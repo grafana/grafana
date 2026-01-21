@@ -1,6 +1,6 @@
 import { locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { AnnotationQueryKind, Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -8,6 +8,7 @@ import { clearLoadedDashboard } from 'app/features/manage-dashboards/state/actio
 import { useDispatch, useSelector, StoreState } from 'app/types/store';
 
 import { ImportDashboardFormV2 } from './ImportDashboardFormV2';
+import { replaceDatasourcesInDashboard, DatasourceMappings } from './importDatasourceReplacer';
 
 const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 
@@ -29,122 +30,21 @@ export function ImportDashboardOverviewV2() {
   async function onSubmit(form: FormData) {
     reportInteraction(IMPORT_FINISHED_EVENT_NAME);
 
+    // Build datasource mappings from form
+    const mappings: DatasourceMappings = {};
+    for (const key of Object.keys(form)) {
+      if (key.startsWith('datasource-')) {
+        const dsType = key.replace('datasource-', '');
+        const ds = form[key as keyof typeof form] as { uid: string; type: string; name?: string } | undefined;
+        if (ds?.uid) {
+          mappings[dsType] = { uid: ds.uid, type: ds.type, name: ds.name };
+        }
+      }
+    }
+
     const dashboardWithDataSources: DashboardV2Spec = {
-      ...dashboard,
+      ...replaceDatasourcesInDashboard(dashboard, mappings),
       title: form.dashboard.title,
-      annotations: dashboard.annotations?.map((annotation: AnnotationQueryKind) => {
-        const dsType = annotation.spec.query?.group;
-        if (dsType) {
-          if (form[`datasource-${dsType}` as keyof typeof form]) {
-            const ds = form[`datasource-${dsType}` as keyof typeof form] as { uid: string; type: string };
-            return {
-              ...annotation,
-              spec: {
-                ...annotation.spec,
-                query: {
-                  ...annotation.spec.query,
-                  datasource: { name: ds.uid },
-                },
-              },
-            };
-          }
-        }
-        return annotation;
-      }),
-      variables: dashboard.variables?.map((variable) => {
-        if (variable.kind === 'QueryVariable') {
-          const dsType = variable.spec.query?.group;
-          if (dsType) {
-            if (form[`datasource-${dsType}` as keyof typeof form]) {
-              const ds = form[`datasource-${dsType}` as keyof typeof form] as { uid: string; type: string };
-              return {
-                ...variable,
-                spec: {
-                  ...variable.spec,
-                  query: {
-                    ...variable.spec.query,
-                    datasource: {
-                      name: ds.uid,
-                    },
-                  },
-                  options: [],
-                  current: {
-                    text: '',
-                    value: '',
-                  },
-                  refresh: 'onDashboardLoad',
-                },
-              };
-            }
-          }
-        } else if (variable.kind === 'DatasourceVariable') {
-          const dsType = variable.spec.pluginId;
-          if (dsType) {
-            if (form[`datasource-${dsType}`]) {
-              const ds = form[`datasource-${dsType}`];
-              return {
-                ...variable,
-                spec: {
-                  ...variable.spec,
-                  current: {
-                    // @ts-ignore
-                    text: ds.name,
-                    // @ts-ignore
-                    value: ds.uid,
-                  },
-                },
-              };
-            }
-          }
-        }
-        return variable;
-      }),
-      elements: Object.fromEntries(
-        Object.entries(dashboard.elements).map(([key, element]) => {
-          if (element.kind === 'Panel') {
-            const panel = { ...element.spec };
-            if (panel.data?.kind === 'QueryGroup') {
-              const newQueries = panel.data.spec.queries.map((query) => {
-                if (query.kind === 'PanelQuery') {
-                  const queryType = query.spec.query?.group;
-                  // Match datasource by query group
-                  if (queryType && form[`datasource-${queryType}` as keyof typeof form]) {
-                    const ds = form[`datasource-${queryType}` as keyof typeof form] as { uid: string; type: string };
-                    return {
-                      ...query,
-                      spec: {
-                        ...query.spec,
-                        query: {
-                          ...query.spec.query,
-                          datasource: {
-                            name: ds.uid,
-                          },
-                        },
-                      },
-                    };
-                  }
-                }
-                return query;
-              });
-              panel.data = {
-                ...panel.data,
-                spec: {
-                  ...panel.data.spec,
-                  queries: newQueries,
-                },
-              };
-            }
-            return [
-              key,
-              {
-                kind: element.kind,
-                spec: panel,
-              },
-            ];
-          }
-          return [key, element];
-        })
-      ),
     };
 
     const result = await getDashboardAPI('v2').saveDashboard({
