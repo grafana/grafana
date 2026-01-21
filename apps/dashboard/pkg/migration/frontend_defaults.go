@@ -3,7 +3,6 @@ package migration
 import (
 	"sort"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
@@ -242,33 +241,20 @@ func sortPanelsByGridPos(dashboard map[string]interface{}) {
 
 // addBuiltInAnnotationQuery adds the built-in "Annotations & Alerts" annotation
 func addBuiltInAnnotationQuery(dashboard map[string]interface{}) {
-	logger := logging.DefaultLogger.With("logger", "dashboard.migration.addBuiltInAnnotationQuery")
-
 	// Handle dashboards with "dashboard" wrapper structure
 	// Some specs have the actual dashboard nested under a "dashboard" key
 	targetDashboard := dashboard
-	hasWrapper := false
 	if innerDashboard, ok := dashboard["dashboard"].(map[string]interface{}); ok {
 		targetDashboard = innerDashboard
-		hasWrapper = true
 	}
-
-	// Debug: log the dashboard structure
-	logger.Error("DEBUG addBuiltInAnnotationQuery called",
-		"hasWrapper", hasWrapper,
-		"hasAnnotationsAtRoot", dashboard["annotations"] != nil,
-		"hasAnnotationsInTarget", targetDashboard["annotations"] != nil,
-	)
 
 	annotations, ok := targetDashboard["annotations"].(map[string]interface{})
 	if !ok {
-		logger.Error("DEBUG No annotations found in targetDashboard, returning early")
 		return
 	}
 
 	list, ok := annotations["list"].([]interface{})
 	if !ok {
-		logger.Error("DEBUG No annotations list found, returning early")
 		return
 	}
 
@@ -276,7 +262,6 @@ func addBuiltInAnnotationQuery(dashboard map[string]interface{}) {
 	for _, item := range list {
 		if annotation, ok := item.(map[string]interface{}); ok {
 			if builtIn, ok := annotation["builtIn"].(float64); ok && builtIn == 1 {
-				logger.Error("DEBUG Built-in annotation already exists, skipping")
 				return // Already exists
 			}
 		}
@@ -298,14 +283,6 @@ func addBuiltInAnnotationQuery(dashboard map[string]interface{}) {
 
 	// Insert at the beginning
 	annotations["list"] = append([]interface{}{builtInAnnotation}, list...)
-
-	// Debug: confirm annotation was added
-	if newList, ok := annotations["list"].([]interface{}); ok {
-		logger.Error("DEBUG Built-in annotation added",
-			"annotationCount", len(newList),
-			"hasWrapper", hasWrapper,
-		)
-	}
 }
 
 // initMeta initializes meta properties with defaults
