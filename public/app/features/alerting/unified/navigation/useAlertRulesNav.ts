@@ -48,7 +48,6 @@ export function useAlertRulesNav() {
       text: t('alerting.navigation.alert-rules', 'Alert rules'),
       url: '/alerting/list',
       active: location.pathname === '/alerting/list',
-      icon: 'list-ul',
       parentItem: alertRulesNav,
     },
   ];
@@ -60,7 +59,6 @@ export function useAlertRulesNav() {
       text: t('alerting.navigation.recently-deleted', 'Recently deleted'),
       url: '/alerting/recently-deleted',
       active: location.pathname === '/alerting/recently-deleted',
-      icon: 'history',
       parentItem: alertRulesNav,
     });
   }
