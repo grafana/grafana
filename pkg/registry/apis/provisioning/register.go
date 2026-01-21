@@ -114,11 +114,10 @@ type APIBuilder struct {
 	jobHistoryLoki    *jobs.LokiJobHistory
 	resourceLister    resources.ResourceLister
 	dashboardAccess   legacy.MigrationDashboardAccessor
-	unified             resource.ResourceClient
-	repoFactory         repository.Factory
-	connectionFactory   connection.Factory
-	connectionDecrypter connection.Decrypter
-	client              client.ProvisioningV0alpha1Interface
+	unified           resource.ResourceClient
+	repoFactory       repository.Factory
+	connectionFactory connection.Factory
+	client            client.ProvisioningV0alpha1Interface
 	access            auth.AccessChecker
 	accessWithAdmin   auth.AccessChecker
 	accessWithEditor  auth.AccessChecker
@@ -141,7 +140,6 @@ func NewAPIBuilder(
 	onlyApiServer bool,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
-	connectionDecrypter connection.Decrypter,
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	configProvider apiserver.RestConfigProvider,
@@ -187,7 +185,6 @@ func NewAPIBuilder(
 		features:                            features,
 		repoFactory:                         repoFactory,
 		connectionFactory:                   connectionFactory,
-		connectionDecrypter:                 connectionDecrypter,
 		clients:                             clients,
 		parsers:                             parsers,
 		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
@@ -890,7 +887,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				connInformer,
 				connStatusPatcher,
 				connTester,
-				b.connectionDecrypter,
+				b.connectionFactory,
 			)
 			if err != nil {
 				return err

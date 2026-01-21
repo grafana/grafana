@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
-	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
@@ -50,9 +49,9 @@ type ConnectionController struct {
 	connSynced cache.InformerSynced
 	logger     logging.Logger
 
-	statusPatcher       ConnectionStatusPatcher
-	tester              connection.SimpleConnectionTester
-	connectionDecrypter connection.Decrypter
+	statusPatcher     ConnectionStatusPatcher
+	tester            connection.SimpleConnectionTester
+	connectionFactory connection.Factory
 
 	queue workqueue.TypedRateLimitingInterface[*connectionQueueItem]
 }
@@ -63,7 +62,7 @@ func NewConnectionController(
 	connInformer informer.ConnectionInformer,
 	statusPatcher ConnectionStatusPatcher,
 	tester connection.SimpleConnectionTester,
-	connectionDecrypter connection.Decrypter,
+	connectionFactory connection.Factory,
 ) (*ConnectionController, error) {
 	cc := &ConnectionController{
 		client:     provisioningClient,
@@ -75,10 +74,10 @@ func NewConnectionController(
 				Name: "provisioningConnectionController",
 			},
 		),
-		statusPatcher:       statusPatcher,
-		tester:              tester,
-		connectionDecrypter: connectionDecrypter,
-		logger:              logging.DefaultLogger.With("logger", connectionLoggerName),
+		statusPatcher:     statusPatcher,
+		tester:            tester,
+		connectionFactory: connectionFactory,
+		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
 	}
 
 	_, err := connInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -168,6 +167,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
 	if err != nil {
+		logger.Error("retrieving namespace and name from key", "error", err)
 		return err
 	}
 
@@ -176,8 +176,11 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	case apierrors.IsNotFound(err):
 		return errors.New("connection not found in cache")
 	case err != nil:
+		logger.Error("getting connection", "error", err)
 		return err
 	}
+
+	logger = logger.With("connection", conn.Name, "namespace", conn.Namespace)
 
 	// Skip if being deleted
 	if conn.DeletionTimestamp != nil {
@@ -199,9 +202,8 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return nil
 	}
 
-	patchOperations := []map[string]interface{}{}
+	var patchOperations []map[string]interface{}
 
-	// Only update observedGeneration when spec changes
 	if hasSpecChanged {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
@@ -213,7 +215,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	// Regenerate JWT token if needed (before health check)
 	// This ensures the health check uses a fresh, valid token
 	if cc.shouldRegenerateToken(conn) {
-		logger.Info("regenerating JWT token for connection")
+		logger.Debug("Regenerating JWT token for connection")
 		tokenOps, err := cc.generateConnectionToken(ctx, conn)
 		if err != nil {
 			// Log error but continue - health check will surface the issue
@@ -315,86 +317,50 @@ func (cc *ConnectionController) hasRecentHealthCheck(healthStatus provisioning.H
 	return age <= connectionUnhealthyDuration
 }
 
-// shouldRegenerateToken determines if JWT token should be regenerated.
-// Returns true for GitHub connections when:
-// - Spec has changed (Generation != ObservedGeneration), OR
-// - Health check is about to run (stale health status)
+// shouldRegenerateToken determines if connection token should be regenerated.
+// Returns true only when the previous health check failed.
 func (cc *ConnectionController) shouldRegenerateToken(conn *provisioning.Connection) bool {
-	// Only GitHub connections use JWT tokens
-	if conn.Spec.Type != provisioning.GithubConnectionType || conn.Spec.GitHub == nil {
-		return false
-	}
-
-	// Need private key to generate token
-	if conn.Secure.PrivateKey.IsZero() {
-		return false
-	}
-
-	// Regenerate on spec change or when health check is due
-	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
-	shouldCheckHealth := cc.shouldCheckHealth(conn)
-	return hasSpecChanged || shouldCheckHealth
+	// Only regenerate if the previous health check failed
+	return conn.Status.Health.Checked != 0 && !conn.Status.Health.Healthy
 }
 
-// generateConnectionToken regenerates the JWT token for a GitHub connection.
-// Follows the same pattern as Repository controller's generateRepositoryToken (lines 663-721).
-// Returns patch operations for /secure/token field.
+// generateConnectionToken regenerates the connection token if the connection supports it.
+// Uses the TokenGenerator interface to generate tokens in a connection-type-agnostic way.
+// Returns patch operations to update the /secure/token field.
 func (cc *ConnectionController) generateConnectionToken(
 	ctx context.Context,
 	conn *provisioning.Connection,
 ) ([]map[string]interface{}, error) {
 	logger := logging.FromContext(ctx)
 
-	// Get decrypted private key using decrypter
-	secure := cc.connectionDecrypter(conn)
-	privateKey, err := secure.PrivateKey(ctx)
+	builtConnection, err := cc.connectionFactory.Build(ctx, conn)
 	if err != nil {
-		logger.Error("failed to decrypt private key", "error", err)
+		logger.Error("failed to build connection", "error", err)
 		return nil, nil // Non-blocking: return empty patches
 	}
 
-	// Generate new JWT token
-	token, err := githubConnection.GenerateJWTToken(conn.Spec.GitHub.AppID, privateKey)
+	tokenGen, ok := builtConnection.(connection.TokenGenerator)
+	if !ok {
+		logger.Debug("connection type does not support token generation, skipping")
+		return nil, nil
+	}
+
+	token, err := tokenGen.GenerateConnectionToken(ctx)
 	if err != nil {
-		logger.Error("failed to generate JWT token", "error", err)
+		logger.Error("failed to generate connection token", "error", err)
 		return nil, nil // Non-blocking: return empty patches
 	}
 
-	logger.Info("successfully generated new JWT token for connection")
+	logger.Info("successfully generated new connection token")
 
-	// Build patch operations (same pattern as Repository controller)
-	var patchOperations []map[string]interface{}
-
-	switch {
-	case conn.Secure.IsZero():
-		// No secure field exists, create it with token
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":   "add",
-			"path": "/secure",
-			"value": map[string]interface{}{
-				"token": map[string]string{
-					"create": string(token),
-				},
-			},
-		})
-	case conn.Secure.Token.IsZero():
-		// Secure exists but no token, add token field
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":   "add",
-			"path": "/secure/token",
-			"value": map[string]string{
-				"create": string(token),
-			},
-		})
-	default:
-		// Token exists, replace it
-		patchOperations = append(patchOperations, map[string]interface{}{
+	patchOperations := []map[string]interface{}{
+		{
 			"op":   "replace",
 			"path": "/secure/token",
 			"value": map[string]string{
 				"create": string(token),
 			},
-		})
+		},
 	}
 
 	return patchOperations, nil
