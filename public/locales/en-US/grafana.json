@@ -6294,6 +6294,11 @@
         "remove-panel": "Remove panel"
       }
     },
+    "option-row": {
+      "aria-label-remove-option": "Remove option",
+      "title-drag-and-drop-to-reorder": "Drag and drop to reorder",
+      "tooltip-remove-option": "Remove option"
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Alert"
     },
@@ -6661,6 +6666,9 @@
         }
       },
       "label": "Hide"
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": "Static options"
     },
     "variable-type-select": {
       "name-variable-type": "Variable type"

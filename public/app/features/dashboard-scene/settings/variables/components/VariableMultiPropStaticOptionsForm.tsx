@@ -122,8 +122,8 @@ export const VariableMultiPropStaticOptionsForm = (props: VariableMultiPropStati
         className={styles.table}
         role="grid"
         aria-label={t(
-          'dashboard-scene.variable-multi-prop-static-options-form.aria-label-object-values',
-          'Object values'
+          'dashboard-scene.variable-multi-prop-static-options-form.aria-label-static-options',
+          'Static options'
         )}
       >
         <thead className={styles.thead}>
@@ -197,7 +197,12 @@ function OptionRow({
   return (
     <Draggable draggableId={option.id} index={index}>
       {(draggableProvided) => (
-        <tr className={styles.row} ref={draggableProvided.innerRef} {...draggableProvided.draggableProps} data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.row}>
+        <tr
+          className={styles.row}
+          ref={draggableProvided.innerRef}
+          {...draggableProvided.draggableProps}
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.row}
+        >
           <td>
             <Stack direction="row" alignItems="center" {...draggableProvided.dragHandleProps}>
               <Icon
