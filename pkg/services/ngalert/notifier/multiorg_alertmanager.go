@@ -263,7 +263,7 @@ func (moa *MultiOrgAlertmanager) initAlertBroadcast() {
 	if _, ok := moa.peer.(*NilPeer); ok {
 		return
 	}
-	state := newAlertBroadcastState(moa.logger.New("component", "alert-broadcast"), moa)
+	state := newAlertBroadcastState(moa.logger.New("component", "alert-broadcast"), moa, moa.metrics)
 	moa.alertsBroadcastChannel = moa.peer.AddState(alertBroadcastKey, state, moa.metrics.Registerer)
 }
 
@@ -284,9 +284,17 @@ func (moa *MultiOrgAlertmanager) BroadcastAlerts(orgID int64, alerts apimodels.P
 	buf, err := json.Marshal(payload)
 	if err != nil {
 		moa.logger.Warn("Failed to encode broadcast alerts payload", "error", err)
+		if moa.metrics != nil {
+			moa.metrics.AlertBroadcastSendErrors.Inc()
+		}
 		return
 	}
 	moa.alertsBroadcastChannel.Broadcast(buf)
+
+	if moa.metrics != nil {
+		moa.metrics.AlertBroadcastAlertsSent.Add(float64(len(alerts.PostableAlerts)))
+	}
+
 	moa.logger.Debug("Broadcast alerts to peers", "orgID", orgID, "alerts", len(alerts.PostableAlerts))
 }
 

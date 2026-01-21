@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
 
 const alertBroadcastKey = "alerts:broadcast"
@@ -17,14 +18,16 @@ type AlertBroadcastPayload struct {
 }
 
 type alertBroadcast struct {
-	logger log.Logger
-	moa    *MultiOrgAlertmanager
+	logger  log.Logger
+	moa     *MultiOrgAlertmanager
+	metrics *metrics.MultiOrgAlertmanager
 }
 
-func newAlertBroadcastState(logger log.Logger, moa *MultiOrgAlertmanager) *alertBroadcast {
+func newAlertBroadcastState(logger log.Logger, moa *MultiOrgAlertmanager, m *metrics.MultiOrgAlertmanager) *alertBroadcast {
 	return &alertBroadcast{
-		logger: logger,
-		moa:    moa,
+		logger:  logger,
+		moa:     moa,
+		metrics: m,
 	}
 }
 
@@ -40,24 +43,40 @@ func (s *alertBroadcast) Merge(b []byte) error {
 	var payload AlertBroadcastPayload
 	if err := json.Unmarshal(b, &payload); err != nil {
 		s.logger.Warn("Failed to decode broadcast alerts payload", "error", err)
+		if s.metrics != nil {
+			s.metrics.AlertBroadcastReceiveErrors.WithLabelValues("unmarshal").Inc()
+		}
 		return nil
 	}
 	if len(payload.Alerts.PostableAlerts) == 0 {
 		return nil
 	}
 
+	if s.metrics != nil {
+		s.metrics.AlertBroadcastAlertsReceived.Add(float64(len(payload.Alerts.PostableAlerts)))
+	}
+
 	am, err := s.moa.AlertmanagerFor(payload.OrgID)
 	if err != nil {
 		if errors.Is(err, ErrNoAlertmanagerForOrg) || errors.Is(err, ErrAlertmanagerNotReady) {
 			s.logger.Debug("Skipping receiving of broadcasted alerts, alertmanager unavailable", "orgID", payload.OrgID, "error", err)
+			if s.metrics != nil {
+				s.metrics.AlertBroadcastReceiveErrors.WithLabelValues("alertmanager_unavailable").Inc()
+			}
 			return nil
 		}
 		s.logger.Warn("Failed to resolve alertmanager for broadcast alerts", "orgID", payload.OrgID, "error", err)
+		if s.metrics != nil {
+			s.metrics.AlertBroadcastReceiveErrors.WithLabelValues("alertmanager_error").Inc()
+		}
 		return nil
 	}
 
 	if err := am.PutAlerts(context.Background(), payload.Alerts); err != nil {
 		s.logger.Warn("Failed to accept received broadcast alerts", "orgID", payload.OrgID, "alerts", len(payload.Alerts.PostableAlerts), "error", err)
+		if s.metrics != nil {
+			s.metrics.AlertBroadcastReceiveErrors.WithLabelValues("put_alerts").Inc()
+		}
 	} else {
 		s.logger.Debug("Received broadcast alerts from peer", "orgID", payload.OrgID, "alerts", len(payload.Alerts.PostableAlerts))
 	}

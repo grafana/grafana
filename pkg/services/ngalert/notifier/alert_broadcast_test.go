@@ -21,11 +21,12 @@ import (
 
 func TestBroadcastAlerts(t *testing.T) {
 	testCases := []struct {
-		name          string
-		orgID         int64
-		alerts        apimodels.PostableAlerts
-		channelExists bool
-		expected      *AlertBroadcastPayload
+		name               string
+		orgID              int64
+		alerts             apimodels.PostableAlerts
+		channelExists      bool
+		expected           *AlertBroadcastPayload
+		expectedAlertsSent int
 	}{
 		{
 			name:  "broadcasts alerts when channel exists",
@@ -44,6 +45,7 @@ func TestBroadcastAlerts(t *testing.T) {
 					},
 				},
 			},
+			expectedAlertsSent: 1,
 		},
 		{
 			name:  "does not broadcast when channel is nil",
@@ -53,31 +55,37 @@ func TestBroadcastAlerts(t *testing.T) {
 					{Annotations: amv2.LabelSet{"summary": "test alert"}},
 				},
 			},
-			channelExists: false,
-			expected:      nil,
+			channelExists:      false,
+			expected:           nil,
+			expectedAlertsSent: 0,
 		},
 		{
-			name:          "does not broadcast empty alerts",
-			orgID:         1,
-			alerts:        apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{}},
-			channelExists: true,
-			expected:      nil,
+			name:               "does not broadcast empty alerts",
+			orgID:              1,
+			alerts:             apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{}},
+			channelExists:      true,
+			expected:           nil,
+			expectedAlertsSent: 0,
 		},
 		{
-			name:          "does not broadcast nil alerts",
-			orgID:         1,
-			alerts:        apimodels.PostableAlerts{},
-			channelExists: true,
-			expected:      nil,
+			name:               "does not broadcast nil alerts",
+			orgID:              1,
+			alerts:             apimodels.PostableAlerts{},
+			channelExists:      true,
+			expected:           nil,
+			expectedAlertsSent: 0,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockChannel := &MockBroadcastChannel{}
+			reg := prometheus.NewRegistry()
+			m := metrics.NewNGAlert(reg)
 
 			moa := &MultiOrgAlertmanager{
-				logger: log.NewNopLogger(),
+				logger:  log.NewNopLogger(),
+				metrics: m.GetMultiOrgAlertmanagerMetrics(),
 			}
 
 			if tc.channelExists {
@@ -95,12 +103,16 @@ func TestBroadcastAlerts(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, *tc.expected, decoded)
 			}
+
+			// Verify metrics
+			alertsSent := int(testGetCounterValue(t, reg, "grafana_alerting_alert_broadcast_alerts_sent_total"))
+			require.Equal(t, tc.expectedAlertsSent, alertsSent)
 		})
 	}
 }
 
 func TestAlertBroadcast_MarshalBinary(t *testing.T) {
-	state := newAlertBroadcastState(log.NewNopLogger(), nil)
+	state := newAlertBroadcastState(log.NewNopLogger(), nil, nil)
 
 	data, err := state.MarshalBinary()
 
@@ -114,7 +126,7 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 			logger:        log.NewNopLogger(),
 			alertmanagers: make(map[int64]Alertmanager),
 		}
-		state := newAlertBroadcastState(log.NewNopLogger(), moa)
+		state := newAlertBroadcastState(log.NewNopLogger(), moa, nil)
 
 		err := state.Merge([]byte{})
 		require.NoError(t, err)
@@ -125,21 +137,26 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 			logger:        log.NewNopLogger(),
 			alertmanagers: make(map[int64]Alertmanager),
 		}
-		state := newAlertBroadcastState(log.NewNopLogger(), moa)
+		state := newAlertBroadcastState(log.NewNopLogger(), moa, nil)
 
 		err := state.Merge(nil)
 		require.NoError(t, err)
 	})
 
-	t.Run("invalid JSON returns nil", func(t *testing.T) {
+	t.Run("invalid JSON increments error metric", func(t *testing.T) {
+		reg := prometheus.NewRegistry()
+		m := metrics.NewNGAlert(reg)
+
 		moa := &MultiOrgAlertmanager{
 			logger:        log.NewNopLogger(),
 			alertmanagers: make(map[int64]Alertmanager),
 		}
-		state := newAlertBroadcastState(log.NewNopLogger(), moa)
+		state := newAlertBroadcastState(log.NewNopLogger(), moa, m.GetMultiOrgAlertmanagerMetrics())
 
 		err := state.Merge([]byte("not valid json"))
 		require.NoError(t, err)
+
+		require.Equal(t, 1, int(testGetCounterValueWithLabel(t, reg, "grafana_alerting_alert_broadcast_receive_errors_total", "reason", "unmarshal")))
 	})
 
 	t.Run("empty alerts in payload returns nil", func(t *testing.T) {
@@ -147,7 +164,7 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 			logger:        log.NewNopLogger(),
 			alertmanagers: make(map[int64]Alertmanager),
 		}
-		state := newAlertBroadcastState(log.NewNopLogger(), moa)
+		state := newAlertBroadcastState(log.NewNopLogger(), moa, nil)
 
 		payload, err := json.Marshal(AlertBroadcastPayload{
 			OrgID:  1,
@@ -159,7 +176,10 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("delivers alerts to alertmanager", func(t *testing.T) {
+	t.Run("delivers alerts to alertmanager and increments received metric", func(t *testing.T) {
+		reg := prometheus.NewRegistry()
+		m := metrics.NewNGAlert(reg)
+
 		mockAM := alertmanager_mock.NewAlertmanagerMock(t)
 		mockAM.On("Ready").Return(true)
 		mockAM.On("PutAlerts", mock.Anything, mock.MatchedBy(func(alerts apimodels.PostableAlerts) bool {
@@ -179,7 +199,7 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 			logger:        log.NewNopLogger(),
 			alertmanagers: map[int64]Alertmanager{1: mockAM},
 		}
-		state := newAlertBroadcastState(log.NewNopLogger(), moa)
+		state := newAlertBroadcastState(log.NewNopLogger(), moa, m.GetMultiOrgAlertmanagerMetrics())
 
 		payload, err := json.Marshal(AlertBroadcastPayload{
 			OrgID: 1,
@@ -196,14 +216,19 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 		err = state.Merge(payload)
 		require.NoError(t, err)
 		mockAM.AssertExpectations(t)
+
+		require.Equal(t, 3, int(testGetCounterValue(t, reg, "grafana_alerting_alert_broadcast_alerts_received_total")))
 	})
 
-	t.Run("skips when alertmanager not found", func(t *testing.T) {
+	t.Run("alertmanager not found increments error metric", func(t *testing.T) {
+		reg := prometheus.NewRegistry()
+		m := metrics.NewNGAlert(reg)
+
 		moa := &MultiOrgAlertmanager{
 			logger:        log.NewNopLogger(),
 			alertmanagers: make(map[int64]Alertmanager),
 		}
-		state := newAlertBroadcastState(log.NewNopLogger(), moa)
+		state := newAlertBroadcastState(log.NewNopLogger(), moa, m.GetMultiOrgAlertmanagerMetrics())
 
 		payload, err := json.Marshal(AlertBroadcastPayload{
 			OrgID: 999,
@@ -217,9 +242,14 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 
 		err = state.Merge(payload)
 		require.NoError(t, err)
+
+		require.Equal(t, 1, int(testGetCounterValueWithLabel(t, reg, "grafana_alerting_alert_broadcast_receive_errors_total", "reason", "alertmanager_unavailable")))
 	})
 
-	t.Run("skips when alertmanager not ready", func(t *testing.T) {
+	t.Run("alertmanager not ready increments error metric", func(t *testing.T) {
+		reg := prometheus.NewRegistry()
+		m := metrics.NewNGAlert(reg)
+
 		mockAM := alertmanager_mock.NewAlertmanagerMock(t)
 		mockAM.On("Ready").Return(false)
 
@@ -227,7 +257,7 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 			logger:        log.NewNopLogger(),
 			alertmanagers: map[int64]Alertmanager{1: mockAM},
 		}
-		state := newAlertBroadcastState(log.NewNopLogger(), moa)
+		state := newAlertBroadcastState(log.NewNopLogger(), moa, m.GetMultiOrgAlertmanagerMetrics())
 
 		payload, err := json.Marshal(AlertBroadcastPayload{
 			OrgID: 1,
@@ -242,9 +272,14 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 		err = state.Merge(payload)
 		require.NoError(t, err)
 		mockAM.AssertNotCalled(t, "PutAlerts", mock.Anything, mock.Anything)
+
+		require.Equal(t, 1, int(testGetCounterValueWithLabel(t, reg, "grafana_alerting_alert_broadcast_receive_errors_total", "reason", "alertmanager_unavailable")))
 	})
 
-	t.Run("does not return error when PutAlerts fails", func(t *testing.T) {
+	t.Run("PutAlerts failure increments error metric", func(t *testing.T) {
+		reg := prometheus.NewRegistry()
+		m := metrics.NewNGAlert(reg)
+
 		mockAM := alertmanager_mock.NewAlertmanagerMock(t)
 		mockAM.On("Ready").Return(true)
 		mockAM.On("PutAlerts", mock.Anything, mock.Anything).Return(errors.New("test error"))
@@ -253,7 +288,7 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 			logger:        log.NewNopLogger(),
 			alertmanagers: map[int64]Alertmanager{1: mockAM},
 		}
-		state := newAlertBroadcastState(log.NewNopLogger(), moa)
+		state := newAlertBroadcastState(log.NewNopLogger(), moa, m.GetMultiOrgAlertmanagerMetrics())
 
 		payload, err := json.Marshal(AlertBroadcastPayload{
 			OrgID: 1,
@@ -268,6 +303,8 @@ func TestAlertBroadcast_Merge(t *testing.T) {
 		err = state.Merge(payload)
 		require.NoError(t, err)
 		mockAM.AssertExpectations(t)
+
+		require.Equal(t, 1, int(testGetCounterValueWithLabel(t, reg, "grafana_alerting_alert_broadcast_receive_errors_total", "reason", "put_alerts")))
 	})
 }
 
@@ -326,4 +363,36 @@ func TestInitAlertBroadcast(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Test helpers for metrics
+
+func testGetCounterValue(t *testing.T, reg *prometheus.Registry, name string) float64 {
+	t.Helper()
+	families, err := reg.Gather()
+	require.NoError(t, err)
+	for _, f := range families {
+		if f.GetName() == name {
+			return f.GetMetric()[0].GetCounter().GetValue()
+		}
+	}
+	return 0
+}
+
+func testGetCounterValueWithLabel(t *testing.T, reg *prometheus.Registry, name, labelName, labelValue string) float64 {
+	t.Helper()
+	families, err := reg.Gather()
+	require.NoError(t, err)
+	for _, f := range families {
+		if f.GetName() == name {
+			for _, metric := range f.GetMetric() {
+				for _, label := range metric.GetLabel() {
+					if label.GetName() == labelName && label.GetValue() == labelValue {
+						return metric.GetCounter().GetValue()
+					}
+				}
+			}
+		}
+	}
+	return 0
 }
