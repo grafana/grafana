@@ -16,4 +16,48 @@ receiverv0alpha1: receiverKind & {
 	selectableFields: [
 		"spec.title",
 	]
+	routes: {
+		"test": {
+			// TODO  remove once fix is released
+			"GET": {
+				name: "getReceiverIntegrationTest"
+				response: {
+					status: "ok"
+				}
+			}
+			"POST": {
+				name: "createReceiverIntegrationTest"
+				request: {
+					body: CreateReceiverTestRequestBody
+				}
+				response: CreateReceiverTestResponse
+				responseMetadata: {
+					typeMeta: true
+				}
+			}
+		}
+	}
+}
+
+#Alert: {
+	labels: {
+		[string]: string
+	}
+	annotations: {
+		[string]: string
+	}
+}
+
+CreateReceiverTestRequestBody: {
+		integration?: v0alpha1.#Integration
+		integrationRef?: {
+			uid: string
+		}
+		alert: #Alert
+}
+
+CreateReceiverTestResponse: {
+	status: "success" | "failure"
+	duration: string
+	error?: string
 }
