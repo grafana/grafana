@@ -183,18 +183,13 @@ jobs:
           ")
           echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
 
-      - name: Get current commit SHA
-        if: steps.check-affected.outputs.affected == 'true'
-        id: get-sha
-        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
       - name: Run coverage for ${{ matrix.codeowner }}
         if: steps.check-affected.outputs.affected == 'true'
         run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
         env:
           SHOULD_OPEN_COVERAGE_REPORT: 'false'
           CI: 'true'
-          GITHUB_SHA: ${{ steps.get-sha.outputs.sha }}
+          GITHUB_SHA: ${{ matrix.branch == 'main' && github.event.pull_request.base.sha || github.event.pull_request.head.sha }}
 
       - name: Upload coverage summary
         if: steps.check-affected.outputs.affected == 'true'
