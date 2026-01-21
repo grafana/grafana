@@ -592,6 +592,7 @@
       "duplicate": "Duplicate",
       "label-integration": "Integration",
       "label-notification-settings": "Notification settings",
+      "label-section": "Optional {{name}} settings",
       "test": "Test"
     },
     "classic-condition-viewer": {
@@ -1540,6 +1541,10 @@
     },
     "receiver-form": {
       "add-contact-point-integration": "Add contact point integration",
+      "body-attention": "Because there is no default policy configured yet, this contact point will automatically be set as default.",
+      "contact-point": "Contact point",
+      "contact-point-create": "Create contact point",
+      "contact-point-update": "Update contact point",
       "label-name": "Name",
       "name-placeholder-name": "Name",
       "save-contact-point": "Save contact point",
@@ -1547,13 +1552,10 @@
       "title-attention": "Attention",
       "title-manage-contact-point-permissions": "Manage contact point permissions"
     },
-    "receiver-metadata-badge": {
-      "aria-label-open-external-link": "Open external link"
-    },
     "receivers": {
       "protected": {
         "field": {
-          "description": "This field is protected and can only be editor by users with elevated permissions"
+          "description": "This field is protected and can only be edited by users with elevated permissions"
         }
       }
     },
