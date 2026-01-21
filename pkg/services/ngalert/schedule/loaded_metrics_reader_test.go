@@ -33,7 +33,7 @@ func TestLoadedResultsFromRuleState(t *testing.T) {
 	}
 
 	t.Run("should return pending and alerting states", func(t *testing.T) {
-		loaded := reader.Read()
+		loaded := reader.Read(context.Background())
 		require.Len(t, loaded, 2)
 		require.Contains(t, loaded, data.Fingerprint(1))
 		require.Contains(t, loaded, data.Fingerprint(2))
@@ -43,13 +43,13 @@ func TestLoadedResultsFromRuleState(t *testing.T) {
 		for _, s := range p.states[rule.GetKey()] {
 			s.StateReason = uuid.NewString()
 		}
-		loaded := reader.Read()
+		loaded := reader.Read(context.Background())
 		require.Empty(t, loaded)
 	})
 
 	t.Run("empty if no states", func(t *testing.T) {
 		p.states[rule.GetKey()] = nil
-		loaded := reader.Read()
+		loaded := reader.Read(context.Background())
 		require.Empty(t, loaded)
 	})
 }

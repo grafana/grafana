@@ -30,8 +30,8 @@ type AlertingResultsFromRuleState struct {
 	Rule    *ngmodels.AlertRule
 }
 
-func (n AlertingResultsFromRuleState) Read() map[data.Fingerprint]struct{} {
-	states := n.Manager.GetStatesForRuleUID(context.Background(), n.Rule.OrgID, n.Rule.UID)
+func (n AlertingResultsFromRuleState) Read(ctx context.Context) map[data.Fingerprint]struct{} {
+	states := n.Manager.GetStatesForRuleUID(ctx, n.Rule.OrgID, n.Rule.UID)
 
 	active := map[data.Fingerprint]struct{}{}
 	for _, st := range states {
