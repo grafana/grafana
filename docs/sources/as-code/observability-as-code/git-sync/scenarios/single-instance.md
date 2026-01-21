@@ -4,7 +4,7 @@ menuTitle: Single instance
 description: Synchronize a single Grafana instance with a Git repository
 weight: 10
 aliases:
-  - ../../provision-resources/scenarios/single-instance   
+  - ../../provision-resources/git-sync-deployment-scenarios/single-instance   
 ---
 
 # Single instance Git Sync
