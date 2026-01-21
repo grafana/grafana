@@ -102,9 +102,9 @@ func TestRepositoryTester_Test_Cases(t *testing.T) {
 
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory)
+	validator := NewValidator(10*time.Second, true, mockFactory)
 	// Use basic RepositoryValidator since RepositoryTester is used for health checks
-	tester := NewRepositoryTester(&validator)
+	tester := NewRepositoryTester(validator)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			results, err := tester.Test(context.Background(), tt.repository)
@@ -144,9 +144,9 @@ func TestRepositoryTester_Test(t *testing.T) {
 
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory)
+	validator := NewValidator(10*time.Second, true, mockFactory)
 	// Use basic RepositoryValidator since RepositoryTester is used for health checks
-	tester := NewRepositoryTester(&validator)
+	tester := NewRepositoryTester(validator)
 	results, err := tester.Test(context.Background(), repository)
 	require.NoError(t, err)
 	require.NotNil(t, results)

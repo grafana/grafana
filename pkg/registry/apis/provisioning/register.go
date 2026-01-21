@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -100,8 +101,8 @@ type APIBuilder struct {
 	tracer                 tracing.Tracer
 	repoStore              grafanarest.Storage
 	repoLister             *repository.Lister
-	existingReposValidator repository.AdditionalValidatorFunc // actual validator, set in UpdateAPIGroupInfo
-	repoAdmissionValidator *repository.AdmissionValidator     // uses lazy wrapper, set in NewAPIBuilder
+	existingReposValidator repository.Validator           // actual validator, set in UpdateAPIGroupInfo
+	repoAdmissionValidator *repository.AdmissionValidator // uses lazy wrapper, set in NewAPIBuilder
 	connectionStore        grafanarest.Storage
 	parsers                resources.ParserFactory
 	repositoryResources    resources.RepositoryResourcesFactory
@@ -124,7 +125,7 @@ type APIBuilder struct {
 	accessWithViewer  auth.AccessChecker
 	statusPatcher     *appcontroller.RepositoryStatusPatcher
 	healthChecker     *controller.HealthChecker
-	repoValidator     repository.RepositoryValidator
+	repoValidator     repository.Validator
 	admissionHandler  *appadmission.Handler
 	// Extras provides additional functionality to the API.
 	extras       []Extra
@@ -178,7 +179,7 @@ func NewAPIBuilder(
 		accessChecker = auth.NewSessionAccessChecker(access)
 	}
 
-	repoValidator := repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering, repoFactory)
+	repoValidator := repository.NewValidator(minSyncInterval, allowImageRendering, repoFactory)
 
 	b := &APIBuilder{
 		onlyApiServer:                       onlyApiServer,
@@ -215,13 +216,8 @@ func NewAPIBuilder(
 	// Store admission validator so test endpoint can use the same validation logic.
 	// The AdmissionValidator includes existing repositories validator to check for conflicts.
 	// We use a lazy wrapper because the actual validator isn't created until UpdateAPIGroupInfo.
-	lazyValidator := func(ctx context.Context, cfg *provisioning.Repository) error {
-		if b.existingReposValidator == nil {
-			return nil
-		}
-		return b.existingReposValidator(ctx, cfg)
-	}
-	b.repoAdmissionValidator = repository.NewAdmissionValidator(&repoValidator, lazyValidator)
+	lazyExistingReposValidator := &lazyValidator{builder: b}
+	b.repoAdmissionValidator = repository.NewAdmissionValidator(allowedTargets, repoValidator, lazyExistingReposValidator)
 	admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), b.repoAdmissionValidator)
 
 	// Connection mutator and validator
@@ -241,6 +237,19 @@ func NewAPIBuilder(
 	}
 
 	return b
+}
+
+// lazyValidator is a wrapper that implements repository.Validator interface
+// and delegates to the builder's existingReposValidator once it's initialized.
+type lazyValidator struct {
+	builder *APIBuilder
+}
+
+func (v *lazyValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
+	if v.builder.existingReposValidator == nil {
+		return nil
+	}
+	return v.builder.existingReposValidator.Validate(ctx, cfg)
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -643,7 +652,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.repoStore = repositoryStorage
 	b.repoLister = repository.NewLister(repositoryStorage)
-	b.existingReposValidator = repository.NewExistingRepositoriesValidator(b.repoLister)
+	b.existingReposValidator = repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister)
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
@@ -759,7 +768,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
 			// Health checker uses basic validation only - no additional validators needed
 			// since the repository already passed admission validation when it was created/updated.
-			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewRepositoryTester(&b.repoValidator))
+			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewRepositoryTester(b.repoValidator))
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.onlyApiServer {

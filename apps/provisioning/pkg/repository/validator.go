@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -49,13 +48,13 @@ type RepositoryValidator struct {
 // FIXME: The separation of concerns here is not ideal. RepositoryValidator should not depend on Factory,
 // but we need to call Factory.Validate() for structural validation (URL, branch, path, etc.) before
 // doing configuration validation. This coupling was introduced to avoid more extensive refactoring.
-func NewValidator(minSyncInterval time.Duration, allowImageRendering bool, repoFactory Factory) RepositoryValidator {
+func NewValidator(minSyncInterval time.Duration, allowImageRendering bool, repoFactory Factory) Validator {
 	// do not allow minsync interval to be less than 10
 	if minSyncInterval <= 10*time.Second {
 		minSyncInterval = 10 * time.Second
 	}
 
-	return RepositoryValidator{
+	return &RepositoryValidator{
 		allowImageRendering: allowImageRendering,
 		minSyncInterval:     minSyncInterval,
 		repoFactory:         repoFactory,
@@ -174,21 +173,20 @@ func FromFieldError(err *field.Error) *provisioning.TestResults {
 // For runtime validation that requires secrets or external service checks, use the
 // Test() method on the Repository interface instead.
 //
-// AdmissionValidator wraps a Validator and adds additional validator functions
-// (e.g., NewExistingRepositoriesValidator) that compare against other repositories.
+// AdmissionValidator wraps a list of Validators that are called after basic validation passes.
+// the order of the validators is important, the first validator that returns an error will stop the validation process.
 type AdmissionValidator struct {
-	validator            Validator
-	additionalValidators []AdditionalValidatorFunc
-	allowedTargets       []provisioning.SyncTargetType
+	validators     []Validator
+	allowedTargets []provisioning.SyncTargetType
 }
 
 // NewAdmissionValidator creates a new repository admission validator.
-// additionalValidators are called after basic validation passes (e.g., NewExistingRepositoriesValidator).
-func NewAdmissionValidator(validator Validator, allowedTargets []provisioning.SyncTargetType, additionalValidators ...AdditionalValidatorFunc) *AdmissionValidator {
+// validators are called after basic validation passes.
+// the order of the validators is important, the first validator that returns an error will stop the validation process.
+func NewAdmissionValidator(allowedTargets []provisioning.SyncTargetType, validators ...Validator) *AdmissionValidator {
 	return &AdmissionValidator{
-		validator:            validator,
-		allowedTargets:       allowedTargets,
-		additionalValidators: additionalValidators,
+		validators:     validators,
+		allowedTargets: allowedTargets,
 	}
 }
 
@@ -241,7 +239,7 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		}
 	}
 
-	if isCreate && !slices.Contains(v.allowedTargets, r.Spec.Sync.Target) {
+	if isCreate && r.Spec.Sync.Enabled && !slices.Contains(v.allowedTargets, r.Spec.Sync.Target) {
 		list = append(list,
 			field.Invalid(
 				field.NewPath("spec", "target"),
@@ -254,29 +252,11 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return invalidRepositoryError(a.GetName(), list)
 	}
 
-	// Run base validation
-	list = v.validator.Validate(ctx, r)
-	if len(list) > 0 {
-		return invalidRepositoryError(a.GetName(), list)
-	}
-
-	// Run additional validators (e.g., existing repositories check)
-	for _, validatorFn := range v.additionalValidators {
-		if validatorFn == nil {
-			continue
-		}
-		if err := validatorFn(ctx, r); err != nil {
-			// Cast to ValidationError, *field.Error, or wrap as internal error
-			var validationErr *ValidationError
-			if errors.As(err, &validationErr) {
-				return invalidRepositoryError(a.GetName(), validationErr.ErrorList)
-			}
-			if fieldErr, ok := err.(*field.Error); ok {
-				return invalidRepositoryError(a.GetName(), field.ErrorList{fieldErr})
-			}
-			return invalidRepositoryError(a.GetName(), field.ErrorList{
-				field.InternalError(field.NewPath(""), err),
-			})
+	// Run validators
+	for _, validator := range v.validators {
+		list = append(list, validator.Validate(ctx, r)...)
+		if len(list) > 0 {
+			return invalidRepositoryError(a.GetName(), list)
 		}
 	}
 

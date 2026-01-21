@@ -188,10 +188,10 @@ func TestValidator_Validate(t *testing.T) {
 					},
 				}
 			}(),
-			expectedErrs: 3,
+			expectedErrs: 2,
 			// 1. reserved name
 			// 2. sync interval too low
-			// 3. sync target not supported
+			// Note: "sync target not supported" is now checked in AdmissionValidator, not RepositoryValidator
 		},
 		{
 			name: "branch workflow for non-github repository",
@@ -414,10 +414,13 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 
 			validator := NewValidator(10*time.Second, false, mockFactory)
 
-			admissionValidator := NewAdmissionValidator(&validator, []provisioning.SyncTargetType{
-				provisioning.SyncTargetTypeFolder,
-				provisioning.SyncTargetTypeInstance,
-			}, nil)
+			admissionValidator := NewAdmissionValidator(
+				[]provisioning.SyncTargetType{
+					provisioning.SyncTargetTypeFolder,
+					provisioning.SyncTargetTypeInstance,
+				},
+				validator,
+			)
 
 			attr := newAdmissionValidatorTestAttributes(tt.obj, tt.old, tt.operation)
 
@@ -441,7 +444,10 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
 	validator := NewValidator(10*time.Second, false, mockFactory)
-	admissionValidator := NewAdmissionValidator(&validator, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, nil)
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
+		validator,
+	)
 
 	oldRepo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
@@ -476,18 +482,29 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	assert.Equal(t, "old-secret", newRepo.Secure.WebhookSecret.Name)
 }
 
-func TestAdmissionValidator_CallsAdditionalValidators(t *testing.T) {
+// mockValidator implements Validator for testing
+type mockValidator struct {
+	called bool
+	errors field.ErrorList
+}
+
+func (m *mockValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
+	m.called = true
+	return m.errors
+}
+
+func TestAdmissionValidator_CallsMultipleValidators(t *testing.T) {
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	called := false
-	mockValidatorFn := func(ctx context.Context, cfg *provisioning.Repository) error {
-		called = true
-		return nil
-	}
+	baseValidator := NewValidator(10*time.Second, false, mockFactory)
+	additionalValidator := &mockValidator{}
 
-	validator := NewValidator(10*time.Second, false, mockFactory)
-	admissionValidator := NewAdmissionValidator(&validator, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, mockValidatorFn)
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
+		baseValidator,
+		additionalValidator,
+	)
 
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
@@ -502,19 +519,23 @@ func TestAdmissionValidator_CallsAdditionalValidators(t *testing.T) {
 
 	err := admissionValidator.Validate(context.Background(), attr, nil)
 	require.NoError(t, err)
-	assert.True(t, called, "validator function should have been called")
+	assert.True(t, additionalValidator.called, "additional validator should have been called")
 }
 
-func TestAdmissionValidator_AdditionalValidatorError(t *testing.T) {
+func TestAdmissionValidator_ValidatorError(t *testing.T) {
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	mockValidatorFn := func(ctx context.Context, cfg *provisioning.Repository) error {
-		return field.Forbidden(field.NewPath("spec"), "duplicate repository")
+	baseValidator := NewValidator(10*time.Second, false, mockFactory)
+	additionalValidator := &mockValidator{
+		errors: field.ErrorList{field.Forbidden(field.NewPath("spec"), "duplicate repository")},
 	}
 
-	validator := NewValidator(10*time.Second, false, mockFactory)
-	admissionValidator := NewAdmissionValidator(&validator, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, mockValidatorFn)
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
+		baseValidator,
+		additionalValidator,
+	)
 
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},

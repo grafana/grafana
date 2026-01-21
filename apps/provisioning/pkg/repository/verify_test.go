@@ -22,7 +22,7 @@ func (m *verifyTestStorage) List(ctx context.Context, options *internalversion.L
 	return &provisioning.RepositoryList{Items: m.repositories}, nil
 }
 
-func TestExistingRepositoriesValidator_Validate(t *testing.T) {
+func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 	tests := []struct {
 		name            string
 		cfg             *provisioning.Repository
@@ -242,18 +242,18 @@ func TestExistingRepositoriesValidator_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &verifyTestStorage{repositories: tt.existingRepos}
 			lister := NewLister(store)
-			validateFn := NewExistingRepositoriesValidator(lister)
-			err := validateFn(context.Background(), tt.cfg)
+			validator := NewVerifyAgainstExistingRepositoriesValidator(lister)
+			errList := validator.Validate(context.Background(), tt.cfg)
 
 			if tt.wantErr {
-				require.Error(t, err)
+				require.NotEmpty(t, errList, "expected validation errors")
 				if tt.wantErrContains != "" {
-					assert.Contains(t, err.Error(), tt.wantErrContains)
+					assert.Contains(t, errList.ToAggregate().Error(), tt.wantErrContains)
 				}
 				return
 			}
 
-			assert.NoError(t, err)
+			assert.Empty(t, errList)
 		})
 	}
 }
