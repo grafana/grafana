@@ -19,6 +19,7 @@ import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
+import { PluginExtensionRegistries } from './features/plugins/extensions/registry/types';
 import { ScopesContextProvider } from './features/scopes/ScopesContextProvider';
 import { RouterWrapper } from './routes/RoutesWrapper';
 
@@ -28,6 +29,7 @@ interface AppWrapperProps {
 
 interface AppWrapperState {
   ready?: boolean;
+  registries?: PluginExtensionRegistries;
 }
 
 /** Used by enterprise */
@@ -56,7 +58,8 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   }
 
   async componentDidMount() {
-    this.setState({ ready: true });
+    const registries = await getPluginExtensionRegistries();
+    this.setState({ ready: true, registries });
     this.removePreloader();
 
     // clear any old icon caches
@@ -94,7 +97,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
 
   render() {
     const { app } = this.props;
-    const { ready } = this.state;
+    const { ready, registries } = this.state;
 
     navigationLogger('AppWrapper', false, 'rendering');
 
@@ -126,7 +129,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                 >
                   <MaybeTimeRangeProvider>
                     <ScopesContextProvider>
-                      <ExtensionRegistriesProvider>
+                      <ExtensionRegistriesProvider registries={registries}>
                         <ExtensionSidebarContextProvider>
                           <UNSAFE_PortalProvider getContainer={getPortalContainer}>
                             <GlobalStyles />

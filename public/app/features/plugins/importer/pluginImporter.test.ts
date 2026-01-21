@@ -14,31 +14,36 @@ import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsR
 import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
-import { getPluginExtensionRegistries } from '../extensions/registry/setup';
+import { setPluginExtensionRegistries } from '../extensions/registry/setup';
 import { pluginsLogger } from '../utils';
 
 import * as importPluginModule from './importPluginModule';
 import { pluginImporter, clearCaches } from './pluginImporter';
 
-jest.mock('../extensions/registry/setup', () => ({
-  getPluginExtensionRegistries: jest.fn().mockResolvedValue({
-    exposedComponentsRegistry: { register: jest.fn() },
-    addedComponentsRegistry: { register: jest.fn() },
-    addedLinksRegistry: { register: jest.fn() },
-    addedFunctionsRegistry: { register: jest.fn() },
-  }),
-}));
-
 describe('pluginImporter', () => {
-  const getPluginExtensionsMock = jest.mocked(getPluginExtensionRegistries);
+  let exposedComponentsRegistry: ExposedComponentsRegistry;
+  let addedComponentsRegistry: AddedComponentsRegistry;
+  let addedLinksRegistry: AddedLinksRegistry;
+  let addedFunctionsRegistry: AddedFunctionsRegistry;
+
   beforeEach(() => {
     jest.clearAllMocks();
     clearCaches();
-    getPluginExtensionsMock.mockResolvedValue({
-      exposedComponentsRegistry: { register: jest.fn() } as unknown as ExposedComponentsRegistry,
-      addedComponentsRegistry: { register: jest.fn() } as unknown as AddedComponentsRegistry,
-      addedLinksRegistry: { register: jest.fn() } as unknown as AddedLinksRegistry,
-      addedFunctionsRegistry: { register: jest.fn() } as unknown as AddedFunctionsRegistry,
+    addedComponentsRegistry = new AddedComponentsRegistry([]);
+    addedFunctionsRegistry = new AddedFunctionsRegistry([]);
+    addedLinksRegistry = new AddedLinksRegistry([]);
+    exposedComponentsRegistry = new ExposedComponentsRegistry([]);
+
+    addedComponentsRegistry.register = jest.fn();
+    addedFunctionsRegistry.register = jest.fn();
+    addedLinksRegistry.register = jest.fn();
+    exposedComponentsRegistry.register = jest.fn();
+
+    setPluginExtensionRegistries({
+      addedComponentsRegistry,
+      addedFunctionsRegistry,
+      addedLinksRegistry,
+      exposedComponentsRegistry,
     });
   });
 
@@ -247,8 +252,6 @@ describe('pluginImporter', () => {
       });
       expect(init).toHaveBeenCalledWith({ ...appPlugin });
       expect(setComponentsFromLegacyExports).toHaveBeenCalledWith({ ...plugin });
-      const { addedComponentsRegistry, addedLinksRegistry, addedFunctionsRegistry, exposedComponentsRegistry } =
-        await getPluginExtensionsMock();
       expect(addedComponentsRegistry.register).toHaveBeenCalledWith({
         pluginId: 'test-plugin',
         configs: [{}],
@@ -309,8 +312,6 @@ describe('pluginImporter', () => {
       });
       expect(init).toHaveBeenCalledWith({ ...meta });
       expect(setComponentsFromLegacyExports).toHaveBeenCalledWith({ ...plugin });
-      const { addedComponentsRegistry, addedLinksRegistry, addedFunctionsRegistry, exposedComponentsRegistry } =
-        await getPluginExtensionsMock();
       expect(addedComponentsRegistry.register).toHaveBeenCalledWith({
         pluginId: 'test-plugin',
         configs: [{}],
@@ -355,8 +356,6 @@ describe('pluginImporter', () => {
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
 
-      const { addedComponentsRegistry, addedLinksRegistry, addedFunctionsRegistry, exposedComponentsRegistry } =
-        await getPluginExtensionsMock();
       expect(addedComponentsRegistry.register).toHaveBeenCalledWith({
         pluginId: 'test-plugin',
         configs: [],

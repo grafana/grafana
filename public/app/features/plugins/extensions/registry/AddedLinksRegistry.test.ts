@@ -1,6 +1,6 @@
 import { firstValueFrom, take } from 'rxjs';
 
-import { AppPluginConfig, PluginLoadingStrategy } from '@grafana/data';
+import { AppPluginConfig } from '@grafana/data';
 
 import { log } from '../logs/log';
 import { resetLogMock } from '../logs/testUtils';

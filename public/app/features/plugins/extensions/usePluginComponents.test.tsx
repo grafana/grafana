@@ -1,6 +1,5 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
 import React, { type JSX } from 'react';
-import { useAsync } from 'react-use';
 
 import { AppPluginConfig, PluginContextProvider, PluginExtensionPoints, PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -42,11 +41,17 @@ jest.mock('./logs/log', () => {
   };
 });
 
+// See: public/app/features/plugins/extensions/utils.tsx for implementation details
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
-  useAsync: jest.fn(),
+  useAsync: jest.fn().mockImplementation(() => ({
+    error: null,
+    loading: false,
+    value: {
+      id: 'my-app-plugin',
+    },
+  })),
 }));
-const useAsyncMock = jest.mocked(useAsync);
 
 describe('usePluginComponents()', () => {
   let registries: PluginExtensionRegistries;
@@ -70,7 +75,6 @@ describe('usePluginComponents()', () => {
       addedLinksRegistry: new AddedLinksRegistry(apps),
       addedFunctionsRegistry: new AddedFunctionsRegistry(apps),
     };
-    useAsyncMock.mockReturnValue({ value: registries, loading: false });
 
     pluginMeta = {
       id: pluginId,
@@ -110,7 +114,7 @@ describe('usePluginComponents()', () => {
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
       <PluginContextProvider meta={pluginMeta}>
-        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
   });
@@ -439,7 +443,7 @@ describe('usePluginComponents()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 
@@ -490,7 +494,7 @@ describe('usePluginComponents()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 
@@ -518,7 +522,7 @@ describe('usePluginComponents()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 
@@ -537,7 +541,7 @@ describe('usePluginComponents()', () => {
 
     // No plugin context -> used in Grafana core
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
+      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
     );
 
     // Adding an extension to the extension point
@@ -569,7 +573,7 @@ describe('usePluginComponents()', () => {
 
     // No plugin context -> used in Grafana core
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
+      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
     );
 
     const extensionPointId = 'grafana/not-exposed-extension-point/v1';
@@ -609,7 +613,7 @@ describe('usePluginComponents()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 
@@ -654,7 +658,7 @@ describe('usePluginComponents()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 

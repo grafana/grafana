@@ -5,11 +5,11 @@ import {
   PluginContextType,
   PluginExtensionAddedLinkConfig,
   PluginExtensionPoints,
-  PluginLoadingStrategy,
   PluginType,
 } from '@grafana/data';
 
 import { createLogMock } from './logs/testUtils';
+import { basicApp } from './test-fixtures/config.apps';
 import {
   assertConfigureIsValid,
   assertStringProps,
@@ -31,30 +31,12 @@ function createAppPluginConfig(
   extensionOverrides: Partial<AppPluginConfig['extensions']> = {}
 ): AppPluginConfig {
   return {
-    id: pluginId,
-    path: '',
-    version: '',
-    preload: false,
-    angular: {
-      detected: false,
-      hideDeprecation: false,
-    },
-    loadingStrategy: PluginLoadingStrategy.fetch,
-    dependencies: {
-      grafanaVersion: '8.0.0',
-      plugins: [],
-      extensions: {
-        exposedComponents: [],
-      },
-    },
+    ...basicApp,
     extensions: {
-      addedLinks: [],
-      addedComponents: [],
-      exposedComponents: [],
-      extensionPoints: [],
-      addedFunctions: [],
+      ...basicApp.extensions,
       ...extensionOverrides,
     },
+    id: pluginId,
     ...overrides,
   };
 }

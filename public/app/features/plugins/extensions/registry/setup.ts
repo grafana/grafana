@@ -12,6 +12,10 @@ import { AddedLinksRegistry } from './AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './types';
 
+/**
+ * Lazy-initialized singleton for plugin extension registries.
+ * The Promise is stored immediately on first call, making this safe from race conditions.
+ */
 let pluginExtensionRegistries: Promise<PluginExtensionRegistries> | undefined;
 
 async function initPluginExtensionRegistries(): Promise<PluginExtensionRegistries> {
@@ -64,15 +68,30 @@ async function initPluginExtensionRegistries(): Promise<PluginExtensionRegistrie
   return pluginExtensionRegistries;
 }
 
+/**
+ * Gets the plugin extension registries, initializing them on first call.
+ * This function is safe to call concurrently - multiple simultaneous calls will
+ * all receive the same Promise instance, ensuring only one initialization.
+ * @returns Promise resolving to the plugin extension registries
+ * @throws Error if getAppPluginMetas() fails during initialization
+ */
 export async function getPluginExtensionRegistries(): Promise<PluginExtensionRegistries> {
+  // Return cached promise if already initialized or in progress
   if (pluginExtensionRegistries) {
     return pluginExtensionRegistries;
   }
 
+  // Store promise immediately (before any await) to prevent race conditions
   pluginExtensionRegistries = initPluginExtensionRegistries();
   return pluginExtensionRegistries;
 }
 
+/**
+ * Sets the plugin extension registries.
+ * This function is intended for use in tests only, allowing injection of mock registries.
+ * @param overrides Plugin extension registries to set
+ * @throws Error if called outside of a test environment
+ */
 export function setPluginExtensionRegistries(overrides: PluginExtensionRegistries) {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('setPluginExtensionRegistries() function can only be called from tests.');

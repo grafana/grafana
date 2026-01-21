@@ -1,6 +1,5 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import type { JSX } from 'react';
-import { useAsync } from 'react-use';
 
 import { AppPluginConfig, PluginContextProvider, PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -27,6 +26,18 @@ jest.mock('./utils', () => ({
   isGrafanaDevMode: jest.fn().mockReturnValue(false),
 }));
 
+// See: public/app/features/plugins/extensions/utils.tsx for implementation details
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useAsync: jest.fn().mockImplementation(() => ({
+    error: null,
+    loading: false,
+    value: {
+      id: 'my-app-plugin',
+    },
+  })),
+}));
+
 jest.mock('./logs/log', () => {
   const { createLogMock } = jest.requireActual('./logs/testUtils');
   const original = jest.requireActual('./logs/log');
@@ -36,12 +47,6 @@ jest.mock('./logs/log', () => {
     log: createLogMock(),
   };
 });
-
-jest.mock('react-use', () => ({
-  ...jest.requireActual('react-use'),
-  useAsync: jest.fn(),
-}));
-const useAsyncMock = jest.mocked(useAsync);
 
 describe('usePluginComponent()', () => {
   let registries: PluginExtensionRegistries;
@@ -77,8 +82,6 @@ describe('usePluginComponent()', () => {
     jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
     resetLogMock(log);
-
-    useAsyncMock.mockReturnValue({ value: registries, loading: false });
 
     pluginMeta = {
       id: pluginId,
@@ -117,7 +120,7 @@ describe('usePluginComponent()', () => {
     };
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
+      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
     );
   });
 
@@ -205,7 +208,7 @@ describe('usePluginComponent()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 
@@ -227,7 +230,7 @@ describe('usePluginComponent()', () => {
 
     // No plugin context -> used in Grafana core
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
+      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
     );
 
     registries.exposedComponentsRegistry.register({
@@ -262,7 +265,7 @@ describe('usePluginComponent()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 
@@ -293,7 +296,7 @@ describe('usePluginComponent()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 

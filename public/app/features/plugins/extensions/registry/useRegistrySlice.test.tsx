@@ -1,6 +1,5 @@
 import { renderHook } from '@testing-library/react';
 import React, { type JSX } from 'react';
-import { useAsync } from 'react-use';
 
 import { ExtensionRegistriesProvider } from '../ExtensionRegistriesContext';
 
@@ -16,12 +15,6 @@ import {
   useExposedComponentRegistrySlice,
 } from './useRegistrySlice';
 
-jest.mock('react-use', () => ({
-  ...jest.requireActual('react-use'),
-  useAsync: jest.fn(),
-}));
-const useAsyncMock = jest.mocked(useAsync);
-
 describe('useRegistrySlice', () => {
   let registries: PluginExtensionRegistries;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
@@ -34,10 +27,8 @@ describe('useRegistrySlice', () => {
       addedFunctionsRegistry: new AddedFunctionsRegistry([]),
     };
 
-    useAsyncMock.mockReturnValue({ value: registries, loading: false });
-
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
+      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
     );
   });
 

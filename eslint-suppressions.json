@@ -2917,21 +2917,6 @@
       "count": 1
     }
   },
-  "public/app/features/plugins/extensions/utils.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 27
-    }
-  },
-  "public/app/features/plugins/extensions/utils.tsx": {
-    "no-restricted-syntax": {
-      "count": 7
-    }
-  },
-  "public/app/features/plugins/sandbox/codeLoader.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/plugins/sandbox/distortions.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
