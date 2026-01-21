@@ -1,0 +1,4433 @@
+openapi: 3.1.0
+info:
+  title: Prometheus API
+  description: Prometheus is an Open-Source monitoring system with a dimensional data model, flexible query language, efficient time series database and modern alerting approach.
+  contact:
+    name: Prometheus Community
+    url: https://prometheus.io/community/
+  version: 0.0.1-undefined
+servers:
+  - url: http://ismails-Job-M4-Pro.local:9090/api/v1
+paths:
+  /query:
+    get:
+      tags:
+        - query
+      summary: Evaluate an instant query
+      operationId: query
+      parameters:
+        - name: limit
+          in: query
+          description: The maximum number of metrics to return.
+          required: false
+          explode: false
+          schema:
+            type: integer
+            format: int64
+          examples:
+            default:
+              value: 100
+        - name: time
+          in: query
+          description: The evaluation timestamp (optional, defaults to current time).
+          required: false
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T13:37:00.000Z"
+        - name: query
+          in: query
+          description: The PromQL query to execute.
+          required: true
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: up
+        - name: timeout
+          in: query
+          description: Evaluation timeout. Optional. Defaults to and is capped by the value of the -query.timeout flag.
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: 30s
+        - name: lookback_delta
+          in: query
+          description: Override the lookback period for this query. Optional.
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: 5m
+        - name: stats
+          in: query
+          description: When provided, include query statistics in the response. The special value 'all' enables more comprehensive statistics.
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: all
+      responses:
+        "200":
+          description: Query executed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryOutputBody'
+              examples:
+                vectorResult:
+                  summary: Successful instant query with vector result
+                  value:
+                    data:
+                      result:
+                        - metric:
+                            __name__: up
+                            instance: demo.prometheus.io:9090
+                            job: prometheus
+                          value:
+                            - 1767436620
+                            - "1"
+                        - metric:
+                            __name__: up
+                            env: demo
+                            instance: demo.prometheus.io:9093
+                            job: alertmanager
+                          value:
+                            - 1767436620
+                            - "1"
+                      resultType: vector
+                    status: success
+                scalarResult:
+                  summary: Query returning a scalar value
+                  value:
+                    data:
+                      result:
+                        - 1767436620
+                        - "42"
+                      resultType: scalar
+                    status: success
+        default:
+          description: Error executing query.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+    post:
+      tags:
+        - query
+      summary: Evaluate an instant query
+      operationId: query-post
+      requestBody:
+        description: Submit an instant query. This endpoint accepts the same parameters as the GET version.
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QueryPostInputBody'
+            examples:
+              simpleQuery:
+                summary: Simple instant query
+                value:
+                  query: up
+              queryWithTime:
+                summary: Query with specific timestamp
+                value:
+                  query: up{job="prometheus"}
+                  time: "2026-01-02T13:37:00.000Z"
+              queryWithLimit:
+                summary: Query with limit and statistics
+                value:
+                  limit: 100
+                  query: rate(prometheus_http_requests_total{handler="/api/v1/query"}[5m])
+                  stats: all
+        required: true
+      responses:
+        "200":
+          description: Instant query executed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryOutputBody'
+              examples:
+                vectorResult:
+                  summary: Successful instant query with vector result
+                  value:
+                    data:
+                      result:
+                        - metric:
+                            __name__: up
+                            instance: demo.prometheus.io:9090
+                            job: prometheus
+                          value:
+                            - 1767436620
+                            - "1"
+                        - metric:
+                            __name__: up
+                            env: demo
+                            instance: demo.prometheus.io:9093
+                            job: alertmanager
+                          value:
+                            - 1767436620
+                            - "1"
+                      resultType: vector
+                    status: success
+                scalarResult:
+                  summary: Query returning a scalar value
+                  value:
+                    data:
+                      result:
+                        - 1767436620
+                        - "42"
+                      resultType: scalar
+                    status: success
+        default:
+          description: Error executing instant query.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /query_range:
+    get:
+      tags:
+        - query
+      summary: Evaluate a range query
+      operationId: query-range
+      parameters:
+        - name: limit
+          in: query
+          description: The maximum number of metrics to return.
+          required: false
+          explode: false
+          schema:
+            type: integer
+            format: int64
+          examples:
+            default:
+              value: 100
+        - name: start
+          in: query
+          description: The start time of the query.
+          required: true
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T12:37:00.000Z"
+        - name: end
+          in: query
+          description: The end time of the query.
+          required: true
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T13:37:00.000Z"
+        - name: step
+          in: query
+          description: The step size of the query.
+          required: true
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: 15s
+        - name: query
+          in: query
+          description: The query to execute.
+          required: true
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: rate(prometheus_http_requests_total{handler="/api/v1/query"}[5m])
+        - name: timeout
+          in: query
+          description: Evaluation timeout. Optional. Defaults to and is capped by the value of the -query.timeout flag.
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: 30s
+        - name: lookback_delta
+          in: query
+          description: Override the lookback period for this query. Optional.
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: 5m
+        - name: stats
+          in: query
+          description: When provided, include query statistics in the response. The special value 'all' enables more comprehensive statistics.
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: all
+      responses:
+        "200":
+          description: Range query executed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryRangeOutputBody'
+              examples:
+                matrixResult:
+                  summary: Successful range query with matrix result
+                  value:
+                    data:
+                      result:
+                        - metric:
+                            __name__: up
+                            instance: demo.prometheus.io:9090
+                            job: prometheus
+                          values:
+                            - - 1767433020
+                              - "1"
+                            - - 1767434820
+                              - "1"
+                            - - 1767436620
+                              - "1"
+                      resultType: matrix
+                    status: success
+        default:
+          description: Error executing range query.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+    post:
+      tags:
+        - query
+      summary: Evaluate a range query
+      operationId: query-range-post
+      requestBody:
+        description: Submit a range query. This endpoint accepts the same parameters as the GET version.
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QueryRangePostInputBody'
+            examples:
+              basicRange:
+                summary: Basic range query
+                value:
+                  end: "2026-01-02T13:37:00.000Z"
+                  query: up
+                  start: "2026-01-02T12:37:00.000Z"
+                  step: 15s
+              rateQuery:
+                summary: Rate calculation over time range
+                value:
+                  end: "2026-01-02T13:37:00.000Z"
+                  query: rate(prometheus_http_requests_total{handler="/api/v1/query"}[5m])
+                  start: "2026-01-02T12:37:00.000Z"
+                  step: 30s
+                  timeout: 30s
+        required: true
+      responses:
+        "200":
+          description: Range query executed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryRangeOutputBody'
+              examples:
+                matrixResult:
+                  summary: Successful range query with matrix result
+                  value:
+                    data:
+                      result:
+                        - metric:
+                            __name__: up
+                            instance: demo.prometheus.io:9090
+                            job: prometheus
+                          values:
+                            - - 1767433020
+                              - "1"
+                            - - 1767434820
+                              - "1"
+                            - - 1767436620
+                              - "1"
+                      resultType: matrix
+                    status: success
+        default:
+          description: Error executing range query.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /query_exemplars:
+    get:
+      tags:
+        - query
+      summary: Query exemplars
+      operationId: query-exemplars
+      parameters:
+        - name: start
+          in: query
+          description: Start timestamp for exemplars query.
+          required: false
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T12:37:00.000Z"
+        - name: end
+          in: query
+          description: End timestamp for exemplars query.
+          required: false
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T13:37:00.000Z"
+        - name: query
+          in: query
+          description: PromQL query to extract exemplars for.
+          required: true
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: prometheus_http_requests_total
+      responses:
+        "200":
+          description: Exemplars retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryExemplarsOutputBody'
+              examples:
+                exemplarsResult:
+                  summary: Exemplars for a metric with trace IDs
+                  value:
+                    data:
+                      - exemplars:
+                          - labels:
+                              traceID: abc123def456
+                            timestamp: 1.689956451781e+09
+                            value: "1.5"
+                        seriesLabels:
+                          __name__: http_requests_total
+                          job: api-server
+                          method: GET
+                    status: success
+        default:
+          description: Error retrieving exemplars.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+    post:
+      tags:
+        - query
+      summary: Query exemplars
+      operationId: query-exemplars-post
+      requestBody:
+        description: Submit an exemplars query. This endpoint accepts the same parameters as the GET version.
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QueryExemplarsPostInputBody'
+            examples:
+              basicExemplar:
+                summary: Query exemplars for a metric
+                value:
+                  query: prometheus_http_requests_total
+              exemplarWithTimeRange:
+                summary: Exemplars within specific time range
+                value:
+                  end: "2026-01-02T13:37:00.000Z"
+                  query: prometheus_http_requests_total{job="prometheus"}
+                  start: "2026-01-02T12:37:00.000Z"
+        required: true
+      responses:
+        "200":
+          description: Exemplars query completed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryExemplarsOutputBody'
+              examples:
+                exemplarsResult:
+                  summary: Exemplars for a metric with trace IDs
+                  value:
+                    data:
+                      - exemplars:
+                          - labels:
+                              traceID: abc123def456
+                            timestamp: 1.689956451781e+09
+                            value: "1.5"
+                        seriesLabels:
+                          __name__: http_requests_total
+                          job: api-server
+                          method: GET
+                    status: success
+        default:
+          description: Error processing exemplars query.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /format_query:
+    get:
+      tags:
+        - query
+      summary: Format a PromQL query
+      operationId: format-query
+      parameters:
+        - name: query
+          in: query
+          description: PromQL expression to format.
+          required: true
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: sum(rate(http_requests_total[5m])) by (job)
+      responses:
+        "200":
+          description: Query formatted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormatQueryOutputBody'
+              examples:
+                formattedQuery:
+                  summary: Formatted PromQL query
+                  value:
+                    data: sum by(job, status) (rate(http_requests_total[5m]))
+                    status: success
+        default:
+          description: Error formatting query.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+    post:
+      tags:
+        - query
+      summary: Format a PromQL query
+      operationId: format-query-post
+      requestBody:
+        description: Submit a PromQL query to format. This endpoint accepts the same parameters as the GET version.
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FormatQueryPostInputBody'
+            examples:
+              simpleFormat:
+                summary: Format a simple query
+                value:
+                  query: up{job="prometheus"}
+              complexFormat:
+                summary: Format a complex query
+                value:
+                  query: sum(rate(http_requests_total[5m])) by (job, status)
+        required: true
+      responses:
+        "200":
+          description: Query formatting completed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormatQueryOutputBody'
+              examples:
+                formattedQuery:
+                  summary: Formatted PromQL query
+                  value:
+                    data: sum by(job, status) (rate(http_requests_total[5m]))
+                    status: success
+        default:
+          description: Error formatting query.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /parse_query:
+    get:
+      tags:
+        - query
+      summary: Parse a PromQL query
+      operationId: parse-query
+      parameters:
+        - name: query
+          in: query
+          description: PromQL expression to parse.
+          required: true
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: up{job="prometheus"}
+      responses:
+        "200":
+          description: Query parsed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseQueryOutputBody'
+              examples:
+                parsedQuery:
+                  summary: Parsed PromQL expression tree
+                  value:
+                    data:
+                      resultType: vector
+                    status: success
+        default:
+          description: Error parsing query.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+    post:
+      tags:
+        - query
+      summary: Parse a PromQL query
+      operationId: parse-query-post
+      requestBody:
+        description: Submit a PromQL query to parse. This endpoint accepts the same parameters as the GET version.
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ParseQueryPostInputBody'
+            examples:
+              simpleParse:
+                summary: Parse a simple query
+                value:
+                  query: up
+              complexParse:
+                summary: Parse a complex query
+                value:
+                  query: rate(http_requests_total{job="api"}[5m])
+        required: true
+      responses:
+        "200":
+          description: Query parsed successfully via POST.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseQueryOutputBody'
+              examples:
+                parsedQuery:
+                  summary: Parsed PromQL expression tree
+                  value:
+                    data:
+                      resultType: vector
+                    status: success
+        default:
+          description: Error parsing query via POST.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /labels:
+    get:
+      tags:
+        - labels
+      summary: Get label names
+      operationId: labels
+      parameters:
+        - name: start
+          in: query
+          description: Start timestamp for label names query.
+          required: false
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T12:37:00.000Z"
+        - name: end
+          in: query
+          description: End timestamp for label names query.
+          required: false
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T13:37:00.000Z"
+        - name: match[]
+          in: query
+          description: Series selector argument.
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+          examples:
+            default:
+              value:
+                - '{job="prometheus"}'
+        - name: limit
+          in: query
+          description: Maximum number of label names to return.
+          required: false
+          explode: false
+          schema:
+            type: integer
+            format: int64
+          examples:
+            default:
+              value: 100
+      responses:
+        "200":
+          description: Label names retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelsOutputBody'
+              examples:
+                labelNames:
+                  summary: List of label names
+                  value:
+                    data:
+                      - __name__
+                      - active
+                      - address
+                      - alertmanager
+                      - alertname
+                      - alertstate
+                      - backend
+                      - branch
+                      - code
+                      - collector
+                      - component
+                      - device
+                      - env
+                      - endpoint
+                      - fstype
+                      - handler
+                      - instance
+                      - job
+                      - le
+                      - method
+                      - mode
+                      - name
+                    status: success
+        default:
+          description: Error retrieving label names.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+    post:
+      tags:
+        - labels
+      summary: Get label names
+      operationId: labels-post
+      requestBody:
+        description: Submit a label names query. This endpoint accepts the same parameters as the GET version.
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LabelsPostInputBody'
+            examples:
+              allLabels:
+                summary: Get all label names
+                value: {}
+              labelsWithTimeRange:
+                summary: Get label names within time range
+                value:
+                  end: "2026-01-02T13:37:00.000Z"
+                  start: "2026-01-02T12:37:00.000Z"
+              labelsWithMatch:
+                summary: Get label names matching series selector
+                value:
+                  match[]:
+                    - up
+                    - process_start_time_seconds{job="prometheus"}
+        required: true
+      responses:
+        "200":
+          description: Label names retrieved successfully via POST.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelsOutputBody'
+              examples:
+                labelNames:
+                  summary: List of label names
+                  value:
+                    data:
+                      - __name__
+                      - active
+                      - address
+                      - alertmanager
+                      - alertname
+                      - alertstate
+                      - backend
+                      - branch
+                      - code
+                      - collector
+                      - component
+                      - device
+                      - env
+                      - endpoint
+                      - fstype
+                      - handler
+                      - instance
+                      - job
+                      - le
+                      - method
+                      - mode
+                      - name
+                    status: success
+        default:
+          description: Error retrieving label names via POST.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /label/{name}/values:
+    get:
+      tags:
+        - labels
+      summary: Get label values
+      operationId: label-values
+      parameters:
+        - name: name
+          in: path
+          description: Label name.
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: query
+          description: Start timestamp for label values query.
+          required: false
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T12:37:00.000Z"
+        - name: end
+          in: query
+          description: End timestamp for label values query.
+          required: false
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T13:37:00.000Z"
+        - name: match[]
+          in: query
+          description: Series selector argument.
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+          examples:
+            default:
+              value:
+                - '{job="prometheus"}'
+        - name: limit
+          in: query
+          description: Maximum number of label values to return.
+          required: false
+          explode: false
+          schema:
+            type: integer
+            format: int64
+          examples:
+            default:
+              value: 1000
+      responses:
+        "200":
+          description: Label values retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelValuesOutputBody'
+              examples:
+                labelValues:
+                  summary: List of values for a label
+                  value:
+                    data:
+                      - alertmanager
+                      - blackbox
+                      - caddy
+                      - cadvisor
+                      - grafana
+                      - node
+                      - prometheus
+                      - random
+                    status: success
+        default:
+          description: Error retrieving label values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /series:
+    get:
+      tags:
+        - series
+      summary: Find series by label matchers
+      operationId: series
+      parameters:
+        - name: start
+          in: query
+          description: Start timestamp for series query.
+          required: false
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T12:37:00.000Z"
+        - name: end
+          in: query
+          description: End timestamp for series query.
+          required: false
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T13:37:00.000Z"
+        - name: match[]
+          in: query
+          description: Series selector argument.
+          required: true
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+          examples:
+            default:
+              value:
+                - '{job="prometheus"}'
+        - name: limit
+          in: query
+          description: Maximum number of series to return.
+          required: false
+          explode: false
+          schema:
+            type: integer
+            format: int64
+          examples:
+            default:
+              value: 100
+      responses:
+        "200":
+          description: Series returned matching the provided label matchers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeriesOutputBody'
+              examples:
+                seriesList:
+                  summary: List of series matching the selector
+                  value:
+                    data:
+                      - __name__: up
+                        env: demo
+                        instance: demo.prometheus.io:8080
+                        job: cadvisor
+                      - __name__: up
+                        env: demo
+                        instance: demo.prometheus.io:9093
+                        job: alertmanager
+                      - __name__: up
+                        env: demo
+                        instance: demo.prometheus.io:9100
+                        job: node
+                      - __name__: up
+                        instance: demo.prometheus.io:3000
+                        job: grafana
+                      - __name__: up
+                        instance: demo.prometheus.io:8996
+                        job: random
+                    status: success
+        default:
+          description: Error retrieving series.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+    post:
+      tags:
+        - series
+      summary: Find series by label matchers
+      operationId: series-post
+      requestBody:
+        description: Submit a series query. This endpoint accepts the same parameters as the GET version.
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SeriesPostInputBody'
+            examples:
+              seriesMatch:
+                summary: Find series by label matchers
+                value:
+                  match[]:
+                    - up
+              seriesWithTimeRange:
+                summary: Find series with time range
+                value:
+                  end: "2026-01-02T13:37:00.000Z"
+                  match[]:
+                    - up
+                    - process_cpu_seconds_total{job="prometheus"}
+                  start: "2026-01-02T12:37:00.000Z"
+        required: true
+      responses:
+        "200":
+          description: Series returned matching the provided label matchers via POST.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeriesOutputBody'
+              examples:
+                seriesList:
+                  summary: List of series matching the selector
+                  value:
+                    data:
+                      - __name__: up
+                        env: demo
+                        instance: demo.prometheus.io:8080
+                        job: cadvisor
+                      - __name__: up
+                        env: demo
+                        instance: demo.prometheus.io:9093
+                        job: alertmanager
+                      - __name__: up
+                        env: demo
+                        instance: demo.prometheus.io:9100
+                        job: node
+                      - __name__: up
+                        instance: demo.prometheus.io:3000
+                        job: grafana
+                      - __name__: up
+                        instance: demo.prometheus.io:8996
+                        job: random
+                    status: success
+        default:
+          description: Error retrieving series via POST.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+    delete:
+      tags:
+        - series
+      summary: Delete series
+      description: 'Delete series matching selectors. Note: This is deprecated, use POST /admin/tsdb/delete_series instead.'
+      operationId: delete-series
+      responses:
+        "200":
+          description: Series marked for deletion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeriesDeleteOutputBody'
+              examples:
+                seriesDeleted:
+                  summary: Series marked for deletion
+                  value:
+                    status: success
+        default:
+          description: Error deleting series.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /metadata:
+    get:
+      tags:
+        - metadata
+      summary: Get metadata
+      operationId: get-metadata
+      parameters:
+        - name: limit
+          in: query
+          description: The maximum number of metrics to return.
+          required: false
+          explode: false
+          schema:
+            type: integer
+            format: int64
+          examples:
+            default:
+              value: 100
+        - name: limit_per_metric
+          in: query
+          description: The maximum number of metadata entries per metric.
+          required: false
+          explode: false
+          schema:
+            type: integer
+            format: int64
+          examples:
+            default:
+              value: 10
+        - name: metric
+          in: query
+          description: A metric name to filter metadata for.
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: http_requests_total
+      responses:
+        "200":
+          description: Metric metadata retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetadataOutputBody'
+              examples:
+                metricMetadata:
+                  summary: Metadata for metrics
+                  value:
+                    data:
+                      go_gc_stack_starting_size_bytes:
+                        - help: The stack size of new goroutines. Sourced from /gc/stack/starting-size:bytes.
+                          type: gauge
+                          unit: ""
+                      prometheus_rule_group_iterations_missed_total:
+                        - help: The total number of rule group evaluations missed due to slow rule group evaluation.
+                          type: counter
+                          unit: ""
+                      prometheus_sd_updates_total:
+                        - help: Total number of update events sent to the SD consumers.
+                          type: counter
+                          unit: ""
+                    status: success
+        default:
+          description: Error retrieving metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /scrape_pools:
+    get:
+      tags:
+        - targets
+      summary: Get scrape pools
+      operationId: get-scrape-pools
+      responses:
+        "200":
+          description: Scrape pools retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScrapePoolsOutputBody'
+              examples:
+                scrapePoolsList:
+                  summary: List of scrape pool names
+                  value:
+                    data:
+                      scrapePools:
+                        - alertmanager
+                        - blackbox
+                        - caddy
+                        - cadvisor
+                        - grafana
+                        - node
+                        - prometheus
+                        - random
+                    status: success
+        default:
+          description: Error retrieving scrape pools.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /targets:
+    get:
+      tags:
+        - targets
+      summary: Get targets
+      operationId: get-targets
+      parameters:
+        - name: scrapePool
+          in: query
+          description: Filter targets by scrape pool name.
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: prometheus
+        - name: state
+          in: query
+          description: 'Filter by state: active, dropped, or any.'
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: active
+      responses:
+        "200":
+          description: Target discovery information retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TargetsOutputBody'
+              examples:
+                targetsList:
+                  summary: Active and dropped targets
+                  value:
+                    data:
+                      activeTargets:
+                        - discoveredLabels:
+                            __address__: demo.prometheus.io:9093
+                            __meta_filepath: /etc/prometheus/file_sd/alertmanager.yml
+                            __metrics_path__: /metrics
+                            __scheme__: http
+                            env: demo
+                            job: alertmanager
+                          globalUrl: http://demo.prometheus.io:9093/metrics
+                          health: up
+                          labels:
+                            env: demo
+                            instance: demo.prometheus.io:9093
+                            job: alertmanager
+                          lastError: ""
+                          lastScrape: "2026-01-02T13:36:40.200Z"
+                          lastScrapeDuration: 0.006576866
+                          scrapeInterval: 15s
+                          scrapePool: alertmanager
+                          scrapeTimeout: 10s
+                          scrapeUrl: http://demo.prometheus.io:9093/metrics
+                      droppedTargetCounts:
+                        alertmanager: 0
+                        blackbox: 0
+                        caddy: 0
+                        cadvisor: 0
+                        grafana: 0
+                        node: 0
+                        prometheus: 0
+                        random: 0
+                      droppedTargets: []
+                    status: success
+        default:
+          description: Error retrieving targets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /targets/metadata:
+    get:
+      tags:
+        - targets
+      summary: Get targets metadata
+      operationId: get-targets-metadata
+      parameters:
+        - name: match_target
+          in: query
+          description: Label selector to filter targets.
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: '{job="prometheus"}'
+        - name: metric
+          in: query
+          description: Metric name to retrieve metadata for.
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: http_requests_total
+        - name: limit
+          in: query
+          description: Maximum number of targets to match.
+          required: false
+          explode: false
+          schema:
+            type: integer
+            format: int64
+          examples:
+            default:
+              value: 10
+      responses:
+        "200":
+          description: Target metadata retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TargetMetadataOutputBody'
+              examples:
+                targetMetadata:
+                  summary: Metadata for targets
+                  value:
+                    data:
+                      - help: The current health status of the target
+                        metric: up
+                        target:
+                          instance: localhost:9090
+                          job: prometheus
+                        type: gauge
+                        unit: ""
+                    status: success
+        default:
+          description: Error retrieving target metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /targets/relabel_steps:
+    get:
+      tags:
+        - targets
+      summary: Get targets relabel steps
+      operationId: get-targets-relabel-steps
+      parameters:
+        - name: scrapePool
+          in: query
+          description: Name of the scrape pool.
+          required: true
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: prometheus
+        - name: labels
+          in: query
+          description: JSON-encoded labels to apply relabel rules to.
+          required: true
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: '{"__address__":"localhost:9090","job":"prometheus"}'
+      responses:
+        "200":
+          description: Relabel steps retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TargetRelabelStepsOutputBody'
+              examples:
+                relabelSteps:
+                  summary: Relabel steps for a target
+                  value:
+                    data:
+                      steps:
+                        - keep: true
+                          output:
+                            __address__: localhost:9090
+                            instance: localhost:9090
+                            job: prometheus
+                          rule:
+                            action: replace
+                            regex: (.*)
+                            replacement: $1
+                            source_labels:
+                              - __address__
+                            target_label: instance
+                    status: success
+        default:
+          description: Error retrieving relabel steps.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /rules:
+    get:
+      tags:
+        - rules
+      summary: Get alerting and recording rules
+      operationId: rules
+      parameters:
+        - name: type
+          in: query
+          description: 'Filter by rule type: alert or record.'
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: alert
+        - name: rule_name[]
+          in: query
+          description: Filter by rule name.
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+          examples:
+            default:
+              value:
+                - HighErrorRate
+        - name: rule_group[]
+          in: query
+          description: Filter by rule group name.
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+          examples:
+            default:
+              value:
+                - example_alerts
+        - name: file[]
+          in: query
+          description: Filter by file path.
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+          examples:
+            default:
+              value:
+                - /etc/prometheus/rules.yml
+        - name: match[]
+          in: query
+          description: Label matchers to filter rules.
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+          examples:
+            default:
+              value:
+                - '{severity="critical"}'
+        - name: exclude_alerts
+          in: query
+          description: Exclude active alerts from response.
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: "false"
+        - name: group_limit
+          in: query
+          description: Maximum number of rule groups to return.
+          required: false
+          explode: false
+          schema:
+            type: integer
+            format: int64
+          examples:
+            default:
+              value: 100
+        - name: group_next_token
+          in: query
+          description: Pagination token for next page.
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: abc123
+      responses:
+        "200":
+          description: Rules retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RulesOutputBody'
+              examples:
+                ruleGroups:
+                  summary: Alerting and recording rules
+                  value:
+                    data:
+                      groups:
+                        - evaluationTime: 0.000561635
+                          file: /etc/prometheus/rules/ansible_managed.yml
+                          interval: 15
+                          lastEvaluation: "2026-01-02T13:36:56.874Z"
+                          limit: 0
+                          name: ansible managed alert rules
+                          rules:
+                            - annotations:
+                                description: This is an alert meant to ensure that the entire alerting pipeline is functional. This alert is always firing, therefore it should always be firing in Alertmanager and always fire against a receiver. There are integrations with various notification mechanisms that send a notification when this alert is not firing. For example the "DeadMansSnitch" integration in PagerDuty.
+                                summary: Ensure entire alerting pipeline is functional
+                              duration: 600
+                              evaluationTime: 0.000356688
+                              health: ok
+                              keepFiringFor: 0
+                              labels:
+                                severity: warning
+                              lastEvaluation: "2026-01-02T13:36:56.874Z"
+                              name: Watchdog
+                              query: vector(1)
+                              state: firing
+                              type: alerting
+                    status: success
+        default:
+          description: Error retrieving rules.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /alerts:
+    get:
+      tags:
+        - alerts
+      summary: Get active alerts
+      operationId: alerts
+      responses:
+        "200":
+          description: Active alerts retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertsOutputBody'
+              examples:
+                activeAlerts:
+                  summary: Currently active alerts
+                  value:
+                    data:
+                      alerts:
+                        - activeAt: "2026-01-02T13:30:00.000Z"
+                          annotations:
+                            description: This is an alert meant to ensure that the entire alerting pipeline is functional. This alert is always firing, therefore it should always be firing in Alertmanager and always fire against a receiver. There are integrations with various notification mechanisms that send a notification when this alert is not firing. For example the "DeadMansSnitch" integration in PagerDuty.
+                            summary: Ensure entire alerting pipeline is functional
+                          labels:
+                            alertname: Watchdog
+                            severity: warning
+                          state: firing
+                          value: "1e+00"
+                    status: success
+        default:
+          description: Error retrieving alerts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /alertmanagers:
+    get:
+      tags:
+        - alerts
+      summary: Get Alertmanager discovery
+      operationId: alertmanagers
+      responses:
+        "200":
+          description: Alertmanager targets retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertmanagersOutputBody'
+              examples:
+                alertmanagerDiscovery:
+                  summary: Alertmanager discovery results
+                  value:
+                    data:
+                      activeAlertmanagers:
+                        - url: http://demo.prometheus.io:9093/api/v2/alerts
+                      droppedAlertmanagers: []
+                    status: success
+        default:
+          description: Error retrieving Alertmanager targets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /status/config:
+    get:
+      tags:
+        - status
+      summary: Get status config
+      operationId: get-status-config
+      responses:
+        "200":
+          description: Configuration retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusConfigOutputBody'
+              examples:
+                configYAML:
+                  summary: Prometheus configuration
+                  value:
+                    data:
+                      yaml: |
+                        global:
+                          scrape_interval: 15s
+                          scrape_timeout: 10s
+                          evaluation_interval: 15s
+                          external_labels:
+                            environment: demo-prometheus-io
+                        alerting:
+                          alertmanagers:
+                          - scheme: http
+                            static_configs:
+                            - targets:
+                              - demo.prometheus.io:9093
+                        rule_files:
+                        - /etc/prometheus/rules/*.yml
+                    status: success
+        default:
+          description: Error retrieving configuration.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /status/runtimeinfo:
+    get:
+      tags:
+        - status
+      summary: Get status runtimeinfo
+      operationId: get-status-runtimeinfo
+      responses:
+        "200":
+          description: Runtime information retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusRuntimeInfoOutputBody'
+              examples:
+                runtimeInfo:
+                  summary: Runtime information
+                  value:
+                    data:
+                      CWD: /
+                      GODEBUG: ""
+                      GOGC: "75"
+                      GOMAXPROCS: 2
+                      GOMEMLIMIT: 3703818240
+                      corruptionCount: 0
+                      goroutineCount: 88
+                      hostname: demo-prometheus-io
+                      lastConfigTime: "2026-01-01T13:37:00.000Z"
+                      reloadConfigSuccess: true
+                      serverTime: "2026-01-02T13:37:00.000Z"
+                      startTime: "2026-01-01T13:37:00.000Z"
+                      storageRetention: 31d
+                    status: success
+        default:
+          description: Error retrieving runtime information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /status/buildinfo:
+    get:
+      tags:
+        - status
+      summary: Get status buildinfo
+      operationId: get-status-buildinfo
+      responses:
+        "200":
+          description: Build information retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusBuildInfoOutputBody'
+              examples:
+                buildInfo:
+                  summary: Build information
+                  value:
+                    data:
+                      branch: HEAD
+                      buildDate: 20251030-07:26:10
+                      buildUser: root@08c890a84441
+                      goVersion: go1.25.3
+                      revision: 0a41f0000705c69ab8e0f9a723fc73e39ed62b07
+                      version: 3.7.3
+                    status: success
+        default:
+          description: Error retrieving build information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /status/flags:
+    get:
+      tags:
+        - status
+      summary: Get status flags
+      operationId: get-status-flags
+      responses:
+        "200":
+          description: Command-line flags retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusFlagsOutputBody'
+              examples:
+                flags:
+                  summary: Command-line flags
+                  value:
+                    data:
+                      agent: "false"
+                      alertmanager.notification-queue-capacity: "10000"
+                      config.file: /etc/prometheus/prometheus.yml
+                      enable-feature: exemplar-storage,native-histograms
+                      query.max-concurrency: "20"
+                      query.timeout: 2m
+                      storage.tsdb.path: /prometheus
+                      storage.tsdb.retention.time: 15d
+                      web.console.libraries: /usr/share/prometheus/console_libraries
+                      web.console.templates: /usr/share/prometheus/consoles
+                      web.enable-admin-api: "true"
+                      web.enable-lifecycle: "true"
+                      web.listen-address: 0.0.0.0:9090
+                      web.page-title: Prometheus Time Series Collection and Processing Server
+                    status: success
+        default:
+          description: Error retrieving flags.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /status/tsdb:
+    get:
+      tags:
+        - status
+      summary: Get TSDB status
+      operationId: status-tsdb
+      parameters:
+        - name: limit
+          in: query
+          description: The maximum number of items to return per category.
+          required: false
+          explode: false
+          schema:
+            type: integer
+            format: int64
+          examples:
+            default:
+              value: 10
+      responses:
+        "200":
+          description: TSDB status retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTSDBOutputBody'
+              examples:
+                tsdbStats:
+                  summary: TSDB statistics
+                  value:
+                    data:
+                      headStats:
+                        chunkCount: 37525
+                        maxTime: 1767436620000
+                        minTime: 1767362400712
+                        numLabelPairs: 2512
+                        numSeries: 9925
+                      labelValueCountByLabelName:
+                        - name: __name__
+                          value: 5
+                        - name: job
+                          value: 3
+                      memoryInBytesByLabelName:
+                        - name: __name__
+                          value: 1024
+                        - name: job
+                          value: 512
+                      seriesCountByLabelValuePair:
+                        - name: job=prometheus
+                          value: 100
+                        - name: instance=localhost:9090
+                          value: 100
+                      seriesCountByMetricName:
+                        - name: up
+                          value: 100
+                        - name: http_requests_total
+                          value: 500
+                    status: success
+        default:
+          description: Error retrieving TSDB status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /status/tsdb/blocks:
+    get:
+      tags:
+        - status
+      summary: Get TSDB blocks information
+      operationId: status-tsdb-blocks
+      responses:
+        "200":
+          description: TSDB blocks information retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTSDBBlocksOutputBody'
+              examples:
+                tsdbBlocks:
+                  summary: TSDB block information
+                  value:
+                    data:
+                      blocks:
+                        - compaction:
+                            level: 4
+                            sources:
+                              - 01KBCJ7TR8A4QAJ3AA1J651P5S
+                              - 01KBCS3J0E34567YPB8Y5W0E24
+                              - 01KBCZZ9KRTYGG3E7HVQFGC3S3
+                          maxTime: 1764763200000
+                          minTime: 1764568801099
+                          stats:
+                            numChunks: 1073962
+                            numSamples: 129505582
+                            numSeries: 10661
+                          ulid: 01KC4D6GXQA4CRHYKV78NEBVAE
+                          version: 1
+                    status: success
+        default:
+          description: Error retrieving TSDB blocks.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /status/walreplay:
+    get:
+      tags:
+        - status
+      summary: Get status walreplay
+      operationId: get-status-walreplay
+      responses:
+        "200":
+          description: WAL replay status retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusWALReplayOutputBody'
+              examples:
+                walReplay:
+                  summary: WAL replay status
+                  value:
+                    data:
+                      current: 3214
+                      max: 3214
+                      min: 3209
+                    status: success
+        default:
+          description: Error retrieving WAL replay status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /admin/tsdb/delete_series:
+    put:
+      tags:
+        - admin
+      summary: Delete series matching selectors via PUT
+      description: Deletes data for a selection of series in a time range using PUT method.
+      operationId: deleteSeriesPut
+      parameters:
+        - name: match[]
+          in: query
+          description: Series selectors to identify series to delete.
+          required: true
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+          examples:
+            default:
+              value:
+                - '{__name__=~"test.*"}'
+        - name: start
+          in: query
+          description: Start timestamp for deletion.
+          required: false
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T12:37:00.000Z"
+        - name: end
+          in: query
+          description: End timestamp for deletion.
+          required: false
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T13:37:00.000Z"
+      responses:
+        "200":
+          description: Series deleted successfully via PUT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteSeriesOutputBody'
+              examples:
+                deletionSuccess:
+                  summary: Successful series deletion
+                  value:
+                    status: success
+        default:
+          description: Error deleting series via PUT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+    post:
+      tags:
+        - admin
+      summary: Delete series matching selectors
+      description: Deletes data for a selection of series in a time range.
+      operationId: deleteSeriesPost
+      parameters:
+        - name: match[]
+          in: query
+          description: Series selectors to identify series to delete.
+          required: true
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+          examples:
+            default:
+              value:
+                - '{__name__=~"test.*"}'
+        - name: start
+          in: query
+          description: Start timestamp for deletion.
+          required: false
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T12:37:00.000Z"
+        - name: end
+          in: query
+          description: End timestamp for deletion.
+          required: false
+          explode: false
+          schema:
+            oneOf:
+              - type: string
+                format: date-time
+                description: RFC3339 timestamp.
+              - type: number
+                format: unixtime
+                description: Unix timestamp in seconds.
+            description: Timestamp in RFC3339 format or Unix timestamp in seconds.
+          examples:
+            default:
+              value: "2026-01-02T13:37:00.000Z"
+      responses:
+        "200":
+          description: Series deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteSeriesOutputBody'
+              examples:
+                deletionSuccess:
+                  summary: Successful series deletion
+                  value:
+                    status: success
+        default:
+          description: Error deleting series.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /admin/tsdb/clean_tombstones:
+    put:
+      tags:
+        - admin
+      summary: Clean tombstones in the TSDB via PUT
+      description: Removes deleted data from disk and cleans up existing tombstones using PUT method.
+      operationId: cleanTombstonesPut
+      responses:
+        "200":
+          description: Tombstones cleaned successfully via PUT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanTombstonesOutputBody'
+              examples:
+                tombstonesCleaned:
+                  summary: Tombstones cleaned successfully
+                  value:
+                    status: success
+        default:
+          description: Error cleaning tombstones via PUT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+    post:
+      tags:
+        - admin
+      summary: Clean tombstones in the TSDB
+      description: Removes deleted data from disk and cleans up existing tombstones.
+      operationId: cleanTombstonesPost
+      responses:
+        "200":
+          description: Tombstones cleaned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanTombstonesOutputBody'
+              examples:
+                tombstonesCleaned:
+                  summary: Tombstones cleaned successfully
+                  value:
+                    status: success
+        default:
+          description: Error cleaning tombstones.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /admin/tsdb/snapshot:
+    put:
+      tags:
+        - admin
+      summary: Create a snapshot of the TSDB via PUT
+      description: Creates a snapshot of all current data using PUT method.
+      operationId: snapshotPut
+      parameters:
+        - name: skip_head
+          in: query
+          description: If true, do not snapshot data in the head block.
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: "false"
+      responses:
+        "200":
+          description: Snapshot created successfully via PUT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotOutputBody'
+              examples:
+                snapshotCreated:
+                  summary: Snapshot created successfully
+                  value:
+                    data:
+                      name: 20260102T133700Z-a1b2c3d4e5f67890
+                    status: success
+        default:
+          description: Error creating snapshot via PUT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+    post:
+      tags:
+        - admin
+      summary: Create a snapshot of the TSDB
+      description: Creates a snapshot of all current data.
+      operationId: snapshotPost
+      parameters:
+        - name: skip_head
+          in: query
+          description: If true, do not snapshot data in the head block.
+          required: false
+          explode: false
+          schema:
+            type: string
+          examples:
+            default:
+              value: "false"
+      responses:
+        "200":
+          description: Snapshot created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotOutputBody'
+              examples:
+                snapshotCreated:
+                  summary: Snapshot created successfully
+                  value:
+                    data:
+                      name: 20260102T133700Z-a1b2c3d4e5f67890
+                    status: success
+        default:
+          description: Error creating snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /read:
+    post:
+      tags:
+        - remote
+      summary: Remote read endpoint
+      description: Prometheus remote read endpoint for federated queries. Accepts and returns Protocol Buffer encoded data.
+      operationId: remoteRead
+      responses:
+        "204":
+          description: No Content
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /write:
+    post:
+      tags:
+        - remote
+      summary: Remote write endpoint
+      description: Prometheus remote write endpoint for sending metrics. Accepts Protocol Buffer encoded write requests.
+      operationId: remoteWrite
+      responses:
+        "204":
+          description: No Content
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /otlp/v1/metrics:
+    post:
+      tags:
+        - otlp
+      summary: OTLP metrics write endpoint
+      description: OpenTelemetry Protocol metrics ingestion endpoint. Accepts OTLP/HTTP metrics in Protocol Buffer format.
+      operationId: otlpWrite
+      responses:
+        "204":
+          description: No Content
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /notifications:
+    get:
+      tags:
+        - notifications
+      summary: Get notifications
+      operationId: get-notifications
+      responses:
+        "200":
+          description: Notifications retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationsOutputBody'
+              examples:
+                notifications:
+                  summary: Server notifications
+                  value:
+                    data:
+                      - active: true
+                        date: "2026-01-02T16:14:50.046Z"
+                        text: Configuration reload has failed.
+                    status: success
+        default:
+          description: Error retrieving notifications.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+  /features:
+    get:
+      tags:
+        - features
+      summary: Get features
+      operationId: get-features
+      responses:
+        "200":
+          description: Feature flags retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeaturesOutputBody'
+              examples:
+                enabledFeatures:
+                  summary: Enabled feature flags
+                  value:
+                    data:
+                      - exemplar-storage
+                      - remote-write-receiver
+                    status: success
+        default:
+          description: Error retrieving features.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tsdbNotReady:
+                  summary: TSDB not ready
+                  value:
+                    error: TSDB not ready
+                    errorType: internal
+                    status: error
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        errorType:
+          type: string
+          description: Type of error that occurred.
+          example: bad_data
+        error:
+          type: string
+          description: Human-readable error message.
+          example: invalid parameter
+      required:
+        - status
+        - errorType
+        - error
+      additionalProperties: false
+      description: Error response.
+    Labels:
+      type: object
+      additionalProperties: true
+      description: Label set represented as a key-value map.
+    QueryOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/QueryData'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for instant query.
+    QueryRangeOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/QueryData'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for range query.
+    QueryPostInputBody:
+      type: object
+      properties:
+        query:
+          type: string
+          description: 'Form field: The PromQL query to execute.'
+          example: up
+        time:
+          type: string
+          description: 'Form field: The evaluation timestamp (optional, defaults to current time).'
+          example: "2023-07-21T20:10:51.781Z"
+        limit:
+          type: integer
+          format: int64
+          description: 'Form field: The maximum number of metrics to return.'
+          example: 100
+        timeout:
+          type: string
+          description: 'Form field: Evaluation timeout (optional, defaults to and is capped by the value of the -query.timeout flag).'
+          example: 30s
+        lookback_delta:
+          type: string
+          description: 'Form field: Override the lookback period for this query (optional).'
+          example: 5m
+        stats:
+          type: string
+          description: 'Form field: When provided, include query statistics in the response (the special value ''all'' enables more comprehensive statistics).'
+          example: all
+      required:
+        - query
+      additionalProperties: false
+      description: POST request body for instant query.
+    QueryRangePostInputBody:
+      type: object
+      properties:
+        query:
+          type: string
+          description: 'Form field: The query to execute.'
+          example: rate(http_requests_total[5m])
+        start:
+          type: string
+          description: 'Form field: The start time of the query.'
+          example: "2023-07-21T20:10:30.781Z"
+        end:
+          type: string
+          description: 'Form field: The end time of the query.'
+          example: "2023-07-21T20:20:30.781Z"
+        step:
+          type: string
+          description: 'Form field: The step size of the query.'
+          example: 15s
+        limit:
+          type: integer
+          format: int64
+          description: 'Form field: The maximum number of metrics to return.'
+          example: 100
+        timeout:
+          type: string
+          description: 'Form field: Evaluation timeout (optional, defaults to and is capped by the value of the -query.timeout flag).'
+          example: 30s
+        lookback_delta:
+          type: string
+          description: 'Form field: Override the lookback period for this query (optional).'
+          example: 5m
+        stats:
+          type: string
+          description: 'Form field: When provided, include query statistics in the response (the special value ''all'' enables more comprehensive statistics).'
+          example: all
+      required:
+        - query
+        - start
+        - end
+        - step
+      additionalProperties: false
+      description: POST request body for range query.
+    QueryExemplarsOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          description: Response data (structure varies by endpoint).
+          example:
+            result: ok
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Generic response body.
+    QueryExemplarsPostInputBody:
+      type: object
+      properties:
+        query:
+          type: string
+          description: 'Form field: The query to execute.'
+          example: http_requests_total
+        start:
+          type: string
+          description: 'Form field: The start time of the query.'
+          example: "2023-07-21T20:00:00.000Z"
+        end:
+          type: string
+          description: 'Form field: The end time of the query.'
+          example: "2023-07-21T21:00:00.000Z"
+      required:
+        - query
+      additionalProperties: false
+      description: POST request body for exemplars query.
+    FormatQueryOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          type: string
+          description: Formatted query string.
+          example: sum by(status) (rate(http_requests_total[5m]))
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for format query endpoint.
+    FormatQueryPostInputBody:
+      type: object
+      properties:
+        query:
+          type: string
+          description: 'Form field: The query to format.'
+          example: sum(rate(http_requests_total[5m])) by (status)
+      required:
+        - query
+      additionalProperties: false
+      description: POST request body for format query.
+    ParseQueryOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          description: Response data (structure varies by endpoint).
+          example:
+            result: ok
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Generic response body.
+    ParseQueryPostInputBody:
+      type: object
+      properties:
+        query:
+          type: string
+          description: 'Form field: The query to parse.'
+          example: sum(rate(http_requests_total[5m]))
+      required:
+        - query
+      additionalProperties: false
+      description: POST request body for parse query.
+    QueryData:
+      anyOf:
+        - type: object
+          properties:
+            resultType:
+              type: string
+              enum:
+                - vector
+            result:
+              type: array
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/FloatSample'
+                  - $ref: '#/components/schemas/HistogramSample'
+              description: Array of samples (either float or histogram).
+          required:
+            - resultType
+            - result
+          additionalProperties: false
+        - type: object
+          properties:
+            resultType:
+              type: string
+              enum:
+                - matrix
+            result:
+              type: array
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/FloatSeries'
+                  - $ref: '#/components/schemas/HistogramSeries'
+              description: Array of time series (either float or histogram).
+          required:
+            - resultType
+            - result
+          additionalProperties: false
+        - type: object
+          properties:
+            resultType:
+              type: string
+              enum:
+                - scalar
+            result:
+              type: array
+              items:
+                oneOf:
+                  - type: number
+                  - type: string
+              maxItems: 2
+              minItems: 2
+              description: Scalar value as [timestamp, stringValue].
+          required:
+            - resultType
+            - result
+          additionalProperties: false
+        - type: object
+          properties:
+            resultType:
+              type: string
+              enum:
+                - string
+            result:
+              type: array
+              items:
+                type: string
+              maxItems: 2
+              minItems: 2
+              description: String value as [timestamp, stringValue].
+          required:
+            - resultType
+            - result
+          additionalProperties: false
+      description: Query result data. The structure of 'result' depends on 'resultType'.
+      example:
+        result:
+          - metric:
+              __name__: up
+              job: prometheus
+            value:
+              - 1627845600
+              - "1"
+        resultType: vector
+    FloatSample:
+      type: object
+      properties:
+        metric:
+          $ref: '#/components/schemas/Labels'
+        value:
+          type: array
+          items:
+            oneOf:
+              - type: number
+              - type: string
+          maxItems: 2
+          minItems: 2
+          description: Timestamp and float value as [unixTimestamp, stringValue].
+          example:
+            - 1767436620
+            - "1"
+      required:
+        - metric
+        - value
+      additionalProperties: false
+      description: A sample with a float value.
+    HistogramSample:
+      type: object
+      properties:
+        metric:
+          $ref: '#/components/schemas/Labels'
+        histogram:
+          type: array
+          items:
+            oneOf:
+              - type: number
+              - $ref: '#/components/schemas/HistogramValue'
+          maxItems: 2
+          minItems: 2
+          description: Timestamp and histogram value as [unixTimestamp, histogramObject].
+          example:
+            - 1767436620
+            - buckets: []
+              count: "60"
+              sum: "120"
+      required:
+        - metric
+        - histogram
+      additionalProperties: false
+      description: A sample with a native histogram value.
+    FloatSeries:
+      type: object
+      properties:
+        metric:
+          $ref: '#/components/schemas/Labels'
+        values:
+          type: array
+          items:
+            type: array
+            items:
+              oneOf:
+                - type: number
+                - type: string
+            maxItems: 2
+            minItems: 2
+          description: Array of [timestamp, stringValue] pairs for float values.
+      required:
+        - metric
+        - values
+      additionalProperties: false
+      description: A time series with float values.
+    HistogramSeries:
+      type: object
+      properties:
+        metric:
+          $ref: '#/components/schemas/Labels'
+        histograms:
+          type: array
+          items:
+            type: array
+            items:
+              oneOf:
+                - type: number
+                - $ref: '#/components/schemas/HistogramValue'
+            maxItems: 2
+            minItems: 2
+          description: Array of [timestamp, histogramObject] pairs for histogram values.
+      required:
+        - metric
+        - histograms
+      additionalProperties: false
+      description: A time series with native histogram values.
+    HistogramValue:
+      type: object
+      properties:
+        count:
+          type: string
+          description: Total count of observations.
+        sum:
+          type: string
+          description: Sum of all observed values.
+        buckets:
+          type: array
+          items:
+            type: array
+            items:
+              oneOf:
+                - type: number
+                - type: string
+          description: Histogram buckets as [boundary_rule, lower, upper, count].
+      required:
+        - count
+        - sum
+      additionalProperties: false
+      description: Native histogram value representation.
+    LabelsOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          type: array
+          items:
+            type: string
+          example:
+            - __name__
+            - job
+            - instance
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body with an array of strings.
+    LabelsPostInputBody:
+      type: object
+      properties:
+        start:
+          type: string
+          description: 'Form field: The start time of the query.'
+          example: "2023-07-21T20:00:00.000Z"
+        end:
+          type: string
+          description: 'Form field: The end time of the query.'
+          example: "2023-07-21T21:00:00.000Z"
+        match[]:
+          type: array
+          items:
+            type: string
+          description: 'Form field: Series selector argument that selects the series from which to read the label names.'
+          example:
+            - '{job="prometheus"}'
+        limit:
+          type: integer
+          format: int64
+          description: 'Form field: The maximum number of label names to return.'
+          example: 100
+      additionalProperties: false
+      description: POST request body for labels query.
+    LabelValuesOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          type: array
+          items:
+            type: string
+          example:
+            - __name__
+            - job
+            - instance
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body with an array of strings.
+    SeriesOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Labels'
+          example:
+            - __name__: up
+              instance: localhost:9090
+              job: prometheus
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body with an array of label sets.
+    SeriesPostInputBody:
+      type: object
+      properties:
+        start:
+          type: string
+          description: 'Form field: The start time of the query.'
+          example: "2023-07-21T20:00:00.000Z"
+        end:
+          type: string
+          description: 'Form field: The end time of the query.'
+          example: "2023-07-21T21:00:00.000Z"
+        match[]:
+          type: array
+          items:
+            type: string
+          description: 'Form field: Series selector argument that selects the series to return.'
+          example:
+            - '{job="prometheus"}'
+        limit:
+          type: integer
+          format: int64
+          description: 'Form field: The maximum number of series to return.'
+          example: 100
+      required:
+        - match[]
+      additionalProperties: false
+      description: POST request body for series query.
+    SeriesDeleteOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          description: Response data (structure varies by endpoint).
+          example:
+            result: ok
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Generic response body.
+    Metadata:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Metric type (counter, gauge, histogram, summary, or untyped).
+        unit:
+          type: string
+          description: Unit of the metric.
+        help:
+          type: string
+          description: Help text describing the metric.
+      required:
+        - type
+        - unit
+        - help
+      additionalProperties: false
+      description: Metric metadata.
+    MetadataOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/Metadata'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for metadata endpoint.
+    MetricMetadata:
+      type: object
+      properties:
+        target:
+          $ref: '#/components/schemas/Labels'
+        metric:
+          type: string
+          description: Metric name.
+        type:
+          type: string
+          description: Metric type (counter, gauge, histogram, summary, or untyped).
+        help:
+          type: string
+          description: Help text describing the metric.
+        unit:
+          type: string
+          description: Unit of the metric.
+      required:
+        - target
+        - type
+        - help
+        - unit
+      additionalProperties: false
+      description: Target metric metadata.
+    Target:
+      type: object
+      properties:
+        discoveredLabels:
+          $ref: '#/components/schemas/Labels'
+        labels:
+          $ref: '#/components/schemas/Labels'
+        scrapePool:
+          type: string
+          description: Name of the scrape pool.
+        scrapeUrl:
+          type: string
+          description: URL of the target.
+        globalUrl:
+          type: string
+          description: Global URL of the target.
+        lastError:
+          type: string
+          description: Last error message from scraping.
+        lastScrape:
+          type: string
+          format: date-time
+          description: Timestamp of the last scrape.
+        lastScrapeDuration:
+          type: number
+          format: double
+          description: Duration of the last scrape in seconds.
+        health:
+          type: string
+          description: Health status of the target (up, down, or unknown).
+        scrapeInterval:
+          type: string
+          description: Scrape interval for this target.
+        scrapeTimeout:
+          type: string
+          description: Scrape timeout for this target.
+      required:
+        - discoveredLabels
+        - labels
+        - scrapePool
+        - scrapeUrl
+        - globalUrl
+        - lastError
+        - lastScrape
+        - lastScrapeDuration
+        - health
+        - scrapeInterval
+        - scrapeTimeout
+      additionalProperties: false
+      description: Scrape target information.
+    DroppedTarget:
+      type: object
+      properties:
+        discoveredLabels:
+          $ref: '#/components/schemas/Labels'
+        scrapePool:
+          type: string
+          description: Name of the scrape pool.
+      required:
+        - discoveredLabels
+        - scrapePool
+      additionalProperties: false
+      description: Dropped target information.
+    TargetDiscovery:
+      type: object
+      properties:
+        activeTargets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Target'
+        droppedTargets:
+          type: array
+          items:
+            $ref: '#/components/schemas/DroppedTarget'
+        droppedTargetCounts:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+      required:
+        - activeTargets
+        - droppedTargets
+        - droppedTargetCounts
+      additionalProperties: false
+      description: Target discovery information including active and dropped targets.
+    TargetsOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/TargetDiscovery'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for targets endpoint.
+    TargetMetadataOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricMetadata'
+          example:
+            - help: The current health status of the target
+              metric: up
+              target:
+                instance: localhost:9090
+                job: prometheus
+              type: gauge
+              unit: ""
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body with an array of metric metadata.
+    ScrapePoolsDiscovery:
+      type: object
+      properties:
+        scrapePools:
+          type: array
+          items:
+            type: string
+      required:
+        - scrapePools
+      additionalProperties: false
+      description: List of all configured scrape pools.
+    ScrapePoolsOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/ScrapePoolsDiscovery'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for scrape pools endpoint.
+    Config:
+      type: object
+      properties:
+        source_labels:
+          type: array
+          items:
+            type: string
+          description: Source labels for relabeling.
+        separator:
+          type: string
+          description: Separator for source label values.
+        regex:
+          type: string
+          description: Regular expression for matching.
+        modulus:
+          type: integer
+          format: int64
+          description: Modulus for hash-based relabeling.
+        target_label:
+          type: string
+          description: Target label name.
+        replacement:
+          type: string
+          description: Replacement value.
+        action:
+          type: string
+          description: Relabel action.
+      additionalProperties: false
+      description: Relabel configuration.
+    RelabelStep:
+      type: object
+      properties:
+        rule:
+          $ref: '#/components/schemas/Config'
+        output:
+          $ref: '#/components/schemas/Labels'
+        keep:
+          type: boolean
+      required:
+        - rule
+        - output
+        - keep
+      additionalProperties: false
+      description: Relabel step showing the rule, output, and whether the target was kept.
+    RelabelStepsResponse:
+      type: object
+      properties:
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelabelStep'
+      required:
+        - steps
+      additionalProperties: false
+      description: Relabeling steps response.
+    TargetRelabelStepsOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/RelabelStepsResponse'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for target relabel steps endpoint.
+    RuleGroup:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the rule group.
+        file:
+          type: string
+          description: File containing the rule group.
+        rules:
+          type: array
+          items:
+            type: object
+            description: Rule definition.
+          description: Rules in this group.
+        interval:
+          type: number
+          format: double
+          description: Evaluation interval in seconds.
+        limit:
+          type: integer
+          format: int64
+          description: Maximum number of alerts for this group.
+        evaluationTime:
+          type: number
+          format: double
+          description: Time taken to evaluate the group in seconds.
+        lastEvaluation:
+          type: string
+          format: date-time
+          description: Timestamp of the last evaluation.
+      required:
+        - name
+        - file
+        - rules
+        - interval
+        - limit
+        - evaluationTime
+        - lastEvaluation
+      additionalProperties: false
+      description: Rule group information.
+    RuleDiscovery:
+      type: object
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleGroup'
+        groupNextToken:
+          type: string
+          description: Pagination token for the next page of groups.
+      required:
+        - groups
+      additionalProperties: false
+      description: Rule discovery information containing all rule groups.
+    RulesOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/RuleDiscovery'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for rules endpoint.
+    Alert:
+      type: object
+      properties:
+        labels:
+          $ref: '#/components/schemas/Labels'
+        annotations:
+          $ref: '#/components/schemas/Labels'
+        state:
+          type: string
+          description: State of the alert (pending, firing, or inactive).
+        value:
+          type: string
+          description: Value of the alert expression.
+        activeAt:
+          type: string
+          format: date-time
+          description: Timestamp when the alert became active.
+        keepFiringSince:
+          type: string
+          format: date-time
+          description: Timestamp since the alert has been kept firing.
+      required:
+        - labels
+        - annotations
+        - state
+        - value
+      additionalProperties: false
+      description: Alert information.
+    AlertDiscovery:
+      type: object
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+      required:
+        - alerts
+      additionalProperties: false
+      description: Alert discovery information containing all active alerts.
+    AlertsOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/AlertDiscovery'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for alerts endpoint.
+    AlertmanagerTarget:
+      type: object
+      properties:
+        url:
+          type: string
+          description: URL of the Alertmanager instance.
+      required:
+        - url
+      additionalProperties: false
+      description: Alertmanager target information.
+    AlertmanagerDiscovery:
+      type: object
+      properties:
+        activeAlertmanagers:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertmanagerTarget'
+        droppedAlertmanagers:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertmanagerTarget'
+      required:
+        - activeAlertmanagers
+        - droppedAlertmanagers
+      additionalProperties: false
+      description: Alertmanager discovery information including active and dropped instances.
+    AlertmanagersOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/AlertmanagerDiscovery'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for alertmanagers endpoint.
+    StatusConfigData:
+      type: object
+      properties:
+        yaml:
+          type: string
+          description: Prometheus configuration in YAML format.
+      required:
+        - yaml
+      additionalProperties: false
+      description: Prometheus configuration.
+    StatusConfigOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/StatusConfigData'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for status config endpoint.
+    RuntimeInfo:
+      type: object
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        CWD:
+          type: string
+        hostname:
+          type: string
+        serverTime:
+          type: string
+          format: date-time
+        reloadConfigSuccess:
+          type: boolean
+        lastConfigTime:
+          type: string
+          format: date-time
+        corruptionCount:
+          type: integer
+          format: int64
+        goroutineCount:
+          type: integer
+          format: int64
+        GOMAXPROCS:
+          type: integer
+          format: int64
+        GOMEMLIMIT:
+          type: integer
+          format: int64
+        GOGC:
+          type: string
+        GODEBUG:
+          type: string
+        storageRetention:
+          type: string
+      required:
+        - startTime
+        - CWD
+        - hostname
+        - serverTime
+        - reloadConfigSuccess
+        - lastConfigTime
+        - corruptionCount
+        - goroutineCount
+        - GOMAXPROCS
+        - GOMEMLIMIT
+        - GOGC
+        - GODEBUG
+        - storageRetention
+      additionalProperties: false
+      description: Prometheus runtime information.
+    StatusRuntimeInfoOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/RuntimeInfo'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for status runtime info endpoint.
+    PrometheusVersion:
+      type: object
+      properties:
+        version:
+          type: string
+        revision:
+          type: string
+        branch:
+          type: string
+        buildUser:
+          type: string
+        buildDate:
+          type: string
+        goVersion:
+          type: string
+      required:
+        - version
+        - revision
+        - branch
+        - buildUser
+        - buildDate
+        - goVersion
+      additionalProperties: false
+      description: Prometheus version information.
+    StatusBuildInfoOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/PrometheusVersion'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for status build info endpoint.
+    StatusFlagsOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          type: object
+          additionalProperties:
+            type: string
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for status flags endpoint.
+    HeadStats:
+      type: object
+      properties:
+        numSeries:
+          type: integer
+          format: int64
+        numLabelPairs:
+          type: integer
+          format: int64
+        chunkCount:
+          type: integer
+          format: int64
+        minTime:
+          type: integer
+          format: int64
+        maxTime:
+          type: integer
+          format: int64
+      required:
+        - numSeries
+        - numLabelPairs
+        - chunkCount
+        - minTime
+        - maxTime
+      additionalProperties: false
+      description: TSDB head statistics.
+    TSDBStat:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: integer
+          format: int64
+      required:
+        - name
+        - value
+      additionalProperties: false
+      description: TSDB statistic.
+    TSDBStatus:
+      type: object
+      properties:
+        headStats:
+          $ref: '#/components/schemas/HeadStats'
+        seriesCountByMetricName:
+          type: array
+          items:
+            $ref: '#/components/schemas/TSDBStat'
+        labelValueCountByLabelName:
+          type: array
+          items:
+            $ref: '#/components/schemas/TSDBStat'
+        memoryInBytesByLabelName:
+          type: array
+          items:
+            $ref: '#/components/schemas/TSDBStat'
+        seriesCountByLabelValuePair:
+          type: array
+          items:
+            $ref: '#/components/schemas/TSDBStat'
+      required:
+        - headStats
+        - seriesCountByMetricName
+        - labelValueCountByLabelName
+        - memoryInBytesByLabelName
+        - seriesCountByLabelValuePair
+      additionalProperties: false
+      description: TSDB status information.
+    StatusTSDBOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/TSDBStatus'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for status TSDB endpoint.
+    BlockDesc:
+      type: object
+      properties:
+        ulid:
+          type: string
+        minTime:
+          type: integer
+          format: int64
+        maxTime:
+          type: integer
+          format: int64
+      required:
+        - ulid
+        - minTime
+        - maxTime
+      additionalProperties: false
+      description: Block descriptor.
+    BlockStats:
+      type: object
+      properties:
+        numSamples:
+          type: integer
+          format: int64
+        numSeries:
+          type: integer
+          format: int64
+        numChunks:
+          type: integer
+          format: int64
+        numTombstones:
+          type: integer
+          format: int64
+        numFloatSamples:
+          type: integer
+          format: int64
+        numHistogramSamples:
+          type: integer
+          format: int64
+      additionalProperties: false
+      description: Block statistics.
+    BlockMetaCompaction:
+      type: object
+      properties:
+        level:
+          type: integer
+          format: int64
+        sources:
+          type: array
+          items:
+            type: string
+        parents:
+          type: array
+          items:
+            $ref: '#/components/schemas/BlockDesc'
+        failed:
+          type: boolean
+        deletable:
+          type: boolean
+        hints:
+          type: array
+          items:
+            type: string
+      required:
+        - level
+      additionalProperties: false
+      description: Block compaction metadata.
+    BlockMeta:
+      type: object
+      properties:
+        ulid:
+          type: string
+        minTime:
+          type: integer
+          format: int64
+        maxTime:
+          type: integer
+          format: int64
+        stats:
+          $ref: '#/components/schemas/BlockStats'
+        compaction:
+          $ref: '#/components/schemas/BlockMetaCompaction'
+        version:
+          type: integer
+          format: int64
+      required:
+        - ulid
+        - minTime
+        - maxTime
+        - compaction
+        - version
+      additionalProperties: false
+      description: Block metadata.
+    StatusTSDBBlocksData:
+      type: object
+      properties:
+        blocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/BlockMeta'
+      required:
+        - blocks
+      additionalProperties: false
+      description: TSDB blocks information.
+    StatusTSDBBlocksOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/StatusTSDBBlocksData'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for status TSDB blocks endpoint.
+    StatusWALReplayData:
+      type: object
+      properties:
+        min:
+          type: integer
+          format: int64
+        max:
+          type: integer
+          format: int64
+        current:
+          type: integer
+          format: int64
+      required:
+        - min
+        - max
+        - current
+      additionalProperties: false
+      description: WAL replay status.
+    StatusWALReplayOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/StatusWALReplayData'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for status WAL replay endpoint.
+    DeleteSeriesOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+      additionalProperties: false
+      description: Response body containing only status.
+    CleanTombstonesOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+      additionalProperties: false
+      description: Response body containing only status.
+    DataStruct:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+      additionalProperties: false
+      description: Generic data structure with a name field.
+    SnapshotOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          $ref: '#/components/schemas/DataStruct'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body for snapshot endpoint.
+    Notification:
+      type: object
+      properties:
+        text:
+          type: string
+        date:
+          type: string
+          format: date-time
+        active:
+          type: boolean
+      required:
+        - text
+        - date
+        - active
+      additionalProperties: false
+      description: Server notification.
+    NotificationsOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+          example:
+            - active: true
+              date: "2023-07-21T20:00:00.000Z"
+              text: Server is running
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Response body with an array of notifications.
+    FeaturesOutputBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+            - error
+          description: Response status.
+          example: success
+        data:
+          description: Response data (structure varies by endpoint).
+          example:
+            result: ok
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Only set if there were warnings while executing the request. There will still be data in the data field.
+        infos:
+          type: array
+          items:
+            type: string
+          description: Only set if there were info-level annotations while executing the request.
+      required:
+        - status
+        - data
+      additionalProperties: false
+      description: Generic response body.
+tags:
+  - name: query
+    description: Query and evaluate PromQL expressions.
+  - name: metadata
+    description: Retrieve metric metadata and information.
+  - name: labels
+    description: Query label names and values.
+  - name: series
+    description: Query and manage time series.
+  - name: targets
+    description: Retrieve target and scrape pool information.
+  - name: rules
+    description: Query recording and alerting rules.
+  - name: alerts
+    description: Query active alerts and alertmanager discovery.
+  - name: status
+    description: Retrieve server status and configuration.
+  - name: admin
+    description: Administrative operations for TSDB management.
+  - name: features
+    description: Query enabled features.
+  - name: remote
+    description: Remote read and write endpoints.
+  - name: otlp
+    description: OpenTelemetry Protocol metrics ingestion.
+  - name: notifications
+    description: Server notifications and events.
