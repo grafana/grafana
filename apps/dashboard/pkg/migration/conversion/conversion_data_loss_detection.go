@@ -232,18 +232,12 @@ func countVariablesV0V1(spec map[string]interface{}) int {
 
 // collectStatsV0V1 collects statistics from v0alpha1 or v1beta1 dashboard
 func collectStatsV0V1(spec map[string]interface{}) dashboardStats {
-	dashboardJSON, ok := spec["dashboard"].(map[string]interface{})
-	if !ok {
-		// If no "dashboard" key, treat the entire object as the dashboard
-		dashboardJSON = spec
-	}
-
 	return dashboardStats{
-		panelCount:      countPanelsV0V1(dashboardJSON),
-		queryCount:      countQueriesV0V1(dashboardJSON),
-		annotationCount: countAnnotationsV0V1(dashboardJSON),
-		linkCount:       countLinksV0V1(dashboardJSON),
-		variableCount:   countVariablesV0V1(dashboardJSON),
+		panelCount:      countPanelsV0V1(spec),
+		queryCount:      countQueriesV0V1(spec),
+		annotationCount: countAnnotationsV0V1(spec),
+		linkCount:       countLinksV0V1(spec),
+		variableCount:   countVariablesV0V1(spec),
 	}
 }
 
