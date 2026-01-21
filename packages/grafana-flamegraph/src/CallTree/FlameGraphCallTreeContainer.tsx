@@ -78,13 +78,16 @@ const FlameGraphCallTreeContainer = memo(
       (nodeIdOrLabel: string | undefined, isLabel = false, itemIndexes?: number[]) => {
         if (nodeIdOrLabel === undefined) {
           setFocusedNodeId(undefined);
+          // Sync with flame graph's focus mode
           setFocusedItemIndexes?.(undefined);
         } else if (isLabel) {
           // When switching from callers mode, we need to find the node by label in the normal tree
           setFocusedNodeId(`label:${nodeIdOrLabel}`);
+          // Sync with flame graph's focus mode
           setFocusedItemIndexes?.(itemIndexes);
         } else {
           setFocusedNodeId(nodeIdOrLabel);
+          // Sync with flame graph's focus mode
           setFocusedItemIndexes?.(itemIndexes);
         }
 
