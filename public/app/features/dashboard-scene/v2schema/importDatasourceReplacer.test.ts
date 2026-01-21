@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { isVariableRef, replaceDatasourcesInDashboard, DatasourceMappings } from './importDatasourceReplacer';

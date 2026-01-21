@@ -30,7 +30,6 @@ export function ImportDashboardOverviewV2() {
   async function onSubmit(form: FormData) {
     reportInteraction(IMPORT_FINISHED_EVENT_NAME);
 
-    // Build datasource mappings from form
     const mappings: DatasourceMappings = {};
     for (const key of Object.keys(form)) {
       if (key.startsWith('datasource-')) {
