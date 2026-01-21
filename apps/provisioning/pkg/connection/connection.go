@@ -34,8 +34,7 @@ type Connection interface {
 }
 
 // TokenGenerator is an optional interface that connections can implement if they need
-// to generate connection-level tokens (e.g., GitHub App JWT tokens).
-// Connections that don't need connection-level tokens (e.g., GitLab, Bitbucket) don't need to implement this.
+// to generate connection-level tokens.
 type TokenGenerator interface {
 	// GenerateConnectionToken generates a connection-level token.
 	// Returns the generated token value.
