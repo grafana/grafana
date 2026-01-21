@@ -364,10 +364,44 @@ class ResourceClientsCache {
   }
 }
 
-export function processSeries(series: Array<{ [key: string]: string }>, findValuesForKey?: string) {
+export function processSeries(
+  series: Array<{ [key: string]: string }>,
+  findValuesForKey?: string,
+  hasLabelsMatchAPISupport = true,
+  matchSelector = ''
+) {
   const metrics: Set<string> = new Set();
   const labelKeys: Set<string> = new Set();
   const labelValues: Set<string> = new Set();
+
+  if (!hasLabelsMatchAPISupport) {
+    // The datasource doesn't have match[] parameter support.
+    // Manual filtering is required to avoid returning duplicate metrics.
+    // Extract label keys and values from match[] selector for filtering
+    const {
+      query: { labels },
+    } = buildVisualQueryFromString(matchSelector);
+    // Filter series based on extracted label keys and values
+    series.forEach((item) => {
+      const matchSelectorExists = labels.every((lbl) => {
+        return item[lbl.label] === lbl.value;
+      });
+      if (matchSelectorExists && findValuesForKey && item[findValuesForKey]) {
+        metrics.add(item.__name__);
+        labelKeys.add(findValuesForKey);
+        labelValues.add(item[findValuesForKey]);
+      }
+    });
+
+    return {
+      metrics: Array.from(metrics).sort(),
+      labelKeys: Array.from(labelKeys).sort(),
+      labelValues: Array.from(labelValues).sort(),
+    };
+  }
+
+  // The datasource has match[] parameter support.
+  // So the returned data is likely filtered already based on the match[] parameter
 
   // Extract metrics and label keys
   series.forEach((item) => {

@@ -821,6 +821,32 @@ describe('processSeries', () => {
     const result = processSeries(series, 'non_existent_label');
     expect(result.labelValues).toEqual([]);
   });
+
+  it("should return a filtered result for a datasource that doesn't have match api support", () => {
+    const series = [
+      {
+        __name__: 'up',
+        instance: 'node_exporter:9101',
+        job: 'node_exporter',
+      },
+      {
+        __name__: 'up',
+        instance: 'fake-prometheus-data:9091',
+        job: 'fake-data-gen',
+      },
+    ];
+    const hasMatchApiSupport = false;
+    const matchSelector = `{instance="fake-prometheus-data:9091",__name__="up"}`;
+    const findValuesForKey = 'job';
+    const expectedResult = {
+      metrics: [],
+      labelKeys: [],
+      labelValues: ['fake-data-gen'],
+    };
+
+    const result = processSeries(series, findValuesForKey, hasMatchApiSupport, matchSelector);
+    expect(result.labelValues).toEqual(expectedResult.labelValues);
+  });
 });
 
 describe('BaseResourceClient', () => {
