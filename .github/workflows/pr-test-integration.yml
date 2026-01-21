@@ -251,6 +251,7 @@ jobs:
           POSTGRES_USER: grafanatest
           POSTGRES_PASSWORD: grafanatest
           POSTGRES_DB: grafanatest
+        options: -c 'max_connections=200'
         ports:
           - 5432:5432
     steps:
