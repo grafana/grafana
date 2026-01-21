@@ -47,7 +47,8 @@ This document provides solutions to common issues you may encounter when configu
 This guide focuses on issues related to connecting Grafana to Tempo and using the data source features. For issues with Tempo itself, refer to the Tempo product documentation:
 
 - [Troubleshoot Tempo](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/) - General Tempo troubleshooting, including ingestion failures and server-side errors.
-- [Unable to find traces](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/querying/unable-to-see-trace/) - Traces missing due to ingestion, sampling, or retention issues.(https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/querying/too-many-requests-error/) - Query capacity limits and 429 errors.
+- [Unable to find traces](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/querying/unable-to-see-trace/) - Traces missing due to ingestion, sampling, or retention issues.
+- [Too many requests error](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/querying/too-many-requests-error/) - Query capacity limits and 429 errors.
 - [Query issues](https://grafana.com/docs/tempo/<TEMPO_VERSION>/troubleshooting/querying/) - Server-side query failures, bad blocks, and performance tuning.
 
 ## Connection errors
@@ -346,6 +347,72 @@ The following issues don't produce specific error messages but are commonly enco
 1. Modify the provisioning YAML file to change data source settings.
 1. For Grafana Cloud, clone the provisioned data source to create an editable copy.
 1. Refer to [Configure the Tempo data source](ref:configure-tempo-data-source) for provisioning instructions.
+
+## Private data source connect issues (_Grafana Cloud only_)
+
+These issues relate to connecting to a private Tempo instance using Private data source connect (PDC). PDC is only available in Grafana Cloud.
+
+{{< admonition type="note" >}}
+Private data source connect allows Grafana Cloud to securely connect to data sources in your private network without exposing them to the public internet. For setup instructions, refer to [Private data source connect](ref:private-data-source-connect).
+{{< /admonition >}}
+
+### PDC agent not connected
+
+**Error message:** "No healthy PDC agents available" or "Private data source connect agent not connected"
+
+**Cause:** The PDC agent installed in your private network isn't running or can't connect to Grafana Cloud.
+
+**Solution:**
+
+1. Verify the PDC agent is running in your private network.
+1. Check the PDC agent logs for connection errors.
+1. Ensure the PDC agent has outbound network access to Grafana Cloud endpoints.
+1. Verify the PDC agent is using the correct token for your Grafana Cloud instance.
+1. Check that firewall rules allow outbound HTTPS (port 443) connections from the PDC agent.
+1. Restart the PDC agent if it appears stuck or unresponsive.
+
+For more information, refer to [Private data source connect](ref:private-data-source-connect).
+
+### Connection through PDC failing
+
+**Error message:** "Failed to connect through private data source" or "Connection refused via PDC"
+
+**Cause:** The PDC agent is connected to Grafana Cloud but cannot reach the Tempo instance in your private network.
+
+**Solution:**
+
+1. Verify the Tempo URL is correct and accessible from the machine running the PDC agent.
+1. Check that the PDC agent can resolve the Tempo hostname (DNS resolution).
+1. Ensure there are no firewall rules blocking connections from the PDC agent to Tempo.
+1. Verify the Tempo port (default `3200`) is open and accessible.
+1. Test connectivity from the PDC agent host to Tempo using `curl` or `telnet`.
+
+### PDC timeout errors
+
+**Error message:** "Request timed out via private data source connect"
+
+**Cause:** Queries through the PDC tunnel are timing out.
+
+**Solution:**
+
+1. Check network latency between the PDC agent and Tempo.
+1. Verify the PDC agent host has sufficient resources (CPU, memory, network bandwidth).
+1. Ensure no network devices between the PDC agent and Tempo are dropping long-running connections.
+1. For large queries, consider reducing the time range or adding more specific filters.
+1. Check if multiple data sources are sharing the same PDC agent, which may cause resource contention.
+
+### PDC authentication mismatch
+
+**Error message:** "Unauthorized" or "403 Forbidden" when using PDC
+
+**Cause:** The authentication configured in the data source doesn't work with the PDC connection.
+
+**Solution:**
+
+1. Verify that authentication credentials are configured correctly in the Grafana Cloud data source settings.
+1. Check that the Tempo instance accepts the authentication method configured.
+1. Ensure any required headers (such as `X-Scope-OrgID` for multi-tenant Tempo) are properly forwarded through PDC.
+1. Test the connection directly from the PDC agent host to verify credentials work outside of PDC.
 
 ## Get additional help
 
