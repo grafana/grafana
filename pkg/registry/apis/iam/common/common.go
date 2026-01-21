@@ -70,6 +70,7 @@ func List[T metav1.Object](
 	check := func(_, _ string) bool { return true }
 	if ac != nil {
 		var err error
+		//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 		check, _, err = ac.Compile(ctx, ident, authlib.ListRequest{
 			Resource:  resource.GroupResource().Resource,
 			Group:     resource.GroupResource().Group,
