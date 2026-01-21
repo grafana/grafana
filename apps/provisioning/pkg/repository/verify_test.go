@@ -242,18 +242,18 @@ func TestExistingRepositoriesValidator_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &verifyTestStorage{repositories: tt.existingRepos}
 			lister := NewLister(store)
-			validator := NewExistingRepositoriesValidator(lister)
-			fieldErr := validator.Validate(context.Background(), tt.cfg)
+			validateFn := NewExistingRepositoriesValidator(lister)
+			err := validateFn(context.Background(), tt.cfg)
 
 			if tt.wantErr {
-				require.NotNil(t, fieldErr)
+				require.Error(t, err)
 				if tt.wantErrContains != "" {
-					assert.Contains(t, fieldErr.Detail, tt.wantErrContains)
+					assert.Contains(t, err.Error(), tt.wantErrContains)
 				}
 				return
 			}
 
-			assert.Nil(t, fieldErr)
+			assert.NoError(t, err)
 		})
 	}
 }

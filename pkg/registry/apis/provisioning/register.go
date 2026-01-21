@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -101,8 +100,8 @@ type APIBuilder struct {
 	tracer                 tracing.Tracer
 	repoStore              grafanarest.Storage
 	repoLister             *repository.Lister
-	existingReposValidator repository.ExistingRepositoriesValidator // actual validator, set in UpdateAPIGroupInfo
-	repoAdmissionValidator *repository.AdmissionValidator           // uses lazy wrapper, set in NewAPIBuilder
+	existingReposValidator repository.AdditionalValidatorFunc // actual validator, set in UpdateAPIGroupInfo
+	repoAdmissionValidator *repository.AdmissionValidator     // uses lazy wrapper, set in NewAPIBuilder
 	connectionStore        grafanarest.Storage
 	parsers                resources.ParserFactory
 	repositoryResources    resources.RepositoryResourcesFactory
@@ -213,9 +212,16 @@ func NewAPIBuilder(
 
 	// Repository mutator and validator
 	admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(repoFactory))
-	// Store admission validator so RepositoryTester can use the same additional validators.
-	// The AdmissionValidator includes ExistingRepositoriesValidator to check for conflicts with other repositories.
-	b.repoAdmissionValidator = repository.NewAdmissionValidator(&repoValidator, &lazyExistingRepositoriesValidator{builder: b})
+	// Store admission validator so test endpoint can use the same validation logic.
+	// The AdmissionValidator includes existing repositories validator to check for conflicts.
+	// We use a lazy wrapper because the actual validator isn't created until UpdateAPIGroupInfo.
+	lazyValidator := func(ctx context.Context, cfg *provisioning.Repository) error {
+		if b.existingReposValidator == nil {
+			return nil
+		}
+		return b.existingReposValidator(ctx, cfg)
+	}
+	b.repoAdmissionValidator = repository.NewAdmissionValidator(&repoValidator, lazyValidator)
 	admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), b.repoAdmissionValidator)
 
 	// Connection mutator and validator
@@ -722,19 +728,6 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	}
 
 	return b.admissionHandler.Validate(ctx, a, o)
-}
-
-// lazyExistingRepositoriesValidator implements repository.ExistingRepositoriesValidator
-// and delegates to the builder's validator once it's initialized.
-type lazyExistingRepositoriesValidator struct {
-	builder *APIBuilder
-}
-
-func (v *lazyExistingRepositoriesValidator) Validate(ctx context.Context, cfg *provisioning.Repository) *field.Error {
-	if v.builder.existingReposValidator == nil {
-		return nil
-	}
-	return v.builder.existingReposValidator.Validate(ctx, cfg)
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {

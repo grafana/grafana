@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -15,6 +16,21 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
+
+// ValidationError wraps a field.ErrorList to implement the error interface.
+// Use this when returning multiple validation errors from an AdditionalValidatorFunc.
+type ValidationError struct {
+	ErrorList field.ErrorList
+}
+
+func (e *ValidationError) Error() string {
+	return e.ErrorList.ToAggregate().Error()
+}
+
+// NewValidationError creates a ValidationError from a field.ErrorList.
+func NewValidationError(list field.ErrorList) *ValidationError {
+	return &ValidationError{ErrorList: list}
+}
 
 // Validator is the interface for repository validation.
 // It validates repository configuration without requiring external service calls.
@@ -169,16 +185,16 @@ func FromFieldError(err *field.Error) *provisioning.TestResults {
 // For runtime validation that requires secrets or external service checks, use the
 // Test() method on the Repository interface instead.
 //
-// AdmissionValidator wraps a Validator and adds additional validators
-// (e.g., ExistingRepositoriesValidator) that compare against other repositories.
+// AdmissionValidator wraps a Validator and adds additional validator functions
+// (e.g., NewExistingRepositoriesValidator) that compare against other repositories.
 type AdmissionValidator struct {
 	validator            Validator
-	additionalValidators []ExistingRepositoriesValidator
+	additionalValidators []AdditionalValidatorFunc
 }
 
 // NewAdmissionValidator creates a new repository admission validator.
-// additionalValidators are called after basic validation passes (e.g., ExistingRepositoriesValidator).
-func NewAdmissionValidator(validator Validator, additionalValidators ...ExistingRepositoriesValidator) *AdmissionValidator {
+// additionalValidators are called after basic validation passes (e.g., NewExistingRepositoriesValidator).
+func NewAdmissionValidator(validator Validator, additionalValidators ...AdditionalValidatorFunc) *AdmissionValidator {
 	return &AdmissionValidator{
 		validator:            validator,
 		additionalValidators: additionalValidators,
@@ -246,12 +262,22 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	}
 
 	// Run additional validators (e.g., existing repositories check)
-	for _, validator := range v.additionalValidators {
-		if validator == nil {
+	for _, validatorFn := range v.additionalValidators {
+		if validatorFn == nil {
 			continue
 		}
-		if err := validator.Validate(ctx, r); err != nil {
-			return invalidRepositoryError(a.GetName(), field.ErrorList{err})
+		if err := validatorFn(ctx, r); err != nil {
+			// Cast to ValidationError, *field.Error, or wrap as internal error
+			var validationErr *ValidationError
+			if errors.As(err, &validationErr) {
+				return invalidRepositoryError(a.GetName(), validationErr.ErrorList)
+			}
+			if fieldErr, ok := err.(*field.Error); ok {
+				return invalidRepositoryError(a.GetName(), field.ErrorList{fieldErr})
+			}
+			return invalidRepositoryError(a.GetName(), field.ErrorList{
+				field.InternalError(field.NewPath(""), err),
+			})
 		}
 	}
 

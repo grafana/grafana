@@ -476,25 +476,18 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	assert.Equal(t, "old-secret", newRepo.Secure.WebhookSecret.Name)
 }
 
-// mockExistingReposValidator is a test helper for ExistingRepositoriesValidator
-type mockExistingReposValidator struct {
-	called bool
-	err    *field.Error
-}
-
-func (m *mockExistingReposValidator) Validate(ctx context.Context, cfg *provisioning.Repository) *field.Error {
-	m.called = true
-	return m.err
-}
-
-func TestAdmissionValidator_CallsVerifyAgainstExisting(t *testing.T) {
+func TestAdmissionValidator_CallsAdditionalValidators(t *testing.T) {
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	mockValidator := &mockExistingReposValidator{}
+	called := false
+	mockValidatorFn := func(ctx context.Context, cfg *provisioning.Repository) error {
+		called = true
+		return nil
+	}
 
 	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, false, mockFactory)
-	admissionValidator := NewAdmissionValidator(&validator, mockValidator)
+	admissionValidator := NewAdmissionValidator(&validator, mockValidatorFn)
 
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
@@ -509,19 +502,19 @@ func TestAdmissionValidator_CallsVerifyAgainstExisting(t *testing.T) {
 
 	err := admissionValidator.Validate(context.Background(), attr, nil)
 	require.NoError(t, err)
-	assert.True(t, mockValidator.called, "verify function should have been called")
+	assert.True(t, called, "validator function should have been called")
 }
 
-func TestAdmissionValidator_VerifyAgainstExistingError(t *testing.T) {
+func TestAdmissionValidator_AdditionalValidatorError(t *testing.T) {
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	mockValidator := &mockExistingReposValidator{
-		err: field.Forbidden(field.NewPath("spec"), "duplicate repository"),
+	mockValidatorFn := func(ctx context.Context, cfg *provisioning.Repository) error {
+		return field.Forbidden(field.NewPath("spec"), "duplicate repository")
 	}
 
 	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, false, mockFactory)
-	admissionValidator := NewAdmissionValidator(&validator, mockValidator)
+	admissionValidator := NewAdmissionValidator(&validator, mockValidatorFn)
 
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
