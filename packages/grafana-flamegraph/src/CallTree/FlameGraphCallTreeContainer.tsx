@@ -322,7 +322,7 @@ const FlameGraphCallTreeContainer = memo(
       [currentSearchMatchId]
     );
 
-    const calculatedExpanded = useMemo(() => {
+    const expandedState = useMemo(() => {
       const baseExpanded = getInitialExpandedState(nodes, 1);
 
       const expandPathToNode = (nodes: CallTreeNode[], targetId: string): boolean => {
@@ -380,46 +380,34 @@ const FlameGraphCallTreeContainer = memo(
     const BASELINE_WIDTH = 100;
     const COMPARISON_WIDTH = 100;
     const DIFF_WIDTH = 100;
-    // Threshold high enough to ensure function names are readable in non-compact mode
-    const FUNCTION_COMPACT_THRESHOLD = 550;
     const FUNCTION_MIN_WIDTH = 100;
+    // Minimum width for the function column to be readable in non-compact mode
+    const FUNCTION_COMPACT_THRESHOLD = 550;
 
-    const minNonCompactWidth = useMemo(() => {
-      let fixedColumnsWidth: number;
-      if (data.isDiffFlamegraph()) {
-        fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH;
-      } else {
-        fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + SELF_WIDTH + TOTAL_WIDTH;
+    const getFixedColumnsWidth = (isDiff: boolean, compactMode: boolean): number => {
+      if (compactMode) {
+        // Compact mode hides color bar and self column
+        return isDiff ? ACTIONS_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH : ACTIONS_WIDTH + TOTAL_WIDTH;
       }
-      return fixedColumnsWidth + FUNCTION_COMPACT_THRESHOLD;
-    }, [data, ACTIONS_WIDTH]);
+      return isDiff
+        ? ACTIONS_WIDTH + COLOR_BAR_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH
+        : ACTIONS_WIDTH + COLOR_BAR_WIDTH + SELF_WIDTH + TOTAL_WIDTH;
+    };
+
+    const isDiff = data.isDiffFlamegraph();
+
+    // Width threshold below which we switch to compact mode
+    const compactModeThreshold = getFixedColumnsWidth(isDiff, false) + FUNCTION_COMPACT_THRESHOLD;
 
     const compact = compactProp !== undefined ? compactProp : isCompact;
 
-    const calculateFunctionColumnWidth = useCallback(
-      (width: number, compactMode: boolean) => {
-        if (width <= 0) {
-          return undefined;
-        }
-
-        let fixedColumnsWidth: number;
-        if (compactMode) {
-          if (data.isDiffFlamegraph()) {
-            fixedColumnsWidth = ACTIONS_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH;
-          } else {
-            fixedColumnsWidth = ACTIONS_WIDTH + TOTAL_WIDTH;
-          }
-        } else {
-          if (data.isDiffFlamegraph()) {
-            fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + BASELINE_WIDTH + COMPARISON_WIDTH + DIFF_WIDTH;
-          } else {
-            fixedColumnsWidth = ACTIONS_WIDTH + COLOR_BAR_WIDTH + SELF_WIDTH + TOTAL_WIDTH;
-          }
-        }
-        return Math.max(width - fixedColumnsWidth, FUNCTION_MIN_WIDTH);
-      },
-      [data, ACTIONS_WIDTH]
-    );
+    const getFunctionColumnWidth = (availableWidth: number, compactMode: boolean): number | undefined => {
+      if (availableWidth <= 0) {
+        return undefined;
+      }
+      const fixedWidth = getFixedColumnsWidth(isDiff, compactMode);
+      return Math.max(availableWidth - fixedWidth, FUNCTION_MIN_WIDTH);
+    };
 
     const commonColumns: Array<Column<CallTreeNode>> = [
       {
@@ -623,7 +611,7 @@ const FlameGraphCallTreeContainer = memo(
         getSubRows: (row) => row.children || [],
         initialState: {
           sortBy: [{ id: 'total', desc: true }],
-          expanded: calculatedExpanded,
+          expanded: expandedState,
         },
         autoResetExpanded: true, // Reset to initialState when data changes
         autoResetSortBy: false,
@@ -721,13 +709,13 @@ const FlameGraphCallTreeContainer = memo(
 
             // Only update compact mode when crossing the threshold to avoid re-renders on every resize
             if (compactProp === undefined) {
-              const shouldBeCompact = availableWidth > 0 && availableWidth < minNonCompactWidth;
+              const shouldBeCompact = availableWidth > 0 && availableWidth < compactModeThreshold;
               if (shouldBeCompact !== isCompact) {
                 queueMicrotask(() => setIsCompact(shouldBeCompact));
               }
             }
 
-            const functionColumnWidth = calculateFunctionColumnWidth(availableWidth, compact);
+            const functionColumnWidth = getFunctionColumnWidth(availableWidth, compact);
 
             if (width < 3 || height < 3) {
               return null;

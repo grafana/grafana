@@ -1,4 +1,4 @@
-import {FlameGraphDataContainer, LevelItem} from '../FlameGraph/dataTransform';
+import { FlameGraphDataContainer, LevelItem } from '../FlameGraph/dataTransform';
 
 export interface CallTreeNode {
   id: string;
