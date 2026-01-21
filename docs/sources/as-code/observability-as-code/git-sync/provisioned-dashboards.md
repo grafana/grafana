@@ -14,6 +14,7 @@ weight: 350
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/provisioned-dashboards/
 aliases:
   - ../../../observability-as-code/provision-resources/provisioned-dashboards/ # /docs/grafana/next/observability-as-code/provision-resources/provisioned-dashboards/
+  - ../provision-resources/provisioned-dashboards/   
 ---
 
 # Work with provisioned dashboards

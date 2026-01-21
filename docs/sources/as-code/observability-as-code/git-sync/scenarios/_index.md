@@ -9,6 +9,8 @@ keywords:
   - scenarios
   - multi-environment
   - teams
+aliases:
+  - ../../provision-resources/scenarios/   
 ---
 
 # Git Sync deployment scenarios
