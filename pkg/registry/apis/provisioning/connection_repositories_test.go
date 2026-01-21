@@ -7,12 +7,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // mockConnectionGetter implements ConnectionGetter for testing
@@ -31,16 +35,16 @@ type mockConnection struct {
 	err   error
 }
 
-func (m *mockConnection) Validate(ctx context.Context) error {
-	return nil
-}
-
-func (m *mockConnection) Mutate(ctx context.Context) error {
-	return nil
+func (m *mockConnection) GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (*connection.ExpirableSecureValue, error) {
+	return nil, connection.ErrNotImplemented
 }
 
 func (m *mockConnection) ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error) {
 	return m.repos, m.err
+}
+
+func (m *mockConnection) Test(ctx context.Context) (*provisioning.TestResults, error) {
+	return nil, connection.ErrNotImplemented
 }
 
 func TestConnectionRepositoriesConnector(t *testing.T) {
@@ -181,4 +185,189 @@ func (m *mockResponder) Object(statusCode int, obj runtime.Object) {
 func (m *mockResponder) Error(err error) {
 	m.called = true
 	m.err = err
+}
+
+func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
+	t.Run("lists repositories from GitHub connection", func(t *testing.T) {
+		ctx := context.Background()
+		responder := &mockResponder{}
+
+		// Create a GitHub connection
+		connObj := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-github-connection",
+				Namespace: "default",
+			},
+			Spec: provisioning.ConnectionSpec{
+				Type: provisioning.GithubConnectionType,
+				GitHub: &provisioning.GitHubConnectionConfig{
+					AppID:          "123456",
+					InstallationID: "789012",
+				},
+			},
+			Secure: provisioning.ConnectionSecure{
+				Token: common.InlineSecureValue{
+					Create: common.NewSecretValue("test-token"),
+				},
+			},
+		}
+
+		// Setup GitHub mocks
+		mockFactory := github.NewMockGithubFactory(t)
+		mockClient := github.NewMockClient(t)
+
+		expectedRepos := []github.Repository{
+			{Name: "repo1", Owner: "owner1", URL: "https://github.com/owner1/repo1"},
+			{Name: "repo2", Owner: "owner2", URL: "https://github.com/owner2/repo2"},
+			{Name: "repo3", Owner: "owner3", URL: "https://github.com/owner3/repo3"},
+		}
+
+		mockFactory.EXPECT().
+			New(mock.Anything, common.RawSecureValue("test-token")).
+			Return(mockClient)
+		mockClient.EXPECT().
+			ListInstallationRepositories(mock.Anything, "789012").
+			Return(expectedRepos, nil)
+
+		// Create GitHub connection
+		ghConn := github.NewConnection(
+			connObj,
+			mockFactory,
+			github.ConnectionSecrets{
+				Token: common.RawSecureValue("test-token"),
+			},
+		)
+
+		// Setup connection getter
+		mockGetter := &mockConnectionGetter{
+			conn: &ghConn,
+			err:  nil,
+		}
+
+		connector := NewConnectionRepositoriesConnector(mockGetter)
+
+		// Test the endpoint
+		handler, err := connector.Connect(ctx, "test-github-connection", nil, responder)
+		require.NoError(t, err)
+		require.NotNil(t, handler)
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		// Verify response
+		require.True(t, responder.called)
+		require.Nil(t, responder.err)
+		require.Equal(t, http.StatusOK, responder.code)
+		require.NotNil(t, responder.obj)
+
+		repoList, ok := responder.obj.(*provisioning.ExternalRepositoryList)
+		require.True(t, ok)
+		require.Len(t, repoList.Items, 3)
+		require.Equal(t, "repo1", repoList.Items[0].Name)
+		require.Equal(t, "owner1", repoList.Items[0].Owner)
+		require.Equal(t, "https://github.com/owner1/repo1", repoList.Items[0].URL)
+		require.Equal(t, "repo2", repoList.Items[1].Name)
+		require.Equal(t, "owner2", repoList.Items[1].Owner)
+		require.Equal(t, "https://github.com/owner2/repo2", repoList.Items[1].URL)
+		require.Equal(t, "repo3", repoList.Items[2].Name)
+		require.Equal(t, "owner3", repoList.Items[2].Owner)
+		require.Equal(t, "https://github.com/owner3/repo3", repoList.Items[2].URL)
+	})
+
+	t.Run("returns error when GitHub API fails", func(t *testing.T) {
+		ctx := context.Background()
+		responder := &mockResponder{}
+
+		// Create a GitHub connection
+		connObj := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-github-connection",
+				Namespace: "default",
+			},
+			Spec: provisioning.ConnectionSpec{
+				Type: provisioning.GithubConnectionType,
+				GitHub: &provisioning.GitHubConnectionConfig{
+					AppID:          "123456",
+					InstallationID: "789012",
+				},
+			},
+			Secure: provisioning.ConnectionSecure{
+				Token: common.InlineSecureValue{
+					Create: common.NewSecretValue("test-token"),
+				},
+			},
+		}
+
+		// Setup GitHub mocks to return error
+		mockFactory := github.NewMockGithubFactory(t)
+		mockClient := github.NewMockClient(t)
+
+		mockFactory.EXPECT().
+			New(mock.Anything, common.RawSecureValue("test-token")).
+			Return(mockClient)
+		mockClient.EXPECT().
+			ListInstallationRepositories(mock.Anything, "789012").
+			Return(nil, errors.New("github API unavailable"))
+
+		// Create GitHub connection
+		ghConn := github.NewConnection(
+			connObj,
+			mockFactory,
+			github.ConnectionSecrets{
+				Token: common.RawSecureValue("test-token"),
+			},
+		)
+
+		// Setup connection getter
+		mockGetter := &mockConnectionGetter{
+			conn: &ghConn,
+			err:  nil,
+		}
+
+		connector := NewConnectionRepositoriesConnector(mockGetter)
+
+		// Test the endpoint
+		handler, err := connector.Connect(ctx, "test-github-connection", nil, responder)
+		require.NoError(t, err)
+		require.NotNil(t, handler)
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		// Verify error response
+		require.True(t, responder.called)
+		require.NotNil(t, responder.err)
+		require.True(t, apierrors.IsInternalError(responder.err))
+	})
+
+	t.Run("returns NotImplemented for GitLab connection", func(t *testing.T) {
+		ctx := context.Background()
+		responder := &mockResponder{}
+
+		// Create a mock connection that returns ErrNotImplemented
+		mockGetter := &mockConnectionGetter{
+			conn: &mockConnection{err: connection.ErrNotImplemented},
+			err:  nil,
+		}
+
+		connector := NewConnectionRepositoriesConnector(mockGetter)
+
+		handler, err := connector.Connect(ctx, "test-gitlab-connection", nil, responder)
+		require.NoError(t, err)
+		require.NotNil(t, handler)
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		// Verify NotImplemented response
+		require.True(t, responder.called)
+		require.NotNil(t, responder.err)
+		statusErr, ok := responder.err.(*apierrors.StatusError)
+		require.True(t, ok)
+		require.Equal(t, http.StatusNotImplemented, int(statusErr.ErrStatus.Code))
+		require.Equal(t, "NotImplemented", string(statusErr.ErrStatus.Reason))
+	})
 }

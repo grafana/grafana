@@ -2,15 +2,18 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 )
 
 type connectionRepositoriesConnector struct {
@@ -65,6 +68,18 @@ func (c *connectionRepositoriesConnector) Connect(ctx context.Context, name stri
 
 		repos, err := conn.ListRepositories(r.Context())
 		if err != nil {
+			if errors.Is(err, connection.ErrNotImplemented) {
+				logger.Debug("list repositories not implemented for connection type")
+				responder.Error(&apierrors.StatusError{
+					ErrStatus: metav1.Status{
+						Status:  metav1.StatusFailure,
+						Code:    http.StatusNotImplemented,
+						Reason:  "NotImplemented",
+						Message: "list repositories not implemented for given connection type",
+					},
+				})
+				return
+			}
 			logger.Error("failed to list repositories", "error", err)
 			responder.Error(apierrors.NewInternalError(err))
 			return
