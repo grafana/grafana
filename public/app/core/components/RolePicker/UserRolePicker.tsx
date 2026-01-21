@@ -56,9 +56,10 @@ export const UserRolePicker = ({
 }: Props) => {
   const hasPermission = contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) && userId > 0 && orgId;
 
-  // In non-apply mode, always fetch to ensure we have fresh data after mutations
-  // In apply mode, only skip fetch if we have pendingRoles
-  const shouldFetch = apply ? !Boolean(pendingRoles?.length) && hasPermission : hasPermission;
+  // Determine when to fetch:
+  // - In apply mode: only fetch if we don't have roles prop AND no pendingRoles (prevents flicker)
+  // - In non-apply mode: always fetch to get fresh data after mutations
+  const shouldFetch = apply ? !roles && !Boolean(pendingRoles?.length) && hasPermission : hasPermission;
 
   const { data: fetchedRoles, isLoading: isFetching } = useFetchUserRolesQuery(
     shouldFetch ? { userId, orgId } : skipToken
@@ -68,11 +69,11 @@ export const UserRolePicker = ({
 
   const appliedRoles =
     useMemo(() => {
-      if (apply && Boolean(pendingRoles?.length)) {
-        return pendingRoles;
+      // In apply mode: prioritize pendingRoles, then roles prop (never use fetched data to prevent flicker)
+      if (apply) {
+        return pendingRoles || roles || [];
       }
-      // Otherwise prefer fetched data (which is always fresh due to cache invalidation)
-      // Fall back to roles prop if fetched data is not available yet
+      // In non-apply mode: prefer fetched data (fresh from cache) over roles prop
       return fetchedRoles || roles || [];
     }, [roles, pendingRoles, fetchedRoles, apply]) || [];
 
