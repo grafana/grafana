@@ -91,16 +91,10 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       },
     },
 
-    '.dashboard-canvas-add-button': {
-      display: 'flex',
-      opacity: 0.5,
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create('opacity'),
-      },
-      filter: `grayscale(100%)`,
+    '.dashboard-canvas-controls': {
+      opacity: 0,
       '&:hover,:focus-within': {
         opacity: 1,
-        filter: 'unset',
       },
     },
 

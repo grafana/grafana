@@ -15,6 +15,7 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
+import { getLayoutControlsStyles } from './styles';
 import { useClipboardState } from './useClipboardState';
 import { ungroupLayout } from './utils';
 
@@ -23,7 +24,7 @@ export interface Props {
 }
 
 export function CanvasGridAddActions({ layoutManager }: Props) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getLayoutControlsStyles);
   const { hasCopiedPanel } = useClipboardState();
 
   const { disableGrouping, disableTabs } = useMemo(() => {
@@ -60,14 +61,14 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
 
   return (
     <div
-      className={cx(styles.addAction, 'dashboard-canvas-add-button')}
+      className={cx(styles.controls, 'dashboard-canvas-controls')}
       onPointerUp={(evt) => evt.stopPropagation()}
       onPointerDown={(evt) => evt.stopPropagation()}
     >
       <Button
-        variant="primary"
-        fill="text"
+        variant="secondary"
         icon="plus"
+        size="sm"
         data-testid={selectors.components.CanvasGridAddActions.addPanel}
         onClick={() => {
           layoutManager.addPanel(getDefaultVizPanel());
@@ -107,9 +108,9 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
         }
       >
         <Button
-          variant="primary"
-          fill="text"
+          variant="secondary"
           icon="layers"
+          size="sm"
           data-testid={selectors.components.CanvasGridAddActions.groupPanels}
           disabled={disableGrouping}
           tooltip={
@@ -125,9 +126,9 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
       {hasCopiedPanel && layoutManager.pastePanel && (
         <Button
           data-testid={selectors.components.CanvasGridAddActions.pastePanel}
-          variant="primary"
-          fill="text"
+          variant="secondary"
           icon="clipboard-alt"
+          size="sm"
           onClick={() => {
             layoutManager.pastePanel?.();
             DashboardInteractions.trackPastePanelClick();
@@ -175,9 +176,9 @@ function UngroupButtonTabs({ parentLayout, onClick }: UngroupButtonProps<TabsLay
 
   return (
     <Button
-      variant="primary"
-      fill="text"
+      variant="secondary"
       icon="layers-slash"
+      size="sm"
       onClick={onClick}
       data-testid={selectors.components.CanvasGridAddActions.ungroup}
     >
@@ -185,17 +186,3 @@ function UngroupButtonTabs({ parentLayout, onClick }: UngroupButtonProps<TabsLay
     </Button>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  addAction: css({
-    position: 'absolute',
-    padding: theme.spacing(1, 0),
-    height: theme.spacing(5),
-    bottom: 0,
-    left: 0,
-    opacity: 0,
-    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      transition: theme.transitions.create('opacity'),
-    },
-  }),
-});
