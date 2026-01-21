@@ -1,4 +1,4 @@
-name: Check Fronted Test Coverage
+name: Check Frontend Test Coverage
 
 on:
   pull_request:
@@ -276,7 +276,14 @@ jobs:
         if: steps.check-affected.outputs.affected == 'true'
         id: compare
         run: |
-          node scripts/compare-coverage-by-codeowner.js
+          # Run comparison and capture exit code
+          if node scripts/compare-coverage-by-codeowner.js; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          fi
+          
+          # Always capture the markdown output
           {
             echo "markdown<<EOF"
             cat ./coverage-comparison.md
@@ -307,6 +314,12 @@ jobs:
           header: coverage-report-${{ matrix.codeowner }}
           message: ${{ steps.compare.outputs.markdown }}
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+
+      - name: Fail if coverage decreased
+        if: steps.check-affected.outputs.affected == 'true' && steps.compare.outputs.passed == 'false'
+        run: |
+          echo "❌ Coverage check failed for ${{ matrix.codeowner }}"
+          exit 1
 
   all-coverage-checks-pass:
     name: All coverage checks pass
