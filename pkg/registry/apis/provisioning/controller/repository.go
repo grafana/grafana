@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -564,19 +563,32 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return fmt.Errorf("update health status: %w", err)
 	}
 
-	if rc.shouldGenerateTokenFromConnection(obj, healthStatus) {
-		logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
-
-		tokenOps, err := rc.generateRepositoryToken(ctx, obj)
+	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
+		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
 		if err != nil {
-			logger.Error("generating token for repository",
+			logger.Error("retrieving connection",
 				"connection", obj.Spec.Connection.Name,
 				"error", err,
 			)
 			return err
 		}
 
-		patchOperations = append(patchOperations, tokenOps...)
+		if rc.shouldGenerateTokenFromConnection(obj, healthStatus, c) {
+			logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
+
+			tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
+			if err != nil {
+				logger.Error("generating token for repository",
+					"connection", obj.Spec.Connection.Name,
+					"error", err,
+				)
+				return err
+			}
+
+			logger.Info("patch operations for token", "tokenOps", tokenOps)
+
+			patchOperations = append(patchOperations, tokenOps...)
+		}
 	}
 
 	// Add health patch operations first
@@ -637,27 +649,22 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	obj *provisioning.Repository,
 	healthStatus provisioning.HealthStatus,
+	c *provisioning.Connection,
 ) bool {
-	const (
-		tokenInvalidErrorMessage = "not authorized"
-	)
-
-	return obj.Spec.Connection != nil &&
-		obj.Spec.Connection.Name != "" &&
-		!healthStatus.Healthy &&
-		healthStatus.Error == provisioning.HealthFailureHealth &&
-		slices.Contains(healthStatus.Message, tokenInvalidErrorMessage)
+	// We should generate a token from the connection when
+	// - The repo is not healthy
+	// - The token is expired
+	// - The linked connection is healthy (which means it is able to generate valid tokens)
+	return !healthStatus.Healthy &&
+		time.UnixMilli(obj.Status.Token.Expiration).Before(time.Now()) &&
+		c.Status.Health.Healthy
 }
 
 func (rc *RepositoryController) generateRepositoryToken(
 	ctx context.Context,
 	obj *provisioning.Repository,
-) ([]map[string]interface{}, error) {
-	c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("unable to get connection: %w", err)
-	}
-
+	c *provisioning.Connection,
+) ([]map[string]any, error) {
 	conn, err := rc.connectionFactory.Build(ctx, c)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create connection from configuration: %w", err)
@@ -668,21 +675,45 @@ func (rc *RepositoryController) generateRepositoryToken(
 		return nil, fmt.Errorf("unable to create token for repository: %w", err)
 	}
 
-	return []map[string]any{
+	patchOperations := []map[string]any{
 		{
-			"op":   "add",
+			"op":   "replace",
 			"path": "/status/token",
 			"value": provisioning.TokenStatus{
 				LastUpdated: time.Now().UnixMilli(),
 				Expiration:  token.ExpiresAt.UnixMilli(),
 			},
 		},
-		{
+	}
+
+	switch {
+	case obj.Secure.IsZero():
+		patchOperations = append(patchOperations, map[string]any{
+			"op":   "add",
+			"path": "/secure",
+			"value": map[string]any{
+				"token": map[string]string{
+					"create": string(token.Token),
+				},
+			},
+		})
+	case obj.Secure.Token.IsZero():
+		patchOperations = append(patchOperations, map[string]any{
+			"op":   "add",
+			"path": "/secure/token",
+			"value": map[string]string{
+				"create": string(token.Token),
+			},
+		})
+	default:
+		patchOperations = append(patchOperations, map[string]any{
 			"op":   "replace",
 			"path": "/secure/token",
 			"value": map[string]string{
 				"create": string(token.Token),
 			},
-		},
-	}, nil
+		})
+	}
+
+	return patchOperations, nil
 }

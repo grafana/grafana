@@ -13,7 +13,7 @@ var (
 	ErrNotImplemented = errors.New("not implemented")
 )
 
-type RepositoryToken struct {
+type ExpirableSecureValue struct {
 	Token     common.RawSecureValue
 	ExpiresAt time.Time
 }
@@ -22,7 +22,7 @@ type RepositoryToken struct {
 type Connection interface {
 	// GenerateRepositoryToken generates a repository-scoped access token.
 	// The repo parameter specifies the repository name the token should be scoped to.
-	GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (*RepositoryToken, error)
+	GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (*ExpirableSecureValue, error)
 
 	// Test checks if the connection information actually works.
 	Test(ctx context.Context) (*provisioning.TestResults, error)

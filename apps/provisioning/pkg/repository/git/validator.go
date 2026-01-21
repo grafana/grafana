@@ -64,11 +64,41 @@ func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path st
 	}
 
 	// Readonly repositories may not need a token (if public)
+	isNewObject := repo.Generation == 0
 	if len(repo.Spec.Workflows) > 0 {
-		// Here, we only verify the token is provided in case the repo is not related to a connection.
-		hasConnection := repo.Spec.Connection != nil && repo.Spec.Connection.Name != ""
-		if !hasConnection && repo.Secure.Token.IsZero() {
-			list = append(list, field.Required(field.NewPath("secure", "token"), "a git access token is required"))
+		// For new objects, if a token is provided, then the connection should not be there
+		if !repo.Secure.Token.IsZero() {
+			if isNewObject &&
+				repo.Spec.Connection != nil &&
+				repo.Spec.Connection.Name != "" {
+				list = append(
+					list,
+					field.Invalid(
+						field.NewPath("spec", "connection", "name"),
+						repo.Spec.Connection.Name,
+						"cannot have both connection and token defined",
+					),
+					field.Invalid(
+						field.NewPath("secure", "token"),
+						"[REDACTED]",
+						"cannot have both connection and token defined",
+					),
+				)
+			}
+		} else {
+			if repo.Spec.Connection == nil || repo.Spec.Connection.Name == "" {
+				list = append(
+					list,
+					field.Required(
+						field.NewPath("spec", "connection"),
+						"either a token or a connection should be provided",
+					),
+					field.Required(
+						field.NewPath("secure", "token"),
+						"either a token or a connection should be provided",
+					),
+				)
+			}
 		}
 	}
 

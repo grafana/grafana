@@ -7,7 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func Mutate(_ context.Context, obj runtime.Object) error {
@@ -27,12 +26,6 @@ func Mutate(_ context.Context, obj runtime.Object) error {
 		url = strings.TrimSuffix(url, ".git")
 		url = strings.TrimRight(url, "/")
 		repo.Spec.GitHub.URL = url
-	}
-
-	// For new resources, we create a dummy Token which will be updated by the controller.
-	isNewResource := repo.Generation == 0
-	if isNewResource && repo.Spec.Connection != nil && repo.Spec.Connection.Name != "" {
-		repo.Secure.Token = common.InlineSecureValue{Create: common.RawSecureValue(repo.Spec.Connection.Name)}
 	}
 
 	return nil

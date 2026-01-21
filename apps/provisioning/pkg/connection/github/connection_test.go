@@ -419,7 +419,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 		connection    *provisioning.Connection
 		repo          *provisioning.Repository
 		setupMock     func(*github.MockGithubFactory)
-		expectedToken *connection.RepositoryToken
+		expectedToken *connection.ExpirableSecureValue
 		expectedError string
 	}{
 		{
@@ -457,7 +457,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 						ExpiresAt: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 					}, nil)
 			},
-			expectedToken: &connection.RepositoryToken{
+			expectedToken: &connection.ExpirableSecureValue{
 				Token:     common.RawSecureValue("ghs_repository_token_123"),
 				ExpiresAt: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 			},

@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func TestMutator(t *testing.T) {
@@ -116,42 +115,6 @@ func TestMutator(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL: "https://github.com/org/repo",
-					},
-				},
-			},
-		},
-		{
-			name: "should add token",
-			obj: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "repo4",
-					Namespace: "default",
-				},
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/org/repo",
-					},
-					Connection: &provisioning.ConnectionInfo{
-						Name: "someConnection",
-					},
-				},
-			},
-			expectedObj: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "repo4",
-					Namespace: "default",
-				},
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL: "https://github.com/org/repo",
-					},
-					Connection: &provisioning.ConnectionInfo{
-						Name: "someConnection",
-					},
-				},
-				Secure: provisioning.SecureValues{
-					Token: common.InlineSecureValue{
-						Create: common.RawSecureValue("someConnection"),
 					},
 				},
 			},

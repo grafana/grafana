@@ -154,7 +154,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 }
 
 // GenerateRepositoryToken generates a repository-scoped access token.
-func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (*connection.RepositoryToken, error) {
+func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (*connection.ExpirableSecureValue, error) {
 	if repo == nil {
 		return nil, errors.New("a repository is required to generate a token")
 	}
@@ -179,7 +179,7 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 		return nil, fmt.Errorf("failed to create installation access token: %w", err)
 	}
 
-	return &connection.RepositoryToken{
+	return &connection.ExpirableSecureValue{
 		Token:     common.RawSecureValue(installationToken.Token),
 		ExpiresAt: installationToken.ExpiresAt,
 	}, nil

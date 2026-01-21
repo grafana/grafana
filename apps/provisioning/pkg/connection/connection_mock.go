@@ -23,23 +23,23 @@ func (_m *MockConnection) EXPECT() *MockConnection_Expecter {
 }
 
 // GenerateRepositoryToken provides a mock function with given fields: ctx, repo
-func (_m *MockConnection) GenerateRepositoryToken(ctx context.Context, repo *v0alpha1.Repository) (*RepositoryToken, error) {
+func (_m *MockConnection) GenerateRepositoryToken(ctx context.Context, repo *v0alpha1.Repository) (*ExpirableSecureValue, error) {
 	ret := _m.Called(ctx, repo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GenerateRepositoryToken")
 	}
 
-	var r0 *RepositoryToken
+	var r0 *ExpirableSecureValue
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v0alpha1.Repository) (*RepositoryToken, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v0alpha1.Repository) (*ExpirableSecureValue, error)); ok {
 		return rf(ctx, repo)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *v0alpha1.Repository) *RepositoryToken); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v0alpha1.Repository) *ExpirableSecureValue); ok {
 		r0 = rf(ctx, repo)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*RepositoryToken)
+			r0 = ret.Get(0).(*ExpirableSecureValue)
 		}
 	}
 
@@ -71,12 +71,12 @@ func (_c *MockConnection_GenerateRepositoryToken_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockConnection_GenerateRepositoryToken_Call) Return(_a0 *RepositoryToken, _a1 error) *MockConnection_GenerateRepositoryToken_Call {
+func (_c *MockConnection_GenerateRepositoryToken_Call) Return(_a0 *ExpirableSecureValue, _a1 error) *MockConnection_GenerateRepositoryToken_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockConnection_GenerateRepositoryToken_Call) RunAndReturn(run func(context.Context, *v0alpha1.Repository) (*RepositoryToken, error)) *MockConnection_GenerateRepositoryToken_Call {
+func (_c *MockConnection_GenerateRepositoryToken_Call) RunAndReturn(run func(context.Context, *v0alpha1.Repository) (*ExpirableSecureValue, error)) *MockConnection_GenerateRepositoryToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

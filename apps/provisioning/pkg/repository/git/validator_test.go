@@ -130,7 +130,33 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			expectedError: true,
-			errorContains: []string{"token"},
+			errorContains: []string{"token", "connection"},
+		},
+		{
+			name: "workflow with both token and connection",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana.git",
+						Branch: "main",
+					},
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Connection: &provisioning.ConnectionInfo{
+						Name: "test-connection",
+					},
+				},
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
+			},
+			expectedError: true,
+			errorContains: []string{"cannot have both connection and token"},
 		},
 		{
 			name: "invalid path",
