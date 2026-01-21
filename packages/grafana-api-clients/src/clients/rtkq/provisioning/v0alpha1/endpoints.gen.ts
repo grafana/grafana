@@ -1858,6 +1858,10 @@ export type SyncStatus = {
      - `"working"` The job is running */
   state: 'error' | 'pending' | 'success' | 'warning' | 'working';
 };
+export type TokenStatus = {
+  expiration?: number;
+  lastUpdated?: number;
+};
 export type WebhookStatus = {
   id?: number;
   lastEvent?: number;
@@ -1875,6 +1879,8 @@ export type RepositoryStatus = {
   stats?: ResourceCount[];
   /** Sync information with the last sync information */
   sync: SyncStatus;
+  /** Token will get updated with current token information */
+  token?: TokenStatus;
   /** Webhook Information (if applicable) */
   webhook: WebhookStatus;
 };
