@@ -49,7 +49,7 @@ export interface DashboardHistorySrv {
   getHistoryList(
     dashboardUID: string,
     options: HistoryListOpts
-  ): Promise<RevisionsModel[] | { versions: RevisionsModel[]; continueToken?: string }>;
+  ): Promise<{ versions: RevisionsModel[]; continueToken?: string }>;
   getDashboardVersion(dashboardUID: string, version: number): Promise<RevisionsModel | Record<string, never>>;
   restoreDashboard(dashboardUID: string, version: number): Promise<unknown>;
 }
@@ -58,9 +58,12 @@ export interface DashboardHistorySrv {
  * Legacy implementation using /api/ endpoints
  */
 export class LegacyHistorySrv implements DashboardHistorySrv {
-  getHistoryList(dashboardUID: string, options: HistoryListOpts) {
+  getHistoryList(
+    dashboardUID: string,
+    options: HistoryListOpts
+  ): Promise<{ versions: RevisionsModel[]; continueToken?: string }> {
     if (typeof dashboardUID !== 'string') {
-      return Promise.resolve([]);
+      return Promise.resolve({ versions: [] });
     }
 
     return getBackendSrv().get(`api/dashboards/uid/${dashboardUID}/versions`, options);

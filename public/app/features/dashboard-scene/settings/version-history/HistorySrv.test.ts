@@ -59,15 +59,15 @@ describe('LegacyHistorySrv', () => {
       });
     });
 
-    it('should return an empty array when not given an id', () => {
-      return historySrv.getHistoryList(emptyDash.uid, historyListOpts).then((versions) => {
-        expect(versions).toEqual([]);
+    it('should return an empty versions array when not given an id', () => {
+      return historySrv.getHistoryList(emptyDash.uid, historyListOpts).then((result) => {
+        expect(result).toEqual({ versions: [] });
       });
     });
 
-    it('should return an empty array when not given a dashboard id', () => {
-      return historySrv.getHistoryList(null as unknown as string, historyListOpts).then((versions) => {
-        expect(versions).toEqual([]);
+    it('should return an empty versions array when not given a dashboard id', () => {
+      return historySrv.getHistoryList(null as unknown as string, historyListOpts).then((result) => {
+        expect(result).toEqual({ versions: [] });
       });
     });
   });
