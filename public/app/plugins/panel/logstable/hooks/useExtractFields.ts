@@ -23,7 +23,7 @@ interface Props {
 export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props) {
   const dataLinksContext = useDataLinksContext();
   const dataLinkPostProcessor = dataLinksContext.dataLinkPostProcessor;
-  const [extractedFrame, setExtractedFrame] = useState<DataFrame[] | null>(null);
+  const [extractedFrame, setExtractedFrame] = useState<DataFrame | null>(null);
   const theme = useTheme2();
 
   useEffect(() => {
@@ -45,9 +45,11 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
         timeZone,
         dataLinkPostProcessor,
       });
-      setExtractedFrame(extractedFrames);
+      setExtractedFrame(extractedFrames[0]);
     });
-  }, [dataLinkPostProcessor, fieldConfig, rawTableFrame, theme, timeZone]);
+    // @todo hook re-renders unexpectedly when data frame isn't changing if we add `rawTableFrame` as dependency
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataLinkPostProcessor, fieldConfig, rawTableFrame.fields[1].values, theme, timeZone]);
 
   return { extractedFrame };
 }

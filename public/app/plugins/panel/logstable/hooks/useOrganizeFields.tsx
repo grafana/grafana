@@ -11,14 +11,14 @@ import type { Options as LogsTableOptions } from '../panelcfg.gen';
 import { isBuildLinkToLogLine } from '../types';
 
 interface Props {
-  extractedFrame: DataFrame[] | null;
+  extractedFrame: DataFrame | null;
   timeFieldName: string;
   bodyFieldName: string;
   options: LogsTableOptions;
 }
 
 export function useOrganizeFields({ extractedFrame, timeFieldName, bodyFieldName, options }: Props) {
-  const [organizedFrame, setOrganizedFrame] = useState<DataFrame[] | null>(null);
+  const [organizedFrame, setOrganizedFrame] = useState<DataFrame | null>(null);
 
   /**
    * Organize fields transform
@@ -40,7 +40,7 @@ export function useOrganizeFields({ extractedFrame, timeFieldName, bodyFieldName
 }
 
 const organizeFields = async (
-  extractedFrame: DataFrame[],
+  extractedFrame: DataFrame,
   options: LogsTableOptions,
   timeFieldName: string,
   bodyFieldName: string
@@ -69,7 +69,7 @@ const organizeFields = async (
           },
         },
       ],
-      extractedFrame
+      [extractedFrame]
     )
   );
 
@@ -104,5 +104,5 @@ const organizeFields = async (
     }
   }
 
-  return organizedFrame;
+  return organizedFrame[0];
 };

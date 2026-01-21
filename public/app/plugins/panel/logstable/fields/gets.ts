@@ -5,9 +5,6 @@ import { DEFAULT_TIME_FIELD_WIDTH } from '../constants';
 
 export function getFieldWidth(width: number | undefined, field: Field, fieldIndex: number, timeFieldName?: string) {
   if (width !== undefined) {
-    if (fieldIndex === 0) {
-      return width + ROW_ACTION_BUTTON_WIDTH;
-    }
     return width;
   }
 

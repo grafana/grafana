@@ -29,7 +29,8 @@ export function TableNGWrap({
   replaceVariables,
   onChangeTimeRange,
 }: Props) {
-  const styles = useStyles2(getStyles, DEFAULT_SIDEBAR_WIDTH, height, width);
+  const sidebarWidth = options.fieldSelectorWidth ?? DEFAULT_SIDEBAR_WIDTH;
+  const styles = useStyles2(getStyles, sidebarWidth, height, width);
 
   // Callbacks
   const onTableOptionsChange = useCallback(
@@ -52,7 +53,7 @@ export function TableNGWrap({
     <div className={styles.tableWrapper}>
       <TablePanel
         data={data}
-        width={width - DEFAULT_SIDEBAR_WIDTH}
+        width={width - sidebarWidth}
         height={height}
         id={id}
         timeRange={timeRange}

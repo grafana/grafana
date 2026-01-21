@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import { FieldConfigSource, GrafanaTheme2, PanelProps } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme2, PanelData, PanelProps } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import {
   LOGS_DATAPLANE_BODY_NAME,
@@ -47,7 +47,8 @@ export const LogsTable = ({
   id,
   renderCounter,
 }: LogsTablePanelProps) => {
-  const styles = useStyles2(getStyles, DEFAULT_SIDEBAR_WIDTH, height, width);
+  const sidebarWidth = options.fieldSelectorWidth ?? DEFAULT_SIDEBAR_WIDTH;
+  const styles = useStyles2(getStyles, sidebarWidth, height, width);
 
   const rawTableFrame = data.series[frameIndex];
   const logsFrame: LogsFrame | null = useMemo(() => parseLogsFrame(rawTableFrame), [rawTableFrame]);
@@ -80,6 +81,13 @@ export const LogsTable = ({
     [handleLogsTableOptionsChange, options]
   );
 
+  const handleSetFieldSelectorWidth = useCallback(
+    (fieldSelectorWidth: number) => {
+      handleLogsTableOptionsChange({ ...options, fieldSelectorWidth });
+    },
+    [handleLogsTableOptionsChange, options]
+  );
+
   const handleTableOnFieldConfigChange = useCallback(
     (fieldConfig: FieldConfigSource) => {
       onFieldConfigChange(fieldConfig);
@@ -94,9 +102,9 @@ export const LogsTable = ({
   const { organizedFrame } = useOrganizeFields({ extractedFrame, timeFieldName, bodyFieldName, options });
 
   // Build panel data
-  const panelData = useMemo(() => {
+  const panelData: PanelData | null = useMemo(() => {
     if (organizedFrame) {
-      return { ...data, series: organizedFrame };
+      return { ...data, series: [organizedFrame] };
     }
 
     return null;
@@ -113,23 +121,26 @@ export const LogsTable = ({
     return;
   }
 
+  // @todo seeing 4 renders on time range change
   console.log('render::LogsTable', { extractedFrame, organizedFrame });
 
   return (
     <div className={styles.wrapper}>
       <LogsTableFields
+        width={options.fieldSelectorWidth}
         displayedFields={options.displayedFields}
         height={height}
         logsFrame={logsFrame}
         timeFieldName={timeFieldName}
         bodyFieldName={bodyFieldName}
-        dataFrames={extractedFrame}
+        dataFrame={extractedFrame}
         onDisplayedFieldsChange={handleSetDisplayedFields}
+        onWidthChange={handleSetFieldSelectorWidth}
       />
 
       <TableNGWrap
         data={panelData}
-        width={width - DEFAULT_SIDEBAR_WIDTH}
+        width={width}
         height={height}
         id={id}
         timeRange={timeRange}

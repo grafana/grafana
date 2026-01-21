@@ -58,6 +58,7 @@ composableKinds: PanelCfg: {
 					//					logRowMenuIconsAfter?:   _
 					//					logLineMenuCustomItems?: _
 					//					onNewLogsReceived?:      _
+					fieldSelectorWidth?: number
 					displayedFields?: [...string]
 					setDisplayedFields?: _
 					buildLinkToLogLine?: _

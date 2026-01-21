@@ -13,18 +13,6 @@ export const pluginVersion = "12.4.0-pre";
 export interface Options {
   buildLinkToLogLine?: unknown;
   controlsStorageKey?: string;
-  /**
-   * 					isFilterLabelActive?:    _
-   * 					onClickFilterString?:    _
-   * 					onClickFilterOutString?: _
-   * 					onClickShowField?:       _
-   * 					onClickHideField?:       _
-   * 					onLogOptionsChange?:     _
-   * 					logRowMenuIconsBefore?:  _
-   * 					logRowMenuIconsAfter?:   _
-   * 					logLineMenuCustomItems?: _
-   * 					onNewLogsReceived?:      _
-   */
   displayedFields?: Array<string>;
   /**
    * 					wrapLogMessage:           bool
@@ -39,10 +27,21 @@ export interface Options {
    * 					fontSize?:                "default" | "small"                  @cuetsy(kind="enum", memberNames="default|small")
    * 					detailsMode?:             "inline" | "sidebar"                  @cuetsy(kind="enum", memberNames="inline|sidebar")
    * 					timestampResolution?:     "ms" | "ns"                  @cuetsy(kind="enum", memberNames="ms|ns")
-   * TODO: figure out how to define callbacks
+   * @todo filter methods no longer needed as props since these are defined by context?
+   * 					onClickFilterLabel?:    _
+   * 					onClickFilterOutLabel?: _
+   * 					isFilterLabelActive?:    _
+   * 					onClickFilterString?:    _
+   * 					onClickFilterOutString?: _
+   * 					onClickShowField?:       _
+   * 					onClickHideField?:       _
+   * 					onLogOptionsChange?:     _
+   * 					logRowMenuIconsBefore?:  _
+   * 					logRowMenuIconsAfter?:   _
+   * 					logLineMenuCustomItems?: _
+   * 					onNewLogsReceived?:      _
    */
-  onClickFilterLabel?: unknown;
-  onClickFilterOutLabel?: unknown;
+  fieldSelectorWidth?: number;
   setDisplayedFields?: unknown;
   /**
    * 					showLabels:               bool

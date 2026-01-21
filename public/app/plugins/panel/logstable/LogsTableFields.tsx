@@ -1,35 +1,40 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
-import { LogsTableFieldSelector } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
-import { buildColumnsWithMeta } from './buildColumnsWithMeta';
 import { DEFAULT_SIDEBAR_WIDTH } from './constants';
+import { LogsTableFieldSelector } from './fieldSelector/FieldSelector';
+import { buildColumnsWithMeta } from './fieldSelector/buildColumnsWithMeta';
 
 interface Props {
+  width: number | undefined;
   height: number;
-  dataFrames: DataFrame[];
+  dataFrame: DataFrame;
   displayedFields: string[] | undefined;
   onDisplayedFieldsChange: (displayedFields: string[]) => void;
+  onWidthChange: (width: number) => void;
   logsFrame: LogsFrame;
   timeFieldName: string;
   bodyFieldName: string;
 }
 
 export function LogsTableFields({
+  width,
   height,
-  dataFrames,
+  dataFrame,
   displayedFields,
   onDisplayedFieldsChange,
   timeFieldName,
   bodyFieldName,
   logsFrame,
+  onWidthChange,
 }: Props) {
-  const styles = useStyles2(getStyles, DEFAULT_SIDEBAR_WIDTH, height);
+  const sidebarWidth = width ?? DEFAULT_SIDEBAR_WIDTH;
+  const styles = useStyles2(getStyles, sidebarWidth, height);
 
   const defaultDisplayedFields = useMemo(() => [timeFieldName, bodyFieldName], [timeFieldName, bodyFieldName]);
   const [columnsWithMeta, setColumnsWithMeta] = useState<FieldNameMetaStore | null>(null);
@@ -54,17 +59,17 @@ export function LogsTableFields({
           severityField: logsFrame.severityField,
           timeField: logsFrame.timeField,
         },
-        logsFrame.getLogFrameLabelsAsLabels(),
+        dataFrame,
         displayedFields ?? defaultDisplayedFields
       )
     );
-  }, [displayedFields, handleSetColumnsWithMeta, logsFrame, defaultDisplayedFields]);
+  }, [displayedFields, handleSetColumnsWithMeta, logsFrame, defaultDisplayedFields, dataFrame]);
 
   if (columnsWithMeta === null || displayedFields === undefined) {
     return null;
   }
 
-  console.log('render::LogsTableFields');
+  console.log('render::LogsTableFields', width);
 
   return (
     <div className={styles.sidebarWrapper}>
@@ -73,14 +78,10 @@ export function LogsTableFields({
           onDisplayedFieldsChange(defaultDisplayedFields);
         }}
         columnsWithMeta={columnsWithMeta}
-        dataFrames={dataFrames}
-        reorder={(columns: string[]) => {
-          onDisplayedFieldsChange(columns);
-        }}
-        setSidebarWidth={(width) => {
-          console.log('setSidebarWidth (@todo)', width);
-        }}
-        sidebarWidth={DEFAULT_SIDEBAR_WIDTH}
+        dataFrames={[dataFrame]}
+        reorder={onDisplayedFieldsChange}
+        setSidebarWidth={onWidthChange}
+        sidebarWidth={sidebarWidth}
         toggle={(key: string) => {
           if (displayedFields.includes(key)) {
             onDisplayedFieldsChange(displayedFields.filter((f) => f !== key));

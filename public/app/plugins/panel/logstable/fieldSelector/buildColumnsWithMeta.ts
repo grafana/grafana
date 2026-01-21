@@ -1,4 +1,4 @@
-import { FieldWithIndex, getFieldDisplayName, Labels } from '@grafana/data';
+import { DataFrame, FieldWithIndex, getFieldDisplayName } from '@grafana/data';
 import { FieldNameMeta, FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 
 type FieldName = string;
@@ -12,7 +12,7 @@ export interface LogsFrameFields {
 
 export const buildColumnsWithMeta = (
   logsFrameFields: LogsFrameFields,
-  labels: Labels[] | null,
+  dataFrame: DataFrame,
   displayedFields: string[]
 ) => {
   const otherFields = [];
@@ -38,34 +38,23 @@ export const buildColumnsWithMeta = (
   let pendingLabelState: FieldNameMetaStore = {};
 
   // If we have labels and log lines
-  if (labels?.length && numberOfLogLines) {
-    // Iterate through all of Labels
-    labels.forEach((labels: Labels) => {
-      const labelsArray = Object.keys(labels);
-      // Iterate through the label values
-      labelsArray.forEach((label) => {
-        // If it's already in our map, increment the count
-        if (labelCardinality.has(label)) {
-          const value = labelCardinality.get(label);
-          if (value) {
-            if (value?.active) {
-              labelCardinality.set(label, {
-                percentOfLinesWithLabel: value.percentOfLinesWithLabel + 1,
-                active: true,
-                index: value.index,
-              });
-            } else {
-              labelCardinality.set(label, {
-                percentOfLinesWithLabel: value.percentOfLinesWithLabel + 1,
-                active: false,
-                index: undefined,
-              });
-            }
-          }
-          // Otherwise add it
-        } else {
-          labelCardinality.set(label, { percentOfLinesWithLabel: 1, active: false, index: undefined });
+  if (dataFrame.fields.length && numberOfLogLines) {
+    // Iterate through all of fields
+    dataFrame.fields.forEach((field) => {
+      const fieldName = getFieldDisplayName(field);
+      // Count the valid values
+      const countOfValues = field.values.reduce((acc: number, value) => {
+        if (value !== undefined && value !== null) {
+          return acc + 1;
         }
+        return acc;
+      }, 0);
+
+      // @todo rename percentOfLinesWithLabel before normalization
+      labelCardinality.set(fieldName, {
+        percentOfLinesWithLabel: countOfValues,
+        active: false,
+        index: undefined,
       });
     });
 
@@ -83,7 +72,7 @@ export const buildColumnsWithMeta = (
 
   // Normalize the other fields
   otherFields.forEach((field) => {
-    const fieldName = field.name ?? getFieldDisplayName(field);
+    const fieldName = getFieldDisplayName(field);
     const isActive = pendingLabelState[fieldName]?.active;
     const index = pendingLabelState[fieldName]?.index;
     if (isActive && index !== undefined) {
@@ -108,8 +97,12 @@ export const buildColumnsWithMeta = (
   });
 
   displayedFields.forEach((fieldName, idx) => {
-    pendingLabelState[fieldName].active = true;
-    pendingLabelState[fieldName].index = idx;
+    if (pendingLabelState[fieldName]) {
+      pendingLabelState[fieldName].active = true;
+      pendingLabelState[fieldName].index = idx;
+    } else {
+      console.error(`Unknown field ${fieldName}`, { pendingLabelState, displayedFields });
+    }
   });
 
   // If nothing is selected, then select the default columns
