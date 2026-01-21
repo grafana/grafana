@@ -16,8 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+// Validator is the interface for repository validation.
+// It validates repository configuration without requiring external service calls.
+type Validator interface {
+	Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList
+}
+
+// RepositoryValidator implements Validator for basic repository configuration checks.
 type RepositoryValidator struct {
-	allowedTargets      []provisioning.SyncTargetType
 	allowImageRendering bool
 	minSyncInterval     time.Duration
 	repoFactory         Factory
@@ -26,14 +32,13 @@ type RepositoryValidator struct {
 // FIXME: The separation of concerns here is not ideal. RepositoryValidator should not depend on Factory,
 // but we need to call Factory.Validate() for structural validation (URL, branch, path, etc.) before
 // doing configuration validation. This coupling was introduced to avoid more extensive refactoring.
-func NewValidator(minSyncInterval time.Duration, allowedTargets []provisioning.SyncTargetType, allowImageRendering bool, repoFactory Factory) RepositoryValidator {
+func NewValidator(minSyncInterval time.Duration, allowImageRendering bool, repoFactory Factory) Validator {
 	// do not allow minsync interval to be less than 10
 	if minSyncInterval <= 10*time.Second {
 		minSyncInterval = 10 * time.Second
 	}
 
-	return RepositoryValidator{
-		allowedTargets:      allowedTargets,
+	return &RepositoryValidator{
 		allowImageRendering: allowImageRendering,
 		minSyncInterval:     minSyncInterval,
 		repoFactory:         repoFactory,
@@ -42,9 +47,7 @@ func NewValidator(minSyncInterval time.Duration, allowedTargets []provisioning.S
 
 // ValidateRepository does structural validation (via Factory.Validate) and configuration checks on the repository object.
 // It does not run a health check or compare against existing repositories.
-// isCreate indicates whether this is a CREATE operation (true) or UPDATE operation (false).
-// When isCreate is false, allowedTargets validation is skipped to allow existing repositories to continue working.
-func (v *RepositoryValidator) ValidateRepository(ctx context.Context, cfg *provisioning.Repository, isCreate bool) field.ErrorList {
+func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
 	var list field.ErrorList
 
 	// FIXME: Structural validation (URL, branch, path, etc.) is done here via Factory.Validate().
@@ -59,12 +62,6 @@ func (v *RepositoryValidator) ValidateRepository(ctx context.Context, cfg *provi
 		if cfg.Spec.Sync.Target == "" {
 			list = append(list, field.Required(field.NewPath("spec", "sync", "target"),
 				"The target type is required when sync is enabled"))
-		} else if isCreate && !slices.Contains(v.allowedTargets, cfg.Spec.Sync.Target) {
-			list = append(list,
-				field.Invalid(
-					field.NewPath("spec", "target"),
-					cfg.Spec.Sync.Target,
-					"sync target is not supported"))
 		}
 
 		if cfg.Spec.Sync.IntervalSeconds < int64(v.minSyncInterval.Seconds()) {
@@ -160,21 +157,29 @@ func FromFieldError(err *field.Error) *provisioning.TestResults {
 // For runtime validation that requires secrets or external service checks, use the
 // Test() method on the Repository interface instead.
 //
-// Note: VerifyAgainstExistingRepositories type is defined in tester.go
+// AdmissionValidator wraps a list of Validators that are called after basic validation passes.
+// the order of the validators is important, the first validator that returns an error will stop the validation process.
 type AdmissionValidator struct {
-	validator                         RepositoryValidator
-	verifyAgainstExistingRepositories VerifyAgainstExistingRepositories
+	validators     []Validator
+	allowedTargets []provisioning.SyncTargetType
 }
 
-// NewAdmissionValidator creates a new repository admission validator
-func NewAdmissionValidator(validator RepositoryValidator, verifyFn VerifyAgainstExistingRepositories) *AdmissionValidator {
+// NewAdmissionValidator creates a new repository admission validator.
+// validators are called after basic validation passes.
+// the order of the validators is important, the first validator that returns an error will stop the validation process.
+func NewAdmissionValidator(allowedTargets []provisioning.SyncTargetType, validators ...Validator) *AdmissionValidator {
 	return &AdmissionValidator{
-		validator:                         validator,
-		verifyAgainstExistingRepositories: verifyFn,
+		validators:     validators,
+		allowedTargets: allowedTargets,
 	}
 }
 
-// Validate validates Repository resources during admission
+// Validate validates Repository resources during admission.
+// This method is called by the admission webhook and performs additional checks
+// that are specific to admission (e.g., comparing old vs new objects).
+//
+// The returned error is an apierrors.StatusError containing field.ErrorList when
+// validation fails. Callers can use apierrors.StatusError to extract the field errors.
 func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	obj := a.GetObject()
 	if obj == nil {
@@ -199,14 +204,11 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		}
 	}
 
-	// ALL configuration validations should be done in ValidateRepository -
-	// this is how the UI is able to show proper validation errors
-	//
-	// the only time to add configuration checks here is if you need to compare
-	// the incoming change to the current configuration
 	isCreate := a.GetOperation() == admission.Create
-	list := v.validator.ValidateRepository(ctx, r, isCreate)
 
+	// Admission-specific checks that compare old vs new objects
+	// These cannot be done in Validate because they need the old object or operation type
+	var list field.ErrorList
 	if a.GetOperation() == admission.Update {
 		oldRepo := a.GetOldObject().(*provisioning.Repository)
 		if r.Spec.Type != oldRepo.Spec.Type {
@@ -221,15 +223,24 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		}
 	}
 
-	// Early exit to avoid more expensive checks if we have already found errors
+	if isCreate && r.Spec.Sync.Enabled && !slices.Contains(v.allowedTargets, r.Spec.Sync.Target) {
+		list = append(list,
+			field.Invalid(
+				field.NewPath("spec", "target"),
+				r.Spec.Sync.Target,
+				"sync target is not supported"))
+	}
+
+	// Early exit if admission-specific checks failed
 	if len(list) > 0 {
 		return invalidRepositoryError(a.GetName(), list)
 	}
 
-	// Verify against existing repositories
-	if v.verifyAgainstExistingRepositories != nil {
-		if targetError := v.verifyAgainstExistingRepositories(ctx, r); targetError != nil {
-			return invalidRepositoryError(a.GetName(), field.ErrorList{targetError})
+	// Run validators
+	for _, validator := range v.validators {
+		list = append(list, validator.Validate(ctx, r)...)
+		if len(list) > 0 {
+			return invalidRepositoryError(a.GetName(), list)
 		}
 	}
 
