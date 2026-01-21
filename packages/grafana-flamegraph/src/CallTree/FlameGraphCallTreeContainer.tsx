@@ -110,11 +110,11 @@ const FlameGraphCallTreeContainer = memo(
       [onSandwich]
     );
 
-    const { nodes, focusedNode, callersNode } = useMemo(() => {
-      const allNodes = buildAllCallTreeNodes(data);
+    const allNodes = useMemo(() => buildAllCallTreeNodes(data), [data]);
 
+    const { nodes, focusedNode, callersNode } = useMemo(() => {
       let nodesToUse = allNodes;
-      let focused: CallTreeNode | undefined;
+      let focusedNode: CallTreeNode | undefined;
       let callersTargetNode: CallTreeNode | undefined;
 
       if (focusedNodeId) {
@@ -136,26 +136,26 @@ const FlameGraphCallTreeContainer = memo(
           return undefined;
         };
 
-        focused = findNode(allNodes, searchKey, isLabelSearch);
-        if (focused) {
+        focusedNode = findNode(allNodes, searchKey, isLabelSearch);
+        if (focusedNode) {
           if (isLabelSearch) {
             // Update asynchronously to avoid updating state during render
-            setTimeout(() => setFocusedNodeId(focused!.id), 0);
+            setTimeout(() => setFocusedNodeId(focusedNode!.id), 0);
           }
 
-          if (focused.parentId) {
-            const parent = findNode(allNodes, focused.parentId, false);
+          if (focusedNode.parentId) {
+            const parent = findNode(allNodes, focusedNode.parentId, false);
             if (parent) {
               const modifiedParent: CallTreeNode = {
                 ...parent,
-                children: [focused],
+                children: [focusedNode],
               };
               nodesToUse = [modifiedParent];
             } else {
-              nodesToUse = [focused];
+              nodesToUse = [focusedNode];
             }
           } else {
-            nodesToUse = [focused];
+            nodesToUse = [focusedNode];
           }
         }
       }
@@ -173,8 +173,8 @@ const FlameGraphCallTreeContainer = memo(
         }
       }
 
-      return { nodes: nodesToUse, focusedNode: focused, callersNode: callersTargetNode };
-    }, [data, focusedNodeId, callersNodeLabel]);
+      return { nodes: nodesToUse, focusedNode: focusedNode, callersNode: callersTargetNode };
+    }, [allNodes, data, focusedNodeId, callersNodeLabel]);
 
     // Calculate depth offset for focus mode - the top-most visible node should appear at depth 0
     const depthOffset = useMemo(() => {
@@ -230,8 +230,6 @@ const FlameGraphCallTreeContainer = memo(
       };
 
       search(nodes);
-
-      // Sort by total time descending so most significant matches appear first
       matches.sort((a, b) => b.total - a.total);
 
       const matchIds = matches.map((m) => m.id);
@@ -269,13 +267,11 @@ const FlameGraphCallTreeContainer = memo(
         return undefined;
       };
 
-      // Search in the full tree, not the potentially filtered nodes
-      const allNodes = buildAllCallTreeNodes(data);
       const matchedNodeId = findExactMatch(allNodes);
       if (matchedNodeId) {
         setFocusedNodeId(matchedNodeId);
       }
-    }, [focusedItemIndexes, data]);
+    }, [focusedItemIndexes, allNodes]);
 
     const searchResultKey = searchNodes.join(',');
     useEffect(() => {
