@@ -260,7 +260,7 @@
   },
   "packages/grafana-data/src/types/templateVars.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 2
+      "count": 3
     }
   },
   "packages/grafana-data/src/types/trace.ts": {
@@ -1930,11 +1930,6 @@
     }
   },
   "public/app/features/dashboard-scene/settings/variables/components/GroupByVariableForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/components/QueryVariableForm.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
