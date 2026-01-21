@@ -2672,15 +2672,15 @@
     {
       "metadata": {
         "name": "localeFormatPreference",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1769012601213",
         "creationTimestamp": "2025-03-31T13:59:07Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-01-21 16:23:21.21319 +0000 UTC"
         }
       },
       "spec": {
         "description": "Specifies the locale so the correct format for numbers and dates can be shown",
-        "stage": "preview",
+        "stage": "deprecated",
         "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "false"
       }

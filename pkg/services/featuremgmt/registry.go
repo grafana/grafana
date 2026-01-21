@@ -1551,7 +1551,7 @@ var (
 		{
 			Name:        "localeFormatPreference",
 			Description: "Specifies the locale so the correct format for numbers and dates can be shown",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageDeprecated, // not continuing the work for now, will be removed
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 		},
