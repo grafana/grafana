@@ -94,7 +94,7 @@ export function RadialGauge(props: RadialGaugeProps) {
     segmentCount = 0,
     segmentSpacing = 0.1,
     roundedBars = true,
-    thresholdsBar = false,
+    thresholdsBar: rawThresholdsBar = false,
     showScaleLabels = false,
     neutral,
     endpointMarker,
@@ -119,6 +119,8 @@ export function RadialGauge(props: RadialGaugeProps) {
 
   for (let barIndex = 0; barIndex < values.length; barIndex++) {
     const displayValue = values[barIndex];
+    // if min === max, the min and max thresholds will also be equal, which causes visual bugs.
+    const thresholdsBar = rawThresholdsBar && displayValue.field.min !== displayValue.field.max;
     const { startValueAngle, endValueAngle, angleRange } = getValueAngleForValue(
       displayValue,
       startAngle,
