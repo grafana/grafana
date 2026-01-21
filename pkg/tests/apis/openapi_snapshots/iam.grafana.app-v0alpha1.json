@@ -4885,6 +4885,55 @@
           }
         }
       ]
+    },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/{name}/teams": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "description": "connect GET requests to teams of User",
+        "operationId": "getUserTeams",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.UserTeamList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "iam.grafana.app",
+          "version": "v0alpha1",
+          "kind": "UserTeamList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the UserTeamList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -5979,7 +6028,12 @@
             ]
           },
           "teamRef": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.TeamRef"
+              }
+            ]
           },
           "title": {
             "type": "string"
@@ -5999,7 +6053,12 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {}
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.UserTeam"
+                }
+              ]
             }
           },
           "kind": {
@@ -6007,9 +6066,21 @@
             "type": "string"
           },
           "metadata": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "iam.grafana.app",
+            "kind": "UserTeamList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRole": {
         "type": "object",
