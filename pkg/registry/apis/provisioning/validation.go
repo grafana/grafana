@@ -12,8 +12,11 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
+
+//go:generate mockery --name RepositoryLister --structname MockRepositoryLister --inpackage --filename repository_lister_mock.go --with-expecter
 
 // RepositoryLister interface for listing repositories
 type RepositoryLister interface {
@@ -51,7 +54,7 @@ func GetRepositoriesInNamespace(ctx context.Context, store RepositoryLister) ([]
 }
 
 // VerifyAgainstExistingRepositories validates a repository configuration against existing repositories
-func VerifyAgainstExistingRepositories(ctx context.Context, store RepositoryLister, cfg *provisioning.Repository) *field.Error {
+func VerifyAgainstExistingRepositories(ctx context.Context, store RepositoryLister, cfg *provisioning.Repository, limitsProvider quotas.NamespaceLimitsProvider) *field.Error {
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
 	if err != nil {
 		return &field.Error{Type: field.ErrorTypeInternal, Detail: err.Error()}
@@ -115,9 +118,15 @@ func VerifyAgainstExistingRepositories(ctx context.Context, store RepositoryList
 			count++
 		}
 	}
-	if count >= 10 {
+
+	maxRepositories, err := limitsProvider.GetMaxRepositories(ctx, cfg.Namespace)
+	if err != nil {
+		return &field.Error{Type: field.ErrorTypeInternal, Detail: fmt.Sprintf("Failed to get repository limit: %v", err)}
+	}
+
+	if count >= maxRepositories {
 		return field.Forbidden(field.NewPath("spec"),
-			"Maximum number of 10 repositories reached")
+			fmt.Sprintf("Maximum number of %d repositories reached", maxRepositories))
 	}
 
 	return nil
