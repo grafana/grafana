@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { DataFrame, transformDataFrame } from '@grafana/data';
 import { CustomCellRendererProps, TableCellDisplayMode } from '@grafana/ui';
 
-import { LogsTableCustomCellRenderer } from '../CustomCellRenderer';
+import { LogsTableCustomCellRenderer } from '../cells/CustomCellRenderer';
 import { getFieldWidth } from '../fields/gets';
 import { doesFieldSupportAdHocFiltering, doesFieldSupportInspector } from '../fields/supports';
 import type { Options as LogsTableOptions } from '../panelcfg.gen';

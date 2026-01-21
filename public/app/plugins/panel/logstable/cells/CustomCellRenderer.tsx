@@ -3,9 +3,9 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { CustomCellRendererProps, useStyles2 } from '@grafana/ui';
 
-import { LogsNGTableRowActionButtons } from './LogsNGTableRowActionButtons';
-import { ROW_ACTION_BUTTON_WIDTH } from './LogsTable';
-import { BuildLinkToLogLine } from './types';
+import { ROW_ACTION_BUTTON_WIDTH } from '../LogsTable';
+import { LogsNGTableRowActionButtons } from '../rows/LogsNGTableRowActionButtons';
+import { BuildLinkToLogLine } from '../types';
 
 export function LogsTableCustomCellRenderer(props: {
   cellProps: CustomCellRendererProps;

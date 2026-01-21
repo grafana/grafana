@@ -6,9 +6,10 @@ import { useStyles2 } from '@grafana/ui';
 import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
-import { DEFAULT_SIDEBAR_WIDTH } from './constants';
-import { LogsTableFieldSelector } from './fieldSelector/FieldSelector';
-import { buildColumnsWithMeta } from './fieldSelector/buildColumnsWithMeta';
+import { DEFAULT_SIDEBAR_WIDTH } from '../constants';
+
+import { LogsTableFieldSelector } from './LogsTableFieldSelector';
+import { buildColumnsWithMeta } from './buildColumnsWithMeta';
 
 interface Props {
   width: number | undefined;

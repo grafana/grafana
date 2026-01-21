@@ -11,9 +11,9 @@ import {
 } from 'app/features/logs/logsFrame';
 import type { Options as TableOptions } from 'app/plugins/panel/table/panelcfg.gen';
 
-import { LogsTableFields } from './LogsTableFields';
 import { TableNGWrap } from './TableNGWrap';
 import { DEFAULT_SIDEBAR_WIDTH } from './constants';
+import { LogsTableFields } from './fieldSelector/LogsTableFields';
 import { useExtractFields } from './hooks/useExtractFields';
 import { useOrganizeFields } from './hooks/useOrganizeFields';
 import type { Options as LogsTableOptions } from './panelcfg.gen';
@@ -74,6 +74,7 @@ export const LogsTable = ({
     [onOptionsChange]
   );
 
+  // @todo create generic options setter
   const handleSetDisplayedFields = useCallback(
     (displayedFields: string[]) => {
       handleLogsTableOptionsChange({ ...options, displayedFields });
@@ -81,6 +82,7 @@ export const LogsTable = ({
     [handleLogsTableOptionsChange, options]
   );
 
+  // @todo create generic options setter
   const handleSetFieldSelectorWidth = useCallback(
     (fieldSelectorWidth: number) => {
       handleLogsTableOptionsChange({ ...options, fieldSelectorWidth });

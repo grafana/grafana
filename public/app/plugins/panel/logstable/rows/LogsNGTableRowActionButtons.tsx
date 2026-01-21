@@ -13,7 +13,7 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
-import { BuildLinkToLogLine } from './types';
+import { BuildLinkToLogLine } from '../types';
 
 interface Props extends CustomCellRendererProps {
   buildLinkToLog?: BuildLinkToLogLine;
