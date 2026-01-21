@@ -214,6 +214,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-01-12,kubernetesAuthzCoreRolesApi,experimental,@grafana/identity-access-team,false,false,false
 2026-01-15,kubernetesAuthzGlobalRolesApi,experimental,@grafana/identity-access-team,false,false,false
 2026-01-12,kubernetesAuthzRolesApi,experimental,@grafana/identity-access-team,false,false,false
+2026-01-14,kubernetesAuthzTeamLBACRuleApi,experimental,@grafana/identity-access-team,false,false,false
 2026-01-12,kubernetesAuthzRoleBindingsApi,experimental,@grafana/identity-access-team,false,false,false
 2025-07-25,kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
 2025-11-25,kubernetesExternalGroupMapping,experimental,@grafana/identity-access-team,false,false,false
@@ -279,3 +280,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-01-14,alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
 2026-01-15,queryWithAssistant,experimental,@grafana/oss-big-tent,false,false,true
 2026-01-13,queryEditorNext,experimental,@grafana/datapro,false,false,true
+2026-01-20,kubernetesTeamBindings,experimental,@grafana/identity-access-team,false,false,false

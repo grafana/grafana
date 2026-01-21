@@ -3730,6 +3730,7 @@
       "non-folder-item": "Nem mappa {{itemKind}} {{itemUID}}",
       "root-title": "Irányítópultok",
       "search-placeholder": "Mappák keresése",
+      "shared-with-me": "",
       "unknown-error": "Ismeretlen hiba"
     },
     "manage-folder-nav": {
@@ -3833,6 +3834,7 @@
       "label-method": "Metódus",
       "label-payload": "Hasznos tartalom",
       "label-query-parameters": "Lekérdezési paraméterek",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "API tesztelése",
         "title-test-api": "API tesztelése"
