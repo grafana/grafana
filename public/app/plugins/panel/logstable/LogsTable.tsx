@@ -74,18 +74,9 @@ export const LogsTable = ({
     [onOptionsChange]
   );
 
-  // @todo create generic options setter
-  const handleSetDisplayedFields = useCallback(
-    (displayedFields: string[]) => {
-      handleLogsTableOptionsChange({ ...options, displayedFields });
-    },
-    [handleLogsTableOptionsChange, options]
-  );
-
-  // @todo create generic options setter
-  const handleSetFieldSelectorWidth = useCallback(
-    (fieldSelectorWidth: number) => {
-      handleLogsTableOptionsChange({ ...options, fieldSelectorWidth });
+  const handleLogsTableOptionChange = useCallback(
+    (prop: LogsTableOptions) => {
+      handleLogsTableOptionsChange({ ...options, [Object.keys(prop)[0]]: Object.values(prop)[0] });
     },
     [handleLogsTableOptionsChange, options]
   );
@@ -136,8 +127,8 @@ export const LogsTable = ({
         timeFieldName={timeFieldName}
         bodyFieldName={bodyFieldName}
         dataFrame={extractedFrame}
-        onDisplayedFieldsChange={handleSetDisplayedFields}
-        onWidthChange={handleSetFieldSelectorWidth}
+        onDisplayedFieldsChange={(displayedFields: string[]) => handleLogsTableOptionChange({ displayedFields })}
+        onWidthChange={(width: number) => handleLogsTableOptionChange({ fieldSelectorWidth: width })}
       />
 
       <TableNGWrap
