@@ -21,11 +21,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
@@ -149,16 +144,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardList"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardList"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardList"
@@ -216,11 +201,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
@@ -234,11 +214,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
                 }
@@ -258,11 +233,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
@@ -274,11 +244,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
                 }
@@ -432,11 +397,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -486,11 +446,6 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
                 }
@@ -552,11 +507,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
               }
             },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
-              }
-            },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
@@ -574,11 +524,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
@@ -590,11 +535,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
                 }
@@ -676,11 +616,6 @@
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
@@ -692,11 +627,6 @@
             "description": "Accepted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
@@ -794,11 +724,6 @@
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
                 }
               },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
-                }
-              },
               "application/yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
@@ -810,11 +735,6 @@
             "description": "Created",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Dashboard"
                 }
@@ -2261,6 +2181,10 @@
             "description": "This can be used by data sources that return and explicit naming structure for values and labels\nWhen this property is configured, this value is used rather than the default naming strategy.",
             "type": "string"
           },
+          "fieldMinMax": {
+            "description": "Calculate min max per field",
+            "type": "boolean"
+          },
           "filterable": {
             "description": "True if data source field supports ad-hoc filters",
             "type": "boolean"
@@ -2291,6 +2215,9 @@
           "noValue": {
             "description": "Alternative to empty string",
             "type": "string"
+          },
+          "nullValueMode": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardNullValueMode"
           },
           "path": {
             "description": "An explicit path to the field in the datasource.  When the frame meta includes a path,\nThis will default to `${frame.meta.path}/${field.name}\n\nWhen defined, this value can be used as an identifier within the datasource scope, and\nmay be used to update the results",
@@ -2755,7 +2682,7 @@
         ]
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardMatcherConfig": {
-        "description": "Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.\nIt comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.",
+        "description": "Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.\nIt comes with in id ( to resolve implementation from registry) and a configuration that\u2019s specific to a particular matcher type.",
         "type": "object",
         "required": [
           "id"
@@ -2802,6 +2729,15 @@
           }
         },
         "additionalProperties": false
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardNullValueMode": {
+        "description": "How null values should be handled",
+        "type": "string",
+        "enum": [
+          "null",
+          "connected",
+          "null as zero"
+        ]
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPanelKind": {
         "type": "object",

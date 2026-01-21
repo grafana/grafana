@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	index "github.com/blevesearch/bleve_index_api"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -50,6 +51,7 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
+		ScoringModel:  index.BM25Scoring,
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -645,16 +647,16 @@ func (nc *StubAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, re
 	}, authlib.NoopZookie{}, nil
 }
 
+func (nc *StubAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, errors.New("not implemented")
+}
+
 func (nc StubAccessClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	return nil, nil
 }
 
 func (nc StubAccessClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
 	return nil
-}
-
-func (nc StubAccessClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	return nil, nil
 }
 
 func TestSafeInt64ToInt(t *testing.T) {
@@ -773,6 +775,7 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 		IndexCacheTTL: defaultIndexCacheTTL,
 		Logger:        log.NewNopLogger(),
 		BuildVersion:  buildVersion,
+		ScoringModel:  index.BM25Scoring,
 	}
 	for _, opt := range options {
 		opt(&opts)

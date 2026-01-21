@@ -26,6 +26,7 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
@@ -1368,6 +1369,47 @@ func TestIntegrationRemoteAlertmanagerTestTemplates(t *testing.T) {
 	require.Len(t, res.Results, 0)
 	require.Len(t, res.Errors, 1)
 	require.Equal(t, notify.ExecutionError, res.Errors[0].Kind)
+}
+
+func TestIntegrationRemoteAlertmanagerTestIntegration(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	amURL, ok := os.LookupEnv("AM_URL")
+	if !ok {
+		t.Skip("No Alertmanager URL provided")
+	}
+
+	tenantID := os.Getenv("AM_TENANT_ID")
+	password := os.Getenv("AM_PASSWORD")
+
+	cfg := AlertmanagerConfig{
+		OrgID:             1,
+		URL:               amURL,
+		TenantID:          tenantID,
+		BasicAuthPassword: password,
+		DefaultConfig:     defaultGrafanaConfig,
+	}
+
+	ctx := context.Background()
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	require.NoError(t, err)
+
+	integration := ngmodels.IntegrationGen(ngmodels.IntegrationMuts.WithValidConfig("webhook"))()
+	integration.Settings["url"] = "grafana://noop" // TODO remove later if https://github.com/grafana/alerting/pull/465 merged
+	testAlert := alertingModels.TestReceiversConfigAlertParams{
+		Annotations: model.LabelSet{
+			"annotations_label": "annotations_value",
+		},
+		Labels: model.LabelSet{
+			"alertname": "test",
+			"severity":  "critical",
+		},
+	}
+	result, err := am.TestIntegration(ctx, "test-receiver", integration, testAlert)
+	require.NoError(t, err)
+	require.NotEmpty(t, result.LastNotifyAttemptDuration)
 }
 
 func genAlert(active bool, labels map[string]string) amv2.PostableAlert {

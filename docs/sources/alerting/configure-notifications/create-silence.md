@@ -68,9 +68,18 @@ Silences stop notifications from being created for a specified time window but d
 Silences are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
 {{< /admonition >}}
 
-## Mute timing and active timings vs silences
+## Mute timings and active time intervals vs silences
 
-{{< docs/shared lookup="alerts/mute-timings-vs-silences.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+[Mute timings and active time intervals](ref:shared-mute-timings) and [silences](ref:shared-silences) are distinct methods to suppress notifications. They do not prevent alert rules from being evaluated or stop alert instances from appearing in the user interface; they only prevent notifications from being created.
+
+The following table highlights the key differences between mute timings and silences.
+
+|            | Mute timing                                                 | Silence                                                          |
+| ---------- | ----------------------------------------------------------- | ---------------------------------------------------------------- |
+| **Setup**  | Created and then added to notification policies             | Matches alerts using labels to determine whether to silence them |
+| **Period** | Uses time interval definitions that can repeat periodically | Has a fixed start and end time                                   |
+
+[//]: <> ({{< docs/shared lookup="alerts/mute-timings-vs-silences.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 ## Add silences
 

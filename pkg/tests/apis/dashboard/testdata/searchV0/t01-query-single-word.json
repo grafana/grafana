@@ -1,0 +1,28 @@
+{
+  "totalHits": 2,
+  "hits": [
+    {
+      "resource": "dashboards",
+      "name": "timeseries-stacking",
+      "title": "Panel Tests - TimeSeries - stacking",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ],
+      "score": 0.284
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-stacking2",
+      "title": "TimeSeries \u0026 BarChart Stacking",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ],
+      "score": 0.269
+    }
+  ],
+  "maxScore": 0.284
+}

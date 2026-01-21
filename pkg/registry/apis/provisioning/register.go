@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -15,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -28,14 +26,15 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 
+	appadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
-	jobsvalidation "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -73,9 +72,11 @@ var (
 	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
 )
 
+// ErrRepositoryParentFolderConflict and ErrRepositoryDuplicatePath are deprecated.
+// Use repository.ErrRepositoryParentFolderConflict and repository.ErrRepositoryDuplicatePath instead.
 var (
-	ErrRepositoryParentFolderConflict = errors.New("parent folder conflict")
-	ErrRepositoryDuplicatePath        = errors.New("duplicate repository path")
+	ErrRepositoryParentFolderConflict = repository.ErrRepositoryParentFolderConflict
+	ErrRepositoryDuplicatePath        = repository.ErrRepositoryDuplicatePath
 )
 
 // JobHistoryConfig holds configuration for job history backends
@@ -92,12 +93,16 @@ type APIBuilder struct {
 
 	allowedTargets      []provisioning.SyncTargetType
 	allowImageRendering bool
+	minSyncInterval     time.Duration
 
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
 
 	tracer              tracing.Tracer
-	store               grafanarest.Storage
+	repoStore           grafanarest.Storage
+	repoLister          repository.RepositoryLister
+	repoValidator       repository.Validator
+	connectionStore     grafanarest.Storage
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
@@ -119,7 +124,7 @@ type APIBuilder struct {
 	accessWithViewer  auth.AccessChecker
 	statusPatcher     *appcontroller.RepositoryStatusPatcher
 	healthChecker     *controller.HealthChecker
-	repoValidator     repository.RepositoryValidator
+	admissionHandler  *appadmission.Handler
 	// Extras provides additional functionality to the API.
 	extras       []Extra
 	extraWorkers []jobs.Worker
@@ -174,6 +179,7 @@ func NewAPIBuilder(
 
 	b := &APIBuilder{
 		onlyApiServer:                       onlyApiServer,
+		minSyncInterval:                     minSyncInterval,
 		tracer:                              tracer,
 		usageStats:                          usageStats,
 		features:                            features,
@@ -195,7 +201,6 @@ func NewAPIBuilder(
 		allowedTargets:                      allowedTargets,
 		allowImageRendering:                 allowImageRendering,
 		registry:                            registry,
-		repoValidator:                       repository.NewValidator(minSyncInterval, allowedTargets, allowImageRendering),
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 	}
 
@@ -604,7 +609,24 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
-	b.store = repositoryStorage
+	b.repoStore = repositoryStorage
+	b.repoLister = repository.NewStorageLister(repositoryStorage)
+
+	// Create admission handler and register mutators/validators
+	b.admissionHandler = appadmission.NewHandler()
+
+	// Repository mutator and validator
+	b.repoValidator = repository.NewValidator(b.minSyncInterval, b.allowImageRendering, b.repoFactory)
+	existingReposValidator := repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister)
+	repoAdmissionValidator := repository.NewAdmissionValidator(b.allowedTargets, b.repoValidator, existingReposValidator)
+	b.admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(b.repoFactory))
+	b.admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), repoAdmissionValidator)
+	// Connection mutator and validator
+	b.admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(b.connectionFactory))
+	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionValidator(b.connectionFactory))
+	// Jobs validator (no mutator needed)
+	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator())
+	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
@@ -636,6 +658,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create connection storage: %w", err)
 	}
 	connectionStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, connectionsStore)
+	b.connectionStore = connectionsStore
 
 	storage[provisioning.JobResourceInfo.StoragePath()] = jobStore
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
@@ -646,7 +669,9 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector()
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.repoValidator), b.VerifyAgainstExistingRepositories))
+	testTester := repository.NewTester(b.repoValidator, existingReposValidator)
+
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, testTester)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
@@ -669,7 +694,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	return nil
 }
 
-// TODO: Move this to a more appropriate place. Probably controller/mutation.go
+// Mutate delegates to the admission handler for resource-specific mutation
 func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	obj := a.GetObject()
 
@@ -677,147 +702,17 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		return nil // This is normal for sub-resource
 	}
 
-	// FIXME: Do nothing for HistoryJobs for now
-	_, ok := obj.(*provisioning.HistoricJob)
-	if ok {
-		return nil
-	}
-	// FIXME: Do nothing for Jobs for now
-	_, ok = obj.(*provisioning.Job)
-	if ok {
-		return nil
-	}
-
-	c, ok := obj.(*provisioning.Connection)
-	if ok {
-		conn, err := b.asConnection(ctx, c, nil)
-		if err != nil {
-			return err
-		}
-
-		return conn.Mutate(ctx)
-	}
-
-	r, ok := obj.(*provisioning.Repository)
-	if !ok {
-		return fmt.Errorf("expected repository configuration")
-	}
-
-	// This is called on every update, so be careful to only add the finalizer for create
-	if len(r.Finalizers) == 0 && a.GetOperation() == admission.Create {
-		r.Finalizers = []string{
-			repository.RemoveOrphanResourcesFinalizer,
-			repository.CleanFinalizer,
-		}
-	}
-
-	if r.Spec.Sync.IntervalSeconds == 0 {
-		r.Spec.Sync.IntervalSeconds = 60
-	}
-
-	if r.Spec.Workflows == nil {
-		r.Spec.Workflows = []provisioning.Workflow{}
-	}
-
-	// Extra mutators
-	if err := b.repoFactory.Mutate(ctx, r); err != nil {
-		return fmt.Errorf("failed to mutate repository: %w", err)
-	}
-
-	return nil
+	return b.admissionHandler.Mutate(ctx, a, o)
 }
 
-// TODO: move logic to a more appropriate place. Probably controller/validation.go
+// Validate delegates to the admission handler for resource-specific validation
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	obj := a.GetObject()
 	if obj == nil || a.GetOperation() == admission.Connect || a.GetOperation() == admission.Delete {
 		return nil // This is normal for sub-resource
 	}
 
-	// Do not validate objects we are trying to delete
-	meta, _ := apiutils.MetaAccessor(obj)
-	if meta.GetDeletionTimestamp() != nil {
-		return nil
-	}
-
-	// FIXME: Do nothing for HistoryJobs for now
-	_, ok := obj.(*provisioning.HistoricJob)
-	if ok {
-		return nil
-	}
-
-	// Validate connections
-	c, ok := obj.(*provisioning.Connection)
-	if ok {
-		conn, err := b.asConnection(ctx, c, a.GetOldObject())
-		if err != nil {
-			return err
-		}
-
-		return conn.Validate(ctx)
-	}
-
-	// Validate Jobs
-	job, ok := obj.(*provisioning.Job)
-	if ok {
-		return jobsvalidation.ValidateJob(job)
-	}
-
-	repo, err := b.asRepository(ctx, obj, a.GetOldObject())
-	if err != nil {
-		return err
-	}
-
-	// ALL configuration validations should be done in ValidateRepository -
-	// this is how the UI is able to show proper validation errors
-	//
-	// the only time to add configuration checks here is if you need to compare
-	// the incoming change to the current configuration
-	isCreate := a.GetOperation() == admission.Create
-	list := b.repoValidator.ValidateRepository(repo, isCreate)
-	cfg := repo.Config()
-
-	if a.GetOperation() == admission.Update {
-		oldRepo, err := b.asRepository(ctx, a.GetOldObject(), nil)
-		if err != nil {
-			return fmt.Errorf("get old repository for update: %w", err)
-		}
-		oldCfg := oldRepo.Config()
-
-		if cfg.Spec.Type != oldCfg.Spec.Type {
-			list = append(list, field.Forbidden(field.NewPath("spec", "type"),
-				"Changing repository type is not supported"))
-		}
-
-		// Do not allow changing the sync target once anything has synced successfully
-		if cfg.Spec.Sync.Target != oldCfg.Spec.Sync.Target && len(cfg.Status.Stats) > 0 {
-			list = append(list, field.Forbidden(field.NewPath("spec", "sync", "target"),
-				"Changing sync target after running sync is not supported"))
-		}
-	}
-
-	// Early exit to avoid more expensive checks if we have already found errors
-	if len(list) > 0 {
-		return invalidRepositoryError(a.GetName(), list)
-	}
-
-	// Exit early if we have already found errors
-	targetError := b.VerifyAgainstExistingRepositories(ctx, cfg)
-	if targetError != nil {
-		return invalidRepositoryError(a.GetName(), field.ErrorList{targetError})
-	}
-
-	return nil
-}
-
-func invalidRepositoryError(name string, list field.ErrorList) error {
-	return apierrors.NewInvalid(
-		provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
-		name, list)
-}
-
-func (b *APIBuilder) VerifyAgainstExistingRepositories(ctx context.Context, cfg *provisioning.Repository) *field.Error {
-	return VerifyAgainstExistingRepositories(ctx, b.store, cfg)
+	return b.admissionHandler.Validate(ctx, a, o)
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
@@ -847,7 +742,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
-			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewSimpleRepositoryTester(b.repoValidator))
+			// FIXME: Health checker uses basic validation only - no additional validators needed
+			// since the repository already passed admission validation when it was created/updated.
+			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
+			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewTester(b.repoValidator))
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.onlyApiServer {
@@ -863,11 +761,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
 			go connInformer.Informer().Run(postStartHookCtx.Done())
 
-			// Create the repository resources factory
-			repositoryListerWrapper := func(ctx context.Context) ([]provisioning.Repository, error) {
-				return GetRepositoriesInNamespace(ctx, b.store)
-			}
-			usageMetricCollector := usage.MetricCollector(b.tracer, repositoryListerWrapper, b.unified)
+			usageMetricCollector := usage.MetricCollector(b.tracer, b.repoLister.List, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			metrics := jobs.RegisterJobMetrics(b.registry)
@@ -967,6 +861,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.GetClient(),
 				repoInformer,
 				b.repoFactory,
+				b.connectionFactory,
 				b.resourceLister,
 				b.clients,
 				b.jobs,
@@ -984,10 +879,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Create and run connection controller
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
+			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connController, err := controller.NewConnectionController(
 				b.GetClient(),
 				connInformer,
 				connStatusPatcher,
+				connTester,
 			)
 			if err != nil {
 				return err
@@ -1411,11 +1308,19 @@ spec:
 // TODO: where should the helpers live?
 
 func (b *APIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
-	obj, err := b.store.Get(ctx, name, &metav1.GetOptions{})
+	obj, err := b.repoStore.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 	return b.asRepository(ctx, obj, nil)
+}
+
+func (b *APIBuilder) GetConnection(ctx context.Context, name string) (connection.Connection, error) {
+	obj, err := b.connectionStore.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return b.asConnection(ctx, obj, nil)
 }
 
 func (b *APIBuilder) GetRepoFactory() repository.Factory {
@@ -1451,14 +1356,8 @@ func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object, old r
 
 	// Copy previous values if they exist
 	if old != nil {
-		o, ok := old.(*provisioning.Repository)
-		if ok && !o.Secure.IsZero() {
-			if r.Secure.Token.IsZero() {
-				r.Secure.Token = o.Secure.Token
-			}
-			if r.Secure.WebhookSecret.IsZero() {
-				r.Secure.WebhookSecret = o.Secure.WebhookSecret
-			}
+		if oldRepo, ok := old.(*provisioning.Repository); ok {
+			repository.CopySecureValues(r, oldRepo)
 		}
 	}
 
@@ -1477,17 +1376,8 @@ func (b *APIBuilder) asConnection(ctx context.Context, obj runtime.Object, old r
 
 	// Copy previous values if they exist
 	if old != nil {
-		o, ok := old.(*provisioning.Connection)
-		if ok && !o.Secure.IsZero() {
-			if c.Secure.PrivateKey.IsZero() {
-				c.Secure.PrivateKey = o.Secure.PrivateKey
-			}
-			if c.Secure.Token.IsZero() {
-				c.Secure.Token = o.Secure.Token
-			}
-			if c.Secure.ClientSecret.IsZero() {
-				c.Secure.ClientSecret = o.Secure.ClientSecret
-			}
+		if oldConn, ok := old.(*provisioning.Connection); ok {
+			connection.CopySecureValues(c, oldConn)
 		}
 	}
 

@@ -804,7 +804,8 @@
       "label-integration": "統合",
       "label-notification-settings": "通知設定",
       "label-section": "{{name}}のオプション設定",
-      "test": "テスト"
+      "test": "テスト",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "の",
@@ -2168,11 +2169,16 @@
     "provisioning": {
       "badge-tooltip-provenance": "このリソースは{{provenance}}を介してプロビジョニングされており、UIから編集することはできません",
       "badge-tooltip-standard": "このリソースはプロビジョニングされており、UIから編集することはできません",
+      "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "この{{resource}}はプロビジョニングされたものです。つまり、設定によって作成されました。この{{resource}}を更新するには、サーバー管理者にお問い合わせください。",
+      "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "この{{resource}}はUI上で編集できません"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "プロビジョニング済み"
       }
     },
@@ -2662,11 +2668,13 @@
     "rules-group": {
       "deleting": "削除しています",
       "text-federated": "フェデレーション",
-      "text-provisioned": "プロビジョニング済み"
+      "text-provisioned": "プロビジョニング済み",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3706,6 +3714,7 @@
       "non-folder-item": "非フォルダ {{itemKind}} {{itemUID}}",
       "root-title": "ダッシュボード",
       "search-placeholder": "フォルダを検索",
+      "shared-with-me": "",
       "unknown-error": "不明なエラー"
     },
     "manage-folder-nav": {
@@ -3748,7 +3757,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_other": "",
       "failed-count_other": "",
       "success-count_other": ""
@@ -3807,6 +3815,7 @@
       "label-method": "メソッド",
       "label-payload": "ペイロード",
       "label-query-parameters": "クエリのパラメータ",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "APIをテストする",
         "title-test-api": "APIをテストする"
@@ -5318,6 +5327,7 @@
       },
       "header-hidden-tooltip": "行ヘッダーは編集モードでのみ表示されます",
       "name": "行",
+      "new-row-title": "",
       "row": {
         "collapse": "行を折りたたむ",
         "expand": "行を展開する",
@@ -5423,11 +5433,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5567,14 +5573,6 @@
           "arrow": "共有",
           "title": "共有",
           "tooltip": "リンクをコピー"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "破棄",
-            "text": "このダッシュボードには未保存の変更があります。共有する前に保存する必要があります。",
-            "title": "ダッシュボードの変更を保存しますか？",
-            "yesText": "保存"
-          }
         },
         "unlink-library-panel": "ライブラリパネルのリンクを解除"
       },
@@ -6358,12 +6356,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "クラシック",
         "json": "JSON",
         "v1-resource": "V1リソース",
         "v2-resource": "V2リソース",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "ダッシュボードをバージョン{{version}}に復元してもよろしいですか？未保存の変更はすべて失われます。",
@@ -6434,7 +6435,7 @@
       "loading-connected-dashboards": "接続されたダッシュボードを読み込み中...",
       "placeholder-search-affected-dashboards": "影響を受けるダッシュボードを検索",
       "update-all": "すべて更新",
-      "affected-dashboards_other": "この更新は<1>{{count}}件のダッシュボード</1>に影響します。このパネルを使用している次のダッシュボードが影響を受けます。"
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "ダッシュボードの保存中にエラーが発生しました",
@@ -6469,6 +6470,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "共有メニューを切り替え"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -6956,6 +6963,7 @@
         "drone-datasource": "Droneデータソース",
         "git-lab-integration-and-datasource": "GitLab統合・データソース",
         "honeycomb-integration-and-datasource": "Honeycomb統合・データソース",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira統合・データソース",
         "logic-monitor-devices-datasource": "LogicMonitorデバイスデータソース",
         "mongo-db-integration-and-data-source": "MongoDB統合・データソース",
@@ -7812,7 +7820,6 @@
       "export-externally-label": "ダッシュボードをエクスポートして別のインスタンスで使用する",
       "export-format": "形式",
       "export-mode": "モデル",
-      "export-remove-ds-refs": "デプロイの詳細を削除",
       "info-text": "ダッシュボードの定義を含むファイルをコピーまたはダウンロード",
       "title": "ダッシュボードをエクスポート"
     },
@@ -7959,6 +7966,7 @@
     "name-neutral": "中立",
     "name-show-threshold-labels": "しきい値ラベルを表示",
     "name-show-threshold-markers": "しきい値マーカーを表示",
+    "neutral": "",
     "placeholder-neutral": "自動",
     "suggestions": {
       "arc": "",
@@ -9518,7 +9526,7 @@
     "query-inspector": {
       "query-inspector": "クエリ検査",
       "text-loading-query-inspector": "クエリインスペクタ読み込み中...",
-      "count-frames_other": "{{count}}個のフレーム、",
+      "count-frames_other": "",
       "count-rows_other": "{{count}}行"
     }
   },
@@ -9774,7 +9782,7 @@
       "loading-connected-dashboards": "接続されたダッシュボードを読み込み中...",
       "placeholder-search-affected-dashboards": "影響を受けるダッシュボードを検索",
       "update-all": "すべて更新",
-      "num-affected_other": "この更新は<1>{{count}}件のダッシュボード</1>に影響します。"
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -11756,7 +11764,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "削除",
       "confirm-delete-keep-resources": "リポジトリ設定を削除するものの、そのリソースを保持してもよろしいですか？",
       "confirm-delete-with-resources": "リポジトリ設定とそのすべてのリソースを削除してもよろしいですか？",
@@ -12018,6 +12072,7 @@
       "jobs": "ジョブ"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "設定",
       "source-code": "ソースコード"
     },
@@ -12438,13 +12493,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "クエリ行を折りたたむ",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "データソースヘルプを表示",
       "drag-and-drop": "ドラッグアンドドロップで並べ替え",
       "duplicate-query": "クエリを複製",
       "expand-row": "クエリ行を展開",
       "hide-response": "回答を非表示にする",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "クエリを削除",
+      "selected-datasource-label": "",
       "show-response": "応答の表示"
     },
     "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
@@ -12466,6 +12533,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12479,6 +12551,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12634,14 +12707,6 @@
       "starred": "スター付き",
       "view-as-folders": "フォルダ別に表示",
       "view-as-list": "リストとして表示"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "アルファベット順（A-Z）",
-          "alphabetically-za": "アルファベット順（Z-A）"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "インポート",
@@ -13239,7 +13304,7 @@
       "label-never": "なし"
     },
     "status-history-panel": {
-      "too-many-points_other": "ポイントが多すぎて適切に可視化できません。<1></1>より少ないポイントが返されるようにクエリを更新してください。<3></3>（{{count}}ポイントを受信）"
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

@@ -807,7 +807,8 @@
       "label-integration": "Intégration",
       "label-notification-settings": "Paramètres de notification",
       "label-section": "Paramètres facultatifs : {{name}}",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "DE",
@@ -2137,8 +2138,8 @@
         "suffix": "Actualisez la page, puis réessayez.",
         "title": "Échec lors de l’ajout ou de la mise à jour de la politique de notification"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} politiques supplémentaires",
+      "n-more-policies_other": "{{count}} politiques supplémentaires"
     },
     "policy": {
       "label-new-child-policy": "Nouvelle politique enfant",
@@ -2176,11 +2177,16 @@
     "provisioning": {
       "badge-tooltip-provenance": "Cette ressource a été mise en service via {{provenance}} et ne peut pas être modifiée via l'interface utilisateur",
       "badge-tooltip-standard": "Cette ressource a été mise en service et ne peut pas être modifiée via l'interface utilisateur",
+      "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Cette {{resource}} a été mise en service, cela signifie qu’elle a été créée par configuration. Veuillez contacter votre administrateur de serveur pour mettre à jour cette {{resource}}.",
+      "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Cette {{resource}} ne peut pas être modifiée via l’interface utilisateur"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Mis en service"
       }
     },
@@ -2673,11 +2679,13 @@
     "rules-group": {
       "deleting": "Suppression",
       "text-federated": "Fédéré",
-      "text-provisioned": "Mis en service"
+      "text-provisioned": "Mis en service",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3722,6 +3730,7 @@
       "non-folder-item": "Non-dossier {{itemKind}} {{itemUID}}",
       "root-title": "Tableaux de bord",
       "search-placeholder": "Rechercher dans les dossiers",
+      "shared-with-me": "",
       "unknown-error": "Erreur inconnue"
     },
     "manage-folder-nav": {
@@ -3764,7 +3773,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -3826,6 +3834,7 @@
       "label-method": "Méthode",
       "label-payload": "Charge utile",
       "label-query-parameters": "Paramètres de requête",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "API de test",
         "title-test-api": "API de test"
@@ -5338,6 +5347,7 @@
       },
       "header-hidden-tooltip": "En-tête de ligne visible uniquement en mode édition",
       "name": "Lignes",
+      "new-row-title": "",
       "row": {
         "collapse": "Réduire la ligne",
         "expand": "Développer la ligne",
@@ -5443,11 +5453,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5587,14 +5593,6 @@
           "arrow": "Partager",
           "title": "Partager",
           "tooltip": "Copier le lien"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Abandonner",
-            "text": "Vous avez des modifications non enregistrées dans ce tableau de bord. Vous devez les enregistrer avant de pouvoir les partager.",
-            "title": "Enregistrer les modifications dans le tableau de bord ?",
-            "yesText": "Enregistrer"
-          }
         },
         "unlink-library-panel": "Dissocier le panneau Bibliothèque"
       },
@@ -6380,12 +6378,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Classique",
         "json": "JSON",
         "v1-resource": "Ressource V1",
         "v2-resource": "Ressource V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Voulez-vous vraiment restaurer le tableau de bord dans sa version {{version}} ? Toutes les modifications non enregistrées seront perdues.",
@@ -6456,8 +6457,8 @@
       "loading-connected-dashboards": "Chargement des tableaux de bord connectés...",
       "placeholder-search-affected-dashboards": "Rechercher les tableaux de bord concernés",
       "update-all": "Tout mettre à jour",
-      "affected-dashboards_one": "Cette mise à jour affectera <1>{{count}} tableaux de bord.</1> Les tableaux de bord suivants utilisant le panneau seront affectés :",
-      "affected-dashboards_other": "Cette mise à jour affectera <1>{{count}} tableaux de bord.</1> Les tableaux de bord suivants utilisant le panneau seront affectés :"
+      "affected-dashboards_one": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Erreur d'enregistrement du tableau de bord",
@@ -6492,6 +6493,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Basculer le menu de partage"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -6980,6 +6987,7 @@
         "drone-datasource": "Source de données Drone",
         "git-lab-integration-and-datasource": "Intégration et source de données GitLab",
         "honeycomb-integration-and-datasource": "Intégration et source de données Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Intégration et source de données Jira",
         "logic-monitor-devices-datasource": "Source de données LogicMonitor Devices",
         "mongo-db-integration-and-data-source": "Intégration et source de données MongoDB",
@@ -7838,7 +7846,6 @@
       "export-externally-label": "Exporter le tableau de bord pour l'utiliser dans une autre instance",
       "export-format": "Format",
       "export-mode": "Modèle",
-      "export-remove-ds-refs": "Supprimer les détails du déploiement",
       "info-text": "Copier ou télécharger un fichier contenant la définition de votre tableau de bord",
       "title": "Exporter le tableau de bord"
     },
@@ -7985,6 +7992,7 @@
     "name-neutral": "Neutre",
     "name-show-threshold-labels": "Afficher les étiquettes de seuil",
     "name-show-threshold-markers": "Afficher les marqueurs de seuil",
+    "neutral": "",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "",
@@ -9554,8 +9562,8 @@
     "query-inspector": {
       "query-inspector": "Inspecteur de requête",
       "text-loading-query-inspector": "Chargement de l’inspecteur de requête...",
-      "count-frames_one": "{{count}} cadres, ",
-      "count-frames_other": "{{count}} cadres, ",
+      "count-frames_one": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} lignes",
       "count-rows_other": "{{count}} lignes"
     }
@@ -9814,8 +9822,8 @@
       "loading-connected-dashboards": "Chargement des tableaux de bord connectés...",
       "placeholder-search-affected-dashboards": "Rechercher les tableaux de bord concernés",
       "update-all": "Tout mettre à jour",
-      "num-affected_one": "Cette mise à jour affectera <1>{{count}} tableaux de bord.</1>",
-      "num-affected_other": "Cette mise à jour affectera <1>{{count}} tableaux de bord.</1>"
+      "num-affected_one": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -11806,7 +11814,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Supprimer",
       "confirm-delete-keep-resources": "Voulez-vous vraiment supprimer la configuration du référentiel tout en conservant ses ressources ?",
       "confirm-delete-with-resources": "Voulez-vous vraiment supprimer la configuration du référentiel ainsi que toutes ses ressources ?",
@@ -12070,6 +12124,7 @@
       "jobs": "Missions"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Paramètres",
       "source-code": "Code source"
     },
@@ -12491,13 +12546,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Réduire la ligne de requête",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Afficher l'aide de la source de données",
       "drag-and-drop": "Glisser et déposer pour réorganiser",
       "duplicate-query": "Dupliquer la requête",
       "expand-row": "Développer la ligne de requête",
       "hide-response": "Masquer la réponse",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Supprimer la requête",
+      "selected-datasource-label": "",
       "show-response": "Afficher la réponse"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
@@ -12519,6 +12586,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12532,6 +12604,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12548,10 +12621,10 @@
       "restore-button": "Restaurer",
       "restore-loading": "Restauration...",
       "title": "Restaurer les tableaux de bord",
-      "folder-picker-text_one": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_other": ""
+      "folder-picker-text_one": "Veuillez choisir un dossier dans lequel vos tableaux de bord seront restaurés.",
+      "folder-picker-text_other": "Veuillez choisir un dossier dans lequel vos tableaux de bord seront restaurés.",
+      "text_one": "Cette action restaurera {{numberOfDashboards}} tableaux de bord.",
+      "text_other": "Cette action restaurera {{numberOfDashboards}} tableaux de bord."
     }
   },
   "recentlyDeleted": {
@@ -12689,14 +12762,6 @@
       "starred": "Favoris",
       "view-as-folders": "Voir par dossier",
       "view-as-list": "Voir en tant que liste"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Par ordre alphabétique (A-Z)",
-          "alphabetically-za": "Par ordre alphabétique (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importer",
@@ -13295,8 +13360,8 @@
       "label-never": "Jamais"
     },
     "status-history-panel": {
-      "too-many-points_one": "Trop de points pour visualiser correctement. <1></1>Mettez à jour la requête pour renvoyer moins de points. <3></3>({{count}} points reçus)",
-      "too-many-points_other": "Trop de points pour visualiser correctement. <1></1>Mettez à jour la requête pour renvoyer moins de points. <3></3>({{count}} points reçus)"
+      "too-many-points_one": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

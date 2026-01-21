@@ -30,6 +30,7 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
+	"github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -47,6 +48,7 @@ import (
 type stateStore interface {
 	GetSilences(ctx context.Context) (string, error)
 	GetNotificationLog(ctx context.Context) (string, error)
+	GetFlushLog(ctx context.Context) (string, error)
 }
 
 // AutogenFn is a function that adds auto-generated routes to a configuration.
@@ -86,6 +88,8 @@ type Alertmanager struct {
 
 	promoteConfig bool
 	externalURL   string
+
+	runtimeConfig remoteClient.RuntimeConfig
 }
 
 type AlertmanagerConfig struct {
@@ -111,6 +115,9 @@ type AlertmanagerConfig struct {
 
 	// Timeout for the HTTP client.
 	Timeout time.Duration
+
+	// RuntimeConfig specifies runtime behavior settings for the remote Alertmanager.
+	RuntimeConfig remoteClient.RuntimeConfig
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -203,6 +210,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		externalURL:   cfg.ExternalURL,
 		promoteConfig: cfg.PromoteConfig,
 		smtp:          cfg.SmtpConfig,
+		runtimeConfig: cfg.RuntimeConfig,
 	}
 
 	// Parse the default configuration once and remember its hash so we can compare it later.
@@ -331,10 +339,11 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 			AlertmanagerConfig: mergeResult.Config,
 			Templates:          templates,
 		},
-		CreatedAt:   createdAtEpoch,
-		Promoted:    am.promoteConfig,
-		ExternalURL: am.externalURL,
-		SmtpConfig:  am.smtp,
+		CreatedAt:     createdAtEpoch,
+		Promoted:      am.promoteConfig,
+		ExternalURL:   am.externalURL,
+		SmtpConfig:    am.smtp,
+		RuntimeConfig: am.runtimeConfig,
 	}
 
 	cfgHash, err := calculateUserGrafanaConfigHash(payload)
@@ -388,6 +397,8 @@ func (am *Alertmanager) GetRemoteState(ctx context.Context) (notifier.ExternalSt
 			rs.Silences = p.Data
 		case "nfl":
 			rs.Nflog = p.Data
+		case "fls":
+			rs.FlushLog = p.Data
 		default:
 			return rs, fmt.Errorf("unknown part key %q", p.Key)
 		}
@@ -624,6 +635,55 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	})
 }
 
+func (am *Alertmanager) TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error) {
+	decrypted := integrationConfig.Clone()
+	err := decrypted.Decrypt(notifier.DecryptIntegrationSettings(ctx, am.crypto))
+	if err != nil {
+		return alertingModels.IntegrationStatus{}, fmt.Errorf("failed to decrypt receivers: %w", err)
+	}
+	cfg, err := notifier.IntegrationToIntegrationConfig(decrypted)
+	if err != nil {
+		return alertingModels.IntegrationStatus{}, fmt.Errorf("failed to convert integration to integration config: %w", err)
+	}
+	if err = decrypted.Validate(notifier.DecryptIntegrationSettings(ctx, am.crypto)); err != nil {
+		return alertingModels.IntegrationStatus{}, fmt.Errorf("failed to validate integration settings: %w", err)
+	}
+
+	apiReceivers := []*alertingNotify.APIReceiver{
+		{
+			ConfigReceiver: alertingNotify.ConfigReceiver{
+				Name: receiverName,
+			},
+			ReceiverConfig: alertingModels.ReceiverConfig{
+				Integrations: []*alertingModels.IntegrationConfig{
+					&cfg,
+				},
+			},
+		},
+	}
+
+	t := time.Now()
+	// TODO:yuri replace with TestIntegrations when implemented
+	result, _, err := am.mimirClient.TestReceivers(ctx, alertingNotify.TestReceiversConfigBodyParams{
+		Alert:     &alert,
+		Receivers: apiReceivers,
+	})
+	duration := time.Since(t)
+	if err != nil {
+		return alertingModels.IntegrationStatus{}, fmt.Errorf("failed to test integration: %w", err)
+	}
+	status := alertingModels.IntegrationStatus{
+		LastNotifyAttempt:         strfmt.DateTime(result.NotifedAt),
+		LastNotifyAttemptDuration: model.Duration(duration).String(),
+		Name:                      cfg.Type,
+		SendResolved:              false,
+	}
+	if len(result.Receivers) > 0 && len(result.Receivers[0].Configs) > 0 {
+		status.LastNotifyAttemptError = result.Receivers[0].Configs[0].Error
+	}
+	return status, nil
+}
+
 func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
 	for _, alert := range c.Alerts {
 		notifier.AddDefaultLabelsAndAnnotations(alert)
@@ -676,6 +736,12 @@ func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("error getting notification log: %w", err)
 	}
 	parts = append(parts, alertingClusterPB.Part{Key: notifier.NotificationLogFilename, Data: []byte(notificationLog)})
+
+	flushLog, err := am.state.GetFlushLog(ctx)
+	if err != nil {
+		return "", fmt.Errorf("error getting flush log: %w", err)
+	}
+	parts = append(parts, alertingClusterPB.Part{Key: notifier.FlushLogFilename, Data: []byte(flushLog)})
 
 	fs := alertingClusterPB.FullState{
 		Parts: parts,
