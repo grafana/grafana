@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/google/go-github/v70/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -19,12 +20,10 @@ var (
 
 //go:generate mockery --name Client --structname MockClient --inpackage --filename client_mock.go --with-expecter
 type Client interface {
-	// Apps and installations
 	GetApp(ctx context.Context) (App, error)
 	GetAppInstallation(ctx context.Context, installationID string) (AppInstallation, error)
-
-	// Repositories
 	ListInstallationRepositories(ctx context.Context, installationID string) ([]Repository, error)
+	CreateInstallationAccessToken(ctx context.Context, installationID string, repo string) (InstallationToken, error)
 }
 
 // Repository represents a GitHub repository accessible through an installation.
@@ -55,6 +54,14 @@ type AppInstallation struct {
 	Enabled bool
 }
 
+// InstallationToken represents a Github App Installation Access Token.
+type InstallationToken struct {
+	// Token is the access token value.
+	Token string
+	// ExpiresAt is the expiration time of the token.
+	ExpiresAt time.Time
+}
+
 type githubClient struct {
 	gh *github.Client
 }
@@ -74,7 +81,6 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 		return App{}, err
 	}
 
-	// TODO(ferruvich): do we need any other info?
 	return App{
 		ID:    app.GetID(),
 		Slug:  app.GetSlug(),
@@ -98,13 +104,13 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 		return AppInstallation{}, err
 	}
 
-	// TODO(ferruvich): do we need any other info?
 	return AppInstallation{
 		ID:      installation.GetID(),
 		Enabled: installation.GetSuspendedAt().IsZero(),
 	}, nil
 }
 
+<<<<<<< HEAD
 const (
 	maxRepositories = 1000 // Maximum number of repositories to fetch
 )
@@ -168,4 +174,30 @@ func (r *githubClient) ListInstallationRepositories(ctx context.Context, install
 	}
 
 	return allRepos, nil
+=======
+// CreateInstallationAccessToken creates an installation access token scoped to a specific repository.
+func (r *githubClient) CreateInstallationAccessToken(ctx context.Context, installationID string, repo string) (InstallationToken, error) {
+	id, err := strconv.Atoi(installationID)
+	if err != nil {
+		return InstallationToken{}, fmt.Errorf("invalid installation ID: %s", installationID)
+	}
+
+	opts := &github.InstallationTokenOptions{
+		Repositories: []string{repo},
+	}
+
+	token, _, err := r.gh.Apps.CreateInstallationToken(ctx, int64(id), opts)
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return InstallationToken{}, ErrServiceUnavailable
+		}
+		return InstallationToken{}, err
+	}
+
+	return InstallationToken{
+		Token:     token.GetToken(),
+		ExpiresAt: token.GetExpiresAt().Time,
+	}, nil
+>>>>>>> origin/main
 }

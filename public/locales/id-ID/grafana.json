@@ -804,7 +804,8 @@
       "label-integration": "Integrasi",
       "label-notification-settings": "Pengaturan notifikasi",
       "label-section": "Pengaturan {{name}} opsional",
-      "test": "Tes"
+      "test": "Tes",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "DARI",
@@ -2168,11 +2169,16 @@
     "provisioning": {
       "badge-tooltip-provenance": "Sumber daya ini telah disediakan melalui {{provenance}} dan tidak dapat diedit melalui UI",
       "badge-tooltip-standard": "Sumber daya ini telah disediakan dan tidak dapat diedit melalui UI",
+      "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "{{resource}} ini telah disediakan, artinya, ini dibuat melalui konfigurasi. Hubungi admin server Anda untuk memperbarui {{resource}} ini.",
+      "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "{{resource}} ini tidak dapat diedit melalui UI"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Disediakan"
       }
     },
@@ -2662,11 +2668,13 @@
     "rules-group": {
       "deleting": "Menghapus",
       "text-federated": "Federasi",
-      "text-provisioned": "Disediakan"
+      "text-provisioned": "Disediakan",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3706,6 +3714,7 @@
       "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}  ",
       "root-title": "Dasbor",
       "search-placeholder": "Cari folder",
+      "shared-with-me": "",
       "unknown-error": "Kesalahan tidak diketahui"
     },
     "manage-folder-nav": {
@@ -3748,7 +3757,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_other": "",
       "failed-count_other": "",
       "success-count_other": ""
@@ -3807,6 +3815,7 @@
       "label-method": "Metode",
       "label-payload": "Payload",
       "label-query-parameters": "Parameter kueri",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Tes API",
         "title-test-api": "Tes API"
@@ -5318,6 +5327,7 @@
       },
       "header-hidden-tooltip": "Header baris hanya terlihat dalam mode edit",
       "name": "Baris",
+      "new-row-title": "",
       "row": {
         "collapse": "Ciutkan baris",
         "expand": "Perbesar baris",
@@ -5423,11 +5433,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5567,14 +5573,6 @@
           "arrow": "Bagikan",
           "title": "Bagikan",
           "tooltip": "Salin tautan"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Buang",
-            "text": "Anda memiliki perubahan yang belum disimpan ke dasbor ini. Anda harus menyimpannya sebelum dapat membagikannya.",
-            "title": "Simpan perubahan ke dasbor?",
-            "yesText": "Simpan"
-          }
         },
         "unlink-library-panel": "Putus tautan panel pustaka"
       },
@@ -6358,12 +6356,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klasik",
         "json": "JSON",
         "v1-resource": "Sumber Daya V1",
         "v2-resource": "Sumber Daya V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Anda yakin ingin memulihkan dasbor ke versi {{version}}? Semua perubahan yang belum disimpan akan hilang.",
@@ -6434,7 +6435,7 @@
       "loading-connected-dashboards": "Memuat dasbor yang terhubung...",
       "placeholder-search-affected-dashboards": "Cari dasbor yang terpengaruh",
       "update-all": "Perbarui semua",
-      "affected-dashboards_other": "Pembaruan ini akan memengaruhi <1>{{count}} dasbor.</1> Dasbor berikut yang menggunakan panel akan terpengaruh:"
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Kesalahan saat menyimpan dasbor",
@@ -6469,6 +6470,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Alihkan menu bagikan"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -6956,6 +6963,7 @@
         "drone-datasource": "Sumber data Drone",
         "git-lab-integration-and-datasource": "Integrasi dan sumber data GitLab",
         "honeycomb-integration-and-datasource": "Integrasi dan sumber data Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Integrasi dan sumber data Jira",
         "logic-monitor-devices-datasource": "Sumber data Perangkat LogicMonitor",
         "mongo-db-integration-and-data-source": "Integrasi dan sumber data MongoDB",
@@ -7812,7 +7820,6 @@
       "export-externally-label": "Ekspor dasbor untuk digunakan di instans lain",
       "export-format": "Format",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Hapus detail penyebaran",
       "info-text": "Salin atau unduh file yang berisi definisi dasbor Anda",
       "title": "Ekspor dasbor"
     },
@@ -7959,6 +7966,7 @@
     "name-neutral": "Netral",
     "name-show-threshold-labels": "Tampilkan label ambang batas",
     "name-show-threshold-markers": "Tampilkan penanda ambang batas",
+    "neutral": "",
     "placeholder-neutral": "otomatis",
     "suggestions": {
       "arc": "",
@@ -9518,7 +9526,7 @@
     "query-inspector": {
       "query-inspector": "Pemeriksa kueri",
       "text-loading-query-inspector": "Memuat pemeriksa kueri...",
-      "count-frames_other": "{{count}} frame, ",
+      "count-frames_other": "",
       "count-rows_other": "{{count}} baris"
     }
   },
@@ -9774,7 +9782,7 @@
       "loading-connected-dashboards": "Memuat dasbor yang terhubung...",
       "placeholder-search-affected-dashboards": "Cari dasbor yang terpengaruh",
       "update-all": "Perbarui semua",
-      "num-affected_other": "Pembaruan ini akan memengaruhi <1>{{count}} dasbor.</1>"
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -11756,7 +11764,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Hapus",
       "confirm-delete-keep-resources": "Anda yakin ingin menghapus konfigurasi repositori, tetapi menyimpan sumber dayanya?",
       "confirm-delete-with-resources": "Anda yakin ingin menghapus konfigurasi repositori dan semua sumber dayanya?",
@@ -12018,6 +12072,7 @@
       "jobs": "Pekerjaan"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Pengaturan",
       "source-code": "Kode sumber"
     },
@@ -12438,13 +12493,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Ciutkan baris kueri",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Tampilkan bantuan sumber data",
       "drag-and-drop": "Seret dan lepas untuk menyusun ulang",
       "duplicate-query": "Duplikat kueri",
       "expand-row": "Perluas baris kueri",
       "hide-response": "Sembunyikan respons",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Hapus kueri",
+      "selected-datasource-label": "",
       "show-response": "Tampilkan respons"
     },
     "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
@@ -12466,6 +12533,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12479,6 +12551,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12634,14 +12707,6 @@
       "starred": "Dibintangi",
       "view-as-folders": "Lihat menurut folder",
       "view-as-list": "Lihat sebagai daftar"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Sesuai abjad (A-Z)",
-          "alphabetically-za": "Sesuai abjad (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Impor",
@@ -13239,7 +13304,7 @@
       "label-never": "Jangan pernah"
     },
     "status-history-panel": {
-      "too-many-points_other": "Terlalu banyak poin untuk divisualisasikan dengan benar. <1></1>Perbarui kueri untuk menghasilkan lebih sedikit poin. <3></3>({{count}} poin diterima)"
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

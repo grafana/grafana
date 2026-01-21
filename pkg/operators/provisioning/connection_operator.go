@@ -12,8 +12,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,10 +52,24 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 	statusPatcher := appcontroller.NewConnectionStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
 	connInformer := informerFactory.Provisioning().V0alpha1().Connections()
 
+	decryptSvc, err := setupDecryptService(deps.Config, tracing.NewNoopTracerService(), controllerCfg.tokenExchangeClient)
+	if err != nil {
+		return fmt.Errorf("failed to setup decryptService: %w", err)
+	}
+	connectionDecrypter := connection.ProvideDecrypter(decryptSvc)
+
+	// Setup connection factory and tester
+	connectionFactory, err := setupConnectionFactory(deps.Config, connectionDecrypter)
+	if err != nil {
+		return fmt.Errorf("failed to setup connection factory: %w", err)
+	}
+	tester := connection.NewSimpleConnectionTester(connectionFactory)
+
 	connController, err := controller.NewConnectionController(
 		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
 		connInformer,
 		statusPatcher,
+		tester,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create connection controller: %w", err)

@@ -81,6 +81,11 @@ type BleveOptions struct {
 	// Indexes that are not owned by current instance are eligible for cleanup.
 	// If nil, all indexes are owned by the current instance.
 	OwnsIndex func(key resource.NamespacedResource) (bool, error)
+
+	// ScoringModel defines the scoring model used for the bleve indexes
+	// Default: index.TFIDFScoring
+	// Supported values: index.TFIDFScoring and index.BM25Scoring
+	ScoringModel string
 }
 
 type bleveBackend struct {
@@ -368,7 +373,7 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	mapper, err := GetBleveMappings(fields)
+	mapper, err := GetBleveMappings(b.opts.ScoringModel, fields)
 	if err != nil {
 		return nil, err
 	}
@@ -1177,6 +1182,7 @@ func (b *bleveIndex) getIndex(
 	return b.index, nil
 }
 
+// nolint:gocyclo
 func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest")
 	defer span.End()
@@ -1235,42 +1241,62 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		}
 	}
 
-	if len(req.Query) > 1 && strings.Contains(req.Query, "*") {
-		// wildcard query is expensive - should be used with caution
-		wildcard := bleve.NewWildcardQuery(req.Query)
-		queries = append(queries, wildcard)
-	}
+	if len(req.Query) > 1 {
+		if strings.Contains(req.Query, "*") {
+			// wildcard query is expensive - should be used with caution
+			wildcard := bleve.NewWildcardQuery(req.Query)
+			queries = append(queries, wildcard)
+		} else {
+			// When using a
+			searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
+			disjoin := bleve.NewDisjunctionQuery()
+			queries = append(queries, disjoin)
 
-	if req.Query != "" && !strings.Contains(req.Query, "*") {
-		// Add a text query
-		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
+			queryFields := req.QueryFields
+			if len(queryFields) == 0 {
+				queryFields = []*resourcepb.ResourceSearchRequest_QueryField{
+					{
+						Name:  resource.SEARCH_FIELD_TITLE,
+						Type:  resourcepb.QueryFieldType_KEYWORD,
+						Boost: 10, // exact match -- includes ngrams! If they lived on their own field, we could score them differently
+					}, {
+						Name:  resource.SEARCH_FIELD_TITLE,
+						Type:  resourcepb.QueryFieldType_TEXT,
+						Boost: 2, // standard analyzer (with ngrams!)
+					}, {
+						Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
+						Type:  resourcepb.QueryFieldType_TEXT,
+						Boost: 5, // standard analyzer
+					},
+				}
+			}
 
-		// There are multiple ways to match the query string to documents. The following queries are ordered by priority:
+			for _, field := range queryFields {
+				switch field.Type {
+				case resourcepb.QueryFieldType_TEXT, resourcepb.QueryFieldType_DEFAULT:
+					q := bleve.NewMatchQuery(removeSmallTerms(req.Query)) // removeSmallTerms should be part of the analyzer
+					q.SetBoost(float64(field.Boost))
+					q.SetField(field.Name)
+					q.Analyzer = standard.Name               // analyze the text
+					q.Operator = query.MatchQueryOperatorAnd // all terms must match
+					disjoin.AddQuery(q)
 
-		// Query 1: Match the exact query string
-		queryExact := bleve.NewMatchQuery(req.Query)
-		queryExact.SetBoost(10.0)
-		queryExact.SetField(resource.SEARCH_FIELD_TITLE)
-		queryExact.Analyzer = keyword.Name                // don't analyze the query input - treat it as a single token
-		queryExact.Operator = query.MatchQueryOperatorAnd // This doesn't make a difference for keyword analyzer, we add it just to be explicit.
-		searchQuery := bleve.NewDisjunctionQuery(queryExact)
+				case resourcepb.QueryFieldType_KEYWORD:
+					q := bleve.NewMatchQuery(req.Query)
+					q.SetBoost(float64(field.Boost))
+					q.SetField(field.Name)
+					q.Analyzer = keyword.Name // don't analyze the query input - treat it as a single token
+					disjoin.AddQuery(q)
 
-		// Query 2: Phrase query with standard analyzer
-		queryPhrase := bleve.NewMatchPhraseQuery(req.Query)
-		queryPhrase.SetBoost(5.0)
-		queryPhrase.SetField(resource.SEARCH_FIELD_TITLE)
-		queryPhrase.Analyzer = standard.Name
-		searchQuery.AddQuery(queryPhrase)
-
-		// Query 3: Match query with standard analyzer
-		queryAnalyzed := bleve.NewMatchQuery(removeSmallTerms(req.Query))
-		queryAnalyzed.SetField(resource.SEARCH_FIELD_TITLE)
-		queryAnalyzed.SetBoost(2.0)
-		queryAnalyzed.Analyzer = standard.Name
-		queryAnalyzed.Operator = query.MatchQueryOperatorAnd // Make sure all terms from the query are matched
-		searchQuery.AddQuery(queryAnalyzed)
-
-		queries = append(queries, searchQuery)
+				case resourcepb.QueryFieldType_PHRASE:
+					q := bleve.NewMatchPhraseQuery(req.Query)
+					q.SetBoost(float64(field.Boost))
+					q.SetField(field.Name)
+					q.Analyzer = standard.Name
+					disjoin.AddQuery(q)
+				}
+			}
+		}
 	}
 
 	switch len(queries) {
@@ -1292,6 +1318,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			verb = utils.VerbPatch
 		}
 
+		//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 		checker, _, err := access.Compile(ctx, auth, authlib.ListRequest{
 			Namespace: b.key.Namespace,
 			Group:     b.key.Group,
@@ -1307,6 +1334,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 		// handle federation
 		for _, federated := range req.Federated {
+			//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 			checker, _, err := access.Compile(ctx, auth, authlib.ListRequest{
 				Namespace: federated.Namespace,
 				Group:     federated.Group,
@@ -1872,7 +1900,7 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 	if err != nil {
 		return nil, err
 	}
-	filteringSearcher := bleveSearch.NewFilteringSearcher(ctx, searcher, func(d *search.DocumentMatch) bool {
+	filteringSearcher := bleveSearch.NewFilteringSearcher(ctx, searcher, func(_ *search.SearchContext, d *search.DocumentMatch) bool {
 		// The doc ID has the format: <namespace>/<group>/<resourceType>/<name>
 		// IndexInternalID will be the same as the doc ID when using an in-memory index, but when using a file-based
 		// index it becomes a binary encoded number that has some other internal meaning. Using ExternalID() will get the

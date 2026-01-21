@@ -17,7 +17,6 @@ type RepoGetter interface {
 }
 
 type ConnectionGetter interface {
-	// This gets a connection with the provided name in the namespace from ctx
 	GetConnection(ctx context.Context, name string) (connection.Connection, error)
 }
 

@@ -21,6 +21,64 @@ func (_m *MockClient) EXPECT() *MockClient_Expecter {
 	return &MockClient_Expecter{mock: &_m.Mock}
 }
 
+// CreateInstallationAccessToken provides a mock function with given fields: ctx, installationID, repo
+func (_m *MockClient) CreateInstallationAccessToken(ctx context.Context, installationID string, repo string) (InstallationToken, error) {
+	ret := _m.Called(ctx, installationID, repo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateInstallationAccessToken")
+	}
+
+	var r0 InstallationToken
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (InstallationToken, error)); ok {
+		return rf(ctx, installationID, repo)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) InstallationToken); ok {
+		r0 = rf(ctx, installationID, repo)
+	} else {
+		r0 = ret.Get(0).(InstallationToken)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, installationID, repo)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_CreateInstallationAccessToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateInstallationAccessToken'
+type MockClient_CreateInstallationAccessToken_Call struct {
+	*mock.Call
+}
+
+// CreateInstallationAccessToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - installationID string
+//   - repo string
+func (_e *MockClient_Expecter) CreateInstallationAccessToken(ctx interface{}, installationID interface{}, repo interface{}) *MockClient_CreateInstallationAccessToken_Call {
+	return &MockClient_CreateInstallationAccessToken_Call{Call: _e.mock.On("CreateInstallationAccessToken", ctx, installationID, repo)}
+}
+
+func (_c *MockClient_CreateInstallationAccessToken_Call) Run(run func(ctx context.Context, installationID string, repo string)) *MockClient_CreateInstallationAccessToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_CreateInstallationAccessToken_Call) Return(_a0 InstallationToken, _a1 error) *MockClient_CreateInstallationAccessToken_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_CreateInstallationAccessToken_Call) RunAndReturn(run func(context.Context, string, string) (InstallationToken, error)) *MockClient_CreateInstallationAccessToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetApp provides a mock function with given fields: ctx
 func (_m *MockClient) GetApp(ctx context.Context) (App, error) {
 	ret := _m.Called(ctx)

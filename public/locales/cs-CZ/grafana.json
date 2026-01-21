@@ -813,7 +813,8 @@
       "label-integration": "Integrace",
       "label-notification-settings": "Nastavení oznámení",
       "label-section": "Nepovinné nastavení: {{name}}",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "Z",
@@ -2151,10 +2152,10 @@
         "suffix": "Aktualizujte stránku a zkuste to znovu.",
         "title": "Nepodařilo se přidat nebo aktualizovat zásadu oznamování"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_few": "",
-      "n-more-policies_many": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} další zásady",
+      "n-more-policies_few": "{{count}} další zásady",
+      "n-more-policies_many": "{{count}} další zásady",
+      "n-more-policies_other": "{{count}} další zásady"
     },
     "policy": {
       "label-new-child-policy": "Nová podřízená zásada",
@@ -2192,11 +2193,16 @@
     "provisioning": {
       "badge-tooltip-provenance": "Tento zdroj byl zajištěn prostřednictvím {{provenance}} a nelze ho upravovat přes uživatelské rozhraní",
       "badge-tooltip-standard": "Tento zdroj byl zajištěn a nelze ho upravovat přes uživatelské rozhraní",
+      "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Tento {{resource}} byl zajištěn. To znamená, že byl vytvořen konfigurací. Pokud chcete {{resource}} aktualizovat, obraťte se na správce serveru.",
+      "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "{{resource}} nelze upravit přes uživatelské rozhraní"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Zajištěno"
       }
     },
@@ -2695,11 +2701,13 @@
     "rules-group": {
       "deleting": "Odstraňování",
       "text-federated": "Federované",
-      "text-provisioned": "Zajištěno"
+      "text-provisioned": "Zajištěno",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3754,6 +3762,7 @@
       "non-folder-item": "Bez složky {{itemKind}} {{itemUID}}",
       "root-title": "Nástěnky",
       "search-placeholder": "Vyhledat složky",
+      "shared-with-me": "",
       "unknown-error": "Neznámá chyba"
     },
     "manage-folder-nav": {
@@ -3796,7 +3805,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_few": "",
       "all-failed_many": "",
@@ -3864,6 +3872,7 @@
       "label-method": "Metoda",
       "label-payload": "Datový obsah",
       "label-query-parameters": "Parametry dotazu",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Testovací API",
         "title-test-api": "Testovací API"
@@ -5378,6 +5387,7 @@
       },
       "header-hidden-tooltip": "Záhlaví řádku viditelné pouze v režimu úprav",
       "name": "Řádky",
+      "new-row-title": "",
       "row": {
         "collapse": "Sbalit řádek",
         "expand": "Rozbalit řádek",
@@ -5483,11 +5493,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5627,14 +5633,6 @@
           "arrow": "Sdílet",
           "title": "Sdílet",
           "tooltip": "Kopírovat odkaz"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Zahodit",
-            "text": "Máte neuložené změny této nástěnky. Před sdílením musíte změny uložit.",
-            "title": "Uložit změny nástěnky?",
-            "yesText": "Uložit"
-          }
         },
         "unlink-library-panel": "Odpojit panel knihovny"
       },
@@ -6424,12 +6422,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klasický",
         "json": "JSON",
         "v1-resource": "Zdroj V1",
         "v2-resource": "Zdroj V2",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Opravdu chcete obnovit nástěnku na verzi {{version}}? Veškeré neuložené změny budou ztraceny.",
@@ -6500,10 +6501,10 @@
       "loading-connected-dashboards": "Načítání připojených nástěnek…",
       "placeholder-search-affected-dashboards": "Hledat dotčené nástěnky",
       "update-all": "Aktualizovat vše",
-      "affected-dashboards_one": "Tato aktualizace ovlivní nástěnky: <1>{{count}}.</1> Budou ovlivněny následující nástěnky, které používají panel:",
-      "affected-dashboards_few": "Tato aktualizace ovlivní nástěnky: <1>{{count}}.</1> Budou ovlivněny následující nástěnky, které používají panel:",
-      "affected-dashboards_many": "Tato aktualizace ovlivní nástěnky: <1>{{count}}.</1> Budou ovlivněny následující nástěnky, které používají panel:",
-      "affected-dashboards_other": "Tato aktualizace ovlivní nástěnky: <1>{{count}}.</1> Budou ovlivněny následující nástěnky, které používají panel:"
+      "affected-dashboards_one": "",
+      "affected-dashboards_few": "",
+      "affected-dashboards_many": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Chyba při ukládání nástěnky",
@@ -6538,6 +6539,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Přepnout nabídku sdílení"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -7028,6 +7035,7 @@
         "drone-datasource": "Zdroj dat Drone",
         "git-lab-integration-and-datasource": "Integrace a zdroj dat GitLab",
         "honeycomb-integration-and-datasource": "Integrace a zdroj dat Honeycomb",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Integrace a zdroj dat Jira",
         "logic-monitor-devices-datasource": "Zdroj dat zařízení LogicMonitor",
         "mongo-db-integration-and-data-source": "Integrace a zdroj dat MongoDB",
@@ -7890,7 +7898,6 @@
       "export-externally-label": "Exportovat nástěnku pro použití v jiné instanci",
       "export-format": "Formát",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Odebrat podrobnosti o nasazení",
       "info-text": "Zkopírujte nebo stáhněte soubor obsahující definici vaší nástěnky",
       "title": "Exportovat nástěnku"
     },
@@ -8037,6 +8044,7 @@
     "name-neutral": "Neutrální",
     "name-show-threshold-labels": "Zobrazit štítky prahových hodnot",
     "name-show-threshold-markers": "Zobrazit značky prahových hodnot",
+    "neutral": "",
     "placeholder-neutral": "auto.",
     "suggestions": {
       "arc": "",
@@ -9626,10 +9634,10 @@
     "query-inspector": {
       "query-inspector": "Inspektor dotazů",
       "text-loading-query-inspector": "Načítání inspektora dotazů…",
-      "count-frames_one": "{{count}} snímku, ",
-      "count-frames_few": "{{count}} snímky, ",
-      "count-frames_many": "{{count}} snímků, ",
-      "count-frames_other": "{{count}} snímku, ",
+      "count-frames_one": "",
+      "count-frames_few": "",
+      "count-frames_many": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} řádky",
       "count-rows_few": "{{count}} řádků",
       "count-rows_many": "{{count}} řádku",
@@ -9894,10 +9902,10 @@
       "loading-connected-dashboards": "Načítání připojených nástěnek…",
       "placeholder-search-affected-dashboards": "Hledat dotčené nástěnky",
       "update-all": "Aktualizovat vše",
-      "num-affected_one": "Tato aktualizace ovlivní nástěnky: <1>{{count}}.</1>",
-      "num-affected_few": "Tato aktualizace ovlivní nástěnky: <1>{{count}}.</1>",
-      "num-affected_many": "Tato aktualizace ovlivní nástěnky: <1>{{count}}.</1>",
-      "num-affected_other": "Tato aktualizace ovlivní nástěnky: <1>{{count}}.</1>"
+      "num-affected_one": "",
+      "num-affected_few": "",
+      "num-affected_many": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -11906,7 +11914,53 @@
       "free-tier-limit-tooltip": "",
       "instance-fully-managed-tooltip": ""
     },
+    "connection-form": {
+      "alert-connection-deleted": "",
+      "alert-connection-saved": "",
+      "alert-connection-updated": "",
+      "back-to-connections": "",
+      "button-save": "",
+      "button-saving": "",
+      "description-app-id": "",
+      "description-installation-id": "",
+      "description-private-key": "",
+      "description-provider": "",
+      "error-delete-connection": "",
+      "error-required": "",
+      "error-save-connection": "",
+      "label-app-id": "",
+      "label-installation-id": "",
+      "label-private-key": "",
+      "label-provider": "",
+      "not-found": "",
+      "not-found-description": "",
+      "page-subtitle": "",
+      "page-title-create": "",
+      "page-title-edit": "",
+      "placeholder-app-id": "",
+      "placeholder-installation-id": "",
+      "placeholder-private-key": ""
+    },
+    "connections": {
+      "add-connection": "",
+      "cancel": "",
+      "delete": "",
+      "delete-confirm": "",
+      "delete-title": "",
+      "error-loading": "",
+      "no-connections": "",
+      "no-connections-message": "",
+      "no-results": "",
+      "page-subtitle": "",
+      "page-title": "",
+      "search-placeholder": "",
+      "status-connected": "",
+      "status-disconnected": "",
+      "status-unknown": "",
+      "view": ""
+    },
     "delete-repository-button": {
+      "button-cancel": "",
       "button-delete": "Odstranit",
       "confirm-delete-keep-resources": "Opravdu chcete odstranit konfiguraci úložiště, ale ponechat jeho zdroje?",
       "confirm-delete-with-resources": "Opravdu chcete odstranit konfiguraci úložiště a všechny jeho zdroje?",
@@ -12174,6 +12228,7 @@
       "jobs": "Práce"
     },
     "repository-actions": {
+      "connections": "",
       "settings": "Nastavení",
       "source-code": "Zdrojový kód"
     },
@@ -12597,13 +12652,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Sbalit řádek dotazu",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Zobrazit nápovědu pro zdroj dat",
       "drag-and-drop": "Přetažením změníte pořadí",
       "duplicate-query": "Duplikovat dotaz",
       "expand-row": "Rozbalit řádek dotazu",
       "hide-response": "Skrýt odpověď",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Odebrat dotaz",
+      "selected-datasource-label": "",
       "show-response": "Zobrazit odpověď"
     },
     "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
@@ -12625,6 +12692,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12638,6 +12710,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12654,14 +12727,14 @@
       "restore-button": "Obnovit",
       "restore-loading": "Probíhá obnovení…",
       "title": "Obnovit nástěnky",
-      "folder-picker-text_one": "",
-      "folder-picker-text_few": "",
-      "folder-picker-text_many": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_few": "",
-      "text_many": "",
-      "text_other": ""
+      "folder-picker-text_one": "Vyberte složku, do které budou vaše nástěnky obnoveny.",
+      "folder-picker-text_few": "Vyberte složku, do které budou vaše nástěnky obnoveny.",
+      "folder-picker-text_many": "Vyberte složku, do které budou vaše nástěnky obnoveny.",
+      "folder-picker-text_other": "Vyberte složku, do které budou vaše nástěnky obnoveny.",
+      "text_one": "Tato akce obnoví následující počet nástěnek: {{numberOfDashboards}}.",
+      "text_few": "Tato akce obnoví následující počet nástěnek: {{numberOfDashboards}}.",
+      "text_many": "Tato akce obnoví následující počet nástěnek: {{numberOfDashboards}}.",
+      "text_other": "Tato akce obnoví následující počet nástěnek: {{numberOfDashboards}}."
     }
   },
   "recentlyDeleted": {
@@ -12799,14 +12872,6 @@
       "starred": "Označeno hvězdičkou",
       "view-as-folders": "Zobrazit podle složek",
       "view-as-list": "Zobrazit jako seznam"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Abecedně (A–Z)",
-          "alphabetically-za": "Abecedně (Z–A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importovat",
@@ -13407,10 +13472,10 @@
       "label-never": "Nikdy"
     },
     "status-history-panel": {
-      "too-many-points_one": "Příliš mnoho bodů pro správnou vizualizaci. <1></1>Aktualizujte dotaz pro získání méně bodů. <3></3>(přijaté body: {{count}})",
-      "too-many-points_few": "Příliš mnoho bodů pro správnou vizualizaci. <1></1>Aktualizujte dotaz pro získání méně bodů. <3></3>(přijaté body: {{count}})",
-      "too-many-points_many": "Příliš mnoho bodů pro správnou vizualizaci. <1></1>Aktualizujte dotaz pro získání méně bodů. <3></3>(přijaté body: {{count}})",
-      "too-many-points_other": "Příliš mnoho bodů pro správnou vizualizaci. <1></1>Aktualizujte dotaz pro získání méně bodů. <3></3>(přijaté body: {{count}})"
+      "too-many-points_one": "",
+      "too-many-points_few": "",
+      "too-many-points_many": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

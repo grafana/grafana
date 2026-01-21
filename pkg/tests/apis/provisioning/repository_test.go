@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -226,6 +227,39 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				return localTmp
 			}(),
 			expectedErr: "cannot have both remove and release orphan resources finalizers",
+		},
+		{
+			name: "should succeed with repository with no token but referencing Connection",
+			repo: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "provisioning.grafana.app/v0alpha1",
+				"kind":       "Repository",
+				"metadata": map[string]any{
+					"name":      "repo-with-connection",
+					"namespace": "default",
+				},
+				"spec": map[string]any{
+					"title": "Repo With Connection",
+					"type":  "github",
+					"sync": map[string]any{
+						"enabled": false,
+						"target":  "folder",
+					},
+					"github": map[string]any{
+						"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+						"branch": "integration-test",
+					},
+					"connection": map[string]any{
+						"name": "a-connection",
+					},
+					// Having workflows would normally trigger a secure.token check
+					// But we should not do that as a connection is referenced
+					"workflows": []string{
+						string(provisioning.WriteWorkflow),
+						string(provisioning.BranchWorkflow),
+					},
+				},
+				// Missing secure.token
+			}},
 		},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -1028,4 +1062,87 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 		require.NoError(t, result.Error(), "admin should be able to GET refs")
 		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 	})
+}
+
+func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	decryptService := helper.GetEnv().DecryptService
+	require.NotNil(t, decryptService, "decrypt service not wired properly")
+
+	// Create a connection first
+	connection := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Connection",
+		"metadata": map[string]any{
+			"name":      "test-connection",
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"type": "github",
+			"github": map[string]any{
+				"appID":          "123456",
+				"installationID": "789012",
+			},
+		},
+		"secure": map[string]any{
+			"privateKey": map[string]any{
+				"create": privateKeyBase64,
+			},
+		},
+	}}
+
+	_, err := helper.CreateGithubConnection(t, ctx, connection)
+	require.NoError(t, err, "failed to create connection")
+
+	// Create a repository WITH the connection
+	repoWithConnection := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Repository",
+		"metadata": map[string]any{
+			"name":      "repo-with-connection",
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"title": "Repo With Connection",
+			"type":  "github",
+			"sync": map[string]any{
+				"enabled": false,
+				"target":  "folder",
+			},
+			"github": map[string]any{
+				"url":    "https://github.com/some/url",
+				"branch": "main",
+			},
+			"connection": map[string]any{
+				"name": "test-connection",
+			},
+		},
+	}}
+
+	_, err = helper.Repositories.Resource.Create(ctx, repoWithConnection, createOptions)
+	require.NoError(t, err, "failed to create repository with connection")
+
+	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
+		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
+		require.NoError(collectT, err, "can list values")
+		r := unstructuredToRepository(t, repo)
+		require.NotEqual(t, 0, r.Status.ObservedGeneration, "resource should be reconciled at least once")
+		require.Equal(collectT, r.Status.ObservedGeneration, r.Generation, "resource should be reconciled")
+		// Token should be there
+		require.False(collectT, r.Secure.Token.IsZero())
+
+		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", r.GetNamespace(), r.Secure.Token.Name)
+		require.NoError(t, err, "decryption error")
+		require.Len(t, decrypted, 1)
+
+		val := decrypted[r.Secure.Token.Name].Value()
+		require.NotNil(t, val)
+		require.Equal(t, "someToken", val.DangerouslyExposeAndConsumeValue())
+	}, time.Second*10, time.Second, "Expected repo to be reconciled")
 }
