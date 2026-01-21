@@ -110,7 +110,6 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 	}, nil
 }
 
-<<<<<<< HEAD
 const (
 	maxRepositories = 1000 // Maximum number of repositories to fetch
 )
@@ -174,7 +173,6 @@ func (r *githubClient) ListInstallationRepositories(ctx context.Context, install
 	}
 
 	return allRepos, nil
-=======
 // CreateInstallationAccessToken creates an installation access token scoped to a specific repository.
 func (r *githubClient) CreateInstallationAccessToken(ctx context.Context, installationID string, repo string) (InstallationToken, error) {
 	id, err := strconv.Atoi(installationID)
@@ -199,5 +197,4 @@ func (r *githubClient) CreateInstallationAccessToken(ctx context.Context, instal
 		Token:     token.GetToken(),
 		ExpiresAt: token.GetExpiresAt().Time,
 	}, nil
->>>>>>> origin/main
 }
