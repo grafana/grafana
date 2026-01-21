@@ -7,7 +7,6 @@ import {
   applyFieldOverrides,
   CustomTransformOperator,
   DataFrame,
-  DataFrameType,
   DataTransformerConfig,
   Field,
   FieldType,
@@ -34,6 +33,7 @@ import {
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { LogsFrame } from 'app/features/logs/logsFrame';
+import { getLogsExtractFields } from 'app/plugins/panel/logstable/transforms/extractLogsFields';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
@@ -366,33 +366,6 @@ const isFieldFilterable = (field: Field, bodyName: string, timeName: string) => 
 
   return true;
 };
-
-// @todo move to logsFrame
-export function getLogsExtractFields(dataFrame: DataFrame) {
-  return dataFrame.fields
-    .filter((field: Field & { typeInfo?: { frame: string } }) => {
-      const isFieldLokiLabels =
-        field.typeInfo?.frame === 'json.RawMessage' &&
-        field.name === 'labels' &&
-        dataFrame?.meta?.type !== DataFrameType.LogLines;
-      const isFieldDataplaneLabels =
-        field.name === 'labels' && field.type === FieldType.other && dataFrame?.meta?.type === DataFrameType.LogLines;
-      return isFieldLokiLabels || isFieldDataplaneLabels;
-    })
-    .flatMap((field: Field) => {
-      return [
-        {
-          id: 'extractFields',
-          options: {
-            format: 'json',
-            keepTime: false,
-            replace: false,
-            source: field.name,
-          },
-        },
-      ];
-    });
-}
 
 function buildLabelFilters(columnsWithMeta: Record<string, FieldNameMeta>) {
   // Create object of label filters to include columns selected by the user

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { DataFrame, transformDataFrame } from '@grafana/data';
@@ -27,11 +27,7 @@ export function useOrganizeFields({ extractedFrame, timeFieldName, bodyFieldName
     if (!extractedFrame || !timeFieldName || !bodyFieldName) {
       return;
     }
-    console.log('useEffect:: organize fields', {
-      extractedFrame,
-      displayedFields: options.displayedFields,
-      buildLinkToLogLine: options.buildLinkToLogLine,
-    });
+    console.log('useOrganizeFields', { bodyFieldName, extractedFrame, options, timeFieldName });
 
     organizeFields(extractedFrame, options, timeFieldName, bodyFieldName).then((frame) => {
       if (frame) {

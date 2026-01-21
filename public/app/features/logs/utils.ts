@@ -33,8 +33,8 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getConfig } from 'app/core/config';
+import { getLogsExtractFields } from 'app/plugins/panel/logstable/transforms/extractLogsFields';
 
-import { getLogsExtractFields } from '../explore/Logs/LogsTable';
 import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/utils/download';
 
 import { getDataframeFields } from './components/logParser';

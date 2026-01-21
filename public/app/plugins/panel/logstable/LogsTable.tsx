@@ -1,20 +1,8 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { lastValueFrom } from 'rxjs';
+import { useCallback, useMemo } from 'react';
 
-import {
-  applyFieldOverrides,
-  DataFrame,
-  FieldConfigSource,
-  GrafanaTheme2,
-  PanelProps,
-  transformDataFrame,
-  useDataLinksContext,
-} from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { FieldConfigSource, GrafanaTheme2, PanelProps } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { getLogsExtractFields } from 'app/features/explore/Logs/LogsTable';
 import {
   LOGS_DATAPLANE_BODY_NAME,
   LOGS_DATAPLANE_TIMESTAMP_NAME,
@@ -26,6 +14,7 @@ import type { Options as TableOptions } from 'app/plugins/panel/table/panelcfg.g
 import { LogsTableFields } from './LogsTableFields';
 import { TableNGWrap } from './TableNGWrap';
 import { DEFAULT_SIDEBAR_WIDTH } from './constants';
+import { useExtractFields } from './hooks/useExtractFields';
 import { useOrganizeFields } from './hooks/useOrganizeFields';
 import type { Options as LogsTableOptions } from './panelcfg.gen';
 import { isOnLogsTableOptionsChange, OnLogsTableOptionsChange } from './types';
@@ -58,24 +47,24 @@ export const LogsTable = ({
   id,
   renderCounter,
 }: LogsTablePanelProps) => {
-  // Variables
-  const unTransformedDataFrame = data.series[frameIndex];
+  const styles = useStyles2(getStyles, DEFAULT_SIDEBAR_WIDTH, height, width);
 
-  // Hooks
-  const logsFrame: LogsFrame | null = useMemo(() => parseLogsFrame(unTransformedDataFrame), [unTransformedDataFrame]);
+  const rawTableFrame = data.series[frameIndex];
+  const logsFrame: LogsFrame | null = useMemo(() => parseLogsFrame(rawTableFrame), [rawTableFrame]);
   const timeFieldName = logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME;
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
 
-  // State
-  const [extractedFrame, setExtractedFrame] = useState<DataFrame[] | null>(null);
-  const styles = useStyles2(getStyles, DEFAULT_SIDEBAR_WIDTH, height, width);
-  const dataLinksContext = useDataLinksContext();
-  const dataLinkPostProcessor = dataLinksContext.dataLinkPostProcessor;
-
-  // Methods
   const onLogsTableOptionsChange: OnLogsTableOptionsChange | undefined = isOnLogsTableOptionsChange(onOptionsChange)
     ? onOptionsChange
     : undefined;
+
+  // Callbacks
+  const handleTableOptionsChange = useCallback(
+    (options: TableOptions) => {
+      onLogsTableOptionsChange?.(options);
+    },
+    [onLogsTableOptionsChange]
+  );
 
   const handleLogsTableOptionsChange = useCallback(
     (options: LogsTableOptions) => {
@@ -86,18 +75,9 @@ export const LogsTable = ({
 
   const handleSetDisplayedFields = useCallback(
     (displayedFields: string[]) => {
-      console.log('handleSetDisplayedFields', displayedFields);
       handleLogsTableOptionsChange({ ...options, displayedFields });
     },
     [handleLogsTableOptionsChange, options]
-  );
-
-  // Callbacks
-  const onTableOptionsChange = useCallback(
-    (options: TableOptions) => {
-      onLogsTableOptionsChange?.(options);
-    },
-    [onLogsTableOptionsChange]
   );
 
   const handleTableOnFieldConfigChange = useCallback(
@@ -107,33 +87,13 @@ export const LogsTable = ({
     [onFieldConfigChange]
   );
 
-  /**
-   * Extract fields transform
-   */
-  useEffect(() => {
-    console.log('useEffect:: extract fields');
-    // @todo move
-    const extractFields = async () => {
-      return await lastValueFrom(
-        transformDataFrame(getLogsExtractFields(unTransformedDataFrame), [unTransformedDataFrame])
-      );
-    };
+  // Extract fields transform
+  const { extractedFrame } = useExtractFields({ rawTableFrame, fieldConfig, timeZone });
 
-    extractFields().then((data) => {
-      const extractedFrames = applyFieldOverrides({
-        data,
-        fieldConfig,
-        replaceVariables: replaceVariables ?? getTemplateSrv().replace.bind(getTemplateSrv()),
-        theme: config.theme2,
-        timeZone: timeZone,
-        dataLinkPostProcessor,
-      });
-      setExtractedFrame(extractedFrames);
-    });
-  }, [dataLinkPostProcessor, fieldConfig, replaceVariables, timeZone, unTransformedDataFrame]);
-
+  // Organize fields transform
   const { organizedFrame } = useOrganizeFields({ extractedFrame, timeFieldName, bodyFieldName, options });
 
+  // Build panel data
   const panelData = useMemo(() => {
     if (organizedFrame) {
       return { ...data, series: organizedFrame };
@@ -180,7 +140,7 @@ export const LogsTable = ({
         renderCounter={renderCounter}
         title={title}
         eventBus={eventBus}
-        onOptionsChange={onTableOptionsChange}
+        onOptionsChange={handleTableOptionsChange}
         onFieldConfigChange={handleTableOnFieldConfigChange}
         replaceVariables={replaceVariables}
         onChangeTimeRange={onChangeTimeRange}
