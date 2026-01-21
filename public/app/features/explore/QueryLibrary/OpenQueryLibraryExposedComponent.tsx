@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { ToolbarButton } from '@grafana/ui';
 
@@ -25,6 +26,7 @@ export const OpenQueryLibraryExposedComponent = ({
 
   const handleClick = useCallback(() => {
     openDrawer({ datasourceFilters, onSelectQuery, query });
+    reportInteraction(`exposed_query_library-${onSelectQuery ? 'load-queries-open' : 'save-queries-open'}`);
   }, [datasourceFilters, onSelectQuery, openDrawer, query]);
 
   if (!queryLibraryEnabled) {
