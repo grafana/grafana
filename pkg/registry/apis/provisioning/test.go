@@ -116,7 +116,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					old, _ := s.repoGetter.GetRepository(ctx, name)
 					if old != nil {
 						oldCfg := old.Config()
-						copyRepositorySecureValues(&cfg, oldCfg)
+						repository.CopySecureValues(&cfg, oldCfg)
 					}
 				}
 
@@ -167,7 +167,11 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 						return
 					}
 
-					cfg.Secure.Token.Create = token
+					cfg.Secure.Token.Create = token.Token
+					// HACK: currently, Repository validator does not allow for Connection and token
+					// to be declared together in a new / temporary Repository.
+					// We are therefore removing it in such cases.
+					cfg.Spec.Connection = nil
 				}
 
 				// Create a temporary repository

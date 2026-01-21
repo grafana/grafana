@@ -173,6 +173,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	ualert.AddStateEvaluationDurationColumn(mg)
 	ualert.AddStateLastErrorColumn(mg)
-
+	ualert.AddStateLastResultColumn(mg)
+  
 	accesscontrol.AddScopedReceiverTestingPermissions(mg)
 }

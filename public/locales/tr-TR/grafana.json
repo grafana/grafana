@@ -2138,8 +2138,8 @@
         "suffix": "Lütfen sayfayı yenileyin ve tekrar deneyin.",
         "title": "Bildirim politikası eklenemedi veya güncellenemedi"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} ek politika",
+      "n-more-policies_other": "{{count}} ek politika"
     },
     "policy": {
       "label-new-child-policy": "Çocuklara ilişkin yeni politika",
@@ -2178,8 +2178,10 @@
       "badge-tooltip-provenance": "Bu kaynak {{provenance}} aracılığıyla sağlanmıştır ve kullanıcı arayüzü üzerinden düzenlenemez",
       "badge-tooltip-standard": "Bu kaynak sağlanmıştır ve kullanıcı arayüzü üzerinden düzenlenemez",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Bu {{resource}} sağlanmış; yani yapılandırma tarafından oluşturulmuş. Bu {{resource}} ögesini güncellemek için sunucu yöneticinize başvurun.",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Bu {{resource}} kullanıcı arayüzü üzerinden düzenlenemez"
     },
     "provisioning-badge": {
@@ -2677,7 +2679,10 @@
     "rules-group": {
       "deleting": "Siliniyor",
       "text-federated": "Şirket dışı",
-      "text-provisioned": "Sağlanan"
+      "text-provisioned": "Sağlanan",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -3725,6 +3730,7 @@
       "non-folder-item": "Klasörsüz {{itemKind}} {{itemUID}}",
       "root-title": "Panolar",
       "search-placeholder": "Klasör ara",
+      "shared-with-me": "",
       "unknown-error": "Bilinmeyen hata"
     },
     "manage-folder-nav": {
@@ -3828,6 +3834,7 @@
       "label-method": "Yöntem",
       "label-payload": "Yük",
       "label-query-parameters": "Sorgu parametreleri",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Test API'si",
         "title-test-api": "Test API'si"
@@ -5446,11 +5453,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5590,14 +5593,6 @@
           "arrow": "Paylaş",
           "title": "Paylaş",
           "tooltip": "Bağlantıyı kopyala"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Vazgeç",
-            "text": "Bu panoda kaydedilmemiş değişiklikleriniz var. Paylaşmadan önce onları kaydetmeniz gerekir.",
-            "title": "Değişiklikler panoya kaydedilsin mi?",
-            "yesText": "Kaydet"
-          }
         },
         "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır"
       },
@@ -6462,8 +6457,8 @@
       "loading-connected-dashboards": "Bağlı panolar yükleniyor...",
       "placeholder-search-affected-dashboards": "Etkilenen panoları ara",
       "update-all": "Tümünü güncelle",
-      "affected-dashboards_one": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1> Paneli kullanan aşağıdaki panolar etkilenecek:",
-      "affected-dashboards_other": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1> Paneli kullanan aşağıdaki panolar etkilenecek:"
+      "affected-dashboards_one": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Pano kaydedilirken hata oluştu",
@@ -6498,6 +6493,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Paylaşım menüsünü aç/kapat"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -9561,8 +9562,8 @@
     "query-inspector": {
       "query-inspector": "Sorgu denetçisi",
       "text-loading-query-inspector": "Sorgu denetçisi yükleniyor...",
-      "count-frames_one": "{{count}} çerçeve, ",
-      "count-frames_other": "{{count}} çerçeve, ",
+      "count-frames_one": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} satır",
       "count-rows_other": "{{count}} satır"
     }
@@ -9821,8 +9822,8 @@
       "loading-connected-dashboards": "Bağlı panolar yükleniyor...",
       "placeholder-search-affected-dashboards": "Etkilenen panoları ara",
       "update-all": "Tümünü güncelle",
-      "num-affected_one": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1>",
-      "num-affected_other": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1>"
+      "num-affected_one": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12545,13 +12546,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Sorgu satırını daralt",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Veri kaynağı yardımını göster",
       "drag-and-drop": "Yeniden düzenlemek için sürükleyip bırakın",
       "duplicate-query": "Sorguyu çoğalt",
       "expand-row": "Sorgu satırını genişlet",
       "hide-response": "Yanıtı gizle",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Sorguyu kaldır",
+      "selected-datasource-label": "",
       "show-response": "Yanıtı göster"
     },
     "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor."
@@ -12608,10 +12621,10 @@
       "restore-button": "Geri yükle",
       "restore-loading": "Geri yükleniyor…",
       "title": "Panoları Geri Yükleme",
-      "folder-picker-text_one": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_other": ""
+      "folder-picker-text_one": "Lütfen panolarınızın geri yükleneceği bir klasör seçin.",
+      "folder-picker-text_other": "Lütfen panolarınızın geri yükleneceği bir klasör seçin.",
+      "text_one": "Bu işlem {{numberOfDashboards}} panoyu geri yükleyecektir.",
+      "text_other": "Bu işlem {{numberOfDashboards}} panoyu geri yükleyecektir."
     }
   },
   "recentlyDeleted": {
@@ -13347,8 +13360,8 @@
       "label-never": "Hiçbir zaman"
     },
     "status-history-panel": {
-      "too-many-points_one": "Veri noktası sayısı çok fazla olduğu için düzgün görselleştirilemiyor. <1></1>Sorguyu daha az nokta döndürecek şekilde güncelleyin. <3></3>({{count}} nokta alındı)",
-      "too-many-points_other": "Veri noktası sayısı çok fazla olduğu için düzgün görselleştirilemiyor. <1></1>Sorguyu daha az nokta döndürecek şekilde güncelleyin. <3></3>({{count}} nokta alındı)"
+      "too-many-points_one": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

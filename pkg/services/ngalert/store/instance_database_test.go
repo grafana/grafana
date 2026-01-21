@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -361,6 +362,42 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		require.Len(t, alerts, 1)
 		require.LessOrEqual(t, len(alerts[0].LastError), 1000, "LastError should be truncated to max 1000 chars")
 		require.True(t, strings.HasSuffix(alerts[0].LastError, "... (truncated)"), "Truncated error should have suffix")
+	})
+
+	t.Run("can save and read alert instance with LastResult containing NaN and Inf values", func(t *testing.T) {
+		alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
+		labels := models.InstanceLabels{"test": "nanInfValues"}
+		_, hash, _ := labels.StringAndHash()
+
+		instance := models.AlertInstance{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  alertRule.OrgID,
+				RuleUID:    alertRule.UID,
+				LabelsHash: hash,
+			},
+			CurrentState: models.InstanceStateFiring,
+			Labels:       labels,
+			LastResult: models.LastResult{
+				Values:    map[string]float64{"A": math.NaN(), "B": math.Inf(1), "C": math.Inf(-1), "D": 10.5},
+				Condition: "A",
+			},
+		}
+		err := ng.InstanceStore.SaveAlertInstance(ctx, instance)
+		require.NoError(t, err, "SaveAlertInstance should handle NaN/Inf values in LastResult")
+
+		listCmd := &models.ListAlertInstancesQuery{
+			RuleOrgID: instance.RuleOrgID,
+			RuleUID:   instance.RuleUID,
+		}
+		alerts, err := ng.InstanceStore.ListAlertInstances(ctx, listCmd)
+		require.Len(t, alerts, 1)
+		require.NoError(t, err)
+
+		expectedLastResult := models.LastResult{
+			Values:    map[string]float64{"A": math.NaN(), "B": math.Inf(1), "C": math.Inf(-1), "D": 10.5},
+			Condition: "A",
+		}
+		require.True(t, cmp.Equal(expectedLastResult, alerts[0].LastResult, cmpopts.EquateNaNs()), "LastResult mismatch after round-trip")
 	})
 }
 

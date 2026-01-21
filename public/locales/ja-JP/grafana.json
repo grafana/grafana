@@ -2170,8 +2170,10 @@
       "badge-tooltip-provenance": "このリソースは{{provenance}}を介してプロビジョニングされており、UIから編集することはできません",
       "badge-tooltip-standard": "このリソースはプロビジョニングされており、UIから編集することはできません",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "この{{resource}}はプロビジョニングされたものです。つまり、設定によって作成されました。この{{resource}}を更新するには、サーバー管理者にお問い合わせください。",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "この{{resource}}はUI上で編集できません"
     },
     "provisioning-badge": {
@@ -2666,7 +2668,10 @@
     "rules-group": {
       "deleting": "削除しています",
       "text-federated": "フェデレーション",
-      "text-provisioned": "プロビジョニング済み"
+      "text-provisioned": "プロビジョニング済み",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -3709,6 +3714,7 @@
       "non-folder-item": "非フォルダ {{itemKind}} {{itemUID}}",
       "root-title": "ダッシュボード",
       "search-placeholder": "フォルダを検索",
+      "shared-with-me": "",
       "unknown-error": "不明なエラー"
     },
     "manage-folder-nav": {
@@ -3809,6 +3815,7 @@
       "label-method": "メソッド",
       "label-payload": "ペイロード",
       "label-query-parameters": "クエリのパラメータ",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "APIをテストする",
         "title-test-api": "APIをテストする"
@@ -5426,11 +5433,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5570,14 +5573,6 @@
           "arrow": "共有",
           "title": "共有",
           "tooltip": "リンクをコピー"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "破棄",
-            "text": "このダッシュボードには未保存の変更があります。共有する前に保存する必要があります。",
-            "title": "ダッシュボードの変更を保存しますか？",
-            "yesText": "保存"
-          }
         },
         "unlink-library-panel": "ライブラリパネルのリンクを解除"
       },
@@ -6440,7 +6435,7 @@
       "loading-connected-dashboards": "接続されたダッシュボードを読み込み中...",
       "placeholder-search-affected-dashboards": "影響を受けるダッシュボードを検索",
       "update-all": "すべて更新",
-      "affected-dashboards_other": "この更新は<1>{{count}}件のダッシュボード</1>に影響します。このパネルを使用している次のダッシュボードが影響を受けます。"
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "ダッシュボードの保存中にエラーが発生しました",
@@ -6475,6 +6470,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "共有メニューを切り替え"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -9525,7 +9526,7 @@
     "query-inspector": {
       "query-inspector": "クエリ検査",
       "text-loading-query-inspector": "クエリインスペクタ読み込み中...",
-      "count-frames_other": "{{count}}個のフレーム、",
+      "count-frames_other": "",
       "count-rows_other": "{{count}}行"
     }
   },
@@ -9781,7 +9782,7 @@
       "loading-connected-dashboards": "接続されたダッシュボードを読み込み中...",
       "placeholder-search-affected-dashboards": "影響を受けるダッシュボードを検索",
       "update-all": "すべて更新",
-      "num-affected_other": "この更新は<1>{{count}}件のダッシュボード</1>に影響します。"
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12492,13 +12493,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "クエリ行を折りたたむ",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "データソースヘルプを表示",
       "drag-and-drop": "ドラッグアンドドロップで並べ替え",
       "duplicate-query": "クエリを複製",
       "expand-row": "クエリ行を展開",
       "hide-response": "回答を非表示にする",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "クエリを削除",
+      "selected-datasource-label": "",
       "show-response": "応答の表示"
     },
     "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
@@ -13291,7 +13304,7 @@
       "label-never": "なし"
     },
     "status-history-panel": {
-      "too-many-points_other": "ポイントが多すぎて適切に可視化できません。<1></1>より少ないポイントが返されるようにクエリを更新してください。<3></3>（{{count}}ポイントを受信）"
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

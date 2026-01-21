@@ -36,7 +36,7 @@ type ConnectionSecure struct {
 }
 
 func (v ConnectionSecure) IsZero() bool {
-	return v.PrivateKey.IsZero() && v.Token.IsZero()
+	return v.PrivateKey.IsZero() && v.Token.IsZero() && v.ClientSecret.IsZero()
 }
 
 type GitHubConnectionConfig struct {
