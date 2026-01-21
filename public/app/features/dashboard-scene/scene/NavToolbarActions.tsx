@@ -398,6 +398,27 @@ export function ToolbarActions({ dashboard }: Props) {
   });
 
   toolbarActions.push({
+    group: 'settings',
+    condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
+    render: () => (
+      <Button
+        onClick={() => {
+          locationService.partial({ editview: 'theme' });
+        }}
+        tooltip={t('dashboard.toolbar.dashboard-theme.tooltip', 'Edit dashboard theme and styling')}
+        fill="text"
+        size="sm"
+        key="theme"
+        variant="secondary"
+        icon="palette"
+        data-testid="dashboard-toolbar-theme-button"
+      >
+        <Trans i18nKey="dashboard.toolbar.dashboard-theme.label">Theme</Trans>
+      </Button>
+    ),
+  });
+
+  toolbarActions.push({
     group: 'main-buttons',
     condition: isEditing && !isNew && isShowingDashboard,
     render: () => (

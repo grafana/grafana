@@ -310,6 +310,9 @@ export function createDashboardSceneFromDashboardModel(
         }
       : undefined;
 
+  // @ts-expect-error not in dashboard schema because it's experimental
+  const backgroundImage: string | undefined = oldModel.backgroundImage;
+
   // Create profiler once and reuse to avoid duplicate metadata setting
   const dashboardProfiler = getDashboardSceneProfilerWithMetadata(oldModel.uid, oldModel.title);
 
@@ -379,6 +382,7 @@ export function createDashboardSceneFromDashboardModel(
       title: oldModel.title,
       version: oldModel.version,
       scopeMeta,
+      backgroundImage,
       body,
       $timeRange: new SceneTimeRange({
         from: oldModel.time.from,

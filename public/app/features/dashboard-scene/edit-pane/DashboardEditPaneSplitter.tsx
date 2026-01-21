@@ -29,16 +29,25 @@ interface Props {
 
 export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
-  const { editPane } = dashboard.state;
+  const { editPane, backgroundImage } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
 
+  const backgroundStyle: React.CSSProperties | undefined = backgroundImage
+    ? {
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }
+    : undefined;
+
   if (!config.featureToggles.dashboardNewLayouts) {
     return (
       <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
-        <div className={styles.canvasWrappperOld}>
+        <div className={styles.canvasWrappperOld} style={backgroundStyle}>
           <NavToolbarActions dashboard={dashboard} />
           <div className={styles.controlsWrapperSticky}>{controls}</div>
           <div className={styles.body}>{body}</div>
@@ -103,6 +112,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
         <div
           className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk)}
           data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+          style={backgroundStyle}
         >
           <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>{body}</NativeScrollbar>
         </div>
@@ -115,7 +125,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
         data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
         {...sidebarContext.outerWrapperProps}
       >
-        <div className={styles.scrollContainer} ref={onBodyRef} onPointerDown={onClearSelection}>
+        <div className={styles.scrollContainer} ref={onBodyRef} onPointerDown={onClearSelection} style={backgroundStyle}>
           {body}
         </div>
 

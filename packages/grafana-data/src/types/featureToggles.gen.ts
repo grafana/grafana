@@ -240,6 +240,10 @@ export interface FeatureToggles {
   */
   kubernetesDashboards?: boolean;
   /**
+  * Use kubernetes API for dashboard version history
+  */
+  kubernetesDashboardVersions?: boolean;
+  /**
   * Enables k8s short url api and uses it under the hood when handling legacy /api
   */
   kubernetesShortURLs?: boolean;

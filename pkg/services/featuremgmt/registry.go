@@ -380,6 +380,13 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
+			Name:         "kubernetesDashboardVersions",
+			Description:  "Use kubernetes API for dashboard version history",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:            "kubernetesShortURLs",
 			Description:     "Enables k8s short url api and uses it under the hood when handling legacy /api",
 			Stage:           FeatureStageExperimental,

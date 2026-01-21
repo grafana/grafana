@@ -15,6 +15,7 @@ import { DashboardLinksEditView } from './DashboardLinksEditView';
 import { GeneralSettingsEditView } from './GeneralSettingsEditView';
 import { JsonModelEditView } from './JsonModelEditView';
 import { PermissionsEditView } from './PermissionsEditView';
+import { ThemeEditView } from './ThemeEditView';
 import { VariablesEditView } from './VariablesEditView';
 import { VersionsEditView } from './VersionsEditView';
 
@@ -63,6 +64,11 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
       url: locationUtil.getUrlForPartial(location, { editview: 'links', editIndex: null }),
       active: currentEditView === 'links',
     });
+    pageNav.children!.push({
+      text: t('dashboard-settings.theme.title', 'Theme & Styling'),
+      url: locationUtil.getUrlForPartial(location, { editview: 'theme', editIndex: null }),
+      active: currentEditView === 'theme',
+    });
   }
 
   if (dashboard.state.uid && dashboard.state.meta.canSave) {
@@ -100,6 +106,8 @@ export function createDashboardEditViewFor(editview: string): DashboardEditView 
       return new VariablesEditView({});
     case 'links':
       return new DashboardLinksEditView({});
+    case 'theme':
+      return new ThemeEditView({});
     case 'versions':
       return new VersionsEditView({});
     case 'json-model':
