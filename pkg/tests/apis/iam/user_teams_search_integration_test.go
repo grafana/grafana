@@ -34,35 +34,35 @@ func TestIntegrationUserTeams(t *testing.T) {
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 
 	for _, mode := range modes {
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			EnableLog:            true,
-			AppModeProduction:    false,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				"users.iam.grafana.app": {
-					DualWriterMode: mode,
+		t.Run(fmt.Sprintf("With dual writer mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				EnableLog:            true,
+				AppModeProduction:    false,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"users.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+					"teams.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+					"teambindings.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
 				},
-				"teams.iam.grafana.app": {
-					DualWriterMode: mode,
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesAuthnMutation,
+					featuremgmt.FlagKubernetesTeamBindings,
 				},
-				"teambindings.iam.grafana.app": {
-					DualWriterMode: mode,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-				featuremgmt.FlagKubernetesAuthnMutation,
-				featuremgmt.FlagKubernetesTeamBindings,
-			},
-			UnifiedStorageEnableSearch: true,
+				UnifiedStorageEnableSearch: true,
+			})
+
+			t.Cleanup(func() { helper.Shutdown() })
+
+			doUserTeamsTests(t, helper, mode)
 		})
-
-		t.Cleanup(func() { helper.Shutdown() })
-
-		doUserTeamsTests(t, helper, mode)
-
-		helper.Shutdown()
 	}
 }
 
