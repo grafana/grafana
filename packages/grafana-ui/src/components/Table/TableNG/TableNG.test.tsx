@@ -97,6 +97,12 @@ const createNestedDataFrame = (): DataFrame => {
     name: 'NestedData',
     fields: [
       {
+        name: 'Nested hidden',
+        type: FieldType.string,
+        values: ['secret1', 'secret2'],
+        config: { custom: { hideFrom: { viz: true } } },
+      },
+      {
         name: 'Nested A',
         type: FieldType.string,
         values: ['N1', 'N2'],
@@ -412,6 +418,10 @@ describe('TableNG', () => {
         expectedExpandedContent.forEach((text) => {
           expect(screen.getByText(text)).toBeInTheDocument();
         });
+
+        // Hidden nested fields should stay hidden
+        expect(screen.queryByText('Nested hidden')).not.toBeInTheDocument();
+        expect(screen.queryByText('secret1')).not.toBeInTheDocument();
 
         // Check if the expanded row has the aria-expanded attribute
         const expandedRow = container.querySelector('[aria-expanded="true"]');

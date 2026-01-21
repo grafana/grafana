@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/google/go-github/v70/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -48,7 +49,7 @@ type InstallationToken struct {
 	// Token is the access token value.
 	Token string
 	// ExpiresAt is the expiration time of the token.
-	ExpiresAt string
+	ExpiresAt time.Time
 }
 
 type githubClient struct {
@@ -121,6 +122,6 @@ func (r *githubClient) CreateInstallationAccessToken(ctx context.Context, instal
 
 	return InstallationToken{
 		Token:     token.GetToken(),
-		ExpiresAt: token.GetExpiresAt().String(),
+		ExpiresAt: token.GetExpiresAt().Time,
 	}, nil
 }

@@ -3714,6 +3714,7 @@
       "non-folder-item": "非文件夹 {{itemKind}} {{itemUID}}",
       "root-title": "数据面板",
       "search-placeholder": "搜索文件夹",
+      "shared-with-me": "",
       "unknown-error": "未知错误"
     },
     "manage-folder-nav": {
@@ -3814,6 +3815,7 @@
       "label-method": "方法",
       "label-payload": "负载",
       "label-query-parameters": "查询参数",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "测试 API",
         "title-test-api": "测试 API"

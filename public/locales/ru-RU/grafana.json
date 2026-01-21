@@ -3762,6 +3762,7 @@
       "non-folder-item": "{{itemKind}} {{itemUID}} не является папкой",
       "root-title": "Дашборды",
       "search-placeholder": "Поиск папок",
+      "shared-with-me": "",
       "unknown-error": "Неизвестная ошибка"
     },
     "manage-folder-nav": {
@@ -3871,6 +3872,7 @@
       "label-method": "Метод",
       "label-payload": "Полезные данные",
       "label-query-parameters": "Параметры запроса",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Тест API",
         "title-test-api": "Тест API"
