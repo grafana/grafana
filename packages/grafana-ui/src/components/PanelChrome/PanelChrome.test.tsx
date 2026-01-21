@@ -239,11 +239,7 @@ it('does not select the panel when clicking interactive content', async () => {
         onClear: jest.fn(),
       }}
     >
-      <PanelChrome
-        width={100}
-        height={100}
-        selectionId="panel-1"
-      >
+      <PanelChrome width={100} height={100} selectionId="panel-1">
         {() => (
           <div>
             <button type="button">Legend item</button>
