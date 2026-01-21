@@ -22,8 +22,8 @@ import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDash
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { dispatch } from 'app/store/store';
 import { PermissionLevel } from 'app/types/acl';
-import { SaveDashboardResponseDTO, ImportDashboardResponseDTO } from 'app/types/dashboard';
-import { FolderListItemDTO, FolderDTO, DescendantCount, DescendantCountDTO } from 'app/types/folders';
+import { ImportDashboardResponseDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { DescendantCount, DescendantCountDTO, FolderDTO, FolderListItemDTO } from 'app/types/folders';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
@@ -356,6 +356,7 @@ export const browseDashboardsAPI = createApi({
       invalidatesTags: ['getFolder'],
       queryFn: async ({ dashboardUIDs }) => {
         const pageStateManager = getDashboardScenePageStateManager();
+        const restoreDashboardsEnabled = config.featureToggles.restoreDashboards;
         let deletedCount = 0;
         const deletedDashboardUIDs: string[] = [];
         // Delete all the dashboards sequentially
@@ -375,8 +376,7 @@ export const browseDashboardsAPI = createApi({
             }
           }
 
-          const shouldShowSuccessAlert = !config.featureToggles.restoreDashboards;
-          await getDashboardAPI().deleteDashboard(dashboardUID, shouldShowSuccessAlert);
+          await getDashboardAPI().deleteDashboard(dashboardUID, !restoreDashboardsEnabled);
 
           deletedCount++;
           deletedDashboardUIDs.push(dashboardUID);
@@ -390,12 +390,9 @@ export const browseDashboardsAPI = createApi({
           }
 
           // Show success notification after all deletions
-          if (config.featureToggles.restoreDashboards) {
+          if (restoreDashboardsEnabled) {
             // Show notification with button to Recently Deleted
-            const title =
-              deletedCount === 1
-                ? t('browse-dashboards.delete.success', 'Dashboard deleted')
-                : t('browse-dashboards.delete.success-multi', 'Dashboards deleted');
+            const title = t('browse-dashboards.delete.success', 'Dashboard deleted', { count: deletedCount });
             const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View Recently Deleted');
             const component = buildNotificationButton({
               buttonLabel: buttonText,
