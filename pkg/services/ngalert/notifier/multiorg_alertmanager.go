@@ -421,6 +421,12 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 	}
 }
 
+// Peer returns the cluster peer for this Alertmanager.
+// Returns nil if clustering is not configured.
+func (moa *MultiOrgAlertmanager) Peer() alertingNotify.ClusterPeer {
+	return moa.peer
+}
+
 // AlertmanagerFor returns the Alertmanager instance for the organization provided.
 // When the organization does not have an active Alertmanager, it returns a ErrNoAlertmanagerForOrg.
 // When the Alertmanager of the organization is not ready, it returns a ErrAlertmanagerNotReady.

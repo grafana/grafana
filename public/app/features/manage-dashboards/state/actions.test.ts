@@ -96,7 +96,6 @@ describe('importDashboard', () => {
       constants: [],
       dataSources: [
         {
-          id: 1,
           uid: 'ds-uid',
           name: 'ds-name',
           type: 'prometheus',

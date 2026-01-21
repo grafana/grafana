@@ -53,7 +53,9 @@ export class DatasourceSrv implements DataSourceService {
       }
 
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
-      this.settingsMapById[dsSettings.id] = dsSettings;
+      if (dsSettings.id) {
+        this.settingsMapById[dsSettings.id] = dsSettings;
+      }
     }
 
     for (const ds of Object.values(this.runtimeDataSources)) {
