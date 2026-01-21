@@ -389,7 +389,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, timeZone, queryResponse, showFlameGraph } = this.props;
+    const { graphResult, timeZone, queryResponse, showFlameGraph, queriesChangedIndexAtRun } = this.props;
 
     return (
       <ContentOutlineItem panelId="Graph" title={t('explore.explore.title-graph', 'Graph')} icon="graph-bar">
@@ -404,6 +404,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           splitOpenFn={this.onSplitOpen('graph')}
           loadingState={queryResponse.state}
           eventBus={this.graphEventBus}
+          queriesChangedIndexAtRun={queriesChangedIndexAtRun}
         />
       </ContentOutlineItem>
     );
@@ -811,6 +812,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     correlationEditorHelperData,
     compact,
     queryLibraryRef,
+    queriesChangedIndexAtRun,
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -845,6 +847,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     correlationEditorDetails: explore.correlationEditorDetails,
     exploreActiveDS: selectExploreDSMaps(state),
     queryLibraryRef,
+    queriesChangedIndexAtRun,
   };
 }
 
