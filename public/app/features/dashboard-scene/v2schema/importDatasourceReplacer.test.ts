@@ -478,6 +478,65 @@ describe('replaceDatasourcesInDashboard', () => {
     });
   });
 
+  describe('GroupByVariable', () => {
+    it('replaces hardcoded datasource in GroupByVariable', () => {
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [
+          {
+            kind: 'GroupByVariable',
+            group: 'prometheus',
+            datasource: { name: 'old-prom-uid' },
+            spec: {
+              name: 'groupby',
+              hide: 'dontHide',
+              skipUrlSync: false,
+              allowCustomValue: false,
+              options: [],
+              current: { text: '', value: '' },
+            },
+          },
+        ],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, mappings);
+
+      const variable = result.variables?.[0];
+      expect(variable?.kind).toBe('GroupByVariable');
+      if (variable?.kind === 'GroupByVariable') {
+        expect(variable.datasource?.name).toBe('new-prom-uid');
+      }
+    });
+
+    it('preserves variable reference in GroupByVariable', () => {
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [
+          {
+            kind: 'GroupByVariable',
+            group: 'prometheus',
+            datasource: { name: '${ds}' },
+            spec: {
+              name: 'groupby',
+              hide: 'dontHide',
+              skipUrlSync: false,
+              allowCustomValue: false,
+              options: [],
+              current: { text: '', value: '' },
+            },
+          },
+        ],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, mappings);
+
+      const variable = result.variables?.[0];
+      if (variable?.kind === 'GroupByVariable') {
+        expect(variable.datasource?.name).toBe('${ds}');
+      }
+    });
+  });
+
   describe('edge cases', () => {
     it('handles mixed variable and hardcoded datasources', () => {
       const dashboard: DashboardV2Spec = {

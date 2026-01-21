@@ -104,7 +104,7 @@ function replaceVariableDatasources(
       };
     }
 
-    if (variable.kind === 'AdhocVariable') {
+    if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
       const dsType = variable.group;
       const currentDsName = variable.datasource?.name;
       const ds = dsType ? mappings[dsType] : undefined;
