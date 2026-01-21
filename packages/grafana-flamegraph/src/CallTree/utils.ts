@@ -9,11 +9,9 @@ export interface CallTreeNode {
   totalPercent: number;
   depth: number;
   parentId?: string;
-  hasChildren: boolean;
-  childCount: number;
   subtreeSize: number;
   levelItem: LevelItem;
-  subRows?: CallTreeNode[];
+  children?: CallTreeNode[];
 
   selfRight?: number;
   totalRight?: number;
@@ -24,7 +22,7 @@ export interface CallTreeNode {
 
 /**
  * Build all call tree nodes from the root level items.
- * Returns an array of root nodes, each with their children in subRows.
+ * Returns an array of root nodes, each with their children.
  * This handles cases where there might be multiple root items.
  *
  * For diff flame graphs, separates left (baseline) and right (comparison) totals
@@ -56,7 +54,6 @@ export function buildAllCallTreeNodes(data: FlameGraphDataContainer): CallTreeNo
 /**
  * Build a hierarchical call tree node from the LevelItem structure.
  * Each node gets a unique ID based on its path in the tree.
- * Children are stored in the subRows property for react-table useExpanded.
  */
 export function buildCallTreeNode(
   data: FlameGraphDataContainer,
@@ -112,15 +109,14 @@ export function buildCallTreeNode(
     totalPercent = rootTotal > 0 ? (total / rootTotal) * 100 : 0;
   }
 
-  const subRows =
+  const children =
     rootItem.children.length > 0
       ? rootItem.children.map((child, index) => {
-        return buildCallTreeNode(data, child, rootTotalLeft, rootTotalRight, nodeId, depth, index);
-      })
+          return buildCallTreeNode(data, child, rootTotalLeft, rootTotalRight, nodeId, depth, index);
+        })
       : undefined;
 
-  const childCount = rootItem.children.length;
-  const subtreeSize = subRows ? subRows.reduce((sum, child) => sum + child.subtreeSize + 1, 0) : 0;
+  const subtreeSize = children ? children.reduce((sum, child) => sum + child.subtreeSize + 1, 0) : 0;
 
   return {
     id: nodeId,
@@ -131,11 +127,9 @@ export function buildCallTreeNode(
     totalPercent,
     depth,
     parentId,
-    hasChildren: rootItem.children.length > 0,
-    childCount,
     subtreeSize,
     levelItem: rootItem,
-    subRows,
+    children,
     selfRight,
     totalRight,
     selfPercentRight,
@@ -162,12 +156,12 @@ export function getInitialExpandedState(nodes: CallTreeNode[], levelsToExpand = 
  * Recursively collect expanded state for nodes up to a certain depth.
  */
 function collectExpandedByDepth(node: CallTreeNode, levelsToExpand: number, expanded: Record<string, boolean>): void {
-  if (node.depth < levelsToExpand && node.hasChildren) {
+  if (node.depth < levelsToExpand && node.children && node.children.length > 0) {
     expanded[node.id] = true;
   }
 
-  if (node.subRows) {
-    node.subRows.forEach((child) => collectExpandedByDepth(child, levelsToExpand, expanded));
+  if (node.children) {
+    node.children.forEach((child) => collectExpandedByDepth(child, levelsToExpand, expanded));
   }
 }
 
@@ -256,15 +250,14 @@ export function buildCallersTree(levels: LevelItem[][], data: FlameGraphDataCont
 
     // In the callers tree, we traverse via parents (going up the call stack)
     const callers = item.parents || [];
-    const subRows =
+    const children =
       callers.length > 0
         ? callers.map((caller, idx) => {
             return buildNode(caller, `${nodeId}.${idx}`, depth + 1, nodeId);
           })
         : undefined;
 
-    const childCount = callers.length;
-    const subtreeSize = subRows ? subRows.reduce((sum, child) => sum + child.subtreeSize + 1, 0) : 0;
+    const subtreeSize = children ? children.reduce((sum, child) => sum + child.subtreeSize + 1, 0) : 0;
 
     return {
       id: nodeId,
@@ -275,11 +268,9 @@ export function buildCallersTree(levels: LevelItem[][], data: FlameGraphDataCont
       totalPercent,
       depth,
       parentId,
-      hasChildren: callers.length > 0,
-      childCount,
       subtreeSize,
       levelItem: item,
-      subRows,
+      children,
       selfRight,
       totalRight,
       selfPercentRight,

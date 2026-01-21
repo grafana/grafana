@@ -126,8 +126,8 @@ const FlameGraphCallTreeContainer = memo(
             if (byLabel ? node.label === searchKey : node.id === searchKey) {
               return node;
             }
-            if (node.subRows) {
-              const found = findNode(node.subRows, searchKey, byLabel);
+            if (node.children) {
+              const found = findNode(node.children, searchKey, byLabel);
               if (found) {
                 return found;
               }
@@ -148,9 +148,7 @@ const FlameGraphCallTreeContainer = memo(
             if (parent) {
               const modifiedParent: CallTreeNode = {
                 ...parent,
-                subRows: [focused],
-                hasChildren: true,
-                childCount: 1,
+                children: [focused],
               };
               nodesToUse = [modifiedParent];
             } else {
@@ -225,8 +223,8 @@ const FlameGraphCallTreeContainer = memo(
             matches.push({ id: node.id, total: node.total });
           }
 
-          if (node.subRows && matches.length < MAX_MATCHES) {
-            search(node.subRows);
+          if (node.children && matches.length < MAX_MATCHES) {
+            search(node.children);
           }
         }
       };
@@ -261,8 +259,8 @@ const FlameGraphCallTreeContainer = memo(
           if (itemIndexesMatch(node.levelItem.itemIndexes, focusedItemIndexes)) {
             return node.id;
           }
-          if (node.subRows) {
-            const found = findExactMatch(node.subRows);
+          if (node.children) {
+            const found = findExactMatch(node.children);
             if (found) {
               return found;
             }
@@ -336,8 +334,8 @@ const FlameGraphCallTreeContainer = memo(
           if (node.id === targetId) {
             return true;
           }
-          if (node.subRows && node.hasChildren) {
-            const foundInSubtree = expandPathToNode(node.subRows, targetId);
+          if (node.children && node.children.length > 0) {
+            const foundInSubtree = expandPathToNode(node.children, targetId);
             if (foundInSubtree) {
               baseExpanded[node.id] = true;
               return true;
@@ -357,13 +355,13 @@ const FlameGraphCallTreeContainer = memo(
         const isLabelSearch = focusedNodeId.startsWith('label:');
         const searchLabel = isLabelSearch ? focusedNodeId.substring(6) : undefined;
 
-        if (rootNode.hasChildren) {
+        if (rootNode.children && rootNode.children.length > 0) {
           baseExpanded['0'] = true;
         }
 
         const isRootTheFocusedNode = isLabelSearch ? rootNode.label === searchLabel : rootNode.id === focusedNodeId;
 
-        if (!isRootTheFocusedNode && rootNode.hasChildren) {
+        if (!isRootTheFocusedNode && rootNode.children && rootNode.children.length > 0) {
           baseExpanded['0.0'] = true;
         }
       }
@@ -371,7 +369,7 @@ const FlameGraphCallTreeContainer = memo(
       if (callersNodeLabel && callersNode && nodes.length > 0) {
         expandPathToNode(nodes, callersNode.id);
 
-        if (callersNode.hasChildren) {
+        if (callersNode.children && callersNode.children.length > 0) {
           baseExpanded[callersNode.id] = true;
         }
       }
@@ -437,7 +435,7 @@ const FlameGraphCallTreeContainer = memo(
             label={row.original.label}
             itemIndexes={row.original.levelItem.itemIndexes}
             levelItem={row.original.levelItem}
-            hasChildren={row.original.hasChildren}
+            hasChildren={Boolean(row.original.children?.length)}
             depth={row.original.depth - depthOffset}
             parentId={row.original.parentId}
             onFocus={handleSetFocusMode}
@@ -467,7 +465,7 @@ const FlameGraphCallTreeContainer = memo(
             row={row as Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>}
             value={value}
             depth={row.original.depth - depthOffset}
-            hasChildren={row.original.hasChildren}
+            hasChildren={Boolean(row.original.children?.length)}
             rowIndex={rowIndex}
             rows={tableInstance.rows}
             onSymbolClick={onSymbolClick}
@@ -626,7 +624,7 @@ const FlameGraphCallTreeContainer = memo(
       {
         columns,
         data: tableNodes,
-        getSubRows: (row) => row.subRows || [],
+        getSubRows: (row) => row.children || [],
         initialState: {
           sortBy: [{ id: 'total', desc: true }],
           expanded: calculatedExpanded,
@@ -1017,10 +1015,10 @@ function FunctionCellWithExpander({
   toggleRowExpanded: (id: string[], value?: boolean) => void;
 }) {
   const expandSingleChildChain = (node: CallTreeNode) => {
-    if (node.childCount === 1 && node.subRows && node.subRows.length === 1) {
-      const childNode = node.subRows[0];
+    if (node.children?.length === 1) {
+      const childNode = node.children[0];
       toggleRowExpanded([childNode.id], true);
-      if (childNode.hasChildren) {
+      if (childNode.children && childNode.children.length > 0) {
         expandSingleChildChain(childNode);
       }
     }
@@ -1121,10 +1119,10 @@ function FunctionCellWithExpander({
         <Button fill="text" size="sm" onClick={handleClick} className={styles.functionButton}>
           {value}
         </Button>
-        {!compact && row.original.childCount > 0 && (
+        {!compact && row.original.children && row.original.children.length > 0 && (
           <span className={styles.nodeBadge}>
-            {row.original.childCount} {row.original.childCount === 1 ? 'child' : 'children'}, {row.original.subtreeSize}{' '}
-            {row.original.subtreeSize === 1 ? 'node' : 'nodes'}
+            {row.original.children.length} {row.original.children.length === 1 ? 'child' : 'children'},{' '}
+            {row.original.subtreeSize} {row.original.subtreeSize === 1 ? 'node' : 'nodes'}
           </span>
         )}
       </span>
