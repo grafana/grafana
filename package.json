@@ -294,7 +294,7 @@
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/scenes": "6.52.10",
-    "@grafana/scenes-react": "6.52.2",
+    "@grafana/scenes-react": "6.52.10",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",

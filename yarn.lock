@@ -3837,11 +3837,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.52.2":
-  version: 6.52.2
-  resolution: "@grafana/scenes-react@npm:6.52.2"
+"@grafana/scenes-react@npm:6.52.10":
+  version: 6.52.10
+  resolution: "@grafana/scenes-react@npm:6.52.10"
   dependencies:
-    "@grafana/scenes": "npm:6.52.2"
+    "@grafana/scenes": "npm:6.52.10"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3853,7 +3853,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/c393faf6612e78254dab79b15cc970448d74ba9784ccda623953c5dbc21d91a8da94b7ad7d0d294eac51314cc193c419a7cb48295fd50b1f9c4472699669eb3e
+  checksum: 10/11d4197f050a734d19b6dfae7158287ed96c5c2e29365921d98f107c6d6aec2451ae6478ce1a906dcb4a625214ca6a33be01caf9795cd941738569706ff87786
   languageName: node
   linkType: hard
 
@@ -3906,32 +3906,6 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
   checksum: 10/f0b8838df8cc4fa46ec8524dd8ba1fff540330973beb1eaf5b4a8e4a53d6307e5351c317ff97146071421233dd2c5b551482ede2ba9c57e520cdf99c843f877c
-  languageName: node
-  linkType: hard
-
-"@grafana/scenes@npm:6.52.2":
-  version: 6.52.2
-  resolution: "@grafana/scenes@npm:6.52.2"
-  dependencies:
-    "@floating-ui/react": "npm:^0.26.16"
-    "@leeoniya/ufuzzy": "npm:^1.0.16"
-    "@tanstack/react-virtual": "npm:^3.9.0"
-    i18next-parser: "npm:9.3.0"
-    react-grid-layout: "npm:1.3.4"
-    react-use: "npm:17.5.0"
-    react-virtualized-auto-sizer: "npm:1.0.24"
-    uuid: "npm:^9.0.0"
-  peerDependencies:
-    "@grafana/data": ">=10.4"
-    "@grafana/e2e-selectors": ">=10.4"
-    "@grafana/i18n": "*"
-    "@grafana/runtime": ">=10.4"
-    "@grafana/schema": ">=10.4"
-    "@grafana/ui": ">=10.4"
-    react: ^18.0.0
-    react-dom: ^18.0.0
-    react-router-dom: ^6.28.0
-  checksum: 10/f6dbe20db78bb1aa09cc38025534917887713d73119a172febb44700837ed859363ee0436b5f4bda6bc063f9432115e32519ab4c8da7834cf1fc22d43fea7711
   languageName: node
   linkType: hard
 
@@ -19964,7 +19938,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:6.52.10"
-    "@grafana/scenes-react": "npm:6.52.2"
+    "@grafana/scenes-react": "npm:6.52.10"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
