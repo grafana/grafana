@@ -351,6 +351,10 @@ const (
 	// Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page
 	FlagSuggestedDashboards = "suggestedDashboards"
 
+	// FlagDashboardValidatorApp
+	// Enables dashboard validator app to run compatibility checks between a dashboard and data source
+	FlagDashboardValidatorApp = "dashboardValidatorApp"
+
 	// FlagDashboardTemplates
 	// Enables a flow to get started with a new dashboard from a template
 	FlagDashboardTemplates = "dashboardTemplates"
