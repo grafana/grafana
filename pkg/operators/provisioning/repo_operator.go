@@ -75,7 +75,9 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	}
 	validator := repository.NewValidator(controllerCfg.minSyncInterval, allowedTargets, controllerCfg.allowImageRendering, controllerCfg.repoFactory)
 	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
-	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer, repository.NewSimpleRepositoryTester(validator))
+	// Health checker uses basic validation only - no need to validate against existing repositories
+	// since the repository already passed admission validation when it was created/updated.
+	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer, repository.NewRepositoryTester(&validator))
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
 	controller, err := controller.NewRepositoryController(

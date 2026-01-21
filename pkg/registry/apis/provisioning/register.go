@@ -98,13 +98,16 @@ type APIBuilder struct {
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
 
-	tracer              tracing.Tracer
-	repoStore           grafanarest.Storage
-	connectionStore     grafanarest.Storage
-	parsers             resources.ParserFactory
-	repositoryResources resources.RepositoryResourcesFactory
-	clients             resources.ClientFactory
-	jobs                interface {
+	tracer                 tracing.Tracer
+	repoStore              grafanarest.Storage
+	repoLister             *repository.Lister
+	existingReposValidator repository.ExistingRepositoriesValidator // actual validator, set in UpdateAPIGroupInfo
+	repoAdmissionValidator *repository.AdmissionValidator           // uses lazy wrapper, set in NewAPIBuilder
+	connectionStore        grafanarest.Storage
+	parsers                resources.ParserFactory
+	repositoryResources    resources.RepositoryResourcesFactory
+	clients                resources.ClientFactory
+	jobs                   interface {
 		jobs.Queue
 		jobs.Store
 	}
@@ -210,7 +213,10 @@ func NewAPIBuilder(
 
 	// Repository mutator and validator
 	admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(repoFactory))
-	admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionValidator(repoValidator, b.VerifyAgainstExistingRepositories))
+	// Store admission validator so RepositoryTester can use the same additional validators.
+	// The AdmissionValidator includes ExistingRepositoriesValidator to check for conflicts with other repositories.
+	b.repoAdmissionValidator = repository.NewAdmissionValidator(&repoValidator, &lazyExistingRepositoriesValidator{builder: b})
+	admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), b.repoAdmissionValidator)
 
 	// Connection mutator and validator
 	admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(connectionFactory))
@@ -630,6 +636,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.repoStore = repositoryStorage
+	b.repoLister = repository.NewLister(repositoryStorage)
+	b.existingReposValidator = repository.NewExistingRepositoriesValidator(b.repoLister)
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
 	if err != nil {
@@ -672,7 +680,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector()
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, repository.NewRepositoryTesterWithExistingChecker(repository.NewSimpleRepositoryTester(b.repoValidator), b.VerifyAgainstExistingRepositories))
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, b.repoAdmissionValidator)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
@@ -716,8 +724,17 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	return b.admissionHandler.Validate(ctx, a, o)
 }
 
-func (b *APIBuilder) VerifyAgainstExistingRepositories(ctx context.Context, cfg *provisioning.Repository) *field.Error {
-	return repository.VerifyAgainstExisting(ctx, b.repoStore, cfg)
+// lazyExistingRepositoriesValidator implements repository.ExistingRepositoriesValidator
+// and delegates to the builder's validator once it's initialized.
+type lazyExistingRepositoriesValidator struct {
+	builder *APIBuilder
+}
+
+func (v *lazyExistingRepositoriesValidator) Validate(ctx context.Context, cfg *provisioning.Repository) *field.Error {
+	if v.builder.existingReposValidator == nil {
+		return nil
+	}
+	return v.builder.existingReposValidator.Validate(ctx, cfg)
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
@@ -747,7 +764,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
-			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewSimpleRepositoryTester(b.repoValidator))
+			// Health checker uses basic validation only - no additional validators needed
+			// since the repository already passed admission validation when it was created/updated.
+			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewRepositoryTester(&b.repoValidator))
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.onlyApiServer {
@@ -763,11 +782,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
 			go connInformer.Informer().Run(postStartHookCtx.Done())
 
-			// Create the repository resources factory
-			repositoryListerWrapper := func(ctx context.Context) ([]provisioning.Repository, error) {
-				return repository.GetRepositoriesInNamespace(ctx, b.repoStore)
-			}
-			usageMetricCollector := usage.MetricCollector(b.tracer, repositoryListerWrapper, b.unified)
+			usageMetricCollector := usage.MetricCollector(b.tracer, b.repoLister.List, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			metrics := jobs.RegisterJobMetrics(b.registry)

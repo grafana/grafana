@@ -16,6 +16,15 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+// Validator is the interface for repository validation.
+// It validates repository configuration without requiring external service calls.
+type Validator interface {
+	// ValidateRepository validates the repository configuration.
+	// isCreate indicates whether this is a CREATE (true) or UPDATE (false) operation.
+	ValidateRepository(ctx context.Context, cfg *provisioning.Repository, isCreate bool) field.ErrorList
+}
+
+// RepositoryValidator implements Validator for basic repository configuration checks.
 type RepositoryValidator struct {
 	allowedTargets      []provisioning.SyncTargetType
 	allowImageRendering bool
@@ -160,21 +169,28 @@ func FromFieldError(err *field.Error) *provisioning.TestResults {
 // For runtime validation that requires secrets or external service checks, use the
 // Test() method on the Repository interface instead.
 //
-// Note: VerifyAgainstExistingRepositories type is defined in tester.go
+// AdmissionValidator wraps a Validator and adds additional validators
+// (e.g., ExistingRepositoriesValidator) that compare against other repositories.
 type AdmissionValidator struct {
-	validator                         RepositoryValidator
-	verifyAgainstExistingRepositories VerifyAgainstExistingRepositories
+	validator            Validator
+	additionalValidators []ExistingRepositoriesValidator
 }
 
-// NewAdmissionValidator creates a new repository admission validator
-func NewAdmissionValidator(validator RepositoryValidator, verifyFn VerifyAgainstExistingRepositories) *AdmissionValidator {
+// NewAdmissionValidator creates a new repository admission validator.
+// additionalValidators are called after basic validation passes (e.g., ExistingRepositoriesValidator).
+func NewAdmissionValidator(validator Validator, additionalValidators ...ExistingRepositoriesValidator) *AdmissionValidator {
 	return &AdmissionValidator{
-		validator:                         validator,
-		verifyAgainstExistingRepositories: verifyFn,
+		validator:            validator,
+		additionalValidators: additionalValidators,
 	}
 }
 
-// Validate validates Repository resources during admission
+// Validate validates Repository resources during admission.
+// This method is called by the admission webhook and performs additional checks
+// that are specific to admission (e.g., comparing old vs new objects).
+//
+// The returned error is an apierrors.StatusError containing field.ErrorList when
+// validation fails. Callers can use apierrors.StatusError to extract the field errors.
 func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	obj := a.GetObject()
 	if obj == nil {
@@ -199,14 +215,11 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		}
 	}
 
-	// ALL configuration validations should be done in ValidateRepository -
-	// this is how the UI is able to show proper validation errors
-	//
-	// the only time to add configuration checks here is if you need to compare
-	// the incoming change to the current configuration
 	isCreate := a.GetOperation() == admission.Create
-	list := v.validator.ValidateRepository(ctx, r, isCreate)
 
+	// Admission-specific checks that compare old vs new objects
+	// These cannot be done in ValidateRepository because they need the old object
+	var list field.ErrorList
 	if a.GetOperation() == admission.Update {
 		oldRepo := a.GetOldObject().(*provisioning.Repository)
 		if r.Spec.Type != oldRepo.Spec.Type {
@@ -221,15 +234,24 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		}
 	}
 
-	// Early exit to avoid more expensive checks if we have already found errors
+	// Early exit if admission-specific checks failed
 	if len(list) > 0 {
 		return invalidRepositoryError(a.GetName(), list)
 	}
 
-	// Verify against existing repositories
-	if v.verifyAgainstExistingRepositories != nil {
-		if targetError := v.verifyAgainstExistingRepositories(ctx, r); targetError != nil {
-			return invalidRepositoryError(a.GetName(), field.ErrorList{targetError})
+	// Run base validation
+	list = v.validator.ValidateRepository(ctx, r, isCreate)
+	if len(list) > 0 {
+		return invalidRepositoryError(a.GetName(), list)
+	}
+
+	// Run additional validators (e.g., existing repositories check)
+	for _, validator := range v.additionalValidators {
+		if validator == nil {
+			continue
+		}
+		if err := validator.Validate(ctx, r); err != nil {
+			return invalidRepositoryError(a.GetName(), field.ErrorList{err})
 		}
 	}
 
@@ -240,4 +262,40 @@ func invalidRepositoryError(name string, list field.ErrorList) error {
 	return apierrors.NewInvalid(
 		provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(),
 		name, list)
+}
+
+// NewCreateAttributes creates admission.Attributes for a CREATE operation.
+// This is useful for pre-admission validation (e.g., test endpoint).
+func NewCreateAttributes(repo *provisioning.Repository) admission.Attributes {
+	return admission.NewAttributesRecord(
+		repo,
+		nil, // old object
+		provisioning.RepositoryResourceInfo.GroupVersionKind(),
+		repo.GetNamespace(),
+		repo.GetName(),
+		provisioning.RepositoryResourceInfo.GroupVersionResource(),
+		"",
+		admission.Create,
+		nil,
+		false,
+		nil, // user info not needed for validation
+	)
+}
+
+// NewUpdateAttributes creates admission.Attributes for an UPDATE operation.
+// This is useful for pre-admission validation (e.g., test endpoint).
+func NewUpdateAttributes(repo, oldRepo *provisioning.Repository) admission.Attributes {
+	return admission.NewAttributesRecord(
+		repo,
+		oldRepo,
+		provisioning.RepositoryResourceInfo.GroupVersionKind(),
+		repo.GetNamespace(),
+		repo.GetName(),
+		provisioning.RepositoryResourceInfo.GroupVersionResource(),
+		"",
+		admission.Update,
+		nil,
+		false,
+		nil, // user info not needed for validation
+	)
 }

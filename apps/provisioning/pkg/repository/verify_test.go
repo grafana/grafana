@@ -13,60 +13,16 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// mockRepositoryLister implements RepositoryLister for testing
-type mockRepositoryLister struct {
+// verifyTestStorage implements StorageLister for verify tests
+type verifyTestStorage struct {
 	repositories []provisioning.Repository
-	err          error
 }
 
-func (m *mockRepositoryLister) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	if m.err != nil {
-		return nil, m.err
-	}
+func (m *verifyTestStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	return &provisioning.RepositoryList{Items: m.repositories}, nil
 }
 
-func TestGetRepositoriesInNamespace(t *testing.T) {
-	tests := []struct {
-		name         string
-		repositories []provisioning.Repository
-		wantCount    int
-		wantErr      bool
-	}{
-		{
-			name:         "returns empty list when no repositories",
-			repositories: []provisioning.Repository{},
-			wantCount:    0,
-			wantErr:      false,
-		},
-		{
-			name: "returns all repositories",
-			repositories: []provisioning.Repository{
-				{ObjectMeta: metav1.ObjectMeta{Name: "repo1"}},
-				{ObjectMeta: metav1.ObjectMeta{Name: "repo2"}},
-			},
-			wantCount: 2,
-			wantErr:   false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			lister := &mockRepositoryLister{repositories: tt.repositories}
-			repos, err := GetRepositoriesInNamespace(context.Background(), lister)
-
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-
-			require.NoError(t, err)
-			assert.Len(t, repos, tt.wantCount)
-		})
-	}
-}
-
-func TestVerifyAgainstExisting(t *testing.T) {
+func TestExistingRepositoriesValidator_Validate(t *testing.T) {
 	tests := []struct {
 		name            string
 		cfg             *provisioning.Repository
@@ -284,8 +240,10 @@ func TestVerifyAgainstExisting(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			lister := &mockRepositoryLister{repositories: tt.existingRepos}
-			fieldErr := VerifyAgainstExisting(context.Background(), lister, tt.cfg)
+			store := &verifyTestStorage{repositories: tt.existingRepos}
+			lister := NewLister(store)
+			validator := NewExistingRepositoriesValidator(lister)
+			fieldErr := validator.Validate(context.Background(), tt.cfg)
 
 			if tt.wantErr {
 				require.NotNil(t, fieldErr)

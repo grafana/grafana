@@ -5,34 +5,44 @@ import (
 	"net/http"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// SimpleRepositoryTester will validate the repository configuration, and then proceed to test the connection to the repository
-type SimpleRepositoryTester struct {
-	validator RepositoryValidator
+// RepositoryTester validates repository configuration and runs health checks.
+// It uses a Validator to validate the configuration before testing connectivity.
+//
+// This is primarily used by the health checker for reconcile health checks.
+// For pre-admission testing (test endpoint), use AdmissionValidator.Validate() directly.
+type RepositoryTester struct {
+	validator Validator
 }
 
-func NewSimpleRepositoryTester(validator RepositoryValidator) SimpleRepositoryTester {
-	return SimpleRepositoryTester{
+// NewRepositoryTester creates a repository tester with the given validator.
+// For health checks, pass a basic RepositoryValidator since the repository
+// already passed admission validation when it was created/updated.
+func NewRepositoryTester(validator Validator) RepositoryTester {
+	return RepositoryTester{
 		validator: validator,
 	}
 }
 
-// TestRepository validates the repository and then runs a health check
-func (t *SimpleRepositoryTester) TestRepository(ctx context.Context, repo Repository) (*provisioning.TestResults, error) {
+// Test validates the repository configuration and runs a health check.
+// Validation errors are returned as TestResults, not as errors.
+// Only internal errors (e.g., network failures during health check) return error.
+func (t *RepositoryTester) Test(ctx context.Context, repo Repository) (*provisioning.TestResults, error) {
+	cfg := repo.Config()
+
 	// Determine if this is a CREATE or UPDATE operation
 	// If the repository has been observed by the controller (ObservedGeneration > 0),
 	// it's an existing repository and we should treat it as UPDATE
-	cfg := repo.Config()
 	isCreate := cfg.Status.ObservedGeneration == 0
 
+	// Run validation (this includes additional validators if using AdmissionValidator)
 	errors := t.validator.ValidateRepository(ctx, cfg, isCreate)
 	if len(errors) > 0 {
 		rsp := &provisioning.TestResults{
-			Code:    http.StatusUnprocessableEntity, // Invalid
+			Code:    http.StatusUnprocessableEntity,
 			Success: false,
 			Errors:  make([]provisioning.ErrorDetails, len(errors)),
 		}
@@ -46,45 +56,6 @@ func (t *SimpleRepositoryTester) TestRepository(ctx context.Context, repo Reposi
 		return rsp, nil
 	}
 
+	// Run health check (tests connectivity to the repository)
 	return repo.Test(ctx)
-}
-
-type VerifyAgainstExistingRepositories func(ctx context.Context, cfg *provisioning.Repository) *field.Error // defined this way to prevent an import cycle
-
-// RepositoryTesterWithExistingChecker will validate the repository configuration, run a health check, and then compare it against existing repositories
-type RepositoryTesterWithExistingChecker struct {
-	tester SimpleRepositoryTester
-	verify VerifyAgainstExistingRepositories
-}
-
-func NewRepositoryTesterWithExistingChecker(tester SimpleRepositoryTester, verify VerifyAgainstExistingRepositories) RepositoryTesterWithExistingChecker {
-	return RepositoryTesterWithExistingChecker{
-		tester: tester,
-		verify: verify,
-	}
-}
-
-// TestRepositoryAndCheckExisting validates the repository, runs a health check, and then compares it against existing repositories
-func (c *RepositoryTesterWithExistingChecker) TestRepositoryAndCheckExisting(ctx context.Context, repo Repository) (*provisioning.TestResults, error) {
-	rsp, err := c.tester.TestRepository(ctx, repo)
-	if err != nil {
-		return nil, err
-	}
-
-	if rsp.Success {
-		cfg := repo.Config()
-		if validationErr := c.verify(ctx, cfg); validationErr != nil {
-			rsp = &provisioning.TestResults{
-				Success: false,
-				Code:    http.StatusUnprocessableEntity,
-				Errors: []provisioning.ErrorDetails{{
-					Type:   metav1.CauseType(validationErr.Type),
-					Field:  validationErr.Field,
-					Detail: validationErr.Detail,
-				}},
-			}
-		}
-	}
-
-	return rsp, nil
 }

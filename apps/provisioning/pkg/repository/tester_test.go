@@ -15,7 +15,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-func TestTestRepository(t *testing.T) {
+func TestRepositoryTester_Test_Cases(t *testing.T) {
 	tests := []struct {
 		name          string
 		repository    *MockRepository
@@ -102,10 +102,12 @@ func TestTestRepository(t *testing.T) {
 
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-	tester := NewSimpleRepositoryTester(NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory))
+	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory)
+	// Use basic RepositoryValidator since RepositoryTester is used for health checks
+	tester := NewRepositoryTester(&validator)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results, err := tester.TestRepository(context.Background(), tt.repository)
+			results, err := tester.Test(context.Background(), tt.repository)
 
 			if tt.expectedError != nil {
 				require.Error(t, err)
@@ -128,7 +130,7 @@ func TestTestRepository(t *testing.T) {
 	}
 }
 
-func TestTester_TestRepository(t *testing.T) {
+func TestRepositoryTester_Test(t *testing.T) {
 	repository := NewMockRepository(t)
 	repository.On("Config").Return(&provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
@@ -142,8 +144,10 @@ func TestTester_TestRepository(t *testing.T) {
 
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-	tester := NewSimpleRepositoryTester(NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory))
-	results, err := tester.TestRepository(context.Background(), repository)
+	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder, provisioning.SyncTargetTypeInstance}, true, mockFactory)
+	// Use basic RepositoryValidator since RepositoryTester is used for health checks
+	tester := NewRepositoryTester(&validator)
+	results, err := tester.Test(context.Background(), repository)
 	require.NoError(t, err)
 	require.NotNil(t, results)
 	require.Equal(t, http.StatusOK, results.Code)

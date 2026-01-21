@@ -417,7 +417,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				provisioning.SyncTargetTypeInstance,
 			}, false, mockFactory)
 
-			admissionValidator := NewAdmissionValidator(validator, nil)
+			admissionValidator := NewAdmissionValidator(&validator, nil)
 
 			attr := newAdmissionValidatorTestAttributes(tt.obj, tt.old, tt.operation)
 
@@ -441,7 +441,7 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
 	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, false, mockFactory)
-	admissionValidator := NewAdmissionValidator(validator, nil)
+	admissionValidator := NewAdmissionValidator(&validator, nil)
 
 	oldRepo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
@@ -476,18 +476,25 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	assert.Equal(t, "old-secret", newRepo.Secure.WebhookSecret.Name)
 }
 
+// mockExistingReposValidator is a test helper for ExistingRepositoriesValidator
+type mockExistingReposValidator struct {
+	called bool
+	err    *field.Error
+}
+
+func (m *mockExistingReposValidator) Validate(ctx context.Context, cfg *provisioning.Repository) *field.Error {
+	m.called = true
+	return m.err
+}
+
 func TestAdmissionValidator_CallsVerifyAgainstExisting(t *testing.T) {
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	verifyFnCalled := false
-	verifyFn := func(ctx context.Context, cfg *provisioning.Repository) *field.Error {
-		verifyFnCalled = true
-		return nil
-	}
+	mockValidator := &mockExistingReposValidator{}
 
 	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, false, mockFactory)
-	admissionValidator := NewAdmissionValidator(validator, verifyFn)
+	admissionValidator := NewAdmissionValidator(&validator, mockValidator)
 
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
@@ -502,19 +509,19 @@ func TestAdmissionValidator_CallsVerifyAgainstExisting(t *testing.T) {
 
 	err := admissionValidator.Validate(context.Background(), attr, nil)
 	require.NoError(t, err)
-	assert.True(t, verifyFnCalled, "verify function should have been called")
+	assert.True(t, mockValidator.called, "verify function should have been called")
 }
 
 func TestAdmissionValidator_VerifyAgainstExistingError(t *testing.T) {
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	verifyFn := func(ctx context.Context, cfg *provisioning.Repository) *field.Error {
-		return field.Forbidden(field.NewPath("spec"), "duplicate repository")
+	mockValidator := &mockExistingReposValidator{
+		err: field.Forbidden(field.NewPath("spec"), "duplicate repository"),
 	}
 
 	validator := NewValidator(10*time.Second, []provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder}, false, mockFactory)
-	admissionValidator := NewAdmissionValidator(validator, verifyFn)
+	admissionValidator := NewAdmissionValidator(&validator, mockValidator)
 
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},

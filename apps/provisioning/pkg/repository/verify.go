@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -15,59 +13,41 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// RepositoryLister interface for listing repositories
-type RepositoryLister interface {
-	List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error)
-}
-
 // ErrRepositoryDuplicatePath is returned when a repository has the same path as another
 var ErrRepositoryDuplicatePath = fmt.Errorf("duplicate repository path")
 
 // ErrRepositoryParentFolderConflict is returned when a repository path conflicts with a parent folder
 var ErrRepositoryParentFolderConflict = fmt.Errorf("repository path conflicts with existing repository")
 
-// GetRepositoriesInNamespace retrieves all repositories in a given namespace
-func GetRepositoriesInNamespace(ctx context.Context, store RepositoryLister) ([]provisioning.Repository, error) {
-	var allRepositories []provisioning.Repository
-	continueToken := ""
-
-	for {
-		obj, err := store.List(ctx, &internalversion.ListOptions{
-			Limit:    100,
-			Continue: continueToken,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		repositoryList, ok := obj.(*provisioning.RepositoryList)
-		if !ok {
-			return nil, fmt.Errorf("expected repository list")
-		}
-
-		allRepositories = append(allRepositories, repositoryList.Items...)
-
-		continueToken = repositoryList.GetContinue()
-		if continueToken == "" {
-			break
-		}
-	}
-
-	return allRepositories, nil
+// ExistingRepositoriesValidator validates a repository configuration against existing repositories.
+type ExistingRepositoriesValidator interface {
+	Validate(ctx context.Context, cfg *provisioning.Repository) *field.Error
 }
 
-// VerifyAgainstExisting validates a repository configuration against existing repositories.
-// It checks for:
+// existingRepositoriesValidator implements ExistingRepositoriesValidator.
+type existingRepositoriesValidator struct {
+	lister *Lister
+}
+
+// NewExistingRepositoriesValidator creates a validator that checks repository configurations
+// against existing repositories in the namespace.
+func NewExistingRepositoriesValidator(lister *Lister) ExistingRepositoriesValidator {
+	return &existingRepositoriesValidator{lister: lister}
+}
+
+// Validate checks for:
 // - Instance sync repositories can only be created if no other repositories exist
 // - Folder sync repositories cannot be created if an instance repository exists
 // - Git repositories cannot have duplicate or conflicting paths
 // - Maximum of 10 repositories per namespace
-func VerifyAgainstExisting(ctx context.Context, store RepositoryLister, cfg *provisioning.Repository) *field.Error {
+func (v *existingRepositoriesValidator) Validate(ctx context.Context, cfg *provisioning.Repository) *field.Error {
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
 	if err != nil {
 		return &field.Error{Type: field.ErrorTypeInternal, Detail: err.Error()}
 	}
-	all, err := GetRepositoriesInNamespace(request.WithNamespace(ctx, cfg.Namespace), store)
+	ctx = request.WithNamespace(ctx, cfg.Namespace)
+
+	all, err := v.lister.List(ctx)
 	if err != nil {
 		return field.Forbidden(field.NewPath("spec"),
 			"Unable to verify root target: "+err.Error())
