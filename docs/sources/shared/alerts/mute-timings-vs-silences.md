@@ -17,11 +17,12 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
 ---
+
 The function of [Mute timing and active timing](ref:shared-mute-timings) differs from [silences](ref:shared-silences), as they are two are distinct methods to suppress notifications. They do not prevent alert rules from being evaluated or stop alert instances from appearing in the user interface; they only prevent notifications from being created.
 
 The following table highlights the key differences of mute timing and active timing compared with silences.
 
-|            | Mute timing and active timing                                                 | Silence                                                          |
+|            | Mute timing and active timing                               | Silence                                                          |
 | ---------- | ----------------------------------------------------------- | ---------------------------------------------------------------- |
 | **Setup**  | Created and then added to notification policies             | Matches alerts using labels to determine whether to silence them |
 | **Period** | Uses time interval definitions that can repeat periodically | Has a fixed start and end time                                   |
