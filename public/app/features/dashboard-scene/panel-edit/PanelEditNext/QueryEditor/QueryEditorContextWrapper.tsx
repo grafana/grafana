@@ -2,9 +2,9 @@ import { ReactNode, useMemo } from 'react';
 
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
 
-import { getQueryRunnerFor } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../../utils/utils';
+import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
-import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { QueryEditorProvider } from './QueryEditorContext';
 
 /**

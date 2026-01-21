@@ -9,7 +9,7 @@ import { PanelEditor } from '../PanelEditor';
 import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
-import { QueryEditorContextWrapper } from './QueryEditorContextWrapper';
+import { QueryEditorContextWrapper } from './QueryEditor/QueryEditorContextWrapper';
 import { QueryEditorSidebar, SidebarSize } from './QueryEditorSidebar';
 import { useVizAndDataPaneLayout } from './hooks';
 

@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Text, useStyles2 } from '@grafana/ui';
 
-export function QueryEditorNext() {
+export function QueryEditorContent() {
   const styles = useStyles2(getStyles);
 
   return (

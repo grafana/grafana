@@ -6,7 +6,7 @@ import { addQuery } from 'app/core/utils/query';
 
 import { getQueryRunnerFor } from '../../utils/utils';
 
-import { QueryEditorNext } from './QueryEditorNext';
+import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
 
 export interface PanelDataPaneNextState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -21,7 +21,7 @@ export interface PanelDataPaneNextState extends SceneObjectState {
  * Pure Scene object - context bridging happens at VizAndDataPaneNext level.
  */
 export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
-  static Component = QueryEditorNext;
+  static Component = QueryEditorContent;
 
   public constructor(state: PanelDataPaneNextState) {
     super(state);
