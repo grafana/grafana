@@ -21,13 +21,15 @@ import (
 	"golang.org/x/net/html"
 )
 
+type queryModel struct {
+	req       *http.Request
+	formData  url.Values
+	rawTarget string
+}
+
 func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataResponse, error) {
 	emptyQueries := []string{}
-	graphiteQueries := map[string]struct {
-		req       *http.Request
-		formData  url.Values
-		rawTarget string
-	}{}
+	graphiteQueries := map[string]queryModel{}
 	// FromAlert header is defined in pkg/services/ngalert/models/constants.go
 	fromAlert := req.Headers["FromAlert"] == "true"
 	result := backend.NewQueryDataResponse()
@@ -44,11 +46,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			continue
 		}
 
-		graphiteQueries[query.RefID] = struct {
-			req       *http.Request
-			formData  url.Values
-			rawTarget string
-		}{
+		graphiteQueries[query.RefID] = queryModel{
 			req:       graphiteReq,
 			formData:  formData,
 			rawTarget: target,
