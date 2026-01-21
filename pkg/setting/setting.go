@@ -448,6 +448,7 @@ type Cfg struct {
 	ExternalUserMngInfo            string
 	ExternalUserMngAnalytics       bool
 	ExternalUserMngAnalyticsParams string
+	ExternalUserUpgradeLinkUrl     string
 	AutoAssignOrg                  bool
 	AutoAssignOrgId                int
 	AutoAssignOrgRole              string
@@ -1847,6 +1848,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
 	cfg.ExternalUserMngAnalytics = users.Key("external_manage_analytics").MustBool(false)
 	cfg.ExternalUserMngAnalyticsParams = valueAsString(users, "external_manage_analytics_params", "")
+	cfg.ExternalUserUpgradeLinkUrl = valueAsString(users, "external_upgrade_link_url", "")
 
 	//nolint:staticcheck
 	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
