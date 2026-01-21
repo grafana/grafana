@@ -48,15 +48,19 @@ function CommandPaletteContents() {
   useRegisterRecentDashboardsActions();
   useRegisterRecentScopesActions();
 
+  const trimmedSearchQuery = searchQuery.trim();
   const queryToggle = useCallback(() => query.toggle(), [query]);
-  const { scopesRow } = useRegisterScopesActions(searchQuery, queryToggle, currentRootActionId);
+  const { scopesRow } = useRegisterScopesActions(trimmedSearchQuery, queryToggle, currentRootActionId);
 
   // This searches dashboards and folders it shows only if we are not in some specific category (and there is no
   // dashboards category right now, so if any category is selected, we don't show these).
   // Normally we register actions with kbar, and it knows not to show actions which are under a different parent than is
   // the currentRootActionId. Because these search results are manually added to the list later, they would show every
   // time.
-  const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery, show: !currentRootActionId });
+  const { searchResults, isFetchingSearchResults } = useSearchResults({
+    searchQuery: trimmedSearchQuery,
+    show: !currentRootActionId,
+  });
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
