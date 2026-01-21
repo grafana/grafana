@@ -3518,7 +3518,6 @@ __metadata:
     jest-canvas-mock: "npm:2.5.2"
     lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
-    react-table: "npm:^7.8.0"
     react-use: "npm:17.6.0"
     react-virtualized-auto-sizer: "npm:1.0.26"
     rollup: "npm:^4.22.4"
@@ -3534,6 +3533,7 @@ __metadata:
     "@grafana/assistant": ^0.1.1
     react: ^18.0.0
     react-dom: ^18.0.0
+    react-table: ^7.8.0
   languageName: unknown
   linkType: soft
 
@@ -29606,7 +29606,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-table@npm:7.8.0, react-table@npm:^7.8.0":
+"react-table@npm:7.8.0":
   version: 7.8.0
   resolution: "react-table@npm:7.8.0"
   peerDependencies:
