@@ -244,21 +244,14 @@ jobs:
       GRAFANA_TEST_DB: postgres
       PGPASSWORD: grafanatest
       POSTGRES_HOST: 127.0.0.1
-    services:
-      postgres:
-        image: postgres:17.6
-        env:
-          POSTGRES_USER: grafanatest
-          POSTGRES_PASSWORD: grafanatest
-          POSTGRES_DB: grafanatest
-        options: -c 'max_connections=200'
-        ports:
-          - 5432:5432
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+      - name: Start Postgres via docker compose
+        run: |
+          make devenv sources=postgres_tests
       - name: Setup Go
         uses: actions/setup-go@v6.0.0
         with:
@@ -273,6 +266,10 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           CGO_ENABLED=0 go test -p=1 -tags=postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Cleanup Postgres
+        if: always()
+        run: |
+          make devenv-down sources=postgres_tests
 
   #### Enterprise
   sqlite-enterprise:
@@ -496,20 +493,14 @@ jobs:
       GRAFANA_TEST_DB: postgres
       PGPASSWORD: grafanatest
       POSTGRES_HOST: 127.0.0.1
-    services:
-      postgres:
-        image: postgres:17.6
-        env:
-          POSTGRES_USER: grafanatest
-          POSTGRES_PASSWORD: grafanatest
-          POSTGRES_DB: grafanatest
-        ports:
-          - 5432:5432
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+      - name: Start Postgres via docker compose
+        run: |
+          make devenv sources=postgres_tests
       - name: Setup Go
         uses: actions/setup-go@v6.0.0
         with:
@@ -528,6 +519,10 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           CGO_ENABLED=0 go test -p=1 -tags=enterprise,postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Cleanup Postgres
+        if: always()
+        run: |
+          make devenv-down sources=postgres_tests
 
   # This is the job that is actually required by rulesets.
   # We want to only require one job instead of all the individual tests and shards.
