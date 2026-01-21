@@ -23,6 +23,10 @@ export const GitHubAppCredentialFields = memo<GitHubAppCredentialFieldsProps>(
       formState: { errors },
     } = useFormContext<ConnectionFormData>();
 
+    const requiredValidation = required
+      ? t('provisioning.connection-form.error-required', 'This field is required')
+      : false;
+
     return (
       <Stack direction="column" gap={2}>
         <Field
@@ -36,11 +40,13 @@ export const GitHubAppCredentialFields = memo<GitHubAppCredentialFieldsProps>(
           <Input
             id="appID"
             {...register('appID', {
-              required: required ? t('provisioning.connection-form.error-required', 'This field is required') : false,
+              required: requiredValidation,
             })}
             placeholder={t('provisioning.connection-form.placeholder-app-id', '123456')}
           />
+          
         </Field>
+      
 
         <Field
           noMargin
@@ -56,7 +62,7 @@ export const GitHubAppCredentialFields = memo<GitHubAppCredentialFieldsProps>(
           <Input
             id="installationID"
             {...register('installationID', {
-              required: required ? t('provisioning.connection-form.error-required', 'This field is required') : false,
+              required: requiredValidation,
             })}
             placeholder={t('provisioning.connection-form.placeholder-installation-id', '12345678')}
           />
@@ -78,7 +84,7 @@ export const GitHubAppCredentialFields = memo<GitHubAppCredentialFieldsProps>(
             name="privateKey"
             control={control}
             rules={{
-              required: required ? t('provisioning.connection-form.error-required', 'This field is required') : false,
+              required: requiredValidation,
             }}
             render={({ field: { ref, ...field } }) => (
               <SecretTextArea

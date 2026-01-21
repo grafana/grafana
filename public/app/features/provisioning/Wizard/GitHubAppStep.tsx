@@ -51,42 +51,46 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
   // Expose submit method to parent via ref. The parent wizard (ProvisioningWizard) needs to trigger
   // submission when the user clicks "Next", so we use useImperativeHandle to allow the parent to
   // call submit() programmatically via githubAppStepRef.current?.submit()
-  useImperativeHandle(ref, () => ({
-    submit: async () => {
-      const isValid = await credentialForm.trigger();
-      if (!isValid) {
-        const validationError = t(
+  useImperativeHandle(
+    ref,
+    () => ({
+      submit: async () => {
+        const isValid = await credentialForm.trigger();
+        if (!isValid) {
+          const validationError = t(
+            'provisioning.wizard.github-app-creation-default-error',
+            'Failed to create connection'
+          );
+          onSubmit({ success: false, error: validationError });
+          return;
+        }
+
+        const { appID, installationID, privateKey } = credentialForm.getValues();
+        const spec: ConnectionSpec = {
+          type: 'github',
+          github: { appID, installationID },
+        };
+
+        const defaultErrorMessage = t(
           'provisioning.wizard.github-app-creation-default-error',
           'Failed to create connection'
         );
-        onSubmit({ success: false, error: validationError });
-        return;
-      }
 
-      const { appID, installationID, privateKey } = credentialForm.getValues();
-      const spec: ConnectionSpec = {
-        type: 'github',
-        github: { appID, installationID },
-      };
-
-      const defaultErrorMessage = t(
-        'provisioning.wizard.github-app-creation-default-error',
-        'Failed to create connection'
-      );
-
-      try {
-        const result = await createConnection(spec, privateKey);
-        if (result.data?.metadata?.name) {
-          onSubmit({ success: true, connectionName: result.data.metadata.name });
-        } else {
-          const errorMessage = result.error ? extractErrorMessage(result.error) : defaultErrorMessage;
-          onSubmit({ success: false, error: errorMessage });
+        try {
+          const result = await createConnection(spec, privateKey);
+          if (result.data?.metadata?.name) {
+            onSubmit({ success: true, connectionName: result.data.metadata.name });
+          } else {
+            const errorMessage = result.error ? extractErrorMessage(result.error) : defaultErrorMessage;
+            onSubmit({ success: false, error: errorMessage });
+          }
+        } catch (error) {
+          onSubmit({ success: false, error: extractErrorMessage(error) });
         }
-      } catch (error) {
-        onSubmit({ success: false, error: extractErrorMessage(error) });
-      }
-    },
-  }));
+      },
+    }),
+    [credentialForm, createConnection, onSubmit]
+  );
 
   return (
     <Stack direction="column" gap={2}>

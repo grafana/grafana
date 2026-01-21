@@ -36,6 +36,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
         generateDashboardPreviews: data.generateDashboardPreviews,
       };
       // Add connection reference at spec level if using GitHub App
+      // connection name is only available for the app flow
       if (connectionName) {
         spec.connection = { name: connectionName };
       }
