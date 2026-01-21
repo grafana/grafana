@@ -44,9 +44,7 @@ export const GitHubAppCredentialFields = memo<GitHubAppCredentialFieldsProps>(
             })}
             placeholder={t('provisioning.connection-form.placeholder-app-id', '123456')}
           />
-          
         </Field>
-      
 
         <Field
           noMargin
