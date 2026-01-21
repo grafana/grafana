@@ -3730,6 +3730,7 @@
       "non-folder-item": "{{itemKind}} {{itemUID}} no es una carpeta",
       "root-title": "Dashboards",
       "search-placeholder": "Buscar carpetas",
+      "shared-with-me": "",
       "unknown-error": "Error desconocido"
     },
     "manage-folder-nav": {
@@ -3833,6 +3834,7 @@
       "label-method": "Método",
       "label-payload": "Payload",
       "label-query-parameters": "Parámetros de la consulta",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Probar la API",
         "title-test-api": "Probar la API"
