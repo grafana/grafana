@@ -1067,10 +1067,13 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t, withLogs)
+	helper := runGrafana(t)
 	ctx := context.Background()
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	decryptService := helper.GetEnv().DecryptService
+	require.NotNil(t, decryptService, "decrypt service not wired properly")
 
 	// Create a connection first
 	connection := &unstructured.Unstructured{Object: map[string]any{
@@ -1129,8 +1132,17 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
 		require.NoError(collectT, err, "can list values")
 		r := unstructuredToRepository(t, repo)
-		assert.True(collectT, r.Status.ObservedGeneration > 0, "should be reconciled at least once", r)
+		require.NotEqual(t, 0, r.Status.ObservedGeneration, "resource should be reconciled at least once")
+		require.Equal(collectT, r.Status.ObservedGeneration, r.Generation, "resource should be reconciled")
 		// Token should be there
-		assert.False(collectT, r.Secure.Token.IsZero())
+		require.False(collectT, r.Secure.Token.IsZero())
+
+		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", r.GetNamespace(), r.Secure.Token.Name)
+		require.NoError(t, err, "decryption error")
+		require.Len(t, decrypted, 1)
+
+		val := decrypted[r.Secure.Token.Name].Value()
+		require.NotNil(t, val)
+		require.Equal(t, "someToken", val.DangerouslyExposeAndConsumeValue())
 	}, time.Second*10, time.Second, "Expected repo to be reconciled")
 }

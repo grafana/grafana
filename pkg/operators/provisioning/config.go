@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"

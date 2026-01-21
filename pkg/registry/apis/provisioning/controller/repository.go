@@ -646,6 +646,8 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	return hookOps, true, nil
 }
 
+// HACK: we need a proper way of doing this check by adding Conditions
+// We're going to work on this in https://github.com/grafana/git-ui-sync-project/issues/744.
 func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	obj *provisioning.Repository,
 	healthStatus provisioning.HealthStatus,
@@ -686,6 +688,8 @@ func (rc *RepositoryController) generateRepositoryToken(
 		},
 	}
 
+	// HACK - here we need to do different things based on the status of repository
+	// https://github.com/grafana/git-ui-sync-project/issues/745 to have a proper fix on it
 	switch {
 	case obj.Secure.IsZero():
 		patchOperations = append(patchOperations, map[string]any{
