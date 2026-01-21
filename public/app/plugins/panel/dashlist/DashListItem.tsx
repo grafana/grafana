@@ -1,5 +1,3 @@
-import { truncate } from 'lodash';
-
 import { reportInteraction } from '@grafana/runtime';
 import { Box, Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
 import { LocationInfo } from 'app/features/search/service/types';
@@ -29,7 +27,6 @@ export function DashListItem({
   source,
 }: Props) {
   const css = useStyles2(getStyles);
-  const shortTitle = truncate(dashboard.name, { length: 40, omission: '…' });
 
   const onCardLinkClick = () => {
     reportInteraction('grafana_browse_dashboards_page_click_list_item', {
@@ -61,8 +58,8 @@ export function DashListItem({
           />
         </div>
       ) : (
-        <Card className={css.dashlistCard} noMargin>
-          <Stack direction="column" justifyContent="space-between" height="100%">
+        <Card noMargin className={css.dashlistCardContainer}>
+          <div className={css.dashlistCard}>
             <Stack justifyContent="space-between" alignItems="start">
               <Link
                 className={css.dashlistCardLink}
@@ -71,7 +68,7 @@ export function DashListItem({
                 title={dashboard.name}
                 onClick={onCardLinkClick}
               >
-                {shortTitle}
+                {dashboard.name}
               </Link>
               <StarToolbarButton
                 title={dashboard.name}
@@ -83,14 +80,22 @@ export function DashListItem({
             </Stack>
 
             {showFolderNames && locationInfo && (
-              <Stack alignItems="start" direction="row" gap={0.5} height="25%">
+              <Stack alignItems="start" direction="row" gap={0.5}>
                 <Icon name="folder" size="sm" className={css.dashlistCardIcon} aria-hidden="true" />
-                <Text color="secondary" variant="bodySmall" element="p">
-                  {locationInfo?.name}
-                </Text>
+                <div className={css.dashlistCardFolder}>
+                  <Text
+                    color="secondary"
+                    variant="bodySmall"
+                    element="p"
+                    aria-label={locationInfo?.name}
+                    title={locationInfo?.name}
+                  >
+                    {locationInfo?.name}
+                  </Text>
+                </div>
               </Stack>
             )}
-          </Stack>
+          </div>
         </Card>
       )}
     </>
