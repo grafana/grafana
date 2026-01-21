@@ -70,6 +70,7 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 		connInformer,
 		statusPatcher,
 		tester,
+		connectionDecrypter,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create connection controller: %w", err)

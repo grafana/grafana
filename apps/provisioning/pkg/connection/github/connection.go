@@ -46,7 +46,6 @@ func NewConnection(
 const (
 	//TODO(ferruvich): these probably need to be setup in API configuration.
 	githubInstallationURL = "https://github.com/settings/installations"
-	jwtExpirationMinutes  = 10 // GitHub Apps JWT tokens expire in 10 minutes maximum
 )
 
 // Test validates the appID and installationID against the given github token.
