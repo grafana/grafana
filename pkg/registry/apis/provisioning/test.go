@@ -244,9 +244,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 				return
 			}
 		} else {
-			// Testing temporary repository - use Tester which runs validation + health check.
-			// The Tester is configured with AdmissionValidatorAdapter which includes
-			// ExistingRepositoriesValidator to catch conflicts with other repositories.
+			// Testing temporary repository - just run test without status update
 			rsp, err = s.tester.Test(ctx, repo)
 			if err != nil {
 				responder.Error(err)

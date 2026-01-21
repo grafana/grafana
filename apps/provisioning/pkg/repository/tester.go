@@ -2,9 +2,6 @@ package repository
 
 import (
 	"context"
-	"net/http"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -15,15 +12,15 @@ import (
 // This is primarily used by the health checker for reconcile health checks.
 // For pre-admission testing (test endpoint), use AdmissionValidator.Validate() directly.
 type Tester struct {
-	validator Validator
+	validators []Validator
 }
 
 // NewTester creates a repository tester with the given validator.
 // For health checks, pass a basic RepositoryValidator since the repository
 // already passed admission validation when it was created/updated.
-func NewTester(validator Validator) Tester {
+func NewTester(validators ...Validator) Tester {
 	return Tester{
-		validator: validator,
+		validators: validators,
 	}
 }
 
@@ -33,21 +30,11 @@ func NewTester(validator Validator) Tester {
 func (t *Tester) Test(ctx context.Context, repo Repository) (*provisioning.TestResults, error) {
 	cfg := repo.Config()
 
-	errors := t.validator.Validate(ctx, cfg)
-	if len(errors) > 0 {
-		rsp := &provisioning.TestResults{
-			Code:    http.StatusUnprocessableEntity,
-			Success: false,
-			Errors:  make([]provisioning.ErrorDetails, len(errors)),
+	for _, validator := range t.validators {
+		list := validator.Validate(ctx, cfg)
+		if len(list) > 0 {
+			return nil, invalidRepositoryError(cfg.GetName(), list)
 		}
-		for i, err := range errors {
-			rsp.Errors[i] = provisioning.ErrorDetails{
-				Type:   metav1.CauseType(err.Type),
-				Field:  err.Field,
-				Detail: err.Detail,
-			}
-		}
-		return rsp, nil
 	}
 
 	return repo.Test(ctx)
