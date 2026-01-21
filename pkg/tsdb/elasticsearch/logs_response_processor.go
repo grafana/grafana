@@ -53,10 +53,10 @@ func (p *logsResponseProcessor) processLogsResponse(res *es.SearchResponse, targ
 		}
 
 		for k, v := range flattened {
+			doc[k] = v
+
 			if configuredFields.LogLevelField != "" && k == configuredFields.LogLevelField {
 				doc["level"] = v
-			} else {
-				doc[k] = v
 			}
 		}
 
