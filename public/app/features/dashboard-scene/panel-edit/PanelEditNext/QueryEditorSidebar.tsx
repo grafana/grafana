@@ -23,6 +23,8 @@ export function QueryEditorSidebar({ sidebarState, setSidebarState }: QueryEdito
   const styles = useStyles2(getStyles);
   const isMini = sidebarState.size === SidebarSize.Mini;
 
+  const { queries } = 
+
   const toggleSize = () => {
     setSidebarState({
       ...sidebarState,

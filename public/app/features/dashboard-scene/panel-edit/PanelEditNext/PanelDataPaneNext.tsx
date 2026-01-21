@@ -1,21 +1,11 @@
-import { useMemo } from 'react';
-
-import {
-  CoreApp,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  getDataSourceRef,
-  getNextRefId,
-  LoadingState,
-} from '@grafana/data';
+import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef, getNextRefId } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { addQuery } from 'app/core/utils/query';
 
 import { getQueryRunnerFor } from '../../utils/utils';
 
-import { QueryEditorProvider } from './QueryEditorContext';
 import { QueryEditorNext } from './QueryEditorNext';
 
 export interface PanelDataPaneNextState extends SceneObjectState {
@@ -28,10 +18,10 @@ export interface PanelDataPaneNextState extends SceneObjectState {
 /**
  * Scene wrapper for the next generation query editor.
  * Handles datasource loading and provides methods for interacting with Scene state.
- * Bridges Scene state to React Context for the UI layer.
+ * Pure Scene object - context bridging happens at VizAndDataPaneNext level.
  */
 export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
-  static Component = QueryEditorNextContainer;
+  static Component = QueryEditorNext;
 
   public constructor(state: PanelDataPaneNextState) {
     super(state);
@@ -165,49 +155,4 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queryRunner.setState({ datasource: dsRef });
     }
   };
-}
-
-/**
- * Container that subscribes to Scene state and provides it via React Context.
- */
-function QueryEditorNextContainer({ model }: SceneComponentProps<PanelDataPaneNext>) {
-  const { panelRef, datasource, dsSettings, error } = model.useState();
-  const panel = panelRef.resolve();
-  const queryRunner = getQueryRunnerFor(panel);
-  const queryRunnerState = queryRunner?.useState();
-
-  // All reactive state in one object
-  const state = useMemo(
-    () => ({
-      panel,
-      datasource,
-      dsSettings,
-      queries: queryRunnerState?.queries ?? [],
-      data: queryRunnerState?.data,
-      isLoading: queryRunnerState?.data?.state === LoadingState.Loading,
-      error,
-    }),
-    [panel, datasource, dsSettings, queryRunnerState?.queries, queryRunnerState?.data, error]
-  );
-
-  // Stable actions - only changes if model changes (it won't)
-  const actions = useMemo(
-    () => ({
-      updateQueries: model.updateQueries,
-      addQuery: model.addQuery,
-      deleteQuery: model.deleteQuery,
-      duplicateQuery: model.duplicateQuery,
-      runQueries: model.runQueries,
-      changeDataSource: (settings: DataSourceInstanceSettings) => {
-        model.changeDataSource(getDataSourceRef(settings));
-      },
-    }),
-    [model]
-  );
-
-  return (
-    <QueryEditorProvider state={state} actions={actions}>
-      <QueryEditorNext />
-    </QueryEditorProvider>
-  );
 }

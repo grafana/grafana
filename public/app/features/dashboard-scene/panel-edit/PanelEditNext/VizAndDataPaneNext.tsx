@@ -1,16 +1,63 @@
 import { css, cx } from '@emotion/css';
+import { ReactNode, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, getDataSourceRef, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 
+import { getQueryRunnerFor } from '../../utils/utils';
 import { PanelEditor } from '../PanelEditor';
 import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
+import { QueryEditorProvider } from './QueryEditorContext';
 import { QueryEditorSidebar, SidebarSize, SidebarState } from './QueryEditorSidebar';
 import { useVizAndDataPaneLayout } from './hooks';
+
+/**
+ * Bridge component that subscribes to Scene state and provides it via React Context.
+ * Wraps children with QueryEditorProvider so both sidebar and editor can access context.
+ */
+function QueryEditorContextBridge({ dataPane, children }: { dataPane: PanelDataPaneNext; children: ReactNode }) {
+  const { panelRef, datasource, dsSettings, error } = dataPane.useState();
+  const panel = panelRef.resolve();
+  const queryRunner = getQueryRunnerFor(panel);
+  const queryRunnerState = queryRunner?.useState();
+
+  const state = useMemo(
+    () => ({
+      panel,
+      datasource,
+      dsSettings,
+      queries: queryRunnerState?.queries ?? [],
+      data: queryRunnerState?.data,
+      isLoading: queryRunnerState?.data?.state === LoadingState.Loading,
+      error,
+    }),
+    [panel, datasource, dsSettings, queryRunnerState?.queries, queryRunnerState?.data, error]
+  );
+
+  const actions = useMemo(
+    () => ({
+      updateQueries: dataPane.updateQueries,
+      addQuery: dataPane.addQuery,
+      deleteQuery: dataPane.deleteQuery,
+      duplicateQuery: dataPane.duplicateQuery,
+      runQueries: dataPane.runQueries,
+      changeDataSource: (settings: DataSourceInstanceSettings) => {
+        dataPane.changeDataSource(getDataSourceRef(settings));
+      },
+    }),
+    [dataPane]
+  );
+
+  return (
+    <QueryEditorProvider state={state} actions={actions}>
+      {children}
+    </QueryEditorProvider>
+  );
+}
 
 export function VizAndDataPaneNext({
   model,
@@ -50,34 +97,36 @@ export function VizAndDataPaneNext({
           <div ref={layout.vizResize.handleRef} className={layout.vizResize.className} data-testid="viz-resizer" />
         </div>
       </div>
-      <div className={cx(styles.sidebar, sidebarSizeClass)}>
-        <QueryEditorSidebar sidebarState={layout.sidebarState} setSidebarState={layout.setSidebarState} />
-        <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, height: '100%' }}>
-          <div
-            style={{ height: '100%', width: 2 }}
-            ref={layout.sidebarResize.handleRef}
-            className={layout.sidebarResize.className}
-            data-testid="sidebar-resizer"
-          />
-        </div>
-      </div>
-      <div className={cx(styles.dataPane, dataPaneSizeClass)}>
-        {grid.splitterState.collapsed ? (
-          <div className={styles.expandDataPane}>
-            <Button
-              tooltip={t('dashboard-scene.viz-and-data-pane.tooltip-open-query-pane', 'Open query pane')}
-              icon={'arrow-to-right'}
-              onClick={actions.onToggleCollapse}
-              variant="secondary"
-              size="sm"
-              className={styles.openDataPaneButton}
-              aria-label={t('dashboard-scene.viz-and-data-pane.aria-label-open-query-pane', 'Open query pane')}
+      <QueryEditorContextBridge dataPane={nextDataPane}>
+        <div className={cx(styles.sidebar, sidebarSizeClass)}>
+          <QueryEditorSidebar sidebarState={layout.sidebarState} setSidebarState={layout.setSidebarState} />
+          <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, height: '100%' }}>
+            <div
+              style={{ height: '100%', width: 2 }}
+              ref={layout.sidebarResize.handleRef}
+              className={layout.sidebarResize.className}
+              data-testid="sidebar-resizer"
             />
           </div>
-        ) : (
-          <nextDataPane.Component model={nextDataPane} />
-        )}
-      </div>
+        </div>
+        <div className={cx(styles.dataPane, dataPaneSizeClass)}>
+          {grid.splitterState.collapsed ? (
+            <div className={styles.expandDataPane}>
+              <Button
+                tooltip={t('dashboard-scene.viz-and-data-pane.tooltip-open-query-pane', 'Open query pane')}
+                icon={'arrow-to-right'}
+                onClick={actions.onToggleCollapse}
+                variant="secondary"
+                size="sm"
+                className={styles.openDataPaneButton}
+                aria-label={t('dashboard-scene.viz-and-data-pane.aria-label-open-query-pane', 'Open query pane')}
+              />
+            </div>
+          ) : (
+            <nextDataPane.Component model={nextDataPane} />
+          )}
+        </div>
+      </QueryEditorContextBridge>
     </div>
   );
 }
