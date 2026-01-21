@@ -4,6 +4,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Text, useStyles2 } from '@grafana/ui';
 
+import { useQueryEditorState } from './QueryEditorContext';
+
 export enum SidebarSize {
   Mini = 'mini',
   Full = 'full',
@@ -23,7 +25,9 @@ export function QueryEditorSidebar({ sidebarState, setSidebarState }: QueryEdito
   const styles = useStyles2(getStyles);
   const isMini = sidebarState.size === SidebarSize.Mini;
 
-  const { queries } = 
+  const { queries } = useQueryEditorState();
+
+  console.log({ queries });
 
   const toggleSize = () => {
     setSidebarState({
@@ -43,9 +47,7 @@ export function QueryEditorSidebar({ sidebarState, setSidebarState }: QueryEdito
         className={styles.iconButton}
       />
       <div className={styles.body}>
-        <Text color="secondary">
-          {t('query-editor-next.sidebar.placeholder', 'Sidebar content placeholder')}
-        </Text>
+        <Text color="secondary">{t('query-editor-next.sidebar.placeholder', 'Sidebar content placeholder')}</Text>
       </div>
     </div>
   );

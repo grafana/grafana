@@ -1,63 +1,17 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode, useMemo } from 'react';
 
-import { DataSourceInstanceSettings, getDataSourceRef, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import { getQueryRunnerFor } from '../../utils/utils';
 import { PanelEditor } from '../PanelEditor';
 import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
-import { QueryEditorProvider } from './QueryEditorContext';
+import { QueryEditorContextBridge } from './QueryEditorContextBridge';
 import { QueryEditorSidebar, SidebarSize, SidebarState } from './QueryEditorSidebar';
 import { useVizAndDataPaneLayout } from './hooks';
-
-/**
- * Bridge component that subscribes to Scene state and provides it via React Context.
- * Wraps children with QueryEditorProvider so both sidebar and editor can access context.
- */
-function QueryEditorContextBridge({ dataPane, children }: { dataPane: PanelDataPaneNext; children: ReactNode }) {
-  const { panelRef, datasource, dsSettings, error } = dataPane.useState();
-  const panel = panelRef.resolve();
-  const queryRunner = getQueryRunnerFor(panel);
-  const queryRunnerState = queryRunner?.useState();
-
-  const state = useMemo(
-    () => ({
-      panel,
-      datasource,
-      dsSettings,
-      queries: queryRunnerState?.queries ?? [],
-      data: queryRunnerState?.data,
-      isLoading: queryRunnerState?.data?.state === LoadingState.Loading,
-      error,
-    }),
-    [panel, datasource, dsSettings, queryRunnerState?.queries, queryRunnerState?.data, error]
-  );
-
-  const actions = useMemo(
-    () => ({
-      updateQueries: dataPane.updateQueries,
-      addQuery: dataPane.addQuery,
-      deleteQuery: dataPane.deleteQuery,
-      duplicateQuery: dataPane.duplicateQuery,
-      runQueries: dataPane.runQueries,
-      changeDataSource: (settings: DataSourceInstanceSettings) => {
-        dataPane.changeDataSource(getDataSourceRef(settings));
-      },
-    }),
-    [dataPane]
-  );
-
-  return (
-    <QueryEditorProvider state={state} actions={actions}>
-      {children}
-    </QueryEditorProvider>
-  );
-}
 
 export function VizAndDataPaneNext({
   model,
