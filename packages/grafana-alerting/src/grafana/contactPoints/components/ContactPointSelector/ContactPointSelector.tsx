@@ -4,14 +4,11 @@ import { Combobox, ComboboxOption } from '@grafana/ui';
 
 import type { ContactPoint } from '../../../api/notifications/v0alpha1/types';
 import { useListContactPoints } from '../../hooks/v0alpha1/useContactPoints';
-import { getContactPointDescription } from '../../utils';
+import { getContactPointDescription, isUsableContactPoint } from '../../utils';
 
 import { CustomComboBoxProps } from './ComboBox.types';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
-
-// Annotation key that indicates whether a contact point can be used in routes and rules
-const CAN_USE_ANNOTATION = 'grafana.com/canUse';
 
 export type ContactPointSelectorProps = CustomComboBoxProps<ContactPoint> & {
   /**
@@ -38,14 +35,7 @@ function ContactPointSelector(props: ContactPointSelectorProps) {
   // Create a mapping of options with their corresponding contact points
   const contactPointOptions = chain(contactPoints?.items)
     .toArray()
-    .filter((contactPoint) => {
-      if (includeUnusable) {
-        return true;
-      }
-      // By default, only include contact points that can be used
-      const canUse = contactPoint.metadata?.annotations?.[CAN_USE_ANNOTATION];
-      return canUse === 'true';
-    })
+    .filter((contactPoint) => includeUnusable || isUsableContactPoint(contactPoint))
     .map((contactPoint) => ({
       option: {
         label: contactPoint.spec.title,
