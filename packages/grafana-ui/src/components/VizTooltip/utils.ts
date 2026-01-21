@@ -74,6 +74,20 @@ const numberCmp = (a: VizTooltipItem, b: VizTooltipItem) => a.numeric! - b.numer
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 const stringCmp = (a: VizTooltipItem, b: VizTooltipItem) => collator.compare(`${a.value}`, `${b.value}`);
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getDisplayValueString = (value: any, field: Field): { text: string; numeric: number; color?: string } => {
+  if (Array.isArray(value) && value.length === 0) {
+    return { text: '', numeric: NaN };
+  }
+
+  if ((Array.isArray(value) && value.length > 0) || (value && typeof value === 'object')) {
+    return { text: JSON.stringify(value), numeric: NaN };
+  }
+
+  const display = field.display!(value); // super expensive :(
+  return { text: formattedValueToString(display), numeric: display.numeric, color: display.color };
+};
+
 export const getContentItems = (
   fields: Field[],
   xField: Field,
@@ -123,7 +137,7 @@ export const getContentItems = (
       continue;
     }
 
-    const display = field.display!(v); // super expensive :(
+    const display = getDisplayValueString(v, field);
 
     // sort NaN and non-numeric to bottom (regardless of sort order)
     const numeric = !Number.isNaN(display.numeric)
@@ -136,7 +150,7 @@ export const getContentItems = (
 
     rows.push({
       label: field.state?.displayName ?? field.name,
-      value: formattedValueToString(display),
+      value: display.text,
       color: display.color ?? FALLBACK_COLOR,
       colorIndicator,
       colorPlacement,
@@ -149,11 +163,12 @@ export const getContentItems = (
   _restFields?.forEach((field) => {
     if (!field.config.custom?.hideFrom?.tooltip) {
       const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
-      const display = field.display!(field.values[dataIdxs[0]!]);
+      const rawValue = field.values[dataIdxs[0]!];
+      const display = getDisplayValueString(rawValue, field);
 
       rows.push({
         label: field.state?.displayName ?? field.name,
-        value: formattedValueToString(display),
+        value: display.text,
         color: FALLBACK_COLOR,
         colorIndicator,
         colorPlacement,
