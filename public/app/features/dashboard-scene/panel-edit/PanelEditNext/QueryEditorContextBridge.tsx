@@ -12,22 +12,34 @@ import { QueryEditorProvider } from './QueryEditorContext';
  * Wraps children with QueryEditorProvider so both sidebar and editor can access context.
  */
 export function QueryEditorContextBridge({ dataPane, children }: { dataPane: PanelDataPaneNext; children: ReactNode }) {
-  const { panelRef, datasource, dsSettings, error } = dataPane.useState();
+  const { panelRef, datasource, dsSettings, dsError } = dataPane.useState();
   const panel = panelRef.resolve();
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
 
-  const state = useMemo(
+  const dsState = useMemo(
     () => ({
-      panel,
       datasource,
       dsSettings,
+      dsError,
+    }),
+    [datasource, dsSettings, dsError]
+  );
+
+  const qrState = useMemo(
+    () => ({
       queries: queryRunnerState?.queries ?? [],
       data: queryRunnerState?.data,
       isLoading: queryRunnerState?.data?.state === LoadingState.Loading,
-      error,
     }),
-    [panel, datasource, dsSettings, queryRunnerState?.queries, queryRunnerState?.data, error]
+    [queryRunnerState?.queries, queryRunnerState?.data]
+  );
+
+  const panelState = useMemo(
+    () => ({
+      panel,
+    }),
+    [panel]
   );
 
   const actions = useMemo(
@@ -45,7 +57,7 @@ export function QueryEditorContextBridge({ dataPane, children }: { dataPane: Pan
   );
 
   return (
-    <QueryEditorProvider state={state} actions={actions}>
+    <QueryEditorProvider dsState={dsState} qrState={qrState} panelState={panelState} actions={actions}>
       {children}
     </QueryEditorProvider>
   );

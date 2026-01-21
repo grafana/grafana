@@ -4,14 +4,20 @@ import { DataSourceApi, DataSourceInstanceSettings, PanelData } from '@grafana/d
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 
-export interface QueryEditorState {
-  panel: VizPanel;
+export interface DatasourceState {
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
+  dsError?: Error;
+}
+
+export interface QueryRunnerState {
   queries: DataQuery[];
   data?: PanelData;
   isLoading: boolean;
-  error?: Error;
+}
+
+export interface PanelState {
+  panel: VizPanel;
 }
 
 export interface QueryEditorActions {
@@ -23,35 +29,59 @@ export interface QueryEditorActions {
   changeDataSource: (settings: DataSourceInstanceSettings) => void;
 }
 
-const StateContext = createContext<QueryEditorState | null>(null);
+const DatasourceContext = createContext<DatasourceState | null>(null);
+const QueryRunnerContext = createContext<QueryRunnerState | null>(null);
+const PanelContext = createContext<PanelState | null>(null);
 const ActionsContext = createContext<QueryEditorActions | null>(null);
 
-export function useQueryEditorState(): QueryEditorState {
-  const context = useContext(StateContext);
+export function useDatasourceContext(): DatasourceState {
+  const context = useContext(DatasourceContext);
   if (!context) {
-    throw new Error('useQueryEditorState must be used within QueryEditorProvider');
+    throw new Error('useDatasourceContext must be used within QueryEditorProvider');
   }
   return context;
 }
 
-export function useQueryEditorActions(): QueryEditorActions {
+export function useQueryRunnerContext(): QueryRunnerState {
+  const context = useContext(QueryRunnerContext);
+  if (!context) {
+    throw new Error('useQueryRunnerContext must be used within QueryEditorProvider');
+  }
+  return context;
+}
+
+export function usePanelContext(): PanelState {
+  const context = useContext(PanelContext);
+  if (!context) {
+    throw new Error('usePanelContext must be used within QueryEditorProvider');
+  }
+  return context;
+}
+
+export function useActionsContext(): QueryEditorActions {
   const context = useContext(ActionsContext);
   if (!context) {
-    throw new Error('useQueryEditorActions must be used within QueryEditorProvider');
+    throw new Error('useActionsContext must be used within QueryEditorProvider');
   }
   return context;
 }
 
 interface QueryEditorProviderProps {
   children: ReactNode;
-  state: QueryEditorState;
+  dsState: DatasourceState;
+  qrState: QueryRunnerState;
+  panelState: PanelState;
   actions: QueryEditorActions;
 }
 
-export function QueryEditorProvider({ children, state, actions }: QueryEditorProviderProps) {
+export function QueryEditorProvider({ children, dsState, qrState, panelState, actions }: QueryEditorProviderProps) {
   return (
     <ActionsContext.Provider value={actions}>
-      <StateContext.Provider value={state}>{children}</StateContext.Provider>
+      <DatasourceContext.Provider value={dsState}>
+        <QueryRunnerContext.Provider value={qrState}>
+          <PanelContext.Provider value={panelState}>{children}</PanelContext.Provider>
+        </QueryRunnerContext.Provider>
+      </DatasourceContext.Provider>
     </ActionsContext.Provider>
   );
 }

@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Text, useStyles2 } from '@grafana/ui';
 
-import { useQueryEditorState } from './QueryEditorContext';
+import { useQueryRunnerContext } from './QueryEditorContext';
 
 export enum SidebarSize {
   Mini = 'mini',
@@ -19,7 +19,7 @@ export function QueryEditorSidebar({ sidebarSize, setSidebarSize }: QueryEditorS
   const styles = useStyles2(getStyles);
   const isMini = sidebarSize === SidebarSize.Mini;
 
-  const { queries } = useQueryEditorState();
+  const { queries } = useQueryRunnerContext();
 
   console.log({ queries });
 

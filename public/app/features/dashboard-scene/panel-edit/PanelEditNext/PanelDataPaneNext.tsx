@@ -12,7 +12,7 @@ export interface PanelDataPaneNextState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
-  error?: Error;
+  dsError?: Error;
 }
 
 /**
@@ -47,7 +47,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   private async loadDatasource() {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (!queryRunner) {
-      this.setState({ datasource: undefined, dsSettings: undefined, error: undefined });
+      this.setState({ datasource: undefined, dsSettings: undefined, dsError: undefined });
       return;
     }
 
@@ -55,7 +55,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     // TODO: Add fallback to last-used datasource from localStorage for parity with PanelDataQueriesTab
     const dsRef = queryRunner.state.datasource ?? queryRunner.state.queries?.[0]?.datasource;
     if (!dsRef) {
-      this.setState({ datasource: undefined, dsSettings: undefined, error: undefined });
+      this.setState({ datasource: undefined, dsSettings: undefined, dsError: undefined });
       return;
     }
 
@@ -65,19 +65,19 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
         this.setState({
           datasource: undefined,
           dsSettings: undefined,
-          error: new Error(`Datasource settings not found for ${dsRef.uid}`),
+          dsError: new Error(`Datasource settings not found for ${dsRef.uid}`),
         });
         return;
       }
 
       const datasource = await getDataSourceSrv().get(dsRef);
-      this.setState({ datasource, dsSettings, error: undefined });
+      this.setState({ datasource, dsSettings, dsError: undefined });
     } catch (err) {
       console.error('Failed to load datasource:', err);
       this.setState({
         datasource: undefined,
         dsSettings: undefined,
-        error: err instanceof Error ? err : new Error('Failed to load datasource'),
+        dsError: err instanceof Error ? err : new Error('Failed to load datasource'),
       });
     }
   }
