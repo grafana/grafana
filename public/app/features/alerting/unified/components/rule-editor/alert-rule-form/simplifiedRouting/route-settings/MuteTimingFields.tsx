@@ -27,6 +27,7 @@ export function MuteTimingFields({ alertmanager }: BaseAlertmanagerArgs) {
       )}
       className={styles.muteTimingField}
       invalid={!!errors.contactPoints?.[alertmanager]?.muteTimeIntervals}
+      noMargin
     >
       <Controller
         render={({ field: { onChange, ref, ...field } }) => (

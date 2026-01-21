@@ -1049,6 +1049,17 @@ func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 				_, _ = w.Write(ghmock.MustMarshal(installation))
 			}),
 		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.PostAppInstallationsAccessTokensByInstallationId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				installation := github.InstallationToken{
+					Token:     github.Ptr("someToken"),
+					ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour * 2)},
+				}
+				_, _ = w.Write(ghmock.MustMarshal(installation))
+			}),
+		),
 	)
 	h.SetGithubConnectionFactory(connectionFactory)
 

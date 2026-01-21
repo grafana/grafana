@@ -10,7 +10,6 @@ export const createMockInstanceSetttings = (
   const metaOverrides = overrides?.meta;
   return {
     url: '/ds/1',
-    id: 1,
     uid: 'abc',
     type: 'azuremonitor',
     access: 'proxy',

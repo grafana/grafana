@@ -2138,8 +2138,8 @@
         "suffix": "Atualize a página e tente novamente.",
         "title": "Falha ao adicionar ou atualizar a política de notificação"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} política adicional",
+      "n-more-policies_other": "{{count}} políticas adicionais"
     },
     "policy": {
       "label-new-child-policy": "Nova política secundária",
@@ -2178,8 +2178,10 @@
       "badge-tooltip-provenance": "Este recurso foi provisionado via {{provenance}} e não pode ser editado por meio da interface do usuário",
       "badge-tooltip-standard": "Este recurso foi provisionado e não pode ser editado por meio da interface do usuário",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Este recurso ({{resource}}) foi provisionado — ou seja, foi criado por meio de uma configuração. Entre em contato com o administrador do servidor para atualizar este {{resource}}.",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Este recurso ({{resource}}) não pode ser editado por meio da interface de usuário"
     },
     "provisioning-badge": {
@@ -3728,6 +3730,7 @@
       "non-folder-item": "{{itemKind}} {{itemUID}} não é uma pasta",
       "root-title": "Painéis de controle",
       "search-placeholder": "Buscar pastas",
+      "shared-with-me": "",
       "unknown-error": "Erro desconhecido"
     },
     "manage-folder-nav": {
@@ -3831,6 +3834,7 @@
       "label-method": "Método",
       "label-payload": "Carga útil",
       "label-query-parameters": "Parâmetros de consulta",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Testar API",
         "title-test-api": "Testar API"
@@ -6453,8 +6457,8 @@
       "loading-connected-dashboards": "Carregando painéis conectados…",
       "placeholder-search-affected-dashboards": "Pesquisar painéis afetados",
       "update-all": "Atualizar tudo",
-      "affected-dashboards_one": "Esta atualização afetará <1>{{count}} painéis.</1> Os seguintes painéis de controle que estão usando o painel serão afetados:",
-      "affected-dashboards_other": "Esta atualização afetará <1>{{count}} painéis.</1> Os seguintes painéis de controle que estão usando o painel serão afetados:"
+      "affected-dashboards_one": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Erro ao salvar o painel de controle",
@@ -9558,8 +9562,8 @@
     "query-inspector": {
       "query-inspector": "Inspetor da consulta",
       "text-loading-query-inspector": "Carregando inspetor de consulta…",
-      "count-frames_one": "{{count}} quadros, ",
-      "count-frames_other": "{{count}} quadros, ",
+      "count-frames_one": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} linhas",
       "count-rows_other": "{{count}} linhas"
     }
@@ -9818,8 +9822,8 @@
       "loading-connected-dashboards": "Carregando painéis conectados…",
       "placeholder-search-affected-dashboards": "Pesquisar painéis afetados",
       "update-all": "Atualizar tudo",
-      "num-affected_one": "Esta atualização afetará <1>{{count}} painéis.</1>",
-      "num-affected_other": "Esta atualização afetará <1>{{count}} painéis.</1>"
+      "num-affected_one": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12542,13 +12546,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Recolher linha de consulta",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Mostrar ajuda da fonte de dados",
       "drag-and-drop": "Arraste e solte para reordenar",
       "duplicate-query": "Duplicar consulta",
       "expand-row": "Expandir linha de consulta",
       "hide-response": "Ocultar resposta",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Remover consulta",
+      "selected-datasource-label": "",
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
@@ -12605,10 +12621,10 @@
       "restore-button": "Restaurar",
       "restore-loading": "Restaurando…",
       "title": "Restaurar painéis de controle",
-      "folder-picker-text_one": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_other": ""
+      "folder-picker-text_one": "Escolha uma pasta para onde seu painel de controle será restaurado.",
+      "folder-picker-text_other": "Escolha uma pasta para onde seus painéis de controle serão restaurados.",
+      "text_one": "Esta ação restaurará {{numberOfDashboards}} painel de controle.",
+      "text_other": "Esta ação restaurará {{numberOfDashboards}} painéis de controle."
     }
   },
   "recentlyDeleted": {
@@ -13344,8 +13360,8 @@
       "label-never": "Nunca"
     },
     "status-history-panel": {
-      "too-many-points_one": "Há um número excessivo de pontos para que haja uma visualização adequada. <1></1>Atualize a consulta para retornar menos pontos. <3></3>({{count}} pontos recebidos)",
-      "too-many-points_other": "Há um número excessivo de pontos para que haja uma visualização adequada. <1></1>Atualize a consulta para retornar menos pontos. <3></3>({{count}} pontos recebidos)"
+      "too-many-points_one": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

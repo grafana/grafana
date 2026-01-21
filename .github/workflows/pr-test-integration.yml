@@ -37,9 +37,12 @@ jobs:
         uses: ./.github/actions/change-detection
         with:
           self: .github/workflows/pr-test-integration.yml
+
+  #### OSS
   sqlite:
+    # Run this workflow only for PRs from forks
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     strategy:
       matrix:
         # We don't need more than this since it has to wait for the other tests.
@@ -71,8 +74,9 @@ jobs:
           go test -tags=sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
 
   sqlite_nocgo:
+    # Run this workflow only for PRs from forks
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     strategy:
       matrix:
         # We don't need more than this since it has to wait for the other tests.
@@ -165,9 +169,11 @@ jobs:
           path: profiles/
           retention-days: 7
           if-no-files-found: ignore
+
   mysql:
+    # Run this workflow only for PRs from forks
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     strategy:
       matrix:
         shard: [
@@ -215,9 +221,11 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           CGO_ENABLED=0 go test -p=1 -tags=mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+
   postgres:
+    # Run this workflow only for PRs from forks
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     strategy:
       matrix:
         shard: [
@@ -265,6 +273,261 @@ jobs:
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           CGO_ENABLED=0 go test -p=1 -tags=postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
 
+  #### Enterprise
+  sqlite-enterprise:
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    needs: detect-changes
+    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
+    strategy:
+      matrix:
+        # We don't need more than this since it has to wait for the other tests.
+        shard: [
+          1/4, 2/4, 3/4, 4/4,
+        ]
+      fail-fast: false
+
+    name: Sqlite Enterprise (${{ matrix.shard }})
+    runs-on: ubuntu-x64-large-io
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v6.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Setup Enterprise
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
+      - name: Run tests
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+          go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+
+  sqlite_nocgo-enterprise:
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    needs: detect-changes
+    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
+    strategy:
+      matrix:
+        # We don't need more than this since it has to wait for the other tests.
+        shard: [
+          1/4, 2/4, 3/4, 4/4,
+          profiled,
+        ]
+      fail-fast: false
+
+    name: Sqlite Without CGo Enterprise (${{ matrix.shard }})
+    runs-on: ubuntu-x64-large-io
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v6.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Setup Enterprise
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
+      - name: Run tests
+        if: matrix.shard != 'profiled'
+        env:
+          SHARD: ${{ matrix.shard }}
+          CGO_ENABLED: 0
+          SKIP_PACKAGES: |-
+            pkg/tests/apis/folder
+            pkg/tests/apis/dashboard
+        run: |
+          set -euo pipefail
+          # Build regex pattern like: pkg1$|pkg2$|pkg3$
+          SKIP_PATTERN=$(echo "$SKIP_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | grep -Ev "($SKIP_PATTERN)")"
+          go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Run profiled tests
+        id: run-profiled-tests
+        if: matrix.shard == 'profiled'
+        env:
+          CGO_ENABLED: 0
+          PROFILED_PACKAGES: |-
+            pkg/tests/apis/folder
+            pkg/tests/apis/dashboard
+        run: |
+          set -euo pipefail
+          # Build regex pattern line: pkg1$|pkg2$|pkg3$
+          PROFILE_PATTERN=$(echo "$PROFILED_PACKAGES" | sed '/^$/d' | sed 's|.*|&$|' | paste -sd '|' -)
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | grep -E "($PROFILE_PATTERN)")"
+          if [ ${#PACKAGES[@]} -eq 0 ]; then
+            echo "⚠️  No profiled packages found"
+            exit 0
+          fi
+          mkdir -p profiles
+          EXIT_CODE=0
+          # Run each profiled package sequentially
+          for full_pkg in "${PACKAGES[@]}"; do
+            # Build valid file name
+            pkg_name=$(basename "$full_pkg" | tr '/' '_' | tr '.' '_')
+            echo "📦 Running $full_pkg"
+            set +e
+            go test -tags=enterprise,sqlite -timeout=8m -run '^TestIntegration' \
+              -outputdir=profiles \
+              -cpuprofile="cpu_${pkg_name}.prof" \
+              -memprofile="mem_${pkg_name}.prof" \
+              -trace="trace_${pkg_name}.out" \
+              "$full_pkg" 2>&1 | tee "profiles/test_${pkg_name}.log"
+            TEST_EXIT=$?
+            set -e
+            if [ $TEST_EXIT -ne 0 ]; then
+              echo "❌ $full_pkg failed with exit code $TEST_EXIT"
+              EXIT_CODE=1
+            else
+              echo "✅ $full_pkg passed"
+            fi
+          done
+          # Set output for artifact upload
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "upload_artifacts=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "upload_artifacts=false" >> "$GITHUB_OUTPUT"
+          fi
+          exit $EXIT_CODE
+      - name: Output test profiles and traces
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v4
+        if: matrix.shard == 'profiled' && !cancelled() && steps.run-profiled-tests.outputs.upload_artifacts == 'true'
+        with:
+          name: integration-test-profiles-sqlite-nocgo-${{ github.run_number }}
+          path: profiles/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  mysql-enterprise:
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    needs: detect-changes
+    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
+    strategy:
+      matrix:
+        shard: [
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
+        ]
+      fail-fast: false
+
+    name: MySQL Enterprise (${{ matrix.shard }})
+    runs-on: ubuntu-x64-large-io
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GRAFANA_TEST_DB: mysql
+      MYSQL_HOST: 127.0.0.1
+    services:
+      mysql:
+        image: mysql:8.0.43
+        env:
+          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_DATABASE: grafana_tests
+          MYSQL_USER: grafana
+          MYSQL_PASSWORD: password
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
+        ports:
+          - 3306:3306
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v6.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Setup Enterprise
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
+      - name: Setup MySQL devenv
+        run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
+      - name: Run tests
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+          CGO_ENABLED=0 go test -p=1 -tags=enterprise,mysql -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+
+  postgres-enterprise:
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    needs: detect-changes
+    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
+    strategy:
+      matrix:
+        shard: [
+           1/16,  2/16,  3/16,  4/16,
+           5/16,  6/16,  7/16,  8/16,
+           9/16, 10/16, 11/16, 12/16,
+          13/16, 14/16, 15/16, 16/16,
+        ]
+      fail-fast: false
+
+    name: Postgres Enterprise (${{ matrix.shard }})
+    runs-on: ubuntu-x64-large-io
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GRAFANA_TEST_DB: postgres
+      PGPASSWORD: grafanatest
+      POSTGRES_HOST: 127.0.0.1
+    services:
+      postgres:
+        image: postgres:17.6
+        env:
+          POSTGRES_USER: grafanatest
+          POSTGRES_PASSWORD: grafanatest
+          POSTGRES_DB: grafanatest
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v6.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Setup Enterprise
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
+      - name: Setup Postgres devenv
+        run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+      - name: Run tests
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+          CGO_ENABLED=0 go test -p=1 -tags=enterprise,postgres -timeout=8m -run '^TestIntegration' "${PACKAGES[@]}"
+
   # This is the job that is actually required by rulesets.
   # We want to only require one job instead of all the individual tests and shards.
   # Future work also allows us to start skipping some tests based on changed files.
@@ -273,6 +536,9 @@ jobs:
       - mysql
       - postgres
       - sqlite
+      - mysql-enterprise
+      - postgres-enterprise
+      - sqlite-enterprise
     # always() is the best function here.
     # success() || failure() will skip this function if any need is also skipped.
     # That means conditional test suites will fail the entire requirement check.

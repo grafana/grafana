@@ -1382,11 +1382,6 @@
       "count": 2
     }
   },
-  "public/app/features/alerting/unified/components/mute-timings/MuteTimingForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/mute-timings/MuteTimingTimeInterval.tsx": {
     "no-restricted-syntax": {
       "count": 5
@@ -1507,11 +1502,6 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/ActiveTimingFields.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/MuteTimingFields.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
@@ -1762,16 +1752,6 @@
       "count": 1
     }
   },
-  "public/app/features/connections/components/AdvisorRedirectNotice/AdvisorRedirectNotice.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/features/connections/components/AdvisorRedirectNotice/AdvisorRedirectNotice.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/connections/tabs/ConnectData/ConnectData.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -1781,11 +1761,6 @@
     },
     "react/no-unescaped-entities": {
       "count": 2
-    }
-  },
-  "public/app/features/correlations/CorrelationsPage.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/correlations/Forms/ConfigureCorrelationBasicInfoForm.tsx": {
@@ -1819,11 +1794,6 @@
   "public/app/features/dashboard-scene/addToDashboard/AddToDashboardForm.tsx": {
     "no-restricted-syntax": {
       "count": 2
-    }
-  },
-  "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneSplitter.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 5
     }
   },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
@@ -2982,16 +2952,6 @@
       "count": 2
     }
   },
-  "public/app/features/plugins/extensions/utils.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 27
-    }
-  },
-  "public/app/features/plugins/extensions/utils.tsx": {
-    "no-restricted-syntax": {
-      "count": 7
-    }
-  },
   "public/app/features/plugins/extensions/validators.test.tsx": {
     "no-restricted-syntax": {
       "count": 30
@@ -3000,11 +2960,6 @@
   "public/app/features/plugins/extensions/validators.ts": {
     "no-restricted-syntax": {
       "count": 4
-    }
-  },
-  "public/app/features/plugins/sandbox/codeLoader.ts": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/plugins/sandbox/distortions.ts": {
@@ -4242,11 +4197,6 @@
   "public/app/plugins/panel/canvas/editor/LineStyleEditor.tsx": {
     "no-restricted-syntax": {
       "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/editor/element/APIEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/plugins/panel/canvas/editor/element/ParamsEditor.tsx": {

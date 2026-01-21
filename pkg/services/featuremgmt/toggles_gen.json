@@ -1390,6 +1390,7 @@
         "name": "disableClassicHTTPHistogram",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-06-18T19:37:44Z",
+        "deletionTimestamp": "2026-01-20T11:46:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -1575,6 +1576,7 @@
         "name": "enableNativeHTTPHistogram",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2023-10-03T18:23:55Z",
+        "deletionTimestamp": "2026-01-20T11:37:01Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -2436,6 +2438,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzTeamLBACRuleApi",
+        "resourceVersion": "1768589823498",
+        "creationTimestamp": "2026-01-14T23:12:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-16 18:57:03.498879 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Registers AuthZ TeamLBACRule /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthzZanzanaSync",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-10-13T19:37:13Z",
@@ -2649,6 +2668,25 @@
     },
     {
       "metadata": {
+        "name": "liveAPIServer",
+        "resourceVersion": "1768816234707",
+        "creationTimestamp": "2026-01-19T09:34:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-19 09:50:34.707432 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Registers a live apiserver",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresDevMode": true,
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "localeFormatPreference",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-03-31T13:59:07Z",
@@ -2685,6 +2723,7 @@
         "name": "logRequestsInstrumentedAsUnknown",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-06-10T08:56:55Z",
+        "deletionTimestamp": "2026-01-16T14:10:42Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -3726,6 +3765,24 @@
     },
     {
       "metadata": {
+        "name": "queryWithAssistant",
+        "resourceVersion": "1768832883692",
+        "creationTimestamp": "2026-01-15T12:40:17Z",
+        "deletionTimestamp": "2026-01-19T14:25:13Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-19 14:28:03.692934 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the Query with Assistant button in the query editor",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "recentlyViewedDashboards",
         "resourceVersion": "1765227168175",
         "creationTimestamp": "2025-12-10T16:28:19Z",
@@ -4530,14 +4587,18 @@
     {
       "metadata": {
         "name": "useMTPlugins",
-        "resourceVersion": "1764913709691",
-        "creationTimestamp": "2025-12-05T07:09:41Z"
+        "resourceVersion": "1768554119948",
+        "creationTimestamp": "2025-12-05T07:09:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-16 09:01:59.948292 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
