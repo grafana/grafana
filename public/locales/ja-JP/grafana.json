@@ -3714,6 +3714,7 @@
       "non-folder-item": "非フォルダ {{itemKind}} {{itemUID}}",
       "root-title": "ダッシュボード",
       "search-placeholder": "フォルダを検索",
+      "shared-with-me": "",
       "unknown-error": "不明なエラー"
     },
     "manage-folder-nav": {
@@ -3814,6 +3815,7 @@
       "label-method": "メソッド",
       "label-payload": "ペイロード",
       "label-query-parameters": "クエリのパラメータ",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "APIをテストする",
         "title-test-api": "APIをテストする"

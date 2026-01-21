@@ -213,6 +213,13 @@ var appManifestData = app.ManifestData{
 				},
 
 				{
+					Kind:       "TeamLBACRule",
+					Plural:     "TeamLBACRules",
+					Scope:      "Namespaced",
+					Conversion: false,
+				},
+
+				{
 					Kind:       "ServiceAccount",
 					Plural:     "ServiceAccounts",
 					Scope:      "Namespaced",
@@ -595,6 +602,7 @@ var kindVersionToGoType = map[string]resource.Kind{
 	"User/v0alpha1":                 v0alpha1.UserKind(),
 	"Team/v0alpha1":                 v0alpha1.TeamKind(),
 	"TeamBinding/v0alpha1":          v0alpha1.TeamBindingKind(),
+	"TeamLBACRule/v0alpha1":         v0alpha1.TeamLBACRuleKind(),
 	"ServiceAccount/v0alpha1":       v0alpha1.ServiceAccountKind(),
 	"ExternalGroupMapping/v0alpha1": v0alpha1.ExternalGroupMappingKind(),
 }

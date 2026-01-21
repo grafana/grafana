@@ -44,8 +44,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-09-07,sseGroupByDatasource,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-09-19,lokiRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
 2023-09-28,externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
-2023-10-03,enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
-2024-06-18,disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 2023-12-06,kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2025-06-26,kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2024-06-05,kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,false
@@ -216,6 +214,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-01-12,kubernetesAuthzCoreRolesApi,experimental,@grafana/identity-access-team,false,false,false
 2026-01-15,kubernetesAuthzGlobalRolesApi,experimental,@grafana/identity-access-team,false,false,false
 2026-01-12,kubernetesAuthzRolesApi,experimental,@grafana/identity-access-team,false,false,false
+2026-01-15,kubernetesAuthzTeamLBACRuleApi,experimental,@grafana/identity-access-team,false,false,false
 2026-01-12,kubernetesAuthzRoleBindingsApi,experimental,@grafana/identity-access-team,false,false,false
 2025-07-25,kubernetesAuthnMutation,experimental,@grafana/identity-access-team,false,false,false
 2025-11-25,kubernetesExternalGroupMapping,experimental,@grafana/identity-access-team,false,false,false

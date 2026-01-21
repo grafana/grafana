@@ -76,6 +76,7 @@ func RegisterAPIService(
 	coreRolesStorage CoreRoleStorageBackend,
 	roleApiInstaller RoleApiInstaller,
 	globalRoleApiInstaller GlobalRoleApiInstaller,
+	teamLBACApiInstaller TeamLBACApiInstaller,
 	tracing *tracing.TracingService,
 	roleBindingsStorage RoleBindingStorageBackend,
 	externalGroupMappingStorageBackend ExternalGroupMappingStorageBackend,
@@ -112,6 +113,7 @@ func RegisterAPIService(
 		coreRolesStorage:                  coreRolesStorage,
 		roleApiInstaller:                  roleApiInstaller,
 		globalRoleApiInstaller:            globalRoleApiInstaller,
+		teamLBACApiInstaller:              teamLBACApiInstaller,
 		resourcePermissionsStorage:        resourcepermission.ProvideStorageBackend(dbProvider),
 		roleBindingsStorage:               roleBindingsStorage,
 		externalGroupMappingStorage:       externalGroupMappingStorageBackend,
@@ -147,6 +149,7 @@ func NewAPIService(
 	dbProvider legacysql.LegacyDatabaseProvider,
 	coreRoleStorage CoreRoleStorageBackend,
 	roleApiInstaller RoleApiInstaller,
+	teamLBACApiInstaller TeamLBACApiInstaller,
 	features featuremgmt.FeatureToggles,
 	zClient zanzana.Client,
 	reg prometheus.Registerer,
@@ -180,6 +183,7 @@ func NewAPIService(
 		reg:                        reg,
 		roleApiInstaller:           roleApiInstaller,
 		globalRoleApiInstaller:     ProvideNoopGlobalRoleApiInstaller(), // TODO: add a proper global role installer
+		teamLBACApiInstaller:       teamLBACApiInstaller,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				user, ok := types.AuthInfoFrom(ctx)
@@ -226,6 +230,7 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 	enableRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRolesApi, false, openfeature.TransactionContext(ctx))
 	enableRoleBindingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, false, openfeature.TransactionContext(ctx))
 	enableGlobalRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, false, openfeature.TransactionContext(ctx))
+	enableTeamLBACRuleApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, false, openfeature.TransactionContext(ctx))
 
 	if enableCoreRolesApi || enableRolesApi || enableRoleBindingsApi {
 		if err := iamv0.AddAuthZKnownTypes(scheme); err != nil {
@@ -235,6 +240,29 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 
 	if enableGlobalRolesApi {
 		if err := iamv0.AddGlobalRoleKnownTypes(scheme); err != nil {
+			return err
+		}
+	}
+
+	if enableTeamLBACRuleApi {
+		if err := iamv0.AddTeamLBACRuleTypes(scheme); err != nil {
+			return err
+		}
+		// Register field label conversion for field selectors
+		if err := scheme.AddFieldLabelConversionFunc(
+			iamv0.TeamLBACRuleInfo.GroupVersionKind(),
+			func(label, value string) (string, string, error) {
+				// Allow spec.datasource_uid field selector
+				if label == "spec.datasource_uid" {
+					return label, value, nil
+				}
+				// Allow standard metadata fields
+				if label == "metadata.name" || label == "metadata.namespace" {
+					return label, value, nil
+				}
+				return "", "", fmt.Errorf("field label not supported for %s: %s", iamv0.TeamLBACRuleInfo.GroupVersionKind(), label)
+			},
+		); err != nil {
 			return err
 		}
 	}
@@ -279,6 +307,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRolesApi, false, openfeature.TransactionContext(ctx))
 	enableRoleBindingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, false, openfeature.TransactionContext(ctx))
 	enableGlobalRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, false, openfeature.TransactionContext(ctx))
+	enableTeamLBACRuleApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, false, openfeature.TransactionContext(ctx))
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
@@ -330,6 +359,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	if enableGlobalRolesApi {
 		if err := b.globalRoleApiInstaller.RegisterStorage(apiGroupInfo, &opts, storage); err != nil {
+			return err
+		}
+	}
+
+	if enableTeamLBACRuleApi {
+		// TeamLBACRule registration is delegated to the TeamLBACApiInstaller
+		if err := b.teamLBACApiInstaller.RegisterStorage(apiGroupInfo, &opts, storage); err != nil {
 			return err
 		}
 	}
@@ -686,73 +722,102 @@ func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authoriz
 func (b *IdentityAccessManagementAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	switch a.GetOperation() {
 	case admission.Create:
-		switch typedObj := a.GetObject().(type) {
-		case *iamv0.User:
-			return user.ValidateOnCreate(ctx, b.userSearchClient, typedObj)
-		case *iamv0.ServiceAccount:
-			return serviceaccount.ValidateOnCreate(ctx, typedObj)
-		case *iamv0.Team:
-			return team.ValidateOnCreate(ctx, typedObj)
-		case *iamv0.TeamBinding:
-			return teambinding.ValidateOnCreate(ctx, typedObj)
-		case *iamv0.ResourcePermission:
-			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
-		case *iamv0.ExternalGroupMapping:
-			return externalgroupmapping.ValidateOnCreate(typedObj)
-		case *iamv0.Role:
-			return b.roleApiInstaller.ValidateOnCreate(ctx, typedObj)
-		case *iamv0.GlobalRole:
-			return b.globalRoleApiInstaller.ValidateOnCreate(ctx, typedObj)
-		}
-		return nil
+		return b.validateCreate(ctx, a)
 	case admission.Update:
-		switch typedObj := a.GetObject().(type) {
-		case *iamv0.User:
-			oldUserObj, ok := a.GetOldObject().(*iamv0.User)
-			if !ok {
-				return fmt.Errorf("expected old object to be a User, got %T", oldUserObj)
-			}
-			return user.ValidateOnUpdate(ctx, b.userSearchClient, oldUserObj, typedObj)
-		case *iamv0.ResourcePermission:
-			return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
-		case *iamv0.Team:
-			oldTeamObj, ok := a.GetOldObject().(*iamv0.Team)
-			if !ok {
-				return fmt.Errorf("expected old object to be a Team, got %T", oldTeamObj)
-			}
-			return team.ValidateOnUpdate(ctx, typedObj, oldTeamObj)
-		case *iamv0.TeamBinding:
-			oldTeamBindingObj, ok := a.GetOldObject().(*iamv0.TeamBinding)
-			if !ok {
-				return fmt.Errorf("expected old object to be a TeamBinding, got %T", oldTeamBindingObj)
-			}
-			return teambinding.ValidateOnUpdate(ctx, typedObj, oldTeamBindingObj)
-		case *iamv0.Role:
-			oldRoleObj, ok := a.GetOldObject().(*iamv0.Role)
-			if !ok {
-				return fmt.Errorf("expected old object to be a Role, got %T", oldRoleObj)
-			}
-			return b.roleApiInstaller.ValidateOnUpdate(ctx, oldRoleObj, typedObj)
-		case *iamv0.GlobalRole:
-			oldGlobalRoleObj, ok := a.GetOldObject().(*iamv0.GlobalRole)
-			if !ok {
-				return fmt.Errorf("expected old object to be a GlobalRole, got %T", oldGlobalRoleObj)
-			}
-			return b.globalRoleApiInstaller.ValidateOnUpdate(ctx, oldGlobalRoleObj, typedObj)
-		}
-		return nil
+		return b.validateUpdate(ctx, a)
 	case admission.Delete:
-		switch oldObj := a.GetOldObject().(type) {
-		case *iamv0.Role:
-			return b.roleApiInstaller.ValidateOnDelete(ctx, oldObj)
-		case *iamv0.GlobalRole:
-			return b.globalRoleApiInstaller.ValidateOnDelete(ctx, oldObj)
-		}
-		return nil
+		return b.validateDelete(ctx, a)
 	case admission.Connect:
+		return b.validateConnect(ctx, a)
+	}
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context, a admission.Attributes) error {
+	switch typedObj := a.GetObject().(type) {
+	case *iamv0.User:
+		return user.ValidateOnCreate(ctx, b.userSearchClient, typedObj)
+	case *iamv0.ServiceAccount:
+		return serviceaccount.ValidateOnCreate(ctx, typedObj)
+	case *iamv0.Team:
+		return team.ValidateOnCreate(ctx, typedObj)
+	case *iamv0.TeamBinding:
+		return teambinding.ValidateOnCreate(ctx, typedObj)
+	case *iamv0.ResourcePermission:
+		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
+	case *iamv0.ExternalGroupMapping:
+		return externalgroupmapping.ValidateOnCreate(typedObj)
+	case *iamv0.Role:
+		return b.roleApiInstaller.ValidateOnCreate(ctx, typedObj)
+	case *iamv0.GlobalRole:
+		return b.globalRoleApiInstaller.ValidateOnCreate(ctx, typedObj)
+	case *iamv0.TeamLBACRule:
+		return b.teamLBACApiInstaller.ValidateOnCreate(ctx, typedObj)
+	}
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context, a admission.Attributes) error {
+	oldObj := a.GetOldObject()
+	switch typedObj := a.GetObject().(type) {
+	case *iamv0.User:
+		oldUserObj, ok := oldObj.(*iamv0.User)
+		if !ok {
+			return fmt.Errorf("expected old object to be a User, got %T", oldObj)
+		}
+		return user.ValidateOnUpdate(ctx, b.userSearchClient, oldUserObj, typedObj)
+	case *iamv0.ResourcePermission:
+		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
+	case *iamv0.Team:
+		oldTeamObj, ok := oldObj.(*iamv0.Team)
+		if !ok {
+			return fmt.Errorf("expected old object to be a Team, got %T", oldObj)
+		}
+		return team.ValidateOnUpdate(ctx, typedObj, oldTeamObj)
+	case *iamv0.TeamBinding:
+		oldTeamBindingObj, ok := oldObj.(*iamv0.TeamBinding)
+		if !ok {
+			return fmt.Errorf("expected old object to be a TeamBinding, got %T", oldObj)
+		}
+		return teambinding.ValidateOnUpdate(ctx, typedObj, oldTeamBindingObj)
+	case *iamv0.Role:
+		oldRoleObj, ok := oldObj.(*iamv0.Role)
+		if !ok {
+			return fmt.Errorf("expected old object to be a Role, got %T", oldObj)
+		}
+		return b.roleApiInstaller.ValidateOnUpdate(ctx, oldRoleObj, typedObj)
+	case *iamv0.GlobalRole:
+		oldGlobalRoleObj, ok := oldObj.(*iamv0.GlobalRole)
+		if !ok {
+			return fmt.Errorf("expected old object to be a GlobalRole, got %T", oldObj)
+		}
+		return b.globalRoleApiInstaller.ValidateOnUpdate(ctx, oldGlobalRoleObj, typedObj)
+	case *iamv0.TeamLBACRule:
+		oldTeamLBACRuleObj, ok := oldObj.(*iamv0.TeamLBACRule)
+		if !ok {
+			return fmt.Errorf("expected old object to be a TeamLBACRule, got %T", oldObj)
+		}
+		return b.teamLBACApiInstaller.ValidateOnUpdate(ctx, oldTeamLBACRuleObj, typedObj)
+	}
+	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) validateDelete(ctx context.Context, a admission.Attributes) error {
+	switch oldObj := a.GetOldObject().(type) {
+	case *iamv0.Role:
+		return b.roleApiInstaller.ValidateOnDelete(ctx, oldObj)
+	case *iamv0.GlobalRole:
+		return b.globalRoleApiInstaller.ValidateOnDelete(ctx, oldObj)
+	case *iamv0.TeamLBACRule:
+		if b.teamLBACApiInstaller != nil {
+			return b.teamLBACApiInstaller.ValidateOnDelete(ctx, oldObj)
+		}
 		return nil
 	}
+	return nil
+}
 
+func (b *IdentityAccessManagementAPIBuilder) validateConnect(ctx context.Context, a admission.Attributes) error {
 	return nil
 }
 

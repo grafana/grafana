@@ -143,14 +143,6 @@ const (
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
 
-	// FlagEnableNativeHTTPHistogram
-	// Enables native HTTP Histograms
-	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
-
-	// FlagDisableClassicHTTPHistogram
-	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
-	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
-
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
@@ -641,6 +633,10 @@ const (
 	// FlagKubernetesAuthzRolesApi
 	// Registers AuthZ Roles /apis endpoint
 	FlagKubernetesAuthzRolesApi = "kubernetesAuthzRolesApi"
+
+	// FlagKubernetesAuthzTeamLBACRuleApi
+	// Registers AuthZ TeamLBACRule /apis endpoint
+	FlagKubernetesAuthzTeamLBACRuleApi = "kubernetesAuthzTeamLBACRuleApi"
 
 	// FlagKubernetesAuthzRoleBindingsApi
 	// Registers AuthZ Role Bindings /apis endpoint

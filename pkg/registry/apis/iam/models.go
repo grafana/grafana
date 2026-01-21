@@ -59,6 +59,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	coreRolesStorage            CoreRoleStorageBackend
 	roleApiInstaller            RoleApiInstaller
 	globalRoleApiInstaller      GlobalRoleApiInstaller
+	teamLBACApiInstaller        TeamLBACApiInstaller
 	resourcePermissionsStorage  resource.StorageBackend
 	roleBindingsStorage         RoleBindingStorageBackend
 	externalGroupMappingStorage ExternalGroupMappingStorageBackend

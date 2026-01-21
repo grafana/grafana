@@ -3714,6 +3714,7 @@
       "non-folder-item": "비폴더 {{itemKind}} {{itemUID}}",
       "root-title": "대시보드",
       "search-placeholder": "폴더 검색",
+      "shared-with-me": "",
       "unknown-error": "알 수 없는 오류"
     },
     "manage-folder-nav": {
@@ -3814,6 +3815,7 @@
       "label-method": "방법",
       "label-payload": "페이로드",
       "label-query-parameters": "쿼리 파라미터",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "테스트 API",
         "title-test-api": "테스트 API"

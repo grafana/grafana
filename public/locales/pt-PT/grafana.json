@@ -3730,6 +3730,7 @@
       "non-folder-item": "Não pasta {{itemKind}} {{itemUID}}",
       "root-title": "Painéis de controlo",
       "search-placeholder": "Pesquisar pastas",
+      "shared-with-me": "",
       "unknown-error": "Erro desconhecido"
     },
     "manage-folder-nav": {
@@ -3833,6 +3834,7 @@
       "label-method": "Método",
       "label-payload": "Carga útil",
       "label-query-parameters": "Parâmetros da consulta",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Testar API",
         "title-test-api": "Testar API"
