@@ -374,37 +374,22 @@ export function processSeries(
   const labelKeys: Set<string> = new Set();
   const labelValues: Set<string> = new Set();
 
+  // Filter series if the datasource doesn't have match[] API support
+  let filteredSeries = series;
   if (!hasLabelsMatchAPISupport) {
     // The datasource doesn't have match[] parameter support.
     // Manual filtering is required to avoid returning duplicate metrics.
-    // Extract label keys and values from match[] selector for filtering
     const {
       query: { labels },
     } = buildVisualQueryFromString(matchSelector);
-    // Filter series based on extracted label keys and values
-    series.forEach((item) => {
-      const matchSelectorExists = labels.every((lbl) => {
-        return item[lbl.label] === lbl.value;
-      });
-      if (matchSelectorExists && findValuesForKey && item[findValuesForKey]) {
-        metrics.add(item.__name__);
-        labelKeys.add(findValuesForKey);
-        labelValues.add(item[findValuesForKey]);
-      }
-    });
 
-    return {
-      metrics: Array.from(metrics).sort(),
-      labelKeys: Array.from(labelKeys).sort(),
-      labelValues: Array.from(labelValues).sort(),
-    };
+    filteredSeries = series.filter((item) => {
+      return labels.every((lbl) => item[lbl.label] === lbl.value);
+    });
   }
 
-  // The datasource has match[] parameter support.
-  // So the returned data is likely filtered already based on the match[] parameter
-
-  // Extract metrics and label keys
-  series.forEach((item) => {
+  // Extract metrics, label keys, and label values from the (filtered) series
+  filteredSeries.forEach((item) => {
     // Add the __name__ value to metrics
     if (METRIC_LABEL in item) {
       metrics.add(item.__name__);
@@ -415,6 +400,8 @@ export function processSeries(
       if (key !== METRIC_LABEL) {
         labelKeys.add(key);
       }
+
+      // If finding values for a specific key, add those values
       if (findValuesForKey && key === findValuesForKey) {
         labelValues.add(item[key]);
       }
