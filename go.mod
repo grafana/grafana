@@ -1,3 +1,4 @@
+// hello world
 module github.com/grafana/grafana
 
 go 1.25.6
