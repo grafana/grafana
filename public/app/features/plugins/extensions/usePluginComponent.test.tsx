@@ -1,7 +1,8 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import type { JSX } from 'react';
+import { useAsync } from 'react-use';
 
-import { PluginContextProvider, PluginLoadingStrategy, PluginMeta, PluginType } from '@grafana/data';
+import { AppPluginConfig, PluginContextProvider, PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
@@ -12,6 +13,7 @@ import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './registry/types';
+import { basicApp } from './test-fixtures/config.apps';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginComponent } from './usePluginComponent';
 import { isGrafanaDevMode } from './utils';
@@ -25,18 +27,6 @@ jest.mock('./utils', () => ({
   isGrafanaDevMode: jest.fn().mockReturnValue(false),
 }));
 
-// See: public/app/features/plugins/extensions/utils.tsx for implementation details
-jest.mock('react-use', () => ({
-  ...jest.requireActual('react-use'),
-  useAsync: jest.fn().mockImplementation(() => ({
-    error: null,
-    loading: false,
-    value: {
-      id: 'my-app-plugin',
-    },
-  })),
-}));
-
 jest.mock('./logs/log', () => {
   const { createLogMock } = jest.requireActual('./logs/testUtils');
   const original = jest.requireActual('./logs/log');
@@ -47,12 +37,17 @@ jest.mock('./logs/log', () => {
   };
 });
 
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useAsync: jest.fn(),
+}));
+const useAsyncMock = jest.mocked(useAsync);
+
 describe('usePluginComponent()', () => {
   let registries: PluginExtensionRegistries;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
   let pluginMeta: PluginMeta;
-  const originalApps = config.apps;
-  const pluginId = 'myorg-extensions-app';
+  const pluginId = basicApp.id;
   const exposedComponentId = `${pluginId}/exposed-component/v1`;
   const exposedComponentConfig = {
     id: exposedComponentId,
@@ -61,43 +56,29 @@ describe('usePluginComponent()', () => {
     component: () => <div>Hello World</div>,
   };
   const appPluginConfig = {
-    id: pluginId,
-    path: '',
-    version: '',
-    preload: false,
-    angular: {
-      detected: false,
-      hideDeprecation: false,
-    },
-    loadingStrategy: PluginLoadingStrategy.fetch,
-    dependencies: {
-      grafanaVersion: '8.0.0',
-      plugins: [],
-      extensions: {
-        exposedComponents: [],
-      },
-    },
+    ...basicApp,
     extensions: {
-      addedLinks: [],
-      addedComponents: [],
-      addedFunctions: [],
+      ...basicApp.extensions,
       // This is necessary, so we can register exposed components to the registry during the tests
       // (Otherwise the registry would reject it in the imitated production mode)
       exposedComponents: [exposedComponentConfig],
-      extensionPoints: [],
     },
   };
+  let apps: AppPluginConfig[];
 
   beforeEach(() => {
+    apps = [appPluginConfig];
     registries = {
-      addedComponentsRegistry: new AddedComponentsRegistry(),
-      exposedComponentsRegistry: new ExposedComponentsRegistry(),
-      addedLinksRegistry: new AddedLinksRegistry(),
-      addedFunctionsRegistry: new AddedFunctionsRegistry(),
+      addedComponentsRegistry: new AddedComponentsRegistry(apps),
+      exposedComponentsRegistry: new ExposedComponentsRegistry(apps),
+      addedLinksRegistry: new AddedLinksRegistry(apps),
+      addedFunctionsRegistry: new AddedFunctionsRegistry(apps),
     };
     jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
     resetLogMock(log);
+
+    useAsyncMock.mockReturnValue({ value: registries, loading: false });
 
     pluginMeta = {
       id: pluginId,
@@ -135,17 +116,9 @@ describe('usePluginComponent()', () => {
       },
     };
 
-    config.apps = {
-      [pluginId]: appPluginConfig,
-    };
-
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+      <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
     );
-  });
-
-  afterEach(() => {
-    config.apps = originalApps;
   });
 
   it('should return null if there are no component exposed for the id', () => {
@@ -232,7 +205,7 @@ describe('usePluginComponent()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 
@@ -254,7 +227,7 @@ describe('usePluginComponent()', () => {
 
     // No plugin context -> used in Grafana core
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+      <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
     );
 
     registries.exposedComponentsRegistry.register({
@@ -289,7 +262,7 @@ describe('usePluginComponent()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 
@@ -320,7 +293,7 @@ describe('usePluginComponent()', () => {
           },
         }}
       >
-        <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+        <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
 
@@ -383,7 +356,7 @@ describe('usePluginComponent()', () => {
 
     // Should log an error in dev mode
     expect(log.error).toHaveBeenCalledWith(
-      'Attempted to mutate object property "c" from extension with id myorg-extensions-app and version unknown',
+      'Attempted to mutate object property "c" from extension with id grafana-basic-app and version unknown',
       {
         stack: expect.any(String),
       }
@@ -439,7 +412,7 @@ describe('usePluginComponent()', () => {
 
     // Should log a warning
     expect(log.warning).toHaveBeenCalledWith(
-      'Attempted to mutate object property "c" from extension with id myorg-extensions-app and version unknown',
+      'Attempted to mutate object property "c" from extension with id grafana-basic-app and version unknown',
       {
         stack: expect.any(String),
       }

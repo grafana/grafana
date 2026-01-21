@@ -2917,26 +2917,6 @@
       "count": 1
     }
   },
-  "public/app/features/plugins/extensions/usePluginComponent.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
-  "public/app/features/plugins/extensions/usePluginComponents.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/features/plugins/extensions/usePluginFunctions.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/features/plugins/extensions/usePluginLinks.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "public/app/features/plugins/extensions/utils.test.tsx": {
     "no-restricted-syntax": {
       "count": 27

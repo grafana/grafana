@@ -12,24 +12,15 @@ import { AddedLinksRegistry } from './AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './types';
 
-let addedComponentsRegistry: AddedComponentsRegistry | undefined;
-let exposedComponentsRegistry: ExposedComponentsRegistry | undefined;
-let addedLinksRegistry: AddedLinksRegistry | undefined;
-let addedFunctionsRegistry: AddedFunctionsRegistry | undefined;
-let pluginExtensionRegistries: PluginExtensionRegistries | undefined;
+let pluginExtensionRegistries: Promise<PluginExtensionRegistries> | undefined;
 
-export async function getPluginExtensionRegistries(): Promise<PluginExtensionRegistries> {
-  if (pluginExtensionRegistries) {
-    return pluginExtensionRegistries;
-  }
-
+async function initPluginExtensionRegistries(): Promise<PluginExtensionRegistries> {
   const apps = await getAppPluginMetas();
-
-  addedComponentsRegistry = new AddedComponentsRegistry(apps);
-  exposedComponentsRegistry = new ExposedComponentsRegistry(apps);
-  addedLinksRegistry = new AddedLinksRegistry(apps);
-  addedFunctionsRegistry = new AddedFunctionsRegistry(apps);
-  pluginExtensionRegistries = {
+  const addedComponentsRegistry = new AddedComponentsRegistry(apps);
+  const exposedComponentsRegistry = new ExposedComponentsRegistry(apps);
+  const addedLinksRegistry = new AddedLinksRegistry(apps);
+  const addedFunctionsRegistry = new AddedFunctionsRegistry(apps);
+  const pluginExtensionRegistries = {
     addedComponentsRegistry,
     exposedComponentsRegistry,
     addedLinksRegistry,
@@ -71,4 +62,21 @@ export async function getPluginExtensionRegistries(): Promise<PluginExtensionReg
   });
 
   return pluginExtensionRegistries;
+}
+
+export async function getPluginExtensionRegistries(): Promise<PluginExtensionRegistries> {
+  if (pluginExtensionRegistries) {
+    return pluginExtensionRegistries;
+  }
+
+  pluginExtensionRegistries = initPluginExtensionRegistries();
+  return pluginExtensionRegistries;
+}
+
+export function setPluginExtensionRegistries(overrides: PluginExtensionRegistries) {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('setPluginExtensionRegistries() function can only be called from tests.');
+  }
+
+  pluginExtensionRegistries = Promise.resolve(overrides);
 }

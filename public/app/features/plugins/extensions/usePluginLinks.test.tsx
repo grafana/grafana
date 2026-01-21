@@ -20,6 +20,7 @@ import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { PluginExtensionRegistries } from './registry/types';
+import { basicApp } from './test-fixtures/config.apps';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginLinks } from './usePluginLinks';
 import { isGrafanaDevMode } from './utils';
@@ -58,47 +59,21 @@ jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
   useAsync: jest.fn(),
 }));
+const useAsyncMock = jest.mocked(useAsync);
 
 describe('usePluginLinks()', () => {
-  const useAsyncMock = jest.mocked(useAsync);
   let registries: PluginExtensionRegistries;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
   let pluginMeta: PluginMeta;
-  const pluginId = 'myorg-extensions-app';
+  const pluginId = basicApp.id;
   const extensionPointId = `${pluginId}/extension-point/v1`;
-  const defaultApps = [
-    {
-      id: pluginId,
-      path: '',
-      version: '',
-      preload: false,
-      angular: {
-        detected: false,
-        hideDeprecation: false,
-      },
-      loadingStrategy: PluginLoadingStrategy.fetch,
-      dependencies: {
-        grafanaVersion: '8.0.0',
-        plugins: [],
-        extensions: {
-          exposedComponents: [],
-        },
-      },
-      extensions: {
-        addedLinks: [],
-        addedComponents: [],
-        addedFunctions: [],
-        exposedComponents: [],
-        extensionPoints: [],
-      },
-    },
-  ];
-  let apps: AppPluginConfig[] = defaultApps;
+  let apps: AppPluginConfig[];
 
   beforeEach(() => {
     jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
 
+    apps = [basicApp];
     registries = {
       addedComponentsRegistry: new AddedComponentsRegistry(apps),
       exposedComponentsRegistry: new ExposedComponentsRegistry(apps),
@@ -107,10 +82,7 @@ describe('usePluginLinks()', () => {
     };
     resetLogMock(log);
 
-    useAsyncMock.mockReturnValue({
-      value: registries,
-      loading: false,
-    });
+    useAsyncMock.mockReturnValue({ value: registries, loading: false });
 
     pluginMeta = {
       id: pluginId,
@@ -153,10 +125,6 @@ describe('usePluginLinks()', () => {
         <ExtensionRegistriesProvider>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
-  });
-
-  afterEach(() => {
-    apps = defaultApps;
   });
 
   it('should return an empty array if there are no link extensions registered for the extension point', () => {
