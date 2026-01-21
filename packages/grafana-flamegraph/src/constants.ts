@@ -8,6 +8,6 @@ export const GROUP_STRIP_WIDTH = 3 * window.devicePixelRatio;
 export const GROUP_STRIP_PADDING = 3 * window.devicePixelRatio;
 export const GROUP_STRIP_MARGIN_LEFT = 4 * window.devicePixelRatio;
 export const GROUP_TEXT_OFFSET = 2 * window.devicePixelRatio;
-export const MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH = 800;
+export const MIN_WIDTH_FOR_SPLIT_VIEW = 800;
 export const MIN_WIDTH_TO_SHOW_SPLIT_PANE_SELECTORS = 1100;
 export const TOP_TABLE_COLUMN_WIDTH = 120;

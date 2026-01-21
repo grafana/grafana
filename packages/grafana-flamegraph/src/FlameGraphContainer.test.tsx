@@ -7,7 +7,7 @@ import { createDataFrame, createTheme } from '@grafana/data';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import { data } from './FlameGraph/testData/dataNestedSet';
 import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
-import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
+import { MIN_WIDTH_FOR_SPLIT_VIEW } from './constants';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn().mockReturnValue({
@@ -92,7 +92,7 @@ describe('FlameGraphContainer', () => {
   });
 
   it('should render multi option if screen width >= threshold', async () => {
-    global.innerWidth = MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH;
+    global.innerWidth = MIN_WIDTH_FOR_SPLIT_VIEW;
     global.dispatchEvent(new Event('resize'));
     render(<FlameGraphContainerWithProps />);
 

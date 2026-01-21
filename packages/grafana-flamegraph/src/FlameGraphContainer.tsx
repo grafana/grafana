@@ -11,7 +11,7 @@ import { GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphConte
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphPane from './FlameGraphPane';
-import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
+import { MIN_WIDTH_FOR_SPLIT_VIEW } from './constants';
 import { PaneView, ViewMode } from './types';
 import { getAssistantContextFromDataFrame } from './utils';
 
@@ -116,7 +116,7 @@ const FlameGraphContainer = ({
 
   // Determine if we can show Split view based on container width
   const canShowSplitView =
-    containerWidth > 0 && (containerWidth >= MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH || Boolean(vertical));
+    containerWidth > 0 && (containerWidth >= MIN_WIDTH_FOR_SPLIT_VIEW || Boolean(vertical));
 
   // Use refs and stable wrappers to prevent child re-renders when callbacks change
   const onTableSymbolClickRef = useRef(onTableSymbolClick);
