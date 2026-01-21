@@ -12,13 +12,13 @@ import {
   TableCellInspectorMode,
   useTheme2,
 } from '@grafana/ui';
-import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { BuildLinkToLogLine } from './types';
 
 interface Props extends CustomCellRendererProps {
-  logsFrame: LogsFrame;
   buildLinkToLog?: BuildLinkToLogLine;
+  // timeFieldName: string;
+  bodyFieldName: string;
 }
 
 /**
@@ -27,7 +27,7 @@ interface Props extends CustomCellRendererProps {
  * @constructor
  */
 export function LogsNGTableRowActionButtons(props: Props) {
-  const { rowIndex, logsFrame, field, frame, buildLinkToLog } = props;
+  const { rowIndex, frame, buildLinkToLog, bodyFieldName } = props;
   const theme = useTheme2();
   const [isInspecting, setIsInspecting] = useState(false);
   const styles = getStyles(theme);
@@ -64,14 +64,18 @@ export function LogsNGTableRowActionButtons(props: Props) {
               tooltipPlacement="top"
               tabIndex={0}
               aria-label={t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')}
-              getText={() => buildLinkToLog(logsFrame, rowIndex, field)}
+              getText={() => {
+                console.log('getText (@todo)');
+                // buildLinkToLog(logsFrame, rowIndex, field)
+                return '';
+              }}
             />
           </div>
         )}
       </div>
       {isInspecting && (
         <TableCellInspector
-          value={getLineValue(logsFrame, frame, rowIndex)}
+          value={getLineValue(bodyFieldName, frame, rowIndex)}
           mode={TableCellInspectorMode.code}
           onDismiss={function (): void {
             setIsInspecting(false);
@@ -82,8 +86,7 @@ export function LogsNGTableRowActionButtons(props: Props) {
   );
 }
 
-const getLineValue = memoize((logsFrame: LogsFrame, frame: DataFrame, rowIndex: number) => {
-  const bodyFieldName = logsFrame?.bodyField?.name;
+const getLineValue = memoize((bodyFieldName: string, frame: DataFrame, rowIndex: number) => {
   const bodyField = bodyFieldName
     ? frame.fields.find((field) => field.name === bodyFieldName)
     : frame.fields.find((field) => field.type === 'string');
@@ -122,7 +125,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     width: '20px',
   }),
   clipboardButton: css({
-    height: 30,
     lineHeight: '1',
     padding: 0,
     width: '20px',

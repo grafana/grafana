@@ -1,25 +1,34 @@
-import { getFieldDisplayName, Labels } from '@grafana/data';
+import { FieldWithIndex, getFieldDisplayName, Labels } from '@grafana/data';
+import { FieldNameMeta, FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
 
-import { FieldNameMeta, FieldNameMetaStore } from '../../../features/explore/Logs/LogsTableWrap';
-import { LogsFrame } from '../../../features/logs/logsFrame';
 type FieldName = string;
 
-export const buildColumnsWithMeta = (logsFrame: LogsFrame, numberOfLogLines: number, displayedFields: string[]) => {
-  const labels = logsFrame?.getLogFrameLabelsAsLabels();
+export interface LogsFrameFields {
+  extraFields: FieldWithIndex[];
+  severityField: FieldWithIndex | null;
+  bodyField: FieldWithIndex;
+  timeField: FieldWithIndex;
+}
 
+export const buildColumnsWithMeta = (
+  logsFrameFields: LogsFrameFields,
+  labels: Labels[] | null,
+  displayedFields: string[]
+) => {
   const otherFields = [];
+  const numberOfLogLines = logsFrameFields?.timeField.values.length;
 
-  if (logsFrame) {
-    otherFields.push(...logsFrame.extraFields.filter((field) => !field?.config?.custom?.hidden));
+  if (logsFrameFields.extraFields) {
+    otherFields.push(...logsFrameFields.extraFields.filter((field) => !field?.config?.custom?.hidden));
   }
-  if (logsFrame?.severityField) {
-    otherFields.push(logsFrame?.severityField);
+  if (logsFrameFields?.severityField) {
+    otherFields.push(logsFrameFields?.severityField);
   }
-  if (logsFrame?.bodyField) {
-    otherFields.push(logsFrame?.bodyField);
+  if (logsFrameFields?.bodyField) {
+    otherFields.push(logsFrameFields?.bodyField);
   }
-  if (logsFrame?.timeField) {
-    otherFields.push(logsFrame?.timeField);
+  if (logsFrameFields?.timeField) {
+    otherFields.push(logsFrameFields?.timeField);
   }
 
   // Use a map to dedupe labels and count their occurrences in the logs
@@ -105,17 +114,17 @@ export const buildColumnsWithMeta = (logsFrame: LogsFrame, numberOfLogLines: num
 
   // If nothing is selected, then select the default columns
   if (displayedFields.length === 0) {
-    if (logsFrame?.bodyField?.name) {
-      pendingLabelState[logsFrame.bodyField.name].active = true;
+    if (logsFrameFields?.bodyField?.name) {
+      pendingLabelState[logsFrameFields.bodyField.name].active = true;
     }
-    if (logsFrame?.timeField?.name) {
-      pendingLabelState[logsFrame.timeField.name].active = true;
+    if (logsFrameFields?.timeField?.name) {
+      pendingLabelState[logsFrameFields.timeField.name].active = true;
     }
   }
 
-  if (logsFrame?.bodyField?.name && logsFrame?.timeField?.name) {
-    pendingLabelState[logsFrame.bodyField.name].type = 'BODY_FIELD';
-    pendingLabelState[logsFrame.timeField.name].type = 'TIME_FIELD';
+  if (logsFrameFields?.bodyField?.name && logsFrameFields?.timeField?.name) {
+    pendingLabelState[logsFrameFields.bodyField.name].type = 'BODY_FIELD';
+    pendingLabelState[logsFrameFields.timeField.name].type = 'TIME_FIELD';
   }
 
   return pendingLabelState;

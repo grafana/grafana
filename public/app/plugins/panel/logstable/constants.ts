@@ -1,0 +1,2 @@
+export const DEFAULT_SIDEBAR_WIDTH = 200;
+export const DEFAULT_TIME_FIELD_WIDTH = 160;
