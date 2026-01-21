@@ -16,21 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// ValidationError wraps a field.ErrorList to implement the error interface.
-// Use this when returning multiple validation errors from an AdditionalValidatorFunc.
-type ValidationError struct {
-	ErrorList field.ErrorList
-}
-
-func (e *ValidationError) Error() string {
-	return e.ErrorList.ToAggregate().Error()
-}
-
-// NewValidationError creates a ValidationError from a field.ErrorList.
-func NewValidationError(list field.ErrorList) *ValidationError {
-	return &ValidationError{ErrorList: list}
-}
-
 // Validator is the interface for repository validation.
 // It validates repository configuration without requiring external service calls.
 type Validator interface {

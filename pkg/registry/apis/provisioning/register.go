@@ -610,6 +610,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.repoStore = repositoryStorage
+	b.repoLister = repository.NewStorageLister(repositoryStorage)
 
 	// Create admission handler and register mutators/validators
 	b.admissionHandler = appadmission.NewHandler()
