@@ -96,7 +96,8 @@ export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplier<Opti
     dataSummary.frameCount === 1 &&
     dataSummary.rowCountTotal <= MAX_GAUGES;
 
-  const showSparkline = dataSummary.rowCountTotal > 1 && dataSummary.hasFieldType(FieldType.time);
+  const showSparkline =
+    !shouldUseRawValues && dataSummary.rowCountTotal > 1 && dataSummary.hasFieldType(FieldType.time);
 
   return suggestions.map((s) => {
     const suggestion = defaultNumericVizOptions(withDefaults(s), dataSummary, shouldUseRawValues);
@@ -110,7 +111,7 @@ export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplier<Opti
         overrides: [],
       };
       suggestion.fieldConfig.defaults.color = suggestion.fieldConfig.defaults.color ?? {
-        mode: dataSummary.rowCountTotal > 1 ? FieldColorModeId.PaletteClassic : FieldColorModeId.Thresholds,
+        mode: FieldColorModeId.PaletteClassic,
       };
     }
 
