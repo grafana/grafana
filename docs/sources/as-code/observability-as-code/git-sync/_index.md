@@ -24,8 +24,8 @@ menuTitle: Git Sync
 weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/
 aliases:
-  - ../../../observability-as-code/provision-resources/intro-git-sync/ 
-  - ./provision-resources/intro-git-sync/ 
+  - ../../../observability-as-code/provision-resources/intro-git-sync/
+  - ./provision-resources/intro-git-sync/
 ---
 
 # Introduction to Git Sync
@@ -40,7 +40,7 @@ You can sign up to the private preview using the [Git Sync early access form](ht
 
 {{< /admonition >}}
 
-Git Sync in Grafana lets you manage your dashboards as code as JSON files stored in GitHub. You and your team can version control, collaborate, and automate deployments efficiently. 
+Git Sync in Grafana lets you manage your dashboards as code as JSON files stored in GitHub. You and your team can version control, collaborate, and automate deployments efficiently.
 
 ## How it works
 
