@@ -290,7 +290,7 @@ func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Reque
 func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user identity.Requester, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	queries := parsedReq.getFlattenedQueries()
 	ds := queries[0].datasource
-	if err := s.dataSourceRequestValidator.Validate(ds, nil); err != nil {
+	if err := s.dataSourceRequestValidator.Validate(ds.URL, ds.JsonData, nil); err != nil {
 		return nil, datasources.ErrDataSourceAccessDenied
 	}
 
