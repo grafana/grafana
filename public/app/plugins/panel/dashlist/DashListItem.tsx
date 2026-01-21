@@ -1,5 +1,5 @@
 import { reportInteraction } from '@grafana/runtime';
-import { Box, Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
 import { LocationInfo } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 
@@ -59,43 +59,42 @@ export function DashListItem({
         </div>
       ) : (
         <Card noMargin className={css.dashlistCardContainer}>
-          <div className={css.dashlistCard}>
-            <Stack justifyContent="space-between" alignItems="start">
-              <Link
-                className={css.dashlistCardLink}
-                href={url}
-                aria-label={dashboard.name}
-                title={dashboard.name}
-                onClick={onCardLinkClick}
-              >
-                {dashboard.name}
-              </Link>
-              <StarToolbarButton
-                title={dashboard.name}
-                group="dashboard.grafana.app"
-                kind="Dashboard"
-                id={dashboard.uid}
-                onStarChange={onStarChange}
-              />
-            </Stack>
+          <Stack justifyContent="space-between" alignItems="start">
+            <Link
+              className={css.dashlistCard}
+              href={url}
+              aria-label={dashboard.name}
+              title={dashboard.name}
+              onClick={onCardLinkClick}
+            >
+              <div className={css.dashlistCardLink}>{dashboard.name}</div>
 
-            {showFolderNames && locationInfo && (
-              <Stack alignItems="start" direction="row" gap={0.5}>
-                <Icon name="folder" size="sm" className={css.dashlistCardIcon} aria-hidden="true" />
-                <div className={css.dashlistCardFolder}>
-                  <Text
-                    color="secondary"
-                    variant="bodySmall"
-                    element="p"
-                    aria-label={locationInfo?.name}
-                    title={locationInfo?.name}
-                  >
-                    {locationInfo?.name}
-                  </Text>
-                </div>
-              </Stack>
-            )}
-          </div>
+              {showFolderNames && locationInfo && (
+                <Stack alignItems="start" direction="row" gap={0.5}>
+                  <Icon name="folder" size="sm" className={css.dashlistCardIcon} aria-hidden="true" />
+                  <div className={css.dashlistCardFolder}>
+                    <Text
+                      color="secondary"
+                      variant="bodySmall"
+                      element="p"
+                      aria-label={locationInfo?.name}
+                      title={locationInfo?.name}
+                    >
+                      {locationInfo?.name}
+                    </Text>
+                  </div>
+                </Stack>
+              )}
+            </Link>
+
+            <StarToolbarButton
+              title={dashboard.name}
+              group="dashboard.grafana.app"
+              kind="Dashboard"
+              id={dashboard.uid}
+              onStarChange={onStarChange}
+            />
+          </Stack>
         </Card>
       )}
     </>
