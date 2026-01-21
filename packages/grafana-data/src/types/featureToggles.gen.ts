@@ -1420,4 +1420,9 @@ export interface FeatureToggles {
   * @default false
   */
   queryWithAssistant?: boolean;
+  /**
+  * Enables search for team bindings in the app platform API
+  * @default false
+  */
+  kubernetesTeamBindings?: boolean;
 }

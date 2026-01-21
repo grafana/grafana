@@ -92,7 +92,7 @@ describe('LogsQueryEditor', () => {
         }),
       })
     );
-  });
+  }, 10000);
 
   it('should disable other resource types when selecting multiple resources', async () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
