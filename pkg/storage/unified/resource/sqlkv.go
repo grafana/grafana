@@ -492,6 +492,10 @@ func (k *sqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 	return nil
 }
 
+func (k *sqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error {
+	return fmt.Errorf("Batch operation not implemented for sqlKV")
+}
+
 func (k *sqlKV) UnixTimestamp(ctx context.Context) (int64, error) {
 	return time.Now().Unix(), nil
 }
