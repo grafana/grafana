@@ -336,4 +336,8 @@ jobs:
       - name: Verify all checks passed
         if: steps.check-skip.outputs.skipped == 'false'
         run: |
-          echo "If this step succeeds, all coverage metrics were maintained or improved."
+          if [[ "${{ needs.compare-and-report.result }}" != "success" ]]; then
+            echo "❌ Coverage checks failed for one or more teams"
+            exit 1
+          fi
+          echo "✅ All coverage metrics were maintained or improved."
