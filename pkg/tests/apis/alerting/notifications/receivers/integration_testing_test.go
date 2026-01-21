@@ -3,6 +3,7 @@ package receivers
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"testing"
 
 	"github.com/grafana/alerting/definition"
@@ -30,6 +31,10 @@ func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
+
+	helper.GetEnv().NotificationService.WebhookHandler = func(ctx context.Context, sync *notifications.SendWebhookSync) error {
+		return nil
+	}
 
 	org1 := helper.Org1
 
@@ -127,7 +132,7 @@ func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
 				user: func() apis.User {
 					return helper.CreateUser("creatorAndTester", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 						{
-							Actions: []string{accesscontrol.ActionAlertingReceiversCreate, accesscontrol.ActionAlertingReceiversRead},
+							Actions: []string{accesscontrol.ActionAlertingReceiversCreate},
 						},
 						{
 							Actions:           []string{accesscontrol.ActionAlertingReceiversTestCreate},
@@ -216,27 +221,24 @@ func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				cfg := tc.user.NewRestConfig()
-				helper.GetEnv().NotificationService.WebhookHandler = func(ctx context.Context, sync *notifications.SendWebhookSync) error {
-					return nil
-				}
+
 				alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cfg.Username, cfg.Password)
 
 				prefix := "cannot"
 				if tc.canTestNew {
 					prefix = "can"
 				}
-				t.Run(prefix+" test when no integration UID provided", func(t *testing.T) {
+				t.Run(prefix+" test when no receiver name provided", func(t *testing.T) {
 					resp, code, err := alertingApi.TestReceiver(t, apimodels.TestReceiversConfigBodyParams{
 						Alert: &alert,
 						Receivers: []*apimodels.PostableApiReceiver{
 							{
 								Receiver: config.Receiver{
-									Name: "test-receiver-2",
+									Name: "",
 								},
 								PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
 									GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{
 										{
-											UID:      "",
 											Type:     "webhook",
 											Settings: apimodels.RawMessage(`{"url":"http://localhost:8080"}`),
 										},
@@ -250,28 +252,118 @@ func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
 					if !tc.canTestNew {
 						expectedCode = 403
 					}
-					require.Equalf(t, expectedCode, code, "Expected 200, got %d: %s", code, string(resp))
+					require.Equalf(t, expectedCode, code, "Expected %d, got %d: %s", expectedCode, code, string(resp))
 				})
 
 				prefix = "cannot"
 				if tc.canTestExisting {
 					prefix = "can"
 				}
-				t.Run(prefix+" test integration when UID provided", func(t *testing.T) {
-					resp, code, err := alertingApi.TestReceiver(t, apimodels.TestReceiversConfigBodyParams{
-						Alert: &alert,
-						Receivers: []*apimodels.PostableApiReceiver{
-							&legacyReceiver,
-						},
+				t.Run(prefix+" test integration when receiver name is provided", func(t *testing.T) {
+					t.Run("and existing integration is tested", func(t *testing.T) {
+						resp, code, err := alertingApi.TestReceiver(t, apimodels.TestReceiversConfigBodyParams{
+							Alert: &alert,
+							Receivers: []*apimodels.PostableApiReceiver{
+								&legacyReceiver,
+							},
+						})
+						require.NoError(t, err)
+						expectedCode := 207
+						if !tc.canTestExisting {
+							expectedCode = 403
+						}
+						require.Equalf(t, expectedCode, code, "Expected %d, got %d: %s", expectedCode, code, string(resp))
 					})
-					require.NoError(t, err)
-					expectedCode := 207
-					if !tc.canTestExisting {
-						expectedCode = 403
-					}
-					require.Equalf(t, expectedCode, code, "Expected 200, got %d: %s", code, string(resp))
+					t.Run("and new integration is tested", func(t *testing.T) {
+						resp, code, err := alertingApi.TestReceiver(t, apimodels.TestReceiversConfigBodyParams{
+							Alert: &alert,
+							Receivers: []*apimodels.PostableApiReceiver{
+								{
+									Receiver: config.Receiver{
+										Name: legacyReceiver.Name,
+									},
+									PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
+										GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{
+											{
+												Type:     "webhook",
+												Settings: apimodels.RawMessage(`{"url":"http://localhost:8080"}`),
+											},
+										},
+									},
+								},
+							},
+						})
+						require.NoError(t, err)
+						expectedCode := 207
+						if !tc.canTestExisting {
+							expectedCode = 403
+						}
+						require.Equalf(t, expectedCode, code, "Expected %d, got %d: %s", expectedCode, code, string(resp))
+					})
 				})
 			})
 		}
+	})
+
+	t.Run("should require protected:write permission if existing integration is tested", func(t *testing.T) {
+		modified := maps.Clone(existingReceiver.Spec.Integrations[0].Settings)
+		modified["url"] = "grafana://noop/1"
+		data, err := json.Marshal(modified)
+		require.NoError(t, err)
+
+		modifiedProtected := apimodels.PostableApiReceiver{
+			Receiver: config.Receiver{
+				Name: existingReceiver.Spec.Title,
+			},
+			PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
+				GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{
+					{
+						UID:      *existingReceiver.Spec.Integrations[0].Uid,
+						Type:     existingReceiver.Spec.Integrations[0].Type,
+						Settings: apimodels.RawMessage(data),
+					},
+				},
+			},
+		}
+
+		noProtected := helper.CreateUser("updater+no-protected", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+			{
+				Actions:           []string{accesscontrol.ActionAlertingReceiversRead, accesscontrol.ActionAlertingReceiversUpdate, accesscontrol.ActionAlertingReceiversTestCreate},
+				Resource:          models.ScopeReceiversRoot,
+				ResourceAttribute: "uid",
+				ResourceID:        existingReceiver.Name,
+			},
+		})
+		cfg := noProtected.NewRestConfig()
+		alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cfg.Username, cfg.Password)
+
+		resp, code, err := alertingApi.TestReceiver(t, apimodels.TestReceiversConfigBodyParams{
+			Alert: &alert,
+			Receivers: []*apimodels.PostableApiReceiver{
+				&modifiedProtected,
+			},
+		})
+		require.NoError(t, err)
+		require.Equalf(t, 403, code, "Expected 403, got %d: %s", code, string(resp))
+
+		protected := helper.CreateUser("updater+protected", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+			{
+				Actions:           []string{accesscontrol.ActionAlertingReceiversRead, accesscontrol.ActionAlertingReceiversUpdate, accesscontrol.ActionAlertingReceiversTestCreate, accesscontrol.ActionAlertingReceiversUpdateProtected},
+				Resource:          models.ScopeReceiversRoot,
+				ResourceAttribute: "uid",
+				ResourceID:        existingReceiver.Name,
+			},
+		})
+		cfg = protected.NewRestConfig()
+		alertingApi = alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cfg.Username, cfg.Password)
+
+		resp, code, err = alertingApi.TestReceiver(t, apimodels.TestReceiversConfigBodyParams{
+			Alert: &alert,
+			Receivers: []*apimodels.PostableApiReceiver{
+				&modifiedProtected,
+			},
+		})
+		require.NoError(t, err)
+		require.Equalf(t, 207, code, "Expected 403, got %d: %s", code, string(resp))
 	})
 }
