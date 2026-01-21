@@ -35,6 +35,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/cluster"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -351,6 +352,10 @@ func (ng *AlertNG) init() error {
 		Log:                  log.New("ngalert.scheduler"),
 		RecordingWriter:      ng.RecordingWriter,
 		FeatureToggles:       ng.FeatureToggles,
+	}
+
+	if ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation {
+		schedCfg.EvaluationCoordinator = cluster.NewEvaluationCoordinator(ng.MultiOrgAlertmanager.Peer())
 	}
 
 	history, err := configureHistorianBackend(
