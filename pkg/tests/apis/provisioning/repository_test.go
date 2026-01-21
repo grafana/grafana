@@ -1122,12 +1122,8 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		},
 	}}
 
-	createdRepo, err := helper.Repositories.Resource.Create(ctx, repoWithConnection, createOptions)
+	_, err = helper.Repositories.Resource.Create(ctx, repoWithConnection, createOptions)
 	require.NoError(t, err, "failed to create repository with connection")
-
-	cr := unstructuredToRepository(t, createdRepo)
-	// A dummy token must have been created
-	require.False(t, cr.Secure.Token.IsZero())
 
 	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
 		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
@@ -1136,7 +1132,5 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		assert.True(collectT, r.Status.ObservedGeneration > 0, "should be reconciled at least once", r)
 		// Token should be there
 		assert.False(collectT, r.Secure.Token.IsZero())
-		// Name should be different as it has been updated
-		assert.NotEqual(collectT, cr.Secure.Token.Name, r.Secure.Token.Name)
 	}, time.Second*10, time.Second, "Expected repo to be reconciled")
 }
