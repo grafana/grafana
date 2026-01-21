@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"embed"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
@@ -18,6 +20,21 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	gocache "github.com/patrickmn/go-cache"
 )
+
+// Templates setup for backward-compatibility queries
+var (
+	//go:embed data/*.sql
+	sqlTemplatesFS embed.FS
+
+	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
+)
+
+func mustTemplate(filename string) *template.Template {
+	if t := sqlTemplates.Lookup(filename); t != nil {
+		return t
+	}
+	panic(fmt.Sprintf("template file not found: %s", filename))
+}
 
 const (
 	dataSection = "unified/data"
@@ -29,15 +46,22 @@ const (
 
 // dataStore is a data store that uses a KV store to store data.
 type dataStore struct {
-	kv    KV
-	cache *gocache.Cache
+	kv            KV
+	cache         *gocache.Cache
+	legacyDialect sqltemplate.Dialect // TODO: remove when backwards compatibility is no longer needed.
 }
 
 func newDataStore(kv KV) *dataStore {
-	return &dataStore{
+	ds := &dataStore{
 		kv:    kv,
 		cache: gocache.New(time.Hour, 10*time.Minute), // 1 hour expiration, 10 minute cleanup
 	}
+
+	if sqlkv, ok := kv.(*sqlKV); ok {
+		ds.legacyDialect = sqltemplate.DialectForDriver(sqlkv.driverName)
+	}
+
+	return ds
 }
 
 type DataObj struct {
@@ -818,9 +842,10 @@ func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, err
 
 // TODO: remove when backwards compatibility is no longer needed.
 var (
-	sqlKVUpdateLegacyResourceHistory = mustTemplate("sqlkv_update_legacy_resource_history.sql")
-	sqlKVInsertLegacyResource        = mustTemplate("sqlkv_insert_legacy_resource.sql")
-	sqlKVUpdateLegacyResource        = mustTemplate("sqlkv_update_legacy_resource.sql")
+	sqlKVUpdateLegacyResourceHistoryFull = mustTemplate("sqlkv_update_legacy_resource_history_full.sql")
+	sqlKVInsertLegacyResource            = mustTemplate("sqlkv_insert_legacy_resource.sql")
+	sqlKVUpdateLegacyResource            = mustTemplate("sqlkv_update_legacy_resource.sql")
+	sqlKVDeleteLegacyResource            = mustTemplate("sqlkv_delete_legacy_resource.sql")
 )
 
 // TODO: remove when backwards compatibility is no longer needed.
@@ -844,6 +869,12 @@ func (req sqlKVLegacySaveRequest) Validate() error {
 type sqlKVLegacyUpdateHistoryRequest struct {
 	sqltemplate.SQLTemplate
 	GUID       string
+	Group      string
+	Resource   string
+	Namespace  string
+	Name       string
+	Action     int64
+	Folder     string
 	PreviousRV int64
 	Generation int64
 }
@@ -860,7 +891,7 @@ func (req sqlKVLegacyUpdateHistoryRequest) Validate() error {
 //
 // TODO: remove when backwards compatibility is no longer needed.
 func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.Tx, event WriteEvent, key DataKey) error {
-	kv, isSQLKV := d.kv.(*sqlKV)
+	_, isSQLKV := d.kv.(*sqlKV)
 	if !isSQLKV {
 		return nil
 	}
@@ -877,17 +908,6 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		previousRV = rvmanager.RVFromSnowflake(event.PreviousRV)
 	}
 
-	_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResourceHistory, sqlKVLegacyUpdateHistoryRequest{
-		SQLTemplate: sqltemplate.New(kv.dialect),
-		GUID:        key.GUID,
-		PreviousRV:  previousRV,
-		Generation:  generation,
-	})
-
-	if err != nil {
-		return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
-	}
-
 	var action int64
 	switch key.Action {
 	case DataActionCreated:
@@ -898,10 +918,23 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		action = 3
 	}
 
+	// fill in remaining required fields for backwards compatibility: action, previous_resource_version and generation
+	_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResourceHistoryFull, sqlKVLegacyUpdateHistoryRequest{
+		SQLTemplate: sqltemplate.New(d.legacyDialect),
+		GUID:        key.GUID,
+		Action:      action,
+		PreviousRV:  previousRV,
+		Generation:  generation,
+	})
+
+	if err != nil {
+		return fmt.Errorf("compatibility layer: failed to update resource_history: %w", err)
+	}
+
 	switch key.Action {
 	case DataActionCreated:
 		_, err := dbutil.Exec(ctx, tx, sqlKVInsertLegacyResource, sqlKVLegacySaveRequest{
-			SQLTemplate: sqltemplate.New(kv.dialect),
+			SQLTemplate: sqltemplate.New(d.legacyDialect),
 			GUID:        key.GUID,
 			Group:       key.Group,
 			Resource:    key.Resource,
@@ -917,7 +950,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		}
 	case DataActionUpdated:
 		_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResource, sqlKVLegacySaveRequest{
-			SQLTemplate: sqltemplate.New(kv.dialect),
+			SQLTemplate: sqltemplate.New(d.legacyDialect),
 			GUID:        key.GUID,
 			Group:       key.Group,
 			Resource:    key.Resource,
@@ -933,7 +966,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		}
 	case DataActionDeleted:
 		_, err := dbutil.Exec(ctx, tx, sqlKVDeleteLegacyResource, sqlKVLegacySaveRequest{
-			SQLTemplate: sqltemplate.New(kv.dialect),
+			SQLTemplate: sqltemplate.New(d.legacyDialect),
 			Group:       key.Group,
 			Resource:    key.Resource,
 			Namespace:   key.Namespace,
