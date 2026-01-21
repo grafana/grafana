@@ -73,11 +73,9 @@ describe('isUsableContactPoint', () => {
   });
 
   it('should return false when canUse annotation is missing', () => {
-    const contactPoint = ContactPointFactory.build({
-      metadata: {
-        annotations: {},
-      },
-    });
+    const contactPoint = ContactPointFactory.build();
+    // Remove the canUse annotation to simulate it being missing
+    delete contactPoint.metadata.annotations?.['grafana.com/canUse'];
     expect(isUsableContactPoint(contactPoint)).toBe(false);
   });
 });
