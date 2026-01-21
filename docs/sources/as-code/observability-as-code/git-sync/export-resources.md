@@ -14,16 +14,20 @@ labels:
 title: Add non-provisioned resources from Grafana
 menuTitle: Add non-provisioned resources
 weight: 300
-canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/export-resources/
+canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/export-resources/
+aliases:
+  - ../provision-resources/export-resources/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
 ---
 
 # Export non-provisioned resources from Grafana
 
 {{< admonition type="caution" >}}
 
-Git Sync is available in [private preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud. Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided. You can sign up to the private preview using the [Git Sync early access form](https://forms.gle/WKkR3EVMcbqsNnkD9).
+Git Sync is available in [private preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions.
 
-Git Sync and local file provisioning are [experimental features](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
+Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
+
+You can sign up to the private preview using the [Git Sync early access form](https://forms.gle/WKkR3EVMcbqsNnkD9).
 
 {{< /admonition >}}
 
