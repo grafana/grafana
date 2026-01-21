@@ -1,5 +1,11 @@
 import { FlameGraphDataContainer, LevelItem } from '../FlameGraph/dataTransform';
 
+import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../FlameGraph/colors';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { ColorScheme, ColorSchemeDiff } from '../types';
+
 export interface CallTreeNode {
   id: string;
   label: string;
@@ -281,4 +287,39 @@ export function buildCallersTree(levels: LevelItem[][], data: FlameGraphDataCont
 
   // Build tree starting from target(s) at the last level
   return targetLevel.map((targetItem, index) => buildNode(targetItem, `${index}`, 0, undefined));
+}
+
+export function getRowBarColor(
+  node: CallTreeNode,
+  data: FlameGraphDataContainer,
+  colorScheme: ColorScheme | ColorSchemeDiff,
+  theme: GrafanaTheme2
+): string {
+  if (data.isDiffFlamegraph()) {
+    const levels = data.getLevels();
+    const rootTotal = levels[0][0].value;
+    const rootTotalRight = levels[0][0].valueRight || 0;
+
+    // getBarColorByDiff expects combined total as the first parameter
+    // node.total is now the left/baseline value only, so we need to add them back together
+    const barColor = getBarColorByDiff(
+      node.total + (node.totalRight || 0),
+      node.totalRight || 0,
+      rootTotal,
+      rootTotalRight,
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      colorScheme as ColorSchemeDiff
+    );
+    return barColor.setAlpha(1.0).toString();
+  } else {
+    if (colorScheme === ColorScheme.ValueBased) {
+      const levels = data.getLevels();
+      const rootTotal = levels[0][0].value;
+      const barColor = getBarColorByValue(node.total, rootTotal, 0, 1);
+      return barColor.setAlpha(1.0).toString();
+    } else {
+      const barColor = getBarColorByPackage(node.label, theme);
+      return barColor.setAlpha(1.0).toString();
+    }
+  }
 }

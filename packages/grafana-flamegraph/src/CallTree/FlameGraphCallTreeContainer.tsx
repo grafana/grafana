@@ -6,12 +6,17 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Dropdown, Icon, IconButton, Menu, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../FlameGraph/colors';
 import { FlameGraphDataContainer, LevelItem } from '../FlameGraph/dataTransform';
 import { GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
 import { ColorScheme, ColorSchemeDiff, PaneView, ViewMode } from '../types';
 
-import { buildAllCallTreeNodes, buildCallersTree, CallTreeNode, getInitialExpandedState } from './utils';
+import {
+  buildAllCallTreeNodes,
+  buildCallersTree,
+  CallTreeNode,
+  getInitialExpandedState,
+  getRowBarColor,
+} from './utils';
 
 type Styles = ReturnType<typeof getStyles>;
 
@@ -23,7 +28,6 @@ type Props = {
   onTableSort?: (sort: string) => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
   search: string;
-  compact?: boolean;
   onSearch?: (symbol: string) => void;
   focusedItemIndexes?: number[];
   setFocusedItemIndexes?: (itemIndexes: number[] | undefined) => void;
@@ -39,7 +43,6 @@ const FlameGraphCallTreeContainer = memo(
     sandwichItem,
     onSandwich,
     search,
-    compact: compactProp,
     onSearch,
     focusedItemIndexes,
     setFocusedItemIndexes,
@@ -399,7 +402,7 @@ const FlameGraphCallTreeContainer = memo(
     // Width threshold below which we switch to compact mode
     const compactModeThreshold = getFixedColumnsWidth(isDiff, false) + FUNCTION_COMPACT_THRESHOLD;
 
-    const compact = compactProp !== undefined ? compactProp : isCompact;
+    const compact = isCompact;
 
     const getFunctionColumnWidth = (availableWidth: number, compactMode: boolean): number | undefined => {
       if (availableWidth <= 0) {
@@ -704,15 +707,14 @@ const FlameGraphCallTreeContainer = memo(
 
         <AutoSizer style={{ width: '100%', height: 'calc(100% - 50px)' }}>
           {({ width, height }) => {
+            // Make space for the vertical scrollbar, otherwise it overlaps the "total" column
             const SCROLLBAR_WIDTH = 16;
             const availableWidth = width - SCROLLBAR_WIDTH;
 
             // Only update compact mode when crossing the threshold to avoid re-renders on every resize
-            if (compactProp === undefined) {
-              const shouldBeCompact = availableWidth > 0 && availableWidth < compactModeThreshold;
-              if (shouldBeCompact !== isCompact) {
-                queueMicrotask(() => setIsCompact(shouldBeCompact));
-              }
+            const shouldBeCompact = availableWidth > 0 && availableWidth < compactModeThreshold;
+            if (shouldBeCompact !== isCompact) {
+              queueMicrotask(() => setIsCompact(shouldBeCompact));
             }
 
             const functionColumnWidth = getFunctionColumnWidth(availableWidth, compact);
@@ -827,41 +829,6 @@ const FlameGraphCallTreeContainer = memo(
 );
 
 FlameGraphCallTreeContainer.displayName = 'FlameGraphCallTreeContainer';
-
-function getRowBackgroundColor(
-  node: CallTreeNode,
-  data: FlameGraphDataContainer,
-  colorScheme: ColorScheme | ColorSchemeDiff,
-  theme: GrafanaTheme2
-): string {
-  if (data.isDiffFlamegraph()) {
-    const levels = data.getLevels();
-    const rootTotal = levels[0][0].value;
-    const rootTotalRight = levels[0][0].valueRight || 0;
-
-    // getBarColorByDiff expects combined total as first parameter
-    // node.total is now the left/baseline value only, so we need to add them back together
-    const barColor = getBarColorByDiff(
-      node.total + (node.totalRight || 0),
-      node.totalRight || 0,
-      rootTotal,
-      rootTotalRight,
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      colorScheme as ColorSchemeDiff
-    );
-    return barColor.setAlpha(1.0).toString();
-  } else {
-    if (colorScheme === ColorScheme.ValueBased) {
-      const levels = data.getLevels();
-      const rootTotal = levels[0][0].value;
-      const barColor = getBarColorByValue(node.total, rootTotal, 0, 1);
-      return barColor.setAlpha(1.0).toString();
-    } else {
-      const barColor = getBarColorByPackage(node.label, theme);
-      return barColor.setAlpha(1.0).toString();
-    }
-  }
-}
 
 type ActionsCellProps = {
   nodeId: string;
@@ -1129,7 +1096,7 @@ function ColorBarCell({
   styles: Styles;
   focusedNode?: CallTreeNode;
 }) {
-  const barColor = getRowBackgroundColor(node, data, colorScheme, theme);
+  const barColor = getRowBarColor(node, data, colorScheme, theme);
 
   let barWidth: string;
 
