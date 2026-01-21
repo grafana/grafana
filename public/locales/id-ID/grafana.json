@@ -2170,8 +2170,10 @@
       "badge-tooltip-provenance": "Sumber daya ini telah disediakan melalui {{provenance}} dan tidak dapat diedit melalui UI",
       "badge-tooltip-standard": "Sumber daya ini telah disediakan dan tidak dapat diedit melalui UI",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "{{resource}} ini telah disediakan, artinya, ini dibuat melalui konfigurasi. Hubungi admin server Anda untuk memperbarui {{resource}} ini.",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "{{resource}} ini tidak dapat diedit melalui UI"
     },
     "provisioning-badge": {
@@ -2666,7 +2668,10 @@
     "rules-group": {
       "deleting": "Menghapus",
       "text-federated": "Federasi",
-      "text-provisioned": "Disediakan"
+      "text-provisioned": "Disediakan",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -3709,6 +3714,7 @@
       "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}  ",
       "root-title": "Dasbor",
       "search-placeholder": "Cari folder",
+      "shared-with-me": "",
       "unknown-error": "Kesalahan tidak diketahui"
     },
     "manage-folder-nav": {
@@ -3809,6 +3815,7 @@
       "label-method": "Metode",
       "label-payload": "Payload",
       "label-query-parameters": "Parameter kueri",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Tes API",
         "title-test-api": "Tes API"
@@ -5426,11 +5433,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5570,14 +5573,6 @@
           "arrow": "Bagikan",
           "title": "Bagikan",
           "tooltip": "Salin tautan"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Buang",
-            "text": "Anda memiliki perubahan yang belum disimpan ke dasbor ini. Anda harus menyimpannya sebelum dapat membagikannya.",
-            "title": "Simpan perubahan ke dasbor?",
-            "yesText": "Simpan"
-          }
         },
         "unlink-library-panel": "Putus tautan panel pustaka"
       },
@@ -6440,7 +6435,7 @@
       "loading-connected-dashboards": "Memuat dasbor yang terhubung...",
       "placeholder-search-affected-dashboards": "Cari dasbor yang terpengaruh",
       "update-all": "Perbarui semua",
-      "affected-dashboards_other": "Pembaruan ini akan memengaruhi <1>{{count}} dasbor.</1> Dasbor berikut yang menggunakan panel akan terpengaruh:"
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Kesalahan saat menyimpan dasbor",
@@ -6475,6 +6470,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Alihkan menu bagikan"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -9525,7 +9526,7 @@
     "query-inspector": {
       "query-inspector": "Pemeriksa kueri",
       "text-loading-query-inspector": "Memuat pemeriksa kueri...",
-      "count-frames_other": "{{count}} frame, ",
+      "count-frames_other": "",
       "count-rows_other": "{{count}} baris"
     }
   },
@@ -9781,7 +9782,7 @@
       "loading-connected-dashboards": "Memuat dasbor yang terhubung...",
       "placeholder-search-affected-dashboards": "Cari dasbor yang terpengaruh",
       "update-all": "Perbarui semua",
-      "num-affected_other": "Pembaruan ini akan memengaruhi <1>{{count}} dasbor.</1>"
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12492,13 +12493,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Ciutkan baris kueri",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Tampilkan bantuan sumber data",
       "drag-and-drop": "Seret dan lepas untuk menyusun ulang",
       "duplicate-query": "Duplikat kueri",
       "expand-row": "Perluas baris kueri",
       "hide-response": "Sembunyikan respons",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Hapus kueri",
+      "selected-datasource-label": "",
       "show-response": "Tampilkan respons"
     },
     "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
@@ -13291,7 +13304,7 @@
       "label-never": "Jangan pernah"
     },
     "status-history-panel": {
-      "too-many-points_other": "Terlalu banyak poin untuk divisualisasikan dengan benar. <1></1>Perbarui kueri untuk menghasilkan lebih sedikit poin. <3></3>({{count}} poin diterima)"
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

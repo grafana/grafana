@@ -409,7 +409,20 @@
           "multi": true,
           "includeAll": true,
           "allValue": "*",
-          "allowCustomValue": true
+          "allowCustomValue": true,
+          "staticOptions": [
+            {
+              "selected": false,
+              "text": "All",
+              "value": "$__all"
+            },
+            {
+              "selected": false,
+              "text": "host1",
+              "value": "host1"
+            }
+          ],
+          "staticOptionsOrder": "before"
         }
       }
     ]

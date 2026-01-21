@@ -647,16 +647,16 @@ func (nc *StubAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, re
 	}, authlib.NoopZookie{}, nil
 }
 
+func (nc *StubAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, errors.New("not implemented")
+}
+
 func (nc StubAccessClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	return nil, nil
 }
 
 func (nc StubAccessClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
 	return nil
-}
-
-func (nc StubAccessClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	return nil, nil
 }
 
 func TestSafeInt64ToInt(t *testing.T) {

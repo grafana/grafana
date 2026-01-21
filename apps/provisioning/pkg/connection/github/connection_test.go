@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"net/http"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -223,6 +224,193 @@ func TestConnection_Mutate(t *testing.T) {
 	}
 }
 
+func TestConnection_Test(t *testing.T) {
+	tests := []struct {
+		name           string
+		connection     *provisioning.Connection
+		setupMock      func(*github.MockGithubFactory, *github.MockClient)
+		expectedCode   int
+		expectedErrors []provisioning.ErrorDetails
+		expectSuccess  bool
+	}{
+		{
+			name: "success - valid app and installation",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{ID: 456, Enabled: true}, nil)
+			},
+			expectedCode:  http.StatusOK,
+			expectSuccess: true,
+		},
+		{
+			name: "failure - GetApp returns service unavailable",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{}, github.ErrServiceUnavailable)
+			},
+			expectedCode:  http.StatusServiceUnavailable,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.token",
+					Detail: github.ErrServiceUnavailable.Error(),
+				},
+			},
+		},
+		{
+			name: "failure - GetApp returns other error (invalid token)",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{}, errors.New("unauthorized"))
+			},
+			expectedCode:  http.StatusBadRequest,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.token",
+					Detail: "invalid token",
+				},
+			},
+		},
+		{
+			name: "failure - appID mismatch",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 999, Slug: "wrong-app"}, nil)
+			},
+			expectedCode:  http.StatusBadRequest,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.appID",
+					Detail: "appID mismatch: expected 123, got 999",
+				},
+			},
+		},
+		{
+			name: "failure - GetAppInstallation returns service unavailable",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{}, github.ErrServiceUnavailable)
+			},
+			expectedCode:  http.StatusServiceUnavailable,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.token",
+					Detail: github.ErrServiceUnavailable.Error(),
+				},
+			},
+		},
+		{
+			name: "failure - GetAppInstallation returns other error (invalid installation)",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
+				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{}, errors.New("not found"))
+			},
+			expectedCode:  http.StatusBadRequest,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.installationID",
+					Detail: "invalid installation ID: 456",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockFactory := github.NewMockGithubFactory(t)
+			mockClient := github.NewMockClient(t)
+			if tt.setupMock != nil {
+				tt.setupMock(mockFactory, mockClient)
+			}
+
+			conn := github.NewConnection(tt.connection, mockFactory, github.ConnectionSecrets{
+				Token: common.RawSecureValue("test-token"),
+			})
+			result, err := conn.Test(context.Background())
+
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			assert.Equal(t, tt.expectedCode, result.Code)
+			assert.Equal(t, tt.expectSuccess, result.Success)
+			if tt.expectedErrors != nil {
+				assert.Equal(t, tt.expectedErrors, result.Errors)
+			}
+		})
+	}
+}
+
 func TestConnection_GenerateRepositoryToken(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -412,278 +600,6 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedToken, token)
-			}
-		})
-	}
-}
-
-func TestConnection_Validate(t *testing.T) {
-	tests := []struct {
-		name           string
-		connection     *provisioning.Connection
-		setupMock      func(*github.MockGithubFactory)
-		wantErr        bool
-		errMsgContains []string
-	}{
-		{
-			name: "invalid type returns error",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: "invalid",
-				},
-			},
-			wantErr:        true,
-			errMsgContains: []string{"spec.type"},
-		},
-		{
-			name: "github type without github config returns error",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-				},
-			},
-			wantErr:        true,
-			errMsgContains: []string{"spec.github"},
-		},
-		{
-			name: "github type without private key returns error",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-			},
-			wantErr:        true,
-			errMsgContains: []string{"secure.privateKey"},
-		},
-		{
-			name: "github type without token returns error",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-private-key"),
-					},
-				},
-			},
-			wantErr:        true,
-			errMsgContains: []string{"secure.token"},
-		},
-		{
-			name: "github type with client secret returns error",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					ClientSecret: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-client-secret"),
-					},
-				},
-			},
-			wantErr:        true,
-			errMsgContains: []string{"secure.clientSecret"},
-		},
-		{
-			name: "github type without appID returns error",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-private-key"),
-					},
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
-					},
-				},
-			},
-			wantErr:        true,
-			errMsgContains: []string{"spec.github.appID"},
-		},
-		{
-			name: "github type without installationID returns error",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID: "123",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Name: "test-private-key",
-					},
-					Token: common.InlineSecureValue{
-						Name: "test-token",
-					},
-				},
-			},
-			wantErr:        true,
-			errMsgContains: []string{"spec.github.installationID"},
-		},
-		{
-			name: "github type with valid config is valid",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-private-key"),
-					},
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
-					},
-				},
-			},
-			wantErr: false,
-			setupMock: func(mockFactory *github.MockGithubFactory) {
-				mockClient := github.NewMockClient(t)
-
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{ID: 456}, nil)
-			},
-		},
-		{
-			name: "problem getting app returns error",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-private-key"),
-					},
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
-					},
-				},
-			},
-			wantErr:        true,
-			errMsgContains: []string{"spec.token", "[REDACTED]"},
-			setupMock: func(mockFactory *github.MockGithubFactory) {
-				mockClient := github.NewMockClient(t)
-
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{}, assert.AnError)
-			},
-		},
-		{
-			name: "mismatched app ID returns error",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-private-key"),
-					},
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
-					},
-				},
-			},
-			wantErr:        true,
-			errMsgContains: []string{"spec.appID"},
-			setupMock: func(mockFactory *github.MockGithubFactory) {
-				mockClient := github.NewMockClient(t)
-
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 444, Slug: "test-app"}, nil)
-			},
-		},
-		{
-			name: "problem when getting installation returns error",
-			connection: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-private-key"),
-					},
-					Token: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-token"),
-					},
-				},
-			},
-			wantErr:        true,
-			errMsgContains: []string{"spec.installationID", "456"},
-			setupMock: func(mockFactory *github.MockGithubFactory) {
-				mockClient := github.NewMockClient(t)
-
-				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
-				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{ID: 123, Slug: "test-app"}, nil)
-				mockClient.EXPECT().GetAppInstallation(mock.Anything, "456").Return(github.AppInstallation{}, assert.AnError)
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockFactory := github.NewMockGithubFactory(t)
-			if tt.setupMock != nil {
-				tt.setupMock(mockFactory)
-			}
-
-			conn := github.NewConnection(tt.connection, mockFactory, github.ConnectionSecrets{
-				PrivateKey: tt.connection.Secure.PrivateKey.Create,
-				Token:      tt.connection.Secure.Token.Create,
-			})
-			err := conn.Validate(context.Background())
-			if tt.wantErr {
-				assert.Error(t, err)
-				for _, msg := range tt.errMsgContains {
-					assert.Contains(t, err.Error(), msg)
-				}
-			} else {
-				assert.NoError(t, err)
 			}
 		})
 	}

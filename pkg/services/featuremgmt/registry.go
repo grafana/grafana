@@ -77,13 +77,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "logRequestsInstrumentedAsUnknown",
-			Description: "Logs the path for requests that are instrumented as unknown",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendGroup,
-			Expression:  "false",
-		},
-		{
 			Name:        "grpcServer",
 			Description: "Run the GRPC server",
 			Stage:       FeatureStagePublicPreview,
@@ -149,6 +142,16 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaPartnerPluginsSquad,
 			Expression:   "true", // enabled by default
+		},
+		{
+			Name:            "liveAPIServer",
+			Description:     "Registers a live apiserver",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
 		},
 		{
 			Name:         "starsFromAPIServer",
@@ -298,13 +301,6 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 		},
 		{
-			Name:        "permissionsFilterRemoveSubquery",
-			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-		},
-		{
 			Name:            "configurableSchedulerTick",
 			Description:     "Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval",
 			Stage:           FeatureStageExperimental,
@@ -368,24 +364,6 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 			Expression:  "false",
-		},
-		{
-			Name:            "enableNativeHTTPHistogram",
-			Description:     "Enables native HTTP Histograms",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           grafanaBackendServicesSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-		},
-		{
-			Name:            "disableClassicHTTPHistogram",
-			Description:     "Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           grafanaBackendServicesSquad,
-			RequiresRestart: true,
-			Expression:      "false",
 		},
 		{
 			Name:            "kubernetesSnapshots",
@@ -1739,6 +1717,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesAuthzTeamLBACRuleApi",
+			Description:  "Registers AuthZ TeamLBACRule /apis endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesAuthzRoleBindingsApi",
 			Description:  "Registers AuthZ Role Bindings /apis endpoint",
 			Stage:        FeatureStageExperimental,
@@ -2204,6 +2190,7 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: true,
 			Expression:   "false",
+			HideFromDocs: true,
 		},
 		{
 			Name:         "multiPropsVariables",
@@ -2246,6 +2233,14 @@ var (
 			RequiresRestart: true,
 			HideFromDocs:    true,
 			Expression:      "false",
+		},
+		{
+			Name:         "queryWithAssistant",
+			Description:  "Enables the Query with Assistant button in the query editor",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaOSSBigTent,
+			Expression:   "false",
 		},
 	}
 )

@@ -76,15 +76,16 @@
 /.air.toml @macabu
 
 # Git Sync / App Platform Provisioning
-/apps/provisioning/ @grafana/grafana-git-ui-sync-team
-/pkg/operators @grafana/grafana-git-ui-sync-team
-/public/app/features/provisioning @grafana/grafana-git-ui-sync-team
-/pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
-/pkg/tests/apis/provisioning @grafana/grafana-git-ui-sync-team
+/apps/provisioning/ @grafana/grafana-app-platform-squad
+/pkg/operators @grafana/grafana-app-platform-squad
+/public/app/features/provisioning @grafana/grafana-search-navigate-organise
+/pkg/registry/apis/provisioning @grafana/grafana-app-platform-squad
+/pkg/tests/apis/provisioning @grafana/grafana-app-platform-squad
 # Git Sync frontend owned by frontend team as a whole.
 
 /apps/alerting/ @grafana/alerting-backend
 /apps/quotas/ @grafana/grafana-search-and-storage
+/apps/live/ @grafana/grafana-app-platform-squad
 /apps/dashboard/ @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 /apps/folder/ @grafana/grafana-app-platform-squad
 /apps/playlist/ @grafana/grafana-app-platform-squad
@@ -753,7 +754,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-api-clients/src/clients/rtkq/iam/ @grafana/access-squad @grafana/identity-squad
 /packages/grafana-api-clients/src/clients/rtkq/logsdrilldown/ @grafana/observability-logs
 /packages/grafana-api-clients/src/clients/rtkq/preferences/ @grafana/plugins-platform-frontend
-/packages/grafana-api-clients/src/clients/rtkq/provisioning/ @grafana/grafana-git-ui-sync-team
+/packages/grafana-api-clients/src/clients/rtkq/provisioning/ @grafana/grafana-search-navigate-organise
 /packages/grafana-api-clients/src/clients/rtkq/shorturl/ @grafana/sharing-squad
 
 # root files, mostly frontend
@@ -884,11 +885,9 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/flatten.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/impression_srv.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/rangeutil.test.ts @grafana/grafana-frontend-platform
-/public/app/core/specs/store.test.ts @grafana/grafana-frontend-platform
 /public/app/core/specs/TableModel.test.ts @grafana/partner-datasources
 /public/app/core/specs/ticks.test.ts @grafana/plugins-platform-frontend
 /public/app/core/specs/time_series.test.ts @grafana/dataviz-squad
-/public/app/core/store.ts @grafana/grafana-frontend-platform
 /public/app/core/TableModel.ts @grafana/partner-datasources
 /public/app/core/time_series2.ts @grafana/dataviz-squad
 /public/app/core/trustedTypePolicies.ts @grafana/grafana-frontend-platform
@@ -1057,6 +1056,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/clean-git-or-error.sh @grafana/grafana-as-code
 /scripts/grafana-server/ @grafana/grafana-frontend-platform
 /scripts/check-frontend-dev.sh @grafana/grafana-frontend-platform
+/scripts/compare-coverage-by-codeowner.js @grafana/dataviz-squad
 /scripts/helpers/ @grafana/grafana-developer-enablement-squad
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
@@ -1085,7 +1085,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 eslint-suppressions.json @grafanabot
 
 # Design system
-/public/img/icons/unicons/ @grafana/design-system
+/public/img/icons/unicons/ @grafana/product-design-engineering
 
 # Core datasources
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
@@ -1261,11 +1261,11 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/stale.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/storybook-a11y.yml @grafana/grafana-frontend-platform
 /.github/workflows/update-make-docs.yml @grafana/docs-tooling
-/.github/workflows/scripts/kinds/verify-kinds.go @grafana/platform-monitoring
+/.github/workflows/scripts/kinds/verify-kinds.go @grafana/grafana-app-platform-squad
 /.github/workflows/scripts/create-security-branch/create-security-branch.sh @grafana/grafana-developer-enablement-squad
-/.github/workflows/publish-kinds-next.yml @grafana/platform-monitoring
-/.github/workflows/publish-kinds-release.yml @grafana/platform-monitoring
-/.github/workflows/verify-kinds.yml @grafana/platform-monitoring
+/.github/workflows/publish-kinds-next.yml @grafana/grafana-app-platform-squad
+/.github/workflows/publish-kinds-release.yml @grafana/grafana-app-platform-squad
+/.github/workflows/verify-kinds.yml @grafana/grafana-app-platform-squad
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 /.github/workflows/run-schema-v2-e2e.yml  @grafana/dashboards-squad
 /.github/workflows/run-dashboard-search-e2e.yml  @grafana/grafana-search-and-storage
@@ -1293,6 +1293,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/cleanup-branches.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-artifact.yml @grafana/grafana-developer-enablement-squad
 /.github/actions/changelog @zserge
+/.github/workflows/check-frontend-test-coverage.yml @grafana/dataviz-squad
 /.github/workflows/swagger-gen.yml @grafana/grafana-backend-group
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform
 /.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform
@@ -1327,7 +1328,7 @@ embed.go @grafana/grafana-as-code
 /conf/provisioning/dashboards/ @grafana/dashboards-squad
 /conf/provisioning/datasources/ @grafana/plugins-platform-backend
 /conf/provisioning/plugins/ @grafana/plugins-platform-backend
-/conf/provisioning/sample/ @grafana/grafana-git-ui-sync-team
+/conf/provisioning/sample/ @grafana/grafana-app-platform-squad
 
 # Security
 /relyance.yaml @grafana/security-team

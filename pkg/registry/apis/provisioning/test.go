@@ -112,15 +112,11 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					name = "hack-on-hack-for-new"
 				} else {
 					// Copy previous secure values if they exist
+					// FIXME: I think this will need decryption on the old object secrets. That shouldn't be necessary as we only need the spec.
 					old, _ := s.repoGetter.GetRepository(ctx, name)
-					if old != nil && !old.Config().Secure.IsZero() {
-						secure := old.Config().Secure
-						if cfg.Secure.Token.IsZero() {
-							cfg.Secure.Token = secure.Token
-						}
-						if cfg.Secure.WebhookSecret.IsZero() {
-							cfg.Secure.WebhookSecret = secure.WebhookSecret
-						}
+					if old != nil {
+						oldCfg := old.Config()
+						repository.CopySecureValues(&cfg, oldCfg)
 					}
 				}
 
