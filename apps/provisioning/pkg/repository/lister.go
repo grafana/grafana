@@ -11,44 +11,36 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// StorageLister is an interface for listing repositories from storage.
+// RepositoryLister is an interface for listing repositories.
+type RepositoryLister interface {
+	List(ctx context.Context) ([]provisioning.Repository, error)
+}
+
+// storageListerBackend is an interface for listing repositories from storage.
 // This is typically implemented by grafanarest.Storage.
-type StorageLister interface {
+type storageListerBackend interface {
 	List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error)
 }
 
-// ClientLister is an interface for listing repositories using a typed client.
+// clientListerBackend is an interface for listing repositories using a typed client.
 // This is typically implemented by the generated provisioning client.
-type ClientLister interface {
+type clientListerBackend interface {
 	List(ctx context.Context, opts metav1.ListOptions) (*provisioning.RepositoryList, error)
 }
 
-// Lister provides methods for listing repositories.
-type Lister struct {
-	store  StorageLister
-	client ClientLister
+// StorageLister implements RepositoryLister using storage backend.
+type StorageLister struct {
+	store storageListerBackend
 }
 
-// NewLister creates a new Lister with the given storage.
-func NewLister(store StorageLister) *Lister {
-	return &Lister{store: store}
+// NewStorageLister creates a new StorageLister with the given storage.
+func NewStorageLister(store storageListerBackend) *StorageLister {
+	return &StorageLister{store: store}
 }
 
-// NewListerFromClient creates a new Lister using a typed client.
-func NewListerFromClient(client ClientLister) *Lister {
-	return &Lister{client: client}
-}
-
-// List retrieves all repositories in the namespace from context.
+// List retrieves all repositories from storage.
 // The namespace must be set in the context using request.WithNamespace.
-func (l *Lister) List(ctx context.Context) ([]provisioning.Repository, error) {
-	if l.client != nil {
-		return l.listFromClient(ctx)
-	}
-	return l.listFromStorage(ctx)
-}
-
-func (l *Lister) listFromStorage(ctx context.Context) ([]provisioning.Repository, error) {
+func (l *StorageLister) List(ctx context.Context) ([]provisioning.Repository, error) {
 	var allRepositories []provisioning.Repository
 	continueToken := ""
 
@@ -77,7 +69,19 @@ func (l *Lister) listFromStorage(ctx context.Context) ([]provisioning.Repository
 	return allRepositories, nil
 }
 
-func (l *Lister) listFromClient(ctx context.Context) ([]provisioning.Repository, error) {
+// ClientLister implements RepositoryLister using a typed client.
+type ClientLister struct {
+	client clientListerBackend
+}
+
+// NewClientLister creates a new ClientLister using a typed client.
+func NewClientLister(client clientListerBackend) *ClientLister {
+	return &ClientLister{client: client}
+}
+
+// List retrieves all repositories using the typed client.
+// The namespace must be set in the context using request.WithNamespace.
+func (l *ClientLister) List(ctx context.Context) ([]provisioning.Repository, error) {
 	var allRepositories []provisioning.Repository
 	continueToken := ""
 

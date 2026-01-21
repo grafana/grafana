@@ -20,10 +20,10 @@ var ErrRepositoryDuplicatePath = fmt.Errorf("duplicate repository path")
 var ErrRepositoryParentFolderConflict = fmt.Errorf("repository path conflicts with existing repository")
 
 type VerifyAgainstExistingRepositoriesValidator struct {
-	lister *Lister
+	lister RepositoryLister
 }
 
-func NewVerifyAgainstExistingRepositoriesValidator(lister *Lister) Validator {
+func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Validator {
 	return &VerifyAgainstExistingRepositoriesValidator{lister: lister}
 }
 

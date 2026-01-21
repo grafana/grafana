@@ -74,7 +74,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	// since the repository already passed admission validation when it was created/updated.
 	// TODO: Consider adding ExistingRepositoriesValidator for reconciliation to detect conflicts
 	// that may arise from manual edits or migrations (e.g., duplicate paths, instance sync conflicts).
-	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer, repository.NewRepositoryTester(validator))
+	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer, repository.NewTester(validator))
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
 	controller, err := controller.NewRepositoryController(

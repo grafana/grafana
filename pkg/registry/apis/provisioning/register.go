@@ -100,7 +100,7 @@ type APIBuilder struct {
 
 	tracer                 tracing.Tracer
 	repoStore              grafanarest.Storage
-	repoLister             *repository.Lister
+	repoLister             repository.RepositoryLister
 	existingReposValidator repository.Validator           // actual validator, set in UpdateAPIGroupInfo
 	repoAdmissionValidator *repository.AdmissionValidator // uses lazy wrapper, set in NewAPIBuilder
 	connectionStore        grafanarest.Storage
@@ -651,7 +651,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.repoStore = repositoryStorage
-	b.repoLister = repository.NewLister(repositoryStorage)
+	b.repoLister = repository.NewStorageLister(repositoryStorage)
 	b.existingReposValidator = repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister)
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
@@ -768,7 +768,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
 			// Health checker uses basic validation only - no additional validators needed
 			// since the repository already passed admission validation when it was created/updated.
-			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewRepositoryTester(b.repoValidator))
+			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewTester(b.repoValidator))
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.onlyApiServer {

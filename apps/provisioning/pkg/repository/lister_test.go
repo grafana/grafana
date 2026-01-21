@@ -40,12 +40,12 @@ func (m *mockStorageLister) List(ctx context.Context, options *internalversion.L
 	return list, nil
 }
 
-func TestLister_List(t *testing.T) {
+func TestStorageLister_List(t *testing.T) {
 	t.Run("returns empty list when no repositories", func(t *testing.T) {
 		store := &mockStorageLister{
 			pages: [][]provisioning.Repository{{}},
 		}
-		lister := NewLister(store)
+		lister := NewStorageLister(store)
 
 		repos, err := lister.List(context.Background())
 
@@ -62,7 +62,7 @@ func TestLister_List(t *testing.T) {
 				},
 			},
 		}
-		lister := NewLister(store)
+		lister := NewStorageLister(store)
 
 		repos, err := lister.List(context.Background())
 
@@ -84,7 +84,7 @@ func TestLister_List(t *testing.T) {
 				},
 			},
 		}
-		lister := NewLister(store)
+		lister := NewStorageLister(store)
 
 		repos, err := lister.List(context.Background())
 
@@ -101,7 +101,7 @@ func TestLister_List(t *testing.T) {
 		store := &mockStorageLister{
 			err: expectedErr,
 		}
-		lister := NewLister(store)
+		lister := NewStorageLister(store)
 
 		repos, err := lister.List(context.Background())
 

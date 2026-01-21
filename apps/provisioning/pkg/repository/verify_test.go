@@ -241,7 +241,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &verifyTestStorage{repositories: tt.existingRepos}
-			lister := NewLister(store)
+			lister := NewStorageLister(store)
 			validator := NewVerifyAgainstExistingRepositoriesValidator(lister)
 			errList := validator.Validate(context.Background(), tt.cfg)
 

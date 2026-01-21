@@ -42,11 +42,11 @@ type HealthCheckerInterface interface {
 type HealthChecker struct {
 	statusPatcher StatusPatcher
 	healthMetrics healthMetrics
-	tester        repository.RepositoryTester
+	tester        repository.Tester
 }
 
 // NewHealthChecker creates a new health checker
-func NewHealthChecker(statusPatcher StatusPatcher, registry prometheus.Registerer, tester repository.RepositoryTester) *HealthChecker {
+func NewHealthChecker(statusPatcher StatusPatcher, registry prometheus.Registerer, tester repository.Tester) *HealthChecker {
 	healthMetrics := registerHealthMetrics(registry)
 	return &HealthChecker{
 		statusPatcher: statusPatcher,
