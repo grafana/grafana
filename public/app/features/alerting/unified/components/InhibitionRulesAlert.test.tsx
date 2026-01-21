@@ -2,6 +2,7 @@ import { produce } from 'immer';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { makeAllAlertmanagerConfigFetchFail } from 'app/features/alerting/unified/mocks/server/configure';
 import {
   getAlertmanagerConfig,
   setAlertmanagerConfig,
@@ -75,6 +76,16 @@ describe('InhibitionRulesAlert', () => {
 
   it('should not render when alertmanagerSourceName is empty', async () => {
     const { container } = render(<InhibitionRulesAlert alertmanagerSourceName="" />);
+
+    await waitFor(() => {
+      expect(container).toBeEmptyDOMElement();
+    });
+  });
+
+  it('should not render when fetching config fails', async () => {
+    makeAllAlertmanagerConfigFetchFail();
+
+    const { container } = render(<InhibitionRulesAlert alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME} />);
 
     await waitFor(() => {
       expect(container).toBeEmptyDOMElement();
