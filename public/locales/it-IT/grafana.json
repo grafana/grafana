@@ -3730,6 +3730,7 @@
       "non-folder-item": "Non cartella {{itemKind}} {{itemUID}}",
       "root-title": "Dashboard",
       "search-placeholder": "Cerca cartelle",
+      "shared-with-me": "",
       "unknown-error": "Errore sconosciuto"
     },
     "manage-folder-nav": {
@@ -3833,6 +3834,7 @@
       "label-method": "Metodo",
       "label-payload": "Carico utile",
       "label-query-parameters": "Parametri delle query",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "API di test",
         "title-test-api": "API di test"

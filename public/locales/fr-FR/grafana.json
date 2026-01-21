@@ -3730,6 +3730,7 @@
       "non-folder-item": "Non-dossier {{itemKind}} {{itemUID}}",
       "root-title": "Tableaux de bord",
       "search-placeholder": "Rechercher dans les dossiers",
+      "shared-with-me": "",
       "unknown-error": "Erreur inconnue"
     },
     "manage-folder-nav": {
@@ -3833,6 +3834,7 @@
       "label-method": "Méthode",
       "label-payload": "Charge utile",
       "label-query-parameters": "Paramètres de requête",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "API de test",
         "title-test-api": "API de test"
