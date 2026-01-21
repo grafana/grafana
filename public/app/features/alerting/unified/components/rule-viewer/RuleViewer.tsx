@@ -109,11 +109,6 @@ const RuleViewer = () => {
   const { returnTo } = useReturnTo('/alerting/list');
   const { annotations, promRule, rulerRule, namespace } = rule;
 
-  // For Grafana-managed rules, use the Grafana Alertmanager. For external rules, use the data source name.
-  const alertmanagerSourceName = isGrafanaRulesSource(namespace.rulesSource)
-    ? GRAFANA_RULES_SOURCE_NAME
-    : namespace.rulesSource.name;
-
   const hasError = isErrorHealth(promRule?.health);
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
@@ -172,7 +167,10 @@ const RuleViewer = () => {
       }
     >
       {shouldUseConsistencyCheck && <PrometheusConsistencyCheck ruleIdentifier={identifier} />}
-      <InhibitionRulesAlert alertmanagerSourceName={alertmanagerSourceName} />
+      {/* Show inhibition rules alert only for Grafana-managed rules */}
+      {isGrafanaRulesSource(namespace.rulesSource) && (
+        <InhibitionRulesAlert alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME} />
+      )}
       <Stack direction="column" gap={2}>
         {/* tabs and tab content */}
         <TabContent>
