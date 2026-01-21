@@ -9,7 +9,7 @@ import { PanelEditor } from '../PanelEditor';
 import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
-import { QueryEditorContextBridge } from './QueryEditorContextBridge';
+import { QueryEditorContextWrapper } from './QueryEditorContextWrapper';
 import { QueryEditorSidebar, SidebarSize } from './QueryEditorSidebar';
 import { useVizAndDataPaneLayout } from './hooks';
 
@@ -51,7 +51,7 @@ export function VizAndDataPaneNext({
           <div ref={layout.vizResize.handleRef} className={layout.vizResize.className} data-testid="viz-resizer" />
         </div>
       </div>
-      <QueryEditorContextBridge dataPane={nextDataPane}>
+      <QueryEditorContextWrapper dataPane={nextDataPane}>
         <div className={cx(styles.sidebar, sidebarSizeClass)}>
           <QueryEditorSidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
           <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, height: '100%' }}>
@@ -80,7 +80,7 @@ export function VizAndDataPaneNext({
             <nextDataPane.Component model={nextDataPane} />
           )}
         </div>
-      </QueryEditorContextBridge>
+      </QueryEditorContextWrapper>
     </div>
   );
 }

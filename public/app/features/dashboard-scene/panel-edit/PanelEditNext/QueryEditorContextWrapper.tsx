@@ -11,7 +11,13 @@ import { QueryEditorProvider } from './QueryEditorContext';
  * Bridge component that subscribes to Scene state and provides it via React Context.
  * Wraps children with QueryEditorProvider so both sidebar and editor can access context.
  */
-export function QueryEditorContextBridge({ dataPane, children }: { dataPane: PanelDataPaneNext; children: ReactNode }) {
+export function QueryEditorContextWrapper({
+  dataPane,
+  children,
+}: {
+  dataPane: PanelDataPaneNext;
+  children: ReactNode;
+}) {
   const { panelRef, datasource, dsSettings, dsError } = dataPane.useState();
   const panel = panelRef.resolve();
   const queryRunner = getQueryRunnerFor(panel);
