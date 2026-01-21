@@ -11,9 +11,9 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/transport"
 	"k8s.io/client-go/util/flowcontrol"
 
+	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
@@ -36,7 +35,6 @@ import (
 type provisioningControllerConfig struct {
 	provisioningClient  *client.Clientset
 	resyncInterval      time.Duration
-	repoFactory         repository.Factory
 	unified             resources.ResourceStore
 	clients             resources.ClientFactory
 	tokenExchangeClient *authn.TokenExchangeClient
@@ -117,9 +115,11 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 	config := &rest.Config{
 		APIPath: "/apis",
 		Host:    provisioningServerURL,
-		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-			return authrt.NewRoundTripper(tokenExchangeClient, rt, provisioning.GROUP)
-		}),
+		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
+			tokenExchangeClient,
+			provisioning.GROUP,
+			clientauth.WildcardNamespace,
+		),
 		TLSClientConfig: tlsConfig,
 		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
 	}
@@ -127,16 +127,6 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 	provisioningClient, err := client.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
-	}
-
-	decrypter, err := setupDecrypter(cfg, tracer, tokenExchangeClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup decrypter: %w", err)
-	}
-
-	repoFactory, err := setupRepoFactory(cfg, decrypter, provisioningClient, registry)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup repository getter: %w", err)
 	}
 
 	// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
@@ -174,12 +164,20 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 	}
 
 	for group, url := range apiServerURLs {
+		// Build audiences: always include the group, and add provisioning.GROUP only if different
+		audiences := []string{group}
+		if group != provisioning.GROUP {
+			audiences = append(audiences, provisioning.GROUP)
+		}
+
 		config := &rest.Config{
 			APIPath: "/apis",
 			Host:    url,
-			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-				return authrt.NewRoundTripper(tokenExchangeClient, rt, group)
-			}),
+			WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
+				tokenExchangeClient,
+				clientauth.NewStaticAudienceProvider(audiences...),
+				clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace),
+			),
 			Transport: &http.Transport{
 				MaxConnsPerHost:     100,
 				MaxIdleConns:        100,
@@ -195,7 +193,6 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 
 	return &provisioningControllerConfig{
 		provisioningClient:  provisioningClient,
-		repoFactory:         repoFactory,
 		unified:             unified,
 		clients:             clients,
 		resyncInterval:      operatorSec.Key("resync_interval").MustDuration(60 * time.Second),

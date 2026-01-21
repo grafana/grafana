@@ -14,6 +14,7 @@ import {
 } from 'react-table';
 
 import { GrafanaTheme2, IconName, isTruthy } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
@@ -152,6 +153,10 @@ interface BaseProps<TableData extends object> {
    * Optional way to set how the table is sorted from the beginning. Must be memoized.
    */
   initialSortBy?: Array<SortingRule<TableData>>;
+  /**
+   * Disable the ability to remove sorting on columns (none -> asc -> desc -> asc)
+   */
+  disableSortRemove?: boolean;
 }
 
 interface WithExpandableRow<TableData extends object> extends BaseProps<TableData> {
@@ -190,6 +195,7 @@ export function InteractiveTable<TableData extends object>({
   showExpandAll = false,
   fetchData,
   initialSortBy = [],
+  disableSortRemove,
 }: Props<TableData>) {
   const styles = useStyles2(getStyles);
   const tableColumns = useMemo(() => {
@@ -221,6 +227,7 @@ export function InteractiveTable<TableData extends object>({
       disableMultiSort: true,
       // If fetchData is provided, we disable client-side sorting
       manualSortBy: Boolean(fetchData),
+      disableSortRemove,
       getRowId,
       initialState: {
         hiddenColumns: [
@@ -345,7 +352,7 @@ const getColumnHeaderStyles = (theme: GrafanaTheme2) => ({
 });
 
 function ColumnHeader<T extends object>({
-  column: { canSort, render, isSorted, isSortedDesc, getSortByToggleProps },
+  column: { canSort, render, isSorted, isSortedDesc, getSortByToggleProps, Header, id },
   headerTooltip,
 }: {
   column: HeaderGroup<T>;
@@ -376,7 +383,13 @@ function ColumnHeader<T extends object>({
 
   if (canSort) {
     return (
-      <button type="button" onClick={onClick}>
+      <button
+        aria-label={t('grafana-ui.interactive-table.aria-label-sort-column', 'Sort column {{columnName}}', {
+          columnName: typeof Header === 'string' ? Header : id,
+        })}
+        type="button"
+        onClick={onClick}
+      >
         {children}
       </button>
     );

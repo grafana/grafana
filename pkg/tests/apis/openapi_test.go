@@ -10,7 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -28,12 +30,19 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagInvestigationsBackend,
 			featuremgmt.FlagGrafanaAdvisor,
 			featuremgmt.FlagKubernetesAlertingRules,
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
+			featuremgmt.FlagQueryServiceWithConnections,
 			featuremgmt.FlagKubernetesShortURLs,
 			featuremgmt.FlagKubernetesCorrelations,
+			featuremgmt.FlagKubernetesAlertingHistorian,
+			featuremgmt.FlagKubernetesLogsDrilldown,
+		},
+		// Explicitly configure with mode 5 the resources supported by provisioning.
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
 		},
 	})
 
@@ -77,6 +86,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "dashboard.grafana.app",
 		Version: "v2alpha1",
 	}, {
+		Group:   "dashboard.grafana.app",
+		Version: "v2beta1",
+	}, {
 		Group:   "folder.grafana.app",
 		Version: "v1beta1",
 	}, {
@@ -84,9 +96,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "iam.grafana.app",
-		Version: "v0alpha1",
-	}, {
-		Group:   "investigations.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "advisor.grafana.app",
@@ -107,14 +116,20 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "rules.alerting.grafana.app",
 		Version: "v0alpha1",
 	}, {
+		Group:   "historian.alerting.grafana.app",
+		Version: "v0alpha1",
+	}, {
 		Group:   "correlations.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "shorturl.grafana.app",
 		Version: "v1beta1",
 	}, {
-		Group:   "testdata.datasource.grafana.app",
+		Group:   "grafana-testdata-datasource.datasource.grafana.app",
 		Version: "v0alpha1",
+	}, {
+		Group:   "logsdrilldown.grafana.app",
+		Version: "v1beta1",
 	}}
 	for _, gv := range groups {
 		VerifyOpenAPISnapshots(t, dir, gv, h)

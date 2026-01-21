@@ -33,7 +33,7 @@ import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
-import { shouldForceV2API } from '../pages/DashboardScenePageStateManager';
+import { LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -76,11 +76,53 @@ export interface SaveModelToSceneOptions {
   isEmbedded?: boolean;
 }
 
-export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
+type LayoutCreator = (panels: PanelModel[], preload?: boolean) => DashboardLayoutManager;
+
+export interface SceneCreationOptions {
+  /**
+   * When provided, this function is used to create the dashboard body/layout instead of the default v1 behavior.
+   * This allows callers to inject v2 layout strategy.
+   */
+  createLayout?: LayoutCreator;
+  /**
+   * Determines how the dashboard scene is serialized.
+   * @default 'v1'
+   */
+  targetVersion?: 'v1' | 'v2';
+}
+
+// Rows as SceneGridRow within the grid.
+const createDefaultGridLayout: LayoutCreator = (panels, preload) => {
+  return new DefaultGridLayoutManager({
+    grid: new SceneGridLayout({
+      isLazy: getIsLazy(preload),
+      children: createSceneObjectsForPanels(panels),
+    }),
+  });
+};
+
+/**
+ * V2 layout creator - uses RowsLayoutManager when dashboard has rows.
+ * This creates a layout that can be properly serialized to v2 format.
+ */
+export const createV2RowsLayout: LayoutCreator = (panels, preload) => {
+  const hasRows = panels.some((p) => p.type === 'row');
+  if (hasRows) {
+    return createRowsFromPanels(panels);
+  }
+  // Fall back to default grid layout when no rows
+  return createDefaultGridLayout(panels, preload);
+};
+
+export function transformSaveModelToScene(
+  rsp: DashboardDTO,
+  options?: LoadDashboardOptions,
+  sceneOptions?: SceneCreationOptions
+): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
 
-  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard);
+  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard, options, sceneOptions);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
 
   const apiVersion = config.featureToggles.kubernetesDashboards
@@ -92,7 +134,7 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   return scene;
 }
 
-export function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager {
+function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager {
   const rowItems: RowItem[] = [];
 
   let currentLegacyRow: PanelModel | null = null;
@@ -108,7 +150,8 @@ export function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager
         rowItems.push(
           new RowItem({
             title: '',
-            collapse: panel.collapsed,
+            // Hidden header rows must stay expanded; collapsing them would hide the panels entirely.
+            collapse: false,
             layout: new DefaultGridLayoutManager({
               grid: new SceneGridLayout({
                 children: currentRowPanels,
@@ -142,7 +185,7 @@ export function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager
   });
 }
 
-export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
+function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
   // collects all panels and rows
   const panels: SceneGridItemLike[] = [];
 
@@ -255,12 +298,17 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
   return rowItem;
 }
 
-export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel, dto: DashboardDataDTO) {
+export function createDashboardSceneFromDashboardModel(
+  oldModel: DashboardModel,
+  dto: DashboardDataDTO,
+  options?: LoadDashboardOptions,
+  sceneOptions?: SceneCreationOptions
+) {
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
   const uid = oldModel.uid;
-  const serializerVersion = shouldForceV2API() && !oldModel.meta.isSnapshot ? 'v2' : 'v1';
+  const targetVersion = sceneOptions?.targetVersion ?? 'v1';
 
   if (oldModel.meta.isSnapshot) {
     variables = createVariablesForSnapshot(oldModel);
@@ -348,9 +396,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
 
   let body: DashboardLayoutManager;
 
-  if (config.featureToggles.dashboardNewLayouts && oldModel.panels.some((p) => p.type === 'row')) {
-    body = createRowsFromPanels(oldModel.panels);
+  if (sceneOptions?.createLayout) {
+    // Use injected layout creator (allows callers to specify v2 or custom layout strategy)
+    body = sceneOptions.createLayout(oldModel.panels, dto.preload);
   } else {
+    // Default v1 layout: DefaultGridLayoutManager
     body = new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         isLazy: getIsLazy(dto.preload),
@@ -398,7 +448,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         hideTimeControls: oldModel.timepicker.hidden,
       }),
     },
-    serializerVersion
+    targetVersion
   );
 
   // Enable panel profiling for this dashboard using the composed SceneRenderProfiler
@@ -432,7 +482,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     key: getVizPanelKeyForPanelId(panel.id),
     title: panel.title?.substring(0, 5000),
     description: panel.description,
-    pluginId: panel.type ?? 'timeseries',
+    pluginId: panel.type ?? 'timeseries', // TODO: should this be `getDefaultPluginId()`?
     options: panel.options ?? {},
     fieldConfig: panel.fieldConfig,
     pluginVersion: panel.pluginVersion,

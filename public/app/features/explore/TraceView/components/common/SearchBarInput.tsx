@@ -22,7 +22,7 @@ type Props = {
   onChange: (value: string) => void;
 };
 
-const SearchBarInput = memo(({ value, onChange }: Props) => {
+const SearchBarInput = memo(({ value = '', onChange }: Props) => {
   const clearUiFind = () => {
     onChange('');
   };

@@ -7,6 +7,11 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,6 +23,19 @@ func setupTestEventStore(t *testing.T) *eventStore {
 		require.NoError(t, err)
 	})
 	kv := NewBadgerKV(db)
+	return newEventStore(kv)
+}
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+func setupTestEventStoreSqlKv(t *testing.T) *eventStore {
+	dbstore := db.InitTestDB(t)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	require.NoError(t, err)
+	kv, err := NewSQLKV(eDB)
+	require.NoError(t, err)
 	return newEventStore(kv)
 }
 
@@ -180,10 +198,21 @@ func TestEventStore_ParseEventKey(t *testing.T) {
 	assert.Equal(t, originalKey, parsedKey)
 }
 
-func TestEventStore_Save_Get(t *testing.T) {
-	ctx := context.Background()
-	store := setupTestEventStore(t)
+func runEventStoreTestWith(t *testing.T, storeName string, newStoreFn func(*testing.T) *eventStore, testFn func(*testing.T, context.Context, *eventStore)) {
+	t.Run(storeName, func(t *testing.T) {
+		ctx := context.Background()
+		store := newStoreFn(t)
+		testFn(t, ctx, store)
+	})
+}
 
+func TestIntegrationEventStore_Save_Get(t *testing.T) {
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreSaveGet)
+	runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreSaveGet)
+}
+
+func testEventStoreSaveGet(t *testing.T, ctx context.Context, store *eventStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	event := Event{
 		Namespace:       "default",
 		Group:           "apps",
@@ -215,10 +244,13 @@ func TestEventStore_Save_Get(t *testing.T) {
 	assert.Equal(t, event, retrievedEvent)
 }
 
-func TestEventStore_Get_NotFound(t *testing.T) {
-	ctx := context.Background()
-	store := setupTestEventStore(t)
+func TestIntegrationEventStore_Get_NotFound(t *testing.T) {
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreGetNotFound)
+	runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreGetNotFound)
+}
 
+func testEventStoreGetNotFound(t *testing.T, ctx context.Context, store *eventStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	nonExistentKey := EventKey{
 		Namespace:       "default",
 		Group:           "apps",
@@ -232,10 +264,13 @@ func TestEventStore_Get_NotFound(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestEventStore_LastEventKey(t *testing.T) {
-	ctx := context.Background()
-	store := setupTestEventStore(t)
+func TestIntegrationEventStore_LastEventKey(t *testing.T) {
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreLastEventKey)
+	runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreLastEventKey)
+}
 
+func testEventStoreLastEventKey(t *testing.T, ctx context.Context, store *eventStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Test when no events exist
 	_, err := store.LastEventKey(ctx)
 	assert.Error(t, err)
@@ -291,10 +326,13 @@ func TestEventStore_LastEventKey(t *testing.T) {
 	assert.Equal(t, expectedKey, lastKey)
 }
 
-func TestEventStore_ListKeysSince(t *testing.T) {
-	ctx := context.Background()
-	store := setupTestEventStore(t)
+func TestIntegrationEventStore_ListKeysSince(t *testing.T) {
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreListKeysSince)
+	runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreListKeysSince)
+}
 
+func testEventStoreListKeysSince(t *testing.T, ctx context.Context, store *eventStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Add events with different resource versions
 	events := []Event{
 		{
@@ -329,29 +367,54 @@ func TestEventStore_ListKeysSince(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	// List events since RV 1500 (should get events with RV 2000 and 3000)
-	retrievedEvents := make([]string, 0, 2)
-	for eventKey, err := range store.ListKeysSince(ctx, 1500) {
+	{
+		// List events since RV 1500 (should get events with RV 2000 and 3000)
+		retrievedEvents := make([]string, 0, 2)
+		for eventKey, err := range store.ListKeysSince(ctx, 1500, SortOrderAsc) {
+			require.NoError(t, err)
+			retrievedEvents = append(retrievedEvents, eventKey)
+		}
+
+		// Should return events in ASCENDING order of resource version
+		require.Len(t, retrievedEvents, 2)
+		evt1, err := ParseEventKey(retrievedEvents[0])
 		require.NoError(t, err)
-		retrievedEvents = append(retrievedEvents, eventKey)
+		assert.Equal(t, int64(2000), evt1.ResourceVersion)
+		assert.Equal(t, "test-2", evt1.Name)
+		evt2, err := ParseEventKey(retrievedEvents[1])
+		require.NoError(t, err)
+		assert.Equal(t, int64(3000), evt2.ResourceVersion)
+		assert.Equal(t, "test-3", evt2.Name)
 	}
 
-	// Should return events in ascending order of resource version
-	require.Len(t, retrievedEvents, 2)
-	evt1, err := ParseEventKey(retrievedEvents[0])
-	require.NoError(t, err)
-	assert.Equal(t, int64(2000), evt1.ResourceVersion)
-	assert.Equal(t, "test-2", evt1.Name)
-	evt2, err := ParseEventKey(retrievedEvents[1])
-	require.NoError(t, err)
-	assert.Equal(t, int64(3000), evt2.ResourceVersion)
-	assert.Equal(t, "test-3", evt2.Name)
+	{
+		// List events since RV 1500 (should get events with RV 2000 and 3000)
+		retrievedEvents := make([]string, 0, 2)
+		for eventKey, err := range store.ListKeysSince(ctx, 1500, SortOrderDesc) {
+			require.NoError(t, err)
+			retrievedEvents = append(retrievedEvents, eventKey)
+		}
+
+		// Should return events in DESCENDING order of resource version
+		require.Len(t, retrievedEvents, 2)
+		evt1, err := ParseEventKey(retrievedEvents[0])
+		require.NoError(t, err)
+		assert.Equal(t, int64(3000), evt1.ResourceVersion)
+		assert.Equal(t, "test-3", evt1.Name)
+		evt2, err := ParseEventKey(retrievedEvents[1])
+		require.NoError(t, err)
+		assert.Equal(t, int64(2000), evt2.ResourceVersion)
+		assert.Equal(t, "test-2", evt2.Name)
+	}
 }
 
-func TestEventStore_ListSince(t *testing.T) {
-	ctx := context.Background()
-	store := setupTestEventStore(t)
+func TestIntegrationEventStore_ListSince(t *testing.T) {
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreListSince)
+	runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreListSince)
+}
 
+func testEventStoreListSince(t *testing.T, ctx context.Context, store *eventStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Add events with different resource versions
 	events := []Event{
 		{
@@ -388,7 +451,7 @@ func TestEventStore_ListSince(t *testing.T) {
 
 	// List events since RV 1500 (should get events with RV 2000 and 3000)
 	retrievedEvents := make([]Event, 0, 2)
-	for event, err := range store.ListSince(ctx, 1500) {
+	for event, err := range store.ListSince(ctx, 1500, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)
 	}
@@ -403,13 +466,16 @@ func TestEventStore_ListSince(t *testing.T) {
 	assert.Equal(t, DataActionDeleted, retrievedEvents[1].Action)
 }
 
-func TestEventStore_ListSince_Empty(t *testing.T) {
-	ctx := context.Background()
-	store := setupTestEventStore(t)
+func TestIntegrationEventStore_ListSince_Empty(t *testing.T) {
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreListSinceEmpty)
+	runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreListSinceEmpty)
+}
 
+func testEventStoreListSinceEmpty(t *testing.T, ctx context.Context, store *eventStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// List events when store is empty
 	retrievedEvents := make([]Event, 0)
-	for event, err := range store.ListSince(ctx, 0) {
+	for event, err := range store.ListSince(ctx, 0, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)
 	}
@@ -458,10 +524,13 @@ func TestEventKey_Struct(t *testing.T) {
 	assert.Equal(t, int64(1234567890), key.ResourceVersion)
 }
 
-func TestEventStore_Save_InvalidJSON(t *testing.T) {
-	ctx := context.Background()
-	store := setupTestEventStore(t)
+func TestIntegrationEventStore_Save_InvalidJSON(t *testing.T) {
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreSaveInvalidJSON)
+	runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreSaveInvalidJSON)
+}
 
+func testEventStoreSaveInvalidJSON(t *testing.T, ctx context.Context, store *eventStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// This should work fine as the Event struct should be serializable
 	event := Event{
 		Namespace:       "default",
@@ -476,10 +545,13 @@ func TestEventStore_Save_InvalidJSON(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestEventStore_CleanupOldEvents(t *testing.T) {
-	ctx := context.Background()
-	store := setupTestEventStore(t)
+func TestIntegrationEventStore_CleanupOldEvents(t *testing.T) {
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreCleanupOldEvents)
+	runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreCleanupOldEvents)
+}
 
+func testEventStoreCleanupOldEvents(t *testing.T, ctx context.Context, store *eventStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	now := time.Now()
 	oldRV := snowflakeFromTime(now.Add(-48 * time.Hour))   // 48 hours ago
 	recentRV := snowflakeFromTime(now.Add(-1 * time.Hour)) // 1 hour ago
@@ -564,10 +636,13 @@ func TestEventStore_CleanupOldEvents(t *testing.T) {
 	require.NoError(t, err, "Recent event should still exist")
 }
 
-func TestEventStore_CleanupOldEvents_NoOldEvents(t *testing.T) {
-	ctx := context.Background()
-	store := setupTestEventStore(t)
+func TestIntegrationEventStore_CleanupOldEvents_NoOldEvents(t *testing.T) {
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreCleanupOldEventsNoOldEvents)
+	runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreCleanupOldEventsNoOldEvents)
+}
 
+func testEventStoreCleanupOldEventsNoOldEvents(t *testing.T, ctx context.Context, store *eventStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Create an event 1 hour old
 	rv := snowflakeFromTime(time.Now().Add(-1 * time.Hour))
 	event := Event{
@@ -602,20 +677,26 @@ func TestEventStore_CleanupOldEvents_NoOldEvents(t *testing.T) {
 	require.NoError(t, err, "Recent event should still exist")
 }
 
-func TestEventStore_CleanupOldEvents_EmptyStore(t *testing.T) {
-	ctx := context.Background()
-	store := setupTestEventStore(t)
+func TestIntegrationEventStore_CleanupOldEvents_EmptyStore(t *testing.T) {
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreCleanupOldEventsEmptyStore)
+	runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreCleanupOldEventsEmptyStore)
+}
 
+func testEventStoreCleanupOldEventsEmptyStore(t *testing.T, ctx context.Context, store *eventStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Clean up events from empty store
 	deletedCount, err := store.CleanupOldEvents(ctx, time.Now().Add(-24*time.Hour))
 	require.NoError(t, err)
 	assert.Equal(t, 0, deletedCount, "Should not have deleted any events from empty store")
 }
 
-func TestEventStore_BatchDelete(t *testing.T) {
-	ctx := context.Background()
-	store := setupTestEventStore(t)
+func TestIntegrationEventStore_BatchDelete(t *testing.T) {
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testEventStoreBatchDelete)
+	runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testEventStoreBatchDelete)
+}
 
+func testEventStoreBatchDelete(t *testing.T, ctx context.Context, store *eventStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Create multiple events (more than batch size to test batching)
 	eventKeys := make([]string, 75)
 	for i := 0; i < 75; i++ {
@@ -721,10 +802,13 @@ func TestSnowflakeFromTime(t *testing.T) {
 	assert.Equal(t, expectedMillis, resultMillis, "Snowflake timestamp should match original time at millisecond precision")
 }
 
-func TestListKeysSince_WithSnowflakeTime(t *testing.T) {
-	ctx := context.Background()
-	store := setupTestEventStore(t)
+func TestIntegrationListKeysSince_WithSnowflakeTime(t *testing.T) {
+	runEventStoreTestWith(t, "badger", setupTestEventStore, testListKeysSinceWithSnowflakeTime)
+	runEventStoreTestWith(t, "sqlkv", setupTestEventStoreSqlKv, testListKeysSinceWithSnowflakeTime)
+}
 
+func testListKeysSinceWithSnowflakeTime(t *testing.T, ctx context.Context, store *eventStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Create events with snowflake-based resource versions at different times
 	now := time.Now()
 	events := []Event{
@@ -763,7 +847,7 @@ func TestListKeysSince_WithSnowflakeTime(t *testing.T) {
 	// List events since 90 minutes ago using subtractDurationFromSnowflake
 	sinceRV := subtractDurationFromSnowflake(snowflakeFromTime(now), 90*time.Minute)
 	retrievedEvents := make([]string, 0)
-	for eventKey, err := range store.ListKeysSince(ctx, sinceRV) {
+	for eventKey, err := range store.ListKeysSince(ctx, sinceRV, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, eventKey)
 	}
@@ -780,7 +864,7 @@ func TestListKeysSince_WithSnowflakeTime(t *testing.T) {
 	// List events since 30 minutes ago using subtractDurationFromSnowflake
 	sinceRV = subtractDurationFromSnowflake(snowflakeFromTime(now), 30*time.Minute)
 	retrievedEvents = make([]string, 0)
-	for eventKey, err := range store.ListKeysSince(ctx, sinceRV) {
+	for eventKey, err := range store.ListKeysSince(ctx, sinceRV, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, eventKey)
 	}

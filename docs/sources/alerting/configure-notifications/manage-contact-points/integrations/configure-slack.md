@@ -43,7 +43,7 @@ There are two ways of integrating Slack into Grafana Alerting.
 
 Note that you can only setup one Slack channel per contact point.
 
-You can customize the `title` and `body` of the Slack message using [notification templates](ref:notification-templates); however, you cannot modify its visual appearance with custom blocks.
+You can customize the `title` and `body` of the Slack message using [notification templates](ref:notification-templates); however, you cannot modify its visual appearance with custom blocks. Additional optional settings are available to customize bot appearance, mentions, and message formatting. Refer to the [Optional settings](#optional-settings) section for more details.
 
 ## Before you begin
 
@@ -51,8 +51,8 @@ You can customize the `title` and `body` of the Slack message using [notificatio
 
 If you are using a Slack API Token, complete the following steps.
 
-1. Follow steps 1 and 2 of the [Slack API Quickstart](https://api.slack.com/start/quickstart).
-1. Add the [chat:write.public](https://api.slack.com/scopes/chat:write.public) scope to give your app the ability to post in all public channels without joining.
+1. Follow step 1 of the [Slack API Quickstart](https://docs.slack.dev/app-management/quickstart-app-settings/#creating) to create the app.
+1. Continue onto the second step of the [Slack API Quickstart](https://docs.slack.dev/app-management/quickstart-app-settings/#scopes) and add the [chat:write.public](https://api.slack.com/scopes/chat:write.public) scope as described to give your app the ability to post in all public channels without joining.
 1. In OAuth Tokens for Your Workspace, copy the Bot User OAuth Token.
 1. Open your Slack workplace.
 1. Right click the channel you want to receive notifications in.
@@ -82,6 +82,48 @@ To create your Slack integration in Grafana Alerting, complete the following ste
    ** For Grafana Alertmanager only.**
 
 1. Click **Save contact point**.
+
+## Optional settings
+
+You can configure additional settings to customize your Slack notifications beyond the required fields.
+
+### Customize bot appearance
+
+You can customize how the bot appears in Slack channels:
+
+| Option     | Description                                                                                                                             |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Username   | Override the default bot username that appears in Slack. Set the `username` field to customize the display name.                        |
+| Icon emoji | Provide an emoji to use as the icon for the message. Set the `icon_emoji` field (for example, `:rocket:`). This overrides the icon URL. |
+| Icon URL   | Provide a URL to an image to use as the icon for the message. Set the `icon_url` field with the image URL.                              |
+
+### Configure mentions
+
+You can automatically mention users, groups, or the entire channel when notifications are sent:
+
+| Option          | Description                                                                                                                                                                                                                                                                               |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mention users   | Mention one or more specific users in the notification. Set the `mentionUsers` field with a comma-separated list of user IDs (for example, `U024BE7LH,U024BE7LJ`). To find a user's ID, refer to [Slack's documentation on finding member IDs](https://api.slack.com/methods/users.list). |
+| Mention groups  | Mention one or more user groups in the notification. Set the `mentionGroups` field with a comma-separated list of group IDs. You can copy group IDs from the group's Slack profile URL.                                                                                                   |
+| Mention channel | Mention the entire channel or active members. Set the `mentionChannel` field to one of the following:<br>- Empty or omit the field to disable channel mentions<br>- `here` to mention every active channel member<br>- `channel` to mention every channel member                          |
+
+### Customize message content
+
+You can customize the notification message using [notification templates](ref:notification-templates):
+
+| Option    | Description                                                                                                                                        |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Title     | Set a custom title for the Slack message. Use the `title` field with template variables (for example, `{{ template "slack.default.title" . }}`).   |
+| Text body | Set a custom body text for the Slack message. Use the `text` field with template variables (for example, `{{ template "slack.default.text" . }}`). |
+| Color     | Set the color of the vertical bar on the left side of the message attachment. Use the `color` field.                                               |
+
+### Advanced configuration
+
+For specialized environments, you can override the default Slack API endpoint:
+
+| Option       | Description                                                                                                                                                                 |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Endpoint URL | Specify a custom Slack API endpoint for non-webhook requests. Set the `endpointUrl` field to your custom endpoint. The default is `https://slack.com/api/chat.postMessage`. |
 
 ## Next steps
 

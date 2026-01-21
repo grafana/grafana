@@ -78,11 +78,37 @@ export function unboxNearMembraneProxies(structure: unknown): unknown {
   if (Array.isArray(structure)) {
     return structure.map(unboxNearMembraneProxies);
   }
+
+  if (isTransferable(structure)) {
+    return structure;
+  }
+
   if (typeof structure === 'object') {
     return Object.keys(structure).reduce((acc, key) => {
       Reflect.set(acc, key, unboxNearMembraneProxies(Reflect.get(structure, key)));
       return acc;
     }, {});
   }
+
   return structure;
+}
+
+function isTransferable(structure: unknown): structure is Transferable {
+  // We should probably add all of the transferable types here.
+  // https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects
+  // Note: Some of these APIs are not available in all browsers (e.g., MediaSourceHandle,
+  // AudioData, VideoFrame are not in Firefox), so we check for their existence first.
+  return (
+    structure instanceof ArrayBuffer ||
+    (typeof OffscreenCanvas !== 'undefined' && structure instanceof OffscreenCanvas) ||
+    structure instanceof ImageBitmap ||
+    structure instanceof MessagePort ||
+    (typeof MediaSourceHandle !== 'undefined' && structure instanceof MediaSourceHandle) ||
+    structure instanceof ReadableStream ||
+    structure instanceof WritableStream ||
+    structure instanceof TransformStream ||
+    (typeof AudioData !== 'undefined' && structure instanceof AudioData) ||
+    (typeof VideoFrame !== 'undefined' && structure instanceof VideoFrame) ||
+    structure instanceof RTCDataChannel
+  );
 }

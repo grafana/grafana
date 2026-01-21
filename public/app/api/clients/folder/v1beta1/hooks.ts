@@ -371,7 +371,6 @@ export function useCreateFolder() {
             ...(folder.parentUid && { [AnnoKeyFolder]: folder.parentUid }),
           },
         },
-        status: {},
       },
     };
 
@@ -404,8 +403,10 @@ export function useUpdateFolder() {
         spec: { title: folder.title },
         metadata: {
           name: folder.uid,
+          annotations: {
+            ...(folder.parentUid && { [AnnoKeyFolder]: folder.parentUid }),
+          },
         },
-        status: {},
       },
     };
 

@@ -18,6 +18,7 @@ import {
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
+  RepeatsUpdatedEvent,
 } from './shared';
 
 export interface DashboardEditPaneState extends SceneObjectState {
@@ -30,7 +31,7 @@ export interface DashboardEditPaneState extends SceneObjectState {
   isDocked?: boolean;
 }
 
-export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters';
+export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add';
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public constructor() {
@@ -83,6 +84,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     this._subs.add(
       dashboard.subscribeToEvent(ConditionalRenderingChangedEvent, ({ payload }) => {
+        this.forceRender();
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(RepeatsUpdatedEvent, () => {
         this.forceRender();
       })
     );

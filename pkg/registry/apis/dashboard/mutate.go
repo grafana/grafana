@@ -33,6 +33,8 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 
 	case dashboardV0.LIBRARY_PANEL_RESOURCE:
 		return nil // nothing needed
+	case dashboardV0.SNAPSHOT_RESOURCE:
+		return nil
 	}
 
 	return fmt.Errorf("unexpected resource: %+v", a.GetResource())

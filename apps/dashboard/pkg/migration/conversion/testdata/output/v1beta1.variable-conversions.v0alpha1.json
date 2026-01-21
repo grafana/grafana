@@ -94,6 +94,7 @@
           "query": "label_values(up, instance)",
           "refresh": 2,
           "regex": "/.*9090.*/",
+          "regexApplyTo": "text",
           "skipUrlSync": false,
           "sort": 1,
           "tagValuesQuery": "",
@@ -362,8 +363,20 @@
           },
           "refresh": 1,
           "regex": "/host[0-9]+/",
+          "regexApplyTo": "value",
           "skipUrlSync": false,
           "sort": 2,
+          "staticOptions": [
+            {
+              "text": "All",
+              "value": "$__all"
+            },
+            {
+              "text": "host1",
+              "value": "host1"
+            }
+          ],
+          "staticOptionsOrder": "before",
           "tagValuesQuery": "",
           "tagsQuery": "",
           "type": "query",
