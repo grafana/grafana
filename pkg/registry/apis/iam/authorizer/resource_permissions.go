@@ -179,32 +179,28 @@ func (r *ResourcePermissionsAuthorizer) FilterList(ctx context.Context, list run
 			canViewFuncs  = map[schema.GroupResource]types.ItemChecker{}
 		)
 		for _, item := range l.Items {
-			gr := schema.GroupResource{
-				Group:    item.Spec.Resource.ApiGroup,
-				Resource: item.Spec.Resource.Resource,
-			}
+			target := item.Spec.Resource
+			targetGR := schema.GroupResource{Group: target.ApiGroup, Resource: target.Resource}
 
 			// Reuse the same canView for items with the same resource
-			canView, found := canViewFuncs[gr]
+			canView, found := canViewFuncs[targetGR]
 
 			if !found {
 				listReq := types.ListRequest{
 					Namespace: item.Namespace,
-					Group:     item.Spec.Resource.ApiGroup,
-					Resource:  item.Spec.Resource.Resource,
+					Group:     target.ApiGroup,
+					Resource:  target.Resource,
 					Verb:      utils.VerbGetPermissions,
 				}
 
+				//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 				canView, _, err = r.accessClient.Compile(ctx, authInfo, listReq)
 				if err != nil {
 					return nil, err
 				}
 
-				canViewFuncs[gr] = canView
+				canViewFuncs[targetGR] = canView
 			}
-
-			target := item.Spec.Resource
-			targetGR := schema.GroupResource{Group: target.ApiGroup, Resource: target.Resource}
 
 			parent := ""
 			// Fetch the parent of the resource

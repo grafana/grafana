@@ -122,6 +122,10 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Connection'],
       }),
+      getConnectionRepositories: build.query<GetConnectionRepositoriesApiResponse, GetConnectionRepositoriesApiArg>({
+        query: (queryArg) => ({ url: `/connections/${queryArg.name}/repositories` }),
+        providesTags: ['Connection'],
+      }),
       getConnectionStatus: build.query<GetConnectionStatusApiResponse, GetConnectionStatusApiArg>({
         query: (queryArg) => ({
           url: `/connections/${queryArg.name}/status`,
@@ -725,6 +729,18 @@ export type UpdateConnectionApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
+};
+export type GetConnectionRepositoriesApiResponse = /** status 200 OK */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: any[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: any;
+};
+export type GetConnectionRepositoriesApiArg = {
+  /** name of the ExternalRepositoryList */
+  name: string;
 };
 export type GetConnectionStatusApiResponse = /** status 200 OK */ Connection;
 export type GetConnectionStatusApiArg = {
@@ -1436,7 +1452,7 @@ export type ConnectionSecure = {
   /** PrivateKey is the reference to the private key used for GitHub App authentication. This value is stored securely and cannot be read back */
   privateKey?: InlineSecureValue;
   /** Token is the reference of the token used to act as the Connection. This value is stored securely and cannot be read back */
-  webhook?: InlineSecureValue;
+  token?: InlineSecureValue;
 };
 export type BitbucketConnectionConfig = {
   /** App client ID */
@@ -1842,6 +1858,10 @@ export type SyncStatus = {
      - `"working"` The job is running */
   state: 'error' | 'pending' | 'success' | 'warning' | 'working';
 };
+export type TokenStatus = {
+  expiration?: number;
+  lastUpdated?: number;
+};
 export type WebhookStatus = {
   id?: number;
   lastEvent?: number;
@@ -1859,6 +1879,8 @@ export type RepositoryStatus = {
   stats?: ResourceCount[];
   /** Sync information with the last sync information */
   sync: SyncStatus;
+  /** Token will get updated with current token information */
+  token?: TokenStatus;
   /** Webhook Information (if applicable) */
   webhook: WebhookStatus;
 };
@@ -2079,6 +2101,8 @@ export const {
   useReplaceConnectionMutation,
   useDeleteConnectionMutation,
   useUpdateConnectionMutation,
+  useGetConnectionRepositoriesQuery,
+  useLazyGetConnectionRepositoriesQuery,
   useGetConnectionStatusQuery,
   useLazyGetConnectionStatusQuery,
   useReplaceConnectionStatusMutation,

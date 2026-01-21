@@ -319,6 +319,9 @@ type RepositoryStatus struct {
 	// Webhook Information (if applicable)
 	Webhook *WebhookStatus `json:"webhook"`
 
+	// Token will get updated with current token information
+	Token TokenStatus `json:"token,omitempty"`
+
 	// Error information during repository deletion (if any)
 	DeleteError string `json:"deleteError,omitempty"`
 }
@@ -355,6 +358,11 @@ type WebhookStatus struct {
 	URL              string   `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`
+}
+
+type TokenStatus struct {
+	LastUpdated int64 `json:"lastUpdated,omitempty"`
+	Expiration  int64 `json:"expiration,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

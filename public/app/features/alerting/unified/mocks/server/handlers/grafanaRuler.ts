@@ -154,6 +154,7 @@ export const rulerRuleVersionHistoryHandler = () => {
         uid: 'service',
         name: '',
       };
+      draft.grafana_alert.message = 'Updated by provisioning service';
     }),
     produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
       draft.grafana_alert.version = 5;
@@ -171,6 +172,7 @@ export const rulerRuleVersionHistoryHandler = () => {
         uid: 'different',
         name: 'different user',
       };
+      draft.grafana_alert.message = 'Changed alert title and thresholds';
     }),
     produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
       draft.grafana_alert.version = 3;
@@ -193,6 +195,7 @@ export const rulerRuleVersionHistoryHandler = () => {
         uid: 'foo',
         name: '',
       };
+      draft.grafana_alert.message = 'Updated evaluation interval and routing';
     }),
     produce(grafanaRulerRule, (draft: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {
       draft.grafana_alert.version = 1;

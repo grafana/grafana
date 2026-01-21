@@ -133,8 +133,15 @@ type FeatureFlag struct {
 	Stage       FeatureFlagStage `json:"stage,omitempty"`
 	Owner       codeowner        `json:"-"` // Owner person or team that owns this feature flag
 
-	// CEL-GO expression.  Using the value "true" will mean this is on by default
-	Expression string `json:"expression,omitempty"`
+	// Expression defined by the feature_toggles configuration.
+	// Supports multiple types including boolean, string, integer, float,
+	// and structured values following the OpenFeature specification.
+	// Empty values are not allowed.
+	//
+	// Using the value "true" means the feature flag is enabled by default,
+	// Using the value "false" means the feature flag is disabled by default,
+	// Using the value "1.0" means the default value of the feature flag is 1.0
+	Expression string `json:"expression"`
 
 	// Special behavior properties
 	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production

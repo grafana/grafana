@@ -30,11 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
@@ -47,7 +44,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -97,10 +93,8 @@ type service struct {
 	tracing *tracing.TracingService
 	metrics prometheus.Registerer
 
-	authorizer        *authorizer.GrafanaAuthorizer
-	serverLockService builder.ServerLockService
-	dualWriter        dualwrite.Service
-	kvStore           kvstore.KVStore
+	authorizer *authorizer.GrafanaAuthorizer
+	dualWriter dualwrite.Service
 
 	pluginClient       plugins.Client
 	datasources        datasource.ScopedPluginDatasourceProvider
@@ -114,7 +108,6 @@ type service struct {
 	aggregatorRunner                  aggregatorrunner.AggregatorRunner
 	appInstallers                     []appsdkapiserver.AppInstaller
 	builderMetrics                    *builder.BuilderMetrics
-	dualWriterMetrics                 *grafanarest.DualWriterMetrics
 
 	auditBackend            audit.Backend
 	auditPolicyRuleProvider auditing.PolicyRuleProvider
@@ -125,9 +118,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	rr routing.RouteRegister,
 	tracing *tracing.TracingService,
-	serverLockService *serverlock.ServerLockService,
 	db db.DB,
-	kvStore kvstore.KVStore,
 	pluginClient plugins.Client,
 	datasources datasource.ScopedPluginDatasourceProvider,
 	contextProvider datasource.PluginContextWrapper,
@@ -155,16 +146,14 @@ func ProvideService(
 		features:                          features,
 		rr:                                rr,
 		builders:                          []builder.APIGroupBuilder{},
-		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(cfg),
+		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
 		metrics:                           reg,
-		kvStore:                           kvStore,
 		pluginClient:                      pluginClient,
 		datasources:                       datasources,
 		contextProvider:                   contextProvider,
 		pluginStore:                       pluginStore,
-		serverLockService:                 serverLockService,
 		dualWriter:                        dualWriter,
 		unified:                           unified,
 		secrets:                           secrets,
@@ -173,7 +162,6 @@ func ProvideService(
 		aggregatorRunner:                  aggregatorRunner,
 		appInstallers:                     appInstallers,
 		builderMetrics:                    builderMetrics,
-		dualWriterMetrics:                 grafanarest.NewDualWriterMetrics(reg),
 		auditBackend:                      auditBackend,
 		auditPolicyRuleProvider:           auditPolicyRuleProvider,
 	}
@@ -412,13 +400,9 @@ func (s *service) start(ctx context.Context) error {
 		builders,
 		o.StorageOptions,
 		s.metrics,
-		request.GetNamespaceMapper(s.cfg),
-		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
-		s.serverLockService,
 		s.dualWriter,
 		optsregister,
 		s.features,
-		s.dualWriterMetrics,
 		s.builderMetrics,
 		apiResourceConfig,
 	)
@@ -432,15 +416,24 @@ func (s *service) start(ctx context.Context) error {
 		server,
 		serverConfig.RESTOptionsGetter,
 		o.StorageOptions,
-		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
-		s.serverLockService,
-		request.GetNamespaceMapper(s.cfg),
 		s.dualWriter,
-		s.dualWriterMetrics,
 		s.builderMetrics,
 		serverConfig.MergedResourceConfig,
 	); err != nil {
 		return err
+	}
+
+	// Augment existing WebServices with custom routes from builders
+	// This directly adds routes to existing WebServices using the OpenAPI specs from builders
+	if server.Handler != nil && server.Handler.GoRestfulContainer != nil {
+		if err := builder.AugmentWebServicesWithCustomRoutes(
+			server.Handler.GoRestfulContainer,
+			builders,
+			s.metrics,
+			serverConfig.MergedResourceConfig,
+		); err != nil {
+			return fmt.Errorf("failed to augment web services with custom routes: %w", err)
+		}
 	}
 
 	// stash the options for later use

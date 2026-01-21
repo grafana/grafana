@@ -32,11 +32,11 @@ type ConnectionSecure struct {
 
 	// Token is the reference of the token used to act as the Connection.
 	// This value is stored securely and cannot be read back
-	Token common.InlineSecureValue `json:"webhook,omitzero,omitempty"`
+	Token common.InlineSecureValue `json:"token,omitzero,omitempty"`
 }
 
 func (v ConnectionSecure) IsZero() bool {
-	return v.PrivateKey.IsZero() && v.Token.IsZero()
+	return v.PrivateKey.IsZero() && v.Token.IsZero() && v.ClientSecret.IsZero()
 }
 
 type GitHubConnectionConfig struct {
@@ -115,4 +115,27 @@ type ConnectionList struct {
 
 	// +listType=atomic
 	Items []Connection `json:"items"`
+}
+
+// ExternalRepositoryList lists repositories from an external git provider
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ExternalRepositoryList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +listType=atomic
+	Items []ExternalRepository `json:"items"`
+}
+
+type ExternalRepository struct {
+	// Name of the repository
+	Name string `json:"name"`
+	// Owner is the user, organization, or workspace that owns the repository
+	// For GitHub: organization or user
+	// For GitLab: namespace (user or group)
+	// For Bitbucket: workspace
+	// For pure Git: empty
+	Owner string `json:"owner,omitempty"`
+	// URL of the repository
+	URL string `json:"url"`
 }

@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"time"
 
-	clientauthmiddleware "github.com/grafana/grafana/pkg/clientauth/middleware"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/open-feature/go-sdk/openfeature"
@@ -26,7 +26,7 @@ type OpenFeatureConfig struct {
 	// HTTPClient is a pre-configured HTTP client (optional, used by features-service + OFREP providers)
 	HTTPClient *http.Client
 	// StaticFlags are the feature flags to use with static provider
-	StaticFlags map[string]bool
+	StaticFlags map[string]memprovider.InMemoryFlag
 	// TargetingKey is used for evaluation context
 	TargetingKey string
 	// ContextAttrs are additional attributes for evaluation context
@@ -67,10 +67,10 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 
 	var httpcli *http.Client
 	if cfg.OpenFeature.ProviderType == setting.FeaturesServiceProviderType || cfg.OpenFeature.ProviderType == setting.OFREPProviderType {
-		var m *clientauthmiddleware.TokenExchangeMiddleware
+		var m *TokenExchangeMiddleware
 
 		if cfg.OpenFeature.ProviderType == setting.FeaturesServiceProviderType {
-			m, err = clientauthmiddleware.NewTokenExchangeMiddleware(cfg)
+			m, err = NewTokenExchangeMiddleware(cfg)
 			if err != nil {
 				return fmt.Errorf("failed to create token exchange middleware: %w", err)
 			}
@@ -100,7 +100,7 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 func createProvider(
 	providerType string,
 	u *url.URL,
-	staticFlags map[string]bool,
+	staticFlags map[string]memprovider.InMemoryFlag,
 	httpClient *http.Client,
 ) (openfeature.FeatureProvider, error) {
 	if providerType == setting.FeaturesServiceProviderType || providerType == setting.OFREPProviderType {
@@ -117,10 +117,10 @@ func createProvider(
 		}
 	}
 
-	return newStaticProvider(staticFlags)
+	return newStaticProvider(staticFlags, standardFeatureFlags)
 }
 
-func createHTTPClient(m *clientauthmiddleware.TokenExchangeMiddleware) (*http.Client, error) {
+func createHTTPClient(m *TokenExchangeMiddleware) (*http.Client, error) {
 	options := sdkhttpclient.Options{
 		TLS: &sdkhttpclient.TLSOptions{InsecureSkipVerify: true},
 		Timeouts: &sdkhttpclient.TimeoutOptions{

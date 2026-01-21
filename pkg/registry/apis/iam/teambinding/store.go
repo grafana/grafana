@@ -276,9 +276,20 @@ func (l *LegacyBindingStore) List(ctx context.Context, options *internalversion.
 		return nil, err
 	}
 
-	res, err := l.store.ListTeamBindings(ctx, ns, legacy.ListTeamBindingsQuery{
+	query := legacy.ListTeamBindingsQuery{
 		Pagination: common.PaginationFromListOptions(options),
-	})
+	}
+
+	if options.FieldSelector != nil {
+		if name, ok := options.FieldSelector.RequiresExactMatch("spec.teamRef.name"); ok {
+			query.TeamUID = name
+		}
+		if name, ok := options.FieldSelector.RequiresExactMatch("spec.subject.name"); ok {
+			query.UserUID = name
+		}
+	}
+
+	res, err := l.store.ListTeamBindings(ctx, ns, query)
 	if err != nil {
 		return nil, err
 	}
