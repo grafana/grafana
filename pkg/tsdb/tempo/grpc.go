@@ -94,7 +94,7 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 	const defaultMaxCallRecvMsgSizeBytes = 4 * 1024 * 1024
 	maxCallRecvMsgSizeBytes := defaultMaxCallRecvMsgSizeBytes
 
-	if v := backend.GrafanaConfigFromContext(ctx).Get("GF_LIVE_CLIENT_QUEUE_MAX_SIZE"); v != "" {
+	if v := backend.GrafanaConfigFromContext(ctx).Get(backend.LiveClientQueueMaxSize); v != "" {
 		parsed, err := strconv.Atoi(v)
 		if err != nil || parsed <= 0 {
 			logger.Debug("Invalid GF_LIVE_CLIENT_QUEUE_MAX_SIZE; using default gRPC max receive size", "value", v, "default", defaultMaxCallRecvMsgSizeBytes, "error", err)
