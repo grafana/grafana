@@ -16,7 +16,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -70,13 +69,13 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	allowedTargets := []v0alpha1.SyncTargetType{}
-	for _, target := range controllerCfg.allowedTargets {
-		allowedTargets = append(allowedTargets, v0alpha1.SyncTargetType(target))
-	}
-	validator := repository.NewValidator(controllerCfg.minSyncInterval, allowedTargets, controllerCfg.allowImageRendering, controllerCfg.repoFactory)
+	validator := repository.NewValidator(controllerCfg.minSyncInterval, controllerCfg.allowImageRendering, controllerCfg.repoFactory)
 	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
-	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer, repository.NewSimpleRepositoryTester(validator))
+	// Health checker uses basic validation only - no need to validate against existing repositories
+	// since the repository already passed admission validation when it was created/updated.
+	// TODO: Consider adding ExistingRepositoriesValidator for reconciliation to detect conflicts
+	// that may arise from manual edits or migrations (e.g., duplicate paths, instance sync conflicts).
+	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer, repository.NewTester(validator))
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
 	controller, err := controller.NewRepositoryController(
