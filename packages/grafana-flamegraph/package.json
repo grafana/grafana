@@ -58,7 +58,6 @@
     "d3": "^7.8.5",
     "lodash": "^4.17.23",
     "react": "18.3.1",
-    "react-table": "^7.8.0",
     "react-use": "17.6.0",
     "react-virtualized-auto-sizer": "1.0.26",
     "tinycolor2": "1.6.0",
@@ -101,6 +100,7 @@
   "peerDependencies": {
     "@grafana/assistant": "^0.1.1",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "react-table": "^7.8.0"
   }
 }
