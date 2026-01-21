@@ -3762,6 +3762,7 @@
       "non-folder-item": "Element {{itemKind}} {{itemUID}} poza folderem",
       "root-title": "Pulpity",
       "search-placeholder": "Przeszukaj foldery",
+      "shared-with-me": "",
       "unknown-error": "Nieznany błąd"
     },
     "manage-folder-nav": {
@@ -3871,6 +3872,7 @@
       "label-method": "Metoda",
       "label-payload": "Ładunek",
       "label-query-parameters": "Parametry zapytania",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Testuj API",
         "title-test-api": "Testuj API"
