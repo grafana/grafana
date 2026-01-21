@@ -198,7 +198,7 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
 
   public queryMetrics = async (timeRange: TimeRange): Promise<{ metrics: string[]; histogramMetrics: string[] }> => {
     const series = await this.querySeries(timeRange, undefined, DEFAULT_SERIES_LIMIT);
-    const { metrics, labelKeys } = processSeries(series, METRIC_LABEL);
+    const { metrics, labelKeys } = processSeries(series, METRIC_LABEL, this.datasource.hasLabelsMatchAPISupport());
     this.metrics = metrics;
     this.histogramMetrics = processHistogramMetrics(this.metrics);
     this.labelKeys = labelKeys;
@@ -216,7 +216,7 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     }
 
     const series = await this.querySeries(timeRange, effectiveMatch, effectiveLimit);
-    const { labelKeys } = processSeries(series);
+    const { labelKeys } = processSeries(series, undefined, this.datasource.hasLabelsMatchAPISupport(), effectiveMatch);
     this._cache.setLabelKeys(timeRange, effectiveMatch, effectiveLimit, labelKeys);
     return labelKeys;
   };
@@ -252,7 +252,12 @@ export class SeriesApiClient extends BaseResourceClient implements ResourceApiCl
     }
 
     const series = await this.querySeries(timeRange, effectiveMatch, effectiveLimit);
-    const { labelValues } = processSeries(series, removeQuotesIfExist(labelKey));
+    const { labelValues } = processSeries(
+      series,
+      removeQuotesIfExist(labelKey),
+      this.datasource.hasLabelsMatchAPISupport(),
+      effectiveMatch
+    );
     this._cache.setLabelValues(timeRange, effectiveMatch, effectiveLimit, labelValues);
     return labelValues;
   };

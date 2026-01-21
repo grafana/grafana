@@ -297,6 +297,7 @@ describe('SeriesApiClient', () => {
       getAdjustedInterval: mockGetAdjustedInterval,
       getTimeRangeParams: mockGetTimeRangeParams,
       interpolateString: mockInterpolateString,
+      hasLabelsMatchAPISupport: () => true,
     } as unknown as PrometheusDatasource);
   });
 
@@ -1000,6 +1001,35 @@ describe('processSeries', () => {
     expect(result.metrics).toEqual(['alerts', 'up']);
     expect(result.labelKeys).toEqual(['instance', 'job']);
     expect(result.labelValues).toEqual(['alerts', 'up']);
+  });
+
+  it('should handle multiple metrics when filtering without match api support and with no match[] selector', () => {
+    const series = [
+      {
+        __name__: 'up',
+        instance: 'host1',
+        job: 'prometheus',
+      },
+      {
+        __name__: 'alerts',
+        instance: 'host3',
+        job: 'prometheus',
+      },
+      {
+        __name__: 'up',
+        instance: 'host2',
+        job: 'grafana',
+      },
+    ];
+    const hasMatchApiSupport = false;
+    const findValuesForKey = 'instance';
+
+    const result = processSeries(series, findValuesForKey, hasMatchApiSupport);
+
+    // Should include both metrics from series matching job=prometheus
+    expect(result.metrics).toEqual(['alerts', 'up']);
+    expect(result.labelKeys).toEqual(['instance', 'job']);
+    expect(result.labelValues).toEqual(['host1', 'host2', 'host3']);
   });
 
   it('should deduplicate results when filtering without match api support', () => {
