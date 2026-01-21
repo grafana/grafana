@@ -695,7 +695,19 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector()
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, b.repoAdmissionValidator)
+	// Create a Tester for the test endpoint that uses AdmissionValidator via adapter.
+	// This ensures test endpoint catches all validation errors including ExistingRepositoriesValidator.
+	testTester := repository.NewTester(repository.NewAdmissionValidatorAdapter(
+		b.repoAdmissionValidator,
+		func(ctx context.Context, name string) (*provisioning.Repository, error) {
+			repo, err := b.GetRepository(ctx, name)
+			if err != nil {
+				return nil, err
+			}
+			return repo.Config(), nil
+		},
+	))
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, testTester)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{

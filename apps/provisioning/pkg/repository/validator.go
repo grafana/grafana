@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -303,4 +304,63 @@ func NewUpdateAttributes(repo, oldRepo *provisioning.Repository) admission.Attri
 		false,
 		nil, // user info not needed for validation
 	)
+}
+
+// OldRepoGetter is a function that retrieves the old version of a repository for UPDATE operations.
+type OldRepoGetter func(ctx context.Context, name string) (*provisioning.Repository, error)
+
+// AdmissionValidatorAdapter adapts AdmissionValidator to the Validator interface.
+// This allows using AdmissionValidator with Tester for pre-admission testing.
+type AdmissionValidatorAdapter struct {
+	admissionValidator *AdmissionValidator
+	getOldRepo         OldRepoGetter
+}
+
+// NewAdmissionValidatorAdapter creates a Validator that wraps AdmissionValidator.
+// The getOldRepo function is called for UPDATE operations to get the previous version.
+func NewAdmissionValidatorAdapter(av *AdmissionValidator, getOldRepo OldRepoGetter) *AdmissionValidatorAdapter {
+	return &AdmissionValidatorAdapter{
+		admissionValidator: av,
+		getOldRepo:         getOldRepo,
+	}
+}
+
+// Validate implements the Validator interface by delegating to AdmissionValidator.
+// It determines whether this is a CREATE or UPDATE based on ObservedGeneration.
+func (a *AdmissionValidatorAdapter) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
+	var attr admission.Attributes
+
+	// Determine operation type based on ObservedGeneration
+	// If ObservedGeneration == 0, it's a new repository (CREATE)
+	if cfg.Status.ObservedGeneration == 0 {
+		attr = NewCreateAttributes(cfg)
+	} else if a.getOldRepo != nil {
+		old, _ := a.getOldRepo(ctx, cfg.Name)
+		if old != nil {
+			attr = NewUpdateAttributes(cfg, old)
+		} else {
+			attr = NewCreateAttributes(cfg)
+		}
+	} else {
+		attr = NewCreateAttributes(cfg)
+	}
+
+	err := a.admissionValidator.Validate(ctx, attr, nil)
+	if err != nil {
+		// Convert error back to field.ErrorList
+		var statusErr *apierrors.StatusError
+		if errors.As(err, &statusErr) && statusErr.ErrStatus.Details != nil {
+			var list field.ErrorList
+			for _, cause := range statusErr.ErrStatus.Details.Causes {
+				list = append(list, &field.Error{
+					Type:   field.ErrorType(cause.Type),
+					Field:  cause.Field,
+					Detail: cause.Message,
+				})
+			}
+			return list
+		}
+		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
+	}
+	return nil
 }

@@ -13,7 +13,6 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -41,8 +40,8 @@ type ConnectorDependencies interface {
 // testConnector handles the /test subresource for repositories.
 // It allows users to validate repository configurations before creating or updating them.
 //
-// This connector uses AdmissionValidator directly to perform the same validation
-// that would occur during actual admission. This includes:
+// This connector uses a Tester configured with AdmissionValidator (via adapter) to perform
+// the same validation that would occur during actual admission. This includes:
 // - Basic configuration validation (RepositoryValidator)
 // - Checking for conflicts with existing repositories (ExistingRepositoriesValidator)
 //
@@ -50,23 +49,23 @@ type ConnectorDependencies interface {
 // creating/updating them - we want to catch validation errors and conflicts during
 // testing, not just during actual create/update operations.
 type testConnector struct {
-	repoGetter         RepoGetter
-	repoFactory        repository.Factory
-	connectionGetter   ConnectionGetter
-	healthProvider     HealthCheckerProvider
-	admissionValidator *repository.AdmissionValidator
+	repoGetter       RepoGetter
+	repoFactory      repository.Factory
+	connectionGetter ConnectionGetter
+	healthProvider   HealthCheckerProvider
+	tester           repository.Tester
 }
 
 func NewTestConnector(
 	deps ConnectorDependencies,
-	admissionValidator *repository.AdmissionValidator,
+	tester repository.Tester,
 ) *testConnector {
 	return &testConnector{
-		repoFactory:        deps.GetRepoFactory(),
-		repoGetter:         deps,
-		connectionGetter:   deps,
-		healthProvider:     deps,
-		admissionValidator: admissionValidator,
+		repoFactory:      deps.GetRepoFactory(),
+		repoGetter:       deps,
+		connectionGetter: deps,
+		healthProvider:   deps,
+		tester:           tester,
 	}
 }
 
@@ -245,37 +244,10 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 				return
 			}
 		} else {
-			// Testing temporary repository - run admission validation then health check.
-			// This ensures the test endpoint catches all validation errors that would
-			// occur during actual create/update operations.
-			cfg := repo.Config()
-
-			// Determine if this is a CREATE or UPDATE operation
-			// If the repository has been observed by the controller (ObservedGeneration > 0),
-			// it's an existing repository and we should treat it as UPDATE
-			var attr admission.Attributes
-			if cfg.Status.ObservedGeneration == 0 {
-				attr = repository.NewCreateAttributes(cfg)
-			} else {
-				// For updates, get the old repository to compare
-				old, _ := s.repoGetter.GetRepository(ctx, name)
-				if old != nil {
-					attr = repository.NewUpdateAttributes(cfg, old.Config())
-				} else {
-					attr = repository.NewCreateAttributes(cfg)
-				}
-			}
-
-			// Run admission validation (includes ExistingRepositoriesValidator)
-			if err := s.admissionValidator.Validate(ctx, attr, nil); err != nil {
-				// Convert validation errors to TestResults
-				rsp = validationErrorToTestResults(err)
-				responder.Object(rsp.Code, rsp)
-				return
-			}
-
-			// Validation passed, run health check
-			rsp, err = repo.Test(ctx)
+			// Testing temporary repository - use Tester which runs validation + health check.
+			// The Tester is configured with AdmissionValidatorAdapter which includes
+			// ExistingRepositoriesValidator to catch conflicts with other repositories.
+			rsp, err = s.tester.Test(ctx, repo)
 			if err != nil {
 				responder.Error(err)
 				return
@@ -284,36 +256,6 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 
 		responder.Object(rsp.Code, rsp)
 	}), 30*time.Second), nil
-}
-
-// validationErrorToTestResults converts a validation error (typically from AdmissionValidator)
-// to TestResults. It extracts field errors from k8s StatusError if present.
-func validationErrorToTestResults(err error) *provisioning.TestResults {
-	var statusErr *k8serrors.StatusError
-	if errors.As(err, &statusErr) {
-		var errs []provisioning.ErrorDetails
-		for _, cause := range statusErr.ErrStatus.Details.Causes {
-			errs = append(errs, provisioning.ErrorDetails{
-				Type:   cause.Type,
-				Field:  cause.Field,
-				Detail: cause.Message,
-			})
-		}
-		return &provisioning.TestResults{
-			Code:    http.StatusUnprocessableEntity,
-			Success: false,
-			Errors:  errs,
-		}
-	}
-
-	// Fallback for non-status errors
-	return &provisioning.TestResults{
-		Code:    http.StatusUnprocessableEntity,
-		Success: false,
-		Errors: []provisioning.ErrorDetails{{
-			Detail: err.Error(),
-		}},
-	}
 }
 
 var (
