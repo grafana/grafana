@@ -39,6 +39,7 @@ import {
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
+import { PanelEditorRendererNext } from './PanelEditNext/PanelEditorRendererNext';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
 
@@ -60,7 +61,8 @@ export interface PanelEditorState extends SceneObjectState {
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
-  static Component = PanelEditorRenderer;
+  static queryEditorRenderer = config.featureToggles.queryEditorNext;
+  static Component = this.queryEditorRenderer ? PanelEditorRendererNext : PanelEditorRenderer;
 
   private _layoutItemState?: SceneObjectState;
   private _layoutItem: DashboardLayoutItem;

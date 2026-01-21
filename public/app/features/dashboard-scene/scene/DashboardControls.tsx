@@ -149,7 +149,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   } = model.useState();
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();
-  const styles = useStyles2(getStyles);
+  const isQueryEditorNext = Boolean(config.featureToggles.queryEditorNext);
+  const styles = useStyles2(getStyles, isQueryEditorNext);
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
 
@@ -295,18 +296,21 @@ function renderHiddenVariables(dashboard: DashboardScene) {
   return null;
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
   return {
     // Original controls style
     controls: css({
       gap: theme.spacing(1),
-      padding: theme.spacing(2, 2, 1, 2),
+      padding: isQueryEditorNext ? 0 : theme.spacing(2, 2, 1, 2),
       flexDirection: 'row',
       flexWrap: 'nowrap',
       position: 'relative',
       width: '100%',
       marginLeft: 'auto',
       display: 'inline-block',
+      ...(isQueryEditorNext && {
+        marginBottom: theme.spacing(-1),
+      }),
       [theme.breakpoints.down('sm')]: {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
