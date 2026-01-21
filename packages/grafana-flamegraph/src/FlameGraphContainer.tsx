@@ -111,7 +111,7 @@ const FlameGraphContainer = ({
   const [panesSwapped, setPanesSwapped] = useState(false);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
   const [resetKey, setResetKey] = useState(0);
-  const [highlightedItemIndexes, setHighlightedItemIndexes] = useState<number[] | undefined>(undefined);
+  const [focusedItemIndexes, setFocusedItemIndexes] = useState<number[] | undefined>(undefined);
   const [sharedSandwichItem, setSharedSandwichItem] = useState<string | undefined>(undefined);
 
   // Determine if we can show Split view based on container width
@@ -192,8 +192,8 @@ const FlameGraphContainer = ({
         setSearch={setSearch}
         resetKey={resetKey}
         keepFocusOnDataChange={keepFocusOnDataChange}
-        highlightedItemIndexes={highlightedItemIndexes}
-        setHighlightedItemIndexes={setHighlightedItemIndexes}
+        focusedItemIndexes={focusedItemIndexes}
+        setFocusedItemIndexes={setFocusedItemIndexes}
         sharedSandwichItem={sharedSandwichItem}
         setSharedSandwichItem={setSharedSandwichItem}
       />
@@ -217,15 +217,13 @@ const FlameGraphContainer = ({
         setSearch={setSearch}
         resetKey={resetKey}
         keepFocusOnDataChange={keepFocusOnDataChange}
-        highlightedItemIndexes={highlightedItemIndexes}
-        setHighlightedItemIndexes={setHighlightedItemIndexes}
+        focusedItemIndexes={focusedItemIndexes}
+        setFocusedItemIndexes={setFocusedItemIndexes}
         sharedSandwichItem={sharedSandwichItem}
         setSharedSandwichItem={setSharedSandwichItem}
       />
     );
   } else {
-    // effectiveViewMode === ViewMode.Split
-
     // Only sync sandwich mode between panes when they show different view types
     // (e.g., FlameGraph + CallTree). When both panes show the same type,
     // they should be independent for separate investigation.
@@ -250,8 +248,8 @@ const FlameGraphContainer = ({
         setSearch={setSearch}
         resetKey={resetKey}
         keepFocusOnDataChange={keepFocusOnDataChange}
-        highlightedItemIndexes={highlightedItemIndexes}
-        setHighlightedItemIndexes={setHighlightedItemIndexes}
+        focusedItemIndexes={focusedItemIndexes}
+        setFocusedItemIndexes={setFocusedItemIndexes}
         sharedSandwichItem={shouldSyncSandwich ? sharedSandwichItem : undefined}
         setSharedSandwichItem={shouldSyncSandwich ? setSharedSandwichItem : undefined}
       />
@@ -276,8 +274,8 @@ const FlameGraphContainer = ({
         setSearch={setSearch}
         resetKey={resetKey}
         keepFocusOnDataChange={keepFocusOnDataChange}
-        highlightedItemIndexes={highlightedItemIndexes}
-        setHighlightedItemIndexes={setHighlightedItemIndexes}
+        focusedItemIndexes={focusedItemIndexes}
+        setFocusedItemIndexes={setFocusedItemIndexes}
         sharedSandwichItem={shouldSyncSandwich ? sharedSandwichItem : undefined}
         setSharedSandwichItem={shouldSyncSandwich ? setSharedSandwichItem : undefined}
       />
@@ -340,7 +338,7 @@ const FlameGraphContainer = ({
             onSwapPanes={() => setPanesSwapped((s) => !s)}
             onReset={() => {
               setSearch('');
-              setHighlightedItemIndexes(undefined);
+              setFocusedItemIndexes(undefined);
               setSharedSandwichItem(undefined);
               setResetKey((k) => k + 1);
             }}

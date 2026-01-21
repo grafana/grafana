@@ -25,8 +25,8 @@ type Props = {
   search: string;
   compact?: boolean;
   onSearch?: (symbol: string) => void;
-  highlightedItemIndexes?: number[];
-  setHighlightedItemIndexes?: (itemIndexes: number[] | undefined) => void;
+  focusedItemIndexes?: number[];
+  setFocusedItemIndexes?: (itemIndexes: number[] | undefined) => void;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   viewMode?: ViewMode;
   paneView?: PaneView;
@@ -41,8 +41,8 @@ const FlameGraphCallTreeContainer = memo(
     search,
     compact: compactProp,
     onSearch,
-    highlightedItemIndexes,
-    setHighlightedItemIndexes,
+    focusedItemIndexes,
+    setFocusedItemIndexes,
     getExtraContextMenuButtons,
     viewMode,
     paneView,
@@ -78,21 +78,21 @@ const FlameGraphCallTreeContainer = memo(
       (nodeIdOrLabel: string | undefined, isLabel = false, itemIndexes?: number[]) => {
         if (nodeIdOrLabel === undefined) {
           setFocusedNodeId(undefined);
-          setHighlightedItemIndexes?.(undefined);
+          setFocusedItemIndexes?.(undefined);
         } else if (isLabel) {
           // When switching from callers mode, we need to find the node by label in the normal tree
           setFocusedNodeId(`label:${nodeIdOrLabel}`);
-          setHighlightedItemIndexes?.(itemIndexes);
+          setFocusedItemIndexes?.(itemIndexes);
         } else {
           setFocusedNodeId(nodeIdOrLabel);
-          setHighlightedItemIndexes?.(itemIndexes);
+          setFocusedItemIndexes?.(itemIndexes);
         }
 
         if (nodeIdOrLabel !== undefined) {
           setCallersNodeLabel(undefined);
         }
       },
-      [setHighlightedItemIndexes]
+      [setFocusedItemIndexes]
     );
 
     const handleSetCallersMode = useCallback(
@@ -239,9 +239,9 @@ const FlameGraphCallTreeContainer = memo(
       return matchIds;
     }, [searchQuery, nodes]);
 
-    // When highlightedItemIndexes changes (from flame graph focus), set focus mode in the call tree
+    // When focusedItemIndexes changes (from flame graph focus), set focus mode in the call tree
     useEffect(() => {
-      if (!highlightedItemIndexes || highlightedItemIndexes.length === 0) {
+      if (!focusedItemIndexes || focusedItemIndexes.length === 0) {
         setFocusedNodeId(undefined);
         return;
       }
@@ -255,7 +255,7 @@ const FlameGraphCallTreeContainer = memo(
 
       const findExactMatch = (nodesToSearch: CallTreeNode[]): string | undefined => {
         for (const node of nodesToSearch) {
-          if (itemIndexesMatch(node.levelItem.itemIndexes, highlightedItemIndexes)) {
+          if (itemIndexesMatch(node.levelItem.itemIndexes, focusedItemIndexes)) {
             return node.id;
           }
           if (node.subRows) {
@@ -274,7 +274,7 @@ const FlameGraphCallTreeContainer = memo(
       if (matchedNodeId) {
         setFocusedNodeId(matchedNodeId);
       }
-    }, [highlightedItemIndexes, data]);
+    }, [focusedItemIndexes, data]);
 
     const searchResultKey = searchNodes.join(',');
     useEffect(() => {

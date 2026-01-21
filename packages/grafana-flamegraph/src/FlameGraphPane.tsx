@@ -29,10 +29,10 @@ export type FlameGraphPaneProps = {
   resetKey?: number;
   /** Whether to preserve focus when the data changes */
   keepFocusOnDataChange?: boolean;
-  /** Item indexes of the focused item in the flame graph, for cross-pane highlighting (e.g., in CallTree) */
-  highlightedItemIndexes?: number[];
-  /** Callback to set the highlighted item indexes when a node is focused in the flame graph */
-  setHighlightedItemIndexes?: (itemIndexes: number[] | undefined) => void;
+  /** Item indexes of the focused item, for cross-pane focus synchronization */
+  focusedItemIndexes?: number[];
+  /** Callback to set the focused item indexes when a node is focused */
+  setFocusedItemIndexes?: (itemIndexes: number[] | undefined) => void;
   /** Shared sandwich item for cross-pane synchronization */
   sharedSandwichItem?: string;
   /** Callback to set the shared sandwich item */
@@ -56,8 +56,8 @@ const FlameGraphPane = ({
   setSearch,
   resetKey,
   keepFocusOnDataChange,
-  highlightedItemIndexes,
-  setHighlightedItemIndexes,
+  focusedItemIndexes,
+  setFocusedItemIndexes,
   sharedSandwichItem,
   setSharedSandwichItem,
 }: FlameGraphPaneProps) => {
@@ -136,25 +136,25 @@ const FlameGraphPane = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataContainer, keepFocusOnDataChange]);
 
-  // Track whether we set highlightedItemIndexes ourselves (from this pane's flame graph)
-  const weSetHighlightedRef = useRef(false);
+  // Track whether we set focusedItemIndexes ourselves (from this pane's flame graph)
+  const weSetFocusRef = useRef(false);
 
-  // Sync highlightedItemIndexes from call tree to flame graph focus
+  // Sync focusedItemIndexes from call tree to flame graph focus
   useEffect(() => {
-    if (!highlightedItemIndexes || highlightedItemIndexes.length === 0) {
+    if (!focusedItemIndexes || focusedItemIndexes.length === 0) {
       return;
     }
 
     // Skip if we just set this ourselves from the flame graph
-    if (weSetHighlightedRef.current) {
-      weSetHighlightedRef.current = false;
+    if (weSetFocusRef.current) {
+      weSetFocusRef.current = false;
       return;
     }
 
     // Check if current focus already matches
     const currentIndexes = focusedItemData?.item.itemIndexes;
-    if (currentIndexes && currentIndexes.length === highlightedItemIndexes.length) {
-      const matches = currentIndexes.every((val, idx) => val === highlightedItemIndexes[idx]);
+    if (currentIndexes && currentIndexes.length === focusedItemIndexes.length) {
+      const matches = currentIndexes.every((val, idx) => val === focusedItemIndexes[idx]);
       if (matches) {
         return;
       }
@@ -165,8 +165,8 @@ const FlameGraphPane = ({
     for (const level of levels) {
       for (const item of level) {
         if (
-          item.itemIndexes.length === highlightedItemIndexes.length &&
-          item.itemIndexes.every((val, idx) => val === highlightedItemIndexes[idx])
+          item.itemIndexes.length === focusedItemIndexes.length &&
+          item.itemIndexes.every((val, idx) => val === focusedItemIndexes[idx])
         ) {
           const label = dataContainer.getLabel(item.itemIndexes[0]);
           const totalViewTicks = levels[0][0].value;
@@ -179,14 +179,14 @@ const FlameGraphPane = ({
         }
       }
     }
-  }, [highlightedItemIndexes, dataContainer, focusedItemData]);
+  }, [focusedItemIndexes, dataContainer, focusedItemData]);
 
   const resetFocus = useCallback(() => {
     setFocusedItemData(undefined);
     setRangeMin(0);
     setRangeMax(1);
-    setHighlightedItemIndexes?.(undefined);
-  }, [setHighlightedItemIndexes]);
+    setFocusedItemIndexes?.(undefined);
+  }, [setFocusedItemIndexes]);
 
   const resetSandwich = useCallback(() => {
     setSandwichItem(undefined);
@@ -269,8 +269,8 @@ const FlameGraphPane = ({
           setRangeMax={setRangeMax}
           onItemFocused={(data) => {
             setFocusedItemData(data);
-            weSetHighlightedRef.current = true;
-            setHighlightedItemIndexes?.(data.item.itemIndexes);
+            weSetFocusRef.current = true;
+            setFocusedItemIndexes?.(data.item.itemIndexes);
           }}
           focusedItemData={focusedItemData}
           textAlign={textAlign}
@@ -311,8 +311,8 @@ const FlameGraphPane = ({
             colorScheme={colorScheme}
             search={search}
             onSearch={onCallTreeSearch}
-            highlightedItemIndexes={highlightedItemIndexes}
-            setHighlightedItemIndexes={setHighlightedItemIndexes}
+            focusedItemIndexes={focusedItemIndexes}
+            setFocusedItemIndexes={setFocusedItemIndexes}
             getExtraContextMenuButtons={getExtraContextMenuButtons}
             viewMode={viewMode}
             paneView={paneViewForContextMenu}
