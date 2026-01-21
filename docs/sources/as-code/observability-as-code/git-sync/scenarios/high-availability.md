@@ -3,6 +3,8 @@ title: Git Sync for high availability environments
 menuTitle: High availability
 description: Run multiple Grafana instances serving traffic simultaneously, synchronized via Git Sync
 weight: 50
+aliases:
+  - ../../provision-resources/git-sync-deployment-scenarios/high-availability
 ---
 
 # Git Sync for high availability environments
