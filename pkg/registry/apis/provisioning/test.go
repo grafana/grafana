@@ -167,7 +167,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 						return
 					}
 
-					cfg.Secure.Token.Create = token
+					cfg.Secure.Token.Create = token.Token
 				}
 
 				// Create a temporary repository

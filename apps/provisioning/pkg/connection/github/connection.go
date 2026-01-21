@@ -154,20 +154,20 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 }
 
 // GenerateRepositoryToken generates a repository-scoped access token.
-func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (common.RawSecureValue, error) {
+func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (*connection.ExpirableSecureValue, error) {
 	if repo == nil {
-		return "", errors.New("a repository is required to generate a token")
+		return nil, errors.New("a repository is required to generate a token")
 	}
 	if c.obj.Spec.GitHub == nil {
-		return "", errors.New("connection is not a GitHub connection")
+		return nil, errors.New("connection is not a GitHub connection")
 	}
 	if repo.Spec.GitHub == nil {
-		return "", errors.New("repository is not a GitHub repo")
+		return nil, errors.New("repository is not a GitHub repo")
 	}
 
 	_, repoName, err := github.ParseOwnerRepoGithub(repo.Spec.GitHub.URL)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse repo URL: %w", err)
+		return nil, fmt.Errorf("failed to parse repo URL: %w", err)
 	}
 
 	// Create the GitHub client with the JWT token
@@ -176,10 +176,13 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 	// Create an installation access token scoped to this repository
 	installationToken, err := ghClient.CreateInstallationAccessToken(ctx, c.obj.Spec.GitHub.InstallationID, repoName)
 	if err != nil {
-		return "", fmt.Errorf("failed to create installation access token: %w", err)
+		return nil, fmt.Errorf("failed to create installation access token: %w", err)
 	}
 
-	return common.RawSecureValue(installationToken.Token), nil
+	return &connection.ExpirableSecureValue{
+		Token:     common.RawSecureValue(installationToken.Token),
+		ExpiresAt: installationToken.ExpiresAt,
+	}, nil
 }
 
 var (

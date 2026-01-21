@@ -6,8 +6,10 @@ import (
 	"errors"
 	"net/http"
 	"testing"
+	"time"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/stretchr/testify/assert"
@@ -417,7 +419,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 		connection    *provisioning.Connection
 		repo          *provisioning.Repository
 		setupMock     func(*github.MockGithubFactory)
-		expectedToken common.RawSecureValue
+		expectedToken *connection.ExpirableSecureValue
 		expectedError string
 	}{
 		{
@@ -450,9 +452,15 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 				mockClient := github.NewMockClient(t)
 				mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("jwt-token")).Return(mockClient)
 				mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "test-repo").
-					Return(github.InstallationToken{Token: "ghs_repository_token_123", ExpiresAt: "2024-01-01T00:00:00Z"}, nil)
+					Return(github.InstallationToken{
+						Token:     "ghs_repository_token_123",
+						ExpiresAt: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+					}, nil)
 			},
-			expectedToken: common.RawSecureValue("ghs_repository_token_123"),
+			expectedToken: &connection.ExpirableSecureValue{
+				Token:     common.RawSecureValue("ghs_repository_token_123"),
+				ExpiresAt: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+			},
 		},
 		{
 			name: "nil repository returns error",
