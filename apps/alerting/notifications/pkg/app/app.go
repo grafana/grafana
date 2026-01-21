@@ -2,21 +2,24 @@ package app
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/simple"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 )
 
 func New(cfg app.Config) (app.App, error) {
-	managedKinds := make([]simple.AppManagedKind, 0)
-	for _, kinds := range apis.GetKinds() {
-		for _, kind := range kinds {
-			managedKinds = append(managedKinds, simple.AppManagedKind{Kind: kind})
-		}
+	customCfg, ok := cfg.SpecificConfig.(*Config)
+	if !ok {
+		return nil, errors.New("no configuration")
+	}
+	if err := customCfg.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 
 	c := simple.AppConfig{
@@ -29,7 +32,20 @@ func New(cfg app.Config) (app.App, error) {
 				},
 			},
 		},
-		ManagedKinds: managedKinds,
+		ManagedKinds: []simple.AppManagedKind{
+			{
+				Kind: v0alpha1.ReceiverKind(),
+				CustomRoutes: map[simple.AppCustomRoute]simple.AppCustomRouteHandler{
+					{
+						Method: simple.AppCustomRouteMethodPost,
+						Path:   "test",
+					}: customCfg.ReceiverTestingHandler.HandleReceiverTestingRequest,
+				},
+			},
+			{Kind: v0alpha1.RoutingTreeKind()},
+			{Kind: v0alpha1.TemplateGroupKind()},
+			{Kind: v0alpha1.TimeIntervalKind()},
+		},
 	}
 
 	a, err := simple.NewApp(c)
