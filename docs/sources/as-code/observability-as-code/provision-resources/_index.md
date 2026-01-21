@@ -8,7 +8,7 @@ labels:
   products:
     - enterprise
     - oss
-title: Provision resources and sync dashboards
+title: Provision resources on-prem
 menuTitle: On-prem file provisioning 
 weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/
@@ -20,13 +20,15 @@ aliases:
 
 {{< admonition type="caution" >}}
 
-On-prem file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions available in [nightly releases](https://grafana.com/grafana/download/nightly). Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
+On-prem file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions available in [nightly releases](https://grafana.com/grafana/download/nightly). It's **not available in Grafana Cloud**.
+
+Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
 
 {{< /admonition >}}
 
-On-prem local file provisioning allows you to configure how to store your dashboard JSON and other files that are stored in your local file system. You can set a single folder, or multiple folders to a different repository, with up to 10 connections. 
+On-prem local file provisioning allows you to configure how to store your dashboard JSON and other files from your local file system. You can set a single folder, or multiple folders to a different repository, with up to 10 connections. 
 
-In the local file workflow:
+With on-prem file provisioning:
 
 - All provisioned resources are changed in the local files.
 - The dashboards saved in your GitHub repository or local folder appear in Grafana in the 'provisioned' folder. The dashboards and folders saved to the local path are referred to as 'provisioned' resources and are labeled as such in the Grafana UI. 
