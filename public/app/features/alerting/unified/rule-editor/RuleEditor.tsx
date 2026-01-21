@@ -58,7 +58,7 @@ const RuleEditor = () => {
   if (cloneIdentifier) {
     return (
       <ExistingRuleEditor
-        key={JSON.stringify(identifier)}
+        key={JSON.stringify(cloneIdentifier)}
         identifier={cloneIdentifier}
         clone={true}
         isManualRestore={isManualRestore}
@@ -121,7 +121,7 @@ function useIdentifierFromCopy() {
   const [searchParams] = useURLSearchParams();
   const copyFromId = searchParams.get('copyFrom') ?? undefined;
 
-  return ruleId.tryParse(copyFromId);
+  return ruleId.tryParse(copyFromId, true);
 }
 
 function useDefaultsFromQuery() {
