@@ -5,7 +5,7 @@ import { DataSourceInstanceSettings, SelectableValue, TimeRange, VariableRegexAp
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { QueryVariable } from '@grafana/scenes';
+import { QueryVariable, VariableValueOption } from '@grafana/scenes';
 import { DataSourceRef, VariableRefresh, VariableSort } from '@grafana/schema';
 import { Field } from '@grafana/ui';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
@@ -52,6 +52,7 @@ interface QueryVariableEditorFormProps {
   staticOptionsOrder?: StaticOptionsOrderType;
   onStaticOptionsChange?: (staticOptions: StaticOptionsType) => void;
   onStaticOptionsOrderChange?: (staticOptionsOrder: StaticOptionsOrderType) => void;
+  options: VariableValueOption[];
 }
 
 export function QueryVariableEditorForm({
@@ -81,6 +82,7 @@ export function QueryVariableEditorForm({
   staticOptionsOrder,
   onStaticOptionsChange,
   onStaticOptionsOrderChange,
+  options,
 }: QueryVariableEditorFormProps) {
   const { value: dsConfig } = useAsync(async () => {
     const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
@@ -157,6 +159,7 @@ export function QueryVariableEditorForm({
 
       {onStaticOptionsChange && onStaticOptionsOrderChange && (
         <QueryVariableStaticOptions
+          options={options}
           staticOptions={staticOptions}
           staticOptionsOrder={staticOptionsOrder}
           onStaticOptionsChange={onStaticOptionsChange}

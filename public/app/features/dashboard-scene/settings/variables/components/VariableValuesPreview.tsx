@@ -13,8 +13,12 @@ export interface Props {
 }
 
 // the option at index 0 can be "All" so we first try to grab the properties from the option at index 1
-export const getPropertiesFromOptions = (options: VariableValueOption[]) =>
-  Object.keys(options[1]?.properties ?? options[0]?.properties ?? {});
+export const getPropertiesFromOptions = (options: VariableValueOption[]) => {
+  const keys = Object.keys(options[1]?.properties ?? options[0]?.properties ?? {}).filter(
+    (p) => !['text', 'value'].includes(p)
+  );
+  return ['text', 'value', ...keys];
+};
 
 export const VariableValuesPreview = ({ options }: Props) => {
   const styles = useStyles2(getStyles);

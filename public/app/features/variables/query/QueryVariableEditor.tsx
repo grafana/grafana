@@ -157,6 +157,11 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
         onMultiChange={this.onMultiChange}
         onIncludeAllChange={this.onIncludeAllChange}
         onAllValueChange={this.onAllValueChange}
+        options={variable.options.map((o) => ({
+          label: String(o.text),
+          value: String(o.value),
+          properties: o.properties,
+        }))}
       />
     );
   }

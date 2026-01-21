@@ -209,6 +209,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       staticOptions: variable.staticOptions?.map((option) => ({
         label: String(option.text),
         value: String(option.value),
+        properties: option.properties,
       })),
       staticOptionsOrder: variable.staticOptionsOrder,
     });

@@ -405,44 +405,33 @@ describe('QueryVariableEditor', () => {
     await user.click(addButton);
 
     // Enter label and value for first option
-    const labelInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.labelInput
-    );
-    const valueInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.valueInput
-    );
-
-    await user.type(labelInputs[0], 'First Option');
-    await user.type(valueInputs[0], 'first-value');
-
-    await waitFor(async () => {
-      await lastValueFrom(variable.validateAndUpdate());
-    });
-
-    expect(variable.state.staticOptions).toEqual([{ label: 'First Option', value: 'first-value' }]);
-
-    // Add second static option
-    await user.click(addButton);
-
-    // Get updated inputs (now there should be 2 sets)
-    const updatedLabelInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.labelInput
-    );
-    const updatedValueInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.valueInput
-    );
-
-    // Enter label and value for second option
-    await user.type(updatedLabelInputs[1], 'Second Option');
-    await user.type(updatedValueInputs[1], 'second-value');
+    await user.type(getAllByTestId('static-option-input-text')[0], 'First Option[Tab]');
+    await user.type(getAllByTestId('static-option-input-value')[0], 'first-value[Tab]');
+    await screen.findByDisplayValue('first-value');
 
     await waitFor(async () => {
       await lastValueFrom(variable.validateAndUpdate());
     });
 
     expect(variable.state.staticOptions).toEqual([
-      { label: 'First Option', value: 'first-value' },
-      { label: 'Second Option', value: 'second-value' },
+      { label: 'First Option', value: 'first-value', properties: { text: 'First Option', value: 'first-value' } },
+    ]);
+
+    // Add second static option
+    await user.click(addButton);
+
+    // Enter label and value for second option
+    await user.type(getAllByTestId('static-option-input-text')[1], 'Second Option[Tab]');
+    await user.type(getAllByTestId('static-option-input-value')[1], 'second-value[Tab]');
+    await screen.findByDisplayValue('second-value');
+
+    await waitFor(async () => {
+      await lastValueFrom(variable.validateAndUpdate());
+    });
+
+    expect(variable.state.staticOptions).toEqual([
+      { label: 'First Option', value: 'first-value', properties: { text: 'First Option', value: 'first-value' } },
+      { label: 'Second Option', value: 'second-value', properties: { text: 'Second Option', value: 'second-value' } },
     ]);
   });
 

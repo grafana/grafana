@@ -93,6 +93,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         staticOptions: variable.state.staticOptions?.map((option) => ({
           text: option.label,
           value: String(option.value),
+          ...(option.properties && { properties: option.properties }),
         })),
         staticOptionsOrder: variable.state.staticOptionsOrder,
       };
@@ -393,6 +394,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           staticOptions: variable.state.staticOptions?.map((option) => ({
             text: option.label,
             value: String(option.value),
+            ...(option.properties && { properties: option.properties }),
           })),
           staticOptionsOrder: variable.state.staticOptionsOrder,
         },

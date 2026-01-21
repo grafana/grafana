@@ -1,17 +1,19 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { QueryVariable } from '@grafana/scenes';
+import { QueryVariable, VariableValueOption } from '@grafana/scenes';
 import { Field, Stack, Switch } from '@grafana/ui';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
+import { VariableMultiPropStaticOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/VariableMultiPropStaticOptionsForm';
 import { VariableSelectField } from 'app/features/dashboard-scene/settings/variables/components/VariableSelectField';
-import { VariableStaticOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/VariableStaticOptionsForm';
+import { getPropertiesFromOptions } from 'app/features/dashboard-scene/settings/variables/components/VariableValuesPreview';
 
 export type StaticOptionsType = QueryVariable['state']['staticOptions'];
 export type StaticOptionsOrderType = QueryVariable['state']['staticOptionsOrder'];
 
 interface QueryVariableStaticOptionsProps {
+  options: VariableValueOption[];
   staticOptions: StaticOptionsType;
   staticOptionsOrder: StaticOptionsOrderType;
   onStaticOptionsChange: (staticOptions: StaticOptionsType) => void;
@@ -25,11 +27,13 @@ const SORT_OPTIONS = [
 ];
 
 export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProps) {
-  const { staticOptions, onStaticOptionsChange, staticOptionsOrder, onStaticOptionsOrderChange } = props;
-
-  const value = SORT_OPTIONS.find((o) => o.value === staticOptionsOrder) ?? SORT_OPTIONS[0];
-
+  const { staticOptions, onStaticOptionsChange, staticOptionsOrder, onStaticOptionsOrderChange, options } = props;
   const [areStaticOptionsEnabled, setAreStaticOptionsEnabled] = useState(!!staticOptions?.length);
+  const value = SORT_OPTIONS.find((o) => o.value === staticOptionsOrder) ?? SORT_OPTIONS[0];
+  const properties = useMemo(
+    () => (areStaticOptionsEnabled ? getPropertiesFromOptions(options) : []),
+    [areStaticOptionsEnabled, options]
+  );
 
   return (
     <>
@@ -65,10 +69,11 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
               />
 
               {areStaticOptionsEnabled && (
-                <VariableStaticOptionsForm
-                  allowEmptyValue
+                <VariableMultiPropStaticOptionsForm
                   options={staticOptions ?? []}
+                  properties={properties}
                   onChange={onStaticOptionsChange}
+                  allowEmptyValue
                 />
               )}
             </Stack>
