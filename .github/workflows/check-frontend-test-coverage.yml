@@ -190,7 +190,7 @@ jobs:
 
       - name: Run coverage for ${{ matrix.codeowner }}
         if: steps.check-affected.outputs.affected == 'true'
-        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}"
+        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
         env:
           SHOULD_OPEN_COVERAGE_REPORT: 'false'
           CI: 'true'
