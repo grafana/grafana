@@ -17,7 +17,7 @@ import { BuildLinkToLogLine } from '../types';
 
 interface Props extends CustomCellRendererProps {
   buildLinkToLog?: BuildLinkToLogLine;
-  // timeFieldName: string;
+  showInspectLogLine: boolean;
   bodyFieldName: string;
 }
 
@@ -27,7 +27,7 @@ interface Props extends CustomCellRendererProps {
  * @constructor
  */
 export function LogsNGTableRowActionButtons(props: Props) {
-  const { rowIndex, frame, buildLinkToLog, bodyFieldName } = props;
+  const { rowIndex, frame, buildLinkToLog, bodyFieldName, showInspectLogLine } = props;
   const theme = useTheme2();
   const [isInspecting, setIsInspecting] = useState(false);
   const styles = getStyles(theme);
@@ -39,19 +39,21 @@ export function LogsNGTableRowActionButtons(props: Props) {
   return (
     <>
       <div className={styles.container}>
-        <div className={styles.buttonWrapper}>
-          <IconButton
-            className={styles.inspectButton}
-            tooltip={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
-            variant="secondary"
-            aria-label={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
-            tooltipPlacement="top"
-            size="md"
-            name="eye"
-            onClick={handleViewClick}
-            tabIndex={0}
-          />
-        </div>
+        {showInspectLogLine && (
+          <div className={styles.buttonWrapper}>
+            <IconButton
+              className={styles.inspectButton}
+              tooltip={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
+              variant="secondary"
+              aria-label={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
+              tooltipPlacement="top"
+              size="md"
+              name="eye"
+              onClick={handleViewClick}
+              tabIndex={0}
+            />
+          </div>
+        )}
         {buildLinkToLog && (
           <div className={styles.buttonWrapper}>
             <ClipboardButton

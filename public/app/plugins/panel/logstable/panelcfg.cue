@@ -31,8 +31,8 @@ composableKinds: PanelCfg: {
 					//					showFieldSelector?:       bool
 					//					showTime:                 bool
 					//					showLogContextToggle:     bool
-					showControls?:       bool
-					controlsStorageKey?: string
+//					showControls?:       bool
+//					controlsStorageKey?: string
 					//					wrapLogMessage:           bool
 					//					prettifyLogMessage:       bool
 					//					enableLogDetails:         bool
@@ -58,6 +58,8 @@ composableKinds: PanelCfg: {
 					//					logRowMenuIconsAfter?:   _
 					//					logLineMenuCustomItems?: _
 					//					onNewLogsReceived?:      _
+					showInspectLogLine?: bool | *true
+					showCopyLogLink?: bool | *false
 					fieldSelectorWidth?: number
 					displayedFields?: [...string]
 					setDisplayedFields?: _

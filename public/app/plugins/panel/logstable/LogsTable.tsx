@@ -46,6 +46,8 @@ export const LogsTable = ({
   timeZone,
   id,
   renderCounter,
+  showCopyLogLink,
+  showInspectLogLine,
 }: LogsTablePanelProps) => {
   const sidebarWidth = options.fieldSelectorWidth ?? DEFAULT_SIDEBAR_WIDTH;
   const styles = useStyles2(getStyles, sidebarWidth, height, width);

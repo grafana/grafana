@@ -11,15 +11,18 @@ export function LogsTableCustomCellRenderer(props: {
   cellProps: CustomCellRendererProps;
   bodyFieldName: string;
   buildLinkToLog?: BuildLinkToLogLine;
+  showCopyLogLink: boolean;
+  showInspectLogLine: boolean;
 }) {
   const styles = useStyles2(getStyles);
-  const { bodyFieldName } = props;
+  const { bodyFieldName, showInspectLogLine, showCopyLogLink } = props;
   return (
     <>
       <LogsNGTableRowActionButtons
         {...props.cellProps}
         bodyFieldName={bodyFieldName}
-        buildLinkToLog={props.buildLinkToLog ?? buildLinkToLog}
+        buildLinkToLog={showCopyLogLink ? (props.buildLinkToLog ?? buildLinkToLog) : undefined}
+        showInspectLogLine={showInspectLogLine}
       />
       <span className={styles.firstColumnCell}>
         {props.cellProps.field.display?.(props.cellProps.value).text ?? String(props.cellProps.value)}

@@ -10,16 +10,14 @@ import { defaultTableFieldOptions } from '@grafana/schema/dist/esm/veneer/common
 
 import { PaginationEditor } from '../table/PaginationEditor';
 import { TableCellOptionEditor } from '../table/TableCellOptionEditor';
-import { tablePanelChangedHandler } from '../table/migrations';
-import { defaultOptions, FieldConfig as TableFieldConfig } from '../table/panelcfg.gen';
+import { FieldConfig as TableFieldConfig, defaultOptions as defaultTableOptions } from '../table/panelcfg.gen';
 import { tableSuggestionsSupplier } from '../table/suggestions';
 
 import { LogsTable } from './LogsTable';
-import { Options } from './panelcfg.gen';
+import { Options, defaultOptions } from './panelcfg.gen';
 
 // @todo can we pull stuff from table module instead of manually adding?
 export const plugin = new PanelPlugin<Options, TableFieldConfig>(LogsTable)
-  .setPanelChangeHandler(tablePanelChangedHandler)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Actions]: {
@@ -27,7 +25,7 @@ export const plugin = new PanelPlugin<Options, TableFieldConfig>(LogsTable)
       },
     },
     useCustomConfig: (builder) => {
-      const category = [t('table.category-logs-table', 'Logs Table')];
+      const category = [t('table.category-table', 'Table')];
       const cellCategory = [t('table.category-cell-options', 'Cell options')];
       builder
         .addNumberInput({
@@ -181,13 +179,14 @@ export const plugin = new PanelPlugin<Options, TableFieldConfig>(LogsTable)
     },
   })
   .setPanelOptions((builder) => {
-    const category = [t('table.category-table', 'Table')];
+    const tableCategory = [t('table.category-table', 'Table')];
+    const logsTableCategory = [t('logstable.category-table', 'Logs Table')];
     builder
       .addBooleanSwitch({
         path: 'showHeader',
         name: t('table.name-show-table-header', 'Show table header'),
-        category,
-        defaultValue: defaultOptions.showHeader,
+        category: tableCategory,
+        defaultValue: defaultTableOptions.showHeader,
       })
       .addNumberInput({
         path: 'frozenColumns.left',
@@ -196,13 +195,13 @@ export const plugin = new PanelPlugin<Options, TableFieldConfig>(LogsTable)
         settings: {
           placeholder: 'none',
         },
-        category,
+        category: tableCategory,
       })
       .addRadio({
         path: 'cellHeight',
         name: t('table.name-cell-height', 'Cell height'),
-        category,
-        defaultValue: defaultOptions.cellHeight,
+        category: tableCategory,
+        defaultValue: defaultTableOptions.cellHeight,
         settings: {
           options: [
             { value: TableCellHeight.Sm, label: t('table.cell-height-options.label-small', 'Small') },
@@ -214,21 +213,42 @@ export const plugin = new PanelPlugin<Options, TableFieldConfig>(LogsTable)
       .addNumberInput({
         path: 'maxRowHeight',
         name: t('table.name-max-height', 'Max row height'),
-        category,
+        category: tableCategory,
         settings: {
           placeholder: t('table.placeholder-max-height', 'none'),
           min: 0,
         },
       })
+      .addBooleanSwitch({
+        path: 'showInspectLogLine',
+        name: t('logstable.show-inspect-button.name', 'Show inspect button'),
+        category: logsTableCategory,
+        description: t(
+          'logstable.show-inspect-button.description',
+          'Enables/disables the log line inspect button in the first column of each row'
+        ),
+        defaultValue: defaultOptions.showInspectLogLine,
+      })
+      .addBooleanSwitch({
+        path: 'showCopyLogLink',
+        name: t('logstable.show-copy-log.name', 'Show copy log link button'),
+        category: logsTableCategory,
+        description: t(
+          'logstable.show-copy-log.description',
+          'Enables/disables the log line link button in the first column of each row'
+        ),
+        defaultValue: defaultOptions.showCopyLogLink,
+      })
       .addCustomEditor({
         id: 'enablePagination',
         path: 'enablePagination',
         name: t('table.name-enable-pagination', 'Enable pagination'),
-        category,
+        category: tableCategory,
         editor: PaginationEditor,
-        defaultValue: defaultOptions?.enablePagination,
+        defaultValue: defaultTableOptions?.enablePagination,
       });
   })
+
   // @todo
   //@ts-expect-error
   .setSuggestionsSupplier(tableSuggestionsSupplier);

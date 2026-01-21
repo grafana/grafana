@@ -10,9 +10,18 @@
 
 export interface Options {
   buildLinkToLogLine?: unknown;
-  controlsStorageKey?: string;
   displayedFields?: Array<string>;
+  fieldSelectorWidth?: number;
+  setDisplayedFields?: unknown;
+  showCopyLogLink?: boolean;
   /**
+   * 					showLabels:               bool
+   * 					showCommonLabels:         bool
+   * 					showFieldSelector?:       bool
+   * 					showTime:                 bool
+   * 					showLogContextToggle:     bool
+   * 					showControls?:       bool
+   * 					controlsStorageKey?: string
    * 					wrapLogMessage:           bool
    * 					prettifyLogMessage:       bool
    * 					enableLogDetails:         bool
@@ -39,18 +48,11 @@ export interface Options {
    * 					logLineMenuCustomItems?: _
    * 					onNewLogsReceived?:      _
    */
-  fieldSelectorWidth?: number;
-  setDisplayedFields?: unknown;
-  /**
-   * 					showLabels:               bool
-   * 					showCommonLabels:         bool
-   * 					showFieldSelector?:       bool
-   * 					showTime:                 bool
-   * 					showLogContextToggle:     bool
-   */
-  showControls?: boolean;
+  showInspectLogLine?: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
   displayedFields: [],
+  showCopyLogLink: false,
+  showInspectLogLine: true,
 };

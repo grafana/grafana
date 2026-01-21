@@ -85,11 +85,13 @@ const organizeFields = async (
           width: getFieldWidth(field.config.custom?.width, field, fieldIndex, timeFieldName),
           inspect: field.config?.custom?.inspect ?? doesFieldSupportInspector(field),
           cellOptions:
-            isFirstField && bodyFieldName
+            isFirstField && bodyFieldName && (options.showCopyLogLink || options.showInspectLogLine)
               ? {
                   type: TableCellDisplayMode.Custom,
                   cellComponent: (cellProps: CustomCellRendererProps) => (
                     <LogsTableCustomCellRenderer
+                      showCopyLogLink={options.showCopyLogLink ?? false}
+                      showInspectLogLine={options.showInspectLogLine ?? true}
                       cellProps={cellProps}
                       bodyFieldName={bodyFieldName}
                       buildLinkToLog={
