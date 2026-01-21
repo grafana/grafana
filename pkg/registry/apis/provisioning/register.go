@@ -99,7 +99,6 @@ type APIBuilder struct {
 	usageStats usagestats.Service
 
 	tracer              tracing.Tracer
-	store               grafanarest.Storage
 	repoStore           grafanarest.Storage
 	connectionStore     grafanarest.Storage
 	parsers             resources.ParserFactory

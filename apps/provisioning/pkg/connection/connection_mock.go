@@ -80,9 +80,6 @@ func (_c *MockConnection_ListRepositories_Call) RunAndReturn(run func(context.Co
 	return _c
 }
 
-// Mutate provides a mock function with given fields: _a0
-func (_m *MockConnection) Mutate(_a0 context.Context) error {
-	ret := _m.Called(_a0)
 // GenerateRepositoryToken provides a mock function with given fields: ctx, repo
 func (_m *MockConnection) GenerateRepositoryToken(ctx context.Context, repo *v0alpha1.Repository) (*ExpirableSecureValue, error) {
 	ret := _m.Called(ctx, repo)
