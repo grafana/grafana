@@ -34,10 +34,11 @@ func TestIntegrationUserTeams(t *testing.T) {
 	// TODO: Add rest.Mode3, rest.Mode4, rest.Mode5 when they are supported
 	// Currently modes 3-5 are failing for postgres with the following error:
 	// unable to start dualwrite service due to migration error: unified storage data migration failed: migration failed (id = playlists migration): migration failed for org 1 (Main Org.): pq: sorry, too many clients already
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2 /*, rest.Mode3, rest.Mode4, rest.Mode5*/}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 
 	for _, mode := range modes {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			EnableLog:            true,
 			AppModeProduction:    false,
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified",
