@@ -23,7 +23,7 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ButtonGroup, Dropdown, Icon, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../constants';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from '../types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, PaneView, ViewMode, TextAlign } from '../types';
 
 import FlameGraphCanvas from './FlameGraphCanvas';
 import { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
@@ -52,7 +52,8 @@ type Props = {
   showFlameGraphOnly?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   collapsing?: boolean;
-  selectedView: SelectedView;
+  viewMode: ViewMode;
+  paneView: PaneView;
   search: string;
   collapsedMap: CollapsedMap;
   setCollapsedMap: (collapsedMap: CollapsedMap) => void;
@@ -79,7 +80,8 @@ const FlameGraph = ({
   showFlameGraphOnly,
   getExtraContextMenuButtons,
   collapsing,
-  selectedView,
+  viewMode,
+  paneView,
   search,
   collapsedMap,
   setCollapsedMap,
@@ -140,7 +142,8 @@ const FlameGraph = ({
     getExtraContextMenuButtons,
     collapsing,
     search,
-    selectedView,
+    viewMode,
+    paneView,
   };
   let canvas = null;
 

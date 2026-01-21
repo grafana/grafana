@@ -12,7 +12,7 @@ import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphPane from './FlameGraphPane';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
-import { PaneView, SelectedView, ViewMode } from './types';
+import { PaneView, ViewMode } from './types';
 import { getAssistantContextFromDataFrame } from './utils';
 
 const ufuzzy = new uFuzzy();
@@ -104,7 +104,6 @@ const FlameGraphContainer = ({
   showAnalyzeWithAssistant = true,
 }: Props) => {
   const [search, setSearch] = useState('');
-  const [selectedView, setSelectedView] = useState(SelectedView.Multi);
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Split);
   const [leftPaneView, setLeftPaneView] = useState<PaneView>(PaneView.TopTable);
   const [rightPaneView, setRightPaneView] = useState<PaneView>(PaneView.FlameGraph);
@@ -112,9 +111,12 @@ const FlameGraphContainer = ({
   const [panesSwapped, setPanesSwapped] = useState(false);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
   const [resetKey, setResetKey] = useState(0);
-  const [viewBeforeNarrow, setViewBeforeNarrow] = useState<SelectedView | null>(null);
   const [highlightedItemIndexes, setHighlightedItemIndexes] = useState<number[] | undefined>(undefined);
   const [sharedSandwichItem, setSharedSandwichItem] = useState<string | undefined>(undefined);
+
+  // Determine if we can show Split view based on container width
+  const canShowSplitView =
+    containerWidth > 0 && (containerWidth >= MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH || Boolean(vertical));
 
   // Use refs and stable wrappers to prevent child re-renders when callbacks change
   const onTableSymbolClickRef = useRef(onTableSymbolClick);
@@ -151,28 +153,8 @@ const FlameGraphContainer = ({
   const styles = getStyles(theme);
   const matchedLabels = useLabelSearch(search, dataContainer);
 
-  useEffect(() => {
-    if (containerWidth === 0) {
-      return;
-    }
-
-    const isNarrow = containerWidth < MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH && !vertical;
-
-    if (isNarrow && selectedView === SelectedView.Multi) {
-      setViewBeforeNarrow(SelectedView.Multi);
-      const currentRightView = viewMode === ViewMode.Single ? singleView : rightPaneView;
-      const narrowView =
-        currentRightView === PaneView.TopTable
-          ? SelectedView.TopTable
-          : currentRightView === PaneView.CallTree
-            ? SelectedView.CallTree
-            : SelectedView.FlameGraph;
-      setSelectedView(narrowView);
-    } else if (!isNarrow && viewBeforeNarrow !== null) {
-      setSelectedView(viewBeforeNarrow);
-      setViewBeforeNarrow(null);
-    }
-  }, [containerWidth, vertical, selectedView, viewBeforeNarrow, viewMode, singleView, rightPaneView]);
+  // The effective view mode: force Single when container is too narrow for Split
+  const effectiveViewMode = canShowSplitView ? viewMode : ViewMode.Single;
 
   const prevViewMode = usePrevious(viewMode);
   useEffect(() => {
@@ -191,7 +173,7 @@ const FlameGraphContainer = ({
   }
 
   let body;
-  if (showFlameGraphOnly || selectedView === SelectedView.FlameGraph) {
+  if (showFlameGraphOnly) {
     body = (
       <FlameGraphPane
         paneView={PaneView.FlameGraph}
@@ -204,8 +186,8 @@ const FlameGraphContainer = ({
         showFlameGraphOnly={showFlameGraphOnly}
         disableCollapsing={disableCollapsing}
         getExtraContextMenuButtons={getExtraContextMenuButtons}
-        selectedView={selectedView}
-        viewMode={viewMode}
+        viewMode={effectiveViewMode}
+        paneViewForContextMenu={PaneView.FlameGraph}
         theme={theme}
         setSearch={setSearch}
         resetKey={resetKey}
@@ -216,10 +198,10 @@ const FlameGraphContainer = ({
         setSharedSandwichItem={setSharedSandwichItem}
       />
     );
-  } else if (selectedView === SelectedView.TopTable) {
+  } else if (effectiveViewMode === ViewMode.Single) {
     body = (
       <FlameGraphPane
-        paneView={PaneView.TopTable}
+        paneView={singleView}
         dataContainer={dataContainer}
         search={search}
         matchedLabels={matchedLabels}
@@ -229,8 +211,8 @@ const FlameGraphContainer = ({
         showFlameGraphOnly={showFlameGraphOnly}
         disableCollapsing={disableCollapsing}
         getExtraContextMenuButtons={getExtraContextMenuButtons}
-        selectedView={selectedView}
-        viewMode={viewMode}
+        viewMode={ViewMode.Single}
+        paneViewForContextMenu={singleView}
         theme={theme}
         setSearch={setSearch}
         resetKey={resetKey}
@@ -241,39 +223,13 @@ const FlameGraphContainer = ({
         setSharedSandwichItem={setSharedSandwichItem}
       />
     );
-  } else if (selectedView === SelectedView.CallTree) {
-    body = (
-      <FlameGraphPane
-        paneView={PaneView.CallTree}
-        dataContainer={dataContainer}
-        search={search}
-        matchedLabels={matchedLabels}
-        onTableSymbolClick={stableOnTableSymbolClick}
-        onTextAlignSelected={stableOnTextAlignSelected}
-        onTableSort={stableOnTableSort}
-        showFlameGraphOnly={showFlameGraphOnly}
-        disableCollapsing={disableCollapsing}
-        getExtraContextMenuButtons={getExtraContextMenuButtons}
-        selectedView={selectedView}
-        viewMode={viewMode}
-        theme={theme}
-        setSearch={setSearch}
-        resetKey={resetKey}
-        keepFocusOnDataChange={keepFocusOnDataChange}
-        highlightedItemIndexes={highlightedItemIndexes}
-        setHighlightedItemIndexes={setHighlightedItemIndexes}
-        sharedSandwichItem={sharedSandwichItem}
-        setSharedSandwichItem={setSharedSandwichItem}
-      />
-    );
-  } else if (selectedView === SelectedView.Multi) {
-    const isSplit = viewMode === ViewMode.Split;
-    const rightSinglePaneView = isSplit ? rightPaneView : singleView;
+  } else {
+    // effectiveViewMode === ViewMode.Split
 
     // Only sync sandwich mode between panes when they show different view types
     // (e.g., FlameGraph + CallTree). When both panes show the same type,
     // they should be independent for separate investigation.
-    const shouldSyncSandwich = isSplit && leftPaneView !== rightPaneView;
+    const shouldSyncSandwich = leftPaneView !== rightPaneView;
 
     const leftPane = (
       <FlameGraphPane
@@ -288,8 +244,8 @@ const FlameGraphContainer = ({
         showFlameGraphOnly={showFlameGraphOnly}
         disableCollapsing={disableCollapsing}
         getExtraContextMenuButtons={getExtraContextMenuButtons}
-        selectedView={selectedView}
-        viewMode={viewMode}
+        viewMode={ViewMode.Split}
+        paneViewForContextMenu={leftPaneView}
         theme={theme}
         setSearch={setSearch}
         resetKey={resetKey}
@@ -301,10 +257,10 @@ const FlameGraphContainer = ({
       />
     );
 
-    const rightSinglePane = (
+    const rightPane = (
       <FlameGraphPane
-        key="right-single-pane"
-        paneView={rightSinglePaneView}
+        key="right-pane"
+        paneView={rightPaneView}
         dataContainer={dataContainer}
         search={search}
         matchedLabels={matchedLabels}
@@ -314,8 +270,8 @@ const FlameGraphContainer = ({
         showFlameGraphOnly={showFlameGraphOnly}
         disableCollapsing={disableCollapsing}
         getExtraContextMenuButtons={getExtraContextMenuButtons}
-        selectedView={selectedView}
-        viewMode={viewMode}
+        viewMode={ViewMode.Split}
+        paneViewForContextMenu={rightPaneView}
         theme={theme}
         setSearch={setSearch}
         resetKey={resetKey}
@@ -332,34 +288,22 @@ const FlameGraphContainer = ({
     if (vertical) {
       body = (
         <div className={styles.verticalContainer}>
-          {isSplit && (
-            <div className={styles.verticalPaneContainer} style={{ order: panesSwapped ? 2 : 1 }}>
-              {leftPane}
-            </div>
-          )}
-          <div
-            key="right-single-container"
-            className={isSplit ? styles.verticalPaneContainer : styles.singlePaneContainer}
-            style={{ order: panesSwapped ? 1 : 2 }}
-          >
-            {rightSinglePane}
+          <div className={styles.verticalPaneContainer} style={{ order: panesSwapped ? 2 : 1 }}>
+            {leftPane}
+          </div>
+          <div className={styles.verticalPaneContainer} style={{ order: panesSwapped ? 1 : 2 }}>
+            {rightPane}
           </div>
         </div>
       );
     } else {
       body = (
         <div className={styles.horizontalContainer}>
-          {isSplit && (
-            <div className={styles.horizontalPaneContainer} style={{ order: panesSwapped ? 2 : 1 }}>
-              {leftPane}
-            </div>
-          )}
-          <div
-            key="right-single-container"
-            className={isSplit ? styles.horizontalPaneContainer : styles.singlePaneContainerHorizontal}
-            style={{ order: panesSwapped ? 1 : 2 }}
-          >
-            {rightSinglePane}
+          <div className={styles.horizontalPaneContainer} style={{ order: panesSwapped ? 2 : 1 }}>
+            {leftPane}
+          </div>
+          <div className={styles.horizontalPaneContainer} style={{ order: panesSwapped ? 1 : 2 }}>
+            {rightPane}
           </div>
         </div>
       );
@@ -375,21 +319,25 @@ const FlameGraphContainer = ({
           <FlameGraphHeader
             search={search}
             setSearch={setSearch}
-            selectedView={selectedView}
-            setSelectedView={(view) => {
-              setSelectedView(view);
-              onViewSelected?.(view);
-            }}
             viewMode={viewMode}
-            setViewMode={setViewMode}
+            setViewMode={(mode) => {
+              setViewMode(mode);
+              onViewSelected?.(mode === ViewMode.Split ? 'split' : singleView);
+            }}
+            canShowSplitView={canShowSplitView}
+            containerWidth={containerWidth}
             leftPaneView={panesSwapped ? rightPaneView : leftPaneView}
             setLeftPaneView={panesSwapped ? setRightPaneView : setLeftPaneView}
             rightPaneView={panesSwapped ? leftPaneView : rightPaneView}
             setRightPaneView={panesSwapped ? setLeftPaneView : setRightPaneView}
             singleView={singleView}
-            setSingleView={setSingleView}
+            setSingleView={(view) => {
+              setSingleView(view);
+              if (viewMode === ViewMode.Single) {
+                onViewSelected?.(view);
+              }
+            }}
             onSwapPanes={() => setPanesSwapped((s) => !s)}
-            containerWidth={containerWidth}
             onReset={() => {
               setSearch('');
               setHighlightedItemIndexes(undefined);
@@ -399,7 +347,6 @@ const FlameGraphContainer = ({
             showResetButton={Boolean(search)}
             stickyHeader={Boolean(stickyHeader)}
             extraHeaderElements={extraHeaderElements}
-            vertical={vertical}
             assistantContext={data && showAnalyzeWithAssistant ? getAssistantContextFromDataFrame(data) : undefined}
           />
         )}

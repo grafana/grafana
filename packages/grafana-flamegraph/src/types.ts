@@ -17,13 +17,6 @@ export enum SampleUnit {
   Nanoseconds = 'ns',
 }
 
-export enum SelectedView {
-  TopTable = 'topTable',
-  FlameGraph = 'flameGraph',
-  Multi = 'multi',
-  CallTree = 'callTree',
-}
-
 export enum ViewMode {
   Single = 'single',
   Split = 'split',

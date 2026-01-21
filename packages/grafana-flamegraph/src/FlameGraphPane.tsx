@@ -8,7 +8,7 @@ import FlameGraph from './FlameGraph/FlameGraph';
 import { GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, PaneView, SelectedView, TextAlign, ViewMode } from './types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, PaneView, ViewMode, TextAlign } from './types';
 
 export type FlameGraphPaneProps = {
   paneView: PaneView;
@@ -21,8 +21,8 @@ export type FlameGraphPaneProps = {
   showFlameGraphOnly?: boolean;
   disableCollapsing?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
-  selectedView: SelectedView;
   viewMode: ViewMode;
+  paneViewForContextMenu: PaneView;
   theme: GrafanaTheme2;
   setSearch: (search: string) => void;
   /** When this key changes, the pane's internal state (focus, sandwich, etc.) will be reset */
@@ -50,8 +50,8 @@ const FlameGraphPane = ({
   showFlameGraphOnly,
   disableCollapsing,
   getExtraContextMenuButtons,
-  selectedView,
   viewMode,
+  paneViewForContextMenu,
   theme,
   setSearch,
   resetKey,
@@ -291,7 +291,8 @@ const FlameGraphPane = ({
           showFlameGraphOnly={showFlameGraphOnly}
           collapsing={!disableCollapsing}
           getExtraContextMenuButtons={getExtraContextMenuButtons}
-          selectedView={selectedView}
+          viewMode={viewMode}
+          paneView={paneViewForContextMenu}
           search={search}
           collapsedMap={collapsedMap}
           setCollapsedMap={setCollapsedMap}
@@ -313,7 +314,8 @@ const FlameGraphPane = ({
             highlightedItemIndexes={highlightedItemIndexes}
             setHighlightedItemIndexes={setHighlightedItemIndexes}
             getExtraContextMenuButtons={getExtraContextMenuButtons}
-            selectedView={selectedView}
+            viewMode={viewMode}
+            paneView={paneViewForContextMenu}
           />
         </div>
       );

@@ -3,7 +3,7 @@ import { type ComponentProps, useRef } from 'react';
 
 import { createDataFrame } from '@grafana/data';
 
-import { ColorScheme, SelectedView } from '../types';
+import { ColorScheme, PaneView, ViewMode } from '../types';
 
 import FlameGraph from './FlameGraph';
 import { FlameGraphDataContainer } from './dataTransform';
@@ -50,7 +50,8 @@ describe('FlameGraph', () => {
         colorScheme={ColorScheme.ValueBased}
         onColorSchemeChange={jest.fn()}
         isDiffMode={false}
-        selectedView={SelectedView.FlameGraph}
+        viewMode={ViewMode.Single}
+        paneView={PaneView.FlameGraph}
         search={''}
         collapsedMap={container.getCollapsedMap()}
         setCollapsedMap={() => {}}
@@ -99,7 +100,8 @@ describe('FlameGraph', () => {
         expect(clickedItemData).toMatchObject({ posX: 0, posY: 0, label: 'total' });
         expect(data.length).toEqual(1101);
         expect(state).toEqual({
-          selectedView: SelectedView.FlameGraph,
+          viewMode: ViewMode.Single,
+          paneView: PaneView.FlameGraph,
           isDiff: false,
           search: '',
           collapseConfig: undefined,

@@ -9,7 +9,7 @@ import { Button, Dropdown, Icon, IconButton, Menu, Tooltip, useStyles2, useTheme
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../FlameGraph/colors';
 import { FlameGraphDataContainer, LevelItem } from '../FlameGraph/dataTransform';
 import { GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
-import { ColorScheme, ColorSchemeDiff, SelectedView } from '../types';
+import { ColorScheme, ColorSchemeDiff, PaneView, ViewMode } from '../types';
 
 import { buildAllCallTreeNodes, buildCallersTree, CallTreeNode, getInitialExpandedState } from './utils';
 
@@ -25,14 +25,11 @@ type Props = {
   search: string;
   compact?: boolean;
   onSearch?: (symbol: string) => void;
-  /** Item indexes of the focused item in the flame graph, to set focus in the call tree */
   highlightedItemIndexes?: number[];
-  /** Callback to sync focus from call tree to flame graph */
   setHighlightedItemIndexes?: (itemIndexes: number[] | undefined) => void;
-  /** Extra buttons to show in the context menu */
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
-  /** Current selected view for extra context menu buttons */
-  selectedView?: SelectedView;
+  viewMode?: ViewMode;
+  paneView?: PaneView;
 };
 
 const FlameGraphCallTreeContainer = memo(
@@ -41,18 +38,16 @@ const FlameGraphCallTreeContainer = memo(
     onSymbolClick,
     sandwichItem,
     onSandwich,
-    onTableSort,
-    colorScheme: initialColorScheme,
     search,
     compact: compactProp,
     onSearch,
     highlightedItemIndexes,
     setHighlightedItemIndexes,
     getExtraContextMenuButtons,
-    selectedView,
+    viewMode,
+    paneView,
   }: Props) => {
     const [isCompact, setIsCompact] = useState(false);
-    const widthRef = useRef(0);
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
@@ -65,6 +60,7 @@ const FlameGraphCallTreeContainer = memo(
     const [focusedNodeId, setFocusedNodeId] = useState<string | undefined>(undefined);
     const [callersNodeLabel, setCallersNodeLabel] = useState<string | undefined>(undefined);
 
+    // react to sandwich mode applied in other visualizations by turning on callers mode
     useEffect(() => {
       if (sandwichItem !== undefined) {
         setCallersNodeLabel(sandwichItem);
@@ -167,13 +163,9 @@ const FlameGraphCallTreeContainer = memo(
         const [callers, _] = data.getSandwichLevels(callersNodeLabel);
 
         if (callers.length > 0) {
-          // Build callers tree - follows same pattern as flame graph sandwich mode
-          // Percentages are relative to target (target = 100%)
-          const tree = buildCallersTree(callers, data);
-
-          nodesToUse = tree;
+          nodesToUse = buildCallersTree(callers, data);
           // The first node in the tree is the target function
-          callersTargetNode = tree.length > 0 ? tree[0] : undefined;
+          callersTargetNode = nodesToUse.length > 0 ? nodesToUse[0] : undefined;
         } else {
           nodesToUse = [];
           callersTargetNode = undefined;
@@ -276,7 +268,7 @@ const FlameGraphCallTreeContainer = memo(
         return undefined;
       };
 
-      // Need to search in the full tree, not the potentially filtered nodes
+      // Search in the full tree, not the potentially filtered nodes
       const allNodes = buildAllCallTreeNodes(data);
       const matchedNodeId = findExactMatch(allNodes);
       if (matchedNodeId) {
@@ -336,23 +328,23 @@ const FlameGraphCallTreeContainer = memo(
     const calculatedExpanded = useMemo(() => {
       const baseExpanded = getInitialExpandedState(nodes, 1);
 
-      if (currentSearchMatchId) {
-        const expandPathToNode = (nodes: CallTreeNode[], targetId: string): boolean => {
-          for (const node of nodes) {
-            if (node.id === targetId) {
+      const expandPathToNode = (nodes: CallTreeNode[], targetId: string): boolean => {
+        for (const node of nodes) {
+          if (node.id === targetId) {
+            return true;
+          }
+          if (node.subRows && node.hasChildren) {
+            const foundInSubtree = expandPathToNode(node.subRows, targetId);
+            if (foundInSubtree) {
+              baseExpanded[node.id] = true;
               return true;
             }
-            if (node.subRows && node.hasChildren) {
-              const foundInSubtree = expandPathToNode(node.subRows, targetId);
-              if (foundInSubtree) {
-                baseExpanded[node.id] = true;
-                return true;
-              }
-            }
           }
-          return false;
-        };
+        }
+        return false;
+      };
 
+      if (currentSearchMatchId) {
         expandPathToNode(nodes, currentSearchMatchId);
       }
 
@@ -374,22 +366,6 @@ const FlameGraphCallTreeContainer = memo(
       }
 
       if (callersNodeLabel && callersNode && nodes.length > 0) {
-        const expandPathToNode = (nodes: CallTreeNode[], targetId: string): boolean => {
-          for (const node of nodes) {
-            if (node.id === targetId) {
-              return true;
-            }
-            if (node.subRows && node.hasChildren) {
-              const foundInSubtree = expandPathToNode(node.subRows, targetId);
-              if (foundInSubtree) {
-                baseExpanded[node.id] = true;
-                return true;
-              }
-            }
-          }
-          return false;
-        };
-
         expandPathToNode(nodes, callersNode.id);
 
         if (callersNode.hasChildren) {
@@ -448,61 +424,62 @@ const FlameGraphCallTreeContainer = memo(
       [data, ACTIONS_WIDTH]
     );
 
+    const commonColumns: Array<Column<CallTreeNode>> = [
+      {
+        Header: '',
+        id: 'actions',
+        Cell: ({ row }: { row: Row<CallTreeNode> }) => (
+          <ActionsCell
+            nodeId={row.original.id}
+            label={row.original.label}
+            itemIndexes={row.original.levelItem.itemIndexes}
+            levelItem={row.original.levelItem}
+            hasChildren={row.original.hasChildren}
+            depth={row.original.depth - depthOffset}
+            parentId={row.original.parentId}
+            onFocus={handleSetFocusMode}
+            onShowCallers={handleSetCallersMode}
+            onSearch={onSearch}
+            focusedNodeId={focusedNodeId}
+            callersNodeLabel={callersNodeLabel}
+            isSearchMatch={searchNodes?.includes(row.original.id) ?? false}
+            actionsCellClass={styles.actionsCell}
+            getExtraContextMenuButtons={getExtraContextMenuButtons}
+            data={data}
+            viewMode={viewMode}
+            paneView={paneView}
+            search={search}
+          />
+        ),
+        width: ACTIONS_WIDTH,
+        minWidth: ACTIONS_WIDTH,
+        disableSortBy: true,
+      },
+      {
+        Header: 'Function',
+        accessor: 'label',
+        Cell: ({ row, value, rowIndex }: { row: Row<CallTreeNode>; value: string; rowIndex?: number }) => (
+          <FunctionCellWithExpander
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            row={row as Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>}
+            value={value}
+            depth={row.original.depth - depthOffset}
+            hasChildren={row.original.hasChildren}
+            rowIndex={rowIndex}
+            rows={tableInstance.rows}
+            onSymbolClick={onSymbolClick}
+            styles={styles}
+            compact={compact}
+            toggleRowExpanded={tableInstance.toggleRowExpanded}
+          />
+        ),
+        minWidth: FUNCTION_MIN_WIDTH,
+      },
+    ];
+
     const columns = useMemo<Array<Column<CallTreeNode>>>(() => {
       if (data.isDiffFlamegraph()) {
-        const cols: Array<Column<CallTreeNode>> = [
-          {
-            Header: '',
-            id: 'actions',
-            Cell: ({ row }: { row: Row<CallTreeNode> }) => (
-              <ActionsCell
-                nodeId={row.original.id}
-                label={row.original.label}
-                itemIndexes={row.original.levelItem.itemIndexes}
-                levelItem={row.original.levelItem}
-                hasChildren={row.original.hasChildren}
-                depth={row.original.depth - depthOffset}
-                parentId={row.original.parentId}
-                onFocus={handleSetFocusMode}
-                onShowCallers={handleSetCallersMode}
-                onSearch={onSearch}
-                focusedNodeId={focusedNodeId}
-                callersNodeLabel={callersNodeLabel}
-                isSearchMatch={searchNodes?.includes(row.original.id) ?? false}
-                actionsCellClass={styles.actionsCell}
-                getExtraContextMenuButtons={getExtraContextMenuButtons}
-                data={data}
-                selectedView={selectedView}
-                search={search}
-              />
-            ),
-            width: ACTIONS_WIDTH,
-            minWidth: ACTIONS_WIDTH,
-            disableSortBy: true,
-          },
-          {
-            Header: 'Function',
-            accessor: 'label',
-            Cell: ({ row, value, rowIndex }: { row: Row<CallTreeNode>; value: string; rowIndex?: number }) => (
-              <FunctionCellWithExpander
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                row={row as Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>}
-                value={value}
-                depth={row.original.depth - depthOffset}
-                hasChildren={row.original.hasChildren}
-                rowIndex={rowIndex}
-                rows={tableInstance.rows}
-                onSymbolClick={onSymbolClick}
-                styles={styles}
-                allNodes={nodes}
-                compact={compact}
-                toggleRowExpanded={tableInstance.toggleRowExpanded}
-              />
-            ),
-            minWidth: FUNCTION_MIN_WIDTH,
-            // width is applied dynamically in render to avoid re-creating columns on resize
-          },
-        ];
+        const cols: Array<Column<CallTreeNode>> = commonColumns;
 
         if (!compact) {
           cols.push({
@@ -516,7 +493,6 @@ const FlameGraphCallTreeContainer = memo(
                 theme={theme}
                 styles={styles}
                 focusedNode={focusedNode}
-                callersNode={callersNode}
               />
             ),
             minWidth: COLOR_BAR_WIDTH,
@@ -545,9 +521,7 @@ const FlameGraphCallTreeContainer = memo(
           {
             Header: 'Diff %',
             accessor: 'diffPercent',
-            Cell: ({ value }: { value: number | undefined }) => (
-              <DiffCell value={value} colorScheme={colorScheme} theme={theme} styles={styles} />
-            ),
+            Cell: ({ value }: { value: number | undefined }) => <DiffCell value={value} theme={theme} />,
             sortType: 'basic',
             width: DIFF_WIDTH,
             minWidth: DIFF_WIDTH,
@@ -556,59 +530,7 @@ const FlameGraphCallTreeContainer = memo(
 
         return cols;
       } else {
-        const cols: Array<Column<CallTreeNode>> = [
-          {
-            Header: '',
-            id: 'actions',
-            Cell: ({ row }: { row: Row<CallTreeNode> }) => (
-              <ActionsCell
-                nodeId={row.original.id}
-                label={row.original.label}
-                itemIndexes={row.original.levelItem.itemIndexes}
-                levelItem={row.original.levelItem}
-                hasChildren={row.original.hasChildren}
-                depth={row.original.depth - depthOffset}
-                parentId={row.original.parentId}
-                onFocus={handleSetFocusMode}
-                onShowCallers={handleSetCallersMode}
-                onSearch={onSearch}
-                focusedNodeId={focusedNodeId}
-                callersNodeLabel={callersNodeLabel}
-                isSearchMatch={searchNodes?.includes(row.original.id) ?? false}
-                actionsCellClass={styles.actionsCell}
-                getExtraContextMenuButtons={getExtraContextMenuButtons}
-                data={data}
-                selectedView={selectedView}
-                search={search}
-              />
-            ),
-            width: ACTIONS_WIDTH,
-            minWidth: ACTIONS_WIDTH,
-            disableSortBy: true,
-          },
-          {
-            Header: 'Function',
-            accessor: 'label',
-            Cell: ({ row, value, rowIndex }: { row: Row<CallTreeNode>; value: string; rowIndex?: number }) => (
-              <FunctionCellWithExpander
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-                row={row as Row<CallTreeNode> & UseExpandedRowProps<CallTreeNode>}
-                value={value}
-                depth={row.original.depth - depthOffset}
-                hasChildren={row.original.hasChildren}
-                rowIndex={rowIndex}
-                rows={tableInstance.rows}
-                onSymbolClick={onSymbolClick}
-                styles={styles}
-                allNodes={nodes}
-                compact={compact}
-                toggleRowExpanded={tableInstance.toggleRowExpanded}
-              />
-            ),
-            minWidth: FUNCTION_MIN_WIDTH,
-            // width is applied dynamically in render to avoid re-creating columns on resize
-          },
-        ];
+        const cols: Array<Column<CallTreeNode>> = commonColumns;
 
         if (!compact) {
           cols.push(
@@ -623,7 +545,6 @@ const FlameGraphCallTreeContainer = memo(
                   theme={theme}
                   styles={styles}
                   focusedNode={focusedNode}
-                  callersNode={callersNode}
                 />
               ),
               minWidth: COLOR_BAR_WIDTH,
@@ -634,7 +555,6 @@ const FlameGraphCallTreeContainer = memo(
               Header: 'Self',
               accessor: 'self',
               Cell: ({ row }: { row: Row<CallTreeNode> }) => {
-                // Use the pre-computed self value which sums across all merged itemIndexes
                 const displaySelf = data.valueDisplayProcessor(row.original.self);
                 const formattedValue = displaySelf.suffix ? displaySelf.text + displaySelf.suffix : displaySelf.text;
                 return (
@@ -809,7 +729,6 @@ const FlameGraphCallTreeContainer = memo(
                 queueMicrotask(() => setIsCompact(shouldBeCompact));
               }
             }
-            widthRef.current = width;
 
             const functionColumnWidth = calculateFunctionColumnWidth(availableWidth, compact);
 
@@ -976,7 +895,8 @@ type ActionsCellProps = {
   actionsCellClass: string;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   data: FlameGraphDataContainer;
-  selectedView?: SelectedView;
+  viewMode?: ViewMode;
+  paneView?: PaneView;
   search: string;
 };
 
@@ -997,7 +917,8 @@ const ActionsCell = memo(function ActionsCell({
   actionsCellClass,
   getExtraContextMenuButtons,
   data,
-  selectedView,
+  viewMode,
+  paneView,
   search,
 }: ActionsCellProps) {
   const isTheFocusedNode =
@@ -1022,11 +943,12 @@ const ActionsCell = memo(function ActionsCell({
       posY: 0,
     };
     return getExtraContextMenuButtons(clickedItemData, data.data, {
-      selectedView: selectedView ?? SelectedView.FlameGraph,
+      viewMode: viewMode ?? ViewMode.Single,
+      paneView: paneView ?? PaneView.CallTree,
       isDiff: data.isDiffFlamegraph(),
       search,
     });
-  }, [getExtraContextMenuButtons, label, levelItem, data, selectedView, search]);
+  }, [getExtraContextMenuButtons, label, levelItem, data, viewMode, paneView, search]);
 
   const hasAnyAction = shouldShowFocusItem || shouldShowCallersItem || shouldShowSearchItem || extraButtons.length > 0;
 
@@ -1077,7 +999,6 @@ function FunctionCellWithExpander({
   rows,
   onSymbolClick,
   styles,
-  allNodes,
   compact = false,
   toggleRowExpanded,
 }: {
@@ -1089,7 +1010,6 @@ function FunctionCellWithExpander({
   rows: Array<Row<CallTreeNode>>;
   onSymbolClick: (symbol: string) => void;
   styles: Styles;
-  allNodes: CallTreeNode[];
   compact?: boolean;
   toggleRowExpanded: (id: string[], value?: boolean) => void;
 }) {
@@ -1164,13 +1084,11 @@ function FunctionCellWithExpander({
       return false;
     };
 
-    const ancestors: CallTreeNode[] = [];
     let currentNode = row.original;
 
     while (currentNode.parentId && currentNode.depth > 0) {
       const parent = nodeIdToNode.get(currentNode.parentId);
       if (parent) {
-        ancestors.unshift(parent);
         currentNode = parent;
       } else {
         break;
@@ -1218,7 +1136,6 @@ function ColorBarCell({
   theme,
   styles,
   focusedNode,
-  callersNode,
 }: {
   node: CallTreeNode;
   data: FlameGraphDataContainer;
@@ -1226,7 +1143,6 @@ function ColorBarCell({
   theme: GrafanaTheme2;
   styles: Styles;
   focusedNode?: CallTreeNode;
-  callersNode?: CallTreeNode;
 }) {
   const barColor = getRowBackgroundColor(node, data, colorScheme, theme);
 
@@ -1250,17 +1166,7 @@ function ColorBarCell({
   );
 }
 
-function DiffCell({
-  value,
-  colorScheme,
-  theme,
-  styles,
-}: {
-  value: number | undefined;
-  colorScheme: ColorScheme | ColorSchemeDiff;
-  theme: GrafanaTheme2;
-  styles: Styles;
-}) {
+function DiffCell({ value, theme }: { value: number | undefined; theme: GrafanaTheme2 }) {
   if (value === undefined) {
     return <span>-</span>;
   }
@@ -1534,7 +1440,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'inline-flex',
       alignItems: 'center',
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.borderRadius(8),
+      borderRadius: theme.shape.radius.default,
       padding: theme.spacing(0.5, 1),
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
@@ -1552,7 +1458,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'inline-flex',
       alignItems: 'center',
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.borderRadius(8),
+      borderRadius: theme.shape.radius.default,
       padding: theme.spacing(0.5, 1),
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,

@@ -7,16 +7,16 @@ import { ChatContextItem, OpenAssistantButton } from '@grafana/assistant';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Dropdown, IconButton, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
-import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, MIN_WIDTH_TO_SHOW_SPLIT_PANE_SELECTORS } from './constants';
-import { PaneView, SelectedView, ViewMode } from './types';
+import { MIN_WIDTH_TO_SHOW_SPLIT_PANE_SELECTORS } from './constants';
+import { PaneView, ViewMode } from './types';
 
 type Props = {
   search: string;
   setSearch: (search: string) => void;
-  selectedView: SelectedView;
-  setSelectedView: (view: SelectedView) => void;
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
+  canShowSplitView: boolean;
+  containerWidth: number;
   leftPaneView: PaneView;
   setLeftPaneView: (view: PaneView) => void;
   rightPaneView: PaneView;
@@ -24,11 +24,9 @@ type Props = {
   singleView: PaneView;
   setSingleView: (view: PaneView) => void;
   onSwapPanes: () => void;
-  containerWidth: number;
   onReset: () => void;
   showResetButton: boolean;
   stickyHeader: boolean;
-  vertical?: boolean;
 
   extraHeaderElements?: React.ReactNode;
 
@@ -38,10 +36,10 @@ type Props = {
 const FlameGraphHeader = ({
   search,
   setSearch,
-  selectedView,
-  setSelectedView,
   viewMode,
   setViewMode,
+  canShowSplitView,
+  containerWidth,
   leftPaneView,
   setLeftPaneView,
   rightPaneView,
@@ -49,12 +47,10 @@ const FlameGraphHeader = ({
   singleView,
   setSingleView,
   onSwapPanes,
-  containerWidth,
   onReset,
   showResetButton,
   stickyHeader,
   extraHeaderElements,
-  vertical,
   assistantContext,
 }: Props) => {
   const styles = useStyles2(getStyles);
@@ -76,6 +72,9 @@ const FlameGraphHeader = ({
       </Button>
     ) : null;
 
+  // Effective view mode: if we can't show split, force single
+  const effectiveViewMode = canShowSplitView ? viewMode : ViewMode.Single;
+
   return (
     <div className={cx(styles.header, { [styles.stickyHeader]: stickyHeader })}>
       <div className={styles.inputContainer}>
@@ -89,7 +88,7 @@ const FlameGraphHeader = ({
         />
       </div>
 
-      {selectedView === SelectedView.Multi && viewMode === ViewMode.Split && (
+      {effectiveViewMode === ViewMode.Split && (
         <div className={styles.middleContainer}>
           {containerWidth >= MIN_WIDTH_TO_SHOW_SPLIT_PANE_SELECTORS ? (
             <>
@@ -118,6 +117,7 @@ const FlameGraphHeader = ({
                       <Menu.Item
                         key={option.value}
                         label={option.label ?? ''}
+                        active={leftPaneView === option.value}
                         onClick={() => option.value && setLeftPaneView(option.value)}
                       />
                     ))}
@@ -136,6 +136,7 @@ const FlameGraphHeader = ({
                       <Menu.Item
                         key={option.value}
                         label={option.label ?? ''}
+                        active={rightPaneView === option.value}
                         onClick={() => option.value && setRightPaneView(option.value)}
                       />
                     ))}
@@ -175,31 +176,21 @@ const FlameGraphHeader = ({
             aria-label={'Reset focus and sandwich state'}
           />
         )}
-        {selectedView === SelectedView.Multi ? (
-          <>
-            {viewMode === ViewMode.Single && (
-              <RadioButtonGroup<PaneView>
-                size="sm"
-                options={paneViewOptions}
-                value={singleView}
-                onChange={setSingleView}
-                className={styles.buttonSpacing}
-              />
-            )}
-            <RadioButtonGroup<ViewMode>
-              size="sm"
-              options={viewModeOptions}
-              value={viewMode}
-              onChange={setViewMode}
-              className={styles.buttonSpacing}
-            />
-          </>
-        ) : (
-          <RadioButtonGroup<SelectedView>
+        {effectiveViewMode === ViewMode.Single && (
+          <RadioButtonGroup<PaneView>
             size="sm"
-            options={getViewOptions(containerWidth, vertical)}
-            value={selectedView}
-            onChange={setSelectedView}
+            options={paneViewOptions}
+            value={singleView}
+            onChange={setSingleView}
+            className={styles.buttonSpacing}
+          />
+        )}
+        {canShowSplitView && (
+          <RadioButtonGroup<ViewMode>
+            size="sm"
+            options={viewModeOptions}
+            value={viewMode}
+            onChange={setViewMode}
             className={styles.buttonSpacing}
           />
         )}
@@ -219,24 +210,6 @@ const paneViewOptions: Array<SelectableValue<PaneView>> = [
   { value: PaneView.FlameGraph, label: 'Flame Graph' },
   { value: PaneView.CallTree, label: 'Call Tree' },
 ];
-
-function getViewOptions(width: number, vertical?: boolean): Array<SelectableValue<SelectedView>> {
-  let viewOptions: Array<{ value: SelectedView; label: string; description: string }> = [
-    { value: SelectedView.TopTable, label: 'Top Table', description: 'Only show top table' },
-    { value: SelectedView.FlameGraph, label: 'Flame Graph', description: 'Only show flame graph' },
-    { value: SelectedView.CallTree, label: 'Call Tree', description: 'Only show call tree' },
-  ];
-
-  if (width >= MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH || vertical) {
-    viewOptions.push({
-      value: SelectedView.Multi,
-      label: 'Multi',
-      description: 'Show split or single view with multiple visualizations',
-    });
-  }
-
-  return viewOptions;
-}
 
 function useSearchInput(
   search: string,

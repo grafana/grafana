@@ -65,18 +65,15 @@ export function buildCallTreeNode(
     const totalLeft = rootItem.value - (rootItem.valueRight || 0);
     totalRight = rootItem.valueRight || 0;
 
-    // Store the left values as the primary values
     self = selfLeft;
     total = totalLeft;
 
-    // Calculate percentages relative to their respective totals (matching Flame Graph)
     selfPercent = rootTotalLeft > 0 ? (selfLeft / rootTotalLeft) * 100 : 0;
     totalPercent = rootTotalLeft > 0 ? (totalLeft / rootTotalLeft) * 100 : 0;
     selfPercentRight = rootTotalRight > 0 ? (selfRight / rootTotalRight) * 100 : 0;
     totalPercentRight = rootTotalRight > 0 ? (totalRight / rootTotalRight) * 100 : 0;
 
     // Diff is the percentage change between comparison% and baseline% of TOTAL values
-    // This matches FlameGraphTooltip: diff = ((percentageRight - percentageLeft) / percentageLeft) * 100
     if (totalPercent > 0) {
       diffPercent = ((totalPercentRight - totalPercent) / totalPercent) * 100;
     } else if (totalPercentRight > 0) {
@@ -85,7 +82,6 @@ export function buildCallTreeNode(
       diffPercent = 0;
     }
   } else {
-    // Non-diff mode: use combined values
     self = data.getSelf(rootItem.itemIndexes);
     total = rootItem.value;
     const rootTotal = rootTotalLeft; // For non-diff, rootTotalRight is 0
@@ -105,7 +101,7 @@ export function buildCallTreeNode(
   const childCount = rootItem.children.length;
   const subtreeSize = subRows ? subRows.reduce((sum, child) => sum + child.subtreeSize + 1, 0) : 0;
 
-  const node: CallTreeNode = {
+  return {
     id: nodeId,
     label,
     self,
@@ -126,8 +122,6 @@ export function buildCallTreeNode(
     totalPercentRight,
     diffPercent,
   };
-
-  return node;
 }
 
 /**
@@ -149,20 +143,16 @@ export function buildAllCallTreeNodes(data: FlameGraphDataContainer): CallTreeNo
   let rootTotalRight: number;
 
   if (data.isDiffFlamegraph()) {
-    // For diff: separate left and right totals (matching FlameGraphTooltip.getDiffTooltipData)
     rootTotalRight = rootItem.valueRight || 0;
     rootTotalLeft = rootItem.value - rootTotalRight;
   } else {
-    // For non-diff: all value is "left", right is 0
     rootTotalLeft = rootItem.value;
     rootTotalRight = 0;
   }
 
-  const rootNodes = levels[0].map((item, index) =>
+  return levels[0].map((item, index) =>
     buildCallTreeNode(data, item, rootTotalLeft, rootTotalRight, undefined, -1, index)
   );
-
-  return rootNodes;
 }
 
 /**
@@ -265,7 +255,6 @@ export function buildCallersTree(levels: LevelItem[][], data: FlameGraphDataCont
       totalPercentRight = targetTotalRight > 0 ? (totalRight / targetTotalRight) * 100 : 0;
 
       // Diff is the percentage change between comparison% and baseline% of TOTAL values
-      // This matches FlameGraphTooltip: diff = ((percentageRight - percentageLeft) / percentageLeft) * 100
       if (totalPercent > 0) {
         diffPercent = ((totalPercentRight - totalPercent) / totalPercent) * 100;
       } else if (totalPercentRight > 0) {

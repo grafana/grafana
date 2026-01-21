@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
 import FlameGraphHeader from './FlameGraphHeader';
-import { PaneView, SelectedView, ViewMode } from './types';
+import { PaneView, ViewMode } from './types';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn().mockReturnValue({
@@ -18,7 +18,6 @@ jest.mock('@grafana/assistant', () => ({
 describe('FlameGraphHeader', () => {
   function setup(props: Partial<React.ComponentProps<typeof FlameGraphHeader>> = {}) {
     const setSearch = jest.fn();
-    const setSelectedView = jest.fn();
     const setViewMode = jest.fn();
     const setLeftPaneView = jest.fn();
     const setRightPaneView = jest.fn();
@@ -30,10 +29,10 @@ describe('FlameGraphHeader', () => {
       <FlameGraphHeader
         search={''}
         setSearch={setSearch}
-        selectedView={SelectedView.Multi}
-        setSelectedView={setSelectedView}
         viewMode={ViewMode.Split}
         setViewMode={setViewMode}
+        canShowSplitView={true}
+        containerWidth={1600}
         leftPaneView={PaneView.TopTable}
         setLeftPaneView={setLeftPaneView}
         rightPaneView={PaneView.FlameGraph}
@@ -41,7 +40,6 @@ describe('FlameGraphHeader', () => {
         singleView={PaneView.FlameGraph}
         setSingleView={setSingleView}
         onSwapPanes={onSwapPanes}
-        containerWidth={1600}
         onReset={onReset}
         showResetButton={true}
         stickyHeader={false}
@@ -53,7 +51,7 @@ describe('FlameGraphHeader', () => {
       renderResult,
       handlers: {
         setSearch,
-        setSelectedView,
+        setViewMode,
         onReset,
       },
     };
