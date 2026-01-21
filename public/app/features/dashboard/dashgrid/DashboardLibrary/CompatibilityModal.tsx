@@ -120,11 +120,10 @@ export const CompatibilityModal = ({ isOpen, onDismiss, dashboardJson, datasourc
         {!loading && !error && result && (
           <Stack direction="column" gap={3}>
             <div>
-              <Text element="h3">
-                <Trans i18nKey="compatibility-modal.score-title">Compatibility Score</Trans>
-              </Text>
-              <Text element="p">
-                <pre>{(result.compatibilityScore * 100).toFixed(0)}%</pre>
+              <Text element="h2">
+                <Trans i18nKey="compatibility-modal.score-title">
+                  Compatibility Score: {(result.compatibilityScore * 100).toFixed(0)}%
+                </Trans>
               </Text>
 
               {/* Simple note about parse errors if any */}
