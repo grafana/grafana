@@ -365,8 +365,8 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 		// Verify NotImplemented response
 		require.True(t, responder.called)
 		require.NotNil(t, responder.err)
-		statusErr, ok := responder.err.(*apierrors.StatusError)
-		require.True(t, ok)
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(responder.err, &statusErr))
 		require.Equal(t, http.StatusNotImplemented, int(statusErr.ErrStatus.Code))
 		require.Equal(t, "NotImplemented", string(statusErr.ErrStatus.Reason))
 	})

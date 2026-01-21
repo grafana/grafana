@@ -191,7 +191,8 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 		return nil, fmt.Errorf("github configuration is required")
 	}
 
-	ghClient := c.ghFactory.New(ctx, c.obj.Secure.Token.Create)
+	// Create the GitHub client with the JWT token
+	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
 
 	repos, err := ghClient.ListInstallationRepositories(ctx, c.obj.Spec.GitHub.InstallationID)
 	if err != nil {
