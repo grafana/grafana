@@ -47,7 +47,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
     }),
     dashlistCardIcon: css({
-      marginRight: theme.spacing(0.5),
+      marginRight: theme.spacing(0.25),
+      marginTop: theme.spacing(0.25),
     }),
     dashlistCardLink: css({
       whiteSpace: 'normal',
