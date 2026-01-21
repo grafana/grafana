@@ -50,6 +50,7 @@ func (*connectionRepositoriesConnector) NewConnectOptions() (runtime.Object, boo
 
 func (c *connectionRepositoriesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "connection-repositories-connector", "connection_name", name)
+	ctx = logging.Context(ctx, logger)
 
 	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -59,14 +60,15 @@ func (c *connectionRepositoriesConnector) Connect(ctx context.Context, name stri
 
 		logger.Debug("listing repositories from connection")
 
-		conn, err := c.getter.GetConnection(r.Context(), name)
+		// Use the context from Connect which has namespace information
+		conn, err := c.getter.GetConnection(ctx, name)
 		if err != nil {
 			logger.Error("failed to get connection", "error", err)
 			responder.Error(err)
 			return
 		}
 
-		repos, err := conn.ListRepositories(r.Context())
+		repos, err := conn.ListRepositories(ctx)
 		if err != nil {
 			if errors.Is(err, connection.ErrNotImplemented) {
 				logger.Debug("list repositories not implemented for connection type")
