@@ -2138,8 +2138,8 @@
         "suffix": "Aggiorna la pagina e riprova.",
         "title": "Impossibile aggiungere o aggiornare i criteri di notifica"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} criterio aggiuntivo",
+      "n-more-policies_other": "{{count}} criteri aggiuntivi"
     },
     "policy": {
       "label-new-child-policy": "Nuova politica per i bambini",
@@ -2178,8 +2178,10 @@
       "badge-tooltip-provenance": "Questa risorsa è stata sottoposta a provisioning tramite {{provenance}} e non può essere modificata tramite l'interfaccia utente",
       "badge-tooltip-standard": "Questa risorsa è stata sottoposta a provisioning e non può essere modificata tramite l'interfaccia utente",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Questa {{resource}} è stata sottoposta a provisioning, il che significa che è stata creata tramite configurazione. Contatta l'amministratore del server per aggiornare questa {{resource}}.",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Questa {{resource}} non può essere modificata tramite l'interfaccia utente"
     },
     "provisioning-badge": {
@@ -3728,6 +3730,7 @@
       "non-folder-item": "Non cartella {{itemKind}} {{itemUID}}",
       "root-title": "Dashboard",
       "search-placeholder": "Cerca cartelle",
+      "shared-with-me": "",
       "unknown-error": "Errore sconosciuto"
     },
     "manage-folder-nav": {
@@ -3831,6 +3834,7 @@
       "label-method": "Metodo",
       "label-payload": "Carico utile",
       "label-query-parameters": "Parametri delle query",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "API di test",
         "title-test-api": "API di test"
@@ -6453,8 +6457,8 @@
       "loading-connected-dashboards": "Caricamento dashboard connesse in corso...",
       "placeholder-search-affected-dashboards": "Cerca dashboard interessate",
       "update-all": "Aggiorna tutto",
-      "affected-dashboards_one": "Questo aggiornamento influirà su <1>{{count}} dashboard.</1> Le seguenti dashboard che utilizzano il pannello saranno interessate:",
-      "affected-dashboards_other": "Questo aggiornamento influirà su <1>{{count}} dashboard.</1> Le seguenti dashboard che utilizzano il pannello saranno interessate:"
+      "affected-dashboards_one": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Errore durante il salvataggio del dashboard",
@@ -9558,8 +9562,8 @@
     "query-inspector": {
       "query-inspector": "Ispettore query",
       "text-loading-query-inspector": "Caricamento dell'ispettore di query in corso...",
-      "count-frames_one": "{{count}} fotogrammi, ",
-      "count-frames_other": "{{count}} fotogrammi, ",
+      "count-frames_one": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} righe",
       "count-rows_other": "{{count}} righe"
     }
@@ -9818,8 +9822,8 @@
       "loading-connected-dashboards": "Caricamento dashboard connesse in corso...",
       "placeholder-search-affected-dashboards": "Cerca dashboard interessate",
       "update-all": "Aggiorna tutto",
-      "num-affected_one": "Questo aggiornamento influirà su <1>{{count}} dashboard.</1>",
-      "num-affected_other": "Questo aggiornamento influirà su <1>{{count}} dashboard.</1>"
+      "num-affected_one": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12542,13 +12546,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Riduci riga della query",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Mostra la guida dell'origine dati",
       "drag-and-drop": "Trascina e rilascia per riordinare",
       "duplicate-query": "Duplica query",
       "expand-row": "Espandi riga della query",
       "hide-response": "Nascondi risposta",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Rimuovi query",
+      "selected-datasource-label": "",
       "show-response": "Mostra la risposta"
     },
     "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
@@ -12605,10 +12621,10 @@
       "restore-button": "Ripristina",
       "restore-loading": "Ripristino in corso...",
       "title": "Ripristina dashboard",
-      "folder-picker-text_one": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_other": ""
+      "folder-picker-text_one": "Scegli una cartella in cui verrà ripristinato il dashboard.",
+      "folder-picker-text_other": "Scegli una cartella in cui verranno ripristinati i dashboard.",
+      "text_one": "Questa azione ripristinerà {{numberOfDashboards}} dashboard.",
+      "text_other": "Questa azione ripristinerà {{numberOfDashboards}} dashboard."
     }
   },
   "recentlyDeleted": {
@@ -13344,8 +13360,8 @@
       "label-never": "Mai"
     },
     "status-history-panel": {
-      "too-many-points_one": "Troppi punti da visualizzare correttamente. <1></1>Aggiorna la query per restituire meno punti <3></3>({{count}} punti ricevuti)",
-      "too-many-points_other": "Troppi punti da visualizzare correttamente. <1></1>Aggiorna la query per restituire meno punti <3></3>({{count}} punti ricevuti)"
+      "too-many-points_one": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

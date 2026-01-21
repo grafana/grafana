@@ -369,7 +369,6 @@ describe('PanelDataQueriesTab', () => {
       // arrange
       const modelMock = await createModelMock();
       const dsSettingsMock: DataSourceInstanceSettings<DataSourceJsonData> = {
-        id: 1,
         uid: 'gdev-testdata',
         name: 'testDs1',
         type: 'grafana-testdata-datasource',

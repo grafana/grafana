@@ -63,7 +63,6 @@ const createFetchResponse = <T>(data: T): FetchResponse<T> => ({
 });
 
 const instanceSettings = {
-  id: 1,
   uid: 'graphiteUid',
   type: 'graphite',
   readOnly: false,
