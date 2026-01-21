@@ -52,14 +52,8 @@ export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplier<Opti
         if (f.type !== FieldType.number) {
           continue;
         }
-        newMin = Math.min(
-          newMin,
-          f.state?.calcs?.min ?? f.values.reduce((accum, curr) => Math.min(accum, curr), Infinity)
-        );
-        newMax = Math.max(
-          newMax,
-          f.state?.calcs?.max ?? f.values.reduce((accum, curr) => Math.max(accum, curr), -Infinity)
-        );
+        newMin = Math.min(newMin, f.state?.calcs?.min ?? Infinity);
+        newMax = Math.max(newMax, f.state?.calcs?.max ?? -Infinity);
       }
       return [newMin, newMax];
     },
@@ -67,7 +61,7 @@ export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplier<Opti
   );
 
   let fieldConfig: FieldConfigSource<Partial<GraphFieldConfig>> | undefined = undefined;
-  if (suggestedRange) {
+  if (suggestedRange && suggestedRange.every(isFinite)) {
     const delta = suggestedRange[1] - suggestedRange[0];
     fieldConfig = {
       defaults: {
