@@ -140,7 +140,6 @@ func ensureTemplatingExists(dashboard map[string]interface{}) {
 
 // ensureAnnotationsExist ensures annotations.list exists
 func ensureAnnotationsExist(dashboard map[string]interface{}) {
-	// Handle dashboards with "dashboard" wrapper structure
 	targetDashboard := dashboard
 	if innerDashboard, ok := dashboard["dashboard"].(map[string]interface{}); ok {
 		targetDashboard = innerDashboard
@@ -241,7 +240,6 @@ func sortPanelsByGridPos(dashboard map[string]interface{}) {
 
 // addBuiltInAnnotationQuery adds the built-in "Annotations & Alerts" annotation
 func addBuiltInAnnotationQuery(dashboard map[string]interface{}) {
-	// Handle dashboards with "dashboard" wrapper structure
 	// Some specs have the actual dashboard nested under a "dashboard" key
 	targetDashboard := dashboard
 	if innerDashboard, ok := dashboard["dashboard"].(map[string]interface{}); ok {
