@@ -3730,6 +3730,7 @@
       "non-folder-item": "Klasörsüz {{itemKind}} {{itemUID}}",
       "root-title": "Panolar",
       "search-placeholder": "Klasör ara",
+      "shared-with-me": "",
       "unknown-error": "Bilinmeyen hata"
     },
     "manage-folder-nav": {
@@ -3833,6 +3834,7 @@
       "label-method": "Yöntem",
       "label-payload": "Yük",
       "label-query-parameters": "Sorgu parametreleri",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Test API'si",
         "title-test-api": "Test API'si"

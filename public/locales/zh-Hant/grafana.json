@@ -3714,6 +3714,7 @@
       "non-folder-item": "非資料夾 {{itemKind}} {{itemUID}}",
       "root-title": "儀表板",
       "search-placeholder": "搜尋資料夾",
+      "shared-with-me": "",
       "unknown-error": "未知錯誤"
     },
     "manage-folder-nav": {
@@ -3814,6 +3815,7 @@
       "label-method": "方法",
       "label-payload": "裝載",
       "label-query-parameters": "查詢參數",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "測試 API",
         "title-test-api": "測試 API"

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/apifmt"
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	"github.com/stretchr/testify/assert"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

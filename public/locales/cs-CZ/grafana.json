@@ -3762,6 +3762,7 @@
       "non-folder-item": "Bez složky {{itemKind}} {{itemUID}}",
       "root-title": "Nástěnky",
       "search-placeholder": "Vyhledat složky",
+      "shared-with-me": "",
       "unknown-error": "Neznámá chyba"
     },
     "manage-folder-nav": {
@@ -3871,6 +3872,7 @@
       "label-method": "Metoda",
       "label-payload": "Datový obsah",
       "label-query-parameters": "Parametry dotazu",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Testovací API",
         "title-test-api": "Testovací API"
