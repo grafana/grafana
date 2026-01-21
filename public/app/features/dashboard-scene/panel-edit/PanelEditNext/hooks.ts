@@ -11,7 +11,7 @@ import { PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';
 
-import { SidebarSize, SidebarState } from './QueryEditorSidebar';
+import { SidebarSize } from './QueryEditorSidebar';
 
 type UseHorizontalResizeOptions = {
   initialWidth: number;
@@ -151,7 +151,7 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
   const { dataPane, tableView, editPreview } = model.useState();
   const panel = model.getPanel();
   const { controls } = dashboard.useState();
-  const [sidebarState, setSidebarState] = useState<SidebarState>({ size: SidebarSize.Mini, collapsed: false });
+  const [sidebarSize, setSidebarSize] = useState<SidebarSize>(SidebarSize.Mini);
 
   const isScrollingLayout = useScrollReflowLimit();
 
@@ -188,13 +188,13 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
       buildVizAndDataPaneGrid({
         controlsEnabled: Boolean(controls),
         hasDataPane: Boolean(dataPane),
-        isSidebarFullWidth: sidebarState.size === SidebarSize.Full,
+        isSidebarFullWidth: sidebarSize === SidebarSize.Full,
         controlsRowHeightPx: CONTROLS_ROW_HEIGHT_PX,
         vizHeight: vizResize.height,
         sidebarWidth: sidebarResize.width,
         containerHeight,
       }),
-    [controls, dataPane, sidebarState.size, vizResize.height, sidebarResize.width, containerHeight]
+    [controls, dataPane, sidebarSize, vizResize.height, sidebarResize.width, containerHeight]
   );
 
   const bottomPaneHeight = containerHeight - vizResize.height - VIZ_BOTTOM_GAP;
@@ -207,8 +207,8 @@ export function useVizAndDataPaneLayout(model: PanelEditor, containerHeight: num
       controls,
     },
     layout: {
-      sidebarState,
-      setSidebarState,
+      sidebarSize,
+      setSidebarSize,
       isScrollingLayout,
       sidebarResize,
       vizResize,

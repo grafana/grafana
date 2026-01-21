@@ -10,30 +10,21 @@ export enum SidebarSize {
   Mini = 'mini',
   Full = 'full',
 }
-
-export interface SidebarState {
-  size: SidebarSize;
-  collapsed: boolean;
-}
-
 interface QueryEditorSidebarProps {
-  sidebarState: SidebarState;
-  setSidebarState: (state: SidebarState) => void;
+  sidebarSize: SidebarSize;
+  setSidebarSize: (size: SidebarSize) => void;
 }
 
-export function QueryEditorSidebar({ sidebarState, setSidebarState }: QueryEditorSidebarProps) {
+export function QueryEditorSidebar({ sidebarSize, setSidebarSize }: QueryEditorSidebarProps) {
   const styles = useStyles2(getStyles);
-  const isMini = sidebarState.size === SidebarSize.Mini;
+  const isMini = sidebarSize === SidebarSize.Mini;
 
   const { queries } = useQueryEditorState();
 
   console.log({ queries });
 
   const toggleSize = () => {
-    setSidebarState({
-      ...sidebarState,
-      size: isMini ? SidebarSize.Full : SidebarSize.Mini,
-    });
+    setSidebarSize(isMini ? SidebarSize.Full : SidebarSize.Mini);
   };
 
   return (

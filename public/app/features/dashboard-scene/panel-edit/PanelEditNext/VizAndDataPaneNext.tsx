@@ -10,7 +10,7 @@ import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { QueryEditorContextBridge } from './QueryEditorContextBridge';
-import { QueryEditorSidebar, SidebarSize, SidebarState } from './QueryEditorSidebar';
+import { QueryEditorSidebar, SidebarSize } from './QueryEditorSidebar';
 import { useVizAndDataPaneLayout } from './hooks';
 
 export function VizAndDataPaneNext({
@@ -18,7 +18,7 @@ export function VizAndDataPaneNext({
   containerHeight = 800,
 }: SceneComponentProps<PanelEditor> & { containerHeight?: number }) {
   const { scene, layout, actions, grid } = useVizAndDataPaneLayout(model, containerHeight);
-  const styles = useStyles2(getStyles, layout.sidebarState);
+  const styles = useStyles2(getStyles, layout.sidebarSize);
 
   if (!scene.dataPane || !(scene.dataPane instanceof PanelDataPaneNext)) {
     return null;
@@ -31,7 +31,7 @@ export function VizAndDataPaneNext({
     maxHeight: containerHeight - 80,
   });
   const sidebarSizeClass = css({
-    height: layout.sidebarState.size === SidebarSize.Mini ? layout.bottomPaneHeight : layout.expandedSidebarHeight,
+    height: layout.sidebarSize === SidebarSize.Mini ? layout.bottomPaneHeight : layout.expandedSidebarHeight,
     width: layout.sidebarResize.width,
   });
   const dataPaneSizeClass = css({
@@ -53,7 +53,7 @@ export function VizAndDataPaneNext({
       </div>
       <QueryEditorContextBridge dataPane={nextDataPane}>
         <div className={cx(styles.sidebar, sidebarSizeClass)}>
-          <QueryEditorSidebar sidebarState={layout.sidebarState} setSidebarState={layout.setSidebarState} />
+          <QueryEditorSidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
           <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, height: '100%' }}>
             <div
               style={{ height: '100%', width: 2 }}
@@ -85,7 +85,7 @@ export function VizAndDataPaneNext({
   );
 }
 
-function getStyles(theme: GrafanaTheme2, sidebarState: SidebarState) {
+function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
   const scrollReflowMediaQuery = '@media ' + scrollReflowMediaCondition;
   return {
     pageContainer: css({
@@ -101,7 +101,7 @@ function getStyles(theme: GrafanaTheme2, sidebarState: SidebarState) {
       gridArea: 'sidebar',
       overflow: 'visible',
       position: 'relative',
-      ...(sidebarState.size === SidebarSize.Mini && {
+      ...(sidebarSize === SidebarSize.Mini && {
         paddingLeft: theme.spacing(2),
       }),
     }),
@@ -111,7 +111,7 @@ function getStyles(theme: GrafanaTheme2, sidebarState: SidebarState) {
       height: '100%',
       minHeight: 100,
       position: 'relative',
-      ...(sidebarState.size === SidebarSize.Mini && {
+      ...(sidebarSize === SidebarSize.Mini && {
         paddingLeft: theme.spacing(2),
       }),
     }),
@@ -123,7 +123,7 @@ function getStyles(theme: GrafanaTheme2, sidebarState: SidebarState) {
       gridArea: 'controls',
       display: 'flex',
       flexDirection: 'column',
-      ...(sidebarState.size === SidebarSize.Mini && {
+      ...(sidebarSize === SidebarSize.Mini && {
         paddingLeft: theme.spacing(2),
       }),
     }),
