@@ -585,8 +585,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 				return err
 			}
 
-			logger.Info("patch operations for token", "tokenOps", tokenOps)
-
 			patchOperations = append(patchOperations, tokenOps...)
 		}
 	}
