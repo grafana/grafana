@@ -807,7 +807,8 @@
       "label-integration": "Integration",
       "label-notification-settings": "Benachrichtigungseinstellungen",
       "label-section": "Optionale {{name}}-Einstellungen",
-      "test": "Test"
+      "test": "Test",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "VON",
@@ -2137,8 +2138,8 @@
         "suffix": "Bitte aktualisieren Sie die Seite und versuchen Sie es erneut.",
         "title": "Benachrichtigungsrichtlinie konnte nicht hinzugefügt oder aktualisiert werden"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} zusätzliche Richtlinie",
+      "n-more-policies_other": "{{count}} zusätzliche Richtlinien"
     },
     "policy": {
       "label-new-child-policy": "Neue untergeordnete Richtlinie",
@@ -2176,11 +2177,16 @@
     "provisioning": {
       "badge-tooltip-provenance": "Diese Ressource wurde über {{provenance}} bereitgestellt und kann nicht über die Benutzeroberfläche bearbeitet werden",
       "badge-tooltip-standard": "Diese Ressource wurde bereitgestellt und kann nicht über die Benutzeroberfläche bearbeitet werden",
+      "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Die Ressource {{resource}} wurde bereitgestellt, d. h. es wurde von config erstellt. Bitte kontaktieren Sie Ihren Serveradministrator für die Aktualisierung von {{resource}}.",
+      "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Die Ressource {{resource}} kann nicht über die Benutzeroberfläche bearbeitet werden"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Bereitgestellt"
       }
     },
@@ -2673,11 +2679,13 @@
     "rules-group": {
       "deleting": "Wird gelöscht",
       "text-federated": "Verbunden",
-      "text-provisioned": "Bereitgestellt"
+      "text-provisioned": "Bereitgestellt",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3722,6 +3730,7 @@
       "non-folder-item": "{{itemKind}} {{itemUID}} nicht im Ordner enthalten",
       "root-title": "Dashboards",
       "search-placeholder": "Ordner suchen",
+      "shared-with-me": "",
       "unknown-error": "Unbekannter Fehler"
     },
     "manage-folder-nav": {
@@ -3764,7 +3773,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -3826,6 +3834,7 @@
       "label-method": "Methode",
       "label-payload": "Payload",
       "label-query-parameters": "Abfrageparameter",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Test-API",
         "title-test-api": "Test-API"
@@ -5338,6 +5347,7 @@
       },
       "header-hidden-tooltip": "Kopfzeile nur im Bearbeitungsmodus sichtbar",
       "name": "Zeilen",
+      "new-row-title": "",
       "row": {
         "collapse": "Zeile einklappen",
         "expand": "Zeile ausklappen",
@@ -5443,11 +5453,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5587,14 +5593,6 @@
           "arrow": "Teilen",
           "title": "Teilen",
           "tooltip": "Link kopieren"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Verwerfen",
-            "text": "Einige Änderungen an diesem Dashboard wurden nicht gespeichert. Sie müssen sie speichern, bevor Sie es freigeben können.",
-            "title": "Änderungen am Dashboard speichern?",
-            "yesText": "Speichern"
-          }
         },
         "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben"
       },
@@ -6380,12 +6378,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klassisch",
         "json": "JSON",
         "v1-resource": "V1-Ressource",
         "v2-resource": "V2-Ressource",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Sind Sie sicher, dass Sie das Dashboard auf die Version {{version}} zurücksetzen möchten? Alle nicht gespeicherten Änderungen gehen verloren.",
@@ -6456,8 +6457,8 @@
       "loading-connected-dashboards": "Verbundene Dashboards werden geladen …",
       "placeholder-search-affected-dashboards": "Betroffene Dashboards suchen",
       "update-all": "Alles aktualisieren",
-      "affected-dashboards_one": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1> Die folgenden Dashboards, die das Panel nutzen, sind betroffen:",
-      "affected-dashboards_other": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1> Die folgenden Dashboards, die das Panel nutzen, sind betroffen:"
+      "affected-dashboards_one": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Fehler beim Speichern des Dashboards",
@@ -6492,6 +6493,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Freigabe-Menü umschalten"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -6980,6 +6987,7 @@
         "drone-datasource": "Drone-Datenquelle",
         "git-lab-integration-and-datasource": "GitLab-Integration und -Datenquelle",
         "honeycomb-integration-and-datasource": "Honeycomb-Integration und -Datenquelle",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira-Integration und -Datenquelle",
         "logic-monitor-devices-datasource": "LogicMonitor Devices-Datenquelle",
         "mongo-db-integration-and-data-source": "MongoDB-Integration und -Datenquelle",
@@ -7838,7 +7846,6 @@
       "export-externally-label": "Exportieren Sie das Dashboard, um es in einer anderen Instanz zu verwenden",
       "export-format": "Format",
       "export-mode": "Modell",
-      "export-remove-ds-refs": "Bereitstellungsdetails entfernen",
       "info-text": "Kopieren oder downloaden Sie eine Datei, die die Definition Ihres Dashboards enthält",
       "title": "Dashboard exportieren"
     },
@@ -7985,6 +7992,7 @@
     "name-neutral": "Neutral",
     "name-show-threshold-labels": "Schwellenwert-Labels anzeigen",
     "name-show-threshold-markers": "Schwellenwert-Markierungen anzeigen",
+    "neutral": "",
     "placeholder-neutral": "auto",
     "suggestions": {
       "arc": "",
@@ -9554,8 +9562,8 @@
     "query-inspector": {
       "query-inspector": "Abfrage-Inspektor",
       "text-loading-query-inspector": "Abfrageinspektor wird geladen ...",
-      "count-frames_one": "{{count}} Frames, ",
-      "count-frames_other": "{{count}} Frames, ",
+      "count-frames_one": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} Zeilen",
       "count-rows_other": "{{count}} Zeilen"
     }
@@ -9814,8 +9822,8 @@
       "loading-connected-dashboards": "Verbundene Dashboards werden geladen …",
       "placeholder-search-affected-dashboards": "Betroffene Dashboards suchen",
       "update-all": "Alles aktualisieren",
-      "num-affected_one": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1>",
-      "num-affected_other": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1>"
+      "num-affected_one": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12538,13 +12546,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Abfragezeile einklappen",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Datenquellen-Hilfe anzeigen",
       "drag-and-drop": "Ziehen und Ablegen zum Neuordnen",
       "duplicate-query": "Abfrage duplizieren",
       "expand-row": "Suchzeile erweitern",
       "hide-response": "Antwort ausblenden",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Abfrage entfernen",
+      "selected-datasource-label": "",
       "show-response": "Antwort anzeigen "
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
@@ -12566,6 +12586,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12579,6 +12604,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12595,10 +12621,10 @@
       "restore-button": "Wiederherstellen",
       "restore-loading": "Wird wiederhergestellt …",
       "title": "Dashboards wiederherstellen",
-      "folder-picker-text_one": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_other": ""
+      "folder-picker-text_one": "Bitte wählen Sie einen Ordner aus, in dem Ihr Dashboard wiederhergestellt werden soll.",
+      "folder-picker-text_other": "Bitte wählen Sie einen Ordner aus, in dem Ihre Dashboards wiederhergestellt werden sollen.",
+      "text_one": "Mit dieser Aktion wird {{numberOfDashboards}} Dashboard wiederhergestellt.",
+      "text_other": "Mit dieser Aktion werden {{numberOfDashboards}} Dashboards wiederhergestellt."
     }
   },
   "recentlyDeleted": {
@@ -12736,14 +12762,6 @@
       "starred": "Hervorgehoben",
       "view-as-folders": "Nach Ordnern anzeigen",
       "view-as-list": "Als Liste anzeigen"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alphabetisch (A–Z)",
-          "alphabetically-za": "Alphabetisch (Z–A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importieren",
@@ -13342,8 +13360,8 @@
       "label-never": "Nie"
     },
     "status-history-panel": {
-      "too-many-points_one": "Zu viele Punkte, um sie richtig darzustellen. <1></1>Aktualisieren Sie die Abfrage, damit weniger Punkte zurückgegeben werden. <3></3>({{count}} Punkte erhalten)",
-      "too-many-points_other": "Zu viele Punkte, um sie richtig darzustellen. <1></1>Aktualisieren Sie die Abfrage, damit weniger Punkte zurückgegeben werden. <3></3>({{count}} Punkte erhalten)"
+      "too-many-points_one": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

@@ -36,6 +36,10 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 		KvStore: kv,
 	}
 
+	if db.DriverName() == "sqlite3" {
+		kvOpts.UseChannelNotifier = true
+	}
+
 	if withRvManager {
 		dialect := sqltemplate.DialectForDriver(db.DriverName())
 		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
@@ -82,14 +86,21 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 			kvbackend, db := newKvBackend(t.Context())
 			sqlbackend, _ := newSqlBackend(t.Context())
 
-			// Skip on SQLite due to concurrency limitations
-			if db.DriverName() == "sqlite3" {
-				t.Skip("Skipping concurrent operations stress test on SQLite")
-			}
-
 			tc.fn(t, sqlbackend, kvbackend, opts.NSPrefix, db)
 		})
 	}
+
+	// Search operations compatibility test (handled separately due to additional SearchServerFactory parameter)
+	t.Run("search operations compatibility", func(t *testing.T) {
+		if opts.SkipTests["search operations compatibility"] {
+			t.Skip()
+		}
+
+		kvbackend, db := newKvBackend(t.Context())
+		sqlbackend, _ := newSqlBackend(t.Context())
+
+		runTestSearchOperationsCompatibility(t, sqlbackend, kvbackend, opts.NSPrefix, db, opts.SearchServerFactory)
+	})
 }
 
 func runTestIntegrationBackendKeyPathGeneration(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
@@ -200,7 +211,7 @@ func verifyKeyPath(t *testing.T, db sqldb.DB, ctx context.Context, key *resource
 	var keyPathRV int64
 	if isSqlBackend {
 		// Convert microsecond RV to snowflake for key_path construction
-		keyPathRV = rvmanager.SnowflakeFromRv(resourceVersion)
+		keyPathRV = rvmanager.SnowflakeFromRV(resourceVersion)
 	} else {
 		// KV backend already provides snowflake RV
 		keyPathRV = resourceVersion
@@ -434,9 +445,6 @@ func verifyResourceHistoryTable(t *testing.T, db sqldb.DB, namespace string, res
 
 	rows, err := db.QueryContext(ctx, query, namespace)
 	require.NoError(t, err)
-	defer func() {
-		_ = rows.Close()
-	}()
 
 	var records []ResourceHistoryRecord
 	for rows.Next() {
@@ -460,33 +468,34 @@ func verifyResourceHistoryTable(t *testing.T, db sqldb.DB, namespace string, res
 	for resourceIdx, res := range resources {
 		// Check create record (action=1, generation=1)
 		createRecord := records[recordIndex]
-		verifyResourceHistoryRecord(t, createRecord, res, resourceIdx, 1, 0, 1, resourceVersions[resourceIdx][0])
+		verifyResourceHistoryRecord(t, createRecord, namespace, res, resourceIdx, 1, 0, 1, resourceVersions[resourceIdx][0])
 		recordIndex++
 	}
 
 	for resourceIdx, res := range resources {
 		// Check update record (action=2, generation=2)
 		updateRecord := records[recordIndex]
-		verifyResourceHistoryRecord(t, updateRecord, res, resourceIdx, 2, resourceVersions[resourceIdx][0], 2, resourceVersions[resourceIdx][1])
+		verifyResourceHistoryRecord(t, updateRecord, namespace, res, resourceIdx, 2, resourceVersions[resourceIdx][0], 2, resourceVersions[resourceIdx][1])
 		recordIndex++
 	}
 
 	for resourceIdx, res := range resources[:2] {
 		// Check delete record (action=3, generation=0) - only first 2 resources were deleted
 		deleteRecord := records[recordIndex]
-		verifyResourceHistoryRecord(t, deleteRecord, res, resourceIdx, 3, resourceVersions[resourceIdx][1], 0, resourceVersions[resourceIdx][2])
+		verifyResourceHistoryRecord(t, deleteRecord, namespace, res, resourceIdx, 3, resourceVersions[resourceIdx][1], 0, resourceVersions[resourceIdx][2])
 		recordIndex++
 	}
 }
 
 // verifyResourceHistoryRecord validates a single resource_history record
-func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, expectedRes struct{ name, folder string }, resourceIdx, expectedAction int, expectedPrevRV int64, expectedGeneration int, expectedRV int64) {
+func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, namespace string, expectedRes struct{ name, folder string }, resourceIdx, expectedAction int, expectedPrevRV int64, expectedGeneration int, expectedRV int64) {
 	// Validate GUID (should be non-empty)
 	require.NotEmpty(t, record.GUID, "GUID should not be empty")
 
 	// Validate group/resource/namespace/name
 	require.Equal(t, "playlist.grafana.app", record.Group)
 	require.Equal(t, "playlists", record.Resource)
+	require.Equal(t, namespace, record.Namespace)
 	require.Equal(t, expectedRes.name, record.Name)
 
 	// Validate value contains expected JSON - server modifies/formats the JSON differently for different operations
@@ -513,8 +522,12 @@ func verifyResourceHistoryRecord(t *testing.T, record ResourceHistoryRecord, exp
 	// For KV backend operations, expectedPrevRV is now in snowflake format (returned by KV backend)
 	// but resource_history table stores microsecond RV, so we need to use IsRvEqual for comparison
 	if strings.Contains(record.Namespace, "-kv") {
-		require.True(t, rvmanager.IsRvEqual(expectedPrevRV, record.PreviousResourceVersion),
-			"Previous resource version should match (KV backend snowflake format)")
+		if expectedPrevRV == 0 {
+			require.Zero(t, record.PreviousResourceVersion)
+		} else {
+			require.Equal(t, expectedPrevRV, rvmanager.SnowflakeFromRV(record.PreviousResourceVersion),
+				"Previous resource version should match (KV backend snowflake format)")
+		}
 	} else {
 		require.Equal(t, expectedPrevRV, record.PreviousResourceVersion)
 	}
@@ -546,9 +559,6 @@ func verifyResourceTable(t *testing.T, db sqldb.DB, namespace string, resources 
 
 	rows, err := db.QueryContext(ctx, query, namespace)
 	require.NoError(t, err)
-	defer func() {
-		_ = rows.Close()
-	}()
 
 	var records []ResourceRecord
 	for rows.Next() {
@@ -612,9 +622,6 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 	// Check that we have exactly one entry for playlist.grafana.app/playlists
 	rows, err := db.QueryContext(ctx, query, "playlist.grafana.app", "playlists")
 	require.NoError(t, err)
-	defer func() {
-		_ = rows.Close()
-	}()
 
 	var records []ResourceVersionRecord
 	for rows.Next() {
@@ -649,7 +656,7 @@ func verifyResourceVersionTable(t *testing.T, db sqldb.DB, namespace string, res
 	isKvBackend := strings.Contains(namespace, "-kv")
 	recordResourceVersion := record.ResourceVersion
 	if isKvBackend {
-		recordResourceVersion = rvmanager.SnowflakeFromRv(record.ResourceVersion)
+		recordResourceVersion = rvmanager.SnowflakeFromRV(record.ResourceVersion)
 	}
 
 	require.Less(t, recordResourceVersion, int64(9223372036854775807), "resource_version should be reasonable")
@@ -692,6 +699,11 @@ func runTestCrossBackendConsistency(t *testing.T, sqlBackend, kvBackend resource
 
 // runTestConcurrentOperationsStress tests heavy concurrent operations between SQL and KV backends
 func runTestConcurrentOperationsStress(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+	// Skip on SQLite due to concurrency limitations
+	if db.DriverName() == "sqlite3" {
+		t.Skip("Skipping concurrent operations stress test on SQLite")
+	}
+
 	ctx := testutil.NewDefaultTestContext(t)
 
 	// Create storage servers from both backends
@@ -841,24 +853,20 @@ func runMixedConcurrentOperations(t *testing.T, sqlServer, kvServer resource.Res
 	}
 
 	// SQL backend operations
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		<-startBarrier // Wait for signal to start
 		if err := runBackendOperationsWithCounts(ctx, sqlServer, namespace+"-sql", "sql", opCounts); err != nil {
 			errors <- fmt.Errorf("SQL backend operations failed: %w", err)
 		}
-	}()
+	})
 
 	// KV backend operations
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		<-startBarrier // Wait for signal to start
 		if err := runBackendOperationsWithCounts(ctx, kvServer, namespace+"-kv", "kv", opCounts); err != nil {
 			errors <- fmt.Errorf("KV backend operations failed: %w", err)
 		}
-	}()
+	})
 
 	// Start both goroutines simultaneously
 	close(startBarrier)
@@ -1273,4 +1281,332 @@ func deletePlaylistResource(t *testing.T, server resource.ResourceServer, ctx co
 	require.Greater(t, deleted.ResourceVersion, int64(0))
 
 	return deleted
+}
+
+// createStorageServer creates a ResourceServer without search enabled (storage-api only)
+func createStorageServer(t *testing.T, backend resource.StorageBackend) resource.ResourceServer {
+	t.Helper()
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      backend,
+		AccessClient: claims.FixedAccessClient(true), // Allow all operations for testing
+	})
+	require.NoError(t, err)
+	return server
+}
+
+// verifySearchServerStats verifies GetStats returns expected count from search server
+func verifySearchServerStats(t *testing.T, searchServer resource.ResourceServer, namespace string, expectedCount int64) {
+	t.Helper()
+	ctx := testutil.NewDefaultTestContext(t)
+
+	stats, err := searchServer.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: namespace,
+	})
+	require.NoError(t, err)
+	require.Nil(t, stats.Error, "GetStats returned error: %v", stats.Error)
+
+	// GetStats returns aggregate stats per group/resource
+	// Since we only create playlists, we expect 1 stat entry
+	require.Len(t, stats.Stats, 1, "Expected 1 stat entry for playlist.grafana.app/playlists")
+	require.Equal(t, expectedCount, stats.Stats[0].Count, "Resource count mismatch")
+
+	t.Logf("GetStats OK: %d resources in namespace %s", expectedCount, namespace)
+}
+
+// verifySearchServerResults verifies Search returns expected results from search server
+func verifySearchServerResults(t *testing.T, searchServer resource.ResourceServer, namespace string, query string, expectedHits int, expectedNames []string) {
+	t.Helper()
+	ctx := testutil.NewDefaultTestContext(t)
+
+	searchReq := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Namespace: namespace,
+			},
+		},
+		Query: query,
+		Limit: 100, // high enough to get all results
+	}
+
+	searchResp, err := searchServer.Search(ctx, searchReq)
+	require.NoError(t, err)
+	require.Nil(t, searchResp.Error, "Search returned error: %v", searchResp.Error)
+
+	// Verify total hits
+	require.Equal(t, int64(expectedHits), searchResp.TotalHits, "Search hits mismatch")
+
+	// Verify result names match expected (order-agnostic)
+	require.NotNil(t, searchResp.Results, "Search results should not be nil")
+	actualNames := make([]string, 0, len(searchResp.Results.Rows))
+	for _, row := range searchResp.Results.Rows {
+		actualNames = append(actualNames, row.Key.Name)
+	}
+	require.ElementsMatch(t, expectedNames, actualNames, "Search result names mismatch")
+
+	// Log for debugging
+	queryDesc := query
+	if queryDesc == "" {
+		queryDesc = "(all)"
+	}
+	t.Logf("Search OK: query=%s, hits=%d", queryDesc, expectedHits)
+}
+
+// SearchServerFactory is a function that creates a ResourceServer with search enabled
+type SearchServerFactory func(t *testing.T, backend resource.StorageBackend) resource.ResourceServer
+
+// runTestSearchOperationsCompatibility tests search-api with different backend combinations
+// Simulates production rollout: Phase 1 (search=sql, storage=mixed) -> Phase 2 (search=kv, storage=kv)
+// The searchServerFactory parameter allows the caller to provide a function that creates search-enabled servers,
+// avoiding import cycles with the search package.
+func runTestSearchOperationsCompatibility(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB, searchServerFactory SearchServerFactory) {
+	// Skip on SQLite due to concurrency limitations
+	if db.DriverName() == "sqlite3" {
+		t.Skip("Skipping search operations compatibility test on SQLite")
+	}
+
+	// Search server factory is required for search compatibility tests
+	require.NotNil(t, searchServerFactory, "SearchServerFactory must be provided in TestOptions for search compatibility tests")
+
+	// Test 1: Phase 1 Rollout - Search server uses SQL backend, Storage servers use both
+	// This simulates the transitional state where storage-api migrates to sqlkv
+	// while search-api continues using sqlbackend
+	t.Run("Search with SQL backend, Storage mixed", func(t *testing.T) {
+		runSearchCompatibilityScenario(t, searchCompatibilityTestConfig{
+			namespace:    nsPrefix + "-search-sql",
+			searchServer: searchServerFactory(t, sqlBackend),
+			alphaStorage: createStorageServer(t, sqlBackend),
+			betaStorage:  createStorageServer(t, kvBackend),
+			alphaPrefix:  "sql",
+			betaPrefix:   "kv",
+		})
+	})
+
+	// Test 2: Phase 2 Final State - All servers use KV backend
+	// This simulates the final state after complete migration to sqlkv
+	t.Run("Search with KV backend, Storage KV", func(t *testing.T) {
+		runSearchCompatibilityScenario(t, searchCompatibilityTestConfig{
+			namespace:    nsPrefix + "-search-kv",
+			searchServer: searchServerFactory(t, kvBackend),
+			alphaStorage: createStorageServer(t, kvBackend),
+			betaStorage:  createStorageServer(t, kvBackend),
+			alphaPrefix:  "kv1",
+			betaPrefix:   "kv2",
+		})
+	})
+}
+
+// numberToWord converts numbers 1-8 to words for test data variety
+func numberToWord(n int) string {
+	words := []string{"Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight"}
+	if n >= 0 && n < len(words) {
+		return words[n]
+	}
+	return fmt.Sprintf("%d", n)
+}
+
+// searchCompatibilityTestConfig defines configuration for a search compatibility test scenario
+type searchCompatibilityTestConfig struct {
+	namespace    string                  // namespace for test isolation
+	searchServer resource.ResourceServer // search server (with search enabled)
+	alphaStorage resource.ResourceServer // storage server for Alpha resources
+	betaStorage  resource.ResourceServer // storage server for Beta resources
+	alphaPrefix  string                  // prefix for Alpha resource names (e.g., "sql", "kv1")
+	betaPrefix   string                  // prefix for Beta resource names (e.g., "kv", "kv2")
+}
+
+// runSearchCompatibilityScenario runs a complete search compatibility test scenario
+// with create, update, and delete phases
+func runSearchCompatibilityScenario(t *testing.T, cfg searchCompatibilityTestConfig) {
+	t.Helper()
+	ctx := testutil.NewDefaultTestContext(t)
+
+	searchServer := cfg.searchServer
+
+	// Track resource versions for update/delete phases
+	resourceVersions := make(map[string]int64)
+
+	// Helper to generate resource name
+	alphaName := func(i int) string {
+		return fmt.Sprintf("%s-playlist-alpha-%d", cfg.alphaPrefix, i)
+	}
+	betaName := func(i int) string {
+		return fmt.Sprintf("%s-playlist-beta-%d", cfg.betaPrefix, i)
+	}
+
+	// Phase A: Alpha storage creates resources with "Alpha" prefix
+	t.Run("Phase A: Create Alpha resources", func(t *testing.T) {
+		for i := 1; i <= 4; i++ {
+			name := alphaName(i)
+			created := createPlaylistResource(t, cfg.alphaStorage, ctx, PlaylistResourceOptions{
+				Name:       name,
+				Namespace:  cfg.namespace,
+				UID:        fmt.Sprintf("%s-uid-alpha-%d", cfg.alphaPrefix, i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Alpha Playlist %s", numberToWord(i)),
+				Folder:     "",
+			})
+			resourceVersions[name] = created.ResourceVersion
+		}
+
+		expectedNames := []string{alphaName(1), alphaName(2), alphaName(3), alphaName(4)}
+		verifySearchServerStats(t, searchServer, cfg.namespace, 4)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "", 4, expectedNames)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 4, expectedNames)
+	})
+
+	// Phase B: Beta storage creates resources with "Beta" prefix
+	t.Run("Phase B: Create Beta resources", func(t *testing.T) {
+		for i := 1; i <= 4; i++ {
+			name := betaName(i)
+			created := createPlaylistResource(t, cfg.betaStorage, ctx, PlaylistResourceOptions{
+				Name:       name,
+				Namespace:  cfg.namespace,
+				UID:        fmt.Sprintf("%s-uid-beta-%d", cfg.betaPrefix, i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Beta Playlist %s", numberToWord(i)),
+				Folder:     "",
+			})
+			resourceVersions[name] = created.ResourceVersion
+		}
+
+		allNames := []string{
+			alphaName(1), alphaName(2), alphaName(3), alphaName(4),
+			betaName(1), betaName(2), betaName(3), betaName(4),
+		}
+		alphaNames := []string{alphaName(1), alphaName(2), alphaName(3), alphaName(4)}
+		betaNames := []string{betaName(1), betaName(2), betaName(3), betaName(4)}
+
+		verifySearchServerStats(t, searchServer, cfg.namespace, 8)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "", 8, allNames)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 4, alphaNames)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Beta", 4, betaNames)
+	})
+
+	// Phase C: Alpha storage creates more Alpha resources
+	t.Run("Phase C: Create more Alpha resources", func(t *testing.T) {
+		for i := 5; i <= 7; i++ {
+			name := alphaName(i)
+			created := createPlaylistResource(t, cfg.alphaStorage, ctx, PlaylistResourceOptions{
+				Name:       name,
+				Namespace:  cfg.namespace,
+				UID:        fmt.Sprintf("%s-uid-alpha-%d", cfg.alphaPrefix, i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Alpha Playlist %s", numberToWord(i)),
+				Folder:     "",
+			})
+			resourceVersions[name] = created.ResourceVersion
+		}
+
+		alphaNames := []string{
+			alphaName(1), alphaName(2), alphaName(3), alphaName(4),
+			alphaName(5), alphaName(6), alphaName(7),
+		}
+		verifySearchServerStats(t, searchServer, cfg.namespace, 11)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 7, alphaNames)
+	})
+
+	// Phase D: Beta storage creates more Beta resources
+	t.Run("Phase D: Create more Beta resources", func(t *testing.T) {
+		for i := 5; i <= 7; i++ {
+			name := betaName(i)
+			created := createPlaylistResource(t, cfg.betaStorage, ctx, PlaylistResourceOptions{
+				Name:       name,
+				Namespace:  cfg.namespace,
+				UID:        fmt.Sprintf("%s-uid-beta-%d", cfg.betaPrefix, i),
+				Generation: 1,
+				Title:      fmt.Sprintf("Beta Playlist %s", numberToWord(i)),
+				Folder:     "",
+			})
+			resourceVersions[name] = created.ResourceVersion
+		}
+
+		betaNames := []string{
+			betaName(1), betaName(2), betaName(3), betaName(4),
+			betaName(5), betaName(6), betaName(7),
+		}
+		verifySearchServerStats(t, searchServer, cfg.namespace, 14)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Beta", 7, betaNames)
+	})
+
+	// Phase E: Update resources and verify search reflects changes
+	t.Run("Phase E: Update resources and verify search", func(t *testing.T) {
+		// Update first Alpha resource with new title containing "Updated"
+		name := alphaName(1)
+		updated := updatePlaylistResource(t, cfg.alphaStorage, ctx, PlaylistResourceOptions{
+			Name:       name,
+			Namespace:  cfg.namespace,
+			UID:        fmt.Sprintf("%s-uid-alpha-1", cfg.alphaPrefix),
+			Generation: 2,
+			Title:      "Updated Alpha Playlist One",
+			Folder:     "",
+		}, resourceVersions[name])
+		resourceVersions[name] = updated.ResourceVersion
+
+		// Update first Beta resource with new title containing "Updated"
+		name = betaName(1)
+		updated = updatePlaylistResource(t, cfg.betaStorage, ctx, PlaylistResourceOptions{
+			Name:       name,
+			Namespace:  cfg.namespace,
+			UID:        fmt.Sprintf("%s-uid-beta-1", cfg.betaPrefix),
+			Generation: 2,
+			Title:      "Updated Beta Playlist One",
+			Folder:     "",
+		}, resourceVersions[name])
+		resourceVersions[name] = updated.ResourceVersion
+
+		// Verify total count remains 14
+		verifySearchServerStats(t, searchServer, cfg.namespace, 14)
+
+		// Verify search for "Updated" returns 2 results
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Updated", 2, []string{
+			alphaName(1), betaName(1),
+		})
+
+		// Verify Alpha and Beta counts remain correct
+		alphaNames := []string{
+			alphaName(1), alphaName(2), alphaName(3), alphaName(4),
+			alphaName(5), alphaName(6), alphaName(7),
+		}
+		betaNames := []string{
+			betaName(1), betaName(2), betaName(3), betaName(4),
+			betaName(5), betaName(6), betaName(7),
+		}
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 7, alphaNames)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Beta", 7, betaNames)
+	})
+
+	// Phase F: Delete resources and verify search reflects removal
+	t.Run("Phase F: Delete resources and verify search", func(t *testing.T) {
+		// Delete last Alpha resource
+		name := alphaName(7)
+		deletePlaylistResource(t, cfg.alphaStorage, ctx, cfg.namespace, name, resourceVersions[name])
+
+		// Delete last Beta resource
+		name = betaName(7)
+		deletePlaylistResource(t, cfg.betaStorage, ctx, cfg.namespace, name, resourceVersions[name])
+
+		// Verify total count is now 12 (14 - 2 deleted)
+		verifySearchServerStats(t, searchServer, cfg.namespace, 12)
+
+		// Verify Alpha count is now 6 (7 - 1 deleted)
+		alphaNames := []string{
+			alphaName(1), alphaName(2), alphaName(3), alphaName(4),
+			alphaName(5), alphaName(6),
+		}
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Alpha", 6, alphaNames)
+
+		// Verify Beta count is now 6 (7 - 1 deleted)
+		betaNames := []string{
+			betaName(1), betaName(2), betaName(3), betaName(4),
+			betaName(5), betaName(6),
+		}
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Beta", 6, betaNames)
+
+		// Verify "Updated" search still returns 2 results (updated resources weren't deleted)
+		verifySearchServerResults(t, searchServer, cfg.namespace, "Updated", 2, []string{
+			alphaName(1), betaName(1),
+		})
+	})
 }

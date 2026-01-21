@@ -61,6 +61,7 @@ func TestAuthzLimitedClient_Compile(t *testing.T) {
 			Verb:      utils.VerbGet,
 			Namespace: "stacks-1",
 		}
+		//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 		checker, _, err := client.Compile(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
 		assert.NoError(t, err)
 		assert.NotNil(t, checker)
@@ -144,6 +145,7 @@ func TestNamespaceMatching(t *testing.T) {
 				Verb:      utils.VerbGet,
 				Namespace: tt.reqNamespace,
 			}
+			//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 			_, _, compileErr := client.Compile(ctx, user, compileReq)
 
 			if tt.expectError {
@@ -208,6 +210,7 @@ func TestNamespaceMatchingFallback(t *testing.T) {
 				Verb:      utils.VerbGet,
 				Namespace: tt.reqNamespace,
 			}
+			//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 			_, _, compileErr := client.Compile(ctx, user, compileReq)
 
 			if tt.expectError {

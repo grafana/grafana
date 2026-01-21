@@ -9,7 +9,7 @@ labels:
     - enterprise
     - oss
 title: Foundation SDK
-weight: 250
+weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/foundation-sdk/
 aliases:
   - ../../observability-as-code/foundation-sdk/ # /docs/grafana/next/observability-as-code/foundation-sdk/

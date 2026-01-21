@@ -12,6 +12,7 @@ type RepositoryStatusApplyConfiguration struct {
 	Sync               *SyncStatusApplyConfiguration     `json:"sync,omitempty"`
 	Stats              []ResourceCountApplyConfiguration `json:"stats,omitempty"`
 	Webhook            *WebhookStatusApplyConfiguration  `json:"webhook,omitempty"`
+	Token              *TokenStatusApplyConfiguration    `json:"token,omitempty"`
 	DeleteError        *string                           `json:"deleteError,omitempty"`
 }
 
@@ -63,6 +64,14 @@ func (b *RepositoryStatusApplyConfiguration) WithStats(values ...*ResourceCountA
 // If called multiple times, the Webhook field is set to the value of the last call.
 func (b *RepositoryStatusApplyConfiguration) WithWebhook(value *WebhookStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	b.Webhook = value
+	return b
+}
+
+// WithToken sets the Token field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Token field is set to the value of the last call.
+func (b *RepositoryStatusApplyConfiguration) WithToken(value *TokenStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
+	b.Token = value
 	return b
 }
 

@@ -42,7 +42,6 @@ export function getMockDSInstanceSettings(
   overrideJsonData?: Partial<InfluxOptions>
 ): DataSourceInstanceSettings<InfluxOptions> {
   return {
-    id: 123,
     url: 'proxied',
     access: 'proxy',
     name: 'influxDb',
