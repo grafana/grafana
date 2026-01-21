@@ -159,7 +159,7 @@ jobs:
         if: steps.check-affected.outputs.affected == 'true'
         uses: actions/checkout@v5
         with:
-          ref: ${{ matrix.branch == 'main' && github.event.pull_request.base.ref || github.event.pull_request.head.sha }}
+          ref: ${{ matrix.branch == 'main' && github.event.pull_request.base.sha || github.event.pull_request.head.sha }}
           persist-credentials: false
 
       - name: Setup Node.js
