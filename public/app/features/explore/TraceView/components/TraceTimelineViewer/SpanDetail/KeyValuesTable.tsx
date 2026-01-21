@@ -14,6 +14,7 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import DOMPurify from 'dompurify';
 import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, PluginExtensionLink, TraceKeyValuePair } from '@grafana/data';
@@ -126,22 +127,16 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
       <table className={styles.table}>
         <tbody className={styles.body}>
           {data.map((row, i) => {
-            let markup = { __html: '' };
+            let html = "";
             if (row.type === 'code') {
-              markup = {
-                __html: `<pre style="border: none; background: none">${row.value}</pre>`,
-              };
+              html = `<pre style="border: none; background: none">${row.value}</pre>`;
             } else if (row.type === 'text') {
-              markup = {
-                __html: `<span style="white-space: pre-wrap;">${row.value}</span>`,
-              };
+              html = `<span style="white-space: pre-wrap;">${row.value}</span>`;
             } else {
-              markup = {
-                __html: jsonMarkup(parseIfComplexJson(row.value)),
-              };
+              html = jsonMarkup(parseIfComplexJson(row.value));
             }
 
-            const jsonTable = <div className={styles.jsonTable} dangerouslySetInnerHTML={markup} />;
+            const jsonTable = <div className={styles.jsonTable} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html)}} />;
             const links = linksGetter?.(data, i);
             let valueMarkup;
             if (links && links.length) {
