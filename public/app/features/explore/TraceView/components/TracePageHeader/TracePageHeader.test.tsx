@@ -502,10 +502,10 @@ describe('TracePageHeader test', () => {
       expect(getByText(header!, '200')).toBeInTheDocument();
     });
 
-    it('should still render filters section when hideHeaderDetails is true', () => {
+    it('should hide filters section when hideHeaderDetails is true', () => {
       setup({ links: [], isLoading: false }, true);
 
-      expect(screen.getByText('Filters')).toBeInTheDocument();
+      expect(screen.queryByText('Filters')).not.toBeInTheDocument();
     });
 
     it('should hide plugin extension buttons when hideHeaderDetails is true', () => {
