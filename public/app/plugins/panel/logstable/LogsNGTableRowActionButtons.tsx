@@ -99,19 +99,15 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
     left: 0,
     top: 0,
-    padding: `0 ${theme.spacing(0.5)}`,
     position: 'absolute',
     zIndex: 1,
   }),
   buttonWrapper: css({
     height: '100%',
-    '& button svg': {
-      marginRight: 'auto',
-    },
     '&:hover': {
       color: theme.colors.text.link,
     },
-    padding: theme.spacing(0, 1),
+    padding: theme.spacing(0, 0.5),
     display: 'flex',
     alignItems: 'center',
   }),
@@ -122,6 +118,8 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     verticalAlign: 'middle',
     cursor: 'pointer',
+    height: '24px',
+    width: '20px',
   }),
   clipboardButton: css({
     height: 30,
@@ -129,5 +127,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     padding: 0,
     width: '20px',
     cursor: 'pointer',
+    height: '24px',
   }),
 });

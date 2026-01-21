@@ -42,7 +42,7 @@ interface LogsTablePanelProps extends PanelProps<LogsTableOptions> {
 // Defaults
 const DEFAULT_SIDEBAR_WIDTH = 200;
 const DEFAULT_TIME_FIELD_WIDTH = 160;
-export const ROW_ACTION_BUTTON_WIDTH = 80;
+export const ROW_ACTION_BUTTON_WIDTH = 55;
 
 export const LogsTable = ({
   data,
