@@ -45,7 +45,7 @@ describe('browseDashboardsAPI saveDashboard', () => {
   });
 
   const createMockDashboardAPI = (saveDashboard: jest.Mock) =>
-    ({ saveDashboard } as unknown as ReturnType<typeof getDashboardAPI>);
+    ({ saveDashboard }) as unknown as ReturnType<typeof getDashboardAPI>;
 
   it('uses v1 dashboard API for v1 dashboards', async () => {
     const saveDashboardV1 = jest.fn().mockResolvedValue({ uid: 'test-uid-v1' });
