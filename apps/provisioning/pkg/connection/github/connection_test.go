@@ -631,16 +631,18 @@ func TestConnection_ListRepositories(t *testing.T) {
 			},
 		}
 
-		mockFactory := NewMockGithubFactory(t)
-		mockClient := NewMockClient(t)
+		mockFactory := github.NewMockGithubFactory(t)
+		mockClient := github.NewMockClient(t)
 
 		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
-		mockClient.EXPECT().ListInstallationRepositories(mock.Anything, "456").Return([]Repository{
+		mockClient.EXPECT().ListInstallationRepositories(mock.Anything, "456").Return([]github.Repository{
 			{Name: "repo1", Owner: "owner1", URL: "https://github.com/owner1/repo1"},
 			{Name: "repo2", Owner: "owner2", URL: "https://github.com/owner2/repo2"},
 		}, nil)
 
-		conn := NewConnection(c, mockFactory)
+		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{
+			Token: common.RawSecureValue("test-token"),
+		})
 		repos, err := conn.ListRepositories(context.Background())
 
 		require.NoError(t, err)
@@ -661,8 +663,8 @@ func TestConnection_ListRepositories(t *testing.T) {
 			},
 		}
 
-		mockFactory := NewMockGithubFactory(t)
-		conn := NewConnection(c, mockFactory)
+		mockFactory := github.NewMockGithubFactory(t)
+		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{})
 		_, err := conn.ListRepositories(context.Background())
 
 		require.Error(t, err)
@@ -686,13 +688,15 @@ func TestConnection_ListRepositories(t *testing.T) {
 			},
 		}
 
-		mockFactory := NewMockGithubFactory(t)
-		mockClient := NewMockClient(t)
+		mockFactory := github.NewMockGithubFactory(t)
+		mockClient := github.NewMockClient(t)
 
 		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
 		mockClient.EXPECT().ListInstallationRepositories(mock.Anything, "456").Return(nil, assert.AnError)
 
-		conn := NewConnection(c, mockFactory)
+		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{
+			Token: common.RawSecureValue("test-token"),
+		})
 		_, err := conn.ListRepositories(context.Background())
 
 		require.Error(t, err)
@@ -716,13 +720,15 @@ func TestConnection_ListRepositories(t *testing.T) {
 			},
 		}
 
-		mockFactory := NewMockGithubFactory(t)
-		mockClient := NewMockClient(t)
+		mockFactory := github.NewMockGithubFactory(t)
+		mockClient := github.NewMockClient(t)
 
 		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
-		mockClient.EXPECT().ListInstallationRepositories(mock.Anything, "456").Return([]Repository{}, nil)
+		mockClient.EXPECT().ListInstallationRepositories(mock.Anything, "456").Return([]github.Repository{}, nil)
 
-		conn := NewConnection(c, mockFactory)
+		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{
+			Token: common.RawSecureValue("test-token"),
+		})
 		repos, err := conn.ListRepositories(context.Background())
 
 		require.NoError(t, err)
