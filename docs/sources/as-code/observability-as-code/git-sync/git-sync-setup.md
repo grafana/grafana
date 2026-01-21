@@ -12,9 +12,10 @@ labels:
     - cloud
 title: Set up Git Sync
 weight: 110
-canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/git-sync-setup/
+canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/git-sync-setup/
 aliases:
   - ../../../observability-as-code/provision-resources/git-sync-setup/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
+  - ../observability-as-code/provision-resources/git-sync-setup/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/  
 ---
 
 # Set up Git Sync
