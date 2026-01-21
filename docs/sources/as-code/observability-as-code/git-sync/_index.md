@@ -25,7 +25,7 @@ weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/
 aliases:
   - ../../../observability-as-code/provision-resources/intro-git-sync/ 
-  - ../provision-resources/intro-git-sync/ 
+  - ../../provision-resources/intro-git-sync/ 
 ---
 
 # Introduction to Git Sync
