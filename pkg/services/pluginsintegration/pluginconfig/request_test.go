@@ -22,6 +22,7 @@ func TestRequestConfigProvider_PluginRequestConfig_Defaults(t *testing.T) {
 
 	p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 	require.Equal(t, map[string]string{
+		"GF_LIVE_CLIENT_QUEUE_MAX_SIZE":            "0",
 		"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
 		"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
 		"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
@@ -219,6 +220,7 @@ func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 
 		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 		require.Equal(t, map[string]string{
+			"GF_LIVE_CLIENT_QUEUE_MAX_SIZE":            "0",
 			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
 			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
 			"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
