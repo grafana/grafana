@@ -64,7 +64,7 @@ type API struct {
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
-	StateManager         *state.Manager
+	StateManager         state.AlertInstanceManager
 	Scheduler            apiprometheus.StatusReader
 	AccessControl        ac.AccessControl
 	Policies             *provisioning.NotificationPolicyService
