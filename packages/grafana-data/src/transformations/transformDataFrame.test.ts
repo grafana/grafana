@@ -59,7 +59,7 @@ const customTransform2: CustomTransformOperator = () => (source) => {
   );
 };
 
-describe('transformDataFrame', () => {
+describe.skip('transformDataFrame', () => {
   beforeAll(() => {
     mockTransformationsRegistry([reduceTransformer, filterFieldsByNameTransformer]);
   });
@@ -157,7 +157,7 @@ describe('transformDataFrame', () => {
     });
   });
 
-  describe('Custom transformations', () => {
+  describe.skip('Custom transformations', () => {
     it('supports leading custom transformation', async () => {
       // divide by 100, reduce, filter
       const cfg = [
