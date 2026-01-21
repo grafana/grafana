@@ -34,7 +34,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       type: data?.spec?.type || 'github',
       appID: data?.spec?.github?.appID || '',
       installationID: data?.spec?.github?.installationID || '',
-      privateKey: privateKey?.name || '',
+      privateKey: '',
     },
   });
 
