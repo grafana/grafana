@@ -146,6 +146,42 @@ Run a raw data query to retrieve a table of all fields that are associated with 
 The option to run a **raw document query** is deprecated as of Grafana v10.1.
 {{< /admonition >}}
 
+## Raw query editor
+
+{{< admonition type="note" >}}
+The raw query editor is an experimental feature that must be enabled using the `elasticsearchRawDSLQuery` feature toggle.
+{{< /admonition >}}
+
+The raw query editor allows you to write Elasticsearch queries using the native [Elasticsearch Query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html).
+
+### Switch between Builder and Code modes
+
+To access the raw query editor, click the **Code** toggle in the top-right corner of the query editor. You can switch between **Builder** and **Code** modes:
+
+- **Builder** - Visual query builder with dropdown menus and forms
+- **Code** - JSON editor for writing raw Elasticsearch DSL queries
+
+### Write raw DSL queries
+
+When in Code mode, you can write complete Elasticsearch query DSL in JSON format. The editor provides:
+
+- **Syntax highlighting** for JSON
+- **Auto-formatting** - Click the **Format** button or press `Shift+Alt+F` to format your query
+- **Keyboard shortcuts** - Press `Ctrl+Enter` (or `Cmd+Enter` on Mac) to run the query
+- **Real-time validation** - Invalid JSON will be highlighted with error messages
+
+### Time range handling
+
+Grafana automatically applies the dashboard time range to your queries by adding a time range filter to the query. You can override this by including your own time range in the `query` section.
+
+### Supported query types
+
+The raw query editor supports all query types:
+
+- **Metrics queries** are used to query time series data with aggregations. The query parser will automatically extract bucket and metric aggregations from your DSL and use them for response processing.
+- **Logs queries** are used to query log data
+- **Raw data queries** are used to query document-level data retrieval
+
 ## Use template variables
 
 You can also augment queries by using [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/template-variables/).
