@@ -1763,11 +1763,6 @@
       "count": 2
     }
   },
-  "public/app/features/correlations/CorrelationsPage.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/correlations/Forms/ConfigureCorrelationBasicInfoForm.tsx": {
     "no-restricted-syntax": {
       "count": 2
@@ -2970,11 +2965,6 @@
   "public/app/features/plugins/extensions/validators.ts": {
     "no-restricted-syntax": {
       "count": 4
-    }
-  },
-  "public/app/features/plugins/sandbox/codeLoader.ts": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/plugins/sandbox/distortions.ts": {
@@ -4212,11 +4202,6 @@
   "public/app/plugins/panel/canvas/editor/LineStyleEditor.tsx": {
     "no-restricted-syntax": {
       "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/editor/element/APIEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/plugins/panel/canvas/editor/element/ParamsEditor.tsx": {

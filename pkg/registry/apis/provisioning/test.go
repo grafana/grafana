@@ -116,7 +116,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					old, _ := s.repoGetter.GetRepository(ctx, name)
 					if old != nil {
 						oldCfg := old.Config()
-						copyRepositorySecureValues(&cfg, oldCfg)
+						repository.CopySecureValues(&cfg, oldCfg)
 					}
 				}
 

@@ -3730,6 +3730,7 @@
       "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}",
       "root-title": "Dashboards",
       "search-placeholder": "Search folders",
+      "shared-with-me": "Shared with me",
       "unknown-error": "Unknown error"
     },
     "manage-folder-nav": {
@@ -3833,6 +3834,7 @@
       "label-method": "Method",
       "label-payload": "Payload",
       "label-query-parameters": "Query parameters",
+      "label-successmessage": "Success message",
       "render-test-apibutton": {
         "test-api": "Test API",
         "title-test-api": "Test API"

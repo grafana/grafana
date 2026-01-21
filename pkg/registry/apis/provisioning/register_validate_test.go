@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
 
+	appadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 
@@ -23,11 +24,17 @@ func TestAPIBuilderValidate(t *testing.T) {
 	factory := repository.NewMockFactory(t)
 	factory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 	validator := repository.NewValidator(30*time.Second, []v0alpha1.SyncTargetType{v0alpha1.SyncTargetTypeFolder}, false, factory)
+
+	// Create admission handler and register repository validator
+	admissionHandler := appadmission.NewHandler()
+	admissionHandler.RegisterValidator(v0alpha1.RepositoryResourceInfo.GetName(), repository.NewAdmissionValidator(validator, nil))
+
 	b := &APIBuilder{
 		repoFactory:         factory,
 		allowedTargets:      []v0alpha1.SyncTargetType{v0alpha1.SyncTargetTypeFolder},
 		allowImageRendering: false,
 		repoValidator:       validator,
+		admissionHandler:    admissionHandler,
 	}
 
 	t.Run("min sync interval is less than 10 seconds", func(t *testing.T) {
