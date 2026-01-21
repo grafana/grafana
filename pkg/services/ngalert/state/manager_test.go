@@ -1319,7 +1319,7 @@ func TestProcessEvalResults(t *testing.T) {
 				results += len(res)
 			}
 
-			states := st.GetStatesForRuleUID(tc.alertRule.OrgID, tc.alertRule.UID)
+			states := st.GetStatesForRuleUID(context.Background(), tc.alertRule.OrgID, tc.alertRule.UID)
 			assert.Len(t, states, len(tc.expectedStates))
 
 			expectedStates := make(map[data.Fingerprint]*state.State, len(tc.expectedStates))
@@ -1417,7 +1417,7 @@ func TestProcessEvalResults(t *testing.T) {
 
 		_ = st.ProcessEvalResults(context.Background(), time, rule, res, systemLabels, state.NoopSender)
 
-		states := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+		states := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 		require.Len(t, states, 1)
 		state := states[0]
 		require.NotNil(t, state.Values)
@@ -1614,7 +1614,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 		}
 		st := state.NewManager(cfg, state.NewNoopPersister())
 		st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
-		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+		existingStatesForRule := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 
 		// We have loaded the expected number of entries from the db
 		assert.Equal(t, tc.startingStateCount, len(existingStatesForRule))
@@ -1636,7 +1636,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 				assert.Equal(t, s, cachedState)
 			}
 		}
-		existingStatesForRule = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+		existingStatesForRule = st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 
 		// The expected number of state entries remains after results are processed
 		assert.Equal(t, tc.finalStateCount, len(existingStatesForRule))
@@ -1723,7 +1723,7 @@ func TestStaleResults(t *testing.T) {
 	// Check that it returns just those state transitions that needs to be sent.
 	checkExpectedStateTransitions(t, statesToSend, map[data.Fingerprint]struct{}{state1: {}, state2: {}}) // Does not contain the Normal state3.
 
-	currentStates := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+	currentStates := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 	statesMap := checkExpectedStates(t, currentStates, initStates)
 	require.Equal(t, eval.Alerting, statesMap[state2].State) // make sure the state is alerting because we need it to be resolved later
 
@@ -1756,7 +1756,7 @@ func TestStaleResults(t *testing.T) {
 	})
 
 	t.Run("should remove stale states from cache", func(t *testing.T) {
-		currentStates = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+		currentStates = st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 		checkExpectedStates(t, currentStates, map[data.Fingerprint]struct{}{
 			getCacheID(t, rule, results[0]): {},
 		})
@@ -1882,7 +1882,7 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 			st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
-			existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+			existingStatesForRule := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 
 			// We have loaded the expected number of entries from the db
 			assert.Equal(t, tc.startingStateCacheCount, len(existingStatesForRule))
@@ -1914,7 +1914,7 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 
 			q = &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alertInstances, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
-			existingStatesForRule = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+			existingStatesForRule = st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 
 			// The expected number of state entries remains after states are deleted
 			assert.Equal(t, tc.finalStateCacheCount, len(existingStatesForRule))
@@ -2029,7 +2029,7 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 			st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
-			existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+			existingStatesForRule := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 
 			// We have loaded the expected number of entries from the db
 			assert.Equal(t, tc.startingStateCacheCount, len(existingStatesForRule))
@@ -2064,7 +2064,7 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 
 			q = &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alertInstances, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
-			existingStatesForRule = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+			existingStatesForRule = st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 
 			// The expected number of state entries remains after states are deleted
 			assert.Equal(t, tc.finalStateCacheCount, len(existingStatesForRule))

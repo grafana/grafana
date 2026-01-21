@@ -37,7 +37,7 @@ hero:
   width: 110
 title: Introduction to Grafana CLI
 menuTitle: Grafana CLI
-weight: 130
+weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/
 aliases:
   - ../../observability-as-code/grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/

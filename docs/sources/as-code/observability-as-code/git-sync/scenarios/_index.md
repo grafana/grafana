@@ -9,6 +9,9 @@ keywords:
   - scenarios
   - multi-environment
   - teams
+canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/scenarios/
+aliases:
+  - ../provision-resources/git-sync-deployment-scenarios/
 ---
 
 # Git Sync deployment scenarios
