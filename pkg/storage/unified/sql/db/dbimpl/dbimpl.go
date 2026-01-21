@@ -49,7 +49,9 @@ func ProvideResourceDB(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Trac
 }
 
 type resourceDBProvider struct {
-	engine          *xorm.Engine
+	engine       *xorm.Engine
+	sharedEngine bool
+
 	cfg             *setting.Cfg
 	log             log.Logger
 	migrateFunc     func(context.Context, *xorm.Engine, *setting.Cfg) error
@@ -89,6 +91,7 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 			return nil, errGrafanaDBInstrumentedNotSupported
 		}
 		p.engine = grafanaDB.GetEngine()
+		p.sharedEngine = true
 		p.logQueries = cfg.SectionWithEnvOverrides("database").Key("log_queries").MustBool(false)
 		return p, nil
 	default:
@@ -101,6 +104,14 @@ func (p *resourceDBProvider) Init(ctx context.Context) (db.DB, error) {
 		p.resourceDB, p.initErr = p.initDB(ctx)
 	})
 	return p.resourceDB, p.initErr
+}
+
+func (p *resourceDBProvider) Stop(_ context.Context) error {
+	if !p.sharedEngine {
+		return p.engine.Close()
+	}
+	p.log.Info("Not closing shared database environment")
+	return nil
 }
 
 func (p *resourceDBProvider) initDB(ctx context.Context) (db.DB, error) {

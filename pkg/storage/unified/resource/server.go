@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -266,6 +267,9 @@ type ResourceServerOptions struct {
 	QOSConfig QueueConfig
 
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
+
+	// DBProvider provides database connections for the server
+	DBProvider db.DBProvider
 }
 
 func NewResourceServer(opts ResourceServerOptions) (*server, error) {
@@ -354,6 +358,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
 		overridesService: opts.OverridesService,
+		dbProvider:       opts.DBProvider,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
@@ -411,6 +416,8 @@ type server struct {
 	// write operations to make sure that subsequent search by the same client will return up-to-date results.
 	// Set from SearchOptions.IndexMinUpdateInterval.
 	artificialSuccessfulWriteDelay time.Duration
+
+	dbProvider db.DBProvider
 }
 
 // Init implements ResourceServer.
@@ -465,7 +472,15 @@ func (s *server) Stop(ctx context.Context) error {
 	if s.overridesService != nil {
 		if err := s.overridesService.stop(ctx); err != nil {
 			stopFailed = true
-			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
+			s.initErr = fmt.Errorf("service stopped with error: %w", err)
+		}
+	}
+
+	if s.dbProvider != nil {
+		s.log.Info("Stopping the DB Provider")
+		if err := s.dbProvider.Stop(ctx); err != nil {
+			stopFailed = true
+			s.initErr = fmt.Errorf("service stopped with error: %w", err)
 		}
 	}
 

@@ -147,6 +147,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 
 			serverOptions.Backend = kvBackend
 			serverOptions.Diagnostics = kvBackend
+			serverOptions.DBProvider = eDB
 		} else {
 			backend, err := NewBackend(BackendOptions{
 				DBProvider:           eDB,
@@ -161,6 +162,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			serverOptions.Backend = backend
 			serverOptions.Diagnostics = backend
 			serverOptions.Lifecycle = backend
+			serverOptions.DBProvider = eDB
 		}
 	}
 

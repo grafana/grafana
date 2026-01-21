@@ -26,6 +26,10 @@ func (d TestDBProvider) Init(context.Context) (db.DB, error) {
 	return d.DB, d.Err
 }
 
+func (d TestDBProvider) Stop(context.Context) error {
+	return nil
+}
+
 var _ db.DBProvider = TestDBProvider{}
 
 // NewDBProviderNopSQL returns a TestDBProvider with a sqlmock.Sqlmock that

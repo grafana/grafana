@@ -81,6 +81,10 @@ func (d *directResourceClient) Update(ctx context.Context, in *resourcepb.Update
 	return d.server.Update(ctx, in)
 }
 
+func (b *directResourceClient) Stop(ctx context.Context) error {
+	return b.server.Stop(ctx)
+}
+
 // Watch implements ResourceClient.
 func (d *directResourceClient) Watch(ctx context.Context, in *resourcepb.WatchRequest, opts ...grpc.CallOption) (resourcepb.ResourceStore_WatchClient, error) {
 	return nil, fmt.Errorf("watch not supported with direct resource client")

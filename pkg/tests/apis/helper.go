@@ -223,6 +223,8 @@ func (c *K8sTestHelper) GetListenerAddress() string {
 func (c *K8sTestHelper) Shutdown() {
 	err := c.env.Server.Shutdown(context.Background(), "done")
 	require.NoError(c.t, err)
+	err = c.env.ResourceClient.Stop(context.Background())
+	require.NoError(c.t, err)
 }
 
 type ResourceClientArgs struct {

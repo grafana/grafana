@@ -17,6 +17,8 @@ type DBProvider interface {
 	// Init initializes the SQL Database, running migrations if needed. It is
 	// idempotent and thread-safe.
 	Init(context.Context) (DB, error)
+	// Stop stops the provided SQL Database if the engine was created by the provider, no-op otherwise.
+	Stop(context.Context) error
 }
 
 // DB is a thin abstraction on *sql.DB to allow mocking to provide better unit

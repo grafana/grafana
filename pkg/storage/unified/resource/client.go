@@ -40,6 +40,8 @@ type ResourceClient interface {
 	resourcepb.BlobStoreClient
 	resourcepb.DiagnosticsClient
 	resourcepb.QuotasClient
+	// ResourceServerStopper is used in local in-proc to stop the server created alongside the client
+	ResourceServerStopper
 }
 
 // Internal implementation
@@ -51,6 +53,7 @@ type resourceClient struct {
 	resourcepb.BlobStoreClient
 	resourcepb.DiagnosticsClient
 	resourcepb.QuotasClient
+	ResourceServerStopper
 }
 
 func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
@@ -70,7 +73,7 @@ func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cf
 	})
 }
 
-func newResourceClient(storageCc grpc.ClientConnInterface, indexCc grpc.ClientConnInterface) ResourceClient {
+func newResourceClient(storageCc grpc.ClientConnInterface, indexCc grpc.ClientConnInterface) *resourceClient {
 	return &resourceClient{
 		ResourceStoreClient:      resourcepb.NewResourceStoreClient(storageCc),
 		ResourceIndexClient:      resourcepb.NewResourceIndexClient(indexCc),
@@ -123,7 +126,9 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
-	return newResourceClient(cc, cc)
+	cli := newResourceClient(cc, cc)
+	cli.ResourceServerStopper = server
+	return cli
 }
 
 type RemoteResourceClientConfig struct {
@@ -160,6 +165,13 @@ func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface,
 	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	cci := grpchan.InterceptClientConn(indexConn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return newResourceClient(cc, cci), nil
+}
+
+func (c *resourceClient) Stop(ctx context.Context) error {
+	if c.ResourceServerStopper == nil {
+		return nil
+	}
+	return c.ResourceServerStopper.Stop(ctx)
 }
 
 var authLogger = log.New("resource-client-auth-interceptor")
