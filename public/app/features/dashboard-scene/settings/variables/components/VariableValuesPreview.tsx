@@ -12,7 +12,7 @@ export interface Props {
   options: VariableValueOption[];
 }
 
-// the option at index 0 can be "All" so we try to grab the propertiesfrom the 2nd option
+// the option at index 0 can be "All" so we first try to grab the properties from the option at index 1
 export const getPropertiesFromOptions = (options: VariableValueOption[]) =>
   Object.keys(options[1]?.properties ?? options[0]?.properties ?? {});
 
@@ -39,11 +39,15 @@ function VariableValuesWithPropsPreview({ options }: { options: VariableValueOpt
   const styles = useStyles2(getStyles);
 
   const { data, columns } = useMemo(() => {
-    const data = options.map(({ properties }) => flattenProperties(properties));
+    const data = options.map(({ label, value, properties }) => ({
+      text: label,
+      value,
+      ...flattenProperties(properties),
+    }));
 
     return {
       data,
-      // the option at index 0 can be "All" so we try to grab the column names from the 2nd option
+      // the data at index 0 can be "All" so we first try to grab the column names from the data at index 1
       columns: Object.keys(data[1] ?? data[0] ?? {}).map((id) => ({
         id,
         // see https://github.com/TanStack/table/issues/1671
