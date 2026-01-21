@@ -11,16 +11,15 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/transport"
 	"k8s.io/client-go/util/flowcontrol"
 
+	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
-	authrt "github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -116,9 +115,11 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 	config := &rest.Config{
 		APIPath: "/apis",
 		Host:    provisioningServerURL,
-		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-			return authrt.NewRoundTripper(tokenExchangeClient, rt, provisioning.GROUP)
-		}),
+		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
+			tokenExchangeClient,
+			provisioning.GROUP,
+			clientauth.WildcardNamespace,
+		),
 		TLSClientConfig: tlsConfig,
 		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
 	}
@@ -163,12 +164,20 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 	}
 
 	for group, url := range apiServerURLs {
+		// Build audiences: always include the group, and add provisioning.GROUP only if different
+		audiences := []string{group}
+		if group != provisioning.GROUP {
+			audiences = append(audiences, provisioning.GROUP)
+		}
+
 		config := &rest.Config{
 			APIPath: "/apis",
 			Host:    url,
-			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-				return authrt.NewRoundTripper(tokenExchangeClient, rt, group, authrt.ExtraAudience(provisioning.GROUP))
-			}),
+			WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
+				tokenExchangeClient,
+				clientauth.NewStaticAudienceProvider(audiences...),
+				clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace),
+			),
 			Transport: &http.Transport{
 				MaxConnsPerHost:     100,
 				MaxIdleConns:        100,

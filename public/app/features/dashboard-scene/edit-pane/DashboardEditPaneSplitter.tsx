@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useLayoutEffect } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -19,7 +20,6 @@ import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
-
 interface Props {
   dashboard: DashboardScene;
   isEditing?: boolean;
@@ -27,25 +27,37 @@ interface Props {
   controls?: React.ReactNode;
 }
 
-export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls }: Props) {
+export function DashboardEditPaneSplitter(props: Props) {
+  if (config.featureToggles.dashboardNewLayouts) {
+    return <DashboardEditPaneSplitterNewLayouts {...props} />;
+  } else {
+    return <DashboardEditPaneSplitterLegacy {...props} />;
+  }
+}
+
+function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
+  const headerHeight = useChromeHeaderHeight();
+  const styles = useStyles2(getStyles, headerHeight ?? 0);
+
+  return (
+    <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
+      <div className={styles.canvasWrappperOld}>
+        <NavToolbarActions dashboard={dashboard} />
+        <div className={styles.controlsWrapperSticky}>{controls}</div>
+        <div className={styles.body}>{body}</div>
+      </div>
+    </NativeScrollbar>
+  );
+}
+
+function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
   const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
-
-  if (!config.featureToggles.dashboardNewLayouts) {
-    return (
-      <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
-        <div className={styles.canvasWrappperOld}>
-          <NavToolbarActions dashboard={dashboard} />
-          <div className={styles.controlsWrapperSticky}>{controls}</div>
-          <div className={styles.body}>{body}</div>
-        </div>
-      </NativeScrollbar>
-    );
-  }
+  const isNewEmptyDashboard = !dashboard.state.uid;
 
   /**
    * Adds star button and left side actions to app chrome breadcrumb area
@@ -63,10 +75,16 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     }
   }, [isEditing, editPane]);
 
+  useEffectOnce(() => {
+    if (isNewEmptyDashboard) {
+      editPane.openPane('add');
+    }
+  });
+
   const { selectionContext, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
 
   const sidebarContext = useSidebar({
-    hasOpenPane: Boolean(openPane),
+    hasOpenPane: Boolean(openPane) || isNewEmptyDashboard,
     contentMargin: 1,
     position: 'right',
     persistanceKey: 'dashboard',
@@ -120,7 +138,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
         </div>
 
         <Sidebar contextValue={sidebarContext}>
-          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} isDocked={sidebarContext.isDocked} />
+          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
         </Sidebar>
       </div>
     );
