@@ -42,10 +42,10 @@ func KeyLabel(providerID ProviderID) string {
 }
 
 type DataKeyCache interface {
-	GetById(namespace, id string) (*DataKeyCacheEntry, bool)
-	GetByLabel(namespace, label string) (*DataKeyCacheEntry, bool)
-	AddById(namespace string, entry *DataKeyCacheEntry)
-	AddByLabel(namespace string, entry *DataKeyCacheEntry)
+	GetById(namespace, id string) (DataKeyCacheEntry, bool)
+	GetByLabel(namespace, label string) (DataKeyCacheEntry, bool)
+	AddById(namespace string, entry DataKeyCacheEntry)
+	AddByLabel(namespace string, entry DataKeyCacheEntry)
 	RemoveExpired()
 	Flush(namespace string)
 }

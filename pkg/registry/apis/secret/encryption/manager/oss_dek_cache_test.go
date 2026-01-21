@@ -20,7 +20,7 @@ func TestOSSDataKeyCache(t *testing.T) {
 	cache := ProvideOSSDataKeyCache(settings)
 
 	namespace := "test-namespace"
-	entry := &encryption.DataKeyCacheEntry{
+	entry := encryption.DataKeyCacheEntry{
 		Id:      "key-123",
 		Label:   "2024-01-01@provider.key1",
 		DataKey: []byte("test-data-key"),
@@ -57,12 +57,12 @@ func TestOSSDataKeyCache(t *testing.T) {
 		cache2 := ProvideOSSDataKeyCache(settings)
 		ns := "independent-test"
 
-		entryById := &encryption.DataKeyCacheEntry{
+		entryById := encryption.DataKeyCacheEntry{
 			Id:      "id-only-key",
 			Label:   "label1",
 			DataKey: []byte("data1"),
 		}
-		entryByLabel := &encryption.DataKeyCacheEntry{
+		entryByLabel := encryption.DataKeyCacheEntry{
 			Id:      "id2",
 			Label:   "label-only-key",
 			DataKey: []byte("data2"),
@@ -101,7 +101,7 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 	cache := ProvideOSSDataKeyCache(settings)
 
 	namespace := "test-namespace"
-	entry := &encryption.DataKeyCacheEntry{
+	entry := encryption.DataKeyCacheEntry{
 		Id:      "key-123",
 		Label:   "2024-01-01@provider.key1",
 		DataKey: []byte("test-data-key"),
@@ -138,7 +138,7 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 		shortCache := ProvideOSSDataKeyCache(shortTTLSettings)
 
 		namespace := "test-ns"
-		expiredEntry := &encryption.DataKeyCacheEntry{
+		expiredEntry := encryption.DataKeyCacheEntry{
 			Id:      "expired-key",
 			Label:   "expired-label",
 			DataKey: []byte("expired-data"),
@@ -159,7 +159,7 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 		shortCache := ProvideOSSDataKeyCache(shortTTLSettings)
 
 		namespace := "test-ns"
-		expiredEntry := &encryption.DataKeyCacheEntry{
+		expiredEntry := encryption.DataKeyCacheEntry{
 			Id:      "expired-key",
 			Label:   "expired-label",
 			DataKey: []byte("expired-data"),
@@ -178,7 +178,7 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 		testCache := ProvideOSSDataKeyCache(settings).(*ossDataKeyCache)
 
 		// Manually insert an entry with mismatched namespace to test the defensive check
-		mismatchedEntry := &encryption.DataKeyCacheEntry{
+		mismatchedEntry := encryption.DataKeyCacheEntry{
 			Id:         "test-id",
 			Label:      "test-label",
 			DataKey:    []byte("test-data"),
@@ -187,7 +187,7 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 		}
 
 		testCache.mtx.Lock()
-		testCache.byId["correct-namespace"] = map[string]*encryption.DataKeyCacheEntry{
+		testCache.byId["correct-namespace"] = map[string]encryption.DataKeyCacheEntry{
 			mismatchedEntry.Id: mismatchedEntry,
 		}
 		testCache.mtx.Unlock()
@@ -201,7 +201,7 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 		testCache := ProvideOSSDataKeyCache(settings).(*ossDataKeyCache)
 
 		// Manually insert an entry with mismatched namespace to test the defensive check
-		mismatchedEntry := &encryption.DataKeyCacheEntry{
+		mismatchedEntry := encryption.DataKeyCacheEntry{
 			Id:         "test-id",
 			Label:      "test-label",
 			DataKey:    []byte("test-data"),
@@ -210,7 +210,7 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 		}
 
 		testCache.mtx.Lock()
-		testCache.byLabel["correct-namespace"] = map[string]*encryption.DataKeyCacheEntry{
+		testCache.byLabel["correct-namespace"] = map[string]encryption.DataKeyCacheEntry{
 			"test-label": mismatchedEntry,
 		}
 		testCache.mtx.Unlock()
@@ -233,14 +233,14 @@ func TestOSSDataKeyCache_NamespaceIsolation(t *testing.T) {
 	namespace1 := "namespace-1"
 	namespace2 := "namespace-2"
 
-	entry1 := &encryption.DataKeyCacheEntry{
+	entry1 := encryption.DataKeyCacheEntry{
 		Id:      "shared-id",
 		Label:   "shared-label",
 		DataKey: []byte("data-from-ns1"),
 		Active:  true,
 	}
 
-	entry2 := &encryption.DataKeyCacheEntry{
+	entry2 := encryption.DataKeyCacheEntry{
 		Id:      "shared-id",
 		Label:   "shared-label",
 		DataKey: []byte("data-from-ns2"),
@@ -308,7 +308,7 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 		cache := ProvideOSSDataKeyCache(settings)
 
 		namespace := "test-ns"
-		entry := &encryption.DataKeyCacheEntry{
+		entry := encryption.DataKeyCacheEntry{
 			Id:      "expiring-key",
 			Label:   "expiring-label",
 			DataKey: []byte("expiring-data"),
@@ -345,12 +345,12 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 		namespace := "test-ns"
 
 		// Add entries that will expire
-		expiredEntry1 := &encryption.DataKeyCacheEntry{
+		expiredEntry1 := encryption.DataKeyCacheEntry{
 			Id:      "expired-1",
 			Label:   "expired-label-1",
 			DataKey: []byte("expired-data-1"),
 		}
-		expiredEntry2 := &encryption.DataKeyCacheEntry{
+		expiredEntry2 := encryption.DataKeyCacheEntry{
 			Id:      "expired-2",
 			Label:   "expired-label-2",
 			DataKey: []byte("expired-data-2"),
@@ -363,12 +363,12 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 
 		// Add fresh entries
-		freshEntry1 := &encryption.DataKeyCacheEntry{
+		freshEntry1 := encryption.DataKeyCacheEntry{
 			Id:      "fresh-1",
 			Label:   "fresh-label-1",
 			DataKey: []byte("fresh-data-1"),
 		}
-		freshEntry2 := &encryption.DataKeyCacheEntry{
+		freshEntry2 := encryption.DataKeyCacheEntry{
 			Id:      "fresh-2",
 			Label:   "fresh-label-2",
 			DataKey: []byte("fresh-data-2"),
@@ -409,12 +409,12 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 		ns1 := "namespace-1"
 		ns2 := "namespace-2"
 
-		ns1ExpiredEntry := &encryption.DataKeyCacheEntry{
+		ns1ExpiredEntry := encryption.DataKeyCacheEntry{
 			Id:      "expired-key-ns1",
 			Label:   "expired-label-ns1",
 			DataKey: []byte("expired-data"),
 		}
-		ns2ExpiredEntry := &encryption.DataKeyCacheEntry{
+		ns2ExpiredEntry := encryption.DataKeyCacheEntry{
 			Id:      "expired-key-ns2",
 			Label:   "expired-label-ns2",
 			DataKey: []byte("expired-data"),
@@ -427,12 +427,12 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 
 		time.Sleep(100 * time.Millisecond)
 
-		ns1FreshEntry := &encryption.DataKeyCacheEntry{
+		ns1FreshEntry := encryption.DataKeyCacheEntry{
 			Id:      "fresh-key-ns1",
 			Label:   "fresh-label-ns1",
 			DataKey: []byte("fresh-data-ns1"),
 		}
-		ns2FreshEntry := &encryption.DataKeyCacheEntry{
+		ns2FreshEntry := encryption.DataKeyCacheEntry{
 			Id:      "fresh-key-ns2",
 			Label:   "fresh-label-ns2",
 			DataKey: []byte("fresh-data-ns2"),
@@ -487,13 +487,13 @@ func TestOSSDataKeyCache_Flush(t *testing.T) {
 	namespace1 := "namespace-1"
 	namespace2 := "namespace-2"
 
-	entry1 := &encryption.DataKeyCacheEntry{
+	entry1 := encryption.DataKeyCacheEntry{
 		Id:      "key-1",
 		Label:   "label-1",
 		DataKey: []byte("data-1"),
 	}
 
-	entry2 := &encryption.DataKeyCacheEntry{
+	entry2 := encryption.DataKeyCacheEntry{
 		Id:      "key-2",
 		Label:   "label-2",
 		DataKey: []byte("data-2"),
@@ -556,7 +556,7 @@ func TestOSSDataKeyCache_Flush(t *testing.T) {
 		cache.Flush(namespace1)
 
 		// Add new entry after flush
-		newEntry := &encryption.DataKeyCacheEntry{
+		newEntry := encryption.DataKeyCacheEntry{
 			Id:      "new-key",
 			Label:   "new-label",
 			DataKey: []byte("new-data"),

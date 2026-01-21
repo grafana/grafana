@@ -12,20 +12,20 @@ import (
 
 type ossDataKeyCache struct {
 	mtx      sync.RWMutex
-	byId     map[string]map[string]*encryption.DataKeyCacheEntry
-	byLabel  map[string]map[string]*encryption.DataKeyCacheEntry
+	byId     map[string]map[string]encryption.DataKeyCacheEntry
+	byLabel  map[string]map[string]encryption.DataKeyCacheEntry
 	cacheTTL time.Duration
 }
 
 func ProvideOSSDataKeyCache(cfg *setting.Cfg) encryption.DataKeyCache {
 	return &ossDataKeyCache{
-		byId:     make(map[string]map[string]*encryption.DataKeyCacheEntry),
-		byLabel:  make(map[string]map[string]*encryption.DataKeyCacheEntry),
+		byId:     make(map[string]map[string]encryption.DataKeyCacheEntry),
+		byLabel:  make(map[string]map[string]encryption.DataKeyCacheEntry),
 		cacheTTL: cfg.SecretsManagement.DataKeysCacheTTL,
 	}
 }
 
-func (c *ossDataKeyCache) GetById(namespace, id string) (_ *encryption.DataKeyCacheEntry, exists bool) {
+func (c *ossDataKeyCache) GetById(namespace, id string) (_ encryption.DataKeyCacheEntry, exists bool) {
 	defer func() {
 		cacheReadsCounter.With(prometheus.Labels{
 			"hit":    strconv.FormatBool(exists),
@@ -33,22 +33,24 @@ func (c *ossDataKeyCache) GetById(namespace, id string) (_ *encryption.DataKeyCa
 		}).Inc()
 	}()
 
+	var entry encryption.DataKeyCacheEntry
+
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 
 	entries, exists := c.byId[namespace]
 	if !exists {
-		return nil, false
+		return entry, false
 	}
-	entry, exists := entries[id]
+	entry, exists = entries[id]
 	if !exists || entry.IsExpired() || entry.Namespace != namespace {
-		return nil, false
+		return entry, false
 	}
 
 	return entry, true
 }
 
-func (c *ossDataKeyCache) GetByLabel(namespace, label string) (_ *encryption.DataKeyCacheEntry, exists bool) {
+func (c *ossDataKeyCache) GetByLabel(namespace, label string) (_ encryption.DataKeyCacheEntry, exists bool) {
 	defer func() {
 		cacheReadsCounter.With(prometheus.Labels{
 			"hit":    strconv.FormatBool(exists),
@@ -56,22 +58,24 @@ func (c *ossDataKeyCache) GetByLabel(namespace, label string) (_ *encryption.Dat
 		}).Inc()
 	}()
 
+	var entry encryption.DataKeyCacheEntry
+
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 
 	entries, exists := c.byLabel[namespace]
 	if !exists {
-		return nil, false
+		return entry, false
 	}
-	entry, exists := entries[label]
+	entry, exists = entries[label]
 	if !exists || entry.IsExpired() || entry.Namespace != namespace {
-		return nil, false
+		return entry, false
 	}
 
 	return entry, true
 }
 
-func (c *ossDataKeyCache) AddById(namespace string, entry *encryption.DataKeyCacheEntry) {
+func (c *ossDataKeyCache) AddById(namespace string, entry encryption.DataKeyCacheEntry) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -80,13 +84,13 @@ func (c *ossDataKeyCache) AddById(namespace string, entry *encryption.DataKeyCac
 
 	entries, exists := c.byId[namespace]
 	if !exists {
-		entries = make(map[string]*encryption.DataKeyCacheEntry)
+		entries = make(map[string]encryption.DataKeyCacheEntry)
 		c.byId[namespace] = entries
 	}
 	entries[entry.Id] = entry
 }
 
-func (c *ossDataKeyCache) AddByLabel(namespace string, entry *encryption.DataKeyCacheEntry) {
+func (c *ossDataKeyCache) AddByLabel(namespace string, entry encryption.DataKeyCacheEntry) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -95,7 +99,7 @@ func (c *ossDataKeyCache) AddByLabel(namespace string, entry *encryption.DataKey
 
 	entries, exists := c.byLabel[namespace]
 	if !exists {
-		entries = make(map[string]*encryption.DataKeyCacheEntry)
+		entries = make(map[string]encryption.DataKeyCacheEntry)
 		c.byLabel[namespace] = entries
 	}
 	entries[entry.Label] = entry
@@ -124,7 +128,7 @@ func (c *ossDataKeyCache) RemoveExpired() {
 
 func (c *ossDataKeyCache) Flush(namespace string) {
 	c.mtx.Lock()
-	c.byId[namespace] = make(map[string]*encryption.DataKeyCacheEntry)
-	c.byLabel[namespace] = make(map[string]*encryption.DataKeyCacheEntry)
+	c.byId[namespace] = make(map[string]encryption.DataKeyCacheEntry)
+	c.byLabel[namespace] = make(map[string]encryption.DataKeyCacheEntry)
 	c.mtx.Unlock()
 }

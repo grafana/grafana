@@ -10,17 +10,17 @@ func ProvideNoopDataKeyCache() encryption.DataKeyCache {
 	return &noopDataKeyCache{}
 }
 
-func (c *noopDataKeyCache) GetById(_ string, _ string) (*encryption.DataKeyCacheEntry, bool) {
-	return nil, false
+func (c *noopDataKeyCache) GetById(_ string, _ string) (encryption.DataKeyCacheEntry, bool) {
+	return encryption.DataKeyCacheEntry{}, false
 }
 
-func (c *noopDataKeyCache) GetByLabel(_ string, _ string) (*encryption.DataKeyCacheEntry, bool) {
-	return nil, false
+func (c *noopDataKeyCache) GetByLabel(_ string, _ string) (encryption.DataKeyCacheEntry, bool) {
+	return encryption.DataKeyCacheEntry{}, false
 }
 
-func (c *noopDataKeyCache) AddById(_ string, _ *encryption.DataKeyCacheEntry) {}
+func (c *noopDataKeyCache) AddById(_ string, _ encryption.DataKeyCacheEntry) {}
 
-func (c *noopDataKeyCache) AddByLabel(_ string, _ *encryption.DataKeyCacheEntry) {}
+func (c *noopDataKeyCache) AddByLabel(_ string, _ encryption.DataKeyCacheEntry) {}
 
 func (c *noopDataKeyCache) RemoveExpired() {}
 

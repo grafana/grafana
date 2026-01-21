@@ -13,7 +13,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -364,22 +363,15 @@ func (s *EncryptionManager) FlushCache(namespace xkube.Namespace) {
 func (s *EncryptionManager) Run(ctx context.Context) error {
 	gc := time.NewTicker(s.cfg.SecretsManagement.DataKeysCacheCleanupInterval)
 
-	grp, gCtx := errgroup.WithContext(ctx)
-
 	for {
 		select {
 		case <-gc.C:
 			s.log.Debug("Removing expired data keys from cache...")
 			s.dataKeyCache.RemoveExpired()
 			s.log.Debug("Removing expired data keys from cache finished successfully")
-		case <-gCtx.Done():
+		case <-ctx.Done():
 			s.log.Debug("Grafana is shutting down; stopping...")
 			gc.Stop()
-
-			if err := grp.Wait(); err != nil && !errors.Is(err, context.Canceled) {
-				return err
-			}
-
 			return nil
 		}
 	}
@@ -407,7 +399,7 @@ func (s *EncryptionManager) Run(ctx context.Context) error {
 func (s *EncryptionManager) cacheDataKey(namespace string, dataKey *contracts.SecretDataKey, decrypted []byte) {
 	// First, we cache the data key by id, because cache "by id" is
 	// only used by decrypt operations, so no risk of corrupting data.
-	entry := &encryption.DataKeyCacheEntry{
+	entry := encryption.DataKeyCacheEntry{
 		Namespace: namespace,
 		Id:        dataKey.UID,
 		Label:     dataKey.Label,
