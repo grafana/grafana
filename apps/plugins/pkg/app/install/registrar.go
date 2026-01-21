@@ -23,16 +23,21 @@ const (
 )
 
 type PluginInstall struct {
-	ID      string
-	Version string
-	URL     string
-	Source  Source
+	ID       string
+	Version  string
+	URL      string
+	Source   Source
+	ParentID string
 }
 
 func (p *PluginInstall) ToPluginInstallV0Alpha1(namespace string) *pluginsv0alpha1.Plugin {
 	var url *string = nil
 	if p.URL != "" {
 		url = &p.URL
+	}
+	var parentID *string = nil
+	if p.ParentID != "" {
+		parentID = &p.ParentID
 	}
 	return &pluginsv0alpha1.Plugin{
 		ObjectMeta: metav1.ObjectMeta{
@@ -43,9 +48,10 @@ func (p *PluginInstall) ToPluginInstallV0Alpha1(namespace string) *pluginsv0alph
 			},
 		},
 		Spec: pluginsv0alpha1.PluginSpec{
-			Id:      p.ID,
-			Version: p.Version,
-			Url:     url,
+			Id:       p.ID,
+			Version:  p.Version,
+			Url:      url,
+			ParentId: parentID,
 		},
 	}
 }
@@ -59,6 +65,9 @@ func (p *PluginInstall) ShouldUpdate(existing *pluginsv0alpha1.Plugin) bool {
 		return true
 	}
 	if !equalStringPointers(existing.Spec.Url, update.Spec.Url) {
+		return true
+	}
+	if !equalStringPointers(existing.Spec.ParentId, update.Spec.ParentId) {
 		return true
 	}
 	return false
