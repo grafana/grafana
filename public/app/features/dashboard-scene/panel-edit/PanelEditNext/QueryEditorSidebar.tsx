@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -15,7 +16,10 @@ interface QueryEditorSidebarProps {
   setSidebarSize: (size: SidebarSize) => void;
 }
 
-export function QueryEditorSidebar({ sidebarSize, setSidebarSize }: QueryEditorSidebarProps) {
+export const QueryEditorSidebar = memo(function QueryEditorSidebar({
+  sidebarSize,
+  setSidebarSize,
+}: QueryEditorSidebarProps) {
   const styles = useStyles2(getStyles);
   const isMini = sidebarSize === SidebarSize.Mini;
 
@@ -42,7 +46,7 @@ export function QueryEditorSidebar({ sidebarSize, setSidebarSize }: QueryEditorS
       </div>
     </div>
   );
-}
+});
 
 function getStyles(theme: GrafanaTheme2) {
   return {
