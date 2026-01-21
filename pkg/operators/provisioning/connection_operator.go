@@ -64,12 +64,14 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("failed to setup connection factory: %w", err)
 	}
 	tester := connection.NewSimpleConnectionTester(connectionFactory)
+	healthMetrics := controller.NewHealthMetricsRecorder(deps.Registerer)
+	healthChecker := controller.NewConnectionHealthChecker(statusPatcher, tester, healthMetrics)
 
 	connController, err := controller.NewConnectionController(
 		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
 		connInformer,
 		statusPatcher,
-		tester,
+		healthChecker,
 		connectionFactory,
 	)
 	if err != nil {
