@@ -1,10 +1,6 @@
 import { locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import {
-  AnnotationQueryKind,
-  Spec as DashboardV2Spec,
-  defaultDataQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { AnnotationQueryKind, Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -37,7 +33,7 @@ export function ImportDashboardOverviewV2() {
       ...dashboard,
       title: form.dashboard.title,
       annotations: dashboard.annotations?.map((annotation: AnnotationQueryKind) => {
-        const dsType = annotation.spec.query?.spec.group;
+        const dsType = annotation.spec.query?.group;
         if (dsType) {
           if (form[`datasource-${dsType}` as keyof typeof form]) {
             const ds = form[`datasource-${dsType}` as keyof typeof form] as { uid: string; type: string };
@@ -46,13 +42,8 @@ export function ImportDashboardOverviewV2() {
               spec: {
                 ...annotation.spec,
                 query: {
-                  kind: 'DataQuery',
-                  group: dsType,
-                  version: defaultDataQueryKind().version,
+                  ...annotation.spec.query,
                   datasource: { name: ds.uid },
-                  spec: {
-                    ...annotation.spec.query?.spec,
-                  },
                 },
               },
             };
@@ -62,7 +53,7 @@ export function ImportDashboardOverviewV2() {
       }),
       variables: dashboard.variables?.map((variable) => {
         if (variable.kind === 'QueryVariable') {
-          const dsType = variable.spec.query?.spec.group;
+          const dsType = variable.spec.query?.group;
           if (dsType) {
             if (form[`datasource-${dsType}` as keyof typeof form]) {
               const ds = form[`datasource-${dsType}` as keyof typeof form] as { uid: string; type: string };
@@ -72,12 +63,8 @@ export function ImportDashboardOverviewV2() {
                   ...variable.spec,
                   query: {
                     ...variable.spec.query,
-                    spec: {
-                      ...variable.spec.query.spec,
-                      group: ds.type,
-                      datasource: {
-                        name: ds.uid,
-                      },
+                    datasource: {
+                      name: ds.uid,
                     },
                   },
                   options: [],
@@ -119,17 +106,19 @@ export function ImportDashboardOverviewV2() {
             if (panel.data?.kind === 'QueryGroup') {
               const newQueries = panel.data.spec.queries.map((query) => {
                 if (query.kind === 'PanelQuery') {
-                  const queryType = query.spec.query?.kind;
-                  // Match datasource by query kind
+                  const queryType = query.spec.query?.group;
+                  // Match datasource by query group
                   if (queryType && form[`datasource-${queryType}` as keyof typeof form]) {
                     const ds = form[`datasource-${queryType}` as keyof typeof form] as { uid: string; type: string };
                     return {
                       ...query,
                       spec: {
                         ...query.spec,
-                        datasource: {
-                          uid: ds.uid,
-                          type: ds.type,
+                        query: {
+                          ...query.spec.query,
+                          datasource: {
+                            name: ds.uid,
+                          },
                         },
                       },
                     };
