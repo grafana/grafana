@@ -13,8 +13,6 @@ import {
   GrafanaRuleIdentifier,
   PromRuleWithLocation,
   PrometheusRuleIdentifier,
-  RecordingRule,
-  Rule,
   RuleGroupIdentifier,
   RuleIdentifier,
   RuleNamespace,
@@ -26,12 +24,14 @@ import {
   GrafanaAlertState,
   GrafanaAlertStateWithReason,
   GrafanaAlertingRuleDefinition,
-  GrafanaPromAlertingRuleDTO,
-  GrafanaPromRecordingRuleDTO,
+  GrafanaPromAlertingRuleCompact,
+  GrafanaPromRecordingRuleCompact,
   GrafanaRecordingRuleDefinition,
   PostableRuleDTO,
+  PromAlertingRuleCompact,
   PromAlertingRuleState,
-  PromRuleDTO,
+  PromRecordingRuleCompact,
+  PromRuleCompact,
   PromRuleType,
   RulerAlertingRuleDTO,
   RulerCloudRuleDTO,
@@ -55,16 +55,18 @@ import { formatPrometheusDuration, safeParsePrometheusDuration } from './time';
 
 /* Grafana managed rules */
 
-function isGrafanaRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerGrafanaRuleDTO {
+function isGrafanaRulerRule(
+  rule?: RulerRuleDTO | PostableRuleDTO
+): rule is RulerGrafanaRuleDTO<GrafanaAlertingRuleDefinition> | RulerGrafanaRuleDTO<GrafanaRecordingRuleDefinition> {
   return typeof rule === 'object' && 'grafana_alert' in rule;
-}
-
-function isGrafanaAlertingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO<GrafanaAlertingRuleDefinition> {
-  return isGrafanaRulerRule(rule) && !isGrafanaRecordingRule(rule);
 }
 
 function isGrafanaRecordingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO<GrafanaRecordingRuleDefinition> {
   return isGrafanaRulerRule(rule) && 'record' in rule.grafana_alert;
+}
+
+function isGrafanaAlertingRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO<GrafanaAlertingRuleDefinition> {
+  return isGrafanaRulerRule(rule) && !('record' in rule.grafana_alert);
 }
 
 export function isPausedRule(rule: RulerGrafanaRuleDTO) {
@@ -92,20 +94,24 @@ export function isCloudRulerGroup(
 
 /* Prometheus rules */
 
-function isAlertingRule(rule?: Rule): rule is AlertingRule {
-  return typeof rule === 'object' && rule.type === PromRuleType.Alerting;
+function isAlertingRule<T extends PromRuleCompact>(rule?: T): rule is T & PromAlertingRuleCompact {
+  return typeof rule === 'object' && !!rule && rule.type === PromRuleType.Alerting;
 }
 
-function isRecordingRule(rule?: Rule): rule is RecordingRule {
-  return typeof rule === 'object' && rule.type === PromRuleType.Recording;
+function isRecordingRule<T extends PromRuleCompact>(rule?: T): rule is T & PromRecordingRuleCompact {
+  return typeof rule === 'object' && !!rule && rule.type === PromRuleType.Recording;
 }
 
-function isGrafanaPromAlertingRule(rule?: Rule): rule is GrafanaPromAlertingRuleDTO {
-  return isAlertingRule(rule) && 'folderUid' in rule && 'uid' in rule;
+function isGrafanaPromAlertingRule<T extends PromRuleCompact>(rule?: T): rule is T & GrafanaPromAlertingRuleCompact {
+  return (
+    typeof rule === 'object' && !!rule && rule.type === PromRuleType.Alerting && 'folderUid' in rule && 'uid' in rule
+  );
 }
 
-function isGrafanaPromRecordingRule(rule?: Rule): rule is GrafanaPromRecordingRuleDTO {
-  return isRecordingRule(rule) && 'folderUid' in rule && 'uid' in rule;
+function isGrafanaPromRecordingRule<T extends PromRuleCompact>(rule?: T): rule is T & GrafanaPromRecordingRuleCompact {
+  return (
+    typeof rule === 'object' && !!rule && rule.type === PromRuleType.Recording && 'folderUid' in rule && 'uid' in rule
+  );
 }
 
 export const rulerRuleType = {
@@ -127,11 +133,11 @@ export const rulerRuleType = {
 };
 
 export const prometheusRuleType = {
-  rule: (rule?: Rule) => isAlertingRule(rule) || isRecordingRule(rule),
-  alertingRule: isAlertingRule,
-  recordingRule: isRecordingRule,
+  rule: <T extends PromRuleCompact>(rule?: T) => isAlertingRule(rule) || isRecordingRule(rule),
+  alertingRule: <T extends PromRuleCompact>(rule?: T) => isAlertingRule(rule),
+  recordingRule: <T extends PromRuleCompact>(rule?: T) => isRecordingRule(rule),
   grafana: {
-    rule: (rule?: Rule) => isGrafanaPromAlertingRule(rule) || isGrafanaPromRecordingRule(rule),
+    rule: <T extends PromRuleCompact>(rule?: T) => isGrafanaPromAlertingRule(rule) || isGrafanaPromRecordingRule(rule),
     alertingRule: isGrafanaPromAlertingRule,
     recordingRule: isGrafanaPromRecordingRule,
   },
@@ -169,7 +175,7 @@ export function isProvisionedRule(rulerRule: RulerRuleDTO): boolean {
   return isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
 }
 
-export function isProvisionedPromRule(promRule: PromRuleDTO): boolean {
+export function isProvisionedPromRule(promRule: PromRuleCompact): boolean {
   return prometheusRuleType.grafana.rule(promRule) && Boolean(promRule.provenance);
 }
 
@@ -247,7 +253,7 @@ export interface RulePluginOrigin {
   pluginId: string;
 }
 
-export function getRulePluginOrigin(rule?: Rule | PromRuleDTO | RulerRuleDTO): RulePluginOrigin | undefined {
+export function getRulePluginOrigin(rule?: PromRuleCompact | RulerRuleDTO): RulePluginOrigin | undefined {
   if (!rule) {
     return undefined;
   }
@@ -276,11 +282,7 @@ function isPluginInstalled(pluginId: string) {
   return Boolean(config.apps[pluginId]);
 }
 
-export function isPluginProvidedGroup(group: RulerRuleGroupDTO): boolean {
-  return group.rules.some((rule) => isPluginProvidedRule(rule));
-}
-
-export function isPluginProvidedRule(rule?: Rule | PromRuleDTO | RulerRuleDTO): boolean {
+export function isPluginProvidedRule(rule?: PromRuleCompact | RulerRuleDTO): boolean {
   return Boolean(getRulePluginOrigin(rule));
 }
 
@@ -548,16 +550,20 @@ export function isDataSourceManagedRuleByType(type?: RuleFormType) {
 /*
  * Grab the UID from either a rulerRule definition or a Prometheus rule definition, only Grafana-managed rules will have a UID.
  */
-export function getRuleUID(rule?: RulerRuleDTO | Rule) {
+export function getRuleUID(rule?: RulerRuleDTO | PromRuleCompact) {
   if (!rule) {
     return;
   }
 
   let ruleUid: string | undefined;
 
+  // Check if it's a Ruler rule with grafana_alert
   if ('grafana_alert' in rule && rulerRuleType.grafana.rule(rule)) {
     ruleUid = rule.grafana_alert.uid;
-  } else if ('uid' in rule && prometheusRuleType.grafana.rule(rule)) {
+  }
+  // Check if it's NOT a RulerRuleDTO (which has 'expr' but not 'type')
+  // PromRuleCompact has 'type'
+  else if ('type' in rule && prometheusRuleType.grafana.rule(rule)) {
     ruleUid = rule.uid;
   }
 

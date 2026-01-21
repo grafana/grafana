@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { MergeExclusive } from 'type-fest';
 
 import { DataSourceRulesSourceIdentifier, RuleHealth } from 'app/types/unified-alerting';
-import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleGroupDTO, PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { PromRulesResponse, prometheusApi, usePopulateGrafanaPrometheusApiCache } from '../../api/prometheusApi';
 
@@ -124,7 +124,7 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
  * @param generator - The paginated generator to convert
  * @returns A non-paginated generator that yields all groups from the original generator one by one
  */
-export function toIndividualRuleGroups<TGroup extends PromRuleGroupDTO>(
+export function toIndividualRuleGroups<TGroup extends PromRuleGroupDTO | GrafanaPromRuleGroupDTO>(
   generator: AsyncGenerator<TGroup[], void, unknown>
 ): AsyncGenerator<TGroup, void, unknown> {
   return (async function* () {

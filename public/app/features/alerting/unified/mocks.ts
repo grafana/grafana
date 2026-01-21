@@ -47,6 +47,7 @@ import {
   GrafanaAlertState,
   GrafanaAlertStateDecision,
   GrafanaPromAlertingRuleDTO,
+  GrafanaPromRecordingRuleDTO,
   GrafanaRuleDefinition,
   PromAlertingRuleState,
   PromRuleType,
@@ -237,6 +238,26 @@ export const mockGrafanaPromAlertingRule = (
     isPaused: false,
     totals: { alerting: 1 },
     totalsFiltered: { alerting: 1 },
+    ...partial,
+  };
+};
+
+export const mockGrafanaPromRecordingRule = (
+  partial: Partial<GrafanaPromRecordingRuleDTO> = {}
+): GrafanaPromRecordingRuleDTO => {
+  return {
+    type: PromRuleType.Recording,
+    health: 'OK',
+    name: 'myrecordingrule',
+    query: 'bar < 3',
+    labels: {
+      cluster: 'eu-central',
+    },
+    lastEvaluation: '2021-03-23T08:19:05.049595312Z',
+    evaluationTime: 0.000395601,
+    uid: 'mock-recording-rule-uid-456',
+    folderUid: 'NAMESPACE_UID',
+    isPaused: false,
     ...partial,
   };
 };

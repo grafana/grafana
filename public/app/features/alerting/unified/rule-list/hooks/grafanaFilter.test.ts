@@ -1,9 +1,9 @@
 import { testWithFeatureToggles } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
-import { PromAlertingRuleState, PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleGroupDTO, PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { mockGrafanaPromAlertingRule, mockPromRecordingRule } from '../../mocks';
+import { mockGrafanaPromAlertingRule, mockGrafanaPromRecordingRule } from '../../mocks';
 import { RuleHealth } from '../../search/rulesSearchParser';
 import { pluginMeta, pluginMetaToPluginConfig } from '../../testSetup/plugins';
 import { SupportedPlugin } from '../../types/pluginBridges';
@@ -30,11 +30,12 @@ getDatasourceAPIUidMock.mockImplementation((ruleSourceName) => {
 describe('grafana-managed rules', () => {
   describe('groupFilter', () => {
     it('should filter by namespace (file path)', () => {
-      const group: PromRuleGroupDTO = {
+      const group: GrafanaPromRuleGroupDTO = {
         name: 'Test Group',
         file: 'production/alerts',
         rules: [],
         interval: 60,
+        folderUid: 'test-folder-uid',
       };
 
       const { frontendFilter } = getGrafanaFilter(getFilter({ namespace: 'production' }));
@@ -45,11 +46,12 @@ describe('grafana-managed rules', () => {
     });
 
     it('should filter by group name', () => {
-      const group: PromRuleGroupDTO = {
+      const group: GrafanaPromRuleGroupDTO = {
         name: 'CPU Usage Alerts',
         file: 'production/alerts',
         rules: [],
         interval: 60,
+        folderUid: 'test-folder-uid',
       };
 
       const { frontendFilter } = getGrafanaFilter(getFilter({ groupName: 'cpu' }));
@@ -60,11 +62,12 @@ describe('grafana-managed rules', () => {
     });
 
     it('should return true when no filters are applied', () => {
-      const group: PromRuleGroupDTO = {
+      const group: GrafanaPromRuleGroupDTO = {
         name: 'Test Group',
         file: 'production/alerts',
         rules: [],
         interval: 60,
+        folderUid: 'test-folder-uid',
       };
 
       const { frontendFilter } = getGrafanaFilter(getFilter({}));
@@ -111,7 +114,7 @@ describe('grafana-managed rules', () => {
 
     it('should filter by rule type', () => {
       const alertingRule = mockGrafanaPromAlertingRule({ name: 'Test Alert' });
-      const recordingRule = mockPromRecordingRule({ name: 'Test Recording' });
+      const recordingRule = mockGrafanaPromRecordingRule({ name: 'Test Recording' });
 
       const { frontendFilter } = getGrafanaFilter(getFilter({ ruleType: PromRuleType.Alerting }));
       expect(frontendFilter.ruleMatches(alertingRule)).toBe(true);
@@ -363,7 +366,7 @@ describe('grafana-managed rules', () => {
 
       it('should skip ruleType filtering on frontend when backend filtering is enabled', () => {
         const alertingRule = mockGrafanaPromAlertingRule({ name: 'Test Alert' });
-        const recordingRule = mockPromRecordingRule({ name: 'Test Recording' });
+        const recordingRule = mockGrafanaPromRecordingRule({ name: 'Test Recording' });
 
         const { frontendFilter } = getGrafanaFilter(getFilter({ ruleType: PromRuleType.Alerting }));
         // Should return true for both because ruleType filter is null (handled by backend)
@@ -407,11 +410,12 @@ describe('grafana-managed rules', () => {
       });
 
       it('should skip groupName filtering on frontend when backend filtering is enabled', () => {
-        const group: PromRuleGroupDTO = {
+        const group: GrafanaPromRuleGroupDTO = {
           name: 'CPU Usage Alerts',
           file: 'production/alerts',
           rules: [],
           interval: 60,
+          folderUid: 'test-folder-uid',
         };
 
         const { frontendFilter } = getGrafanaFilter(getFilter({ groupName: 'memory' }));
@@ -463,11 +467,12 @@ describe('grafana-managed rules', () => {
       });
 
       it('should skip namespace filtering on frontend when backend filtering is enabled', () => {
-        const group: PromRuleGroupDTO = {
+        const group: GrafanaPromRuleGroupDTO = {
           name: 'Test Group',
           file: 'production/alerts',
           rules: [],
           interval: 60,
+          folderUid: 'test-folder-uid',
         };
 
         const { frontendFilter } = getGrafanaFilter(getFilter({ namespace: 'staging' }));
@@ -513,7 +518,7 @@ describe('grafana-managed rules', () => {
 
       it('should perform ruleType filtering on frontend', () => {
         const alertingRule = mockGrafanaPromAlertingRule({ name: 'Test Alert' });
-        const recordingRule = mockPromRecordingRule({ name: 'Test Recording' });
+        const recordingRule = mockGrafanaPromRecordingRule({ name: 'Test Recording' });
 
         const { frontendFilter } = getGrafanaFilter(getFilter({ ruleType: PromRuleType.Alerting }));
         expect(frontendFilter.ruleMatches(alertingRule)).toBe(true);
@@ -563,11 +568,12 @@ describe('grafana-managed rules', () => {
       });
 
       it('should perform groupName filtering on frontend', () => {
-        const group: PromRuleGroupDTO = {
+        const group: GrafanaPromRuleGroupDTO = {
           name: 'CPU Usage Alerts',
           file: 'production/alerts',
           rules: [],
           interval: 60,
+          folderUid: 'test-folder-uid',
         };
 
         const { frontendFilter } = getGrafanaFilter(getFilter({ groupName: 'cpu' }));
@@ -613,7 +619,7 @@ describe('grafana-managed rules', () => {
           annotations: { [Annotation.dashboardUID]: 'dashboard-a' },
           alerts: [],
         });
-        const recordingRule = mockPromRecordingRule({ name: 'Test Recording' });
+        const recordingRule = mockGrafanaPromRecordingRule({ name: 'Test Recording' });
 
         // Backend-handled filters (ruleType, dashboardUid) should skip frontend filtering
         const { frontendFilter: backendHandledFilter } = getGrafanaFilter(
@@ -636,11 +642,12 @@ describe('grafana-managed rules', () => {
         expect(ruleNameNoMatch.ruleMatches(alertingRule)).toBe(false);
 
         // Group name filtering
-        const group: PromRuleGroupDTO = {
+        const group: GrafanaPromRuleGroupDTO = {
           name: 'CPU Usage Alerts',
           file: 'production/alerts',
           rules: [],
           interval: 60,
+          folderUid: 'test-folder-uid',
         };
 
         const { frontendFilter: groupMatch } = getGrafanaFilter(getFilter({ groupName: 'cpu' }));
@@ -702,7 +709,7 @@ describe('grafana-managed rules', () => {
           name: 'High CPU Usage',
           annotations: { [Annotation.dashboardUID]: 'dashboard-a' },
         });
-        const recordingRule = mockPromRecordingRule({ name: 'Test Recording' });
+        const recordingRule = mockGrafanaPromRecordingRule({ name: 'Test Recording' });
 
         const { frontendFilter } = getGrafanaFilter(
           getFilter({
@@ -719,11 +726,12 @@ describe('grafana-managed rules', () => {
       });
 
       it('should skip groupName filtering on frontend', () => {
-        const group: PromRuleGroupDTO = {
+        const group: GrafanaPromRuleGroupDTO = {
           name: 'CPU Usage Alerts',
           file: 'production/alerts',
           rules: [],
           interval: 60,
+          folderUid: 'test-folder-uid',
         };
 
         const { frontendFilter } = getGrafanaFilter(getFilter({ groupName: 'memory' }));
@@ -733,11 +741,12 @@ describe('grafana-managed rules', () => {
 
       it('should skip namespace filtering on frontend', () => {
         // Namespace filter should be handled by backend
-        const group: PromRuleGroupDTO = {
+        const group: GrafanaPromRuleGroupDTO = {
           name: 'Test Group',
           file: 'production/alerts',
           rules: [],
           interval: 60,
+          folderUid: 'test-folder-uid',
         };
 
         const { frontendFilter: nsFilter } = getGrafanaFilter(getFilter({ namespace: 'production' }));

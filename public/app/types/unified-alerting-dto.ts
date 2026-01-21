@@ -118,24 +118,26 @@ export interface AlertmanagerApiFeatures {
   lazyConfigInit: boolean;
 }
 
-interface PromRuleDTOBase {
+// ============================================
+// Compact interfaces (without query field)
+// These are the base types that all rule types extend
+// ============================================
+
+// Base compact - common fields for ALL prometheus-style rules
+interface PromRuleCompactBase {
   health: string;
   name: string;
-  query: string; // expr
   evaluationTime?: number;
   lastEvaluation?: string;
   lastError?: string;
 }
 
-interface GrafanaPromRuleDTOBase extends PromRuleDTOBase {
-  uid: string;
-  folderUid: string;
-  isPaused: boolean;
-  queriedDatasourceUIDs?: string[];
-  provenance?: string;
-}
-
-export interface PromAlertingRuleDTO extends PromRuleDTOBase {
+// Alerting rule compact - base for all alerting rules
+export interface PromAlertingRuleCompact extends PromRuleCompactBase {
+  type: PromRuleType.Alerting;
+  state: PromAlertingRuleState;
+  labels?: Labels;
+  annotations?: Annotations;
   alerts?: Array<{
     labels: Labels;
     annotations: Annotations;
@@ -143,23 +145,78 @@ export interface PromAlertingRuleDTO extends PromRuleDTOBase {
     activeAt: string;
     value: string;
   }>;
-  labels?: Labels;
-  annotations?: Annotations;
-  duration?: number; // for
-  state: PromAlertingRuleState;
-  type: PromRuleType.Alerting;
+  duration?: number;
   notificationSettings?: GrafanaNotificationSettings;
 }
 
-export interface PromRecordingRuleDTO extends PromRuleDTOBase {
-  health: string;
-  name: string;
-  query: string; // expr
+// Recording rule compact - base for all recording rules
+export interface PromRecordingRuleCompact extends PromRuleCompactBase {
   type: PromRuleType.Recording;
   labels?: Labels;
 }
 
+// Union of alerting and recording compact rules
+export type PromRuleCompact = PromAlertingRuleCompact | PromRecordingRuleCompact;
+
+// ============================================
+// Full DTO interfaces (with query field)
+// These extend the compact types and add the query field
+// ============================================
+
+// Prometheus alerting rule DTO - adds query to compact
+export interface PromAlertingRuleDTO extends PromAlertingRuleCompact {
+  query: string; // expr
+}
+
+// Prometheus recording rule DTO - adds query to compact
+export interface PromRecordingRuleDTO extends PromRecordingRuleCompact {
+  query: string; // expr
+}
+
 export type PromRuleDTO = PromAlertingRuleDTO | PromRecordingRuleDTO;
+
+// ============================================
+// Grafana-managed rule interfaces
+// ============================================
+
+// Grafana alerting rule compact - extends PromAlertingRuleCompact
+export interface GrafanaPromAlertingRuleCompact extends PromAlertingRuleCompact {
+  uid: string;
+  folderUid: string;
+  isPaused: boolean;
+  queriedDatasourceUIDs?: string[];
+  provenance?: string;
+  totals: AlertInstanceTotals;
+  totalsFiltered: AlertInstanceTotals;
+}
+
+// Grafana recording rule compact - extends PromRecordingRuleCompact
+export interface GrafanaPromRecordingRuleCompact extends PromRecordingRuleCompact {
+  uid: string;
+  folderUid: string;
+  isPaused: boolean;
+  queriedDatasourceUIDs?: string[];
+  provenance?: string;
+}
+
+// Union of Grafana compact rules
+export type GrafanaPromRuleCompact = GrafanaPromAlertingRuleCompact | GrafanaPromRecordingRuleCompact;
+
+// Grafana alerting rule DTO - adds optional query to compact
+export interface GrafanaPromAlertingRuleDTO extends GrafanaPromAlertingRuleCompact {
+  query?: string; // Optional - omitted when compact=true
+}
+
+// Grafana recording rule DTO - adds optional query to compact
+export interface GrafanaPromRecordingRuleDTO extends GrafanaPromRecordingRuleCompact {
+  query?: string; // Optional - omitted when compact=true
+}
+
+export type GrafanaPromRuleDTO = GrafanaPromAlertingRuleDTO | GrafanaPromRecordingRuleDTO;
+
+// ============================================
+// Rule group interfaces
+// ============================================
 
 export interface PromRuleGroupDTO<TRule = PromRuleDTO> {
   name: string;
@@ -170,15 +227,6 @@ export interface PromRuleGroupDTO<TRule = PromRuleDTO> {
   evaluationTime?: number; // these 2 are not in older prometheus payloads
   lastEvaluation?: string;
 }
-
-export interface GrafanaPromAlertingRuleDTO extends GrafanaPromRuleDTOBase, PromAlertingRuleDTO {
-  totals: AlertInstanceTotals;
-  totalsFiltered: AlertInstanceTotals;
-}
-
-export interface GrafanaPromRecordingRuleDTO extends GrafanaPromRuleDTOBase, PromRecordingRuleDTO {}
-
-export type GrafanaPromRuleDTO = GrafanaPromAlertingRuleDTO | GrafanaPromRecordingRuleDTO;
 
 export interface GrafanaPromRuleGroupDTO extends PromRuleGroupDTO<GrafanaPromRuleDTO> {
   folderUid: string;
@@ -317,7 +365,10 @@ export type PostableRuleGrafanaRuleDTO = RulerGrafanaRuleDTO<PostableGrafanaRule
 
 export type RulerCloudRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO;
 
-export type RulerRuleDTO = RulerCloudRuleDTO | RulerGrafanaRuleDTO;
+export type RulerRuleDTO =
+  | RulerCloudRuleDTO
+  | RulerGrafanaRuleDTO<GrafanaAlertingRuleDefinition>
+  | RulerGrafanaRuleDTO<GrafanaRecordingRuleDefinition>;
 export type PostableRuleDTO = RulerCloudRuleDTO | PostableRuleGrafanaRuleDTO;
 
 export type RulerRuleGroupDTO<R = RulerRuleDTO> = {

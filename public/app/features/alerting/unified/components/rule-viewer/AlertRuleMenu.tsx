@@ -1,4 +1,5 @@
 import { PropsOf } from '@emotion/react';
+import { useCallback } from 'react';
 
 import { useAssistant } from '@grafana/assistant';
 import { AppEvents } from '@grafana/data';
@@ -8,10 +9,10 @@ import { Button, ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
-import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';
-import { EditableRuleIdentifier, Rule, RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
-import { PromAlertingRuleState, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { EditableRuleIdentifier, RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
+import { PromAlertingRuleState, PromRuleCompact, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { alertRuleApi } from '../../api/alertRuleApi';
 import {
   AlertRuleAction,
   EnrichmentAction,
@@ -33,8 +34,12 @@ import { createRelativeUrl } from '../../utils/url';
 import { AnalyzeRuleButton } from '../assistant/AnalizeRuleButton';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
+import { RulePluginExtensionItems } from './RulePluginExtensionItems';
+
+const { usePrefetch } = alertRuleApi;
+
 interface Props {
-  promRule?: Rule;
+  promRule?: PromRuleCompact;
   rulerRule?: RulerRuleDTO;
   identifier: RuleIdentifier;
   groupIdentifier: RuleGroupIdentifierV2;
@@ -112,11 +117,19 @@ const AlertRuleMenu = ({
   const [grafanaExportSupported, grafanaExportAllowed] = grafanaExportAbility;
   const canExport = (exportSupported && exportAllowed) || (grafanaExportSupported && grafanaExportAllowed);
 
-  const ruleExtensionLinks = useRulePluginLinkExtension(promRule, groupIdentifier);
-
-  const extensionsAvailable = ruleExtensionLinks.length > 0;
-
   const [enrichmentReadSupported, enrichmentReadAllowed] = useEnrichmentAbility(EnrichmentAction.Read);
+
+  // grab the UID from either rulerRule or promRule
+  const ruleUid = getRuleUID(rulerRule ?? promRule);
+
+  // Prefetch rule details on hover for better UX
+  const prefetchGetAlertRule = usePrefetch('getAlertRule');
+
+  const handleMouseEnter = useCallback(() => {
+    if (prometheusRuleType.grafana.rule(promRule)) {
+      prefetchGetAlertRule({ uid: promRule.uid });
+    }
+  }, [prefetchGetAlertRule, promRule]);
 
   /**
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
@@ -135,9 +148,6 @@ const AlertRuleMenu = ({
 
   const showDivider =
     [canPause, canSilence, shouldShowDeclareIncidentButton, canDuplicate].some(Boolean) && [canExport].some(Boolean);
-
-  // grab the UID from either rulerRule or promRule
-  const ruleUid = getRuleUID(rulerRule ?? promRule);
 
   const isPaused =
     (rulerRuleType.grafana.rule(rulerRule) && isPausedRule(rulerRule)) ||
@@ -200,14 +210,7 @@ const AlertRuleMenu = ({
           childItems={[<ExportMenuItem key="export-with-modifications" identifier={identifier} />]}
         />
       )}
-      {extensionsAvailable && (
-        <>
-          <Menu.Divider />
-          {ruleExtensionLinks.map((extension) => (
-            <Menu.Item key={extension.id} label={extension.title} icon={extension.icon} onClick={extension.onClick} />
-          ))}
-        </>
-      )}
+      <RulePluginExtensionItems promRule={promRule} groupIdentifier={groupIdentifier} />
       {canDelete && (
         <>
           <Menu.Divider />
@@ -228,8 +231,8 @@ const AlertRuleMenu = ({
   );
 
   return (
-    <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom">
-      <MoreButton size={buttonSize} fill={fill} />
+    <Dropdown overlay={() => <Menu>{menuItems}</Menu>} placement="bottom">
+      <MoreButton onMouseEnter={handleMouseEnter} size={buttonSize} fill={fill} />
     </Dropdown>
   );
 };
