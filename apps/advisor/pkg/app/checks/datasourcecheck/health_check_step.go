@@ -41,7 +41,7 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 
 	// Health check execution
 	resp, err := s.HealthChecker.CheckHealth(ctx, ds)
-	if err != nil {
+	if err != nil || (resp != nil && resp.Status != backend.HealthStatusOk) {
 		// Unable to check health check
 		log.Error("Failed to run health check", "datasource_uid", ds.UID, "error", err)
 		if errors.Is(err, plugins.ErrMethodNotImplemented) || errors.Is(err, plugins.ErrPluginUnavailable) {
@@ -54,11 +54,10 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 			// The plugin is not installed, handle this in the missing plugin step
 			return nil, nil
 		}
-		return nil, nil
-	}
-	if resp != nil && resp.Status != backend.HealthStatusOk {
-		log.Debug("Datasource not healthy", "datasource_uid", ds.UID, "status", resp.Status, "message", resp.Message)
-		moreInfo := fmt.Sprintf("Status: %s\nMessage: %s\nJSONDetails: %s", resp.Status, resp.Message, resp.JSONDetails)
+		moreInfo := ""
+		if resp != nil {
+			moreInfo = fmt.Sprintf("Status: %s\nMessage: %s\nJSONDetails: %s", resp.Status, resp.Message, resp.JSONDetails)
+		}
 		return []advisor.CheckReportFailure{checks.NewCheckReportFailureWithMoreInfo(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),

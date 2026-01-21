@@ -6,7 +6,6 @@ import (
 	sysruntime "runtime"
 	"sync"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -161,8 +160,4 @@ func (c *check) canBeInstalled(ctx context.Context, pluginType string) (bool, er
 	isAvailableInRepo := len(availablePlugins) > 0
 	c.pluginCanBeInstalledCache[pluginType] = !isAvailableInRepo
 	return isAvailableInRepo, nil
-}
-
-type PluginContextProvider interface {
-	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error)
 }

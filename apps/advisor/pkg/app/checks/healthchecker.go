@@ -7,13 +7,12 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
 // HealthCheckerImpl implements the HealthChecker interface by wrapping
 // PluginContextProvider and PluginClient.
 type HealthCheckerImpl struct {
-	PluginContextProvider *plugincontext.Provider
+	PluginContextProvider PluginContextProvider
 	PluginClient          plugins.Client
 }
 
@@ -31,4 +30,8 @@ func (h *HealthCheckerImpl) CheckHealth(ctx context.Context, ds *datasources.Dat
 		Headers:       map[string]string{},
 	}
 	return h.PluginClient.CheckHealth(ctx, req)
+}
+
+type PluginContextProvider interface {
+	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error)
 }
