@@ -1060,6 +1060,52 @@ func (_c *MockResourceClient_Search_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
+// Stop provides a mock function with given fields: ctx
+func (_m *MockResourceClient) Stop(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Stop")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockResourceClient_Stop_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Stop'
+type MockResourceClient_Stop_Call struct {
+	*mock.Call
+}
+
+// Stop is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockResourceClient_Expecter) Stop(ctx interface{}) *MockResourceClient_Stop_Call {
+	return &MockResourceClient_Stop_Call{Call: _e.mock.On("Stop", ctx)}
+}
+
+func (_c *MockResourceClient_Stop_Call) Run(run func(ctx context.Context)) *MockResourceClient_Stop_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockResourceClient_Stop_Call) Return(_a0 error) *MockResourceClient_Stop_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockResourceClient_Stop_Call) RunAndReturn(run func(context.Context) error) *MockResourceClient_Stop_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function with given fields: ctx, in, opts
 func (_m *MockResourceClient) Update(ctx context.Context, in *resourcepb.UpdateRequest, opts ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
 	_va := make([]interface{}, len(opts))
