@@ -116,7 +116,7 @@ export function DashboardsTree({
         return (
           <div>
             {ownerReferences.map((ownerReference) => {
-              return <TeamOwnerReference ownerReference={ownerReference} key={ownerReference.uid} />;
+              return <TeamOwnerReference ownerReference={ownerReference} key={ownerReference.uid} pointOfUse="browseDashboards-tree" />;
             })}
           </div>
         );

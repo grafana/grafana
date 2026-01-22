@@ -154,7 +154,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
         .map((ref) => (
           <Stack key={ref.uid} direction="row">
             <Text>Owned by team:</Text>
-            <TeamOwnerReference ownerReference={ref} pointOfUse="browseDashboards" />
+            <TeamOwnerReference ownerReference={ref} pointOfUse="browseDashboards-header" />
           </Stack>
         ))}
     </Box>
