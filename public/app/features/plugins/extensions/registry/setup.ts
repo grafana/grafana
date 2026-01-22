@@ -45,7 +45,7 @@ exposedComponentsRegistry.register({
       component: AddToDashboardFormExposedComponent,
     },
     {
-      id: PluginExtensionExposedComponents.QueryLibraryContextV1,
+      id: PluginExtensionExposedComponents.OpenQueryLibraryV1,
       title: 'Access to the Query Library',
       description: 'Access to the Query Library',
       component: OpenQueryLibraryExposedComponent,
