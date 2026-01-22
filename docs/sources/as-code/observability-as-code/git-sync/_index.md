@@ -32,11 +32,11 @@ aliases:
 
 {{< admonition type="caution" >}}
 
-Git Sync is available in [private preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions.
-
-Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
+Git Sync is available in [private preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions. Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
 
 You can sign up to the private preview using the [Git Sync early access form](https://forms.gle/WKkR3EVMcbqsNnkD9).
+
+Git Sync is under continuous development. [Report any issues](https://grafana.com/help/) you encounter to help us improve Git Sync.
 
 {{< /admonition >}}
 
@@ -104,6 +104,10 @@ Refer to [Requirements](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/obser
 
 - Support for native Git, Git app, and other providers, such as GitLab or Bitbucket, is on the roadmap.
 
+### Performance considerations
+
+When Git Sync is enabled, the database load might increase, especially if your Grafana instance has many folders and nested folders. Evaluate the performance impact, if any, in a non-production environment.
+
 ## Supported resources
 
 Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet.
@@ -119,9 +123,9 @@ A resource can be:
 | **Supported**    | The resource can be managed with Git Sync.                                 | The resource is supported but has compatibility issues. It **cannot** be managed with Git Sync. |
 | **Unsupported**  | The resource is **not** supported and **cannot** be managed with Git Sync. | Not applicable.                                                                                 |
 
-### Git Sync instance states
+### Grafana instance Git Sync states
 
-An instance can be in one of the following Git Sync states:
+Your Grafana instance can be in one of the following Git Sync states:
 
 - **Unprovisioned**: None of the instance's resources are being managed by Git Sync.
 - **Partially provisioned**: Some of the resources are controlled by Git Sync.
