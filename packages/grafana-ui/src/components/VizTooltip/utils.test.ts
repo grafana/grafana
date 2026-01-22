@@ -432,5 +432,36 @@ describe('utils', () => {
       expect(result.numeric).toBe(42);
       expect(result.color).toBe('#00f');
     });
+
+    it('uses field.display for null values', () => {
+      const result = getTooltipDisplayValue(null, mockField);
+      expect(result.text).toBe('null');
+      expect(result.numeric).toBeNaN();
+      expect(result.color).toBe('#000');
+    });
+
+    it('uses field.display for undefined values', () => {
+      const result = getTooltipDisplayValue(undefined, mockField);
+      expect(result.text).toBe('undefined');
+      expect(result.numeric).toBeNaN();
+      expect(result.color).toBe('#000');
+    });
+
+    it('uses field.display for boolean values', () => {
+      const result = getTooltipDisplayValue(true, mockField);
+      expect(result.text).toBe('true');
+      expect(result.numeric).toBeNaN();
+      expect(result.color).toBe('#000');
+    });
+
+    it('handles arrays with nested arrays', () => {
+      const value = [
+        [1, 2],
+        [3, 4],
+      ];
+      const result = getTooltipDisplayValue(value, mockField);
+      expect(result.text).toBe('[[1,2],[3,4]]');
+      expect(result.numeric).toBeNaN();
+    });
   });
 });
