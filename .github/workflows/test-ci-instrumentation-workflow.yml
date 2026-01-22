@@ -11,93 +11,93 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - name: Checkout Go Cache Plugin
-        uses: actions/checkout@v5
-        with:
-          repository: 'grafana/go-cache-plugin'
-          ref: grambbledook/local-cache-and-metrics
-          persist-credentials: false
-          path: gocacheplugin
-
-      - name: Checkout Go Cache Plugin - toolexec
-        uses: actions/checkout@v5
-        with:
-          repository: 'grafana/go-cache-plugin'
-          ref: grambbledook/toolexec
-          persist-credentials: false
-          path: gocacheplugin-toolexec
-
-      - name: Setup Go
-        uses: actions/setup-go@v6.0.0
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: Get Vault secrets
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          repo_secrets: |
-            OTEL_EXPORTER_OTLP_API_KEY=grafana-otlp-api-key:api-key-base64
-
-      - name: Build Go Cache Plugin
-        run: |
-          cd ./gocacheplugin/cmd/go-cache-plugin
-          GOWORK=off go build -o go-cache-plugin
-          cd ../../..
-          cd ./gocacheplugin-toolexec/cmd/go-toolexec
-          GOWORK=off go build -o go-toolexec
-          cd ../../..
-          cp ./gocacheplugin/cmd/go-cache-plugin/go-cache-plugin ./
-          cp ./gocacheplugin-toolexec/cmd/go-toolexec/go-toolexec ./
-
-      - name: Start Go Cache Plugin
-        env:
-          OTEL_EXPORTER_OTLP_HEADERS_API_KEY: "${{ env.OTEL_EXPORTER_OTLP_API_KEY}}"
-          GOCACHE_LOCAL_ONLY: true
-          GOCACHE_DIR: /tmp/gocache
-          GOCACHE_MODPROXY_NOCACHE: true
-          GOCACHE_ENABLE_TRACING: true
-          GOCACHE_TRACING_TRACE_FILE: trace-modcache.log
-          GOCACHE_TRACING_OTEL_COLLECTOR: "otlp-gateway-ops-eu-south-0.grafana-ops.net"
-          #          OTEL_COLLECTOR_ADDRESS: localhost:4319
-          RUN_ID: ${{ github.run_id }}
-          RUN_ATTEMPT: ${{ github.run_attempt }}
-          JOB_NAME: ${{ github.job }}
-          STEP_NAME: Build Grafana
-          STEP_NUMBER: 8
-        run: |
-          ./go-cache-plugin serve --plugin 5930 --http=localhost:5970 --modproxy &
-
-          echo $! > go-cache-plugin.pid
-
-      - name: Build Grafana
-        continue-on-error: true
-        env:
-          OTEL_EXPORTER_OTLP_HEADERS_API_KEY: "${{ env.OTEL_EXPORTER_OTLP_API_KEY}}"
-          GOCACHE_TRACING_OTEL_COLLECTOR: "otlp-gateway-ops-eu-south-0.grafana-ops.net"
-          GOCACHE_LOCAL_ONLY: true
-          GOCACHE_DIR: /tmp/gocache
-          GOCACHE_ENABLE_TRACING: true
-          GOCACHE_TRACING_TRACE_FILE: trace-gocache.log
-          TOOLEXEC_TRACING_TRACE_FILE: trace-toolexec.log
-
-          RUN_ID: ${{ github.run_id }}
-          RUN_ATTEMPT: ${{ github.run_attempt }}
-          JOB_NAME: ${{ github.job }}
-          STEP_NAME: Build Grafana
-          STEP_NUMBER: 8
-        run: |
-          GOPROXY=http://localhost:5970/mod  GOCACHEPROG="./go-cache-plugin connect 5930" make build-go
-
-      - name: Cleanup
-        run: |
-          kill $(cat go-cache-plugin.pid)
+#      - name: Checkout code
+#        uses: actions/checkout@v5
+#        with:
+#          persist-credentials: false
+#
+#      - name: Checkout Go Cache Plugin
+#        uses: actions/checkout@v5
+#        with:
+#          repository: 'grafana/go-cache-plugin'
+#          ref: grambbledook/local-cache-and-metrics
+#          persist-credentials: false
+#          path: gocacheplugin
+#
+#      - name: Checkout Go Cache Plugin - toolexec
+#        uses: actions/checkout@v5
+#        with:
+#          repository: 'grafana/go-cache-plugin'
+#          ref: grambbledook/toolexec
+#          persist-credentials: false
+#          path: gocacheplugin-toolexec
+#
+#      - name: Setup Go
+#        uses: actions/setup-go@v6.0.0
+#        with:
+#          go-version-file: go.mod
+#          cache: true
+#
+#      - name: Get Vault secrets
+#        id: vault-secrets
+#        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+#        with:
+#          repo_secrets: |
+#            OTEL_EXPORTER_OTLP_API_KEY=grafana-otlp-api-key:api-key-base64
+#
+#      - name: Build Go Cache Plugin
+#        run: |
+#          cd ./gocacheplugin/cmd/go-cache-plugin
+#          GOWORK=off go build -o go-cache-plugin
+#          cd ../../..
+#          cd ./gocacheplugin-toolexec/cmd/go-toolexec
+#          GOWORK=off go build -o go-toolexec
+#          cd ../../..
+#          cp ./gocacheplugin/cmd/go-cache-plugin/go-cache-plugin ./
+#          cp ./gocacheplugin-toolexec/cmd/go-toolexec/go-toolexec ./
+#
+#      - name: Start Go Cache Plugin
+#        env:
+#          OTEL_EXPORTER_OTLP_HEADERS_API_KEY: "${{ env.OTEL_EXPORTER_OTLP_API_KEY}}"
+#          GOCACHE_LOCAL_ONLY: true
+#          GOCACHE_DIR: /tmp/gocache
+#          GOCACHE_MODPROXY_NOCACHE: true
+#          GOCACHE_ENABLE_TRACING: true
+#          GOCACHE_TRACING_TRACE_FILE: trace-modcache.log
+#          GOCACHE_TRACING_OTEL_COLLECTOR: "otlp-gateway-ops-eu-south-0.grafana-ops.net"
+#          #          OTEL_COLLECTOR_ADDRESS: localhost:4319
+#          RUN_ID: ${{ github.run_id }}
+#          RUN_ATTEMPT: ${{ github.run_attempt }}
+#          JOB_NAME: ${{ github.job }}
+#          STEP_NAME: Build Grafana
+#          STEP_NUMBER: 8
+#        run: |
+#          ./go-cache-plugin serve --plugin 5930 --http=localhost:5970 --modproxy &
+#
+#          echo $! > go-cache-plugin.pid
+#
+#      - name: Build Grafana
+#        continue-on-error: true
+#        env:
+#          OTEL_EXPORTER_OTLP_HEADERS_API_KEY: "${{ env.OTEL_EXPORTER_OTLP_API_KEY}}"
+#          GOCACHE_TRACING_OTEL_COLLECTOR: "otlp-gateway-ops-eu-south-0.grafana-ops.net"
+#          GOCACHE_LOCAL_ONLY: true
+#          GOCACHE_DIR: /tmp/gocache
+#          GOCACHE_ENABLE_TRACING: true
+#          GOCACHE_TRACING_TRACE_FILE: trace-gocache.log
+#          TOOLEXEC_TRACING_TRACE_FILE: trace-toolexec.log
+#
+#          RUN_ID: ${{ github.run_id }}
+#          RUN_ATTEMPT: ${{ github.run_attempt }}
+#          JOB_NAME: ${{ github.job }}
+#          STEP_NAME: Build Grafana
+#          STEP_NUMBER: 8
+#        run: |
+#          GOPROXY=http://localhost:5970/mod  GOCACHEPROG="./go-cache-plugin connect 5930" make build-go
+#
+#      - name: Cleanup
+#        run: |
+#          kill $(cat go-cache-plugin.pid)
 
 
       - name: Cat GOMOD traces
@@ -118,15 +118,15 @@ jobs:
           #          cat trace-toolexec.log
           echo "============================="
 
-#  send-telemetry:
-#    runs-on: ubuntu-x64-small
-#    if: always()
-#    needs:
-#      - build
-#    permissions:
-#      id-token: write
-#      contents: read
-#    steps:
+  send-telemetry:
+    runs-on: ubuntu-x64-small
+    if: always()
+    needs:
+      - build
+    permissions:
+      id-token: write
+      contents: read
+    steps:
 #      - name: Get Vault secrets
 #        id: vault-secrets
 #        uses: grafana/shared-workflows/actions/get-vault-secrets@main
@@ -162,13 +162,13 @@ jobs:
 #          }' \
 #            "https://otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp/v1/traces"
 
-#
-#  - uses: paper2/github-actions-opentelemetry@main
-#        env:
-#          OTEL_SERVICE_NAME: github-actions-opentelemetry
-#          OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
-#          OTEL_EXPORTER_OTLP_ENDPOINT: "https://otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp"
-#          OTEL_EXPORTER_OTLP_HEADERS: "Authorization: Basic ${{ env.OTEL_EXPORTER_OTLP_API_KEY }}"
-#          OTEL_RESOURCE_ATTRIBUTES: team=grafana-backend,env=cd
-#        with:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: paper2/github-actions-opentelemetry@main
+        env:
+          OTEL_SERVICE_NAME: github-actions-opentelemetry
+          OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+          OTEL_EXPORTER_OTLP_ENDPOINT: "https://otlp-gateway-ops-eu-south-0.grafana-ops.net"
+          OTEL_EXPORTER_OTLP_HEADERS: "Authorization: Basic ${{ env.OTEL_EXPORTER_OTLP_API_KEY }}"
+          OTEL_RESOURCE_ATTRIBUTES: team=grafanabackend,env=cd
+        with:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
