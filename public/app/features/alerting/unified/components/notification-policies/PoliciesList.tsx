@@ -329,7 +329,7 @@ export const RoutingTreeHeader = ({ route, onDelete }: RoutingTreeHeaderProps) =
           icon={canEdit ? 'pen' : 'eye'}
           type="button"
           data-testid={`${canEdit ? 'edit' : 'view'}-action`}
-          href={`/alerting/notifications/routes/${encodeURIComponent(route.name ?? '')}/edit`}
+          href={`/alerting/routes/policy/${encodeURIComponent(route.name ?? '')}/edit`}
         >
           {canEdit ? 'Edit' : 'View'}
         </LinkButton>

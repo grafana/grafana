@@ -6,7 +6,7 @@ import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { PoliciesTree } from './PoliciesTree';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
-const EditRoutingTree = () => {
+const PoliciesTreeWrapper = () => {
   const { name = '' } = useParams();
 
   const routeName = decodeURIComponent(name);
@@ -22,7 +22,7 @@ const EditRoutingTree = () => {
   return <PoliciesTree routeName={routeName} />;
 };
 
-function EditRoutingTreePage() {
+function PolicyPage() {
   const { name = '' } = useParams();
   const routeName = name === ROOT_ROUTE_NAME ? "Default Policy" : decodeURIComponent(name);
 
@@ -31,9 +31,9 @@ function EditRoutingTreePage() {
   };
   return (
     <AlertmanagerPageWrapper navId="am-routes" pageNav={pageNav} accessType="notification">
-      <EditRoutingTree />
+      <PoliciesTreeWrapper />
     </AlertmanagerPageWrapper>
   );
 }
 
-export default withPageErrorBoundary(EditRoutingTreePage);
+export default withPageErrorBoundary(PolicyPage);
