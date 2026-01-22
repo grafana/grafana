@@ -64,6 +64,7 @@ jobs:
           GOCACHE_MODPROXY_NOCACHE: true
           GOCACHE_ENABLE_TRACING: true
           GOCACHE_TRACING_TRACE_FILE: trace-modcache.log
+          GOCACHE_TRACING_OTEL_COLLECTOR: "otlp-gateway-ops-eu-south-0.grafana-ops.net"
           #          OTEL_COLLECTOR_ADDRESS: localhost:4319
           RUN_ID: ${{ github.run_id }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
@@ -71,7 +72,7 @@ jobs:
           STEP_NAME: Build Grafana
           STEP_NUMBER: 8
         run: |
-          ./go-cache-plugin serve --plugin 5930 --http=localhost:5970 --modproxy --otel-collector=otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp &
+          ./go-cache-plugin serve --plugin 5930 --http=localhost:5970 --modproxy &
 
           echo $! > go-cache-plugin.pid
 
@@ -79,7 +80,7 @@ jobs:
         continue-on-error: true
         env:
           OTEL_EXPORTER_OTLP_HEADERS_API_KEY: "${{ env.OTEL_EXPORTER_OTLP_API_KEY}}"
-
+          GOCACHE_TRACING_OTEL_COLLECTOR: "otlp-gateway-ops-eu-south-0.grafana-ops.net"
           GOCACHE_LOCAL_ONLY: true
           GOCACHE_DIR: /tmp/gocache
           GOCACHE_ENABLE_TRACING: true
@@ -92,7 +93,7 @@ jobs:
           STEP_NAME: Build Grafana
           STEP_NUMBER: 8
         run: |
-          GOPROXY=http://localhost:5970/mod  GOCACHEPROG="./go-cache-plugin connect 5930 --otel-collector=otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp" make build-go
+          GOPROXY=http://localhost:5970/mod  GOCACHEPROG="./go-cache-plugin connect 5930" make build-go
 
       - name: Cleanup
         run: |
