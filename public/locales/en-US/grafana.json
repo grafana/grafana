@@ -14927,6 +14927,9 @@
       "label-both": "Both",
       "label-lines": "Lines",
       "label-points": "Points"
+    },
+    "suggestions": {
+      "scatter-plot": "Scatter plot"
     }
   }
 }
