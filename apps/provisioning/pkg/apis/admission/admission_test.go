@@ -37,7 +37,6 @@ func (v *mockValidator) Validate(ctx context.Context, a admission.Attributes, o 
 	return v.err
 }
 
-
 func newTestAttributes(obj runtime.Object, resource string, op admission.Operation) admission.Attributes {
 	return admission.NewAttributesRecord(
 		obj,

@@ -62,7 +62,8 @@ func TestNewReferencedByRepositoriesValidator(t *testing.T) {
 	require.NotNil(t, v)
 
 	// Verify it implements Validator interface
-	var _ Validator = v
+	checkValidator := func(Validator) {}
+	checkValidator(v)
 }
 
 func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
@@ -148,7 +149,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 			repos: []provisioning.Repository{
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
-					Spec: provisioning.RepositorySpec{
+					Spec:       provisioning.RepositorySpec{
 						// No connection set
 					},
 				},

@@ -15,10 +15,10 @@ import (
 )
 
 type mockStorageLister struct {
-	pages         [][]provisioning.Repository
-	err           error
-	calls         int
-	lastFieldSel  string
+	pages        [][]provisioning.Repository
+	err          error
+	calls        int
+	lastFieldSel string
 }
 
 func (m *mockStorageLister) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
