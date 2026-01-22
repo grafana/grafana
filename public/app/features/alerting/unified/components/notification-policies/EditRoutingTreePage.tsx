@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { Alert } from '@grafana/ui';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
-import { NotificationPoliciesTree } from './NotificationPoliciesTree';
+import { PoliciesTree } from './PoliciesTree';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
 const EditRoutingTree = () => {
@@ -19,7 +19,7 @@ const EditRoutingTree = () => {
     );
   }
 
-  return <NotificationPoliciesTree routeName={routeName} />;
+  return <PoliciesTree routeName={routeName} />;
 };
 
 function EditRoutingTreePage() {
