@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -1332,5 +1333,143 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 
 		t.Logf("Verified token fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
 			tokenError.Type, tokenError.Field, tokenError.Detail, tokenError.Origin)
+	})
+}
+
+func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	namespace := "default"
+
+	// Create typed client from REST config
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories(namespace)
+
+	t.Run("repository fieldErrors are cleared when repository becomes healthy", func(t *testing.T) {
+		// Create a local repository that will be healthy
+		repoPath := helper.ProvisioningPath
+		repoName := "test-repo-field-errors-cleared"
+
+		// Create repository directory
+		err := os.MkdirAll(repoPath, 0o750)
+		require.NoError(t, err)
+
+		// Create a repository that will be healthy initially
+		repoUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      repoName,
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"title": "Repo Field Errors Cleared Test",
+				"type":  "local",
+				"sync": map[string]any{
+					"enabled": false,
+					"target":  "folder",
+				},
+				"local": map[string]any{
+					"path": repoPath,
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.Repositories.Resource.Create(ctx, repoUnstructured, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		t.Cleanup(func() {
+			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		})
+
+		// Wait for repository to become healthy
+		require.Eventually(t, func() bool {
+			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return repo.Status.ObservedGeneration == repo.Generation &&
+				repo.Status.Health.Checked > 0 &&
+				repo.Status.Health.Healthy &&
+				len(repo.Status.FieldErrors) == 0
+		}, 15*time.Second, 500*time.Millisecond, "repository should be healthy")
+
+		// Verify repository is healthy with no fieldErrors
+		repoHealthy, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.True(t, repoHealthy.Status.Health.Healthy, "repository should be healthy")
+		assert.Empty(t, repoHealthy.Status.FieldErrors, "fieldErrors should be empty when healthy")
+
+		// Remove the repository directory to make it unhealthy
+		err = os.RemoveAll(repoPath)
+		require.NoError(t, err)
+
+		// Trigger health check by updating the repository spec
+		latestUnstructured, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		updatedUnstructured := latestUnstructured.DeepCopy()
+		// Update title to trigger reconciliation
+		updatedUnstructured.Object["spec"].(map[string]any)["title"] = "Updated Title"
+		_, err = helper.Repositories.Resource.Update(ctx, updatedUnstructured, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// Wait for repository to become unhealthy with fieldErrors
+		require.Eventually(t, func() bool {
+			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return repo.Status.ObservedGeneration == repo.Generation &&
+				repo.Status.Health.Checked > 0 &&
+				!repo.Status.Health.Healthy &&
+				len(repo.Status.FieldErrors) > 0
+		}, 15*time.Second, 500*time.Millisecond, "repository should be unhealthy with fieldErrors")
+
+		// Verify fieldErrors are present
+		repoWithErrors, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Greater(t, len(repoWithErrors.Status.FieldErrors), 0, "fieldErrors should be present when unhealthy")
+
+		// Recreate the repository directory to make it healthy again
+		err = os.MkdirAll(repoPath, 0o750)
+		require.NoError(t, err)
+
+		// Trigger health check by updating the repository spec again
+		latestUnstructured2, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		updatedUnstructured2 := latestUnstructured2.DeepCopy()
+		// Update title again to trigger reconciliation
+		updatedUnstructured2.Object["spec"].(map[string]any)["title"] = "Final Title"
+		_, err = helper.Repositories.Resource.Update(ctx, updatedUnstructured2, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// Wait for reconciliation - repository should become healthy and fieldErrors should be cleared
+		require.Eventually(t, func() bool {
+			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			// First ensure it's reconciled
+			if repo.Status.ObservedGeneration != repo.Generation {
+				return false
+			}
+			// Then check health
+			if repo.Status.Health.Checked == 0 || !repo.Status.Health.Healthy {
+				return false
+			}
+			// Finally check fieldErrors are cleared
+			return len(repo.Status.FieldErrors) == 0
+		}, 30*time.Second, 1*time.Second, "repository should be healthy with fieldErrors cleared")
+
+		// Verify fieldErrors are cleared
+		repoHealthyAgain, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.True(t, repoHealthyAgain.Status.Health.Healthy, "repository should be healthy")
+		assert.Empty(t, repoHealthyAgain.Status.FieldErrors, "fieldErrors should be cleared when repository becomes healthy")
 	})
 }

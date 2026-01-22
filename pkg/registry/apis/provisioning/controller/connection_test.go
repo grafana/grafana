@@ -352,8 +352,8 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 				Code:    200,
 				Errors:  nil,
 			},
-			expectedFieldErrors: nil,
-			description:         "fieldErrors should be nil when testResults.Errors is nil",
+			expectedFieldErrors: []provisioning.ErrorDetails{},
+			description:         "fieldErrors should be empty array when testResults.Errors is nil",
 		},
 	}
 
@@ -396,13 +396,9 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 						if path, ok := op["path"].(string); ok && path == "/status/fieldErrors" {
 							fieldErrorsFound = true
 							value := op["value"]
-							if tt.expectedFieldErrors == nil {
-								assert.Nil(t, value, "fieldErrors should be nil")
-							} else {
-								fieldErrors, ok := value.([]provisioning.ErrorDetails)
-								require.True(t, ok, "fieldErrors should be []ErrorDetails")
-								assert.Equal(t, tt.expectedFieldErrors, fieldErrors, tt.description)
-							}
+							fieldErrors, ok := value.([]provisioning.ErrorDetails)
+							require.True(t, ok, "fieldErrors should be []ErrorDetails")
+							assert.Equal(t, tt.expectedFieldErrors, fieldErrors, tt.description)
 							break
 						}
 					}

@@ -594,12 +594,16 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		patchOperations = append(patchOperations, healthPatchOps...)
 	}
 
-	// Update fieldErrors from test results
+	// Update fieldErrors from test results - always update to ensure fieldErrors are cleared when there are no errors
 	if testResults != nil {
+		fieldErrors := testResults.Errors
+		if fieldErrors == nil {
+			fieldErrors = []provisioning.ErrorDetails{}
+		}
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/fieldErrors",
-			"value": testResults.Errors,
+			"value": fieldErrors,
 		})
 	}
 
