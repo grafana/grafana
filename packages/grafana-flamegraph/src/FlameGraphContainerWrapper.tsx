@@ -3,8 +3,8 @@ import * as React from 'react';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 
 import { GetExtraContextMenuButtonsFunction as LegacyGetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
-import { GetExtraContextMenuButtonsFunction as NewGetExtraContextMenuButtonsFunction } from './new/FlameGraph/FlameGraphContextMenu';
 import FlameGraphContainerLegacy from './FlameGraphContainer';
+import { GetExtraContextMenuButtonsFunction as NewGetExtraContextMenuButtonsFunction } from './new/FlameGraph/FlameGraphContextMenu';
 import FlameGraphContainerNew from './new/FlameGraphContainer';
 
 export type Props = {
@@ -92,6 +92,7 @@ const FlameGraphContainerWrapper = ({ enableNewUI, getExtraContextMenuButtons, .
     return (
       <FlameGraphContainerNew
         {...props}
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         getExtraContextMenuButtons={getExtraContextMenuButtons as NewGetExtraContextMenuButtonsFunction}
       />
     );
@@ -99,6 +100,7 @@ const FlameGraphContainerWrapper = ({ enableNewUI, getExtraContextMenuButtons, .
   return (
     <FlameGraphContainerLegacy
       {...props}
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       getExtraContextMenuButtons={getExtraContextMenuButtons as LegacyGetExtraContextMenuButtonsFunction}
     />
   );

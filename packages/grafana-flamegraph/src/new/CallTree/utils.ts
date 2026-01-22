@@ -8,12 +8,10 @@
  * - Determine the initial expanded state for tree nodes
  */
 
-import { FlameGraphDataContainer, LevelItem } from '../../FlameGraph/dataTransform';
-
-import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../../FlameGraph/colors';
-
 import { GrafanaTheme2 } from '@grafana/data';
 
+import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../../FlameGraph/colors';
+import { FlameGraphDataContainer, LevelItem } from '../../FlameGraph/dataTransform';
 import { ColorScheme, ColorSchemeDiff } from '../../types';
 
 export interface CallTreeNode {

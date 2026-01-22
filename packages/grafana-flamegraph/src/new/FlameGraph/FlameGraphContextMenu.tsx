@@ -11,9 +11,8 @@
 import { DataFrame } from '@grafana/data';
 import { MenuItem, MenuGroup, ContextMenu, IconName } from '@grafana/ui';
 
-import { ClickedItemData, PaneView, ViewMode } from '../../types';
-
 import { CollapseConfig, FlameGraphDataContainer } from '../../FlameGraph/dataTransform';
+import { ClickedItemData, PaneView, ViewMode } from '../../types';
 
 export type GetExtraContextMenuButtonsFunction = (
   clickedItemData: ClickedItemData,

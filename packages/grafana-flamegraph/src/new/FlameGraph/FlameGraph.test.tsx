@@ -3,11 +3,11 @@ import { type ComponentProps, useRef } from 'react';
 
 import { createDataFrame } from '@grafana/data';
 
+import { FlameGraphDataContainer } from '../../FlameGraph/dataTransform';
+import { data } from '../../FlameGraph/testData/dataNestedSet';
 import { ColorScheme, PaneView, ViewMode } from '../../types';
 
 import FlameGraph from './FlameGraph';
-import { FlameGraphDataContainer } from '../../FlameGraph/dataTransform';
-import { data } from '../../FlameGraph/testData/dataNestedSet';
 
 import 'jest-canvas-mock';
 

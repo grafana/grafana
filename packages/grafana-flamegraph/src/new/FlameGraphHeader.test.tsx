@@ -3,8 +3,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
-import FlameGraphHeader from './FlameGraphHeader';
 import { PaneView, ViewMode } from '../types';
+
+import FlameGraphHeader from './FlameGraphHeader';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn().mockReturnValue({

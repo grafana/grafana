@@ -35,11 +35,6 @@ import { useEffect, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ButtonGroup, Dropdown, Icon, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
-import { PIXELS_PER_LEVEL } from '../../constants';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, PaneView, ViewMode, TextAlign } from '../../types';
-
-import FlameGraphCanvas from './FlameGraphCanvas';
-import { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphMetadata from '../../FlameGraph/FlameGraphMetadata';
 import {
   byPackageGradient,
@@ -48,6 +43,11 @@ import {
   diffDefaultGradient,
 } from '../../FlameGraph/colors';
 import { CollapsedMap, FlameGraphDataContainer, LevelItem } from '../../FlameGraph/dataTransform';
+import { PIXELS_PER_LEVEL } from '../../constants';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, PaneView, ViewMode, TextAlign } from '../../types';
+
+import FlameGraphCanvas from './FlameGraphCanvas';
+import { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 
 type Props = {
   data: FlameGraphDataContainer;

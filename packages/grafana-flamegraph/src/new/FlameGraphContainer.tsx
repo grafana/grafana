@@ -23,13 +23,14 @@ import { useMeasure, usePrevious } from 'react-use';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { ThemeContext } from '@grafana/ui';
 
-import { GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
-import FlameGraphHeader from './FlameGraphHeader';
-import FlameGraphPane from './FlameGraphPane';
 import { MIN_WIDTH_FOR_SPLIT_VIEW } from '../constants';
 import { PaneView, ViewMode } from '../types';
 import { getAssistantContextFromDataFrame } from '../utils';
+
+import { GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
+import FlameGraphHeader from './FlameGraphHeader';
+import FlameGraphPane from './FlameGraphPane';
 
 const ufuzzy = new uFuzzy();
 

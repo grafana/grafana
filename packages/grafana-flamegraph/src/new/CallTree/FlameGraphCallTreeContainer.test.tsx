@@ -1,5 +1,5 @@
 import { act, render, screen, within } from '@testing-library/react';
-import userEvents from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 
 import { createDataFrame } from '@grafana/data';
 
@@ -10,8 +10,15 @@ import { ColorScheme, PaneView, ViewMode } from '../../types';
 import FlameGraphCallTreeContainer from './FlameGraphCallTreeContainer';
 
 describe('FlameGraphCallTreeContainer', () => {
+  let user: ReturnType<typeof userEvent.setup>;
+
   // Needed for AutoSizer to work in test
   beforeEach(() => {
+    jest.useFakeTimers();
+    // Need to use delay: null here to work with fakeTimers
+    // see https://github.com/testing-library/user-event/issues/833
+    user = userEvent.setup({ delay: null });
+
     Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
       configurable: true,
       value: jest.fn(() => ({
@@ -19,6 +26,10 @@ describe('FlameGraphCallTreeContainer', () => {
         height: 500,
       })),
     });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   const setup = async (props?: Partial<React.ComponentProps<typeof FlameGraphCallTreeContainer>>) => {
@@ -42,9 +53,9 @@ describe('FlameGraphCallTreeContainer', () => {
       );
     });
 
-    // Wait for any pending microtasks (like queueMicrotask for compact mode)
+    // Flush any pending timers (like queueMicrotask for compact mode)
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      jest.runAllTimers();
     });
 
     return { container, mocks: { onSymbolClick, onSandwich, onSearch } };
@@ -85,19 +96,20 @@ describe('FlameGraphCallTreeContainer', () => {
     expect(actionButtons.length).toBeGreaterThan(0);
 
     // Click the first action button to open the menu
-    await act(async () => {
-      await userEvents.click(actionButtons[0]);
-    });
+    await user.click(actionButtons[0]);
 
     // The menu should show "Search" option
     expect(screen.getByText('Search')).toBeInTheDocument();
 
     // Click search and verify the callback is called
-    await act(async () => {
-      await userEvents.click(screen.getByText('Search'));
-    });
+    await user.click(screen.getByText('Search'));
 
     expect(mocks.onSearch).toHaveBeenCalled();
+
+    // Run timers to complete menu close animation (react-transition-group)
+    await act(async () => {
+      jest.runAllTimers();
+    });
   });
 
   it('should render extra context menu buttons', async () => {
@@ -113,19 +125,20 @@ describe('FlameGraphCallTreeContainer', () => {
 
     // Open the action menu for the root node
     const actionButtons = screen.getAllByLabelText('Actions');
-    await act(async () => {
-      await userEvents.click(actionButtons[0]);
-    });
+    await user.click(actionButtons[0]);
 
     // The custom action should be in the menu
     expect(screen.getByText('Custom Action')).toBeInTheDocument();
 
     // Click it and verify the callback
-    await act(async () => {
-      await userEvents.click(screen.getByText('Custom Action'));
-    });
+    await user.click(screen.getByText('Custom Action'));
 
     expect(extraButtonClick).toHaveBeenCalled();
+
+    // Run timers to complete menu close animation (react-transition-group)
+    await act(async () => {
+      jest.runAllTimers();
+    });
   });
 
   it('should show search navigation when search prop is provided', async () => {
@@ -177,13 +190,14 @@ describe('FlameGraphCallTreeContainer', () => {
     const row = mallocgcButton.closest('tr');
     const actionButton = within(row!).getByLabelText('Actions');
 
-    await act(async () => {
-      await userEvents.click(actionButton);
-    });
+    await user.click(actionButton);
 
     // Click "Focus on callees"
+    await user.click(screen.getByText('Focus on callees'));
+
+    // Run timers to complete menu close animation (react-transition-group)
     await act(async () => {
-      await userEvents.click(screen.getByText('Focus on callees'));
+      jest.runAllTimers();
     });
 
     // The focus pill should appear in the toolbar showing the focused function
@@ -202,24 +216,43 @@ describe('FlameGraphCallTreeContainer', () => {
     const row = mallocgcButton.closest('tr');
     const actionButton = within(row!).getByLabelText('Actions');
 
-    await act(async () => {
-      await userEvents.click(actionButton);
-    });
+    await user.click(actionButton);
 
     // Click "Show callers"
-    await act(async () => {
-      await userEvents.click(screen.getByText('Show callers'));
-    });
+    await user.click(screen.getByText('Show callers'));
 
     // onSandwich should be called with the function name
     expect(mocks.onSandwich).toHaveBeenCalledWith('runtime.mallocgc');
+
+    // Run timers to complete menu close animation (react-transition-group)
+    await act(async () => {
+      jest.runAllTimers();
+    });
   });
 
   it('should navigate through search results with prev/next buttons', async () => {
-    // Suppress console.error for floating-ui warnings in this test
+    // Suppress console.error for floating-ui tooltip positioning warnings in jsdom
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    await setup({ search: 'runtime.mallocgc' });
+    // This test uses real timers because the prev/next buttons have tooltips
+    // that use @floating-ui/react-dom which doesn't play well with fake timers
+    jest.useRealTimers();
+    const realUser = userEvent.setup();
+
+    await act(async () => {
+      const flameGraphData = createDataFrame(data);
+      const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
+      render(
+        <FlameGraphCallTreeContainer
+          data={container}
+          onSymbolClick={jest.fn()}
+          onSandwich={jest.fn()}
+          colorScheme={ColorScheme.ValueBased}
+          search="runtime.mallocgc"
+          onSearch={jest.fn()}
+        />
+      );
+    });
 
     // Should show multiple matches
     const matchCounter = screen.getByText(/of \d+/);
@@ -227,28 +260,26 @@ describe('FlameGraphCallTreeContainer', () => {
 
     // Extract the total number of matches
     const matchText = matchCounter.textContent!;
-    const totalMatches = parseInt(matchText.match(/of (\d+)/)![1]);
+    const totalMatches = parseInt(matchText.match(/of (\d+)/)![1], 10);
     expect(totalMatches).toBeGreaterThan(1);
 
     // Initial position should be "1 of N"
     expect(screen.getByText(`1 of ${totalMatches}`)).toBeInTheDocument();
 
     // Click next
-    await act(async () => {
-      await userEvents.click(screen.getByLabelText('Next match'));
-    });
+    await realUser.click(screen.getByLabelText('Next match'));
 
     // Should now show "2 of N"
     expect(screen.getByText(`2 of ${totalMatches}`)).toBeInTheDocument();
 
     // Click previous
-    await act(async () => {
-      await userEvents.click(screen.getByLabelText('Previous match'));
-    });
+    await realUser.click(screen.getByLabelText('Previous match'));
 
     // Should be back to "1 of N"
     expect(screen.getByText(`1 of ${totalMatches}`)).toBeInTheDocument();
 
     consoleError.mockRestore();
+    // Restore fake timers for other tests
+    jest.useFakeTimers();
   });
 });

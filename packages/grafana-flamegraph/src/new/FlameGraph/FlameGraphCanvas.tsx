@@ -13,13 +13,13 @@ import { MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState
 import * as React from 'react';
 import { useMeasure } from 'react-use';
 
+import FlameGraphTooltip from '../../FlameGraph/FlameGraphTooltip';
+import { CollapsedMap, FlameGraphDataContainer, LevelItem } from '../../FlameGraph/dataTransform';
+import { getBarX, useFlameRender } from '../../FlameGraph/rendering';
 import { PIXELS_PER_LEVEL } from '../../constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, PaneView, ViewMode, TextAlign } from '../../types';
 
 import FlameGraphContextMenu, { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
-import FlameGraphTooltip from '../../FlameGraph/FlameGraphTooltip';
-import { CollapsedMap, FlameGraphDataContainer, LevelItem } from '../../FlameGraph/dataTransform';
-import { getBarX, useFlameRender } from '../../FlameGraph/rendering';
 
 type Props = {
   data: FlameGraphDataContainer;

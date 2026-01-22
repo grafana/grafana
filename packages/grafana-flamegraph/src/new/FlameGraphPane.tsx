@@ -23,12 +23,13 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 
 import { GrafanaTheme2, escapeStringForRegex } from '@grafana/data';
 
+import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, PaneView, ViewMode, TextAlign } from '../types';
+
 import FlameGraphCallTreeContainer from './CallTree/FlameGraphCallTreeContainer';
 import FlameGraph from './FlameGraph/FlameGraph';
 import { GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
-import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, PaneView, ViewMode, TextAlign } from '../types';
 
 export type FlameGraphPaneProps = {
   paneView: PaneView;

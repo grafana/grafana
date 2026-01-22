@@ -6,8 +6,9 @@ import { createDataFrame, createTheme } from '@grafana/data';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
-import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
 import { MIN_WIDTH_FOR_SPLIT_VIEW } from '../constants';
+
+import FlameGraphContainer, { labelSearch } from './FlameGraphContainer';
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn().mockReturnValue({

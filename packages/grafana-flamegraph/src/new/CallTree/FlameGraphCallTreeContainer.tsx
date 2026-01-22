@@ -21,8 +21,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Dropdown, Icon, IconButton, Menu, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { FlameGraphDataContainer, LevelItem } from '../../FlameGraph/dataTransform';
-import { GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
 import { ColorScheme, ColorSchemeDiff, PaneView, ViewMode } from '../../types';
+import { GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
 
 import {
   buildAllCallTreeNodes,

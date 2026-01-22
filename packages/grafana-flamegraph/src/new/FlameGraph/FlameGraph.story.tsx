@@ -2,11 +2,11 @@ import { Meta, StoryObj } from '@storybook/react';
 
 import { createDataFrame } from '@grafana/data';
 
+import { CollapsedMap, FlameGraphDataContainer } from '../../FlameGraph/dataTransform';
+import { data } from '../../FlameGraph/testData/dataBasic';
 import { ColorScheme, PaneView, ViewMode } from '../../types';
 
 import FlameGraph from './FlameGraph';
-import { CollapsedMap, FlameGraphDataContainer } from '../../FlameGraph/dataTransform';
-import { data } from '../../FlameGraph/testData/dataBasic';
 
 const meta: Meta<typeof FlameGraph> = {
   title: 'FlameGraph',
