@@ -68,7 +68,7 @@ jobs:
               }]
             }]
           }' \
-            "https://otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp"
+            "https://otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp/v1/traces"
 
 #
 #  - uses: paper2/github-actions-opentelemetry@main
