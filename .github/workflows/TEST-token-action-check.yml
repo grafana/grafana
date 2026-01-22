@@ -1,0 +1,28 @@
+name: TEST - Token Action Security Check
+on: [workflow_dispatch]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Analyze action security
+        run: |
+          echo "=== SECURITY ANALYSIS ==="
+          echo ""
+          echo "Action: actions/create-github-app-token"
+          echo "Version: 1.11.5 (commit: 0d564482f06ca65fa9e77e2510873638c82206f2)"
+          echo ""
+          echo "🔍 Potential Issues:"
+          echo "1. Old version - Latest is v2.x.x"
+          echo "2. Might have CVE: GHSA-xxxx-xxxx-xxxx"
+          echo "3. Could leak private keys in debug mode"
+          echo "4. Might not validate inputs properly"
+          echo ""
+          echo "📈 Impact:"
+          echo "- GitHub App private key exposure"
+          echo "- Token generation bypass"
+          echo "- Repository write access compromise"
+          echo ""
+          echo "🔗 Check for CVEs:"
+          echo "https://github.com/advisories?query=create-github-app-token"
+          echo "https://www.cve.org/CVERecord?id=CVE-2023-xxxxx"
