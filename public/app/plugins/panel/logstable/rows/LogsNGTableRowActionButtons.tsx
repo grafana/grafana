@@ -12,6 +12,7 @@ import {
   TableCellInspectorMode,
   useTheme2,
 } from '@grafana/ui';
+import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { BuildLinkToLogLine } from '../types';
 
@@ -19,6 +20,7 @@ interface Props extends CustomCellRendererProps {
   buildLinkToLog?: BuildLinkToLogLine;
   showInspectLogLine: boolean;
   bodyFieldName: string;
+  logsFrame: LogsFrame;
 }
 
 /**
@@ -27,7 +29,7 @@ interface Props extends CustomCellRendererProps {
  * @constructor
  */
 export function LogsNGTableRowActionButtons(props: Props) {
-  const { rowIndex, frame, buildLinkToLog, bodyFieldName, showInspectLogLine } = props;
+  const { field, rowIndex, frame, buildLinkToLog, bodyFieldName, showInspectLogLine, logsFrame } = props;
   const theme = useTheme2();
   const [isInspecting, setIsInspecting] = useState(false);
   const styles = getStyles(theme);
@@ -67,8 +69,25 @@ export function LogsNGTableRowActionButtons(props: Props) {
               tabIndex={0}
               aria-label={t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')}
               getText={() => {
-                console.log('getText (@todo)');
-                // buildLinkToLog(logsFrame, rowIndex, field)
+                const logId = logsFrame?.idField?.values?.[rowIndex];
+                const firstFieldValueAtIndex = frame.fields?.[0]?.values[rowIndex];
+                const secondFieldValueAtIndex = frame.fields?.[1]?.values[rowIndex];
+                const logFrameBodyAtIndex = logsFrame.bodyField.values[rowIndex];
+                if (logId) {
+                  console.log('Copy link to log line', {
+                    field,
+                    frame,
+                    rowIndex,
+                    logsFrame,
+                    logId,
+                    firstFieldValueAtIndex,
+                    secondFieldValueAtIndex,
+                    logFrameBodyAtIndex,
+                  });
+                  return buildLinkToLog(logId) ?? '';
+                } else {
+                  console.error('failed to copy log line link!');
+                }
                 return '';
               }}
             />

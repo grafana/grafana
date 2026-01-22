@@ -1,7 +1,7 @@
 {
   "type": "panel",
   "name": "Logs Table",
-  "id": "logs_table",
+  "id": "logstable",
   "state": "alpha",
   "info": {
     "author": {

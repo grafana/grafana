@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import { FieldConfigSource, GrafanaTheme2, PanelData, PanelProps } from '@grafana/data';
+import { CoreApp, FieldConfigSource, GrafanaTheme2, PanelData, PanelProps } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import {
   LOGS_DATAPLANE_BODY_NAME,
@@ -16,8 +16,10 @@ import { DEFAULT_SIDEBAR_WIDTH } from './constants';
 import { LogsTableFields } from './fieldSelector/LogsTableFields';
 import { useExtractFields } from './hooks/useExtractFields';
 import { useOrganizeFields } from './hooks/useOrganizeFields';
+import { copyLogsTableDashboardUrl } from './links/copyDashboardUrl';
+import { getLogsTablePanelState } from './panelState/getLogsTablePanelState';
 import type { Options as LogsTableOptions } from './panelcfg.gen';
-import { isOnLogsTableOptionsChange, OnLogsTableOptionsChange } from './types';
+import { BuildLinkToLogLine, isOnLogsTableOptionsChange, OnLogsTableOptionsChange } from './types';
 
 interface LogsTablePanelProps extends PanelProps<LogsTableOptions> {
   frameIndex?: number;
@@ -55,6 +57,11 @@ export const LogsTable = ({
   const timeFieldName = logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME;
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
 
+  const permalinkedLogId = getLogsTablePanelState()?.logs?.id ?? undefined;
+  const initialRowIndex = permalinkedLogId
+    ? logsFrame?.idField?.values?.findIndex((id) => id === permalinkedLogId)
+    : undefined;
+
   const onLogsTableOptionsChange: OnLogsTableOptionsChange | undefined = isOnLogsTableOptionsChange(onOptionsChange)
     ? onOptionsChange
     : undefined;
@@ -88,11 +95,34 @@ export const LogsTable = ({
     [onFieldConfigChange]
   );
 
+  const supportsPermalink = useCallback(() => {
+    return !(
+      data?.request?.app !== CoreApp.Dashboard &&
+      data?.request?.app !== CoreApp.PanelEditor &&
+      data?.request?.app !== CoreApp.PanelViewer
+    );
+  }, [data?.request?.app]);
+
+  const onPermalinkClick: BuildLinkToLogLine = useCallback(
+    (logId: string) => {
+      return copyLogsTableDashboardUrl(logId, data.timeRange);
+    },
+    [data.timeRange]
+  );
+
   // Extract fields transform
   const { extractedFrame } = useExtractFields({ rawTableFrame, fieldConfig, timeZone });
 
   // Organize fields transform
-  const { organizedFrame } = useOrganizeFields({ extractedFrame, timeFieldName, bodyFieldName, options });
+  const { organizedFrame } = useOrganizeFields({
+    extractedFrame,
+    timeFieldName,
+    bodyFieldName,
+    options,
+    logsFrame,
+    supportsPermalink: supportsPermalink(),
+    onPermalinkClick,
+  });
 
   // Build panel data
   const panelData: PanelData | null = useMemo(() => {
@@ -117,6 +147,8 @@ export const LogsTable = ({
   // @todo seeing 4 renders on time range change
   console.log('render::LogsTable', { extractedFrame, organizedFrame });
 
+  // @todo add row color
+
   return (
     <div className={styles.wrapper}>
       <LogsTableFields
@@ -132,6 +164,7 @@ export const LogsTable = ({
       />
 
       <TableNGWrap
+        initialRowIndex={initialRowIndex}
         data={panelData}
         width={width}
         height={height}

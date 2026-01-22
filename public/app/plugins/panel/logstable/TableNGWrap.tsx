@@ -11,6 +11,7 @@ import { DEFAULT_SIDEBAR_WIDTH } from './constants';
 
 interface Props extends PanelProps<TableOptions> {
   fieldSelectorWidth: number | undefined;
+  initialRowIndex?: number;
 }
 
 export function TableNGWrap({
@@ -31,6 +32,7 @@ export function TableNGWrap({
   replaceVariables,
   onChangeTimeRange,
   fieldSelectorWidth,
+  initialRowIndex,
 }: Props) {
   const sidebarWidth = fieldSelectorWidth ?? DEFAULT_SIDEBAR_WIDTH;
   const styles = useStyles2(getStyles, sidebarWidth, height, width);
@@ -55,6 +57,7 @@ export function TableNGWrap({
   return (
     <div className={styles.tableWrapper}>
       <TablePanel
+        initialRowIndex={initialRowIndex}
         data={data}
         width={width - sidebarWidth}
         height={height}
@@ -82,6 +85,10 @@ const getStyles = (theme: GrafanaTheme2, sidebarWidth: number, height: number, w
       paddingLeft: sidebarWidth,
       height,
       width,
+      '[aria-selected=true]': {
+        backgroundColor: theme.colors.background.secondary,
+        outline: `solid 1px ${theme.colors.warning.border}`,
+      },
     }),
   };
 };

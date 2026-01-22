@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { CustomCellRendererProps, useStyles2 } from '@grafana/ui';
+import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { ROW_ACTION_BUTTON_WIDTH } from '../LogsTable';
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
@@ -15,8 +16,9 @@ export function LogsTableCustomCellRenderer(props: {
   showCopyLogLink: boolean;
   showInspectLogLine: boolean;
   options: LogsTableOptions;
+  logsFrame: LogsFrame;
 }) {
-  const { bodyFieldName, showInspectLogLine, showCopyLogLink, options } = props;
+  const { bodyFieldName, showInspectLogLine, showCopyLogLink, logsFrame, buildLinkToLog, options } = props;
   const cellPadding =
     options.showInspectLogLine && options.showCopyLogLink
       ? ROW_ACTION_BUTTON_WIDTH
@@ -24,12 +26,14 @@ export function LogsTableCustomCellRenderer(props: {
         ? ROW_ACTION_BUTTON_WIDTH / 2
         : 0;
   const styles = useStyles2(getStyles, cellPadding);
+
   return (
     <>
       <LogsNGTableRowActionButtons
         {...props.cellProps}
+        logsFrame={logsFrame}
         bodyFieldName={bodyFieldName}
-        buildLinkToLog={showCopyLogLink ? (props.buildLinkToLog ?? buildLinkToLog) : undefined}
+        buildLinkToLog={showCopyLogLink ? buildLinkToLog : undefined}
         showInspectLogLine={showInspectLogLine}
       />
       <span className={styles.firstColumnCell}>
@@ -38,10 +42,6 @@ export function LogsTableCustomCellRenderer(props: {
     </>
   );
 }
-
-const buildLinkToLog: BuildLinkToLogLine = (logsFrame, rowIndex, field) => {
-  return '@todo';
-};
 
 const getStyles = (theme: GrafanaTheme2, cellPadding: number) => {
   return {
