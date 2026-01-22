@@ -5,8 +5,8 @@ import { createLogLine } from '../mocks/logRow';
 import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
 
 describe('generateLogGrammar', () => {
-  function generateScenario(entry: string) {
-    const log = createLogLine({ labels: { place: 'luna', source: 'logs' }, entry });
+  function generateScenario(entry: string, labels: Record<string, string> = { place: 'luna', source: 'logs' }) {
+    const log = createLogLine({ labels, entry });
     // Access body getter to trigger LogLineModel internals
     expect(log.body).toBeDefined();
     const grammar = generateLogGrammar(log);
@@ -86,6 +86,15 @@ describe('generateLogGrammar', () => {
       expect.assertions(3);
     }
   );
+
+  test('Identifies labels with special regexp characters', () => {
+    const { tokens } = generateScenario('place(*)=luna', { 'place(*)': 'luna', source: 'logs' });
+    if (tokens[0] instanceof Token) {
+      expect(tokens[0].content).toBe('place(*)=');
+      expect(tokens[0].type).toBe('log-token-label');
+    }
+    expect.assertions(3);
+  });
 });
 
 describe('generateTextMatchGrammar', () => {

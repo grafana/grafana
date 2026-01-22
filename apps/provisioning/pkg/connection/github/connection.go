@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -46,7 +47,6 @@ func NewConnection(
 const (
 	//TODO(ferruvich): these probably need to be setup in API configuration.
 	githubInstallationURL = "https://github.com/settings/installations"
-	jwtExpirationMinutes  = 10 // GitHub Apps JWT tokens expire in 10 minutes maximum
 )
 
 // Test validates the appID and installationID against the given github token.
@@ -211,6 +211,27 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 	return result, nil
 }
 
+// GenerateConnectionToken generates a JWT token for GitHub App authentication.
+// Implements the connection.TokenConnection interface.
+func (c *Connection) GenerateConnectionToken(_ context.Context) (common.RawSecureValue, error) {
+	if c.obj.Spec.GitHub == nil {
+		return "", errors.New("connection is not a GitHub connection")
+	}
+
+	return GenerateJWTToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
+}
+
+// TokenExpiration returns the underlying token expiration.
+func (c *Connection) TokenExpiration(_ context.Context) (time.Time, error) {
+	expiration, err := getExpirationFromToken(c.secrets.Token, c.secrets.PrivateKey)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return expiration, nil
+}
+
 var (
-	_ connection.Connection = (*Connection)(nil)
+	_ connection.Connection      = (*Connection)(nil)
+	_ connection.TokenConnection = (*Connection)(nil)
 )

@@ -63,7 +63,7 @@ type RepositoryController struct {
 
 	repoFactory       repository.Factory
 	connectionFactory connection.Factory
-	healthChecker     *HealthChecker
+	healthChecker     *RepositoryHealthChecker
 	// To allow injection for testing.
 	processFn         func(item *queueItem) error
 	enqueueRepository func(obj any)
@@ -87,7 +87,7 @@ func NewRepositoryController(
 		jobs.Queue
 		jobs.Store
 	},
-	healthChecker *HealthChecker,
+	healthChecker *RepositoryHealthChecker,
 	statusPatcher StatusPatcher,
 	registry prometheus.Registerer,
 	tracer tracing.Tracer,

@@ -9,7 +9,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -26,10 +25,10 @@ type StatusPatcher interface {
 	Patch(ctx context.Context, repo *provisioning.Repository, patchOperations ...map[string]interface{}) error
 }
 
-// HealthCheckerInterface defines the interface for health checking operations
+// RepositoryHealthCheckerInterface defines the interface for repository health checking operations
 //
-//go:generate mockery --name=HealthCheckerInterface --structname=MockHealthChecker
-type HealthCheckerInterface interface {
+//go:generate mockery --name=RepositoryHealthCheckerInterface --structname=MockRepositoryHealthChecker
+type RepositoryHealthCheckerInterface interface {
 	ShouldCheckHealth(repo *provisioning.Repository) bool
 	RefreshHealth(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, provisioning.HealthStatus, error)
 	RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, provisioning.HealthStatus, []map[string]interface{}, error)
@@ -38,25 +37,28 @@ type HealthCheckerInterface interface {
 	HasRecentFailure(healthStatus provisioning.HealthStatus, failureType provisioning.HealthFailureType) bool
 }
 
-// HealthChecker provides unified health checking for repositories
-type HealthChecker struct {
-	statusPatcher StatusPatcher
-	healthMetrics healthMetrics
-	tester        repository.Tester
+// RepositoryHealthChecker provides unified health checking for repositories
+type RepositoryHealthChecker struct {
+	statusPatcher         StatusPatcher
+	tester                repository.Tester
+	healthMetricsRecorder HealthMetricsRecorder
 }
 
-// NewHealthChecker creates a new health checker
-func NewHealthChecker(statusPatcher StatusPatcher, registry prometheus.Registerer, tester repository.Tester) *HealthChecker {
-	healthMetrics := registerHealthMetrics(registry)
-	return &HealthChecker{
-		statusPatcher: statusPatcher,
-		healthMetrics: healthMetrics,
-		tester:        tester,
+// NewRepositoryHealthChecker creates a new repository health checker
+func NewRepositoryHealthChecker(
+	statusPatcher StatusPatcher,
+	tester repository.Tester,
+	healthMetricsRecorder HealthMetricsRecorder,
+) *RepositoryHealthChecker {
+	return &RepositoryHealthChecker{
+		statusPatcher:         statusPatcher,
+		tester:                tester,
+		healthMetricsRecorder: healthMetricsRecorder,
 	}
 }
 
 // ShouldCheckHealth determines if a repository health check should be performed
-func (hc *HealthChecker) ShouldCheckHealth(repo *provisioning.Repository) bool {
+func (hc *RepositoryHealthChecker) ShouldCheckHealth(repo *provisioning.Repository) bool {
 	// If the repository has been updated, run the health check
 	if repo.Generation != repo.Status.ObservedGeneration {
 		return true
@@ -72,7 +74,7 @@ func (hc *HealthChecker) ShouldCheckHealth(repo *provisioning.Repository) bool {
 }
 
 // hasRecentHealthCheck checks if a health check was performed recently (for timing purposes)
-func (hc *HealthChecker) hasRecentHealthCheck(healthStatus provisioning.HealthStatus) bool {
+func (hc *RepositoryHealthChecker) hasRecentHealthCheck(healthStatus provisioning.HealthStatus) bool {
 	if healthStatus.Checked == 0 {
 		return false // Never checked
 	}
@@ -85,7 +87,7 @@ func (hc *HealthChecker) hasRecentHealthCheck(healthStatus provisioning.HealthSt
 }
 
 // HasRecentFailure checks if there's a recent failure of a specific type
-func (hc *HealthChecker) HasRecentFailure(healthStatus provisioning.HealthStatus, failureType provisioning.HealthFailureType) bool {
+func (hc *RepositoryHealthChecker) HasRecentFailure(healthStatus provisioning.HealthStatus, failureType provisioning.HealthFailureType) bool {
 	if healthStatus.Checked == 0 || healthStatus.Healthy || healthStatus.Error != failureType {
 		return false // No failure of this type
 	}
@@ -95,7 +97,7 @@ func (hc *HealthChecker) HasRecentFailure(healthStatus provisioning.HealthStatus
 }
 
 // RecordFailureAndUpdate records a failure and updates the repository status
-func (hc *HealthChecker) RecordFailure(ctx context.Context, failureType provisioning.HealthFailureType, err error, repo *provisioning.Repository) error {
+func (hc *RepositoryHealthChecker) RecordFailure(ctx context.Context, failureType provisioning.HealthFailureType, err error, repo *provisioning.Repository) error {
 	// Create the health status with the failure
 	healthStatus := hc.recordFailure(failureType, err)
 
@@ -111,7 +113,7 @@ func (hc *HealthChecker) RecordFailure(ctx context.Context, failureType provisio
 }
 
 // recordFailure creates a health status with a specific failure
-func (hc *HealthChecker) recordFailure(failureType provisioning.HealthFailureType, err error) provisioning.HealthStatus {
+func (hc *RepositoryHealthChecker) recordFailure(failureType provisioning.HealthFailureType, err error) provisioning.HealthStatus {
 	return provisioning.HealthStatus{
 		Healthy: false,
 		Error:   failureType,
@@ -121,7 +123,7 @@ func (hc *HealthChecker) recordFailure(failureType provisioning.HealthFailureTyp
 }
 
 // hasHealthStatusChanged checks if the health status has meaningfully changed
-func (hc *HealthChecker) hasHealthStatusChanged(old, new provisioning.HealthStatus) bool {
+func (hc *RepositoryHealthChecker) hasHealthStatusChanged(old, new provisioning.HealthStatus) bool {
 	if old.Healthy != new.Healthy {
 		return true
 	}
@@ -149,7 +151,7 @@ func (hc *HealthChecker) hasHealthStatusChanged(old, new provisioning.HealthStat
 
 // RefreshHealth performs a health check on an existing repository,
 // updates its status if needed, and returns the test results
-func (hc *HealthChecker) RefreshHealth(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, provisioning.HealthStatus, error) {
+func (hc *RepositoryHealthChecker) RefreshHealth(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, provisioning.HealthStatus, error) {
 	cfg := repo.Config()
 
 	// Use health checker to perform comprehensive health check with existing status
@@ -178,7 +180,7 @@ func (hc *HealthChecker) RefreshHealth(ctx context.Context, repo repository.Repo
 // and returns the test results, health status, and patch operations to apply.
 // This method does NOT apply the patch itself, allowing the caller to batch
 // multiple status updates together to avoid race conditions.
-func (hc *HealthChecker) RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, provisioning.HealthStatus, []map[string]interface{}, error) {
+func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (*provisioning.TestResults, provisioning.HealthStatus, []map[string]interface{}, error) {
 	cfg := repo.Config()
 
 	// Use health checker to perform comprehensive health check with existing status
@@ -202,7 +204,7 @@ func (hc *HealthChecker) RefreshHealthWithPatchOps(ctx context.Context, repo rep
 }
 
 // RefreshTimestamp updates the health status timestamp without changing other fields
-func (hc *HealthChecker) RefreshTimestamp(ctx context.Context, repo *provisioning.Repository) error {
+func (hc *RepositoryHealthChecker) RefreshTimestamp(ctx context.Context, repo *provisioning.Repository) error {
 	// Update the timestamp on the existing health status
 	healthStatus := repo.Status.Health
 	healthStatus.Checked = time.Now().UnixMilli()
@@ -220,12 +222,12 @@ func (hc *HealthChecker) RefreshTimestamp(ctx context.Context, repo *provisionin
 
 // refreshHealth performs a comprehensive health check
 // Returns test results, health status, and any error
-func (hc *HealthChecker) refreshHealth(ctx context.Context, repo repository.Repository, existingStatus provisioning.HealthStatus) (*provisioning.TestResults, provisioning.HealthStatus, error) {
+func (hc *RepositoryHealthChecker) refreshHealth(ctx context.Context, repo repository.Repository, existingStatus provisioning.HealthStatus) (*provisioning.TestResults, provisioning.HealthStatus, error) {
 	logger := logging.FromContext(ctx).With("repo", repo.Config().GetName(), "namespace", repo.Config().GetNamespace())
 	start := time.Now()
 	outcome := utils.SuccessOutcome
 	defer func() {
-		hc.healthMetrics.RecordHealthCheck(outcome, time.Since(start).Seconds())
+		hc.healthMetricsRecorder.RecordHealthCheck("repository", outcome, time.Since(start).Seconds())
 	}()
 
 	res, err := hc.tester.Test(ctx, repo)

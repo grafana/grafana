@@ -100,7 +100,7 @@ type APIBuilder struct {
 
 	tracer              tracing.Tracer
 	repoStore           grafanarest.Storage
-	repoLister          repository.RepositoryLister
+	repoLister          repository.RepositoryByConnectionLister
 	repoValidator       repository.Validator
 	connectionStore     grafanarest.Storage
 	parsers             resources.ParserFactory
@@ -123,7 +123,7 @@ type APIBuilder struct {
 	accessWithEditor  auth.AccessChecker
 	accessWithViewer  auth.AccessChecker
 	statusPatcher     *appcontroller.RepositoryStatusPatcher
-	healthChecker     *controller.HealthChecker
+	healthChecker     *controller.RepositoryHealthChecker
 	admissionHandler  *appadmission.Handler
 	// Extras provides additional functionality to the API.
 	extras       []Extra
@@ -553,7 +553,7 @@ func (b *APIBuilder) GetStatusPatcher() *appcontroller.RepositoryStatusPatcher {
 	return b.statusPatcher
 }
 
-func (b *APIBuilder) GetHealthChecker() *controller.HealthChecker {
+func (b *APIBuilder) GetHealthChecker() *controller.RepositoryHealthChecker {
 	return b.healthChecker
 }
 
@@ -622,8 +622,11 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	b.admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(b.repoFactory))
 	b.admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), repoAdmissionValidator)
 	// Connection mutator and validator
+	connAdmissionValidator := connection.NewAdmissionValidator(b.connectionFactory)
+	connDeleteValidator := connection.NewReferencedByRepositoriesValidator(b.repoLister)
+	connCombinedValidator := appadmission.NewCombinedValidator(connAdmissionValidator, connDeleteValidator)
 	b.admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(b.connectionFactory))
-	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionValidator(b.connectionFactory))
+	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connCombinedValidator)
 	// Jobs validator (no mutator needed)
 	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator())
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
@@ -709,11 +712,6 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 // Validate delegates to the admission handler for resource-specific validation
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	obj := a.GetObject()
-	if obj == nil || a.GetOperation() == admission.Connect || a.GetOperation() == admission.Delete {
-		return nil // This is normal for sub-resource
-	}
-
 	return b.admissionHandler.Validate(ctx, a, o)
 }
 
@@ -744,10 +742,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
+			healthMetricsRecorder := controller.NewHealthMetricsRecorder(b.registry)
 			// FIXME: Health checker uses basic validation only - no additional validators needed
 			// since the repository already passed admission validation when it was created/updated.
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
-			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewTester(b.repoValidator))
+			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.onlyApiServer {
@@ -882,11 +881,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Create and run connection controller
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
+			connHealthChecker := controller.NewConnectionHealthChecker(&connTester, healthMetricsRecorder)
 			connController, err := controller.NewConnectionController(
 				b.GetClient(),
 				connInformer,
 				connStatusPatcher,
-				connTester,
+				connHealthChecker,
+				b.connectionFactory,
 			)
 			if err != nil {
 				return err
