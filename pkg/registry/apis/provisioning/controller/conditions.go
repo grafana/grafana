@@ -7,38 +7,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// buildConditionPatchOps creates patch operations to update conditions using meta.SetStatusCondition logic
-// This ensures LastTransitionTime is only updated when the condition actually changes
-// Returns empty slice if the condition hasn't changed to avoid unnecessary patches
-func buildConditionPatchOps(obj *provisioning.Repository, newCondition metav1.Condition) []map[string]interface{} {
-	// Check if condition already exists and is unchanged
-	existingCondition := meta.FindStatusCondition(obj.Status.Conditions, newCondition.Type)
-	if existingCondition != nil &&
-		existingCondition.Status == newCondition.Status &&
-		existingCondition.Reason == newCondition.Reason &&
-		existingCondition.Message == newCondition.Message &&
-		existingCondition.ObservedGeneration == newCondition.ObservedGeneration {
-		// Condition hasn't changed, no need to patch
-		return nil
-	}
-
-	// Clone the conditions to avoid mutating the original
-	conditions := make([]metav1.Condition, len(obj.Status.Conditions))
-	copy(conditions, obj.Status.Conditions)
-
-	// Use meta.SetStatusCondition to handle LastTransitionTime correctly
-	meta.SetStatusCondition(&conditions, newCondition)
-
-	// Return patch operation to replace the entire conditions array
-	return []map[string]interface{}{
-		{
-			"op":    "replace",
-			"path":  "/status/conditions",
-			"value": conditions,
-		},
-	}
-}
-
 // buildConditionPatchOpsFromExisting creates condition patch operations for Repository or Connection resources.
 // Returns nil if the condition hasn't changed to avoid unnecessary patches.
 func buildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, generation int64, newCondition metav1.Condition) []map[string]interface{} {
