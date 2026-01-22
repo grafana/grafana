@@ -1334,3 +1334,128 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 			tokenError.Type, tokenError.Field, tokenError.Detail, tokenError.Origin)
 	})
 }
+
+func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	namespace := "default"
+
+	// Create typed client from REST config
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories(namespace)
+
+	// Create a connection first
+	connection := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Connection",
+		"metadata": map[string]any{
+			"name":      "test-connection-field-errors-cleared",
+			"namespace": namespace,
+		},
+		"spec": map[string]any{
+			"type": "github",
+			"github": map[string]any{
+				"appID":          "11111",
+				"installationID": "22222",
+			},
+		},
+		"secure": map[string]any{
+			"privateKey": map[string]any{
+				"create": base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM)),
+			},
+		},
+	}}
+	_, err = helper.CreateGithubConnection(t, ctx, connection)
+	require.NoError(t, err, "failed to create connection")
+
+	t.Cleanup(func() {
+		_ = helper.Connections.Resource.Delete(ctx, "test-connection-field-errors-cleared", metav1.DeleteOptions{})
+	})
+
+	t.Run("repository fieldErrors are cleared when repository becomes healthy", func(t *testing.T) {
+		// Create a repository with an invalid branch that will cause fieldErrors
+		repoUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "test-repo-field-errors-cleared",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"title": "Repo Field Errors Cleared Test",
+				"type":  "github",
+				"sync": map[string]any{
+					"enabled": false,
+					"target":  "folder",
+				},
+				"github": map[string]any{
+					"url":    "https://github.com/grafana/grafana-git-sync-demo",
+					"branch": "non-existent-branch-12345", // Invalid branch
+				},
+				"connection": map[string]any{
+					"name": "test-connection-field-errors-cleared",
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.Repositories.Resource.Create(ctx, repoUnstructured, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		repoName := createdUnstructured.GetName()
+
+		t.Cleanup(func() {
+			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		})
+
+		// Wait for reconciliation - repository should become unhealthy with fieldErrors
+		require.Eventually(t, func() bool {
+			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return repo.Status.ObservedGeneration == repo.Generation &&
+				repo.Status.Health.Checked > 0 &&
+				!repo.Status.Health.Healthy &&
+				len(repo.Status.FieldErrors) > 0
+		}, 15*time.Second, 500*time.Millisecond, "repository should be unhealthy with fieldErrors")
+
+		// Verify fieldErrors are present
+		repoWithErrors, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Greater(t, len(repoWithErrors.Status.FieldErrors), 0, "fieldErrors should be present when unhealthy")
+
+		// Fix the repository by updating to a valid branch
+		latestUnstructured, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		updatedUnstructured := latestUnstructured.DeepCopy()
+		githubSpec := updatedUnstructured.Object["spec"].(map[string]any)["github"].(map[string]any)
+		githubSpec["branch"] = "main" // Valid branch
+
+		_, err = helper.Repositories.Resource.Update(ctx, updatedUnstructured, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// Wait for reconciliation - repository should become healthy and fieldErrors should be cleared
+		require.Eventually(t, func() bool {
+			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return repo.Status.ObservedGeneration == repo.Generation &&
+				repo.Status.Health.Checked > 0 &&
+				repo.Status.Health.Healthy &&
+				len(repo.Status.FieldErrors) == 0
+		}, 15*time.Second, 500*time.Millisecond, "repository should be healthy with fieldErrors cleared")
+
+		// Verify fieldErrors are cleared
+		repoHealthy, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.True(t, repoHealthy.Status.Health.Healthy, "repository should be healthy")
+		assert.Empty(t, repoHealthy.Status.FieldErrors, "fieldErrors should be cleared when repository becomes healthy")
+	})
+}

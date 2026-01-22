@@ -1077,6 +1077,455 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 	})
 }
 
+func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	namespace := "default"
+
+	// Create typed client from REST config
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	t.Run("connection fieldErrors are cleared when connection becomes healthy", func(t *testing.T) {
+		// Create a connection with invalid installation ID that will cause fieldErrors
+		connUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-field-errors-cleared",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "999999999", // Invalid installation ID
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		// Set up a mock that will fail for invalid installation ID
+		var appID int64 = 123456
+		appSlug := "appSlug"
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatch(
+				ghmock.GetApp, github.App{
+					ID:   &appID,
+					Slug: &appSlug,
+				},
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetAppInstallationsByInstallationId,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusNotFound)
+					_, _ = w.Write(ghmock.MustMarshal(github.ErrorResponse{
+						Response: &http.Response{
+							StatusCode: http.StatusNotFound,
+						},
+						Message: "installation ID 999999999 not found",
+					}))
+				}),
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		connName := createdUnstructured.GetName()
+
+		t.Cleanup(func() {
+			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+		})
+
+		// Wait for reconciliation - connection should become unhealthy with fieldErrors
+		require.Eventually(t, func() bool {
+			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return conn.Status.ObservedGeneration == conn.Generation &&
+				conn.Status.Health.Checked > 0 &&
+				!conn.Status.Health.Healthy &&
+				len(conn.Status.FieldErrors) > 0
+		}, 15*time.Second, 500*time.Millisecond, "connection should be unhealthy with fieldErrors")
+
+		// Verify fieldErrors are present
+		connWithErrors, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Greater(t, len(connWithErrors.Status.FieldErrors), 0, "fieldErrors should be present when unhealthy")
+
+		// Fix the connection by updating to a valid installation ID
+		latestUnstructured, err := helper.Connections.Resource.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		updatedUnstructured := latestUnstructured.DeepCopy()
+		githubSpec := updatedUnstructured.Object["spec"].(map[string]any)["github"].(map[string]any)
+		githubSpec["installationID"] = "22222" // Valid installation ID
+
+		// Set up a mock that will succeed for valid installation ID
+		var validInstallationID int64 = 22222
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatch(
+				ghmock.GetApp, github.App{
+					ID:   &appID,
+					Slug: &appSlug,
+				},
+			),
+			ghmock.WithRequestMatch(
+				ghmock.GetAppInstallationsByInstallationId, github.Installation{
+					ID: &validInstallationID,
+				},
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		_, err = helper.Connections.Resource.Update(ctx, updatedUnstructured, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// Wait for reconciliation - connection should become healthy and fieldErrors should be cleared
+		require.Eventually(t, func() bool {
+			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return conn.Status.ObservedGeneration == conn.Generation &&
+				conn.Status.Health.Checked > 0 &&
+				conn.Status.Health.Healthy &&
+				len(conn.Status.FieldErrors) == 0
+		}, 15*time.Second, 500*time.Millisecond, "connection should be healthy with fieldErrors cleared")
+
+		// Verify fieldErrors are cleared
+		connHealthy, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.True(t, connHealthy.Status.Health.Healthy, "connection should be healthy")
+		assert.Equal(t, provisioning.ConnectionStateConnected, connHealthy.Status.State, "connection should be connected")
+		assert.Empty(t, connHealthy.Status.FieldErrors, "fieldErrors should be cleared when connection becomes healthy")
+	})
+}
+
+func TestIntegrationConnectionController_DryRunValidation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	namespace := "default"
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	t.Run("dryRun with valid connection passes runtime validation and does not persist", func(t *testing.T) {
+		// Set up a mock that returns valid app and installation
+		var appID int64 = 123456
+		appSlug := "appSlug"
+		var installationID int64 = 789012
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatch(
+				ghmock.GetApp, github.App{
+					ID:   &appID,
+					Slug: &appSlug,
+				},
+			),
+			ghmock.WithRequestMatch(
+				ghmock.GetAppInstallationsByInstallationId, github.Installation{
+					ID: &installationID,
+				},
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		conn := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-dryrun-valid",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "789012",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		// Create with dryRun=true - should pass validation
+		created, err := helper.Connections.Resource.Create(ctx, conn, metav1.CreateOptions{
+			DryRun:          []string{"All"},
+			FieldValidation: "Strict",
+		})
+		require.NoError(t, err, "dryRun create should succeed with valid connection")
+		require.NotNil(t, created)
+
+		// Verify the resource was NOT persisted (dryRun doesn't create resources)
+		_, err = helper.Connections.Resource.Get(ctx, "test-connection-dryrun-valid", metav1.GetOptions{})
+		require.Error(t, err, "resource should not exist after dryRun")
+		require.True(t, k8serrors.IsNotFound(err), "error should be NotFound")
+	})
+
+	t.Run("dryRun with invalid installation ID fails runtime validation", func(t *testing.T) {
+		// Set up a mock that returns valid app but invalid installation (404)
+		var appID int64 = 123456
+		appSlug := "appSlug"
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatch(
+				ghmock.GetApp, github.App{
+					ID:   &appID,
+					Slug: &appSlug,
+				},
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetAppInstallationsByInstallationId,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					// Return 404 Not Found for invalid installation ID
+					w.WriteHeader(http.StatusNotFound)
+					_, _ = w.Write(ghmock.MustMarshal(github.ErrorResponse{
+						Response: &http.Response{
+							StatusCode: http.StatusNotFound,
+						},
+						Message: "installation ID 999999999 not found",
+					}))
+				}),
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		conn := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-dryrun-invalid-installation",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "999999999", // Invalid installation ID
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		// Create with dryRun=true - should fail with admission error
+		_, err := helper.Connections.Resource.Create(ctx, conn, metav1.CreateOptions{
+			DryRun:          []string{"All"},
+			FieldValidation: "Strict",
+		})
+		require.Error(t, err, "dryRun create should fail with invalid installation ID")
+
+		// Verify it's an Invalid error with field error details
+		statusErr, ok := err.(*k8serrors.StatusError)
+		require.True(t, ok, "error should be StatusError")
+		// Check if it's an Invalid error (could be Invalid or BadRequest depending on how errors are returned)
+		require.True(t, statusErr.Status().Reason == metav1.StatusReasonInvalid || statusErr.Status().Code == 422, 
+			"error reason should be Invalid or status code should be 422")
+
+		// Verify the error message contains information about invalid installation ID
+		errorMessage := statusErr.Error()
+		assert.Contains(t, errorMessage, "invalid installation ID", "error message should mention invalid installation ID")
+
+		// Verify the resource was NOT persisted
+		_, err = helper.Connections.Resource.Get(ctx, "test-connection-dryrun-invalid-installation", metav1.GetOptions{})
+		require.Error(t, err, "resource should not exist after failed dryRun")
+		require.True(t, k8serrors.IsNotFound(err), "error should be NotFound")
+	})
+
+	t.Run("dryRun with invalid app ID fails runtime validation", func(t *testing.T) {
+		// Set up a mock that returns a different app ID (mismatch)
+		var appID int64 = 999999 // Different from the one in spec (123456)
+		appSlug := "appSlug"
+		var installationID int64 = 789012
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatch(
+				ghmock.GetApp, github.App{
+					ID:   &appID,
+					Slug: &appSlug,
+				},
+			),
+			ghmock.WithRequestMatch(
+				ghmock.GetAppInstallationsByInstallationId, github.Installation{
+					ID: &installationID,
+				},
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		conn := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-dryrun-invalid-appid",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "123456", // This will mismatch with returned app ID (999999)
+					"installationID": "789012",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		// Create with dryRun=true - should fail with admission error
+		_, err := helper.Connections.Resource.Create(ctx, conn, metav1.CreateOptions{
+			DryRun:          []string{"All"},
+			FieldValidation: "Strict",
+		})
+		require.Error(t, err, "dryRun create should fail with invalid app ID")
+
+		// Verify it's an Invalid error
+		statusErr, ok := err.(*k8serrors.StatusError)
+		require.True(t, ok, "error should be StatusError")
+		// Check if it's an Invalid error (could be Invalid or BadRequest depending on how errors are returned)
+		require.True(t, statusErr.Status().Reason == metav1.StatusReasonInvalid || statusErr.Status().Code == 422,
+			"error reason should be Invalid or status code should be 422")
+
+		// Verify the error message contains information about app ID mismatch
+		errorMessage := statusErr.Error()
+		assert.Contains(t, errorMessage, "appID mismatch", "error message should mention appID mismatch")
+
+		// Verify the resource was NOT persisted
+		_, err = helper.Connections.Resource.Get(ctx, "test-connection-dryrun-invalid-appid", metav1.GetOptions{})
+		require.Error(t, err, "resource should not exist after failed dryRun")
+		require.True(t, k8serrors.IsNotFound(err), "error should be NotFound")
+	})
+
+	t.Run("dryRun with invalid token fails runtime validation", func(t *testing.T) {
+		// Set up a mock that returns unauthorized error for invalid token
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					// Return 401 Unauthorized for invalid token
+					w.WriteHeader(http.StatusUnauthorized)
+					_, _ = w.Write(ghmock.MustMarshal(github.ErrorResponse{
+						Response: &http.Response{
+							StatusCode: http.StatusUnauthorized,
+						},
+						Message: "Bad credentials",
+					}))
+				}),
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		conn := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-dryrun-invalid-token",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "789012",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		// Create with dryRun=true - should fail with admission error
+		_, err := helper.Connections.Resource.Create(ctx, conn, metav1.CreateOptions{
+			DryRun:          []string{"All"},
+			FieldValidation: "Strict",
+		})
+		require.Error(t, err, "dryRun create should fail with invalid token")
+
+		// Verify it's an Invalid error
+		statusErr, ok := err.(*k8serrors.StatusError)
+		require.True(t, ok, "error should be StatusError")
+		// Check if it's an Invalid error (could be Invalid or BadRequest depending on how errors are returned)
+		require.True(t, statusErr.Status().Reason == metav1.StatusReasonInvalid || statusErr.Status().Code == 422,
+			"error reason should be Invalid or status code should be 422")
+
+		// Verify the error message contains information about invalid token
+		errorMessage := statusErr.Error()
+		assert.Contains(t, errorMessage, "invalid token", "error message should mention invalid token")
+
+		// Verify the resource was NOT persisted
+		_, err = helper.Connections.Resource.Get(ctx, "test-connection-dryrun-invalid-token", metav1.GetOptions{})
+		require.Error(t, err, "resource should not exist after failed dryRun")
+		require.True(t, k8serrors.IsNotFound(err), "error should be NotFound")
+	})
+
+	t.Run("dryRun skips runtime validation if structural validation fails", func(t *testing.T) {
+		conn := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-dryrun-structural-fail",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"type": "github",
+				// Missing github config - structural validation should fail
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		// Create with dryRun=true - should fail with structural validation error
+		_, err := helper.Connections.Resource.Create(ctx, conn, metav1.CreateOptions{
+			DryRun:          []string{"All"},
+			FieldValidation: "Strict",
+		})
+		require.Error(t, err, "dryRun create should fail with structural validation error")
+
+		// Verify it's an Invalid error
+		statusErr, ok := err.(*k8serrors.StatusError)
+		require.True(t, ok, "error should be StatusError")
+		require.Equal(t, metav1.StatusReasonInvalid, statusErr.Status().Reason, "error reason should be Invalid")
+
+		// Verify the error message contains information about missing github config
+		errorMessage := statusErr.Error()
+		assert.Contains(t, errorMessage, "github info must be specified", "error message should mention missing github config")
+
+		// Verify the resource was NOT persisted
+		_, err = helper.Connections.Resource.Get(ctx, "test-connection-dryrun-structural-fail", metav1.GetOptions{})
+		require.Error(t, err, "resource should not exist after failed dryRun")
+		require.True(t, k8serrors.IsNotFound(err), "error should be NotFound")
+	})
+}
+
 func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
