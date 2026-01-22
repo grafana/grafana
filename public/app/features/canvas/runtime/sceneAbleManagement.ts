@@ -158,6 +158,21 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     })
     .on('rotateEnd', () => {
       enableCustomables(scene.moveable!);
+
+      // Update connection coordinates for elements that have connections
+      // Since rotation affects positioning, update all connection endpoints
+      const elementsToUpdate = new Set<ElementState>();
+
+      scene.connections.state.forEach(connectionState => {
+        elementsToUpdate.add(connectionState.source);
+        elementsToUpdate.add(connectionState.target);
+      });
+
+      elementsToUpdate.forEach(element => {
+        scene.connections.updateConnectionsAfterIndividualMove?.(element);
+      });
+      scene.connections.updateState();
+
       // Update the editor with the new rotation
       scene.moved.next(Date.now());
     })
@@ -227,6 +242,14 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       }
     })
     .on('dragGroupEnd', (e) => {
+      // Get all moved elements in the group
+      const movedElements = e.events.map(event => findElementByTarget(event.target, scene.root.elements)).filter((el): el is ElementState => el !== undefined);
+
+      // Update connection original coordinates when both source and target are moved together
+      scene.connections.updateConnectionsAfterGroupMove?.(movedElements, scene.selecto?.getSelectedTargets() || []);
+      scene.connections.updateState();
+      scene.save();
+
       e.events.forEach((event) => {
         const targetedElement = findElementByTarget(event.target, scene.root.elements);
         if (targetedElement) {
@@ -246,6 +269,10 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       const targetedElement = findElementByTarget(event.target, scene.root.elements);
       if (targetedElement) {
         targetedElement.setPlacementFromConstraint(undefined, undefined, scene.scale);
+
+        // Update connection coordinates when an individual element is moved
+        scene.connections.updateConnectionsAfterIndividualMove?.(targetedElement);
+        scene.connections.updateState();
       }
 
       scene.moved.next(Date.now());
@@ -339,6 +366,10 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
           targetedElement.tempConstraint = undefined;
         }
         targetedElement.setPlacementFromConstraint(undefined, undefined, scene.scale);
+
+        // Update connection coordinates when an element is resized
+        scene.connections.updateConnectionsAfterIndividualMove?.(targetedElement);
+        scene.connections.updateState();
 
         // re-add the selected element to the snappable guidelines
         if (scene.moveable && scene.moveable.elementGuidelines) {
