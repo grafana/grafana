@@ -92,6 +92,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		deps.Registerer,
 		tracer,
 		controllerCfg.parallelOperations,
+		controllerCfg.resyncInterval,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)

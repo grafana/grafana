@@ -666,6 +666,7 @@ func TestConnectionController_process(t *testing.T) {
 				statusPatcher:     mockStatusPatcher,
 				connectionFactory: mockFactory,
 				logger:            logging.DefaultLogger,
+				resyncInterval:    5 * time.Minute,
 			}
 
 			item := &connectionQueueItem{key: tt.conn.Namespace + "/" + tt.conn.Name}

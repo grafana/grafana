@@ -73,6 +73,7 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 		statusPatcher,
 		healthChecker,
 		connectionFactory,
+		controllerCfg.resyncInterval,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create connection controller: %w", err)

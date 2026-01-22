@@ -50,7 +50,8 @@ type ConnectionController struct {
 	healthChecker     ConnectionHealthCheckerInterface
 	connectionFactory connection.Factory
 
-	queue workqueue.TypedRateLimitingInterface[*connectionQueueItem]
+	queue          workqueue.TypedRateLimitingInterface[*connectionQueueItem]
+	resyncInterval time.Duration
 }
 
 // NewConnectionController creates a new ConnectionController.
@@ -60,6 +61,7 @@ func NewConnectionController(
 	statusPatcher ConnectionStatusPatcher,
 	healthChecker *ConnectionHealthChecker,
 	connectionFactory connection.Factory,
+	resyncInterval time.Duration,
 ) (*ConnectionController, error) {
 	cc := &ConnectionController{
 		client:     provisioningClient,
@@ -75,6 +77,7 @@ func NewConnectionController(
 		healthChecker:     healthChecker,
 		connectionFactory: connectionFactory,
 		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
+		resyncInterval:    resyncInterval,
 	}
 
 	_, err := connInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -284,11 +287,8 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 }
 
 func (cc *ConnectionController) shouldRefreshToken(expiration time.Time) bool {
-	const (
-		maxTokenAge = time.Minute * 5
-	)
-
-	return expiration.Before(time.Now().Add(maxTokenAge))
+	// If the expiration is before the next resync, we should refresh the token.
+	return expiration.Before(time.Now().Add(cc.resyncInterval))
 }
 
 // generateConnectionToken regenerates the connection token if the connection supports it.
