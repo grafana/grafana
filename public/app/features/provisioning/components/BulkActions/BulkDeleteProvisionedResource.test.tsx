@@ -79,7 +79,7 @@ function setup(
   const mockCreateBulkJob = jest.fn().mockResolvedValue(mockJobResult);
 
   mockUseGetResourceRepositoryView.mockReturnValue({
-    repository: repository ?? defaultRepository,
+    repository: defaultRepository,
     folder: repository
       ? {
           metadata: {
@@ -90,6 +90,7 @@ function setup(
         }
       : null,
     isInstanceManaged: false,
+    canPushToConfiguredBranch: true,
   });
 
   mockUseBulkActionJob.mockReturnValue({

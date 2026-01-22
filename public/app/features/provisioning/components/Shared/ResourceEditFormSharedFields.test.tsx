@@ -50,25 +50,15 @@ jest.mock('@grafana/i18n', () => ({
 
 interface SetupOptions {
   formDefaultValues?: Partial<ProvisionedDashboardFormData>;
-  workflowOptions?: Array<{ label: string; value: string }>;
   isNew?: boolean;
   readOnly?: boolean;
   workflow?: 'write' | 'branch';
   repository?: RepositoryView;
+  canPushToConfiguredBranch?: boolean;
 }
 
 function setup(options: SetupOptions = {}) {
-  const {
-    formDefaultValues = {},
-    workflowOptions = [
-      { label: 'Write directly', value: 'write' },
-      { label: 'Create branch', value: 'branch' },
-    ],
-    isNew,
-    readOnly,
-    workflow,
-    repository,
-  } = options;
+  const { formDefaultValues = {}, canPushToConfiguredBranch = true, isNew, readOnly, workflow, repository } = options;
 
   const user = userEvent.setup();
 
@@ -89,7 +79,7 @@ function setup(options: SetupOptions = {}) {
   };
 
   const componentProps = {
-    workflowOptions,
+    canPushToConfiguredBranch,
     isNew,
     readOnly,
     workflow,
@@ -125,8 +115,8 @@ describe('ResourceEditFormSharedFields', () => {
       setup({ repository: mockRepo.github });
 
       expect(screen.getByRole('radiogroup')).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: 'Write directly' })).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: 'Create branch' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'Push to an existing branch' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'Push to a new branch' })).toBeInTheDocument();
     });
   });
 
@@ -191,7 +181,7 @@ describe('ResourceEditFormSharedFields', () => {
     it('should allow selecting workflow options', async () => {
       const { user } = setup({ repository: mockRepo.github });
 
-      const branchOption = screen.getByRole('radio', { name: 'Create branch' });
+      const branchOption = screen.getByRole('radio', { name: 'Push to a new branch' });
       await user.click(branchOption);
 
       expect(branchOption).toBeChecked();
@@ -225,14 +215,7 @@ describe('ResourceEditFormSharedFields', () => {
 
         return (
           <FormProvider {...methods}>
-            <ResourceEditFormSharedFields
-              workflowOptions={[
-                { label: 'Write directly', value: 'write' },
-                { label: 'Create branch', value: 'branch' },
-              ]}
-              isNew={true}
-              resourceType="dashboard"
-            />
+            <ResourceEditFormSharedFields canPushToConfiguredBranch={true} isNew={true} resourceType="dashboard" />
           </FormProvider>
         );
       };
@@ -267,22 +250,6 @@ describe('ResourceEditFormSharedFields', () => {
 
       // Check if validation error appears
       expect(screen.getByRole('alert')).toBeInTheDocument();
-    });
-  });
-
-  describe('Edge Cases', () => {
-    it('should handle empty workflowOptions', () => {
-      setup({ workflowOptions: [], repository: mockRepo.github });
-
-      expect(screen.getByText('Workflow')).toBeInTheDocument();
-      expect(screen.queryByRole('radio')).not.toBeInTheDocument();
-    });
-
-    it('should handle undefined props', () => {
-      setup({ readOnly: undefined, repository: mockRepo.local });
-
-      expect(screen.getByRole('textbox', { name: /Path/ })).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: 'Comment' })).toBeInTheDocument();
     });
   });
 });

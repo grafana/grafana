@@ -155,10 +155,7 @@ const mockHookData: ProvisionedFolderFormDataResult = {
       title: '',
     },
   },
-  workflowOptions: [
-    { label: 'Commit directly', value: 'write' },
-    { label: 'Create a branch', value: 'branch' },
-  ],
+  canPushToConfiguredBranch: true,
   initialValues: {
     title: '',
     comment: '',
@@ -228,7 +225,7 @@ describe('NewProvisionedFolderForm', () => {
 
     expect(screen.queryByRole('textbox', { name: /branch/i })).not.toBeInTheDocument();
 
-    const branchOption = screen.getByRole('radio', { name: /create a branch/i });
+    const branchOption = screen.getByRole('radio', { name: /push to a new branch/i });
     await user.click(branchOption);
 
     expect(screen.getByRole('textbox', { name: /branch/i })).toBeInTheDocument();
@@ -238,7 +235,7 @@ describe('NewProvisionedFolderForm', () => {
     const { user } = setup();
 
     // Select branch workflow
-    const branchOption = screen.getByRole('radio', { name: /create a branch/i });
+    const branchOption = screen.getByRole('radio', { name: /push to a new branch/i });
     await user.click(branchOption);
 
     // Enter invalid branch name
@@ -325,7 +322,7 @@ describe('NewProvisionedFolderForm', () => {
     await user.type(folderNameInput, 'Branch Folder');
 
     // Select branch workflow
-    const branchOption = screen.getByRole('radio', { name: /create a branch/i });
+    const branchOption = screen.getByRole('radio', { name: /push to a new branch/i });
     await user.click(branchOption);
 
     // Enter branch name

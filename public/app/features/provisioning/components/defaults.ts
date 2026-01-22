@@ -8,5 +8,5 @@ export function getDefaultWorkflow(config?: RepositoryView, loadedFromRef?: stri
 }
 
 export function getCanPushToConfiguredBranch(repository?: RepositoryView) {
-  return repository?.workflows.includes('write') ?? false;
+  return repository?.workflows?.includes('write') ?? false;
 }

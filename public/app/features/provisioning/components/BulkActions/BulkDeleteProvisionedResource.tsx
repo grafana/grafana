@@ -115,6 +115,7 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
                 isNew={false}
                 workflow={workflow}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
+                repository={repository}
                 hidePath
               />
               <Stack gap={2}>
