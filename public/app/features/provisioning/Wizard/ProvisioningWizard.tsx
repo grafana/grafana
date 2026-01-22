@@ -81,7 +81,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget);
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
-    repoName: repoName,
+    repoName,
     setStepStatusInfo,
   });
 
@@ -95,7 +95,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       canSkipSync,
       setStepStatusInfo,
       createSyncJob,
-      navigate,
       getValues,
       repoType,
       syncTarget,
@@ -124,7 +123,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     repoName,
     repoType,
     activeStep,
-    navigate,
     handleBack: goToPreviousStep,
     shouldUseCancelBehavior,
   });
@@ -137,7 +135,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     githubAppStepRef,
     setStepStatusInfo,
     onSuccess: goToNextStep,
-    setValue,
   });
 
   const { nextButtonText, previousButtonText, isNextDisabled, isPreviousDisabled } = useWizardButtons({

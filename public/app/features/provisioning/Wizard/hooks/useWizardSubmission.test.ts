@@ -65,6 +65,7 @@ describe('useWizardSubmission', () => {
       getValues: mockGetValues,
       trigger: mockTrigger,
       setError: mockSetError,
+      setValue: mockSetValue,
     } as unknown as UseFormReturn<WizardFormData>;
   }
 
@@ -81,7 +82,6 @@ describe('useWizardSubmission', () => {
       } as UseWizardSubmissionParams['githubAppStepRef'],
       setStepStatusInfo: mockSetStepStatusInfo,
       onSuccess: mockOnSuccess,
-      setValue: mockSetValue,
       ...overrides,
     };
   }

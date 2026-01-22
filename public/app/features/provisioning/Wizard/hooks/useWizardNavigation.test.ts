@@ -6,6 +6,11 @@ import { WizardFormData, WizardStep } from '../types';
 
 import { useWizardNavigation, UseWizardNavigationParams } from './useWizardNavigation';
 
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom-v5-compat', () => ({
+  useNavigate: () => mockNavigate,
+}));
+
 jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
@@ -37,7 +42,6 @@ describe('useWizardNavigation', () => {
 
   const mockSetStepStatusInfo = jest.fn();
   const mockCreateSyncJob = jest.fn();
-  const mockNavigate = jest.fn();
   const mockGetValues = jest.fn(() => mockFormData);
 
   const defaultParams: UseWizardNavigationParams = {
@@ -46,7 +50,6 @@ describe('useWizardNavigation', () => {
     canSkipSync: false,
     setStepStatusInfo: mockSetStepStatusInfo,
     createSyncJob: mockCreateSyncJob,
-    navigate: mockNavigate,
     getValues: mockGetValues,
     repoType: 'github',
     syncTarget: 'folder',

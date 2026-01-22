@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { NavigateFunction } from 'react-router-dom-v5-compat';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { reportInteraction } from '@grafana/runtime';
 import { useDeleteRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
@@ -11,7 +11,6 @@ export interface UseWizardCancellationParams {
   repoName: string;
   repoType: RepoType;
   activeStep: WizardStep;
-  navigate: NavigateFunction;
   handleBack: () => void;
   shouldUseCancelBehavior: boolean;
 }
@@ -30,10 +29,10 @@ export function useWizardCancellation({
   repoName,
   repoType,
   activeStep,
-  navigate,
   handleBack,
   shouldUseCancelBehavior,
 }: UseWizardCancellationParams): UseWizardCancellationReturn {
+  const navigate = useNavigate();
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [deleteRepository] = useDeleteRepositoryMutation();

@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { reportInteraction } from '@grafana/runtime';
 
@@ -13,7 +14,6 @@ export interface UseWizardNavigationParams {
   canSkipSync: boolean;
   setStepStatusInfo: (info: StepStatusInfo) => void;
   createSyncJob: (requiresMigration: boolean) => Promise<unknown>;
-  navigate: (path: string) => void;
   getValues: () => WizardFormData;
   repoType: string;
   syncTarget: string;
@@ -37,12 +37,12 @@ export function useWizardNavigation({
   canSkipSync,
   setStepStatusInfo,
   createSyncJob,
-  navigate,
   getValues,
   repoType,
   syncTarget,
   githubAuthType,
 }: UseWizardNavigationParams): UseWizardNavigationReturn {
+  const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState<WizardStep>(initialStep);
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
 

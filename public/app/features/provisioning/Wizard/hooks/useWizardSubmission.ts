@@ -1,5 +1,5 @@
 import { RefObject, useCallback, useState } from 'react';
-import { UseFormReturn, UseFormSetValue } from 'react-hook-form';
+import { UseFormReturn } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
@@ -22,7 +22,6 @@ export interface UseWizardSubmissionParams {
   githubAppStepRef: RefObject<GitHubAppStepRef>;
   setStepStatusInfo: (info: StepStatusInfo) => void;
   onSuccess: () => void;
-  setValue: UseFormSetValue<WizardFormData>;
 }
 
 export interface UseWizardSubmissionReturn {
@@ -38,9 +37,9 @@ export function useWizardSubmission({
   githubAppStepRef,
   setStepStatusInfo,
   onSuccess,
-  setValue,
 }: UseWizardSubmissionParams): UseWizardSubmissionReturn {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { setValue } = methods;
 
   const repositoryRequestFailed = t(
     'provisioning.provisioning-wizard.on-submit.title.repository-request-failed',
@@ -169,9 +168,9 @@ export function useWizardSubmission({
     githubAppStepRef,
     setStepStatusInfo,
     onSuccess,
-    setValue,
     repositoryRequestFailed,
     repositoryConnectionFailed,
+    setValue,
   ]);
 
   return {

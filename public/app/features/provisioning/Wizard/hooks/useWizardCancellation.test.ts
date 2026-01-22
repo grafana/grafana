@@ -7,6 +7,11 @@ import { RepoType, WizardStep } from '../types';
 
 import { useWizardCancellation, UseWizardCancellationParams } from './useWizardCancellation';
 
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom-v5-compat', () => ({
+  useNavigate: () => mockNavigate,
+}));
+
 jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
@@ -19,14 +24,12 @@ const mockUseDeleteRepositoryMutation = jest.mocked(useDeleteRepositoryMutation)
 
 describe('useWizardCancellation', () => {
   const mockDeleteRepository = jest.fn();
-  const mockNavigate = jest.fn();
   const mockHandleBack = jest.fn();
 
   const defaultParams: UseWizardCancellationParams = {
     repoName: 'test-repo',
     repoType: 'github' as RepoType,
     activeStep: 'bootstrap' as WizardStep,
-    navigate: mockNavigate,
     handleBack: mockHandleBack,
     shouldUseCancelBehavior: false,
   };
