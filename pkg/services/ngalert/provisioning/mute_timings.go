@@ -95,13 +95,22 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 	return result, nil
 }
 
-// GetMuteTiming returns a mute timing by name or UID
-func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, nameOrUID string, orgID int64) (definitions.MuteTimeInterval, error) {
+// GetMuteTimingByUID returns a mute timing by UID
+func (svc *MuteTimingService) GetMuteTimingByUID(ctx context.Context, uid string, orgID int64) (definitions.MuteTimeInterval, error) {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
-	return svc.getMuteTiming(ctx, revision, nameOrUID, orgID)
+
+	result, found, err := svc.getMuteTimingByUID(ctx, revision, orgID, uid)
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+	if found {
+		return result, nil
+	}
+
+	return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
 }
 
 // GetMuteTimingByName returns a mute timing by name.
@@ -121,6 +130,7 @@ func (svc *MuteTimingService) GetMuteTimingByName(ctx context.Context, name stri
 	return mti, nil
 }
 
+// getMuteTiming is a helper that tries to get a mute timing by name first, then UID if not found by name.
 func (svc *MuteTimingService) getMuteTiming(ctx context.Context, revision *legacy_storage.ConfigRevision, nameOrUID string, orgID int64) (definitions.MuteTimeInterval, error) {
 	result, found, err := svc.getMuteTimingByName(ctx, revision, orgID, nameOrUID)
 	if err != nil {
