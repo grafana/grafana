@@ -10274,6 +10274,17 @@
       "label-log-stats": "{{label}}: {{total}} of {{rowCount}} rows have that label"
     }
   },
+  "logstable": {
+    "category-table": "Logs Table",
+    "show-copy-log": {
+      "description": "Enables/disables the log line link button in the first column of each row",
+      "name": "Show copy log link button"
+    },
+    "show-inspect-button": {
+      "description": "Enables/disables the log line inspect button in the first column of each row",
+      "name": "Show inspect button"
+    }
+  },
   "manage-dashbaords": {
     "import-dashboard-form": {
       "description-existing-library-panels": "List of existing library panels. These panels are not affected by the import."
