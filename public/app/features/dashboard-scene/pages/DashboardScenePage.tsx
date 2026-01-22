@@ -9,7 +9,7 @@ import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { PublicDashboardFooter } from 'app/features/dashboard/components/PublicDashboard/PublicDashboardsFooter';
+import { DashboardBrandingFooter } from 'app/features/dashboard/components/PublicDashboard/DashboardBrandingFooter';
 import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
@@ -163,7 +163,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
       {showKioskFooter && !hideKioskFooter && (
-        <PublicDashboardFooter paddingX={2} useMinHeight={true} linkUrl={KIOSK_DASHBOARD_FOOTER_URL} />
+        <DashboardBrandingFooter paddingX={2} useMinHeight={true} linkUrl={KIOSK_DASHBOARD_FOOTER_URL} />
       )}
     </UrlSyncContextProvider>
   );

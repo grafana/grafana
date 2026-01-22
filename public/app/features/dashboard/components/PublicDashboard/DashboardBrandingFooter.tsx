@@ -9,7 +9,7 @@ import { useGetPublicDashboardConfig } from './usePublicDashboardConfig';
 
 const selectors = e2eSelectors.pages.PublicDashboard;
 
-export interface PublicDashboardFooterProps {
+export interface DashboardBrandingFooterProps {
   /**
    * Applies horizontal padding to the footer container.
    * Useful when rendering the footer in layouts that don't already have page padding (e.g. kiosk mode).
@@ -26,7 +26,7 @@ export interface PublicDashboardFooterProps {
   linkUrl?: string;
 }
 
-export const PublicDashboardFooter = function ({ paddingX, useMinHeight, linkUrl }: PublicDashboardFooterProps) {
+export const DashboardBrandingFooter = function ({ paddingX, useMinHeight, linkUrl }: DashboardBrandingFooterProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const conf = useGetPublicDashboardConfig();
