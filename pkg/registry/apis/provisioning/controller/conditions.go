@@ -42,6 +42,8 @@ func buildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, g
 }
 
 // buildReadyConditionFromHealth creates a Ready condition based on health status.
+// Uses a default reason (InvalidConfiguration) for unhealthy resources.
+// For more specific error classification, use buildReadyConditionWithReason.
 func buildReadyConditionFromHealth(healthStatus provisioning.HealthStatus) metav1.Condition {
 	if healthStatus.Healthy {
 		return metav1.Condition{
@@ -61,7 +63,33 @@ func buildReadyConditionFromHealth(healthStatus provisioning.HealthStatus) metav
 	return metav1.Condition{
 		Type:    provisioning.ConditionTypeReady,
 		Status:  metav1.ConditionFalse,
-		Reason:  provisioning.ReasonUnavailable,
+		Reason:  provisioning.ReasonInvalidConfiguration,
+		Message: message,
+	}
+}
+
+// buildReadyConditionWithReason creates a Ready condition with a specific reason.
+// This allows for granular error classification (InvalidConfiguration, AuthenticationFailed, ServiceUnavailable, RateLimited).
+func buildReadyConditionWithReason(healthStatus provisioning.HealthStatus, reason string) metav1.Condition {
+	if healthStatus.Healthy {
+		return metav1.Condition{
+			Type:    provisioning.ConditionTypeReady,
+			Status:  metav1.ConditionTrue,
+			Reason:  provisioning.ReasonAvailable,
+			Message: "Resource is available",
+		}
+	}
+
+	// Build message from health status messages
+	message := "Resource is unavailable"
+	if len(healthStatus.Message) > 0 {
+		message = healthStatus.Message[0]
+	}
+
+	return metav1.Condition{
+		Type:    provisioning.ConditionTypeReady,
+		Status:  metav1.ConditionFalse,
+		Reason:  reason,
 		Message: message,
 	}
 }

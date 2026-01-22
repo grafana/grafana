@@ -102,6 +102,31 @@ func (hc *ConnectionHealthChecker) hasHealthStatusChanged(old, new provisioning.
 	return false
 }
 
+// classifyConnectionError determines the appropriate Ready condition reason based on test results.
+// Returns one of: Available, InvalidConfiguration, AuthenticationFailed, ServiceUnavailable, or RateLimited.
+func classifyConnectionError(testResults *provisioning.TestResults) string {
+	if testResults.Success {
+		return provisioning.ReasonAvailable
+	}
+
+	// Map HTTP status codes to condition reasons
+	switch testResults.Code {
+	case 422: // Unprocessable Entity - spec validation failed
+		return provisioning.ReasonInvalidConfiguration
+	case 400, 401, 403: // Client errors - authentication/authorization issues
+		return provisioning.ReasonAuthenticationFailed
+	case 500, 502: // Server errors - usually secret/build issues
+		return provisioning.ReasonInvalidConfiguration
+	case 503, 504: // Service unavailable, gateway timeout
+		return provisioning.ReasonServiceUnavailable
+	case 429: // Too many requests - rate limited
+		return provisioning.ReasonRateLimited
+	default:
+		// Unknown error - default to configuration error to prompt investigation
+		return provisioning.ReasonInvalidConfiguration
+	}
+}
+
 // RefreshHealthWithPatchOps performs a health check on an existing connection
 // and returns the test results, health status, and patch operations to apply.
 // This method does NOT apply the patch itself, allowing the caller to batch
@@ -124,8 +149,9 @@ func (hc *ConnectionHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 		})
 	}
 
-	// Update Ready condition based on health status
-	readyCondition := buildReadyConditionFromHealth(newHealthStatus)
+	// Update Ready condition based on health status with error classification
+	reason := classifyConnectionError(testResults)
+	readyCondition := buildReadyConditionWithReason(newHealthStatus, reason)
 	if conditionPatchOps := buildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.GetGeneration(), readyCondition); conditionPatchOps != nil {
 		patchOps = append(patchOps, conditionPatchOps...)
 	}
