@@ -399,7 +399,7 @@ export function createKubernetesRoutingTreeSpec(
 
 export const NAMED_ROOT_LABEL_NAME = '__grafana_managed_route__';
 
-function k8sRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree): Route {
+export function k8sRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree): Route {
   return {
     ...route.spec.defaults,
     name: route.metadata.name,
