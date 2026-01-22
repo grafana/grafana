@@ -254,12 +254,18 @@ export function TableNG(props: TableNGProps) {
   });
 
   useEffect(() => {
-    if (initialRowIndex && gridRef.current?.scrollToCell) {
+    if (sortedRows && initialRowIndex !== undefined && gridRef.current?.scrollToCell) {
+      const rowIdx = sortedRows.findIndex((row) => row.__index === initialRowIndex);
       gridRef.current.scrollToCell({
-        rowIdx: initialRowIndex,
+        rowIdx,
+      });
+      // Select the first cell so there's something visually different about the row
+      gridRef.current.selectCell({
+        rowIdx,
+        idx: 0,
       });
     }
-  }, [initialRowIndex]);
+  }, [initialRowIndex, sortedRows]);
 
   const [footers, isUniformFooter] = useMemo(() => {
     const footers: Array<TableFooterOptions | undefined> = [];
