@@ -606,15 +606,19 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 	defer span.End()
 	ctxLogger := s.logger.FromContext(ctx)
 
-	// Only check action if the request doesn't specify scope
-	if req.Name == "" && req.Verb != utils.VerbCreate {
-		return len(scopeMap) > 0, nil
-	}
-
 	t, ok := s.mapper.Get(req.Group, req.Resource)
 	if !ok {
 		ctxLogger.Error("unsupport resource", "group", req.Group, "resource", req.Resource)
 		return false, status.Error(codes.NotFound, "unsupported resource")
+	}
+
+	if req.Name == "" && req.Verb != utils.VerbCreate {
+		// For resources that require a wildcard scope, we can perform the check immediately
+		if t.Scope("") == "*" {
+			return scopeMap["*"], nil
+		}
+		// Otherwise, only check action if the request doesn't specify scope
+		return len(scopeMap) > 0, nil
 	}
 
 	if t.SkipScope(req.Verb) {

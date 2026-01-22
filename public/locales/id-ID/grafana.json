@@ -3714,6 +3714,7 @@
       "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}  ",
       "root-title": "Dasbor",
       "search-placeholder": "Cari folder",
+      "shared-with-me": "",
       "unknown-error": "Kesalahan tidak diketahui"
     },
     "manage-folder-nav": {
@@ -3814,6 +3815,7 @@
       "label-method": "Metode",
       "label-payload": "Payload",
       "label-query-parameters": "Parameter kueri",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Tes API",
         "title-test-api": "Tes API"
@@ -4529,6 +4531,14 @@
     "actions": {
       "open-settings": "Pengaturan"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Tutup widget 'Tambah Panel'",
       "tooltip-close-widget": "Tutup widget"
@@ -4911,12 +4921,14 @@
       "add-visualization-body": "Pilih sumber data, kemudian kueri dan visualisasikan data Anda dengan bagan, statistik, dan tabel atau buat daftar, markdown, dan widget lainnya.",
       "add-visualization-button": "Tambahkan visualisasi",
       "add-visualization-header": "Mulai dasbor baru Anda dengan menambahkan visualisasi",
+      "description": "",
       "import-a-dashboard-body": "Impor dasbor dari file atau <2>grafana.com</2>.",
       "import-a-dashboard-header": "Impor dasbor",
       "import-dashboard-button": "Impor dasbor",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5422,6 +5434,10 @@
       "loading-configuration": "Memuat konfigurasi"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""

@@ -3714,6 +3714,7 @@
       "non-folder-item": "非フォルダ {{itemKind}} {{itemUID}}",
       "root-title": "ダッシュボード",
       "search-placeholder": "フォルダを検索",
+      "shared-with-me": "",
       "unknown-error": "不明なエラー"
     },
     "manage-folder-nav": {
@@ -3814,6 +3815,7 @@
       "label-method": "メソッド",
       "label-payload": "ペイロード",
       "label-query-parameters": "クエリのパラメータ",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "APIをテストする",
         "title-test-api": "APIをテストする"
@@ -4529,6 +4531,14 @@
     "actions": {
       "open-settings": "設定"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "「パネルを追加」ウィジェットを閉じる",
       "tooltip-close-widget": "ウィジェットを閉じる"
@@ -4911,12 +4921,14 @@
       "add-visualization-body": "データソースを選択し、グラフ、統計、テーブルを使用してデータをクエリおよび視覚化するか、リスト、マークダウン、その他のウィジェットを作成します。",
       "add-visualization-button": "視覚化を追加",
       "add-visualization-header": "視覚化を追加して新しいダッシュボードを開始します",
+      "description": "",
       "import-a-dashboard-body": "ファイルまたは<1>grafana.com</1>からダッシュボードをインポートします。",
       "import-a-dashboard-header": "ダッシュボードをインポートする",
       "import-dashboard-button": "ダッシュボードをインポート",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5422,6 +5434,10 @@
       "loading-configuration": "設定を読み込み中"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""

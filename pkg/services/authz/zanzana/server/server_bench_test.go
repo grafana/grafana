@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -44,7 +43,7 @@ const (
 	benchFolderResource    = "folders"
 
 	// BenchmarkBatchCheck measures the performance of BatchCheck requests with 50 items per batch.
-	batchCheckSize = 50
+	_ = 50 // batchCheckSize - kept for documentation
 )
 
 // benchmarkData holds all the generated test data for benchmarks
@@ -569,196 +568,6 @@ func BenchmarkCheck(b *testing.B) {
 				b.Fatal(err)
 			}
 			_ = res.GetAllowed()
-		}
-	})
-}
-
-func BenchmarkBatchCheck(b *testing.B) {
-	srv, data := setupBenchmarkServer(b)
-	ctx := newContextWithNamespace()
-
-	// Helper to create batch check requests
-	newBatchCheckReq := func(subject string, items []*authzextv1.BatchCheckItem) *authzextv1.BatchCheckRequest {
-		return &authzextv1.BatchCheckRequest{
-			Namespace: benchNamespace,
-			Subject:   subject,
-			Items:     items,
-		}
-	}
-
-	// Helper to create batch items for resources in folders
-	createBatchItems := func(resources []string, resourceFolders map[string]string) []*authzextv1.BatchCheckItem {
-		items := make([]*authzextv1.BatchCheckItem, 0, batchCheckSize)
-		for i := 0; i < batchCheckSize && i < len(resources); i++ {
-			resource := resources[i]
-			items = append(items, &authzextv1.BatchCheckItem{
-				Verb:     utils.VerbGet,
-				Group:    benchDashboardGroup,
-				Resource: benchDashboardResource,
-				Name:     resource,
-				Folder:   resourceFolders[resource],
-			})
-		}
-		return items
-	}
-
-	// Helper to create batch items for folders at a specific depth
-	createFolderBatchItems := func(folders []string, depth int, folderDepths map[string]int) []*authzextv1.BatchCheckItem {
-		items := make([]*authzextv1.BatchCheckItem, 0, batchCheckSize)
-		for _, folder := range folders {
-			if folderDepths[folder] == depth && len(items) < batchCheckSize {
-				items = append(items, &authzextv1.BatchCheckItem{
-					Verb:     utils.VerbGet,
-					Group:    benchDashboardGroup,
-					Resource: benchDashboardResource,
-					Name:     fmt.Sprintf("resource-in-%s", folder),
-					Folder:   folder,
-				})
-			}
-		}
-		// Fill remaining slots if needed
-		for len(items) < batchCheckSize && len(folders) > 0 {
-			folder := folders[len(items)%len(folders)]
-			items = append(items, &authzextv1.BatchCheckItem{
-				Verb:     utils.VerbGet,
-				Group:    benchDashboardGroup,
-				Resource: benchDashboardResource,
-				Name:     fmt.Sprintf("resource-%d", len(items)),
-				Folder:   folder,
-			})
-		}
-		return items
-	}
-
-	usersPerPattern := len(data.users) / numPermissionPatterns
-
-	b.Run("GroupResourceDirect", func(b *testing.B) {
-		// User with group_resource permission - should have access to everything
-		user := data.users[0]
-		items := createBatchItems(data.resources, data.resourceFolders)
-
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
-			if err != nil {
-				b.Fatal(err)
-			}
-			_ = res.Groups
-		}
-	})
-
-	b.Run("FolderInheritance/Depth1", func(b *testing.B) {
-		// User with folder permission on shallow folder
-		user := data.users[usersPerPattern]
-		items := createFolderBatchItems(data.folders, 1, data.folderDepths)
-
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
-			if err != nil {
-				b.Fatal(err)
-			}
-			_ = res.Groups
-		}
-	})
-
-	b.Run("FolderInheritance/Depth4", func(b *testing.B) {
-		// User with folder permission on mid-depth folder
-		user := data.users[2*usersPerPattern]
-		items := createFolderBatchItems(data.folders, 4, data.folderDepths)
-
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
-			if err != nil {
-				b.Fatal(err)
-			}
-			_ = res.Groups
-		}
-	})
-
-	b.Run("FolderInheritance/Depth7", func(b *testing.B) {
-		// Check access on deepest folders (worst case for inheritance traversal)
-		user := data.users[usersPerPattern]
-		items := createFolderBatchItems(data.folders, data.maxDepth, data.folderDepths)
-
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
-			if err != nil {
-				b.Fatal(err)
-			}
-			_ = res.Groups
-		}
-	})
-
-	b.Run("DirectResource", func(b *testing.B) {
-		// User with direct resource permission
-		user := data.users[4*usersPerPattern]
-		items := createBatchItems(data.resources, data.resourceFolders)
-
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
-			if err != nil {
-				b.Fatal(err)
-			}
-			_ = res.Groups
-		}
-	})
-
-	b.Run("TeamMembership", func(b *testing.B) {
-		// User who is a team member, team has folder permission
-		user := data.users[5*usersPerPattern]
-		items := createBatchItems(data.resources, data.resourceFolders)
-
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
-			if err != nil {
-				b.Fatal(err)
-			}
-			_ = res.Groups
-		}
-	})
-
-	b.Run("NoAccess", func(b *testing.B) {
-		// User with no permissions - tests denial path
-		user := data.users[len(data.users)-1]
-		items := createBatchItems(data.resources, data.resourceFolders)
-
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
-			if err != nil {
-				b.Fatal(err)
-			}
-			_ = res.Groups
-		}
-	})
-
-	b.Run("MixedFolders", func(b *testing.B) {
-		// Batch of items across different folder depths
-		user := data.users[usersPerPattern]
-		items := make([]*authzextv1.BatchCheckItem, 0, batchCheckSize)
-		for i := 0; i < batchCheckSize; i++ {
-			folder := data.folders[i%len(data.folders)]
-			items = append(items, &authzextv1.BatchCheckItem{
-				Verb:     utils.VerbGet,
-				Group:    benchDashboardGroup,
-				Resource: benchDashboardResource,
-				Name:     fmt.Sprintf("resource-%d", i),
-				Folder:   folder,
-			})
-		}
-
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			res, err := srv.BatchCheck(ctx, newBatchCheckReq(user, items))
-			if err != nil {
-				b.Fatal(err)
-			}
-			_ = res.Groups
 		}
 	})
 }
