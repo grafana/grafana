@@ -296,9 +296,7 @@ func TestGetMuteTimingByName(t *testing.T) {
 				require.ErrorIs(t, err, expected)
 			})
 		})
-
 	})
-
 }
 
 func TestGetMuteTimingByUID(t *testing.T) {
