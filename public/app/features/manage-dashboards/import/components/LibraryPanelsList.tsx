@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Field, useStyles2 } from '@grafana/ui';
 
 import { LibraryPanelCard } from '../../../library-panels/components/LibraryPanelCard/LibraryPanelCard';
+import { LibraryElementDTO } from '../../../library-panels/types';
 import { LibraryPanelInput, LibraryPanelInputState } from '../../types';
 
 interface Props {
@@ -13,6 +14,8 @@ interface Props {
   description: string;
   folderName?: string;
 }
+
+const DEFAULT_FOLDER_NAME = 'Dashboards';
 
 export function LibraryPanelsList({ inputs, label, description, folderName }: Props): ReactElement | null {
   const styles = useStyles2(getStyles);
@@ -27,14 +30,14 @@ export function LibraryPanelsList({ inputs, label, description, folderName }: Pr
         <>
           {inputs.map((input, index) => {
             const libraryPanelIndex = `elements[${index}]`;
-            const libraryPanel =
-              input.state === LibraryPanelInputState.New
+            // For new panels, override folderName in meta; existing panels use model as-is
+            const libraryPanel: LibraryElementDTO =
+              input.state === LibraryPanelInputState.New && input.model.meta
                 ? {
                     ...input.model,
                     meta: {
                       ...input.model.meta,
-                      folderName: folderName ?? 'Dashboards',
-                      connectedDashboards: input.model.meta?.connectedDashboards ?? 0,
+                      folderName: folderName ?? input.model.meta.folderName ?? DEFAULT_FOLDER_NAME,
                     },
                   }
                 : input.model;

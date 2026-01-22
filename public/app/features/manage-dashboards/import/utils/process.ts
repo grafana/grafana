@@ -7,18 +7,19 @@ import {
 import { isRecord } from 'app/core/utils/isRecord';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 
+import { LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../../library-panels/state/api';
-import { LibraryElementDTO, LibraryElementKind } from '../../../library-panels/types';
+import { LibraryElementKind } from '../../../library-panels/types';
 import { DashboardInputs, DataSourceInput, InputType, LibraryPanelInput, LibraryPanelInputState } from '../../types';
 
-interface LibraryElementExport {
-  uid: string;
-  name: string;
-  kind: number;
-  model: {
-    type: string;
-    description?: string;
-  };
+function isLibraryElementExport(value: unknown): value is LibraryElementExport {
+  return (
+    isRecord(value) &&
+    typeof value.name === 'string' &&
+    typeof value.uid === 'string' &&
+    typeof value.kind === 'number' &&
+    isRecord(value.model)
+  );
 }
 
 /**
@@ -26,7 +27,7 @@ interface LibraryElementExport {
  * This is a pure async function shared between k8s and legacy import paths.
  */
 export async function getLibraryPanelInputs(dashboardJson?: {
-  __elements?: Record<string, LibraryElementExport>;
+  __elements?: Record<string, unknown>;
 }): Promise<LibraryPanelInput[]> {
   if (!dashboardJson || !dashboardJson.__elements) {
     return [];
@@ -35,6 +36,10 @@ export async function getLibraryPanelInputs(dashboardJson?: {
   const libraryPanelInputs: LibraryPanelInput[] = [];
 
   for (const element of Object.values(dashboardJson.__elements)) {
+    if (!isLibraryElementExport(element)) {
+      continue;
+    }
+
     if (element.kind !== LibraryElementKind.Panel) {
       continue;
     }
@@ -44,16 +49,14 @@ export async function getLibraryPanelInputs(dashboardJson?: {
     const { uid, name } = element;
     // Creating partial LibraryElementDTO for new panels - will be replaced if panel exists
     const input: LibraryPanelInput = {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       model: {
         model,
         uid,
         name,
         version: 0,
         type,
-        kind: LibraryElementKind.Panel,
         description,
-      } as LibraryElementDTO,
+      },
       state: LibraryPanelInputState.New,
     };
 
@@ -121,10 +124,8 @@ export async function processInputsFromDashboard(dashboard: unknown): Promise<Da
   }
 
   // Process library panels from __elements
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  inputs.libraryPanels = await getLibraryPanelInputs(
-    dashboard as { __elements?: Record<string, LibraryElementExport> }
-  );
+  const elements = isRecord(dashboard) && isRecord(dashboard.__elements) ? dashboard.__elements : undefined;
+  inputs.libraryPanels = await getLibraryPanelInputs(elements ? { __elements: elements } : undefined);
 
   return inputs;
 }
