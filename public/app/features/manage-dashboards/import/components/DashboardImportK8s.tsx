@@ -7,10 +7,10 @@ import { Spinner, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { isRecord } from 'app/core/utils/isRecord';
+import { DashboardFormat } from 'app/features/dashboard/api/types';
 
 import { DashboardInputs, DashboardSource } from '../../types';
-import { detectImportModel, ImportModel } from '../utils/detect';
+import { detectDashboardFormat, extractDashboardSpec } from '../utils/detect';
 import { processInputsFromDashboard, processV2Inputs } from '../utils/process';
 
 import { ImportOverview } from './ImportOverview';
@@ -29,7 +29,7 @@ type ImportState = {
   inputs: DashboardInputs;
   meta: { updatedAt: string; orgName: string };
   source: DashboardSource;
-  model: ImportModel;
+  format: DashboardFormat;
 };
 
 const initialState: ImportState = {
@@ -38,7 +38,7 @@ const initialState: ImportState = {
   inputs: { dataSources: [], constants: [], libraryPanels: [] },
   meta: { updatedAt: '', orgName: '' },
   source: DashboardSource.Json,
-  model: 'classic',
+  format: DashboardFormat.Classic,
 };
 
 export function DashboardImportK8s({ queryParams }: Props) {
@@ -61,8 +61,11 @@ export function DashboardImportK8s({ queryParams }: Props) {
     try {
       const response = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
       const dashboard = response.json;
-      const model = detectImportModel(dashboard);
-      const inputs = model === 'v2-resource' ? processV2Inputs(dashboard) : await processInputsFromDashboard(dashboard);
+      const format = detectDashboardFormat(dashboard);
+      const inputs =
+        format === DashboardFormat.V2Resource
+          ? processV2Inputs(dashboard)
+          : await processInputsFromDashboard(dashboard);
 
       setState({
         status: LoadingState.Done,
@@ -70,7 +73,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
         inputs,
         meta: { updatedAt: response.updatedAt, orgName: response.orgName },
         source: DashboardSource.Gcom,
-        model,
+        format,
       });
     } catch (error) {
       setState((prev) => ({ ...prev, status: LoadingState.Error }));
@@ -113,14 +116,12 @@ export function DashboardImportK8s({ queryParams }: Props) {
     setState((prev) => ({ ...prev, status: LoadingState.Loading }));
 
     try {
-      // Extract spec if it's a k8s resource wrapper
-      let dashboard = json;
-      if (isRecord(json) && isRecord(json.spec)) {
-        dashboard = json.spec;
-      }
-
-      const model = detectImportModel(json);
-      const inputs = model === 'v2-resource' ? processV2Inputs(dashboard) : await processInputsFromDashboard(dashboard);
+      const format = detectDashboardFormat(json);
+      const dashboard = extractDashboardSpec(json);
+      const inputs =
+        format === DashboardFormat.V2Resource
+          ? processV2Inputs(dashboard)
+          : await processInputsFromDashboard(dashboard);
 
       setState({
         status: LoadingState.Done,
@@ -128,7 +129,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
         inputs,
         meta: { updatedAt: '', orgName: '' },
         source: DashboardSource.Json,
-        model,
+        format,
       });
     } catch (error) {
       setState((prev) => ({ ...prev, status: LoadingState.Error }));

@@ -11,11 +11,12 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { DashboardFormat } from 'app/features/dashboard/api/types';
 import { dispatch } from 'app/store/store';
 
 import { ShareExportTab } from '../ShareExportTab';
 
-import { ExportMode, ResourceExport } from './ResourceExport';
+import { ResourceExport } from './ResourceExport';
 
 const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
 
@@ -33,13 +34,13 @@ export class ExportAsCode extends ShareExportTab {
 
 function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
   const styles = useStyles2(getStyles);
-  const { isSharingExternally, isViewingYAML, exportMode } = model.useState();
+  const { isSharingExternally, isViewingYAML, exportFormat } = model.useState();
 
   const dashboardJson = useAsync(async () => {
     const json = await model.getExportableDashboardJson();
 
     return json;
-  }, [isSharingExternally, exportMode]);
+  }, [isSharingExternally, exportFormat]);
 
   const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
   const stringifiedDashboardYAML = yaml.dump(dashboardJson.value?.json, {
@@ -61,9 +62,9 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
         <ResourceExport
           dashboardJson={dashboardJson}
           isSharingExternally={isSharingExternally ?? false}
-          exportMode={exportMode ?? ExportMode.Classic}
+          exportFormat={exportFormat ?? DashboardFormat.Classic}
           isViewingYAML={isViewingYAML ?? false}
-          onExportModeChange={model.onExportModeChange}
+          onExportFormatChange={model.onExportFormatChange}
           onShareExternallyChange={model.onShareExternallyChange}
           onViewYAML={model.onViewYAML}
         />

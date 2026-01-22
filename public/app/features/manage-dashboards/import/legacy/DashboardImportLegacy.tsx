@@ -15,11 +15,12 @@ import { dispatch } from 'app/store/store';
 import { StoreState } from 'app/types/store';
 
 import { cleanUpAction } from '../../../../core/actions/cleanUp';
+import { DashboardFormat } from '../../../dashboard/api/types';
 import { DashboardSource, ImportDashboardDTO } from '../../types';
 import { GcomDashboardInfo } from '../components/GcomDashboardInfo';
 import { ImportForm } from '../components/ImportForm';
 import { ImportSourceForm } from '../components/ImportSourceForm';
-import { detectImportModel, ImportModel } from '../utils/detect';
+import { detectDashboardFormat } from '../utils/detect';
 
 import {
   clearLoadedDashboard,
@@ -44,9 +45,9 @@ function getV1ResourceSpec(dashboard: unknown): Record<string, unknown> | undefi
 const IMPORT_STARTED_EVENT_NAME = 'dashboard_import_loaded';
 const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 
-function ImportResourceFormatError({ model, onCancel }: { model: ImportModel; onCancel: () => void }) {
+function ImportResourceFormatError({ format, onCancel }: { format: DashboardFormat; onCancel: () => void }) {
   const errorMessage =
-    model === 'v1-resource'
+    format === DashboardFormat.V1Resource
       ? t(
           'manage-dashboards.import-resource-format-error.v1-message',
           'This dashboard is in Kubernetes v1 resource format and cannot be imported when Kubernetes dashboards feature is disabled. Please enable the kubernetesDashboards feature toggle to import this dashboard.'
@@ -223,12 +224,12 @@ class UnthemedDashboardImportLegacy extends PureComponent<Props> {
       ]);
     }
 
-    const model = detectImportModel(dashboard);
-    if (model === 'v2-resource' && dashboard.spec?.elements) {
+    const format = detectDashboardFormat(dashboard);
+    if (format === DashboardFormat.V2Resource && dashboard.spec?.elements) {
       return dispatch(importDashboardV2Json(dashboard.spec));
     }
 
-    if (model === 'v2-resource' && dashboard.elements) {
+    if (format === DashboardFormat.V2Resource && dashboard.elements) {
       return dispatch(importDashboardV2Json(dashboard));
     }
 
@@ -270,11 +271,11 @@ class UnthemedDashboardImportLegacy extends PureComponent<Props> {
     const { loadingState, dashboard } = this.props;
 
     if (loadingState === LoadingState.Done) {
-      const model = detectImportModel(dashboard);
+      const format = detectDashboardFormat(dashboard);
 
       // k8s disabled but resource format -> show error
-      if (model === 'v1-resource' || model === 'v2-resource') {
-        return <ImportResourceFormatError model={model} onCancel={this.props.clearLoadedDashboard} />;
+      if (format === DashboardFormat.V1Resource || format === DashboardFormat.V2Resource) {
+        return <ImportResourceFormatError format={format} onCancel={this.props.clearLoadedDashboard} />;
       }
 
       // k8s disabled + classic -> legacy redux path
