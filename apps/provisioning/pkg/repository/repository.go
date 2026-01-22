@@ -75,6 +75,13 @@ type FileTreeEntry struct {
 	Blob bool
 }
 
+// WebhookSetupResult contains the result of webhook setup operations
+type WebhookSetupResult struct {
+	Status        *provisioning.WebhookStatus
+	SecretChanged bool   // True if the secret was created or rotated
+	Secret        string // Only populated if SecretChanged is true
+}
+
 //go:generate mockery --name Reader --structname MockReader --inpackage --filename reader_mock.go --with-expecter
 type Reader interface {
 	Repository

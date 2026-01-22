@@ -301,62 +301,59 @@ func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
 	return nil
 }
 
-func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]interface{}, error) {
+// SetupWebhook implements WebhookSetup interface for controller-based webhook management
+// This method creates or updates the webhook and returns the status and secret (if changed)
+func (r *githubWebhookRepository) SetupWebhook(ctx context.Context) (*repository.WebhookSetupResult, error) {
 	if len(r.webhookURL) == 0 {
-		return nil, nil
+		return nil, fmt.Errorf("webhook URL not configured")
 	}
 
 	ctx, _ = r.logger(ctx, "")
-	hook, err := r.createWebhook(ctx)
+
+	// updateWebhook handles both creation (if not exists) and updates (if changed)
+	hook, changed, err := r.updateWebhook(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("setup webhook: %w", err)
 	}
-	return []map[string]interface{}{
-		{
-			"op":   "replace",
-			"path": "/status/webhook",
-			"value": &provisioning.WebhookStatus{
-				ID:               hook.ID,
-				URL:              hook.URL,
-				SubscribedEvents: hook.Events,
-			},
-		},
-		{
-			"op":   "replace",
-			"path": "/secure/webhookSecret",
-			"value": map[string]string{
-				"create": hook.Secret,
-			},
-		},
-	}, nil
+
+	status := &provisioning.WebhookStatus{
+		ID:               hook.ID,
+		URL:              hook.URL,
+		SubscribedEvents: hook.Events,
+	}
+
+	result := &repository.WebhookSetupResult{
+		Status:        status,
+		SecretChanged: changed,
+		Secret:        hook.Secret,
+	}
+
+	return result, nil
 }
 
-func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]interface{}, error) {
-	if len(r.webhookURL) == 0 {
-		return nil, nil
-	}
-	ctx, _ = r.logger(ctx, "")
-	hook, changed, err := r.updateWebhook(ctx)
-	if err != nil || !changed {
-		return nil, err
-	}
+// DeleteWebhook implements WebhookSetup interface for cleanup
+func (r *githubWebhookRepository) DeleteWebhook(ctx context.Context) error {
+	return r.deleteWebhook(ctx)
+}
 
-	// update the webhook and secret
-	return []map[string]any{{
-		"op":   "replace",
-		"path": "/status/webhook",
-		"value": &provisioning.WebhookStatus{
-			ID:               hook.ID,
-			URL:              hook.URL,
-			SubscribedEvents: hook.Events,
-		},
-	}, {
-		"op":   "replace",
-		"path": "/secure/webhookSecret",
-		"value": map[string]string{
-			"create": hook.Secret,
-		},
-	}}, nil
+// WebhookURL implements WebhookSetup interface to return the configured webhook URL
+func (r *githubWebhookRepository) WebhookURL() string {
+	return r.webhookURL
+}
+
+// OnCreate no longer handles webhook setup - this is now done by the controller
+// Webhooks are set up during reconciliation with proper condition tracking
+func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]interface{}, error) {
+	// Webhook setup moved to controller reconciliation loop
+	// This ensures proper dependency ordering: validation → secrets → webhooks → sync
+	return nil, nil
+}
+
+// OnUpdate no longer handles webhook setup - this is now done by the controller
+// Webhooks are updated during reconciliation with proper condition tracking
+func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]interface{}, error) {
+	// Webhook setup moved to controller reconciliation loop
+	return nil, nil
 }
 
 func (r *githubWebhookRepository) OnDelete(ctx context.Context) error {

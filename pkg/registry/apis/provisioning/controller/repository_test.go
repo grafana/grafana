@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -21,6 +22,7 @@ import (
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/applyconfiguration/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 type mockProvisioningV0alpha1Interface struct {
@@ -957,4 +959,212 @@ func TestRepositoryController_Conditions(t *testing.T) {
 		assert.Contains(t, conditions[0].Message, "Healthy=False")
 		assert.Contains(t, conditions[0].Message, "Synced=False")
 	})
+}
+
+func TestRepositoryController_WebhookConditions(t *testing.T) {
+	t.Run("updateWebhookConfiguredCondition - webhook not supported", func(t *testing.T) {
+		rc := &RepositoryController{}
+		obj := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Generation: 1,
+			},
+		}
+
+		// Mock a repository that doesn't support webhooks
+		// A basic ConfigRepository doesn't implement WebhookSetup interface
+		repo := repository.NewMockConfigRepository(t)
+
+		ops := rc.updateWebhookConfiguredCondition(context.Background(), obj, repo)
+
+		conditions := ops[0]["value"].([]metav1.Condition)
+		assert.Len(t, conditions, 1)
+		assert.Equal(t, provisioning.ConditionTypeWebhookConfigured, conditions[0].Type)
+		assert.Equal(t, metav1.ConditionTrue, conditions[0].Status)
+		assert.Equal(t, provisioning.ReasonWebhookNotRequired, conditions[0].Reason)
+	})
+
+	t.Run("updateWebhookConfiguredCondition - secret not ready", func(t *testing.T) {
+		rc := &RepositoryController{}
+		obj := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Generation: 1,
+			},
+			Secure: provisioning.SecureValues{
+				// No webhook secret
+			},
+		}
+
+		// Mock repository with webhook support
+		mockRepo := &mockWebhookRepo{
+			webhookURL: "https://example.com/webhook",
+		}
+
+		ops := rc.updateWebhookConfiguredCondition(context.Background(), obj, mockRepo)
+
+		conditions := ops[0]["value"].([]metav1.Condition)
+		assert.Len(t, conditions, 1)
+		assert.Equal(t, provisioning.ConditionTypeWebhookConfigured, conditions[0].Type)
+		assert.Equal(t, metav1.ConditionFalse, conditions[0].Status)
+		assert.Equal(t, provisioning.ReasonSecretNotReady, conditions[0].Reason)
+	})
+
+	t.Run("updateWebhookConfiguredCondition - setup success", func(t *testing.T) {
+		rc := &RepositoryController{}
+		obj := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Generation: 1,
+			},
+			Secure: provisioning.SecureValues{
+				WebhookSecret: common.InlineSecureValue{
+					Name: "test-secret",
+				},
+			},
+		}
+
+		// Mock repository with successful webhook setup
+		mockRepo := &mockWebhookRepo{
+			webhookURL: "https://example.com/webhook",
+			setupResult: &repository.WebhookSetupResult{
+				Status: &provisioning.WebhookStatus{
+					ID:               123,
+					URL:              "https://example.com/webhook",
+					SubscribedEvents: []string{"push", "pull_request"},
+				},
+				SecretChanged: true,
+				Secret:        "new-secret",
+			},
+		}
+
+		ops := rc.updateWebhookConfiguredCondition(context.Background(), obj, mockRepo)
+
+		// Should have condition + status + secret patches
+		assert.Len(t, ops, 3)
+
+		// Check condition
+		conditions := ops[0]["value"].([]metav1.Condition)
+		assert.Equal(t, provisioning.ConditionTypeWebhookConfigured, conditions[0].Type)
+		assert.Equal(t, metav1.ConditionTrue, conditions[0].Status)
+		assert.Equal(t, provisioning.ReasonWebhookCreated, conditions[0].Reason)
+
+		// Check webhook status
+		assert.Equal(t, "/status/webhook", ops[1]["path"])
+		webhookStatus := ops[1]["value"].(*provisioning.WebhookStatus)
+		assert.Equal(t, int64(123), webhookStatus.ID)
+
+		// Check secret update
+		assert.Equal(t, "/secure/webhookSecret", ops[2]["path"])
+	})
+
+	t.Run("updateWebhookConfiguredCondition - setup failure", func(t *testing.T) {
+		rc := &RepositoryController{}
+		obj := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Generation: 1,
+			},
+			Secure: provisioning.SecureValues{
+				WebhookSecret: common.InlineSecureValue{
+					Name: "test-secret",
+				},
+			},
+			Status: provisioning.RepositoryStatus{
+				Webhook: &provisioning.WebhookStatus{
+					ID:  456,
+					URL: "https://old.example.com/webhook",
+				},
+			},
+		}
+
+		// Mock repository with webhook setup failure
+		mockRepo := &mockWebhookRepo{
+			webhookURL: "https://example.com/webhook",
+			setupError: fmt.Errorf("GitHub API error: rate limited"),
+		}
+
+		ops := rc.updateWebhookConfiguredCondition(context.Background(), obj, mockRepo)
+
+		// Should preserve existing webhook status on failure
+		assert.Len(t, ops, 2)
+
+		// Check condition
+		conditions := ops[0]["value"].([]metav1.Condition)
+		assert.Equal(t, provisioning.ConditionTypeWebhookConfigured, conditions[0].Type)
+		assert.Equal(t, metav1.ConditionFalse, conditions[0].Status)
+		assert.Equal(t, provisioning.ReasonWebhookFailed, conditions[0].Reason)
+		assert.Contains(t, conditions[0].Message, "GitHub API error")
+
+		// Check that existing webhook status is preserved
+		assert.Equal(t, "/status/webhook", ops[1]["path"])
+		webhookStatus := ops[1]["value"].(*provisioning.WebhookStatus)
+		assert.Equal(t, int64(456), webhookStatus.ID)
+	})
+
+	t.Run("isWebhookSecretReady", func(t *testing.T) {
+		rc := &RepositoryController{}
+
+		tests := []struct {
+			name     string
+			obj      *provisioning.Repository
+			expected bool
+		}{
+			{
+				name: "secret has name",
+				obj: &provisioning.Repository{
+					Secure: provisioning.SecureValues{
+						WebhookSecret: common.InlineSecureValue{
+							Name: "test-secret",
+						},
+					},
+				},
+				expected: true,
+			},
+			{
+				name: "secret has create value",
+				obj: &provisioning.Repository{
+					Secure: provisioning.SecureValues{
+						WebhookSecret: common.InlineSecureValue{
+							Create: "new-secret",
+						},
+					},
+				},
+				expected: true,
+			},
+			{
+				name: "no secret",
+				obj: &provisioning.Repository{
+					Secure: provisioning.SecureValues{},
+				},
+				expected: false,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				result := rc.isWebhookSecretReady(tt.obj)
+				assert.Equal(t, tt.expected, result)
+			})
+		}
+	})
+}
+
+// mockWebhookRepo is a mock repository that implements WebhookSetup
+type mockWebhookRepo struct {
+	repository.Repository
+	webhookURL  string
+	setupResult *repository.WebhookSetupResult
+	setupError  error
+}
+
+func (m *mockWebhookRepo) SetupWebhook(ctx context.Context) (*repository.WebhookSetupResult, error) {
+	if m.setupError != nil {
+		return nil, m.setupError
+	}
+	return m.setupResult, nil
+}
+
+func (m *mockWebhookRepo) DeleteWebhook(ctx context.Context) error {
+	return nil
+}
+
+func (m *mockWebhookRepo) WebhookURL() string {
+	return m.webhookURL
 }

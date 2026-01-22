@@ -609,9 +609,10 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, healthStatus)
 	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)
 
-	// Update conditions based on validation, health, and sync status
+	// Update conditions based on validation, health, webhook, and sync status
 	patchOperations = append(patchOperations, rc.updateValidatedCondition(obj, validationErrors)...)
 	patchOperations = append(patchOperations, rc.updateHealthyCondition(obj, healthStatus)...)
+	patchOperations = append(patchOperations, rc.updateWebhookConfiguredCondition(ctx, obj, repo)...)
 	patchOperations = append(patchOperations, rc.updateSyncedCondition(obj)...)
 	patchOperations = append(patchOperations, rc.updateReadyCondition(obj, validationErrors, healthStatus)...)
 
