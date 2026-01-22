@@ -1,0 +1,24 @@
+name: TEST - Single Quote Token Bug
+on: [workflow_dispatch]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate fake token
+        id: fake_token
+        run: echo "token=ghs_fake_token_1234567890" >> $GITHUB_OUTPUT
+        
+      - name: Show what happens with single quotes
+        run: |
+          echo "With single quotes: '${{ steps.fake_token.outputs.token }}'"
+          echo "With double quotes: \"${{ steps.fake_token.outputs.token }}\""
+          echo "Without quotes: ${{ steps.fake_token.outputs.token }}"
+          
+      - name: Test if action would fail
+        run: |
+          echo "If peter-evans/create-pull-request receives:"
+          echo "token: '${{ steps.fake_token.outputs.token }}'"
+          echo ""
+          echo "It might treat it as literal string: '${{ steps.fake_token.outputs.token }}'"
+          echo "Not as the actual token value!"
