@@ -7,6 +7,7 @@ import {
   defaultVizConfigSpec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import * as ResponseTransformers from 'app/features/dashboard/api/ResponseTransformers';
+import { DashboardFormat } from 'app/features/dashboard/api/types';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { DashboardDataDTO } from 'app/types/dashboard';
 
@@ -16,7 +17,6 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import * as sceneToV1 from '../serialization/transformSceneToSaveModel';
 import * as sceneToV2 from '../serialization/transformSceneToSaveModelSchemaV2';
 
-import { ExportMode } from './ExportButton/ResourceExport';
 import { ShareExportTab } from './ShareExportTab';
 
 describe('ShareExportTab', () => {
@@ -99,7 +99,7 @@ describe('ShareExportTab', () => {
     // If V1 dashboard → V1 Resource should export with V1 apiVersion
     it('should export V1 dashboard as V1 resource with correct apiVersion', async () => {
       const tab = buildV1DashboardScenario();
-      tab.setState({ exportMode: ExportMode.V1Resource });
+      tab.setState({ exportFormat: DashboardFormat.V1Resource });
 
       const result = await tab.getExportableDashboardJson();
 
@@ -122,7 +122,7 @@ describe('ShareExportTab', () => {
     it('should auto-transform V2 dashboard to V1 resource with correct apiVersion', async () => {
       const tab = buildV2DashboardScenario();
       // user selects V1Resource even though is V2 dashboard
-      tab.setState({ exportMode: ExportMode.V1Resource });
+      tab.setState({ exportFormat: DashboardFormat.V1Resource });
 
       const result = await tab.getExportableDashboardJson();
 
@@ -145,7 +145,7 @@ describe('ShareExportTab', () => {
     it('should handle external sharing when transforming V2 to V1', async () => {
       const tab = buildV2DashboardScenario();
       tab.setState({
-        exportMode: ExportMode.V1Resource,
+        exportFormat: DashboardFormat.V1Resource,
         isSharingExternally: true,
       });
 
@@ -174,7 +174,7 @@ describe('ShareExportTab', () => {
     // If V2 dashboard → V2 Resource should export with V2 apiVersion
     it('should export V2 dashboard as V2 resource with correct apiVersion', async () => {
       const tab = buildV2DashboardScenario();
-      tab.setState({ exportMode: ExportMode.V2Resource });
+      tab.setState({ exportFormat: DashboardFormat.V2Resource });
 
       const result = await tab.getExportableDashboardJson();
 
@@ -195,7 +195,7 @@ describe('ShareExportTab', () => {
     // If V1 dashboard → V2 Resource should detect library panels correctly
     it('should detect library panels in V1 dashboard when exporting as V2 resource', async () => {
       const tab = buildV1DashboardWithLibraryPanels();
-      tab.setState({ exportMode: ExportMode.V2Resource });
+      tab.setState({ exportFormat: DashboardFormat.V2Resource });
 
       const result = await tab.getExportableDashboardJson();
 
@@ -207,7 +207,7 @@ describe('ShareExportTab', () => {
     // If V1 dashboard with dashboardNewLayouts disabled → V2 Resource should detect library panels correctly
     it('should detect library panels in V1 dashboard when user selects V2Resource export mode', async () => {
       const tab = buildV1DashboardWithLibraryPanels();
-      tab.setState({ exportMode: ExportMode.V2Resource });
+      tab.setState({ exportFormat: DashboardFormat.V2Resource });
 
       const result = await tab.getExportableDashboardJson();
 
@@ -219,7 +219,7 @@ describe('ShareExportTab', () => {
     // If V1 dashboard without library panels → V2 Resource should return false
     it('should return false for hasLibraryPanels when V1 dashboard has no library panels', async () => {
       const tab = buildV1DashboardScenario();
-      tab.setState({ exportMode: ExportMode.V2Resource });
+      tab.setState({ exportFormat: DashboardFormat.V2Resource });
 
       const result = await tab.getExportableDashboardJson();
 
@@ -241,7 +241,7 @@ describe('ShareExportTab', () => {
     // If V2 dashboard → V2 Resource should detect library panels correctly
     it('should detect library panels in V2 dashboard when exporting as V2 resource', async () => {
       const tab = buildV2DashboardWithLibraryPanels();
-      tab.setState({ exportMode: ExportMode.V2Resource });
+      tab.setState({ exportFormat: DashboardFormat.V2Resource });
 
       const result = await tab.getExportableDashboardJson();
 
@@ -253,7 +253,7 @@ describe('ShareExportTab', () => {
     // Test the second branch: V2 dashboard with V1 initial save model
     it('should detect library panels in V2 dashboard with V1 initial save model', async () => {
       const tab = buildV2DashboardWithV1InitialSaveModel();
-      tab.setState({ exportMode: ExportMode.V2Resource });
+      tab.setState({ exportFormat: DashboardFormat.V2Resource });
 
       const result = await tab.getExportableDashboardJson();
 
@@ -265,7 +265,7 @@ describe('ShareExportTab', () => {
     // If V2 dashboard without library panels → V2 Resource should return false
     it('should return false for hasLibraryPanels when V2 dashboard has no library panels', async () => {
       const tab = buildV2DashboardScenario();
-      tab.setState({ exportMode: ExportMode.V2Resource });
+      tab.setState({ exportFormat: DashboardFormat.V2Resource });
 
       const result = await tab.getExportableDashboardJson();
 
@@ -279,7 +279,7 @@ describe('ShareExportTab', () => {
     // If V1 dashboard → Classic should export plain dashboard JSON
     it('should export V1 dashboard in classic format', async () => {
       const tab = buildV1DashboardScenario();
-      tab.setState({ exportMode: ExportMode.Classic });
+      tab.setState({ exportFormat: DashboardFormat.Classic });
 
       const result = await tab.getExportableDashboardJson();
 
@@ -310,7 +310,7 @@ describe('ShareExportTab', () => {
       expect(tab.state.isViewingYAML).toBe(true);
 
       // Switch to Classic mode
-      tab.onExportModeChange(ExportMode.Classic);
+      tab.onExportFormatChange(DashboardFormat.Classic);
 
       // Should disable YAML viewing
       expect(tab.state.isViewingYAML).toBe(false);
@@ -325,11 +325,11 @@ describe('ShareExportTab', () => {
       expect(tab.state.isViewingYAML).toBe(true);
 
       // Switch to V1Resource mode
-      tab.onExportModeChange(ExportMode.V1Resource);
+      tab.onExportFormatChange(DashboardFormat.V1Resource);
       expect(tab.state.isViewingYAML).toBe(true); // Should preserve
 
       // Switch to V2Resource mode
-      tab.onExportModeChange(ExportMode.V2Resource);
+      tab.onExportFormatChange(DashboardFormat.V2Resource);
       expect(tab.state.isViewingYAML).toBe(true); // Should preserve
     });
   });

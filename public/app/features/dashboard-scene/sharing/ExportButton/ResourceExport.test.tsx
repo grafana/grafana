@@ -5,8 +5,9 @@ import { AsyncState } from 'react-use/lib/useAsync';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { DashboardFormat } from 'app/features/dashboard/api/types';
 
-import { ExportMode, ResourceExport } from './ResourceExport';
+import { ResourceExport } from './ResourceExport';
 
 type DashboardJsonState = AsyncState<{
   json: Dashboard | DashboardV2Spec | { error: unknown };
@@ -27,9 +28,9 @@ const createDefaultProps = (overrides?: Partial<Parameters<typeof ResourceExport
       },
     } as DashboardJsonState,
     isSharingExternally: false,
-    exportMode: ExportMode.Classic,
+    exportFormat: DashboardFormat.Classic,
     isViewingYAML: false,
-    onExportModeChange: jest.fn(),
+    onExportFormatChange: jest.fn(),
     onShareExternallyChange: jest.fn(),
     onViewYAML: jest.fn(),
   };
@@ -72,7 +73,7 @@ describe('ResourceExport', () => {
     });
 
     it('should have first option selected by default when exportMode is Classic', async () => {
-      render(<ResourceExport {...createDefaultProps({ exportMode: ExportMode.Classic })} />);
+      render(<ResourceExport {...createDefaultProps({ exportFormat: DashboardFormat.Classic })} />);
       await expandOptions();
 
       const radioGroup = screen.getByRole('radiogroup', { name: /model/i });
@@ -80,15 +81,15 @@ describe('ResourceExport', () => {
       expect(radios[0]).toBeChecked();
     });
 
-    it('should call onExportModeChange when export mode is changed', async () => {
-      const onExportModeChange = jest.fn();
-      render(<ResourceExport {...createDefaultProps({ onExportModeChange })} />);
+    it('should call onExportFormatChange when export mode is changed', async () => {
+      const onExportFormatChange = jest.fn();
+      render(<ResourceExport {...createDefaultProps({ onExportFormatChange })} />);
       await expandOptions();
 
       const radioGroup = screen.getByRole('radiogroup', { name: /model/i });
       const radios = within(radioGroup).getAllByRole('radio');
       await userEvent.click(radios[1]); // V1 Resource
-      expect(onExportModeChange).toHaveBeenCalledWith(ExportMode.V1Resource);
+      expect(onExportFormatChange).toHaveBeenCalledWith(DashboardFormat.V1Resource);
     });
   });
 
@@ -103,17 +104,17 @@ describe('ResourceExport', () => {
 
   describe('format options', () => {
     it('should not show format options when export mode is Classic', async () => {
-      render(<ResourceExport {...createDefaultProps({ exportMode: ExportMode.Classic })} />);
+      render(<ResourceExport {...createDefaultProps({ exportFormat: DashboardFormat.Classic })} />);
       await expandOptions();
 
       expect(screen.getByRole('radiogroup', { name: /model/i })).toBeInTheDocument();
       expect(screen.queryByRole('radiogroup', { name: /format/i })).not.toBeInTheDocument();
     });
 
-    it.each([ExportMode.V1Resource, ExportMode.V2Resource])(
+    it.each([DashboardFormat.V1Resource, DashboardFormat.V2Resource])(
       'should show format options when export mode is %s',
-      async (exportMode) => {
-        render(<ResourceExport {...createDefaultProps({ exportMode })} />);
+      async (exportFormat) => {
+        render(<ResourceExport {...createDefaultProps({ exportFormat })} />);
         await expandOptions();
 
         expect(screen.getByRole('radiogroup', { name: /model/i })).toBeInTheDocument();
@@ -122,7 +123,9 @@ describe('ResourceExport', () => {
     );
 
     it('should have first format option selected when isViewingYAML is false', async () => {
-      render(<ResourceExport {...createDefaultProps({ exportMode: ExportMode.V1Resource, isViewingYAML: false })} />);
+      render(
+        <ResourceExport {...createDefaultProps({ exportFormat: DashboardFormat.V1Resource, isViewingYAML: false })} />
+      );
       await expandOptions();
 
       const formatGroup = screen.getByRole('radiogroup', { name: /format/i });
@@ -131,7 +134,9 @@ describe('ResourceExport', () => {
     });
 
     it('should have second format option selected when isViewingYAML is true', async () => {
-      render(<ResourceExport {...createDefaultProps({ exportMode: ExportMode.V1Resource, isViewingYAML: true })} />);
+      render(
+        <ResourceExport {...createDefaultProps({ exportFormat: DashboardFormat.V1Resource, isViewingYAML: true })} />
+      );
       await expandOptions();
 
       const formatGroup = screen.getByRole('radiogroup', { name: /format/i });
@@ -141,7 +146,7 @@ describe('ResourceExport', () => {
 
     it('should call onViewYAML when format is changed', async () => {
       const onViewYAML = jest.fn();
-      render(<ResourceExport {...createDefaultProps({ exportMode: ExportMode.V1Resource, onViewYAML })} />);
+      render(<ResourceExport {...createDefaultProps({ exportFormat: DashboardFormat.V1Resource, onViewYAML })} />);
       await expandOptions();
 
       const formatGroup = screen.getByRole('radiogroup', { name: /format/i });
@@ -153,7 +158,7 @@ describe('ResourceExport', () => {
 
   describe('share externally switch', () => {
     it('should show share externally switch for Classic mode', () => {
-      render(<ResourceExport {...createDefaultProps({ exportMode: ExportMode.Classic })} />);
+      render(<ResourceExport {...createDefaultProps({ exportFormat: DashboardFormat.Classic })} />);
 
       expect(screen.getByTestId(selector.exportExternallyToggle)).toBeInTheDocument();
     });
@@ -163,7 +168,7 @@ describe('ResourceExport', () => {
         <ResourceExport
           {...createDefaultProps({
             dashboardJson: createV2DashboardJson(),
-            exportMode: ExportMode.V2Resource,
+            exportFormat: DashboardFormat.V2Resource,
           })}
         />
       );
@@ -173,7 +178,9 @@ describe('ResourceExport', () => {
 
     it('should call onShareExternallyChange when switch is toggled', async () => {
       const onShareExternallyChange = jest.fn();
-      render(<ResourceExport {...createDefaultProps({ exportMode: ExportMode.Classic, onShareExternallyChange })} />);
+      render(
+        <ResourceExport {...createDefaultProps({ exportFormat: DashboardFormat.Classic, onShareExternallyChange })} />
+      );
 
       const switchElement = screen.getByTestId(selector.exportExternallyToggle);
       await userEvent.click(switchElement);
@@ -181,7 +188,9 @@ describe('ResourceExport', () => {
     });
 
     it('should reflect isSharingExternally value in switch', () => {
-      render(<ResourceExport {...createDefaultProps({ exportMode: ExportMode.Classic, isSharingExternally: true })} />);
+      render(
+        <ResourceExport {...createDefaultProps({ exportFormat: DashboardFormat.Classic, isSharingExternally: true })} />
+      );
 
       expect(screen.getByTestId(selector.exportExternallyToggle)).toBeChecked();
     });
