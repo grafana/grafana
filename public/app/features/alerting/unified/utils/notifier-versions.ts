@@ -28,24 +28,22 @@ export function canCreateNotifier(notifier: NotifierDTO): boolean {
 }
 
 /**
- * Checks if a specific version is legacy (cannot be created).
- * A version is legacy if it has canCreate: false in the notifier's versions array.
+ * Checks if a specific version is legacy (an old/deprecated version format).
+ * A version is legacy if it is NOT the current version of the notifier.
+ * For example, 'v0mimir1' is legacy when 'currentVersion' is 'v1'.
  *
- * @param notifier - The notifier DTO containing versions array
+ * @param notifier - The notifier DTO containing versions array and currentVersion
  * @param version - The version string to check (e.g., 'v0mimir1', 'v1')
- * @returns True if the version is legacy (canCreate: false)
+ * @returns True if the version is not the current version
  */
 export function isLegacyVersion(notifier: NotifierDTO, version?: string): boolean {
-  // If no version specified or no versions array, it's not legacy
-  if (!version || !notifier.versions || notifier.versions.length === 0) {
+  // If no version specified or no currentVersion defined, it's not legacy
+  if (!version || !notifier.currentVersion) {
     return false;
   }
 
-  // Find the matching version and check its canCreate property
-  const versionData = notifier.versions.find((v) => v.version === version);
-
-  // A version is legacy if canCreate is explicitly false
-  return versionData?.canCreate === false;
+  // A version is legacy if it's different from the current version
+  return version !== notifier.currentVersion;
 }
 
 /**
