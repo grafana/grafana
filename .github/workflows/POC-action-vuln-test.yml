@@ -1,0 +1,80 @@
+name: 🔍 POC - Outdated Action Vulnerability Test
+on: [workflow_dispatch]
+
+env:
+  # Simulating a dangerous but common debug setting found in other workflows
+  ACTIONS_STEP_DEBUG: true
+
+jobs:
+  investigate-token-action:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Analyze Vulnerable Action Pattern
+        run: |
+          echo "## Security Analysis: actions/create-github-app-token@1.11.5"
+          echo ""
+          echo "### What we're testing:"
+          echo "1. Does version 1.11.5 log sensitive data when ACTIONS_STEP_DEBUG=true?"
+          echo "2. Are there known CVEs for this specific version?"
+          echo "3. What permissions do generated tokens have?"
+          echo ""
+          echo "### Vulnerable Pattern Found:"
+          echo "```yaml"
+          echo "- uses: actions/create-github-app-token@0d564482f06ca65fa9e77e2510873638c82206f2"
+          echo "  # This is version 1.11.5 from October 2023"
+          echo "  with:"
+          echo "    app-id: \${{ secrets.APP_ID }}"
+          echo "    private-key: \${{ secrets.PRIVATE_KEY }}  # 🚨 CRITICAL SECRET"
+          echo "```"
+          echo ""
+          echo "### Impact if Vulnerable:"
+          echo "- Private GitHub App key exposure"
+          echo "- Token generation with 'contents: write' permissions"
+          echo "- Repository takeover potential"
+          echo ""
+          echo "### Testing Methodology:"
+          echo "We cannot test the REAL action without actual secrets."
+          echo "But we CAN demonstrate the RISK PATTERN:"
+          echo "1. Outdated action pinned to old commit"
+          echo "2. Used in 9 workflows with write permissions"
+          echo "3. Debug mode enabled in other workflows (found earlier)"
+          
+      - name: Simulate What Could Be Logged
+        run: |
+          echo ""
+          echo "### What COULD happen with vulnerable version:"
+          echo "If actions/create-github-app-token@1.11.5 has a logging bug:"
+          echo ""
+          echo "```"
+          echo "[DEBUG] Generating token for app ID: 123456"
+          echo "[DEBUG] Using private key:"
+          echo "-----BEGIN RSA PRIVATE KEY-----"
+          echo "MIIEpAIBAAKCAQEA... [KEY EXPOSED IN LOGS]"
+          echo "-----END RSA PRIVATE KEY-----"
+          echo "[DEBUG] Generated token: ghs_abc123def456"
+          echo "```"
+          echo ""
+          echo "### Actual Findings from Code Scan:"
+          echo "9 workflows use this outdated version:"
+          echo "- alerting-update-module.yml"
+          echo "- commands.yml"
+          echo "- dashboards-issue-add-label.yml"
+          echo "- detect-breaking-changes-levitate.yml"
+          echo "- issue-opened.yml"
+          echo "- pr-dependabot-update-go-workspace.yml"
+          echo "- pr-e2e-tests.yml"
+          echo "- ...and 2 others"
+          
+      - name: Check Version Gap
+        run: |
+          echo ""
+          echo "### Version Analysis:"
+          echo "Current used: 1.11.5 (October 2023)"
+          echo "Latest available: >2.0.0"
+          echo ""
+          echo "### Security Principle Violated:"
+          echo "Using outdated security-critical actions violates security best practices."
+          echo "GitHub recommends always using latest versions for token generation actions."
