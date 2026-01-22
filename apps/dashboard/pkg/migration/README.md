@@ -456,14 +456,23 @@ go test ./apps/dashboard/pkg/migration/conversion/... -run TestDataLossDetection
 
 #### Automatic instrumentation
 
-All dashboard conversions are automatically instrumented via the `withConversionMetrics` wrapper function:
+All dashboard conversions are automatically instrumented via the `normalizeConversion` wrapper function, which provides:
+
+- **Metrics tracking**: Records success/failure metrics with proper labels
+- **Status management**: Ensures `storedVersion` is preserved through multi-step conversions
+- **Error handling**: Sets conversion status on both success and failure
+- **Metadata copying**: Copies ObjectMeta, APIVersion, and Kind on error
+- **Default spec ensuring**: Ensures valid default specs/layouts on error to prevent JSON marshaling issues
+- **Data loss detection**: Compares panel/query counts before and after conversion
+
+The `normalizeConversion` wrapper uses the `DashboardConversion` interface, which all dashboard API versions implement to provide consistent conversion behavior:
 
 ```go
-// All conversion functions are wrapped automatically
-// Includes metrics, logging, and data loss detection
+// All conversion functions are wrapped with normalizeConversion
+// This ensures consistent status handling, metrics, and error management
 s.AddConversionFunc((*dashv0.Dashboard)(nil), (*dashv1.Dashboard)(nil),
-    withConversionMetrics(dashv0.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
-        return Convert_V0_to_V1(a.(*dashv0.Dashboard), b.(*dashv1.Dashboard), scope)
+    normalizeConversion(dashv0.APIVERSION, dashv1.APIVERSION, func(a, b interface{}, scope conversion.Scope) error {
+        return Convert_V0_to_V1beta1(a.(*dashv0.Dashboard), b.(*dashv1.Dashboard), scope)
     }))
 ```
 
