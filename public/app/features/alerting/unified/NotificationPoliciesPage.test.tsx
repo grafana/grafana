@@ -41,8 +41,15 @@ import {
 } from './mocks';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { Route, Routes } from 'react-router-dom-v5-compat';
+import PolicyPage from './components/notification-policies/PolicyPage';
 import { ROOT_ROUTE_NAME } from './utils/k8s/constants';
-import { getRoutingTree, setRoutingTree } from './mocks/server/entities/k8s/routingtrees';
+import {
+  deleteRoutingTree,
+  getRoutingTree,
+  resetRoutingTreeMap,
+  setRoutingTree,
+} from './mocks/server/entities/k8s/routingtrees';
 import {
   createKubernetesRoutingTreeSpec,
   k8sRouteToRoute,
@@ -88,6 +95,25 @@ const renderNotificationPolicies = (alertManagerSourceName: string = GRAFANA_RUL
             (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : ''),
         ],
       },
+    }
+  );
+
+// This is the page for the default policy when alertingMultiplePolicies is enabled.
+const renderPolicyPage = (routeName: string) => () =>
+  render(
+    <Routes>
+      <Route
+        path="/alerting/routes/policy/:name/edit"
+        element={
+          <>
+            <AppNotificationList />
+            <PolicyPage />
+          </>
+        }
+      />
+    </Routes>,
+    {
+      historyOptions: { initialEntries: [`/alerting/routes/policy/${routeName}/edit`] },
     }
   );
 
@@ -146,7 +172,13 @@ const getRootRoute = async () => {
   return ui.rootRouteContainer.find();
 };
 
-describe('NotificationPolicies', () => {
+const OtherPolicyName = 'Some Other Policy Name';
+
+describe.each([
+  { testName: 'NotificationPoliciesPage', renderPage: renderNotificationPolicies, routeName: ROOT_ROUTE_NAME },
+  { testName: 'PolicyPage', renderPage: renderPolicyPage(ROOT_ROUTE_NAME), routeName: ROOT_ROUTE_NAME },
+  { testName: 'PolicyPage', renderPage: renderPolicyPage(OtherPolicyName), routeName: OtherPolicyName },
+])('$testName - Policy: $routeName', ({ testName, renderPage, routeName }) => {
   // combobox hack :/
   beforeAll(() => {
     const mockGetBoundingClientRect = jest.fn(() => ({
@@ -177,12 +209,23 @@ describe('NotificationPolicies', () => {
       AccessControlAction.AlertingNotificationsExternalWrite,
       ...PERMISSIONS_NOTIFICATION_POLICIES,
     ]);
+    resetRoutingTreeMap();
+    // Copy default config to other policy name and clear the default, so we guarantee the tests are validating against
+    // the custom route.
+    const defaultRoute = getRoutingTree(ROOT_ROUTE_NAME)!;
+    defaultRoute.metadata.name = routeName;
+    deleteRoutingTree(ROOT_ROUTE_NAME);
+    setRoutingTree(routeName, defaultRoute);
+  });
+
+  afterAll(() => {
+    resetRoutingTreeMap();
   });
 
   it('loads and shows routes', async () => {
-    const defaultRoute = k8sRouteToRoute(getRoutingTree(ROOT_ROUTE_NAME)!);
+    const defaultRoute = k8sRouteToRoute(getRoutingTree(routeName)!);
 
-    renderNotificationPolicies();
+    renderPage();
     const rootRouteEl = await getRootRoute();
 
     expect(rootRouteEl).toHaveTextContent(new RegExp(`delivered to ${defaultRoute?.receiver}`, 'i'));
@@ -214,7 +257,7 @@ describe('NotificationPolicies', () => {
   });
 
   it('can edit root route if one is already defined', async () => {
-    const { user } = renderNotificationPolicies();
+    const { user } = renderPage();
     let rootRoute = await getRootRoute();
 
     expect(rootRoute).toHaveTextContent('default policy');
@@ -252,12 +295,13 @@ describe('NotificationPolicies', () => {
 
   it('can edit root route if one is not defined yet', async () => {
     setRoutingTree(
-      ROOT_ROUTE_NAME,
+      routeName,
       createKubernetesRoutingTreeSpec({
+        name: routeName,
         routes: [],
       })
     );
-    const { user } = renderNotificationPolicies();
+    const { user } = renderPage();
 
     // Sanity check to make sure we actually have an undefined root route.
     const rootRouteEl = await getRootRoute();
@@ -291,7 +335,7 @@ describe('NotificationPolicies', () => {
       AccessControlAction.AlertingNotificationsExternalRead,
     ]);
 
-    const { user } = renderNotificationPolicies();
+    const { user } = renderPage();
 
     expect(ui.newChildPolicyButton.query()).not.toBeInTheDocument();
     expect(ui.newSiblingPolicyButton.query()).not.toBeInTheDocument();
@@ -305,23 +349,23 @@ describe('NotificationPolicies', () => {
     makeAllAlertmanagerConfigFetchFail(getErrorResponse(errMessage));
     makeAllK8sGetEndpointsFail('alerting.config.notfound', errMessage);
 
-    renderNotificationPolicies();
+    renderPage();
     const alert = await screen.findByRole('alert', { name: /error loading alertmanager config/i });
     expect(await within(alert).findByText(new RegExp(errMessage))).toBeInTheDocument();
     expect(ui.rootRouteContainer.query()).not.toBeInTheDocument();
   });
 
   it('allows user to reload and update policies if its been changed by another user', async () => {
-    const { user } = renderNotificationPolicies();
+    const { user } = renderPage();
     const NEW_INTERVAL = '12h';
 
     await getRootRoute();
 
-    const existingConfig = getRoutingTree(ROOT_ROUTE_NAME)!;
+    const existingConfig = getRoutingTree(routeName)!;
     const modifiedConfig = produce(existingConfig, (draft) => {
       draft.spec.defaults.group_interval = NEW_INTERVAL;
     });
-    setRoutingTree(ROOT_ROUTE_NAME, modifiedConfig);
+    setRoutingTree(routeName, modifiedConfig);
 
     await openDefaultPolicyEditModal();
     await user.click(await screen.findByRole('button', { name: /update default policy/i }));
@@ -338,13 +382,14 @@ describe('NotificationPolicies', () => {
 
   it('Should be able to delete an empty route', async () => {
     setRoutingTree(
-      ROOT_ROUTE_NAME,
+      routeName,
       createKubernetesRoutingTreeSpec({
+        name: routeName,
         routes: [{}],
       })
     );
 
-    const { user } = renderNotificationPolicies();
+    const { user } = renderPage();
 
     await user.click(await ui.moreActions.find());
     const deleteButtons = await ui.deleteRouteButton.find();
@@ -362,7 +407,7 @@ describe('NotificationPolicies', () => {
   });
 
   it('Can add a mute timing to a route', async () => {
-    const { user } = renderNotificationPolicies();
+    const { user } = renderPage();
 
     await openEditModal(0);
 
