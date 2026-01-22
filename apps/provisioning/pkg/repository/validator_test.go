@@ -348,7 +348,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			name: "skips validation for DELETE operations",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-				Spec: provisioning.RepositorySpec{
+				Spec:       provisioning.RepositorySpec{
 					// Invalid - missing title
 				},
 			},
