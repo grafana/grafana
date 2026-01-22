@@ -65,13 +65,11 @@ export function useWizardCancellation({
       return;
     }
 
-    // For GitHub connection step, if repo was created, show confirmation before going back
     if (activeStep === 'connection' && repoName) {
       setShowCancelConfirmation(true);
       return;
     }
 
-    // For other steps, go back one step
     handleBack();
   }, [shouldUseCancelBehavior, repoName, activeStep, navigate, handleBack]);
 

@@ -59,10 +59,9 @@ export function useWizardNavigation({
     if (currentStepIndex > 0) {
       let previousStepIndex = currentStepIndex - 1;
 
-      // Handle special case: if we're on finish step and sync was skipped
       const isFinishStep = activeStep === 'finish';
       if (isFinishStep && canSkipSync) {
-        previousStepIndex = currentStepIndex - 2; // Go back to bootstrap
+        previousStepIndex = currentStepIndex - 2;
       }
 
       if (previousStepIndex >= 0) {
@@ -73,7 +72,6 @@ export function useWizardNavigation({
           repositoryType: repoType,
         });
         setActiveStep(previousStep.id);
-        // Remove current step from completed steps when going back
         setCompletedSteps((prev) => prev.filter((step) => step !== activeStep));
         setStepStatusInfo({ status: 'idle' });
       }
@@ -83,7 +81,6 @@ export function useWizardNavigation({
   const goToNextStep = useCallback(async () => {
     const isLastStep = currentStepIndex === steps.length - 1;
 
-    // Only navigate to provisioning URL if we're on the actual last step
     if (isLastStep) {
       const formData = getValues();
       reportInteraction('grafana_provisioning_repository_created', {
@@ -96,14 +93,12 @@ export function useWizardNavigation({
     } else {
       let nextStepIndex = currentStepIndex + 1;
 
-      // Skip synchronize step if no sync is needed
       if (activeStep === 'bootstrap' && canSkipSync) {
-        nextStepIndex = currentStepIndex + 2; // Skip to finish step
+        nextStepIndex = currentStepIndex + 2;
 
-        // No migration needed when skipping sync
         const job = await createSyncJob(false);
         if (!job) {
-          return; // Don't proceed if job creation fails
+          return;
         }
       }
 

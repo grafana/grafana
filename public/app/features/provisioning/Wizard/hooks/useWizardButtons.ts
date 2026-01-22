@@ -46,7 +46,6 @@ export function useWizardButtons({
   const nextButtonText = useMemo(() => {
     const stepIndex = steps.findIndex((s) => s.id === activeStep);
 
-    // Guard against index out of bounds
     if (stepIndex === -1 || stepIndex >= steps.length - 1) {
       return t('provisioning.wizard.button-next', 'Finish');
     }
@@ -68,12 +67,7 @@ export function useWizardButtons({
       return t('provisioning.wizard-content.button-cancelling', 'Cancelling...');
     }
 
-    if (shouldUseCancelBehavior) {
-      return t('provisioning.wizard-content.button-cancel', 'Cancel');
-    }
-
-    // For GitHub connection step, show Cancel if repo was created
-    if (activeStep === 'connection' && repoName) {
+    if (shouldUseCancelBehavior || (activeStep === 'connection' && repoName)) {
       return t('provisioning.wizard-content.button-cancel', 'Cancel');
     }
 
@@ -85,13 +79,12 @@ export function useWizardButtons({
     if (activeStep === 'authType') {
       return false;
     }
-    // If the step is not on Connect page, we only enable it if the job was successful
     if (activeStep !== 'connection' && hasStepError) {
       return true;
     }
     // Synchronize step requires success or warning to proceed
     if (activeStep === 'synchronize') {
-      return !(isStepSuccess || hasStepWarning); // Disable next button if the step is not successful or has warnings
+      return !(isStepSuccess || hasStepWarning);
     }
     return isSubmitting || isCancelling || isStepRunning || isCreatingSkipJob;
   }, [

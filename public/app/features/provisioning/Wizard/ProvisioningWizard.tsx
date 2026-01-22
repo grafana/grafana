@@ -66,7 +66,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     handleSubmit,
   } = methods;
 
-  const [repoName = '', repoType, syncTarget, githubAuthType, githubAppMode] = watch([
+  const [repoName = '', repoType, syncTarget, githubAuthType] = watch([
     'repositoryName',
     'repository.type',
     'repository.sync.target',
@@ -89,66 +89,72 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   const canSkipSync = Boolean(repoName && !isResourceStatsLoading && shouldSkipSync);
 
   // Navigation hook (must be first since other hooks depend on activeStep and completedSteps)
-  const navigation = useWizardNavigation({
-    initialStep,
-    steps,
-    canSkipSync,
-    setStepStatusInfo,
-    createSyncJob,
-    navigate,
-    getValues,
-    repoType,
-    syncTarget,
-    githubAuthType,
-  });
+  const { activeStep, completedSteps, currentStepConfig, visibleStepIndex, goToNextStep, goToPreviousStep } =
+    useWizardNavigation({
+      initialStep,
+      steps,
+      canSkipSync,
+      setStepStatusInfo,
+      createSyncJob,
+      navigate,
+      getValues,
+      repoType,
+      syncTarget,
+      githubAuthType,
+    });
 
   // Precompute cancel behavior state (used by both cancellation and buttons hooks)
-  const isSyncCompleted = navigation.activeStep === 'synchronize' && (isStepSuccess || hasStepWarning || hasStepError);
+  const isSyncCompleted = activeStep === 'synchronize' && (isStepSuccess || hasStepWarning || hasStepError);
   const isFinishWithSyncCompleted =
-    navigation.activeStep === 'finish' && (isStepSuccess || navigation.completedSteps.includes('synchronize'));
+    activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
   const shouldUseCancelBehavior =
-    navigation.activeStep === 'authType' ||
-    (navigation.activeStep === 'connection' && repoType !== 'github') ||
+    activeStep === 'authType' ||
+    (activeStep === 'connection' && repoType !== 'github') ||
     isSyncCompleted ||
     isFinishWithSyncCompleted;
 
-  // Cancellation hook
-  const cancellation = useWizardCancellation({
+  const {
+    isCancelling,
+    showCancelConfirmation,
+    handlePrevious,
+    handleConfirmCancel,
+    handleDismissCancel,
+    handleRepositoryDeletion,
+    onDiscard,
+  } = useWizardCancellation({
     repoName,
     repoType,
-    activeStep: navigation.activeStep,
+    activeStep,
     deleteRepository,
     navigate,
-    handleBack: navigation.goToPreviousStep,
+    handleBack: goToPreviousStep,
     shouldUseCancelBehavior,
   });
 
-  // Submission hook
-  const submission = useWizardSubmission({
-    activeStep: navigation.activeStep,
-    currentStepConfig: navigation.currentStepConfig,
+  const { isSubmitting, handleSubmit: onFormSubmit } = useWizardSubmission({
+    activeStep,
+    currentStepConfig,
     methods,
     submitData,
     githubAppStepRef,
     setStepStatusInfo,
-    onSuccess: navigation.goToNextStep,
+    onSuccess: goToNextStep,
     setValue,
   });
 
-  // Buttons hook
-  const buttons = useWizardButtons({
-    activeStep: navigation.activeStep,
+  const { nextButtonText, previousButtonText, isNextDisabled, isPreviousDisabled } = useWizardButtons({
+    activeStep,
     steps,
     repoName,
     canSkipSync,
-    isSubmitting: submission.isSubmitting,
-    isCancelling: cancellation.isCancelling,
+    isSubmitting,
+    isCancelling,
     isStepRunning,
     isStepSuccess,
     hasStepError,
     hasStepWarning,
     isCreatingSkipJob,
-    showCancelConfirmation: cancellation.showCancelConfirmation,
+    showCancelConfirmation,
     shouldUseCancelBehavior,
   });
 
@@ -171,7 +177,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     if (result.success) {
       setValue('githubApp.connectionName', result.connectionName);
       setStepStatusInfo({ status: 'success' });
-      navigation.goToNextStep();
+      goToNextStep();
     } else {
       setStepStatusInfo({
         status: 'error',
@@ -188,29 +194,25 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   return (
     <FormProvider {...methods}>
       <Stack gap={6} direction="row" alignItems="flex-start">
-        {navigation.activeStep === 'authType' ? (
+        {activeStep === 'authType' ? (
           <div className={styles.stepperSpacer} />
         ) : (
           <>
-            <Stepper steps={visibleSteps} activeStep={navigation.activeStep} visitedSteps={navigation.completedSteps} />
+            <Stepper steps={visibleSteps} activeStep={activeStep} visitedSteps={completedSteps} />
             <div className={styles.divider} />
           </>
         )}
-        <form onSubmit={handleSubmit(submission.handleSubmit)} className={styles.form}>
+        <form onSubmit={handleSubmit(onFormSubmit)} className={styles.form}>
           <FormPrompt
-            onDiscard={cancellation.onDiscard}
-            confirmRedirect={
-              isDirty &&
-              !['authType', 'connection', 'finish'].includes(navigation.activeStep) &&
-              !cancellation.isCancelling
-            }
+            onDiscard={onDiscard}
+            confirmRedirect={isDirty && !['authType', 'connection', 'finish'].includes(activeStep) && !isCancelling}
           />
           <Stack direction="column">
             <Box marginBottom={2}>
               <Text element="h2">
-                {navigation.activeStep === 'authType'
-                  ? (navigation.currentStepConfig?.title ?? '')
-                  : `${navigation.visibleStepIndex + 1}. ${navigation.currentStepConfig?.title ?? ''}`}
+                {activeStep === 'authType'
+                  ? (currentStepConfig?.title ?? '')
+                  : `${visibleStepIndex + 1}. ${currentStepConfig?.title ?? ''}`}
               </Text>
             </Box>
 
@@ -220,29 +222,29 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
             <div className={styles.content}>
               <WizardStepContent
-                activeStep={navigation.activeStep}
+                activeStep={activeStep}
                 settingsData={settingsData}
                 repoName={repoName}
                 githubAppStepRef={githubAppStepRef}
                 onGitHubAppSubmit={handleGitHubAppSubmit}
-                onRepositoryDeletion={cancellation.handleRepositoryDeletion}
-                isCancelling={cancellation.isCancelling}
+                onRepositoryDeletion={handleRepositoryDeletion}
+                isCancelling={isCancelling}
               />
             </div>
 
             <WizardButtonBar
-              previousText={buttons.previousButtonText}
-              nextText={buttons.nextButtonText}
-              isPreviousDisabled={buttons.isPreviousDisabled}
-              isNextDisabled={buttons.isNextDisabled}
-              isSubmitting={submission.isSubmitting}
-              onPrevious={cancellation.handlePrevious}
+              previousText={previousButtonText}
+              nextText={nextButtonText}
+              isPreviousDisabled={isPreviousDisabled}
+              isNextDisabled={isNextDisabled}
+              isSubmitting={isSubmitting}
+              onPrevious={handlePrevious}
             />
           </Stack>
         </form>
       </Stack>
       <ConfirmModal
-        isOpen={cancellation.showCancelConfirmation}
+        isOpen={showCancelConfirmation}
         title={t('provisioning.wizard.discard-modal.title', 'Discard repository setup?')}
         body={t(
           'provisioning.wizard.discard-modal.body',
@@ -250,8 +252,8 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
         )}
         confirmText={t('provisioning.wizard.discard-modal.confirm', 'Yes, discard')}
         dismissText={t('provisioning.wizard.discard-modal.dismiss', 'Keep working')}
-        onConfirm={cancellation.handleConfirmCancel}
-        onDismiss={cancellation.handleDismissCancel}
+        onConfirm={handleConfirmCancel}
+        onDismiss={handleDismissCancel}
       />
     </FormProvider>
   );
@@ -266,8 +268,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 1,
     alignSelf: 'stretch',
     backgroundColor: theme.colors.border.weak,
-    // align with the button row
-    marginBottom: theme.spacing(13),
+
+    marginBottom: theme.spacing(13), // align with the button row
   }),
   stepperSpacer: css({
     width: 201, // Stepper width (200px) + divider width (1px)
