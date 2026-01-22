@@ -283,10 +283,10 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 		return nil, err
 	}
 
-	return returnFirstFolderSearchResult(ctx, hits, s, orgID)
+	return s.returnFirstFolderSearchResult(ctx, orgID, hits)
 }
 
-func returnFirstFolderSearchResult(ctx context.Context, hits v0alpha1.SearchResults, s *Service, orgID int64) (*folder.Folder, error) {
+func (s *Service) returnFirstFolderSearchResult(ctx context.Context, orgID int64, hits v0alpha1.SearchResults) (*folder.Folder, error) {
 	if len(hits.Hits) == 0 {
 		return nil, dashboards.ErrFolderNotFound
 	}
@@ -357,7 +357,7 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 		hits.Hits = hits.Hits[1:]
 	}
 
-	return returnFirstFolderSearchResult(ctx, hits, s, orgID)
+	return s.returnFirstFolderSearchResult(ctx, orgID, hits)
 }
 
 func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
