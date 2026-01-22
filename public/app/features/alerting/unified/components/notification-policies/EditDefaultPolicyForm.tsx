@@ -78,6 +78,7 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
           })}
           className={styles.input}
           data-testid="routing-tree-name"
+          aria-label={t('alerting.am-root-route-form.aria-label-name', 'Name')}
         />
       </Field>)}
       <Field

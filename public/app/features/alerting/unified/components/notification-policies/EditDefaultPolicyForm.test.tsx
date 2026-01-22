@@ -21,6 +21,7 @@ const ui = {
   groupWaitInput: byRole('textbox', { name: /Group wait/ }),
   groupIntervalInput: byRole('textbox', { name: /Group interval/ }),
   repeatIntervalInput: byRole('textbox', { name: /Repeat interval/ }),
+  routeNameInput: byRole('textbox', { name: /Name/ }),
 };
 setupMswServer();
 // TODO Default and Notification policy form should be unified so we don't need to maintain two almost identical forms
@@ -128,9 +129,33 @@ describe('EditDefaultPolicyForm', function () {
       expect.anything()
     );
   });
+
+  describe('Create Policy', function () {
+    it('should render policy name in form inputs if showNameField=true', async function () {
+      const onSubmit = jest.fn();
+      renderRouteForm(
+      {
+        id: '0',
+        name: 'custom policy name',
+      },
+      onSubmit,
+      true);
+
+      expect(ui.routeNameInput.get()).toHaveValue('custom policy name');
+    });
+    it('should not render policy name in form inputs if showNameField omitted', async function () {
+      renderRouteForm(
+      {
+        id: '0',
+        name: 'custom policy name',
+      });
+
+      expect(ui.routeNameInput.query()).not.toBeInTheDocument();
+    });
+  });
 });
 
-function renderRouteForm(route: RouteWithID, onSubmit: (route: Partial<FormAmRoute>) => void = noop) {
+function renderRouteForm(route: RouteWithID, onSubmit: (route: Partial<FormAmRoute>) => void = noop, showNameField?: boolean) {
   return render(
     <AlertmanagerProvider accessType="instance">
       <AmRootRouteForm
@@ -138,6 +163,7 @@ function renderRouteForm(route: RouteWithID, onSubmit: (route: Partial<FormAmRou
         actionButtons={<Button type="submit">Update default policy</Button>}
         onSubmit={onSubmit}
         route={route}
+        showNameField={showNameField}
       />
     </AlertmanagerProvider>
   );
