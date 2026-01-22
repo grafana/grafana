@@ -139,10 +139,11 @@ export function RecentlyDeletedActions() {
     if (notificationData) {
       if (notificationData.kind === 'action') {
         const component = buildNotificationButton({
+          title: notificationData.data.title,
           buttonLabel: notificationData.data.buttonLabel,
           href: notificationData.data.targetUrl,
         });
-        dispatch(notifyApp(createSuccessNotification(notificationData.data.title, '', undefined, component)));
+        dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
       } else {
         appEvents.publish({
           type: notificationData.data.alertType,

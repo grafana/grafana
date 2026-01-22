@@ -371,11 +371,9 @@ export const browseDashboardsAPI = createApi({
                   'Cannot delete provisioned dashboard. To remove it, delete it from the repository and synchronise to apply the changes.',
                 ],
               });
-
               continue;
             }
           }
-
           await getDashboardAPI().deleteDashboard(dashboardUID, !restoreDashboardsEnabled);
 
           deletedCount++;
@@ -393,12 +391,13 @@ export const browseDashboardsAPI = createApi({
           if (restoreDashboardsEnabled) {
             // Show notification with button to Recently Deleted
             const title = t('browse-dashboards.delete.success', 'Dashboard deleted', { count: deletedCount });
-            const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View Recently Deleted');
+            const buttonText = t('browse-dashboards.delete.view-recently-deleted', 'View deleted dashboards');
             const component = buildNotificationButton({
+              title,
               buttonLabel: buttonText,
               href: '/dashboard/recently-deleted',
             });
-            dispatch(notifyApp(createSuccessNotification(title, '', undefined, component)));
+            dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
           } else if (config.featureToggles.kubernetesDashboards) {
             // Legacy notification for kubernetes dashboards
             appEvents.publish({
