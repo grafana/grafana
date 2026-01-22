@@ -31,9 +31,9 @@ function getField(cache: FieldCache, name: string, fieldType: FieldType): FieldW
 
 export const LOGS_DATAPLANE_TIMESTAMP_NAME = 'timestamp';
 export const LOGS_DATAPLANE_BODY_NAME = 'body';
-const LOGS_DATAPLANE_SEVERITY_NAME = 'severity';
-const LOGS_DATAPLANE_ID_NAME = 'id';
-const LOGS_DATAPLANE_LABELS_NAME = 'labels';
+const DATAPLANE_SEVERITY_NAME = 'severity';
+export const DATAPLANE_ID_NAME = 'id';
+const DATAPLANE_LABELS_NAME = 'labels';
 
 // NOTE: this is a hot fn, we need to avoid allocating new objects here
 export function logFrameLabelsToLabels(logFrameLabels: LogFrameLabels): Labels {
@@ -59,7 +59,7 @@ export function logFrameLabelsToLabels(logFrameLabels: LogFrameLabels): Labels {
     return labels;
   }
 
-  // @ts-ignore
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return logFrameLabels as Labels;
 }
 
@@ -74,9 +74,9 @@ export function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
     return null;
   }
 
-  const severityField = getField(cache, LOGS_DATAPLANE_SEVERITY_NAME, FieldType.string) ?? null;
-  const idField = getField(cache, LOGS_DATAPLANE_ID_NAME, FieldType.string) ?? null;
-  const labelsField = getField(cache, LOGS_DATAPLANE_LABELS_NAME, FieldType.other) ?? null;
+  const severityField = getField(cache, DATAPLANE_SEVERITY_NAME, FieldType.string) ?? null;
+  const idField = getField(cache, DATAPLANE_ID_NAME, FieldType.string) ?? null;
+  const labelsField = getField(cache, DATAPLANE_LABELS_NAME, FieldType.other) ?? null;
 
   const labels = labelsField === null ? null : labelsField.values;
 

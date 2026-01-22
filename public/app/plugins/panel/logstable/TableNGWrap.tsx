@@ -9,7 +9,9 @@ import type { Options as TableOptions } from '../table/panelcfg.gen';
 
 import { DEFAULT_SIDEBAR_WIDTH } from './constants';
 
-interface Props extends PanelProps<TableOptions> {}
+interface Props extends PanelProps<TableOptions> {
+  fieldSelectorWidth: number | undefined;
+}
 
 export function TableNGWrap({
   timeZone,
@@ -28,8 +30,9 @@ export function TableNGWrap({
   onFieldConfigChange,
   replaceVariables,
   onChangeTimeRange,
+  fieldSelectorWidth,
 }: Props) {
-  const sidebarWidth = options.fieldSelectorWidth ?? DEFAULT_SIDEBAR_WIDTH;
+  const sidebarWidth = fieldSelectorWidth ?? DEFAULT_SIDEBAR_WIDTH;
   const styles = useStyles2(getStyles, sidebarWidth, height, width);
 
   // Callbacks

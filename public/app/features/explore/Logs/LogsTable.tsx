@@ -7,6 +7,7 @@ import {
   applyFieldOverrides,
   CustomTransformOperator,
   DataFrame,
+  DataFrameType,
   DataTransformerConfig,
   Field,
   FieldType,
@@ -32,8 +33,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
-import { LogsFrame } from 'app/features/logs/logsFrame';
-import { getLogsExtractFields } from 'app/plugins/panel/logstable/transforms/extractLogsFields';
+import { DATAPLANE_ID_NAME, LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
@@ -154,9 +154,9 @@ export function LogsTable(props: Props) {
         },
       });
       // `getLinks` and `applyFieldOverrides` are taken from TableContainer.tsx
-      for (const [index, field] of frameWithOverrides.fields.entries()) {
+      for (const [fieldIdx, field] of frameWithOverrides.fields.entries()) {
         // Hide ID field from visualization (it's only needed for row matching)
-        if (logsFrame?.idField && (field.name === logsFrame.idField.name || field.name === 'id')) {
+        if (logsFrame?.idField && (field.name === logsFrame.idField.name || field.name === DATAPLANE_ID_NAME)) {
           field.config = {
             ...field.config,
             custom: {
@@ -180,7 +180,7 @@ export function LogsTable(props: Props) {
         };
 
         // For the first field (time), wrap the cell to include action buttons
-        const isFirstField = index === 0;
+        const isFirstField = fieldIdx === 0;
 
         field.config = {
           ...field.config,
@@ -202,7 +202,6 @@ export function LogsTable(props: Props) {
                         panelState={props.panelState}
                         absoluteRange={props.absoluteRange}
                         logRows={props.logRows}
-                        rowIndex={cellProps.rowIndex}
                       />
                       <span className={styles.firstColumnCell}>
                         {cellProps.field.display?.(cellProps.value).text ?? String(cellProps.value)}
@@ -366,6 +365,34 @@ const isFieldFilterable = (field: Field, bodyName: string, timeName: string) => 
 
   return true;
 };
+
+// TODO: explore if `logsFrame.ts` can help us with getting the right fields
+// TODO Why is typeInfo not defined on the Field interface?
+export function getLogsExtractFields(dataFrame: DataFrame) {
+  return dataFrame.fields
+    .filter((field: Field & { typeInfo?: { frame: string } }) => {
+      const isFieldLokiLabels =
+        field.typeInfo?.frame === 'json.RawMessage' &&
+        field.name === 'labels' &&
+        dataFrame?.meta?.type !== DataFrameType.LogLines;
+      const isFieldDataplaneLabels =
+        field.name === 'labels' && field.type === FieldType.other && dataFrame?.meta?.type === DataFrameType.LogLines;
+      return isFieldLokiLabels || isFieldDataplaneLabels;
+    })
+    .flatMap((field: Field) => {
+      return [
+        {
+          id: 'extractFields',
+          options: {
+            format: 'json',
+            keepTime: false,
+            replace: false,
+            source: field.name,
+          },
+        },
+      ];
+    });
+}
 
 function buildLabelFilters(columnsWithMeta: Record<string, FieldNameMeta>) {
   // Create object of label filters to include columns selected by the user

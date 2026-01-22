@@ -150,6 +150,7 @@ export const LogsTable = ({
         onFieldConfigChange={handleTableOnFieldConfigChange}
         replaceVariables={replaceVariables}
         onChangeTimeRange={onChangeTimeRange}
+        fieldSelectorWidth={options.fieldSelectorWidth}
       />
     </div>
   );

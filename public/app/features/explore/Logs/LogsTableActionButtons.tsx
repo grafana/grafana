@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, memo } from 'react';
 
 import {
   AbsoluteTimeRange,
@@ -12,8 +12,8 @@ import {
 import { t } from '@grafana/i18n';
 import { ClipboardButton, CustomCellRendererProps, IconButton, Modal, useTheme2 } from '@grafana/ui';
 import { getLogsPermalinkRange } from 'app/core/utils/shortLinks';
-import { getUrlStateFromPaneState } from 'app/features/explore/hooks/useStateSync';
-import { LogsFrame } from 'app/features/logs/logsFrame';
+import { getUrlStateFromPaneState } from 'app/features/explore/hooks/useStateSync/external.utils';
+import { LogsFrame, DATAPLANE_ID_NAME } from 'app/features/logs/logsFrame';
 import { getState } from 'app/store/store';
 
 import { getExploreBaseUrl } from './utils/url';
@@ -28,30 +28,20 @@ interface Props extends CustomCellRendererProps {
   index?: number;
 }
 
-/**
- * @deprecated
- * @param props
- * @constructor
- */
-export function LogsTableActionButtons(props: Props) {
+export const LogsTableActionButtons = memo((props: Props) => {
   const { exploreId, absoluteRange, logRows, rowIndex, panelState, displayedFields, logsFrame, frame } = props;
-
   const theme = useTheme2();
   const [isInspecting, setIsInspecting] = useState(false);
   // Get logId from the table frame (frame), not the original logsFrame, because
   // the table frame is sorted/transformed and rowIndex refers to the table frame
-  const idFieldName = logsFrame?.idField?.name ?? 'id';
-  const idField = frame.fields.find((field) => field.name === idFieldName || field.name === 'id');
+  const idFieldName = logsFrame?.idField?.name ?? DATAPLANE_ID_NAME;
+  const idField = frame.fields.find((field) => field.name === idFieldName || field.name === DATAPLANE_ID_NAME);
   const logId = idField?.values[rowIndex];
-  const getLineValue = () => {
-    const bodyFieldName = logsFrame?.bodyField?.name;
-    const bodyField = bodyFieldName
-      ? frame.fields.find((field) => field.name === bodyFieldName)
-      : frame.fields.find((field) => field.type === 'string');
-    return bodyField?.values[rowIndex];
-  };
 
-  const lineValue = getLineValue();
+  const getLineValue = () => {
+    const logRowById = logRows?.find((row) => row.rowId === logId);
+    return logRowById?.raw ?? '';
+  };
 
   const styles = getStyles(theme);
 
@@ -110,33 +100,29 @@ export function LogsTableActionButtons(props: Props) {
   return (
     <>
       <div className={styles.iconWrapper}>
-        <div className={styles.inspect}>
-          <IconButton
-            className={styles.inspectButton}
-            tooltip={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
-            variant="secondary"
-            aria-label={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
-            tooltipPlacement="top"
-            size="md"
-            name="eye"
-            onClick={handleViewClick}
-            tabIndex={0}
-          />
-        </div>
-        <div className={styles.inspect}>
-          <ClipboardButton
-            className={styles.clipboardButton}
-            icon="share-alt"
-            variant="secondary"
-            fill="text"
-            size="md"
-            tooltip={t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')}
-            tooltipPlacement="top"
-            tabIndex={0}
-            aria-label={t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')}
-            getText={getText}
-          />
-        </div>
+        <IconButton
+          className={styles.icon}
+          tooltip={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
+          variant="secondary"
+          aria-label={t('explore.logs-table.action-buttons.view-log-line', 'View log line')}
+          tooltipPlacement="top"
+          size="md"
+          name="eye"
+          onClick={handleViewClick}
+          tabIndex={0}
+        />
+        <ClipboardButton
+          className={styles.icon}
+          icon="share-alt"
+          variant="secondary"
+          fill="text"
+          size="md"
+          tooltip={t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')}
+          tooltipPlacement="top"
+          tabIndex={0}
+          aria-label={t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')}
+          getText={getText}
+        />
       </div>
       {isInspecting && (
         <Modal
@@ -144,9 +130,9 @@ export function LogsTableActionButtons(props: Props) {
           isOpen={true}
           title={t('explore.logs-table.action-buttons.inspect-value', 'Inspect value')}
         >
-          <pre>{lineValue}</pre>
+          <pre>{getLineValue()}</pre>
           <Modal.ButtonRow>
-            <ClipboardButton icon="copy" getText={() => lineValue}>
+            <ClipboardButton icon="copy" getText={() => getLineValue()}>
               {t('explore.logs-table.action-buttons.copy-to-clipboard', 'Copy to Clipboard')}
             </ClipboardButton>
           </Modal.ButtonRow>
@@ -154,15 +140,11 @@ export function LogsTableActionButtons(props: Props) {
       )}
     </>
   );
-}
+});
 
-export const getStyles = (theme: GrafanaTheme2) => ({
-  clipboardButton: css({
-    height: '100%',
-    lineHeight: '1',
-    padding: 0,
-    width: '20px',
-  }),
+LogsTableActionButtons.displayName = 'LogsTableActionButtons';
+
+const getStyles = (theme: GrafanaTheme2) => ({
   iconWrapper: css({
     background: theme.colors.background.secondary,
     boxShadow: theme.shadows.z2,
@@ -171,25 +153,50 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     height: '35px',
     left: 0,
     top: 0,
-    padding: `0 ${theme.spacing(0.5)}`,
+    padding: 0,
     position: 'absolute',
     zIndex: 1,
+    alignItems: 'center',
+    // Fix switching icon direction when cell is numeric (rtl)
+    direction: 'ltr',
   }),
-  inspect: css({
-    '& button svg': {
-      marginRight: 'auto',
+  icon: css({
+    gap: 0,
+    margin: 0,
+    padding: 0,
+    borderRadius: theme.shape.radius.default,
+    width: '28px',
+    height: '32px',
+    display: 'inline-flex',
+    justifyContent: 'center',
+
+    '&:before': {
+      content: '""',
+      position: 'absolute',
+      width: 24,
+      height: 24,
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      margin: 'auto',
+      borderRadius: theme.shape.radius.default,
+      backgroundColor: theme.colors.background.primary,
+      zIndex: -1,
+      opacity: 0,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transitionDuration: '0.2s',
+        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        transitionProperty: 'opacity',
+      },
     },
     '&:hover': {
       color: theme.colors.text.link,
       cursor: 'pointer',
+      background: 'none',
+      '&:before': {
+        opacity: 1,
+      },
     },
-    padding: '5px 3px',
-  }),
-  inspectButton: css({
-    borderRadius: theme.shape.radius.default,
-    display: 'inline-flex',
-    margin: 0,
-    overflow: 'hidden',
-    verticalAlign: 'middle',
   }),
 });
