@@ -3,7 +3,7 @@ import { Alert } from '@grafana/ui';
 
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
-import { useAlertRulesNav } from '../../../navigation/useAlertRulesNav';
+import { useDeletedRulesNav } from '../../../navigation/useDeletedRulesNav';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { withPageErrorBoundary } from '../../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
@@ -11,7 +11,7 @@ import { AlertingPageWrapper } from '../../AlertingPageWrapper';
 import { DeletedRules } from './DeletedRules';
 
 function DeletedrulesPage() {
-  const { navId, pageNav } = useAlertRulesNav();
+  const { navId, pageNav } = useDeletedRulesNav();
   const {
     currentData = [],
     isLoading,
