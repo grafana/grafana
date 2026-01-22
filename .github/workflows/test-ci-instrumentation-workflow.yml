@@ -40,7 +40,7 @@ jobs:
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
           repo_secrets: |
-            OTEL_EXPORTER_OTLP_API_KEY=grafana-otlp-api-key:api-key-base65
+            OTEL_EXPORTER_OTLP_API_KEY=grafana-otlp-api-key:api-key-base64
 
       - name: send curl
         run: |
