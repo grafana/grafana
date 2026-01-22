@@ -7,6 +7,7 @@ import {
   getLegacyVersionLabel,
   getOptionsForVersion,
   hasLegacyIntegrations,
+  isDeprecated,
   isLegacyVersion,
 } from './notifier-versions';
 
@@ -157,6 +158,71 @@ describe('notifier-versions utilities', () => {
       expect(isLegacyVersion(notifier, 'v0mimir1')).toBe(true);
       expect(isLegacyVersion(notifier, 'v0mimir2')).toBe(true);
       expect(isLegacyVersion(notifier, 'v1')).toBe(false); // Not legacy because it's currentVersion
+    });
+  });
+
+  describe('isDeprecated', () => {
+    it('should return false if notifier has no deprecated field', () => {
+      const notifier = createNotifier({});
+      expect(isDeprecated(notifier)).toBe(false);
+    });
+
+    it('should return true if notifier has deprecated: true at top level', () => {
+      const notifier = createNotifier({ deprecated: true });
+      expect(isDeprecated(notifier)).toBe(true);
+    });
+
+    it('should return false if notifier has deprecated: false at top level', () => {
+      const notifier = createNotifier({ deprecated: false });
+      expect(isDeprecated(notifier)).toBe(false);
+    });
+
+    it('should return true if specific version has deprecated: true', () => {
+      const notifier = createNotifier({
+        versions: [
+          createVersion({ version: 'v0', deprecated: true }),
+          createVersion({ version: 'v1', deprecated: false }),
+        ],
+      });
+      expect(isDeprecated(notifier, 'v0')).toBe(true);
+      expect(isDeprecated(notifier, 'v1')).toBe(false);
+    });
+
+    it('should return true if notifier is deprecated regardless of version', () => {
+      const notifier = createNotifier({
+        deprecated: true,
+        versions: [createVersion({ version: 'v1', deprecated: false })],
+      });
+      // Top-level deprecated takes precedence
+      expect(isDeprecated(notifier, 'v1')).toBe(true);
+    });
+
+    it('should return false if version is not found in versions array', () => {
+      const notifier = createNotifier({
+        versions: [createVersion({ version: 'v1' })],
+      });
+      expect(isDeprecated(notifier, 'v2')).toBe(false);
+    });
+
+    it('should check currentVersion when no version is specified', () => {
+      const notifier = createNotifier({
+        currentVersion: 'v1',
+        versions: [createVersion({ version: 'v1', deprecated: true })],
+      });
+      // No version specified, should check currentVersion (v1) which is deprecated
+      expect(isDeprecated(notifier)).toBe(true);
+    });
+
+    it('should return false when currentVersion is not deprecated and no version specified', () => {
+      const notifier = createNotifier({
+        currentVersion: 'v1',
+        versions: [
+          createVersion({ version: 'v0', deprecated: true }),
+          createVersion({ version: 'v1', deprecated: false }),
+        ],
+      });
+      // No version specified, should check currentVersion (v1) which is not deprecated
+      expect(isDeprecated(notifier)).toBe(false);
     });
   });
 

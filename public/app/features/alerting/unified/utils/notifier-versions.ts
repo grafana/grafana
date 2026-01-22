@@ -47,6 +47,36 @@ export function isLegacyVersion(notifier: NotifierDTO, version?: string): boolea
 }
 
 /**
+ * Checks if a notifier or a specific version is deprecated.
+ * A notifier is deprecated if either:
+ * - The notifier itself has deprecated: true (top-level)
+ * - The specific version has deprecated: true
+ * - If no version specified, checks the currentVersion
+ *
+ * @param notifier - The notifier DTO to check
+ * @param version - Optional version string to check for version-specific deprecation
+ * @returns True if the notifier or version is deprecated
+ */
+export function isDeprecated(notifier: NotifierDTO, version?: string): boolean {
+  // Check top-level deprecation first
+  if (notifier.deprecated) {
+    return true;
+  }
+
+  // Determine which version to check: provided version, currentVersion, or first version
+  // Use empty string check since version might be '' instead of undefined
+  const versionToCheck = (version && version.length > 0 ? version : null) || notifier.currentVersion;
+
+  // Check if the version is deprecated
+  if (versionToCheck && notifier.versions) {
+    const versionData = notifier.versions.find((v) => v.version === versionToCheck);
+    return versionData?.deprecated === true;
+  }
+
+  return false;
+}
+
+/**
  * Gets the options for a specific version of a notifier.
  * Used to display the correct form fields based on integration version.
  *
