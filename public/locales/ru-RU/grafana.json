@@ -3762,6 +3762,7 @@
       "non-folder-item": "{{itemKind}} {{itemUID}} не является папкой",
       "root-title": "Дашборды",
       "search-placeholder": "Поиск папок",
+      "shared-with-me": "",
       "unknown-error": "Неизвестная ошибка"
     },
     "manage-folder-nav": {
@@ -3871,6 +3872,7 @@
       "label-method": "Метод",
       "label-payload": "Полезные данные",
       "label-query-parameters": "Параметры запроса",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Тест API",
         "title-test-api": "Тест API"
@@ -4586,6 +4588,14 @@
     "actions": {
       "open-settings": "Параметры"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Закрыть виджет «Добавление панели»",
       "tooltip-close-widget": "Закрыть виджет"
@@ -4968,12 +4978,14 @@
       "add-visualization-body": "Выберите источник данных, а затем запрашивайте и визуализируйте свои данные с помощью диаграмм, статистики и таблиц или создавайте списки, разметки и другие виджеты.",
       "add-visualization-button": "Добавить визуализацию",
       "add-visualization-header": "Создание нового дашборда с добавлением визуализации",
+      "description": "",
       "import-a-dashboard-body": "Импортируйте дашборды из файлов или с <1>grafana.com</1>.",
       "import-a-dashboard-header": "Импорт дашборда",
       "import-dashboard-button": "Импорт дашборда",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5482,6 +5494,10 @@
       "loading-configuration": "Загрузка конфигурации"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""

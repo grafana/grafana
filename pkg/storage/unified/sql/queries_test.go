@@ -150,6 +150,32 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlResourceHistoryGarbageGetCandidates: {
+				{
+					Name: "single path",
+					Data: &sqlGarbageCollectCandidatesRequest{
+						SQLTemplate:     mocks.NewTestingSQLTemplate(),
+						Group:           "group",
+						Resource:        "res",
+						CutoffTimestamp: 123456,
+						BatchSize:       100,
+						Response:        new(gcCandidateName),
+					},
+				},
+			},
+			sqlResourceHistoryGCDeleteByNames: {
+				{
+					Name: "single path",
+					Data: &sqlGarbageCollectDeleteByNamesRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Group:       "group",
+						Resource:    "res",
+						Candidates: []gcCandidateName{
+							{Namespace: "ns1", Name: "name1"},
+						},
+					},
+				},
+			},
 			sqlResourceHistoryPoll: {
 				{
 					Name: "single path",

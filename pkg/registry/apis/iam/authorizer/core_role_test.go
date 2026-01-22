@@ -286,6 +286,10 @@ func (m *mockAccessClient) Compile(ctx context.Context, id claims.AuthInfo, req 
 	return nil, nil, nil
 }
 
+func (m *mockAccessClient) BatchCheck(ctx context.Context, id claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	return claims.BatchCheckResponse{}, errors.New("not implemented")
+}
+
 // mockAuthInfo is a mock implementation of claims.AuthInfo
 type mockAuthInfo struct {
 	identityType claims.IdentityType

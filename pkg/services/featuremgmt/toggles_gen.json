@@ -1374,6 +1374,7 @@
         "name": "disableClassicHTTPHistogram",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-06-18T19:37:44Z",
+        "deletionTimestamp": "2026-01-20T11:46:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -1559,6 +1560,7 @@
         "name": "enableNativeHTTPHistogram",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2023-10-03T18:23:55Z",
+        "deletionTimestamp": "2026-01-20T11:37:01Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -2420,6 +2422,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzTeamLBACRuleApi",
+        "resourceVersion": "1768589823498",
+        "creationTimestamp": "2026-01-14T23:12:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-16 18:57:03.498879 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Registers AuthZ TeamLBACRule /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthzZanzanaSync",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-10-13T19:37:13Z",
@@ -2611,6 +2630,23 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesTeamBindings",
+        "resourceVersion": "1768904135898",
+        "creationTimestamp": "2026-01-20T09:57:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-20 10:15:35.898172 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables search for team bindings in the app platform API",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

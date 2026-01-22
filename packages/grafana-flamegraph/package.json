@@ -56,7 +56,7 @@
     "@grafana/ui": "12.4.0-pre",
     "@leeoniya/ufuzzy": "1.0.19",
     "d3": "^7.8.5",
-    "lodash": "4.17.21",
+    "lodash": "4.17.23",
     "react": "18.3.1",
     "react-use": "17.6.0",
     "react-virtualized-auto-sizer": "1.0.26",

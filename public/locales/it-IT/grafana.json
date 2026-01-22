@@ -3730,6 +3730,7 @@
       "non-folder-item": "Non cartella {{itemKind}} {{itemUID}}",
       "root-title": "Dashboard",
       "search-placeholder": "Cerca cartelle",
+      "shared-with-me": "",
       "unknown-error": "Errore sconosciuto"
     },
     "manage-folder-nav": {
@@ -3833,6 +3834,7 @@
       "label-method": "Metodo",
       "label-payload": "Carico utile",
       "label-query-parameters": "Parametri delle query",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "API di test",
         "title-test-api": "API di test"
@@ -4548,6 +4550,14 @@
     "actions": {
       "open-settings": "Impostazioni"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Chiudi il widget \"Aggiungi pannello\"",
       "tooltip-close-widget": "Chiudi widget"
@@ -4930,12 +4940,14 @@
       "add-visualization-body": "Seleziona un'origine dati, quindi esegui query e visualizza i dati con grafici, statistiche e tabelle o crea elenchi, markdown e altri widget.",
       "add-visualization-button": "Aggiungi visualizzazione",
       "add-visualization-header": "Avvia il tuo nuovo dashboard aggiungendo una visualizzazione",
+      "description": "",
       "import-a-dashboard-body": "Importa dashboard da file o <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importa un dashboard",
       "import-dashboard-button": "Importa dashboard",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5442,6 +5454,10 @@
       "loading-configuration": "Caricamento configurazione"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""

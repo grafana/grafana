@@ -244,16 +244,6 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
-  * Enables native HTTP Histograms
-  * @default false
-  */
-  enableNativeHTTPHistogram?: boolean;
-  /**
-  * Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
-  * @default false
-  */
-  disableClassicHTTPHistogram?: boolean;
-  /**
   * Routes snapshot requests from /api to the /apis endpoint
   * @default false
   */
@@ -1106,6 +1096,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthzRolesApi?: boolean;
   /**
+  * Registers AuthZ TeamLBACRule /apis endpoint
+  * @default false
+  */
+  kubernetesAuthzTeamLBACRuleApi?: boolean;
+  /**
   * Registers AuthZ Role Bindings /apis endpoint
   * @default false
   */
@@ -1425,4 +1420,9 @@ export interface FeatureToggles {
   * @default false
   */
   queryWithAssistant?: boolean;
+  /**
+  * Enables search for team bindings in the app platform API
+  * @default false
+  */
+  kubernetesTeamBindings?: boolean;
 }

@@ -14,7 +14,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
-import { PanelContext, PanelContextProvider } from '../../../components/PanelChrome';
+import { PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
@@ -96,6 +96,12 @@ const createNestedDataFrame = (): DataFrame => {
   const nestedFrame = toDataFrame({
     name: 'NestedData',
     fields: [
+      {
+        name: 'Nested hidden',
+        type: FieldType.string,
+        values: ['secret1', 'secret2'],
+        config: { custom: { hideFrom: { viz: true } } },
+      },
       {
         name: 'Nested A',
         type: FieldType.string,
@@ -302,8 +308,10 @@ describe('TableNG', () => {
   let user: ReturnType<typeof userEvent.setup>;
   let origResizeObserver = global.ResizeObserver;
   let origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+  let jestScrollIntoView = jest.fn();
 
   beforeEach(() => {
+    jestScrollIntoView = jest.fn();
     user = userEvent.setup();
     origResizeObserver = global.ResizeObserver;
     origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
@@ -325,12 +333,32 @@ describe('TableNG', () => {
       }
     };
 
-    window.HTMLElement.prototype.scrollIntoView = jest.fn();
+    window.HTMLElement.prototype.scrollIntoView = jestScrollIntoView;
   });
 
   afterEach(() => {
     global.ResizeObserver = origResizeObserver;
     window.HTMLElement.prototype.scrollIntoView = origScrollIntoView;
+  });
+
+  describe('initialRowIndex', () => {
+    it('should not scroll by default', async () => {
+      render(<TableNG enableVirtualization={true} data={createSortingTestDataFrame()} width={100} height={100} />);
+      expect(jestScrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it('initialRowIndex should scroll', async () => {
+      render(
+        <TableNG
+          initialRowIndex={2}
+          enableVirtualization={true}
+          data={createSortingTestDataFrame()}
+          width={100}
+          height={100}
+        />
+      );
+      expect(jestScrollIntoView).toHaveBeenCalled();
+    });
   });
 
   describe('Basic TableNG rendering', () => {
@@ -412,6 +440,10 @@ describe('TableNG', () => {
         expectedExpandedContent.forEach((text) => {
           expect(screen.getByText(text)).toBeInTheDocument();
         });
+
+        // Hidden nested fields should stay hidden
+        expect(screen.queryByText('Nested hidden')).not.toBeInTheDocument();
+        expect(screen.queryByText('secret1')).not.toBeInTheDocument();
 
         // Check if the expanded row has the aria-expanded attribute
         const expandedRow = container.querySelector('[aria-expanded="true"]');
