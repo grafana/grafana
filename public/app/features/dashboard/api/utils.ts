@@ -70,7 +70,7 @@ export function isDashboardV2Spec(obj: unknown): obj is DashboardV2Spec {
 }
 
 export function isDashboardV1Spec(obj: unknown): obj is Dashboard {
-  return isRecord(obj) && 'title' in obj && 'uid' in obj && !isDashboardV2Spec(obj);
+  return isRecord(obj) && 'title' in obj && !isDashboardV2Spec(obj);
 }
 
 export function isDashboardV0Spec(obj: DashboardDataDTO | DashboardV2Spec): obj is DashboardDataDTO {
