@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { t, Trans } from '@grafana/i18n';
 import { ConfirmModal, LinkButton, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
@@ -13,32 +14,39 @@ import { RepositoryList } from './Shared/RepositoryList';
 import { CONNECTIONS_URL } from './constants';
 import { useRepositoryList } from './hooks/useRepositoryList';
 
-enum TabSelection {
-  Repositories = 'repositories',
-  Connections = 'connections',
-  GettingStarted = 'getting-started',
-}
-
 export default function HomePage() {
   const [items, isLoading] = useRepositoryList({ watch: true });
   const [deleteAll] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabSelection>(TabSelection.Repositories);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read tab from URL - null means default (repositories)
+  const activeTab = searchParams.get('tab');
+
+  // Handler to update URL when tab changes
+  const handleTabChange = (tab: string | null) => {
+    if (tab) {
+      searchParams.set('tab', tab);
+    } else {
+      searchParams.delete('tab');
+    }
+    setSearchParams(searchParams, { replace: true });
+  };
 
   const tabInfo = useMemo(
     () => [
       {
-        value: TabSelection.Repositories,
+        value: null,
         label: t('provisioning.home-page.tab-repositories', 'Repositories'),
         title: t('provisioning.home-page.tab-repositories-title', 'List of repositories'),
       },
       {
-        value: TabSelection.Connections,
+        value: 'connections',
         label: t('provisioning.home-page.tab-connections', 'Connections'),
         title: t('provisioning.home-page.tab-connections-title', 'List of connections'),
       },
       {
-        value: TabSelection.GettingStarted,
+        value: 'getting-started',
         label: t('provisioning.home-page.tab-getting-started', 'Getting started'),
         title: t('provisioning.home-page.tab-getting-started-title', 'Getting started'),
       },
@@ -58,29 +66,25 @@ export default function HomePage() {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case TabSelection.Repositories:
-        return <RepositoryList items={items ?? []} />;
-      case TabSelection.Connections:
+      case 'connections':
         return <ConnectionsTabContent />;
-      case TabSelection.GettingStarted:
+      case 'getting-started':
         return <GettingStarted items={items ?? []} />;
       default:
-        return null;
+        return <RepositoryList items={items ?? []} />;
     }
   };
 
   const renderActions = () => {
     switch (activeTab) {
-      case TabSelection.Repositories:
-        return <ConnectRepositoryButton items={items} />;
-      case TabSelection.Connections:
+      case 'connections':
         return (
           <LinkButton variant="primary" href={`${CONNECTIONS_URL}/new`}>
             <Trans i18nKey="provisioning.connections.add-connection">Add connection</Trans>
           </LinkButton>
         );
       default:
-        return null;
+        return <ConnectRepositoryButton items={items} />;
     }
   };
 
@@ -112,7 +116,7 @@ export default function HomePage() {
                 key={t.value}
                 label={t.label}
                 active={activeTab === t.value}
-                onChangeTab={() => setActiveTab(t.value)}
+                onChangeTab={() => handleTabChange(t.value)}
                 title={t.title}
               />
             ))}
