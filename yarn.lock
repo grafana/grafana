@@ -4077,7 +4077,7 @@ __metadata:
     common-tags: "npm:1.8.2"
     core-js: "npm:3.44.0"
     css-loader: "npm:7.1.2"
-    csstype: "npm:3.1.3"
+    csstype: "npm:^3.1.3"
     d3: "npm:^7.9.0"
     date-fns: "npm:^4.1.0"
     downshift: "npm:^9.0.6"
@@ -15814,14 +15814,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"csstype@npm:3.1.3":
-  version: 3.1.3
-  resolution: "csstype@npm:3.1.3"
-  checksum: 10/f593cce41ff5ade23f44e77521e3a1bcc2c64107041e1bf6c3c32adc5187d0d60983292fda326154d20b01079e24931aa5b08e4467cc488b60bb1e7f6d478ade
-  languageName: node
-  linkType: hard
-
-"csstype@npm:^3.0.2, csstype@npm:^3.1.2, csstype@npm:^3.2.2":
+"csstype@npm:^3.0.2, csstype@npm:^3.1.2, csstype@npm:^3.1.3, csstype@npm:^3.2.2":
   version: 3.2.3
   resolution: "csstype@npm:3.2.3"
   checksum: 10/ad41baf7e2ffac65ab544d79107bf7cd1a4bb9bab9ac3302f59ab4ba655d5e30942a8ae46e10ba160c6f4ecea464cc95b975ca2fefbdeeacd6ac63f12f99fe1f
