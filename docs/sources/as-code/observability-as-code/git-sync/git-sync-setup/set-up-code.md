@@ -5,12 +5,13 @@ keywords:
   - git integration
   - git sync
   - github
+  - as code
 labels:
   products:
     - enterprise
     - oss
     - cloud
-title: Set up Git Sync
+title: Set up Git Sync as code
 weight: 110
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/git-sync-setup/
 aliases:
