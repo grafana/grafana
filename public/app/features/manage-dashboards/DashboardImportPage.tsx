@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-import { DashboardImportK8s } from './import/DashboardImportK8s';
+import { DashboardImportK8s } from './import/components/DashboardImportK8s';
 import { DashboardImportLegacy } from './import/legacy/DashboardImportLegacy';
 
 type RouteParams = {};

@@ -2,6 +2,7 @@ import { config, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
+import { isRecord } from 'app/core/utils/isRecord';
 import { Resource } from 'app/features/apiserver/types';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
@@ -52,7 +53,7 @@ export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
   return 'legacy';
 }
 
-// This function is used to determine if the dashboard is in v2 format or also v1 format
+// This function is used to determine if the dashboard is a k8s resource in v2 format or also v1 format
 export function isDashboardResource(
   obj?: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | DashboardWithAccessInfo<DashboardDataDTO> | null
 ): obj is DashboardWithAccessInfo<DashboardV2Spec> | DashboardWithAccessInfo<DashboardDataDTO> {
@@ -64,12 +65,16 @@ export function isDashboardResource(
   return isK8sDashboard;
 }
 
-export function isDashboardV2Spec(obj: Dashboard | DashboardDataDTO | DashboardV2Spec): obj is DashboardV2Spec {
-  return 'elements' in obj;
+export function isDashboardV2Spec(obj: unknown): obj is DashboardV2Spec {
+  return isRecord(obj) && 'elements' in obj;
+}
+
+export function isDashboardV1Spec(obj: unknown): obj is Dashboard {
+  return isRecord(obj) && 'title' in obj && 'uid' in obj && !isDashboardV2Spec(obj);
 }
 
 export function isDashboardV0Spec(obj: DashboardDataDTO | DashboardV2Spec): obj is DashboardDataDTO {
-  return !isDashboardV2Spec(obj); // not v2 spec means it's v1 spec
+  return !isDashboardV2Spec(obj);
 }
 
 export function isDashboardV2Resource(
@@ -86,6 +91,21 @@ export function isV1DashboardCommand(
 
 export function isV1ClassicDashboard(obj: Dashboard | DashboardV2Spec): obj is Dashboard {
   return !isDashboardV2Spec(obj);
+}
+
+export function isV2Resource(value: unknown): boolean {
+  return (
+    isRecord(value) && value.kind === 'DashboardWithAccessInfo' && isRecord(value.spec) && isDashboardV2Spec(value.spec)
+  );
+}
+
+export function isV1Resource(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    value.kind === 'DashboardWithAccessInfo' &&
+    isRecord(value.spec) &&
+    !isDashboardV2Spec(value.spec)
+  );
 }
 
 export function isV2DashboardCommand(

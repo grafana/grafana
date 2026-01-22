@@ -6,18 +6,23 @@ import { Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { appEvents } from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { isDashboardV1Spec, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { ImportDashboardFormV2 } from 'app/features/dashboard-scene/v2schema/ImportDashboardFormV2';
 import { addLibraryPanel } from 'app/features/library-panels/state/api';
 
-import { DashboardInputs, DashboardSource, ImportDashboardDTO, LibraryPanelInputState } from '../state/reducers';
+import {
+  DashboardInputs,
+  DashboardSource,
+  ImportDashboardDTO,
+  ImportFormDataV2,
+  LibraryPanelInputState,
+} from '../types';
+import { applyV1DatasourceInputs, applyV2DatasourceInputs } from '../utils/transform';
 
-import { GcomDashboardInfo } from './components/GcomDashboardInfo';
-import { ImportForm } from './components/ImportForm';
-import { isDashboardV1Spec, isDashboardV2Spec } from './detect';
-import { applyV1DatasourceInputs, applyV2DatasourceInputs } from './transform';
-import { ImportFormDataV2 } from './types';
+import { GcomDashboardInfo } from './GcomDashboardInfo';
+import { ImportDashboardFormV2 } from './ImportDashboardFormV2';
+import { ImportForm } from './ImportForm';
 
 const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 

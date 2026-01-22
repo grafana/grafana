@@ -1,19 +1,20 @@
 import { useState, useEffect } from 'react';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents, LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, reportInteraction } from '@grafana/runtime';
 import { Spinner, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { isRecord } from 'app/core/utils/isRecord';
 
-import { DashboardInputs, DashboardSource } from '../state/reducers';
+import { DashboardInputs, DashboardSource } from '../types';
+import { detectImportModel, ImportModel } from '../utils/detect';
+import { processInputsFromDashboard, processV2Inputs } from '../utils/process';
 
 import { ImportOverview } from './ImportOverview';
-import { ImportSourceForm } from './components/ImportSourceForm';
-import { detectImportModel, ImportModel } from './detect';
-import { processInputsFromDashboard, processV2Inputs } from './process';
+import { ImportSourceForm } from './ImportSourceForm';
 
 const IMPORT_STARTED_EVENT_NAME = 'dashboard_import_loaded';
 
@@ -23,7 +24,7 @@ type QueryParams = { gcomDashboardId?: string };
 type Props = GrafanaRouteComponentProps<RouteParams, QueryParams>;
 
 type ImportState = {
-  status: 'idle' | 'loading' | 'ready' | 'error';
+  status: LoadingState;
   dashboard: unknown;
   inputs: DashboardInputs;
   meta: { updatedAt: string; orgName: string };
@@ -32,7 +33,7 @@ type ImportState = {
 };
 
 const initialState: ImportState = {
-  status: 'idle',
+  status: LoadingState.NotStarted,
   dashboard: {},
   inputs: { dataSources: [], constants: [], libraryPanels: [] },
   meta: { updatedAt: '', orgName: '' },
@@ -55,7 +56,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
   async function fetchGcomDashboard(id: string) {
     reportInteraction(IMPORT_STARTED_EVENT_NAME, { import_source: 'gcom' });
 
-    setState((prev) => ({ ...prev, status: 'loading' }));
+    setState((prev) => ({ ...prev, status: LoadingState.Loading }));
 
     try {
       const response = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
@@ -64,7 +65,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
       const inputs = model === 'v2-resource' ? processV2Inputs(dashboard) : await processInputsFromDashboard(dashboard);
 
       setState({
-        status: 'ready',
+        status: LoadingState.Done,
         dashboard,
         inputs,
         meta: { updatedAt: response.updatedAt, orgName: response.orgName },
@@ -72,7 +73,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
         model,
       });
     } catch (error) {
-      setState((prev) => ({ ...prev, status: 'error' }));
+      setState((prev) => ({ ...prev, status: LoadingState.Error }));
       if (isFetchError(error)) {
         appEvents.emit(AppEvents.alertError, ['Failed to load dashboard', error.data?.message || 'Unknown error']);
       }
@@ -109,7 +110,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
   }
 
   async function processDashboardJson(json: unknown) {
-    setState((prev) => ({ ...prev, status: 'loading' }));
+    setState((prev) => ({ ...prev, status: LoadingState.Loading }));
 
     try {
       // Extract spec if it's a k8s resource wrapper
@@ -122,7 +123,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
       const inputs = model === 'v2-resource' ? processV2Inputs(dashboard) : await processInputsFromDashboard(dashboard);
 
       setState({
-        status: 'ready',
+        status: LoadingState.Done,
         dashboard,
         inputs,
         meta: { updatedAt: '', orgName: '' },
@@ -130,7 +131,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
         model,
       });
     } catch (error) {
-      setState((prev) => ({ ...prev, status: 'error' }));
+      setState((prev) => ({ ...prev, status: LoadingState.Error }));
       const message = error instanceof Error ? error.message : 'Unknown error';
       appEvents.emit(AppEvents.alertError, ['Failed to process dashboard', message]);
     }
@@ -165,7 +166,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
   return (
     <Page navId="dashboards/browse" pageNav={pageNav}>
       <Page.Contents>
-        {state.status === 'loading' && (
+        {state.status === LoadingState.Loading && (
           <Stack direction="column" justifyContent="center">
             <Stack justifyContent="center">
               <Spinner size="xxl" />
@@ -173,7 +174,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
           </Stack>
         )}
 
-        {(state.status === 'idle' || state.status === 'error') && (
+        {(state.status === LoadingState.NotStarted || state.status === LoadingState.Error) && (
           <ImportSourceForm
             onFileUpload={handleFileUpload}
             onGcomSubmit={handleGcomSubmit}
@@ -181,7 +182,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
           />
         )}
 
-        {state.status === 'ready' && (
+        {state.status === LoadingState.Done && (
           <ImportOverview
             dashboard={state.dashboard}
             inputs={state.inputs}
@@ -193,8 +194,4 @@ export function DashboardImportK8s({ queryParams }: Props) {
       </Page.Contents>
     </Page>
   );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }

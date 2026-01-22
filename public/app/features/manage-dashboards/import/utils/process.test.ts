@@ -1,4 +1,4 @@
-import { InputType } from '../state/reducers';
+import { InputType } from '../types';
 
 import { processInputsFromDashboard, processV2Inputs } from './process';
 
@@ -9,9 +9,9 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-// Mock getLibraryPanel
-jest.mock('../../library-panels/state/api', () => ({
-  getLibraryPanel: jest.fn().mockRejectedValue(new Error('Not found')),
+// Mock getLibraryPanel from library-panels/state/api
+jest.mock('../../../library-panels/state/api', () => ({
+  getLibraryPanel: jest.fn().mockRejectedValue({ status: 404 }),
 }));
 
 describe('processInputsFromDashboard', () => {
@@ -154,6 +154,7 @@ describe('processV2Inputs', () => {
 
   it('should collect datasource types from query variables', () => {
     const dashboard = {
+      elements: {},
       variables: [
         {
           kind: 'QueryVariable',
@@ -177,6 +178,7 @@ describe('processV2Inputs', () => {
 
   it('should collect datasource types from annotations', () => {
     const dashboard = {
+      elements: {},
       annotations: [
         {
           kind: 'AnnotationQuery',
@@ -232,6 +234,7 @@ describe('processV2Inputs', () => {
 
   it('should deduplicate datasource types', () => {
     const dashboard = {
+      elements: {},
       variables: [
         {
           kind: 'QueryVariable',
@@ -266,6 +269,7 @@ describe('processV2Inputs', () => {
 
   it('should collect multiple different datasource types', () => {
     const dashboard = {
+      elements: {},
       variables: [
         {
           kind: 'QueryVariable',

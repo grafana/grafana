@@ -7,7 +7,7 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Dashboard, Panel, VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 
-import { DashboardInputs, ImportDashboardDTO, InputType } from '../state/reducers';
+import { DashboardInputs, ImportDashboardDTO, InputType } from '../types';
 
 import { applyV1DatasourceInputs, applyV2DatasourceInputs } from './transform';
 

@@ -12,19 +12,20 @@ import {
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
-import { PanelModel } from '../../dashboard/state/PanelModel';
-import { LibraryElementDTO } from '../../library-panels/types';
-import { DashboardJson } from '../types';
+import { PanelModel } from '../../../dashboard/state/PanelModel';
+import { LibraryElementDTO } from '../../../library-panels/types';
+import { DataSourceInput, ImportDashboardDTO, InputType } from '../types';
+import { getLibraryPanelInputs } from '../utils/process';
 import { validateDashboardJson } from '../utils/validation';
 
 import {
-  getLibraryPanelInputs,
+  DashboardJson,
   importDashboard,
   processDashboard,
   processV2DatasourceInput,
   processV2Datasources,
 } from './actions';
-import { DataSourceInput, ImportDashboardDTO, initialImportDashboardState, InputType } from './reducers';
+import { initialImportDashboardState } from './reducers';
 
 jest.mock('app/features/library-panels/state/api');
 const mocks = {

@@ -6,7 +6,7 @@ import { LibraryPanel } from '@grafana/schema';
 import { Field, useStyles2 } from '@grafana/ui';
 
 import { LibraryPanelCard } from '../../../library-panels/components/LibraryPanelCard/LibraryPanelCard';
-import { LibraryPanelInput, LibraryPanelInputState } from '../../state/reducers';
+import { LibraryPanelInput, LibraryPanelInputState } from '../types';
 
 interface Props {
   inputs: LibraryPanelInput[];

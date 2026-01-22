@@ -1,60 +1,12 @@
+// Legacy Redux slice - will be removed when kubernetesDashboards feature is removed
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, Draft, PayloadAction } from '@reduxjs/toolkit';
 
-import { DataSourceInstanceSettings, LoadingState } from '@grafana/data';
+import { LoadingState } from '@grafana/data';
 
-import { LibraryElementDTO } from '../../library-panels/types';
+import { DashboardInputs, DashboardSource, InputType, LibraryPanelInput } from '../types';
 
-export enum DashboardSource {
-  Gcom = 0,
-  Json = 1,
-}
-
-export interface ImportDashboardDTO {
-  title: string;
-  uid: string;
-  gnetId: string;
-  constants: string[];
-  dataSources: DataSourceInstanceSettings[];
-  elements: LibraryElementDTO[];
-  folder: { uid: string; title?: string };
-}
-
-export enum InputType {
-  DataSource = 'datasource',
-  Constant = 'constant',
-  LibraryPanel = 'libraryPanel',
-}
-
-export enum LibraryPanelInputState {
-  New = 'new',
-  Exists = 'exists',
-  Different = 'different',
-}
-
-export interface DashboardInput {
-  name: string;
-  label: string;
-  description?: string;
-  info: string;
-  value: string;
-  type: InputType;
-}
-
-export interface DataSourceInput extends DashboardInput {
-  pluginId: string;
-}
-
-export interface LibraryPanelInput {
-  model: LibraryElementDTO;
-  state: LibraryPanelInputState;
-}
-
-export interface DashboardInputs {
-  dataSources: DataSourceInput[];
-  constants: DashboardInput[];
-  libraryPanels: LibraryPanelInput[];
-}
-
+// Legacy-only type - Redux state shape
 export interface ImportDashboardState {
   meta: { updatedAt: string; orgName: string };
   dashboard: any;
@@ -67,6 +19,7 @@ export const initialImportDashboardState: ImportDashboardState = {
   meta: { updatedAt: '', orgName: '' },
   dashboard: {},
   source: DashboardSource.Json,
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   inputs: {} as DashboardInputs,
   state: LoadingState.NotStarted,
 };

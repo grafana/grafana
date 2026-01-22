@@ -1,18 +1,14 @@
 import { LoadingState } from '@grafana/data';
 
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { LibraryElementDTO } from '../../library-panels/types';
+import { reducerTester } from '../../../../../test/core/redux/reducerTester';
+import { LibraryElementDTO } from '../../../library-panels/types';
+import { DashboardSource, DataSourceInput, InputType, LibraryPanelInput, LibraryPanelInputState } from '../types';
 
 import {
   clearDashboard,
-  DashboardSource,
-  DataSourceInput,
   importDashboardReducer,
   ImportDashboardState,
   initialImportDashboardState,
-  InputType,
-  LibraryPanelInput,
-  LibraryPanelInputState,
   setGcomDashboard,
   setInputs,
   setJsonDashboard,

@@ -3,7 +3,7 @@ import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 
-import { validationSrv } from '../services/ValidationSrv';
+import { validationSrv } from '../../services/ValidationSrv';
 
 export const validateDashboardJson = (json: string) => {
   let dashboard;

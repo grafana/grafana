@@ -20,7 +20,7 @@ import {
 } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 
-import { validateDashboardJson, validateGcomDashboard } from '../../utils/validation';
+import { validateDashboardJson, validateGcomDashboard } from '../utils/validation';
 
 const JSON_PLACEHOLDER = `{
     "title": "Example - Repeating Dictionary variables",
@@ -42,7 +42,8 @@ export function ImportSourceForm({ onFileUpload, onGcomSubmit, onJsonSubmit }: P
   // Do not display upload file list
   const fileListRenderer = (_file: DropzoneFile, _removeFile: (file: DropzoneFile) => void) => null;
 
-  const GcomDashboardsLink = () => (
+  // Link component for Trans interpolation - the text is intentionally untranslated as it's a URL/brand name
+  const gcomLink = (
     // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     <TextLink variant="bodySmall" href="https://grafana.com/grafana/dashboards/" external>
       grafana.com/dashboards
@@ -72,8 +73,8 @@ export function ImportSourceForm({ onFileUpload, onGcomSubmit, onJsonSubmit }: P
               label={
                 <Label className={styles.labelWithLink} htmlFor="url-input">
                   <span>
-                    <Trans i18nKey="dashboard-import.gcom-field.label">
-                      Find and import dashboards for common applications at <GcomDashboardsLink />
+                    <Trans i18nKey="dashboard-import.gcom-field.label" components={{ link: gcomLink }}>
+                      {'Find and import dashboards for common applications at <link />'}
                     </Trans>
                   </span>
                 </Label>

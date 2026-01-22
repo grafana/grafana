@@ -1,5 +1,5 @@
 import { locationService } from '@grafana/runtime';
-import { InputType, DataSourceInput, DashboardInput } from 'app/features/manage-dashboards/state/reducers';
+import { InputType, DataSourceInput, DashboardInput } from 'app/features/manage-dashboards/import/types';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';

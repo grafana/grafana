@@ -2,6 +2,7 @@ import { t } from '@grafana/i18n';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { safeStringifyValue } from 'app/core/utils/explore';
+import { isRecord } from 'app/core/utils/isRecord';
 import { GraphEdge, GraphNode, getPropsWithVariable } from 'app/features/variables/inspect/utils';
 
 export const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
@@ -251,7 +252,3 @@ export const variableRegexExec = (variableString: string) => {
   variableRegex.lastIndex = 0;
   return variableRegex.exec(variableString);
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}

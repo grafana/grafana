@@ -1,18 +1,78 @@
 import { getDataSourceSrv } from '@grafana/runtime';
-import { QueryVariableKind, PanelQueryKind, AnnotationQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-
-import { getLibraryPanel } from '../../library-panels/state/api';
-import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import {
-  DashboardInput,
-  DashboardInputs,
-  DataSourceInput,
-  InputType,
-  LibraryPanelInput,
-  LibraryPanelInputState,
-} from '../state/reducers';
+  AnnotationQueryKind as AnnotationQueryKindV2,
+  PanelQueryKind,
+  QueryVariableKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { isRecord } from 'app/core/utils/isRecord';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 
-import { isDashboardV2Spec } from './detect';
+import { getLibraryPanel } from '../../../library-panels/state/api';
+import { LibraryElementDTO, LibraryElementKind } from '../../../library-panels/types';
+import { DashboardInputs, DataSourceInput, InputType, LibraryPanelInput, LibraryPanelInputState } from '../types';
+
+interface LibraryElementExport {
+  uid: string;
+  name: string;
+  kind: number;
+  model: {
+    type: string;
+    description?: string;
+  };
+}
+
+/**
+ * Process library panel elements from a dashboard JSON and check their existence state.
+ * This is a pure async function shared between k8s and legacy import paths.
+ */
+export async function getLibraryPanelInputs(dashboardJson?: {
+  __elements?: Record<string, LibraryElementExport>;
+}): Promise<LibraryPanelInput[]> {
+  if (!dashboardJson || !dashboardJson.__elements) {
+    return [];
+  }
+
+  const libraryPanelInputs: LibraryPanelInput[] = [];
+
+  for (const element of Object.values(dashboardJson.__elements)) {
+    if (element.kind !== LibraryElementKind.Panel) {
+      continue;
+    }
+
+    const model = element.model;
+    const { type, description } = model;
+    const { uid, name } = element;
+    // Creating partial LibraryElementDTO for new panels - will be replaced if panel exists
+    const input: LibraryPanelInput = {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      model: {
+        model,
+        uid,
+        name,
+        version: 0,
+        type,
+        kind: LibraryElementKind.Panel,
+        description,
+      } as LibraryElementDTO,
+      state: LibraryPanelInputState.New,
+    };
+
+    try {
+      const panelInDb = await getLibraryPanel(uid, true);
+      input.state = LibraryPanelInputState.Exists;
+      input.model = panelInDb;
+    } catch (e: unknown) {
+      // Check for 404 status indicating panel doesn't exist
+      if (typeof e === 'object' && e !== null && 'status' in e && e.status !== 404) {
+        throw e;
+      }
+    }
+
+    libraryPanelInputs.push(input);
+  }
+
+  return libraryPanelInputs;
+}
 
 /**
  * Process inputs from a v1/classic dashboard JSON
@@ -36,7 +96,7 @@ export async function processInputsFromDashboard(dashboard: unknown): Promise<Da
         continue;
       }
 
-      const inputModel: DashboardInput | DataSourceInput = {
+      const inputModel = {
         name: String(input.name ?? ''),
         label: String(input.label ?? ''),
         info: String(input.description ?? ''),
@@ -61,11 +121,8 @@ export async function processInputsFromDashboard(dashboard: unknown): Promise<Da
   }
 
   // Process library panels from __elements
-  const elements = dashboard.__elements;
-  if (isRecord(elements)) {
-    const libraryPanelInputs = await processLibraryPanelInputs(elements);
-    inputs.libraryPanels = libraryPanelInputs;
-  }
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  inputs.libraryPanels = await getLibraryPanelInputs(dashboard as { __elements?: Record<string, unknown> });
 
   return inputs;
 }
@@ -105,7 +162,7 @@ export function processV2Inputs(dashboard: unknown): DashboardInputs {
   if (dashboard.annotations) {
     for (const annotation of dashboard.annotations) {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const annot = annotation as AnnotationQueryKind;
+      const annot = annotation as AnnotationQueryKindV2;
       const dsType = annot.spec.query?.spec.group;
       if (dsType) {
         dsTypes.add(dsType);
@@ -148,42 +205,6 @@ export function processV2Inputs(dashboard: unknown): DashboardInputs {
   return inputs;
 }
 
-async function processLibraryPanelInputs(elements: Record<string, unknown>): Promise<LibraryPanelInput[]> {
-  const libraryPanelInputs: LibraryPanelInput[] = [];
-
-  for (const element of Object.values(elements)) {
-    if (!isRecord(element) || !isLibraryElementDTO(element)) {
-      continue;
-    }
-
-    const elementModel = element;
-
-    try {
-      const existingPanel = await getLibraryPanel(elementModel.uid, true);
-
-      if (existingPanel.version === elementModel.version) {
-        libraryPanelInputs.push({
-          model: elementModel,
-          state: LibraryPanelInputState.Exists,
-        });
-      } else {
-        libraryPanelInputs.push({
-          model: elementModel,
-          state: LibraryPanelInputState.Different,
-        });
-      }
-    } catch {
-      // Panel doesn't exist, mark as new
-      libraryPanelInputs.push({
-        model: elementModel,
-        state: LibraryPanelInputState.New,
-      });
-    }
-  }
-
-  return libraryPanelInputs;
-}
-
 function getDataSourceDescription(input: Record<string, unknown>): string {
   const pluginId = String(input.pluginId ?? '');
   const dsInfo = getDataSourceSrv().getList({ pluginId });
@@ -193,14 +214,4 @@ function getDataSourceDescription(input: Record<string, unknown>): string {
   }
 
   return `Select a ${pluginId} data source`;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-function isLibraryElementDTO(element: Record<string, unknown>): element is LibraryElementDTO {
-  return (
-    element.kind === LibraryElementKind.Panel && typeof element.uid === 'string' && typeof element.version === 'number'
-  );
 }

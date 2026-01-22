@@ -1,5 +1,8 @@
+// Legacy Redux actions - will be removed when kubernetesDashboards feature is removed
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   QueryVariableKind,
@@ -13,25 +16,22 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ThunkResult } from 'app/types/store';
 
 import {
+  ExternalDashboard,
   Input,
   InputUsage,
   LibraryElementExport,
   LibraryPanel,
-} from '../../dashboard/components/DashExportModal/DashboardExporter';
-import { getLibraryPanel } from '../../library-panels/state/api';
-import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
-import { DashboardJson } from '../types';
+} from '../../../dashboard/components/DashExportModal/DashboardExporter';
+import { DataSourceInput, ImportDashboardDTO, InputType, LibraryPanelInputState } from '../types';
+import { getLibraryPanelInputs } from '../utils/process';
+
+export type DashboardJson = ExternalDashboard & Omit<Dashboard, 'panels'>;
 
 import {
   clearDashboard,
-  DataSourceInput,
   fetchDashboard,
   fetchFailed,
-  ImportDashboardDTO,
   ImportDashboardState,
-  InputType,
-  LibraryPanelInput,
-  LibraryPanelInputState,
   setGcomDashboard,
   setInputs,
   setJsonDashboard,
@@ -186,52 +186,6 @@ export function processV2Datasources(dashboard: DashboardV2Spec): ThunkResult<vo
 
     dispatch(setInputs(Object.values(inputs)));
   };
-}
-
-export async function getLibraryPanelInputs(dashboardJson?: {
-  __elements?: Record<string, LibraryElementExport>;
-}): Promise<LibraryPanelInput[]> {
-  if (!dashboardJson || !dashboardJson.__elements) {
-    return [];
-  }
-
-  const libraryPanelInputs: LibraryPanelInput[] = [];
-
-  for (const element of Object.values(dashboardJson.__elements)) {
-    if (element.kind !== LibraryElementKind.Panel) {
-      continue;
-    }
-
-    const model = element.model;
-    const { type, description } = model;
-    const { uid, name } = element;
-    const input: LibraryPanelInput = {
-      model: {
-        model,
-        uid,
-        name,
-        version: 0,
-        type,
-        kind: LibraryElementKind.Panel,
-        description,
-      } as LibraryElementDTO,
-      state: LibraryPanelInputState.New,
-    };
-
-    try {
-      const panelInDb = await getLibraryPanel(uid, true);
-      input.state = LibraryPanelInputState.Exists;
-      input.model = panelInDb;
-    } catch (e: any) {
-      if (e.status !== 404) {
-        throw e;
-      }
-    }
-
-    libraryPanelInputs.push(input);
-  }
-
-  return libraryPanelInputs;
 }
 
 export function clearLoadedDashboard(): ThunkResult<void> {

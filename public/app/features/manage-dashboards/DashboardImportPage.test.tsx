@@ -6,7 +6,7 @@ import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 
 import DashboardImportPage from './DashboardImportPage';
 
-jest.mock('./import/DashboardImportK8s', () => ({
+jest.mock('./import/components/DashboardImportK8s', () => ({
   DashboardImportK8s: jest.fn(() => <div data-testid="import-k8s" />),
 }));
 

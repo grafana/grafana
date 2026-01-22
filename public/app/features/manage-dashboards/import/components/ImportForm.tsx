@@ -8,14 +8,8 @@ import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input, Legend } f
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import {
-  DashboardInput,
-  DashboardInputs,
-  DataSourceInput,
-  ImportDashboardDTO,
-  LibraryPanelInputState,
-} from '../../state/reducers';
-import { validateTitle, validateUid } from '../../utils/validation';
+import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO, LibraryPanelInputState } from '../types';
+import { validateTitle, validateUid } from '../utils/validation';
 
 import { LibraryPanelsList } from './LibraryPanelsList';
 

@@ -8,14 +8,9 @@ import {
   defaultDataQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { AnnotationQuery, Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
+import { isRecord } from 'app/core/utils/isRecord';
 
-import { DataSourceInput, ImportDashboardDTO } from '../state/reducers';
-
-import { DatasourceSelection, ImportFormDataV2 } from './types';
-
-// =====================
-// V1 Transformation
-// =====================
+import { DatasourceSelection, DataSourceInput, ImportDashboardDTO, ImportFormDataV2 } from '../types';
 
 export function applyV1DatasourceInputs(
   dashboard: Dashboard,
@@ -47,10 +42,6 @@ export function applyV1DatasourceInputs(
   };
 }
 
-// =====================
-// V2 Transformation
-// =====================
-
 export function applyV2DatasourceInputs(dashboard: DashboardV2Spec, form: ImportFormDataV2): DashboardV2Spec {
   const annotations = dashboard.annotations?.map((annotation) => processAnnotationV2(annotation, form));
   const variables = dashboard.variables?.map((variable) => processVariableV2(variable, form));
@@ -63,10 +54,6 @@ export function applyV2DatasourceInputs(dashboard: DashboardV2Spec, form: Import
     elements,
   };
 }
-
-// =====================
-// V2 Processing Functions
-// =====================
 
 function getDatasourceSelection(form: ImportFormDataV2, key: string): DatasourceSelection | undefined {
   const value = form[`datasource-${key}`];
@@ -211,10 +198,6 @@ function processPanelV2(panel: PanelSpec, form: ImportFormDataV2): PanelSpec {
   };
 }
 
-// =====================
-// V1 Processing Functions
-// =====================
-
 function hasUid(query: Record<string, unknown> | {}): query is { uid: string } {
   return 'uid' in query && typeof query['uid'] === 'string';
 }
@@ -327,8 +310,4 @@ function processVariable(
   }
 
   return variable;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }

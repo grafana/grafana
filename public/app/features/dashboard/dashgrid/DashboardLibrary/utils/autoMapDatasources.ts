@@ -1,6 +1,6 @@
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Input } from 'app/features/dashboard/components/DashExportModal/DashboardExporter';
-import { DashboardInput, DataSourceInput, InputType } from 'app/features/manage-dashboards/state/reducers';
+import { DashboardInput, DataSourceInput, InputType } from 'app/features/manage-dashboards/import/types';
 
 export interface InputMapping {
   name: string;
