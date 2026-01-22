@@ -234,14 +234,6 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
-  * Enables native HTTP Histograms
-  */
-  enableNativeHTTPHistogram?: boolean;
-  /**
-  * Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
-  */
-  disableClassicHTTPHistogram?: boolean;
-  /**
   * Routes snapshot requests from /api to the /apis endpoint
   * @default false
   */
@@ -368,6 +360,7 @@ export interface FeatureToggles {
   alertingUIUseFullyCompatBackendFilters?: boolean;
   /**
   * Enables creating alert rules from a panel using a drawer UI
+  * @default false
   */
   createAlertRuleFromPanel?: boolean;
   /**
