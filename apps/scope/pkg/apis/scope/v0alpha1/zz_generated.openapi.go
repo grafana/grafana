@@ -649,13 +649,6 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNavigationSpec(ref common.ReferenceCall
 							Format:      "",
 						},
 					},
-					"expandOnLoad": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Expands to display the subscope children when the ScopeNavigation is loaded.",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 					"disableSubScopeSelection": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Makes the subscope not selectable, only serving as a way to build the tree.",
