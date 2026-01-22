@@ -29,6 +29,7 @@ import {
   getResultEnvironmentsDevSelect,
   getResultEnvironmentsProdSelect,
   querySelectorApply,
+  findResultApplicationsGrafanaSelect,
 } from './selectors';
 
 const expectInDocument = (selector: () => HTMLElement) => expect(selector()).toBeInTheDocument();
@@ -51,7 +52,8 @@ export const expectScopesHeadline = (value: string) => expectTextContent(getTree
 export const expectPersistedApplicationsGrafanaNotPresent = () =>
   expectNotInDocument(queryPersistedApplicationsGrafanaSelect);
 export const expectResultApplicationsGrafanaSelected = () => expectChecked(getResultApplicationsGrafanaSelect);
-export const expectResultApplicationsGrafanaPresent = () => expectInDocument(getResultApplicationsGrafanaSelect);
+export const expectResultApplicationsGrafanaPresent = async () =>
+  expect(await findResultApplicationsGrafanaSelect()).toBeInTheDocument();
 export const expectResultApplicationsGrafanaNotPresent = () =>
   expectNotInDocument(queryResultApplicationsGrafanaSelect);
 export const expectPersistedApplicationsMimirPresent = () => expectInDocument(getPersistedApplicationsMimirSelect);

@@ -183,7 +183,7 @@ describe('Tree', () => {
 
     await searchScopes('Grafana');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(5);
-    expectResultApplicationsGrafanaPresent();
+    await expectResultApplicationsGrafanaPresent();
     expectResultApplicationsCloudNotPresent();
   });
 
@@ -209,7 +209,7 @@ describe('Tree', () => {
     await openSelector();
 
     // Verify all sibling nodes (Grafana, Mimir, Cloud) are visible
-    expectResultApplicationsGrafanaPresent();
+    await expectResultApplicationsGrafanaPresent();
     expectResultApplicationsMimirPresent();
     expectResultApplicationsCloudPresent();
 
@@ -244,7 +244,7 @@ describe('Tree', () => {
     await searchScopes('grafana');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectPersistedApplicationsMimirPresent();
-    expectResultApplicationsGrafanaPresent();
+    await expectResultApplicationsGrafanaPresent();
   });
 
   it('Does not persist a retrieved scope', async () => {
@@ -266,7 +266,8 @@ describe('Tree', () => {
     await clearScopesSearch();
     expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
     expectResultApplicationsMimirPresent();
-    expectResultApplicationsGrafanaPresent();
+    // Wait for async operations to complete and nodes to be rendered after clearing search
+    await expectResultApplicationsGrafanaPresent();
   });
 
   it('Persists nodes from search', async () => {
@@ -283,7 +284,8 @@ describe('Tree', () => {
     await clearScopesSearch();
     expect(fetchNodesSpy).toHaveBeenCalledTimes(5);
     expectResultApplicationsMimirPresent();
-    expectResultApplicationsGrafanaPresent();
+    // Wait for async operations to complete and nodes to be rendered after clearing search
+    await expectResultApplicationsGrafanaPresent();
   });
 
   it('Selects a persisted scope', async () => {
@@ -462,6 +464,8 @@ describe('Tree', () => {
       // Click outside search to lose focus
       const outsideElement = screen.getByText('Select scopes');
       await user.click(outsideElement);
+      // Advance timers to ensure setTimeout(0) in blur handler completes
+      await jest.runOnlyPendingTimersAsync();
 
       // Try to navigate with arrow keys
       await user.keyboard('{ArrowDown}');
