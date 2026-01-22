@@ -925,6 +925,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardValidatorApp",
+			Description:  "Enables dashboard validator app to run compatibility checks between a dashboard and data source",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardTemplates",
 			Description:  "Enables a flow to get started with a new dashboard from a template",
 			Stage:        FeatureStagePublicPreview,
@@ -2240,6 +2248,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaOSSBigTent,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesTeamBindings",
+			Description:  "Enables search for team bindings in the app platform API",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
 			Expression:   "false",
 		},
 	}

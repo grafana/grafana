@@ -78,7 +78,7 @@ export const ActionRow = ({
 
   return (
     <Stack justifyContent="space-between" alignItems="center">
-      <Stack gap={2} alignItems="center">
+      <Stack alignItems="center">
         <TagFilter isClearable={false} tags={state.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
         {config.featureToggles.panelTitleSearch && (
           <Checkbox

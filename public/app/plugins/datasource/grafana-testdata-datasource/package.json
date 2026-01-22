@@ -10,7 +10,7 @@
     "@grafana/schema": "12.4.0-pre",
     "@grafana/ui": "12.4.0-pre",
     "d3-random": "^3.0.1",
-    "lodash": "4.17.21",
+    "lodash": "4.17.23",
     "micro-memoize": "^4.1.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",

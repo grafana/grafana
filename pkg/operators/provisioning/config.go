@@ -9,11 +9,12 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/transport"
 	"k8s.io/client-go/util/flowcontrol"
 
+	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,11 +22,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	authrt "github.com/grafana/grafana/apps/provisioning/pkg/auth"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
+	gitrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
+	githubrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
@@ -116,9 +118,11 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 	config := &rest.Config{
 		APIPath: "/apis",
 		Host:    provisioningServerURL,
-		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-			return authrt.NewRoundTripper(tokenExchangeClient, rt, provisioning.GROUP)
-		}),
+		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
+			tokenExchangeClient,
+			provisioning.GROUP,
+			clientauth.WildcardNamespace,
+		),
 		TLSClientConfig: tlsConfig,
 		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
 	}
@@ -163,12 +167,20 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 	}
 
 	for group, url := range apiServerURLs {
+		// Build audiences: always include the group, and add provisioning.GROUP only if different
+		audiences := []string{group}
+		if group != provisioning.GROUP {
+			audiences = append(audiences, provisioning.GROUP)
+		}
+
 		config := &rest.Config{
 			APIPath: "/apis",
 			Host:    url,
-			WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
-				return authrt.NewRoundTripper(tokenExchangeClient, rt, group, authrt.ExtraAudience(provisioning.GROUP))
-			}),
+			WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
+				tokenExchangeClient,
+				clientauth.NewStaticAudienceProvider(audiences...),
+				clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace),
+			),
 			Transport: &http.Transport{
 				MaxConnsPerHost:     100,
 				MaxIdleConns:        100,
@@ -224,7 +236,7 @@ func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSCl
 func setupRepoFactory(
 	cfg *setting.Cfg,
 	decrypter repository.Decrypter,
-	provisioningClient *client.Clientset,
+	_ *client.Clientset,
 	registry prometheus.Registerer,
 ) (repository.Factory, error) {
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
@@ -247,7 +259,7 @@ func setupRepoFactory(
 
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
-			extras = append(extras, git.Extra(decrypter))
+			extras = append(extras, gitrepo.Extra(decrypter))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
@@ -255,12 +267,7 @@ func setupRepoFactory(
 				webhook = webhooks.ProvideWebhooks(provisioningAppURL, registry)
 			}
 
-			extras = append(extras, github.Extra(
-				decrypter,
-				github.ProvideFactory(),
-				webhook,
-			),
-			)
+			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {
@@ -289,7 +296,39 @@ func setupRepoFactory(
 	return repoFactory, nil
 }
 
-func setupDecrypter(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeClient *authn.TokenExchangeClient) (decrypter repository.Decrypter, err error) {
+func setupConnectionFactory(
+	cfg *setting.Cfg,
+	decrypter connection.Decrypter,
+) (connection.Factory, error) {
+	// Setup decrypt service for connections
+	secretsSec := cfg.SectionWithEnvOverrides("secrets_manager")
+	if secretsSec == nil {
+		return nil, fmt.Errorf("no [secrets_manager] section found in config")
+	}
+
+	address := secretsSec.Key("grpc_server_address").String()
+	if address == "" {
+		return nil, fmt.Errorf("grpc_server_address is required in [secrets_manager] section")
+	}
+
+	// For now, only support GitHub connections
+	// TODO: Add support for other connection types
+	extras := []connection.Extra{
+		githubconnection.Extra(decrypter, githubconnection.ProvideFactory()),
+	}
+	enabledTypes := map[provisioning.ConnectionType]struct{}{
+		provisioning.GithubConnectionType: {},
+	}
+
+	connectionFactory, err := connection.ProvideFactory(enabledTypes, extras)
+	if err != nil {
+		return nil, fmt.Errorf("create connection factory: %w", err)
+	}
+
+	return connectionFactory, nil
+}
+
+func setupDecryptService(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeClient *authn.TokenExchangeClient) (decrypt.DecryptService, error) {
 	secretsSec := cfg.SectionWithEnvOverrides("secrets_manager")
 	if secretsSec == nil {
 		return nil, fmt.Errorf("no [secrets_manager] section found in config")
@@ -318,7 +357,7 @@ func setupDecrypter(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeClient
 		return nil, fmt.Errorf("create decrypt service: %w", err)
 	}
 
-	return repository.ProvideDecrypter(decryptSvc), nil
+	return decryptSvc, nil
 }
 
 // HACK: This logic directly connects to unified storage. We are doing this for now as there is no global

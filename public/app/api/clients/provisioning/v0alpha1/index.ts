@@ -1,10 +1,12 @@
 import {
   generatedAPI,
+  type ConnectionSpec,
+  type ConnectionStatus,
+  type ErrorDetails,
   type JobSpec,
   type JobStatus,
   type RepositorySpec,
   type RepositoryStatus,
-  type ErrorDetails,
   type Status,
 } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
@@ -13,7 +15,7 @@ import { clearFolders } from 'app/features/browse-dashboards/state/slice';
 import { getState } from 'app/store/store';
 import { ThunkDispatch } from 'app/types/store';
 
-import { createSuccessNotification, createErrorNotification } from '../../../../core/copy/appNotification';
+import { createErrorNotification, createSuccessNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
 import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
@@ -59,6 +61,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       onCacheEntryAdded: createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories'),
     },
     listConnection: {
+      query: ({ watch, ...queryArg }) => ({
+        url: `/connections`,
+        params: queryArg,
+      }),
+      onCacheEntryAdded: createOnCacheEntryAdded<ConnectionSpec, ConnectionStatus>('connections'),
       providesTags: (result) =>
         result
           ? [

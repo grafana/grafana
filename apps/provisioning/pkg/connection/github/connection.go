@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -46,7 +47,6 @@ func NewConnection(
 const (
 	//TODO(ferruvich): these probably need to be setup in API configuration.
 	githubInstallationURL = "https://github.com/settings/installations"
-	jwtExpirationMinutes  = 10 // GitHub Apps JWT tokens expire in 10 minutes maximum
 )
 
 // Test validates the appID and installationID against the given github token.
@@ -154,20 +154,20 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 }
 
 // GenerateRepositoryToken generates a repository-scoped access token.
-func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (common.RawSecureValue, error) {
+func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (*connection.ExpirableSecureValue, error) {
 	if repo == nil {
-		return "", errors.New("a repository is required to generate a token")
+		return nil, errors.New("a repository is required to generate a token")
 	}
 	if c.obj.Spec.GitHub == nil {
-		return "", errors.New("connection is not a GitHub connection")
+		return nil, errors.New("connection is not a GitHub connection")
 	}
 	if repo.Spec.GitHub == nil {
-		return "", errors.New("repository is not a GitHub repo")
+		return nil, errors.New("repository is not a GitHub repo")
 	}
 
 	_, repoName, err := github.ParseOwnerRepoGithub(repo.Spec.GitHub.URL)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse repo URL: %w", err)
+		return nil, fmt.Errorf("failed to parse repo URL: %w", err)
 	}
 
 	// Create the GitHub client with the JWT token
@@ -176,12 +176,62 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 	// Create an installation access token scoped to this repository
 	installationToken, err := ghClient.CreateInstallationAccessToken(ctx, c.obj.Spec.GitHub.InstallationID, repoName)
 	if err != nil {
-		return "", fmt.Errorf("failed to create installation access token: %w", err)
+		return nil, fmt.Errorf("failed to create installation access token: %w", err)
 	}
 
-	return common.RawSecureValue(installationToken.Token), nil
+	return &connection.ExpirableSecureValue{
+		Token:     common.RawSecureValue(installationToken.Token),
+		ExpiresAt: installationToken.ExpiresAt,
+	}, nil
+}
+
+// ListRepositories returns the list of repositories accessible through this GitHub App connection.
+func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error) {
+	if c.obj.Spec.GitHub == nil {
+		return nil, fmt.Errorf("github configuration is required")
+	}
+
+	// Create the GitHub client with the JWT token
+	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
+
+	repos, err := ghClient.ListInstallationRepositories(ctx, c.obj.Spec.GitHub.InstallationID)
+	if err != nil {
+		return nil, fmt.Errorf("list installation repositories: %w", err)
+	}
+
+	result := make([]provisioning.ExternalRepository, 0, len(repos))
+	for _, repo := range repos {
+		result = append(result, provisioning.ExternalRepository{
+			Name:  repo.Name,
+			Owner: repo.Owner,
+			URL:   repo.URL,
+		})
+	}
+
+	return result, nil
+}
+
+// GenerateConnectionToken generates a JWT token for GitHub App authentication.
+// Implements the connection.TokenConnection interface.
+func (c *Connection) GenerateConnectionToken(_ context.Context) (common.RawSecureValue, error) {
+	if c.obj.Spec.GitHub == nil {
+		return "", errors.New("connection is not a GitHub connection")
+	}
+
+	return GenerateJWTToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
+}
+
+// TokenExpiration returns the underlying token expiration.
+func (c *Connection) TokenExpiration(_ context.Context) (time.Time, error) {
+	expiration, err := getExpirationFromToken(c.secrets.Token, c.secrets.PrivateKey)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return expiration, nil
 }
 
 var (
-	_ connection.Connection = (*Connection)(nil)
+	_ connection.Connection      = (*Connection)(nil)
+	_ connection.TokenConnection = (*Connection)(nil)
 )
