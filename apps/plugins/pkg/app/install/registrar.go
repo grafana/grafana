@@ -18,9 +18,16 @@ const (
 type Source = string
 
 const (
-	SourceUnknown     Source = "unknown"
-	SourcePluginStore Source = "plugin-store"
+	SourceUnknown               Source = "unknown"
+	SourcePluginStore           Source = "plugin-store"
+	SourceChildPluginReconciler Source = "child-plugin-reconciler"
 )
+
+// Registrar is an interface for registering plugin installations.
+type Registrar interface {
+	Register(ctx context.Context, namespace string, install *PluginInstall) error
+	Unregister(ctx context.Context, namespace string, name string, source Source) error
+}
 
 type PluginInstall struct {
 	ID       string
