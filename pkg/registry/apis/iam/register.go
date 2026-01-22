@@ -256,6 +256,10 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 				if label == "spec.datasource_uid" {
 					return label, value, nil
 				}
+				// Allow spec.datasource_type field selector
+				if label == "spec.datasource_type" {
+					return label, value, nil
+				}
 				// Allow standard metadata fields
 				if label == "metadata.name" || label == "metadata.namespace" {
 					return label, value, nil

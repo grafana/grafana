@@ -2854,6 +2854,14 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRuleSpec(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
+					"datasource_type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Data source type that this TeamLBAC Rule applies to",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"team_uid": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Team UID that this TeamLBAC Rule applies to",
@@ -2878,7 +2886,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRuleSpec(ref common.ReferenceCallback)
 						},
 					},
 				},
-				Required: []string{"datasource_uid", "team_uid", "filters"},
+				Required: []string{"datasource_uid", "datasource_type", "team_uid", "filters"},
 			},
 		},
 	}

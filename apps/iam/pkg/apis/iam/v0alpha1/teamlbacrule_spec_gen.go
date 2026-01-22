@@ -6,6 +6,8 @@ package v0alpha1
 type TeamLBACRuleSpec struct {
 	// Data source UID that this TeamLBAC Rule applies to
 	DatasourceUid string `json:"datasource_uid"`
+	// Data source type that this TeamLBAC Rule applies to
+	DatasourceType string `json:"datasource_type"`
 	// Team UID that this TeamLBAC Rule applies to
 	TeamUid string `json:"team_uid"`
 	// Filters for the TeamLBAC Rule
