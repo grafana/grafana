@@ -851,8 +851,14 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		latestUnstructured, err := helper.Connections.Resource.Get(ctx, connName, metav1.GetOptions{})
 		require.NoError(t, err)
 
+		// Forcing the update of healthcheck - marking it as old.
+		health := latestUnstructured.Object["status"].(map[string]any)["health"].(map[string]any)
+		health["checked"] = time.UnixMilli(initialHealthChecked).Add(-5 * time.Minute).UnixMilli()
+		updated, err := helper.Connections.Resource.UpdateStatus(ctx, latestUnstructured, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
 		// Update the connection spec using the latest version
-		updatedUnstructured := latestUnstructured.DeepCopy()
+		updatedUnstructured := updated.DeepCopy()
 		githubSpec := updatedUnstructured.Object["spec"].(map[string]any)["github"].(map[string]any)
 		githubSpec["appID"] = "99999"
 		_, err = helper.UpdateGithubConnection(t, ctx, updatedUnstructured)

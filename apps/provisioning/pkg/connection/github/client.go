@@ -177,6 +177,8 @@ func (r *githubClient) ListInstallationRepositories(ctx context.Context, install
 }
 
 // CreateInstallationAccessToken creates an installation access token scoped to a specific repository.
+// Based on https://docs.github.com/en/rest/apps/apps?apiVersion=latest#create-an-installation-access-token-for-an-app
+// the installation access token will last one hour from the time it is created.
 func (r *githubClient) CreateInstallationAccessToken(ctx context.Context, installationID string, repo string) (InstallationToken, error) {
 	id, err := strconv.Atoi(installationID)
 	if err != nil {
