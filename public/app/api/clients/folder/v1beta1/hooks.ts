@@ -395,17 +395,17 @@ export function useCreateFolder() {
     const partialMetadata: ObjectMeta =
       teamOwnerReferenceUids && teamOwnerReferenceUids.length > 0
         ? {
-          ownerReferences: [
-            ...teamOwnerReferenceUids.map(({ uid, name }) => ({
-              apiVersion: `${IAM_API_GROUP}/${IAM_API_VERSION}`,
-              kind: 'Team',
-              name,
-              uid,
-              controller: true,
-              blockOwnerDeletion: false,
-            })),
-          ],
-        }
+            ownerReferences: [
+              ...teamOwnerReferenceUids.map(({ uid, name }) => ({
+                apiVersion: `${IAM_API_GROUP}/${IAM_API_VERSION}`,
+                kind: 'Team',
+                name,
+                uid,
+                controller: true,
+                blockOwnerDeletion: false,
+              })),
+            ],
+          }
         : {};
 
     const apiPayload: CreateFolderApiArg = {
