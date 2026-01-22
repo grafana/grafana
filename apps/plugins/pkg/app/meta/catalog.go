@@ -18,18 +18,19 @@ const (
 
 // CatalogProvider retrieves plugin metadata from the grafana.com API.
 type CatalogProvider struct {
-	httpClient       *http.Client
-	grafanaComAPIURL string
-	ttl              time.Duration
+	httpClient         *http.Client
+	grafanaComAPIURL   string
+	grafanaComAPIToken string
+	ttl                time.Duration
 }
 
 // NewCatalogProvider creates a new CatalogProvider that fetches metadata from grafana.com.
-func NewCatalogProvider(grafanaComAPIURL string) *CatalogProvider {
-	return NewCatalogProviderWithTTL(grafanaComAPIURL, defaultCatalogTTL)
+func NewCatalogProvider(grafanaComAPIURL, grafanaComAPIToken string) *CatalogProvider {
+	return NewCatalogProviderWithTTL(grafanaComAPIURL, grafanaComAPIToken, defaultCatalogTTL)
 }
 
 // NewCatalogProviderWithTTL creates a new CatalogProvider with a custom TTL.
-func NewCatalogProviderWithTTL(grafanaComAPIURL string, ttl time.Duration) *CatalogProvider {
+func NewCatalogProviderWithTTL(grafanaComAPIURL, grafanaComAPIToken string, ttl time.Duration) *CatalogProvider {
 	if grafanaComAPIURL == "" {
 		grafanaComAPIURL = "https://grafana.com/api/plugins"
 	}
@@ -38,8 +39,9 @@ func NewCatalogProviderWithTTL(grafanaComAPIURL string, ttl time.Duration) *Cata
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
-		grafanaComAPIURL: grafanaComAPIURL,
-		ttl:              ttl,
+		grafanaComAPIURL:   grafanaComAPIURL,
+		grafanaComAPIToken: grafanaComAPIToken,
+		ttl:                ttl,
 	}
 }
 
@@ -59,6 +61,7 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, pluginID, version string)
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "grafana-plugins-app")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", p.grafanaComAPIToken))
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
