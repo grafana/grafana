@@ -22,9 +22,11 @@ import (
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationReadImported_Snapshot(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -78,7 +80,7 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 	require.NoError(t, err)
 	t.Run("secure fields should be properly masked", func(t *testing.T) {
 		for _, receiver := range receivers.Items {
-			if receiver.Spec.Title == "grafana-default-email" {
+			if receiver.Spec.Title == "empty" {
 				continue
 			}
 			for _, integration := range receiver.Spec.Integrations {
@@ -98,7 +100,7 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 	})
 	t.Run("should set the correct annotations", func(t *testing.T) {
 		for _, receiver := range receivers.Items {
-			if receiver.Spec.Title == "grafana-default-email" {
+			if receiver.Spec.Title == "empty" {
 				continue
 			}
 			assert.EqualValuesf(t, models.ProvenanceConvertedPrometheus, receiver.GetProvenanceStatus(), "receiver %s has unexpected provenance", receiver.Name)

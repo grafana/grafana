@@ -278,10 +278,12 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response
 
 // swagger:route DELETE /datasources/name/{name} datasources deleteDataSourceByName
 //
-// Delete an existing data source by name.
+// Delete an existing data source by name. This function will be removed in the future.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: deleteDataSourceByNameResponse
@@ -597,10 +599,12 @@ func (hs *HTTPServer) getRawDataSourceByUID(ctx context.Context, uid string, org
 
 // swagger:route GET /datasources/name/{name} datasources getDataSourceByName
 //
-// Get a single data source by Name.
+// Get a single data source by Name.  This function will be removed in the future.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getDataSourceResponse
@@ -624,10 +628,12 @@ func (hs *HTTPServer) GetDataSourceByName(c *contextmodel.ReqContext) response.R
 
 // swagger:route GET /datasources/id/{name} datasources getDataSourceIdByName
 //
-// Get data source Id by Name.
+// Get data source Id by Name. This function will be removed in the future.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getDataSourceIDResponse

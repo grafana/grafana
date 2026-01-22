@@ -87,19 +87,33 @@ func (a *SyncRuleStatePersister) Sync(ctx context.Context, span trace.Span, rule
 			continue
 		}
 
+		var lastError string
+		if s.Error != nil {
+			lastError = s.Error.Error()
+		}
+		var lastResult models.LastResult
+		if s.LatestResult != nil {
+			lastResult = models.LastResult{
+				Values:    s.LatestResult.Values,
+				Condition: s.LatestResult.Condition,
+			}
+		}
 		instance := models.AlertInstance{
-			AlertInstanceKey:  key,
-			Labels:            models.InstanceLabels(s.Labels),
-			Annotations:       s.Annotations,
-			CurrentState:      models.InstanceStateType(s.State.State.String()),
-			CurrentReason:     s.StateReason,
-			LastEvalTime:      s.LastEvaluationTime,
-			CurrentStateSince: s.StartsAt,
-			CurrentStateEnd:   s.EndsAt,
-			FiredAt:           s.FiredAt,
-			ResolvedAt:        s.ResolvedAt,
-			LastSentAt:        s.LastSentAt,
-			ResultFingerprint: s.ResultFingerprint.String(),
+			AlertInstanceKey:   key,
+			Labels:             models.InstanceLabels(s.Labels),
+			Annotations:        s.Annotations,
+			CurrentState:       models.InstanceStateType(s.State.State.String()),
+			CurrentReason:      s.StateReason,
+			LastEvalTime:       s.LastEvaluationTime,
+			CurrentStateSince:  s.StartsAt,
+			CurrentStateEnd:    s.EndsAt,
+			FiredAt:            s.FiredAt,
+			ResolvedAt:         s.ResolvedAt,
+			LastSentAt:         s.LastSentAt,
+			ResultFingerprint:  s.ResultFingerprint.String(),
+			EvaluationDuration: s.EvaluationDuration,
+			LastError:          lastError,
+			LastResult:         lastResult,
 		}
 
 		instancesToSave = append(instancesToSave, instance)

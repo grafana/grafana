@@ -140,7 +140,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/datasources/correlations',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "CorrelationsPage" */ 'app/features/correlations/CorrelationsPage')
+        () =>
+          import(/* webpackChunkName: "CorrelationsPageWrapper" */ 'app/features/correlations/CorrelationsPageWrapper')
       ),
     },
     {

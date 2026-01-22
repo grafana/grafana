@@ -9,7 +9,7 @@ import { getErrorMessage } from '../utils/httpUtils';
 import { ConnectionList } from './ConnectionList';
 
 export default function ConnectionsPage() {
-  const [items, isLoading, error] = useConnectionList();
+  const [items, isLoading, error] = useConnectionList({ watch: true });
   const hasNoConnections = !isLoading && !error && items?.length === 0;
 
   return (

@@ -34,6 +34,10 @@ export interface Props {
   orientation?: VizOrientation;
 }
 
+/**
+ * @deprecated
+ * The Gauge component is deprecated and will be removed in Grafana 13.0.
+ */
 export class Gauge extends PureComponent<Props> {
   canvasElement: HTMLDivElement | null = null;
 
