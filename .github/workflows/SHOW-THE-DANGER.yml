@@ -1,0 +1,38 @@
+name: SHOW - Secrets Actually Leak
+on: [workflow_dispatch]
+
+env:
+  ACTIONS_STEP_DEBUG: true  # The "Loud Speaker"
+
+jobs:
+  steal-keys:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Pretend we're the Vault (giving out keys)
+      - name: Get Secret Keys (Like Vault Does)
+        run: |
+          echo "CLOUD_PASSWORD=SuperSecretCloudPass123!" >> $GITHUB_ENV
+          echo "API_KEY=AKIAIOSFODNN7EXAMPLE" >> $GITHUB_ENV
+          
+      # Step 2: Show what hackers would see
+      - name: What Hackers See in Logs
+        run: |
+          echo "========== HACKER'S VIEW =========="
+          echo "If a hacker looks at these logs, they see:"
+          echo ""
+          echo "1. ALL environment variables"
+          echo "2. Including: CLOUD_PASSWORD"
+          echo "3. Including: API_KEY"
+          echo ""
+          echo "GitHub tries to hide secrets marked as 'secrets'"
+          echo "But debug mode often shows them anyway!"
+          echo "==================================="
+          
+      # Step 3: Try to "steal" the keys (just show we could)
+      - name: Prove We Could Steal
+        run: |
+          echo "If I were a hacker, I could:"
+          echo "1. Copy the CLOUD_PASSWORD from logs"
+          echo "2. Login to cloud provider"
+          echo "3. Create servers, delete data, steal info"
+          echo "4. Cost company $$$"
