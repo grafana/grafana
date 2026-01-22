@@ -39,7 +39,7 @@ interface Props {
  * );
  *
  * // Open Query Library to save a query
- * 
+ *
  * <OpenQueryLibraryComponent
  *   // Data source filter
  *   datasourceFilters={['data-source-name']}
@@ -48,9 +48,9 @@ interface Props {
  *   icon="save"
  *   tooltip={'Save in Saved Queries'}
  * />
- * 
+ *
  * // Open Query Library to load a query
- * 
+ *
  * <OpenQueryLibraryComponent
  *   // Data source filter
  *   datasourceFilters={['data-source-name']}

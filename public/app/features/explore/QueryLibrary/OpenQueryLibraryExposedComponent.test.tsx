@@ -68,12 +68,7 @@ describe('OpenQueryLibraryExposedComponent', () => {
     const mockQuery: DataQuery = { refId: 'A' };
     const mockDatasourceFilters = ['loki'];
 
-    render(
-      <OpenQueryLibraryExposedComponent
-        query={mockQuery}
-        datasourceFilters={mockDatasourceFilters}
-      />
-    );
+    render(<OpenQueryLibraryExposedComponent query={mockQuery} datasourceFilters={mockDatasourceFilters} />);
 
     await userEvent.click(screen.getByRole('button'));
 
@@ -89,10 +84,7 @@ describe('OpenQueryLibraryExposedComponent', () => {
     const mockOnSelectQuery = jest.fn();
 
     render(
-      <OpenQueryLibraryExposedComponent
-        datasourceFilters={mockDatasourceFilters}
-        onSelectQuery={mockOnSelectQuery}
-      />
+      <OpenQueryLibraryExposedComponent datasourceFilters={mockDatasourceFilters} onSelectQuery={mockOnSelectQuery} />
     );
 
     await userEvent.click(screen.getByRole('button'));
