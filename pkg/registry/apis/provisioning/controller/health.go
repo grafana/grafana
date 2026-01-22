@@ -200,6 +200,12 @@ func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 		})
 	}
 
+	// Update Ready condition based on health status
+	readyCondition := buildReadyConditionFromHealth(newHealthStatus)
+	if conditionPatchOps := buildConditionPatchOpsForRepository(cfg.Status.Conditions, cfg.GetGeneration(), readyCondition); conditionPatchOps != nil {
+		patchOps = append(patchOps, conditionPatchOps...)
+	}
+
 	return testResults, newHealthStatus, patchOps, nil
 }
 

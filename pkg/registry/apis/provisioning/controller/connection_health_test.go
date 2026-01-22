@@ -348,13 +348,24 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 			name: "no status change - no patches",
 			conn: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-conn",
-					Namespace: "default",
+					Name:       "test-conn",
+					Namespace:  "default",
+					Generation: 1,
 				},
 				Status: provisioning.ConnectionStatus{
 					Health: provisioning.HealthStatus{
 						Healthy: true,
 						Checked: time.Now().Add(-20 * time.Second).UnixMilli(),
+					},
+					Conditions: []metav1.Condition{
+						{
+							Type:               provisioning.ConditionTypeReady,
+							Status:             metav1.ConditionTrue,
+							Reason:             provisioning.ReasonAvailable,
+							Message:            "Resource is available",
+							ObservedGeneration: 1,
+							LastTransitionTime: metav1.Now(),
+						},
 					},
 				},
 			},
@@ -403,9 +414,32 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 			assert.Equal(t, tt.expectedHealth, healthStatus.Healthy)
 
 			if tt.expectPatches {
-				assert.Len(t, patchOps, 1)
+				// Should have 2 patches: health and condition
+				assert.Len(t, patchOps, 2)
+
+				// First patch should be health
 				assert.Equal(t, "replace", patchOps[0]["op"])
 				assert.Equal(t, "/status/health", patchOps[0]["path"])
+
+				// Second patch should be conditions with Ready condition
+				assert.Equal(t, "replace", patchOps[1]["op"])
+				assert.Equal(t, "/status/conditions", patchOps[1]["path"])
+
+				// Verify Ready condition is set correctly
+				conditions, ok := patchOps[1]["value"].([]metav1.Condition)
+				require.True(t, ok, "conditions should be of type []metav1.Condition")
+				require.Len(t, conditions, 1, "should have exactly one condition")
+
+				readyCondition := conditions[0]
+				assert.Equal(t, provisioning.ConditionTypeReady, readyCondition.Type)
+
+				if tt.expectedHealth {
+					assert.Equal(t, metav1.ConditionTrue, readyCondition.Status)
+					assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason)
+				} else {
+					assert.Equal(t, metav1.ConditionFalse, readyCondition.Status)
+					assert.Equal(t, provisioning.ReasonUnavailable, readyCondition.Reason)
+				}
 			} else {
 				assert.Empty(t, patchOps)
 			}

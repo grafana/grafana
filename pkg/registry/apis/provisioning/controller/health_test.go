@@ -611,6 +611,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 			expectError:    false,
 			expectedHealth: true,
 			expectPatchOps: false,
+			// Note: Need to add existing condition to the mock repo below
 		},
 		{
 			name:       "test repository error",
@@ -629,15 +630,34 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mock repository
+			repoStatus := provisioning.RepositoryStatus{
+				Health: tt.existingStatus,
+			}
+
+			// For "no status change" test, add existing condition
+			if tt.name == "no status change - no patch ops returned" {
+				repoStatus.Conditions = []metav1.Condition{
+					{
+						Type:               provisioning.ConditionTypeReady,
+						Status:             metav1.ConditionTrue,
+						Reason:             provisioning.ReasonAvailable,
+						Message:            "Resource is available",
+						ObservedGeneration: 1,
+						LastTransitionTime: metav1.Now(),
+					},
+				}
+			}
+
 			mockRepo := &mockRepository{
 				config: &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Generation: 1,
+					},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repository",
 						Type:  provisioning.LocalRepositoryType,
 					},
-					Status: provisioning.RepositoryStatus{
-						Health: tt.existingStatus,
-					},
+					Status: repoStatus,
 				},
 				testResult: tt.testResult,
 				testError:  tt.testError,
@@ -668,10 +688,33 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 			// Verify patch operations
 			if tt.expectPatchOps {
 				assert.NotEmpty(t, patchOps, "expected patch operations to be returned")
-				assert.Len(t, patchOps, 1)
+				// Should have 2 patches: health and condition
+				assert.Len(t, patchOps, 2)
+
+				// First patch should be health
 				assert.Equal(t, "replace", patchOps[0]["op"])
 				assert.Equal(t, tt.expectedPatchPath, patchOps[0]["path"])
 				assert.Equal(t, healthStatus, patchOps[0]["value"])
+
+				// Second patch should be conditions with Ready condition
+				assert.Equal(t, "replace", patchOps[1]["op"])
+				assert.Equal(t, "/status/conditions", patchOps[1]["path"])
+
+				// Verify Ready condition is set correctly
+				conditions, ok := patchOps[1]["value"].([]metav1.Condition)
+				assert.True(t, ok, "conditions should be of type []metav1.Condition")
+				assert.Len(t, conditions, 1, "should have exactly one condition")
+
+				readyCondition := conditions[0]
+				assert.Equal(t, provisioning.ConditionTypeReady, readyCondition.Type)
+
+				if tt.expectedHealth {
+					assert.Equal(t, metav1.ConditionTrue, readyCondition.Status)
+					assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason)
+				} else {
+					assert.Equal(t, metav1.ConditionFalse, readyCondition.Status)
+					assert.Equal(t, provisioning.ReasonUnavailable, readyCondition.Reason)
+				}
 			} else {
 				assert.Empty(t, patchOps, "expected no patch operations to be returned")
 			}
