@@ -55,6 +55,7 @@ export const statSuggestionsSupplier: VisualizationSuggestionsSupplier<Options> 
     // aggregated suggestions for number fields
     suggestions.push(
       {
+        name: t('stat.suggestions.stat', 'Stat'),
         options: {
           reduceOptions: {
             values: false,

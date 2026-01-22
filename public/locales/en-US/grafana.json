@@ -13303,6 +13303,7 @@
       "label-standard": "Standard"
     },
     "suggestions": {
+      "stat": "Stat",
       "stat-color-background": "Stat - color background",
       "stat-discrete-values": "Stat - discrete values",
       "stat-discrete-values-color-background": "Stat - discrete values - color background",
