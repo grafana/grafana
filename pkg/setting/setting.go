@@ -245,6 +245,7 @@ type Cfg struct {
 	// use this setting.
 	MetricsIncludeTeamLabel          bool
 	MetricsTotalStatsIntervalSeconds int
+	ClassicHTTPHistogramEnabled      bool
 	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
@@ -625,6 +626,11 @@ type Cfg struct {
 	OverridesReloadInterval                    time.Duration
 	EnableSQLKVBackend                         bool
 	EnableSQLKVCompatibilityMode               bool
+	EnableGarbageCollection                    bool
+	GarbageCollectionInterval                  time.Duration
+	GarbageCollectionBatchSize                 int
+	GarbageCollectionMaxAge                    time.Duration
+	DashboardsGarbageCollectionMaxAge          time.Duration
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
@@ -1271,6 +1277,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 	cfg.MetricsIncludeTeamLabel = iniFile.Section("metrics").Key("include_team_label").MustBool(false)
 	cfg.MetricsTotalStatsIntervalSeconds = iniFile.Section("metrics").Key("total_stats_collector_interval_seconds").MustInt(1800)
+	cfg.ClassicHTTPHistogramEnabled = iniFile.Section("metrics").Key("classic_http_histogram_enabled").MustBool(true)
 
 	analytics := iniFile.Section("analytics")
 	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)
