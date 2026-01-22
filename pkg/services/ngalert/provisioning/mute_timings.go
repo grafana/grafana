@@ -104,6 +104,23 @@ func (svc *MuteTimingService) GetMuteTiming(ctx context.Context, nameOrUID strin
 	return svc.getMuteTiming(ctx, revision, nameOrUID, orgID)
 }
 
+// GetMuteTimingByName returns a mute timing by name.
+func (svc *MuteTimingService) GetMuteTimingByName(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error) {
+	revision, err := svc.configStore.Get(ctx, orgID)
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+
+	mti, found, err := svc.getMuteTimingByName(ctx, revision, orgID, name)
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
+	} else if !found {
+		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
+	}
+
+	return mti, nil
+}
+
 func (svc *MuteTimingService) getMuteTiming(ctx context.Context, revision *legacy_storage.ConfigRevision, nameOrUID string, orgID int64) (definitions.MuteTimeInterval, error) {
 	result, found, err := svc.getMuteTimingByName(ctx, revision, orgID, nameOrUID)
 	if err != nil {
@@ -300,16 +317,24 @@ func isTimeIntervalInUseInRoutes(name string, route *definitions.Route) bool {
 }
 
 func (svc *MuteTimingService) getMuteTimingByName(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, name string) (definitions.MuteTimeInterval, bool, error) {
-	return svc.getMuteTimingBy(ctx, revision, orgID, findByName(name))
+	grafanaIntervals := getGrafanaTimeIntervals(revision)
+	if idx := slices.IndexFunc(grafanaIntervals, findByName(name)); idx != -1 {
+		interval := grafanaIntervals[idx]
+
+		prov, err := svc.provenanceStore.GetProvenance(ctx, &definitions.MuteTimeInterval{UID: legacy_storage.NameToUid(interval.Name), MuteTimeInterval: interval}, orgID)
+		if err != nil {
+			return definitions.MuteTimeInterval{}, false, err
+		}
+
+		return newMuteTimingInterval(interval, definitions.Provenance(prov)), true, nil
+	}
+
+	return definitions.MuteTimeInterval{}, false, nil
 }
 
 func (svc *MuteTimingService) getMuteTimingByUID(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, uid string) (definitions.MuteTimeInterval, bool, error) {
-	return svc.getMuteTimingBy(ctx, revision, orgID, findByUID(uid))
-}
-
-func (svc *MuteTimingService) getMuteTimingBy(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, find func(config.MuteTimeInterval) bool) (definitions.MuteTimeInterval, bool, error) {
 	grafanaIntervals := getGrafanaTimeIntervals(revision)
-	if idx := slices.IndexFunc(grafanaIntervals, find); idx != -1 {
+	if idx := slices.IndexFunc(grafanaIntervals, findByUID(uid)); idx != -1 {
 		interval := grafanaIntervals[idx]
 
 		prov, err := svc.provenanceStore.GetProvenance(ctx, &definitions.MuteTimeInterval{UID: legacy_storage.NameToUid(interval.Name), MuteTimeInterval: interval}, orgID)
@@ -321,7 +346,7 @@ func (svc *MuteTimingService) getMuteTimingBy(ctx context.Context, revision *leg
 	}
 
 	if importedIntervals := svc.getImportedTimeIntervals(revision); len(importedIntervals) > 0 {
-		if idx := slices.IndexFunc(importedIntervals, find); idx != -1 {
+		if idx := slices.IndexFunc(importedIntervals, findByUID(uid)); idx != -1 {
 			interval := importedIntervals[idx]
 
 			return newMuteTimingInterval(interval, definitions.Provenance(models.ProvenanceConvertedPrometheus)), true, nil
