@@ -14,6 +14,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -282,6 +283,10 @@ func (s *Service) getFolderByIDFromApiServer(ctx context.Context, id int64, orgI
 		return nil, err
 	}
 
+	return s.returnFirstFolderSearchResult(ctx, orgID, hits)
+}
+
+func (s *Service) returnFirstFolderSearchResult(ctx context.Context, orgID int64, hits v0alpha1.SearchResults) (*folder.Folder, error) {
 	if len(hits.Hits) == 0 {
 		return nil, dashboards.ErrFolderNotFound
 	}
@@ -347,22 +352,12 @@ func (s *Service) getFolderByTitleFromApiServer(ctx context.Context, orgID int64
 		return nil, err
 	}
 
-	if len(hits.Hits) == 0 {
-		return nil, dashboards.ErrFolderNotFound
+	// If we're searching for top-level folders (parentUID == nil), and the first result is not in the root folder, remove it from the results.
+	for parentUID == nil && len(hits.Hits) > 0 && hits.Hits[0].Folder != "" {
+		hits.Hits = hits.Hits[1:]
 	}
 
-	uid := hits.Hits[0].Name
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	f, err := s.Get(ctx, &folder.GetFolderQuery{UID: &uid, SignedInUser: user, OrgID: orgID})
-	if err != nil {
-		return nil, err
-	}
-
-	return f, nil
+	return s.returnFirstFolderSearchResult(ctx, orgID, hits)
 }
 
 func (s *Service) getChildrenFromApiServer(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
