@@ -7,15 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v70/github"
-	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/pkg/extensions"
 	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
-	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1351,78 +1349,32 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 	require.NoError(t, err)
 	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories(namespace)
 
-	// Create a connection first
-	connection := &unstructured.Unstructured{Object: map[string]any{
-		"apiVersion": "provisioning.grafana.app/v0alpha1",
-		"kind":       "Connection",
-		"metadata": map[string]any{
-			"name":      "test-connection-field-errors-cleared",
-			"namespace": namespace,
-		},
-		"spec": map[string]any{
-			"type": "github",
-			"github": map[string]any{
-				"appID":          "11111",
-				"installationID": "22222",
-			},
-		},
-		"secure": map[string]any{
-			"privateKey": map[string]any{
-				"create": base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM)),
-			},
-		},
-	}}
-	_, err = helper.CreateGithubConnection(t, ctx, connection)
-	require.NoError(t, err, "failed to create connection")
-
-	t.Cleanup(func() {
-		_ = helper.Connections.Resource.Delete(ctx, "test-connection-field-errors-cleared", metav1.DeleteOptions{})
-	})
-
-	// Set up GitHub mocks to support repository branch validation
-	// The connection is already set up by CreateGithubConnection, but we need to ensure
-	// the mocks support branch validation for the repository health check
-	var appID int64 = 11111
-	appSlug := "appSlug"
-	var installationID int64 = 22222
-	connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
-	connectionFactory.Client = ghmock.NewMockedHTTPClient(
-		ghmock.WithRequestMatch(
-			ghmock.GetApp, github.App{
-				ID:   &appID,
-				Slug: &appSlug,
-			},
-		),
-		ghmock.WithRequestMatch(
-			ghmock.GetAppInstallationsByInstallationId, github.Installation{
-				ID: &installationID,
-			},
-		),
-	)
-	helper.SetGithubConnectionFactory(connectionFactory)
-
 	t.Run("repository fieldErrors are cleared when repository becomes healthy", func(t *testing.T) {
-		// Create a repository with an invalid branch that will cause fieldErrors
+		// Create a local repository that will be healthy
+		repoPath := helper.ProvisioningPath
+		repoName := "test-repo-field-errors-cleared"
+
+		// Create repository directory
+		err := os.MkdirAll(repoPath, 0o750)
+		require.NoError(t, err)
+
+		// Create a repository that will be healthy initially
 		repoUnstructured := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Repository",
 			"metadata": map[string]any{
-				"name":      "test-repo-field-errors-cleared",
+				"name":      repoName,
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
 				"title": "Repo Field Errors Cleared Test",
-				"type":  "github",
+				"type":  "local",
 				"sync": map[string]any{
 					"enabled": false,
 					"target":  "folder",
 				},
-				"github": map[string]any{
-					"url":    "https://github.com/grafana/grafana-git-sync-demo",
-					"branch": "non-existent-branch-12345", // Invalid branch
-				},
-				"connection": map[string]any{
-					"name": "test-connection-field-errors-cleared",
+				"local": map[string]any{
+					"path": repoPath,
 				},
 			},
 		}}
@@ -1431,13 +1383,42 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, createdUnstructured)
 
-		repoName := createdUnstructured.GetName()
-
 		t.Cleanup(func() {
 			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
 		})
 
-		// Wait for reconciliation - repository should become unhealthy with fieldErrors
+		// Wait for repository to become healthy
+		require.Eventually(t, func() bool {
+			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return repo.Status.ObservedGeneration == repo.Generation &&
+				repo.Status.Health.Checked > 0 &&
+				repo.Status.Health.Healthy &&
+				len(repo.Status.FieldErrors) == 0
+		}, 15*time.Second, 500*time.Millisecond, "repository should be healthy")
+
+		// Verify repository is healthy with no fieldErrors
+		repoHealthy, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.True(t, repoHealthy.Status.Health.Healthy, "repository should be healthy")
+		assert.Empty(t, repoHealthy.Status.FieldErrors, "fieldErrors should be empty when healthy")
+
+		// Remove the repository directory to make it unhealthy
+		err = os.RemoveAll(repoPath)
+		require.NoError(t, err)
+
+		// Trigger health check by updating the repository spec
+		latestUnstructured, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		updatedUnstructured := latestUnstructured.DeepCopy()
+		// Update title to trigger reconciliation
+		updatedUnstructured.Object["spec"].(map[string]any)["title"] = "Updated Title"
+		_, err = helper.Repositories.Resource.Update(ctx, updatedUnstructured, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// Wait for repository to become unhealthy with fieldErrors
 		require.Eventually(t, func() bool {
 			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
 			if err != nil {
@@ -1454,19 +1435,20 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 		require.NoError(t, err)
 		require.Greater(t, len(repoWithErrors.Status.FieldErrors), 0, "fieldErrors should be present when unhealthy")
 
-		// Fix the repository by updating to a valid branch
-		latestUnstructured, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		// Recreate the repository directory to make it healthy again
+		err = os.MkdirAll(repoPath, 0o750)
 		require.NoError(t, err)
 
-		updatedUnstructured := latestUnstructured.DeepCopy()
-		githubSpec := updatedUnstructured.Object["spec"].(map[string]any)["github"].(map[string]any)
-		githubSpec["branch"] = "main" // Valid branch
-
-		_, err = helper.Repositories.Resource.Update(ctx, updatedUnstructured, metav1.UpdateOptions{})
+		// Trigger health check by updating the repository spec again
+		latestUnstructured2, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		updatedUnstructured2 := latestUnstructured2.DeepCopy()
+		// Update title again to trigger reconciliation
+		updatedUnstructured2.Object["spec"].(map[string]any)["title"] = "Final Title"
+		_, err = helper.Repositories.Resource.Update(ctx, updatedUnstructured2, metav1.UpdateOptions{})
 		require.NoError(t, err)
 
 		// Wait for reconciliation - repository should become healthy and fieldErrors should be cleared
-		// Check conditions separately for better error messages
 		require.Eventually(t, func() bool {
 			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
 			if err != nil {
@@ -1485,9 +1467,9 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 		}, 30*time.Second, 1*time.Second, "repository should be healthy with fieldErrors cleared")
 
 		// Verify fieldErrors are cleared
-		repoHealthy, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		repoHealthyAgain, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
 		require.NoError(t, err)
-		assert.True(t, repoHealthy.Status.Health.Healthy, "repository should be healthy")
-		assert.Empty(t, repoHealthy.Status.FieldErrors, "fieldErrors should be cleared when repository becomes healthy")
+		assert.True(t, repoHealthyAgain.Status.Health.Healthy, "repository should be healthy")
+		assert.Empty(t, repoHealthyAgain.Status.FieldErrors, "fieldErrors should be cleared when repository becomes healthy")
 	})
 }
