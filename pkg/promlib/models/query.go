@@ -33,6 +33,40 @@ const (
 	PromQueryFormatHeatmap    PromQueryFormat = "heatmap"
 )
 
+// UnmarshalJSON implements custom unmarshaling to handle both string and numeric format values.
+// This provides a failsafe to prevent unmarshaling errors when clients incorrectly send
+// numeric values instead of strings for the format field.
+func (f *PromQueryFormat) UnmarshalJSON(data []byte) error {
+	// Try to unmarshal as string first (the expected type)
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		*f = PromQueryFormat(s)
+		return nil
+	}
+
+	// If that fails, try as number and convert to the default format
+	// This handles cases where clients incorrectly send numeric values
+	var n float64
+	if err := json.Unmarshal(data, &n); err == nil {
+		// Map numbers to format strings for backwards compatibility
+		switch int(n) {
+		case 0, 1:
+			*f = PromQueryFormatTimeSeries
+		case 2:
+			*f = PromQueryFormatTable
+		case 3:
+			*f = PromQueryFormatHeatmap
+		default:
+			*f = PromQueryFormatTimeSeries // default fallback
+		}
+		return nil
+	}
+
+	// If both fail, use default and don't error out (failsafe behavior)
+	*f = PromQueryFormatTimeSeries
+	return nil
+}
+
 // QueryEditorMode defines model for QueryEditorMode.
 // +enum
 type QueryEditorMode string
