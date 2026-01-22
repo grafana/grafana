@@ -389,7 +389,7 @@ export function processSeries(
     } = buildVisualQueryFromString(matchSelector);
 
     filteredSeries = series.filter((item) => {
-      return labels.every((lbl) => item[lbl.label] === lbl.value);
+      return labels.every((lbl) => matchesLabelCondition(item[lbl.label], lbl.op, lbl.value));
     });
   }
 
@@ -418,4 +418,47 @@ export function processSeries(
     labelKeys: Array.from(labelKeys).sort(),
     labelValues: Array.from(labelValues).sort(),
   };
+}
+
+/**
+ * Evaluates whether a label value matches based on the operator.
+ * Supports Prometheus label matching operators: =, !=, =~, !~
+ *
+ * @param itemValue - The actual value from the series item
+ * @param operator - The comparison operator (=, !=, =~, !~)
+ * @param matchValue - The value to match against
+ * @returns true if the condition is satisfied, false otherwise
+ */
+function matchesLabelCondition(itemValue: string | undefined, operator: string, matchValue: string): boolean {
+  // Handle case where label doesn't exist in the item
+  if (itemValue === undefined) {
+    // For != and !~, missing label is considered a match (it's "not equal" to the value)
+    return operator === '!=' || operator === '!~';
+  }
+
+  switch (operator) {
+    case '=':
+      return itemValue === matchValue;
+    case '!=':
+      return itemValue !== matchValue;
+    case '=~':
+      try {
+        const regex = new RegExp(matchValue);
+        return regex.test(itemValue);
+      } catch {
+        // Invalid regex, treat as no match
+        return false;
+      }
+    case '!~':
+      try {
+        const regex = new RegExp(matchValue);
+        return !regex.test(itemValue);
+      } catch {
+        // Invalid regex, treat as match (doesn't match invalid pattern)
+        return true;
+      }
+    default:
+      // Unknown operator, default to exact match
+      return itemValue === matchValue;
+  }
 }
