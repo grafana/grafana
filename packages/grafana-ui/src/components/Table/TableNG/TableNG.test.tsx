@@ -354,7 +354,7 @@ describe('TableNG', () => {
       const { container } = render(
         <TableNG
           initialRowIndex={4}
-          enableVirtualization={false}
+          enableVirtualization={true}
           data={createSortingTestDataFrame()}
           width={100}
           height={10}
