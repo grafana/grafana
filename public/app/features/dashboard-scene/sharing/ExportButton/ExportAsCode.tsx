@@ -11,7 +11,7 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { DashboardFormat } from 'app/features/dashboard/api/types';
+import { ExportFormat } from 'app/features/dashboard/api/types';
 import { dispatch } from 'app/store/store';
 
 import { ShareExportTab } from '../ShareExportTab';
@@ -62,7 +62,7 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
         <ResourceExport
           dashboardJson={dashboardJson}
           isSharingExternally={isSharingExternally ?? false}
-          exportFormat={exportFormat ?? DashboardFormat.Classic}
+          exportFormat={exportFormat ?? ExportFormat.Classic}
           isViewingYAML={isViewingYAML ?? false}
           onExportFormatChange={model.onExportFormatChange}
           onShareExternallyChange={model.onShareExternallyChange}

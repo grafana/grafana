@@ -7,11 +7,11 @@ import { Spinner, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardFormat } from 'app/features/dashboard/api/types';
+import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV1Resource, isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 
 import { DashboardInputs, DashboardSource } from '../../types';
-import { detectDashboardFormat, extractV1Inputs, extractV2Inputs } from '../utils/inputs';
+import { detectExportFormat, extractV1Inputs, extractV2Inputs } from '../utils/inputs';
 
 import { ImportOverview } from './ImportOverview';
 import { ImportSourceForm } from './ImportSourceForm';
@@ -29,7 +29,7 @@ type ImportState = {
   inputs: DashboardInputs;
   meta: { updatedAt: string; orgName: string };
   source: DashboardSource;
-  format: DashboardFormat;
+  format: ExportFormat;
 };
 
 const initialState: ImportState = {
@@ -38,7 +38,7 @@ const initialState: ImportState = {
   inputs: { dataSources: [], constants: [], libraryPanels: [] },
   meta: { updatedAt: '', orgName: '' },
   source: DashboardSource.Json,
-  format: DashboardFormat.Classic,
+  format: ExportFormat.Classic,
 };
 
 export function DashboardImportK8s({ queryParams }: Props) {
@@ -61,9 +61,8 @@ export function DashboardImportK8s({ queryParams }: Props) {
     try {
       const response = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
       const dashboard = response.json;
-      const format = detectDashboardFormat(dashboard);
-      const inputs =
-        format === DashboardFormat.V2Resource ? extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
+      const format = detectExportFormat(dashboard);
+      const inputs = format === ExportFormat.V2Resource ? extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
 
       setState({
         status: LoadingState.Done,
@@ -114,11 +113,10 @@ export function DashboardImportK8s({ queryParams }: Props) {
     setState((prev) => ({ ...prev, status: LoadingState.Loading }));
 
     try {
-      const format = detectDashboardFormat(json);
+      const format = detectExportFormat(json);
       // Unwrap k8s resource to get the spec, or use as-is for classic dashboards
       const dashboard = isDashboardV2Resource(json) || isDashboardV1Resource(json) ? json.spec : json;
-      const inputs =
-        format === DashboardFormat.V2Resource ? extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
+      const inputs = format === ExportFormat.V2Resource ? extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
 
       setState({
         status: LoadingState.Done,

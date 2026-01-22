@@ -12,7 +12,7 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
 import { ObjectMeta } from 'app/features/apiserver/types';
 import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
-import { DashboardFormat, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { ExportFormat, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec, isV1ClassicDashboard } from 'app/features/dashboard/api/utils';
 import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import { K8S_V2_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v2';
@@ -46,7 +46,7 @@ export interface ShareExportTabState extends SceneShareTabState {
   isSharingExternally?: boolean;
   isViewingJSON?: boolean;
   isViewingYAML?: boolean;
-  exportFormat?: DashboardFormat;
+  exportFormat?: ExportFormat;
 }
 
 export class ShareExportTab extends SceneObjectBase<ShareExportTabState> implements ShareView {
@@ -58,7 +58,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       ...state,
       isSharingExternally: false,
       isViewingJSON: false,
-      exportFormat: config.featureToggles.kubernetesDashboards ? DashboardFormat.Classic : undefined,
+      exportFormat: config.featureToggles.kubernetesDashboards ? ExportFormat.Classic : undefined,
     });
   }
 
@@ -76,12 +76,12 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     });
   };
 
-  public onExportFormatChange = (exportFormat: DashboardFormat) => {
+  public onExportFormatChange = (exportFormat: ExportFormat) => {
     this.setState({
       exportFormat,
     });
 
-    if (exportFormat === DashboardFormat.Classic) {
+    if (exportFormat === ExportFormat.Classic) {
       this.setState({
         isViewingYAML: false,
       });
@@ -123,10 +123,10 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       isDashboardV2Spec(origDashboard) &&
       'elements' in exportable &&
       initialSaveModelVersion === 'v2' &&
-      exportFormat !== DashboardFormat.V1Resource
+      exportFormat !== ExportFormat.V1Resource
     ) {
       this.setState({
-        exportFormat: DashboardFormat.V2Resource,
+        exportFormat: ExportFormat.V2Resource,
       });
 
       // For automatic V2 path, also process library panels when sharing externally
@@ -157,7 +157,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       };
     }
 
-    if (exportFormat === DashboardFormat.V1Resource) {
+    if (exportFormat === ExportFormat.V1Resource) {
       // Check if source is V2 and auto-transform to V1
       if (isDashboardV2Spec(origDashboard) && initialSaveModelVersion === 'v2') {
         try {
@@ -220,7 +220,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       }
     }
 
-    if (exportFormat === DashboardFormat.V2Resource) {
+    if (exportFormat === ExportFormat.V2Resource) {
       let sceneForV2Export = scene;
 
       // When exporting v1 dashboard as v2, we need to recreate the scene with v2 layout creator
@@ -339,7 +339,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       externally: isSharingExternally,
       dashboard_schema_version: dashboard.initialSaveModelVersion,
       has_library_panels: Boolean(dashboard.hasLibraryPanels),
-      export_mode: exportFormat || DashboardFormat.Classic,
+      export_mode: exportFormat || ExportFormat.Classic,
       format: isViewingYAML ? 'yaml' : 'json',
       action: 'copy',
     });
@@ -419,7 +419,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
             <ResourceExport
               dashboardJson={dashboardJson}
               isSharingExternally={isSharingExternally ?? false}
-              exportFormat={exportFormat ?? DashboardFormat.Classic}
+              exportFormat={exportFormat ?? ExportFormat.Classic}
               isViewingYAML={isViewingYAML ?? false}
               onExportFormatChange={model.onExportFormatChange}
               onShareExternallyChange={model.onShareExternallyChange}

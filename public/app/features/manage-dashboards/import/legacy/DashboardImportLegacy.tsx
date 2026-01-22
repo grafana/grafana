@@ -15,12 +15,12 @@ import { dispatch } from 'app/store/store';
 import { StoreState } from 'app/types/store';
 
 import { cleanUpAction } from '../../../../core/actions/cleanUp';
-import { DashboardFormat } from '../../../dashboard/api/types';
+import { ExportFormat } from '../../../dashboard/api/types';
 import { DashboardSource, ImportDashboardDTO } from '../../types';
 import { GcomDashboardInfo } from '../components/GcomDashboardInfo';
 import { ImportForm } from '../components/ImportForm';
 import { ImportSourceForm } from '../components/ImportSourceForm';
-import { detectDashboardFormat } from '../utils/inputs';
+import { detectExportFormat } from '../utils/inputs';
 
 import {
   clearLoadedDashboard,
@@ -45,9 +45,9 @@ function getV1ResourceSpec(dashboard: unknown): Record<string, unknown> | undefi
 const IMPORT_STARTED_EVENT_NAME = 'dashboard_import_loaded';
 const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 
-function ImportResourceFormatError({ format, onCancel }: { format: DashboardFormat; onCancel: () => void }) {
+function ImportResourceFormatError({ format, onCancel }: { format: ExportFormat; onCancel: () => void }) {
   const errorMessage =
-    format === DashboardFormat.V1Resource
+    format === ExportFormat.V1Resource
       ? t(
           'manage-dashboards.import-resource-format-error.v1-message',
           'This dashboard is in Kubernetes v1 resource format and cannot be imported when Kubernetes dashboards feature is disabled. Please enable the kubernetesDashboards feature toggle to import this dashboard.'
@@ -224,12 +224,12 @@ class UnthemedDashboardImportLegacy extends PureComponent<Props> {
       ]);
     }
 
-    const format = detectDashboardFormat(dashboard);
-    if (format === DashboardFormat.V2Resource && dashboard.spec?.elements) {
+    const format = detectExportFormat(dashboard);
+    if (format === ExportFormat.V2Resource && dashboard.spec?.elements) {
       return dispatch(importDashboardV2Json(dashboard.spec));
     }
 
-    if (format === DashboardFormat.V2Resource && dashboard.elements) {
+    if (format === ExportFormat.V2Resource && dashboard.elements) {
       return dispatch(importDashboardV2Json(dashboard));
     }
 
@@ -271,10 +271,10 @@ class UnthemedDashboardImportLegacy extends PureComponent<Props> {
     const { loadingState, dashboard } = this.props;
 
     if (loadingState === LoadingState.Done) {
-      const format = detectDashboardFormat(dashboard);
+      const format = detectExportFormat(dashboard);
 
       // k8s disabled but resource format -> show error
-      if (format === DashboardFormat.V1Resource || format === DashboardFormat.V2Resource) {
+      if (format === ExportFormat.V1Resource || format === ExportFormat.V2Resource) {
         return <ImportResourceFormatError format={format} onCancel={this.props.clearLoadedDashboard} />;
       }
 

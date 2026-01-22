@@ -13,7 +13,7 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { AnnotationQuery, Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { isRecord } from 'app/core/utils/isRecord';
-import { DashboardFormat } from 'app/features/dashboard/api/types';
+import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV1Resource, isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 
 import { LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
@@ -34,16 +34,16 @@ import {
  * Detect the dashboard format from input.
  * Handles k8s resources (v1/v2), raw specs, and classic dashboards.
  */
-export function detectDashboardFormat(input: unknown): DashboardFormat {
+export function detectExportFormat(input: unknown): ExportFormat {
   if (isDashboardV2Resource(input) || isDashboardV2Spec(input)) {
-    return DashboardFormat.V2Resource;
+    return ExportFormat.V2Resource;
   }
 
   if (isDashboardV1Resource(input)) {
-    return DashboardFormat.V1Resource;
+    return ExportFormat.V1Resource;
   }
 
-  return DashboardFormat.Classic;
+  return ExportFormat.Classic;
 }
 
 function isLibraryElementExport(value: unknown): value is LibraryElementExport {

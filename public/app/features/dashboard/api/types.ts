@@ -12,7 +12,7 @@ import { SaveDashboardCommand } from '../components/SaveDashboard/types';
  * - V1Resource: Kubernetes resource with v1 dashboard spec
  * - V2Resource: Kubernetes resource with v2 dashboard spec (new layouts)
  */
-export enum DashboardFormat {
+export enum ExportFormat {
   Classic = 'classic',
   V1Resource = 'v1-resource',
   V2Resource = 'v2-resource',

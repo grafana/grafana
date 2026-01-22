@@ -6,7 +6,7 @@ import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Alert, Icon, Label, RadioButtonGroup, Stack, Switch, Box, Tooltip } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { DashboardFormat } from 'app/features/dashboard/api/types';
+import { ExportFormat } from 'app/features/dashboard/api/types';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { ExportableResource } from '../ShareExportTab';
@@ -18,9 +18,9 @@ interface Props {
     initialSaveModelVersion: 'v1' | 'v2';
   }>;
   isSharingExternally: boolean;
-  exportFormat: DashboardFormat;
+  exportFormat: ExportFormat;
   isViewingYAML: boolean;
-  onExportFormatChange: (format: DashboardFormat) => void;
+  onExportFormatChange: (format: ExportFormat) => void;
   onShareExternallyChange: () => void;
   onViewYAML: () => void;
 }
@@ -43,7 +43,7 @@ export function ResourceExport({
   const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
 
   const switchExportLabel =
-    exportFormat === DashboardFormat.V2Resource
+    exportFormat === ExportFormat.V2Resource
       ? t('dashboard-scene.resource-export.share-externally', 'Share dashboard with another instance')
       : t('share-modal.export.share-externally-label', 'Export for sharing externally');
   const switchExportTooltip = t(
@@ -56,15 +56,15 @@ export function ResourceExport({
   const exportResourceOptions = [
     {
       label: t('dashboard-scene.resource-export.label.classic', 'Classic'),
-      value: DashboardFormat.Classic,
+      value: ExportFormat.Classic,
     },
     {
       label: t('dashboard-scene.resource-export.label.v1-resource', 'V1 Resource'),
-      value: DashboardFormat.V1Resource,
+      value: ExportFormat.V1Resource,
     },
     {
       label: t('dashboard-scene.resource-export.label.v2-resource', 'V2 Resource'),
-      value: DashboardFormat.V2Resource,
+      value: ExportFormat.V2Resource,
     },
   ];
 
@@ -90,7 +90,7 @@ export function ResourceExport({
               </Stack>
             )}
 
-            {exportFormat !== DashboardFormat.Classic && (
+            {exportFormat !== ExportFormat.Classic && (
               <Stack gap={1} alignItems="center">
                 <Label>{switchExportFormatLabel}</Label>
                 <RadioButtonGroup
@@ -109,8 +109,8 @@ export function ResourceExport({
       </QueryOperationRow>
 
       {(isV2Dashboard ||
-        exportFormat === DashboardFormat.Classic ||
-        (initialSaveModelVersion === 'v2' && exportFormat === DashboardFormat.V1Resource)) && (
+        exportFormat === ExportFormat.Classic ||
+        (initialSaveModelVersion === 'v2' && exportFormat === ExportFormat.V1Resource)) && (
         <Stack gap={1} alignItems="start">
           <Label>
             <Stack gap={0.5} alignItems="center">

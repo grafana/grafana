@@ -6,11 +6,11 @@ import {
   Spec as DashboardV2Spec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Dashboard, Panel, VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
-import { DashboardFormat } from 'app/features/dashboard/api/types';
+import { ExportFormat } from 'app/features/dashboard/api/types';
 
 import { DashboardInputs, ImportDashboardDTO, ImportFormDataV2, InputType } from '../../types';
 
-import { applyV1Inputs, applyV2Inputs, detectDashboardFormat, extractV1Inputs, extractV2Inputs } from './inputs';
+import { applyV1Inputs, applyV2Inputs, detectExportFormat, extractV1Inputs, extractV2Inputs } from './inputs';
 
 // Mock getDataSourceSrv
 jest.mock('@grafana/runtime', () => ({
@@ -24,25 +24,25 @@ jest.mock('../../../library-panels/state/api', () => ({
   getLibraryPanel: jest.fn().mockRejectedValue({ status: 404 }),
 }));
 
-describe('detectDashboardFormat', () => {
+describe('detectExportFormat', () => {
   it('detects v2 resource format', () => {
     const dashboard = { kind: 'DashboardWithAccessInfo', spec: { elements: {} } };
-    expect(detectDashboardFormat(dashboard)).toBe(DashboardFormat.V2Resource);
+    expect(detectExportFormat(dashboard)).toBe(ExportFormat.V2Resource);
   });
 
   it('detects v2 spec format (raw)', () => {
     const dashboard = { elements: {}, layout: {} };
-    expect(detectDashboardFormat(dashboard)).toBe(DashboardFormat.V2Resource);
+    expect(detectExportFormat(dashboard)).toBe(ExportFormat.V2Resource);
   });
 
   it('detects v1 resource format', () => {
     const dashboard = { kind: 'DashboardWithAccessInfo', spec: { title: 'v1' } };
-    expect(detectDashboardFormat(dashboard)).toBe(DashboardFormat.V1Resource);
+    expect(detectExportFormat(dashboard)).toBe(ExportFormat.V1Resource);
   });
 
   it('detects classic format', () => {
     const dashboard = { title: 'v1' };
-    expect(detectDashboardFormat(dashboard)).toBe(DashboardFormat.Classic);
+    expect(detectExportFormat(dashboard)).toBe(ExportFormat.Classic);
   });
 });
 
