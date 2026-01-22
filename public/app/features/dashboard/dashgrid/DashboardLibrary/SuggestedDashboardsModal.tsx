@@ -6,8 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Modal, TabsBar, Tab, TabContent, useStyles2, Text } from '@grafana/ui';
-import { DashboardInput, DataSourceInput } from 'app/features/manage-dashboards/import/types';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { DashboardInput, DataSourceInput, DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
 import { CommunityDashboardSection } from './CommunityDashboardSection';

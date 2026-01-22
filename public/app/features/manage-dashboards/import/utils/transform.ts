@@ -10,7 +10,7 @@ import {
 import { AnnotationQuery, Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { isRecord } from 'app/core/utils/isRecord';
 
-import { DatasourceSelection, DataSourceInput, ImportDashboardDTO, ImportFormDataV2 } from '../types';
+import { DatasourceSelection, DataSourceInput, ImportDashboardDTO, ImportFormDataV2 } from '../../types';
 
 export function applyV1DatasourceInputs(
   dashboard: Dashboard,

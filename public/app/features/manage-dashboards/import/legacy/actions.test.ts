@@ -14,17 +14,11 @@ import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { PanelModel } from '../../../dashboard/state/PanelModel';
 import { LibraryElementDTO } from '../../../library-panels/types';
-import { DataSourceInput, ImportDashboardDTO, InputType } from '../types';
+import { DashboardJson, DataSourceInput, ImportDashboardDTO, InputType } from '../../types';
 import { getLibraryPanelInputs } from '../utils/process';
 import { validateDashboardJson } from '../utils/validation';
 
-import {
-  DashboardJson,
-  importDashboard,
-  processDashboard,
-  processV2DatasourceInput,
-  processV2Datasources,
-} from './actions';
+import { importDashboard, processDashboard, processV2DatasourceInput, processV2Datasources } from './actions';
 import { initialImportDashboardState } from './reducers';
 
 jest.mock('app/features/library-panels/state/api');

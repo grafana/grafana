@@ -17,7 +17,7 @@ import {
   ImportDashboardDTO,
   ImportFormDataV2,
   LibraryPanelInputState,
-} from '../types';
+} from '../../types';
 import { applyV1DatasourceInputs, applyV2DatasourceInputs } from '../utils/transform';
 
 import { GcomDashboardInfo } from './GcomDashboardInfo';

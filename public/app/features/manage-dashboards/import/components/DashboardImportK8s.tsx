@@ -9,7 +9,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { isRecord } from 'app/core/utils/isRecord';
 
-import { DashboardInputs, DashboardSource } from '../types';
+import { DashboardInputs, DashboardSource } from '../../types';
 import { detectImportModel, ImportModel } from '../utils/detect';
 import { processInputsFromDashboard, processV2Inputs } from '../utils/process';
 

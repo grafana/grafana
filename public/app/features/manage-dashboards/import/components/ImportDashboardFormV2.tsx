@@ -8,7 +8,7 @@ import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input } from '@gr
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { DashboardInputs, DatasourceSelection, DataSourceInput, ImportFormDataV2 } from '../types';
+import { DashboardInputs, DatasourceSelection, DataSourceInput, ImportFormDataV2 } from '../../types';
 import { validateTitle } from '../utils/validation';
 
 interface Props extends Pick<UseFormReturn<ImportFormDataV2>, 'register' | 'control' | 'getValues' | 'watch'> {

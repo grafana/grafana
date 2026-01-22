@@ -16,16 +16,13 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ThunkResult } from 'app/types/store';
 
 import {
-  ExternalDashboard,
   Input,
   InputUsage,
   LibraryElementExport,
   LibraryPanel,
 } from '../../../dashboard/components/DashExportModal/DashboardExporter';
-import { DataSourceInput, ImportDashboardDTO, InputType, LibraryPanelInputState } from '../types';
+import { DataSourceInput, ImportDashboardDTO, InputType, LibraryPanelInputState, DashboardJson } from '../../types';
 import { getLibraryPanelInputs } from '../utils/process';
-
-export type DashboardJson = ExternalDashboard & Omit<Dashboard, 'panels'>;
 
 import {
   clearDashboard,

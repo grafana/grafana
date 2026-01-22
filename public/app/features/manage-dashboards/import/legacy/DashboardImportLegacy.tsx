@@ -15,10 +15,10 @@ import { dispatch } from 'app/store/store';
 import { StoreState } from 'app/types/store';
 
 import { cleanUpAction } from '../../../../core/actions/cleanUp';
+import { DashboardSource, ImportDashboardDTO } from '../../types';
 import { GcomDashboardInfo } from '../components/GcomDashboardInfo';
 import { ImportForm } from '../components/ImportForm';
 import { ImportSourceForm } from '../components/ImportSourceForm';
-import { DashboardSource, ImportDashboardDTO } from '../types';
 import { detectImportModel, ImportModel } from '../utils/detect';
 
 import {

@@ -9,7 +9,7 @@ import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 
 import { getLibraryPanel } from '../../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../../library-panels/types';
-import { DashboardInputs, DataSourceInput, InputType, LibraryPanelInput, LibraryPanelInputState } from '../types';
+import { DashboardInputs, DataSourceInput, InputType, LibraryPanelInput, LibraryPanelInputState } from '../../types';
 
 interface LibraryElementExport {
   uid: string;

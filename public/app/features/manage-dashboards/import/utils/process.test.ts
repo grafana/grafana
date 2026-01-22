@@ -1,4 +1,4 @@
-import { InputType } from '../types';
+import { InputType } from '../../types';
 
 import { processInputsFromDashboard, processV2Inputs } from './process';
 

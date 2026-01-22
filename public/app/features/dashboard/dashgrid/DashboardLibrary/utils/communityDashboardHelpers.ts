@@ -3,8 +3,7 @@ import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { DataSourceInput } from 'app/features/manage-dashboards/import/types';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { DataSourceInput, DashboardJson } from 'app/features/manage-dashboards/types';
 import { dispatch } from 'app/types/store';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';

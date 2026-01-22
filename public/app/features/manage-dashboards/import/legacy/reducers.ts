@@ -4,7 +4,7 @@ import { createSlice, Draft, PayloadAction } from '@reduxjs/toolkit';
 
 import { LoadingState } from '@grafana/data';
 
-import { DashboardInputs, DashboardSource, InputType, LibraryPanelInput } from '../types';
+import { DashboardInputs, DashboardSource, InputType, LibraryPanelInput } from '../../types';
 
 // Legacy-only type - Redux state shape
 export interface ImportDashboardState {

@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { DataSourceInput, DashboardInput, InputType } from 'app/features/manage-dashboards/import/types';
+import { DataSourceInput, DashboardInput, InputType } from 'app/features/manage-dashboards/types';
 
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
 import { CONTENT_KINDS, ContentKind, EVENT_LOCATIONS, EventLocation } from './interactions';
