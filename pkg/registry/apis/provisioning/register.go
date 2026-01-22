@@ -100,7 +100,7 @@ type APIBuilder struct {
 
 	tracer              tracing.Tracer
 	repoStore           grafanarest.Storage
-	repoLister          repository.RepositoryLister
+	repoLister          repository.RepositoryByConnectionLister
 	repoValidator       repository.Validator
 	connectionStore     grafanarest.Storage
 	parsers             resources.ParserFactory
@@ -624,6 +624,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// Connection mutator and validator
 	b.admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(b.connectionFactory))
 	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionValidator(b.connectionFactory))
+	// Connection delete validator - prevents deletion when repositories reference the connection
+	b.admissionHandler.RegisterDeleteValidator(provisioning.ConnectionResourceInfo.GetName(), connection.NewDeleteValidator(b.repoLister))
 	// Jobs validator (no mutator needed)
 	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator())
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
@@ -707,8 +709,13 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 // Validate delegates to the admission handler for resource-specific validation
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	// Handle delete validation separately - for delete, obj may be nil
+	if a.GetOperation() == admission.Delete {
+		return b.admissionHandler.ValidateDelete(ctx, a, o)
+	}
+
 	obj := a.GetObject()
-	if obj == nil || a.GetOperation() == admission.Connect || a.GetOperation() == admission.Delete {
+	if obj == nil || a.GetOperation() == admission.Connect {
 		return nil // This is normal for sub-resource
 	}
 

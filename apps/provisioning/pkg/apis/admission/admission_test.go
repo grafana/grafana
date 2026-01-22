@@ -37,6 +37,17 @@ func (v *mockValidator) Validate(ctx context.Context, a admission.Attributes, o 
 	return v.err
 }
 
+// mockDeleteValidator is a test implementation of DeleteValidator
+type mockDeleteValidator struct {
+	called bool
+	err    error
+}
+
+func (v *mockDeleteValidator) ValidateDelete(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	v.called = true
+	return v.err
+}
+
 func newTestAttributes(obj runtime.Object, resource string, op admission.Operation) admission.Attributes {
 	return admission.NewAttributesRecord(
 		obj,
@@ -58,8 +69,10 @@ func TestNewHandler(t *testing.T) {
 	require.NotNil(t, h)
 	assert.NotNil(t, h.mutators)
 	assert.NotNil(t, h.validators)
+	assert.NotNil(t, h.deleteValidators)
 	assert.Empty(t, h.mutators)
 	assert.Empty(t, h.validators)
+	assert.Empty(t, h.deleteValidators)
 }
 
 func TestHandler_RegisterMutator(t *testing.T) {
@@ -80,6 +93,16 @@ func TestHandler_RegisterValidator(t *testing.T) {
 
 	assert.Len(t, h.validators, 1)
 	assert.Equal(t, v, h.validators["repositories"])
+}
+
+func TestHandler_RegisterDeleteValidator(t *testing.T) {
+	h := NewHandler()
+	v := &mockDeleteValidator{}
+
+	h.RegisterDeleteValidator("connections", v)
+
+	assert.Len(t, h.deleteValidators, 1)
+	assert.Equal(t, v, h.deleteValidators["connections"])
 }
 
 func TestHandler_Mutate(t *testing.T) {
@@ -242,6 +265,73 @@ func TestHandler_Validate(t *testing.T) {
 
 			attr := newTestAttributes(tt.obj, tt.resource, tt.operation)
 			err := h.Validate(context.Background(), attr, nil)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.wantCalled, v.called)
+		})
+	}
+}
+
+func TestHandler_ValidateDelete(t *testing.T) {
+	tests := []struct {
+		name                    string
+		resource                string
+		operation               admission.Operation
+		registerDeleteValidator bool
+		deleteValidatorErr      error
+		wantCalled              bool
+		wantErr                 bool
+	}{
+		{
+			name:                    "calls registered delete validator",
+			resource:                "connections",
+			operation:               admission.Delete,
+			registerDeleteValidator: true,
+			wantCalled:              true,
+			wantErr:                 false,
+		},
+		{
+			name:                    "returns nil for unregistered resource",
+			resource:                "unknown",
+			operation:               admission.Delete,
+			registerDeleteValidator: false,
+			wantCalled:              false,
+			wantErr:                 false,
+		},
+		{
+			name:                    "returns nil for non-Delete operation",
+			resource:                "connections",
+			operation:               admission.Create,
+			registerDeleteValidator: true,
+			wantCalled:              false,
+			wantErr:                 false,
+		},
+		{
+			name:                    "propagates delete validator error",
+			resource:                "connections",
+			operation:               admission.Delete,
+			registerDeleteValidator: true,
+			deleteValidatorErr:      errors.New("delete validation failed"),
+			wantCalled:              true,
+			wantErr:                 true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := NewHandler()
+			v := &mockDeleteValidator{err: tt.deleteValidatorErr}
+
+			if tt.registerDeleteValidator {
+				h.RegisterDeleteValidator("connections", v)
+			}
+
+			attr := newTestAttributes(nil, tt.resource, tt.operation)
+			err := h.ValidateDelete(context.Background(), attr, nil)
 
 			if tt.wantErr {
 				assert.Error(t, err)

@@ -1036,6 +1036,141 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 	})
 }
 
+func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	createOptions := metav1.CreateOptions{}
+	deleteOptions := metav1.DeleteOptions{}
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	// Create a connection
+	connection := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Connection",
+		"metadata": map[string]any{
+			"name":      "test-conn-delete-blocked",
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"type": "github",
+			"github": map[string]any{
+				"appID":          "123456",
+				"installationID": "454545",
+			},
+		},
+		"secure": map[string]any{
+			"privateKey": map[string]any{
+				"create": privateKeyBase64,
+			},
+		},
+	}}
+
+	_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+	require.NoError(t, err, "failed to create connection")
+
+	// Create a repository that references the connection
+	repo := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Repository",
+		"metadata": map[string]any{
+			"name":      "repo-referencing-connection",
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"title": "Repo Referencing Connection",
+			"type":  "local",
+			"sync": map[string]any{
+				"enabled": false,
+				"target":  "folder",
+			},
+			"local": map[string]any{
+				"path": helper.ProvisioningPath,
+			},
+			"connection": map[string]any{
+				"name": "test-conn-delete-blocked",
+			},
+		},
+	}}
+
+	_, err = helper.Repositories.Resource.Create(ctx, repo, createOptions)
+	require.NoError(t, err, "failed to create repository referencing connection")
+
+	t.Run("should block connection deletion when referenced by repository", func(t *testing.T) {
+		err := helper.Connections.Resource.Delete(ctx, "test-conn-delete-blocked", deleteOptions)
+		require.Error(t, err, "expected deletion to be blocked")
+
+		// Verify it's a Forbidden error
+		assert.True(t, k8serrors.IsForbidden(err), "expected Forbidden error, got: %v", err)
+		assert.Contains(t, err.Error(), "repo-referencing-connection", "error should mention the referencing repository")
+	})
+
+	t.Run("should allow connection deletion after repository is deleted", func(t *testing.T) {
+		// Delete the repository first
+		err := helper.Repositories.Resource.Delete(ctx, "repo-referencing-connection", deleteOptions)
+		require.NoError(t, err, "failed to delete repository")
+
+		// Wait for the repository to be fully deleted (might have finalizers)
+		require.Eventually(t, func() bool {
+			_, err := helper.Repositories.Resource.Get(ctx, "repo-referencing-connection", metav1.GetOptions{})
+			return k8serrors.IsNotFound(err)
+		}, 30*time.Second, 100*time.Millisecond, "repository should be deleted")
+
+		// Now deletion should succeed
+		err = helper.Connections.Resource.Delete(ctx, "test-conn-delete-blocked", deleteOptions)
+		require.NoError(t, err, "expected deletion to succeed after repository deletion")
+
+		// Verify connection is actually deleted
+		_, err = helper.Connections.Resource.Get(ctx, "test-conn-delete-blocked", metav1.GetOptions{})
+		assert.True(t, k8serrors.IsNotFound(err), "connection should be deleted")
+	})
+}
+
+func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	createOptions := metav1.CreateOptions{}
+	deleteOptions := metav1.DeleteOptions{}
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	// Create a connection with no repository references
+	connection := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Connection",
+		"metadata": map[string]any{
+			"name":      "test-conn-no-refs",
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"type": "github",
+			"github": map[string]any{
+				"appID":          "789012",
+				"installationID": "121212",
+			},
+		},
+		"secure": map[string]any{
+			"privateKey": map[string]any{
+				"create": privateKeyBase64,
+			},
+		},
+	}}
+
+	_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+	require.NoError(t, err, "failed to create connection")
+
+	t.Run("should allow deletion of connection with no repository references", func(t *testing.T) {
+		err := helper.Connections.Resource.Delete(ctx, "test-conn-no-refs", deleteOptions)
+		require.NoError(t, err, "expected deletion to succeed for unreferenced connection")
+
+		// Verify connection is deleted
+		_, err = helper.Connections.Resource.Get(ctx, "test-conn-no-refs", metav1.GetOptions{})
+		assert.True(t, k8serrors.IsNotFound(err), "connection should be deleted")
+	})
+}
+
 func verifyToken(t *testing.T, appID, publicKey, token string) (bool, error) {
 	t.Helper()
 

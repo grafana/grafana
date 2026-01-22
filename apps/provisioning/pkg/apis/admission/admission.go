@@ -16,17 +16,24 @@ type Validator interface {
 	Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error
 }
 
+// DeleteValidator handles validation before deletion of a specific resource type
+type DeleteValidator interface {
+	ValidateDelete(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error
+}
+
 // Handler dispatches to registered mutators and validators based on resource type
 type Handler struct {
-	mutators   map[string]Mutator
-	validators map[string]Validator
+	mutators         map[string]Mutator
+	validators       map[string]Validator
+	deleteValidators map[string]DeleteValidator
 }
 
 // NewHandler creates a new admission handler
 func NewHandler() *Handler {
 	return &Handler{
-		mutators:   make(map[string]Mutator),
-		validators: make(map[string]Validator),
+		mutators:         make(map[string]Mutator),
+		validators:       make(map[string]Validator),
+		deleteValidators: make(map[string]DeleteValidator),
 	}
 }
 
@@ -38,6 +45,11 @@ func (h *Handler) RegisterMutator(resource string, m Mutator) {
 // RegisterValidator registers a validator for a specific resource type
 func (h *Handler) RegisterValidator(resource string, v Validator) {
 	h.validators[resource] = v
+}
+
+// RegisterDeleteValidator registers a delete validator for a specific resource type
+func (h *Handler) RegisterDeleteValidator(resource string, v DeleteValidator) {
+	h.deleteValidators[resource] = v
 }
 
 // Mutate dispatches mutation to the appropriate handler based on resource type
@@ -69,5 +81,20 @@ func (h *Handler) Validate(ctx context.Context, a admission.Attributes, o admiss
 	}
 
 	// No validator registered for this resource - that's okay, not all resources need validation
+	return nil
+}
+
+// ValidateDelete dispatches delete validation to the appropriate handler based on resource type
+func (h *Handler) ValidateDelete(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	if a.GetOperation() != admission.Delete {
+		return nil
+	}
+
+	resource := a.GetResource().Resource
+	if v, ok := h.deleteValidators[resource]; ok {
+		return v.ValidateDelete(ctx, a, o)
+	}
+
+	// No delete validator registered for this resource - that's okay, not all resources need delete validation
 	return nil
 }

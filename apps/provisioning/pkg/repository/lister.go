@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	"k8s.io/apimachinery/pkg/fields"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -14,6 +15,13 @@ import (
 // RepositoryLister is an interface for listing repositories.
 type RepositoryLister interface {
 	List(ctx context.Context) ([]provisioning.Repository, error)
+}
+
+// RepositoryByConnectionLister extends RepositoryLister to support listing repositories by connection name.
+type RepositoryByConnectionLister interface {
+	RepositoryLister
+	// ListByConnection returns all repositories that reference the given connection name.
+	ListByConnection(ctx context.Context, connectionName string) ([]provisioning.Repository, error)
 }
 
 // storageListerBackend is an interface for listing repositories from storage.
@@ -41,14 +49,28 @@ func NewStorageLister(store storageListerBackend) *StorageLister {
 // List retrieves all repositories from storage.
 // The namespace must be set in the context using request.WithNamespace.
 func (l *StorageLister) List(ctx context.Context) ([]provisioning.Repository, error) {
+	return l.listWithOptions(ctx, &internalversion.ListOptions{})
+}
+
+// ListByConnection returns all repositories that reference the given connection name.
+// The namespace must be set in the context using request.WithNamespace.
+func (l *StorageLister) ListByConnection(ctx context.Context, connectionName string) ([]provisioning.Repository, error) {
+	fieldSelector := fields.OneTermEqualSelector("spec.connection.name", connectionName)
+	return l.listWithOptions(ctx, &internalversion.ListOptions{
+		FieldSelector: fieldSelector,
+	})
+}
+
+// listWithOptions retrieves repositories from storage with the given options.
+func (l *StorageLister) listWithOptions(ctx context.Context, opts *internalversion.ListOptions) ([]provisioning.Repository, error) {
 	var allRepositories []provisioning.Repository
 	continueToken := ""
 
 	for {
-		obj, err := l.store.List(ctx, &internalversion.ListOptions{
-			Limit:    100,
-			Continue: continueToken,
-		})
+		opts.Limit = 100
+		opts.Continue = continueToken
+
+		obj, err := l.store.List(ctx, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -82,14 +104,28 @@ func NewClientLister(client clientListerBackend) *ClientLister {
 // List retrieves all repositories using the typed client.
 // The namespace must be set in the context using request.WithNamespace.
 func (l *ClientLister) List(ctx context.Context) ([]provisioning.Repository, error) {
+	return l.listWithOptions(ctx, metav1.ListOptions{})
+}
+
+// ListByConnection returns all repositories that reference the given connection name.
+// The namespace must be set in the context using request.WithNamespace.
+func (l *ClientLister) ListByConnection(ctx context.Context, connectionName string) ([]provisioning.Repository, error) {
+	fieldSelector := fields.OneTermEqualSelector("spec.connection.name", connectionName)
+	return l.listWithOptions(ctx, metav1.ListOptions{
+		FieldSelector: fieldSelector.String(),
+	})
+}
+
+// listWithOptions retrieves repositories using the typed client with the given options.
+func (l *ClientLister) listWithOptions(ctx context.Context, opts metav1.ListOptions) ([]provisioning.Repository, error) {
 	var allRepositories []provisioning.Repository
 	continueToken := ""
 
 	for {
-		list, err := l.client.List(ctx, metav1.ListOptions{
-			Limit:    100,
-			Continue: continueToken,
-		})
+		opts.Limit = 100
+		opts.Continue = continueToken
+
+		list, err := l.client.List(ctx, opts)
 		if err != nil {
 			return nil, err
 		}
