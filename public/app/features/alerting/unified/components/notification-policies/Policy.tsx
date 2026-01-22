@@ -49,7 +49,7 @@ import { Spacer } from '../Spacer';
 import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
 import { Matchers } from './Matchers';
-import { RoutesMatchingFilters } from './NotificationPoliciesTree';
+import { RoutesMatchingFilters } from './PoliciesTree';
 import { TimingOptions } from './timingOptions';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 

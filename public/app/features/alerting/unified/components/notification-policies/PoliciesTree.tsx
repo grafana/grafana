@@ -33,11 +33,11 @@ import {
   useUpdateExistingNotificationPolicy,
 } from './useNotificationPolicyRoute';
 
-interface NotificationPoliciesTreeProps {
+interface PoliciesTreeProps {
   routeName?: string;
 }
 
-export const NotificationPoliciesTree = ({ routeName }: NotificationPoliciesTreeProps) => {
+export const PoliciesTree = ({ routeName }: PoliciesTreeProps) => {
   const appNotification = useAppNotification();
   const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
 
