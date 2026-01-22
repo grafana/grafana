@@ -63,7 +63,7 @@ type RepositoryController struct {
 
 	repoFactory       repository.Factory
 	connectionFactory connection.Factory
-	healthChecker     *HealthChecker
+	healthChecker     *RepositoryHealthChecker
 	// To allow injection for testing.
 	processFn         func(item *queueItem) error
 	enqueueRepository func(obj any)
@@ -87,7 +87,7 @@ func NewRepositoryController(
 		jobs.Queue
 		jobs.Store
 	},
-	healthChecker *HealthChecker,
+	healthChecker *RepositoryHealthChecker,
 	statusPatcher StatusPatcher,
 	registry prometheus.Registerer,
 	tracer tracing.Tracer,
@@ -594,12 +594,16 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		patchOperations = append(patchOperations, healthPatchOps...)
 	}
 
-	// Update fieldErrors from test results
+	// Update fieldErrors from test results - always update to ensure fieldErrors are cleared when there are no errors
 	if testResults != nil {
+		fieldErrors := testResults.Errors
+		if fieldErrors == nil {
+			fieldErrors = []provisioning.ErrorDetails{}
+		}
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/fieldErrors",
-			"value": testResults.Errors,
+			"value": fieldErrors,
 		})
 	}
 
