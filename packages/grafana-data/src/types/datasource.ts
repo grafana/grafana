@@ -215,9 +215,11 @@ abstract class DataSourceApi<
   readonly name: string;
 
   /**
-   *  Set in constructor
+   * Internal ID, this will be removed in G13
+   *
+   * @deprecated
    */
-  readonly id: number;
+  readonly id?: number;
 
   /**
    *  Set in constructor
@@ -732,7 +734,10 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
  * in bootData (on page load), or from: /api/frontend/settings
  */
 export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataSourceJsonData> {
-  id: number;
+  /**
+   * @deprecated will be removed in G13
+   */
+  id?: number;
   uid: string;
   type: string;
   name: string;

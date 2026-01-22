@@ -4,6 +4,7 @@ import {
   DeepPartial,
   EmbeddedScene,
   SceneDeactivationHandler,
+  sceneGraph,
   SceneGridLayout,
   SceneGridRow,
   SceneObject,
@@ -19,13 +20,18 @@ import {
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { DashboardDTO } from 'app/types/dashboard';
 
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { DashboardLayoutGrid } from '../scene/types/DashboardLayoutGrid';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 
@@ -310,4 +316,17 @@ export function getTestDashboardSceneFromSaveModel(spec?: Partial<DashboardV2Spe
   dashboard.setInitialSaveModel(initialSaveModel);
 
   return dashboard;
+}
+
+// returns e.g. data-testid Layout container row Row title
+export function getTestIdForLayout(model: AutoGridLayout | DashboardLayoutGrid) {
+  const parentRowOrTab = sceneGraph.findObject(
+    model,
+    (currentSceneObject) => currentSceneObject instanceof RowItem || currentSceneObject instanceof TabItem
+  );
+  if (parentRowOrTab instanceof TabItem || parentRowOrTab instanceof RowItem) {
+    return `${getLayoutType(parentRowOrTab)} ${parentRowOrTab.state.title}`;
+  }
+
+  return '';
 }

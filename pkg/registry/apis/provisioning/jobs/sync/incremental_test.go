@@ -104,10 +104,10 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock progress recording
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionCreated && result.Path == "dashboards/test.json"
+					return result.Action() == repository.FileActionCreated && result.Path() == "dashboards/test.json"
 				})).Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionUpdated && result.Path == "alerts/alert.yaml"
+					return result.Action() == repository.FileActionUpdated && result.Path() == "alerts/alert.yaml"
 				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -139,13 +139,9 @@ func TestIncrementalSync(t *testing.T) {
 					Return("test-folder", nil)
 
 				// Mock progress recording
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionCreated,
-					Path:   "unsupported/path/",
-					Kind:   resources.FolderKind.Kind,
-					Group:  resources.FolderResource.Group,
-					Name:   "test-folder",
-				}).Return()
+				progress.On("Record", mock.Anything, jobs.NewFolderResult("unsupported/path/").
+					WithAction(repository.FileActionCreated).
+					Build()).Return()
 
 				progress.On("TooManyErrors").Return(nil)
 			},
@@ -171,10 +167,13 @@ func TestIncrementalSync(t *testing.T) {
 				// Mock HasDirPathFailedCreation check
 				progress.On("HasDirPathFailedCreation", ".unsupported/path/file.txt").Return(false)
 
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionIgnored,
-					Path:   ".unsupported/path/file.txt",
-				}).Return()
+				// Mock HasDirPathFailedCreation check
+				progress.On("HasDirPathFailedCreation", ".unsupported/path/file.txt").Return(false)
+
+				progress.On("Record", mock.Anything, jobs.NewPathOnlyResult(
+					".unsupported/path/file.txt",
+				).WithAction(repository.FileActionIgnored).
+					Build()).Return()
 				progress.On("TooManyErrors").Return(nil)
 			},
 			previousRef:   "old-ref",
@@ -201,13 +200,13 @@ func TestIncrementalSync(t *testing.T) {
 					Return("old-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
 				// Mock progress recording
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionDeleted,
-					Path:   "dashboards/old.json",
-					Name:   "old-dashboard",
-					Kind:   "Dashboard",
-					Group:  "dashboards",
-				}).Return()
+				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+					"old-dashboard",
+					"dashboards",
+					"Dashboard",
+				).WithPath("dashboards/old.json").
+					WithAction(repository.FileActionDeleted).
+					Build()).Return()
 
 				progress.On("TooManyErrors").Return(nil)
 			},
@@ -240,13 +239,13 @@ func TestIncrementalSync(t *testing.T) {
 					Return("renamed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
 				// Mock progress recording
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionRenamed,
-					Path:   "dashboards/new.json",
-					Name:   "renamed-dashboard",
-					Kind:   "Dashboard",
-					Group:  "dashboards",
-				}).Return()
+				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+					"renamed-dashboard",
+					"dashboards",
+					"Dashboard",
+				).WithPath("dashboards/new.json").
+					WithAction(repository.FileActionRenamed).
+					Build()).Return()
 
 				progress.On("TooManyErrors").Return(nil)
 			},
@@ -271,10 +270,9 @@ func TestIncrementalSync(t *testing.T) {
 				// Mock HasDirPathFailedCreation check
 				progress.On("HasDirPathFailedCreation", "dashboards/ignored.json").Return(false)
 
-				progress.On("Record", mock.Anything, jobs.JobResourceResult{
-					Action: repository.FileActionIgnored,
-					Path:   "dashboards/ignored.json",
-				}).Return()
+				progress.On("Record", mock.Anything, jobs.NewPathOnlyResult(
+					"dashboards/ignored.json",
+				).WithAction(repository.FileActionIgnored).Build()).Return()
 				progress.On("TooManyErrors").Return(nil)
 			},
 			previousRef:   "old-ref",
@@ -305,10 +303,10 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock progress recording with error
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionIgnored &&
-						result.Path == "unsupported/path/file.txt" &&
-						result.Error != nil &&
-						result.Error.Error() == "failed to create folder"
+					return result.Action() == repository.FileActionIgnored &&
+						result.Path() == "unsupported/path/file.txt" &&
+						result.Error() != nil &&
+						result.Error().Error() == "failed to create folder"
 				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -341,13 +339,13 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock progress recording with error
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionCreated &&
-						result.Path == "dashboards/test.json" &&
-						result.Name == "test-dashboard" &&
-						result.Kind == "Dashboard" &&
-						result.Group == "dashboards" &&
-						result.Error != nil &&
-						result.Error.Error() == "writing resource from file dashboards/test.json: write failed"
+					return result.Action() == repository.FileActionCreated &&
+						result.Path() == "dashboards/test.json" &&
+						result.Name() == "test-dashboard" &&
+						result.Kind() == "Dashboard" &&
+						result.Group() == "dashboards" &&
+						result.Error() != nil &&
+						result.Error().Error() == "writing resource from file dashboards/test.json: write failed"
 				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -377,13 +375,13 @@ func TestIncrementalSync(t *testing.T) {
 
 				// Mock progress recording with error
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action == repository.FileActionDeleted &&
-						result.Path == "dashboards/old.json" &&
-						result.Name == "old-dashboard" &&
-						result.Kind == "Dashboard" &&
-						result.Group == "dashboards" &&
-						result.Error != nil &&
-						result.Error.Error() == "removing resource from file dashboards/old.json: delete failed"
+					return result.Action() == repository.FileActionDeleted &&
+						result.Path() == "dashboards/old.json" &&
+						result.Name() == "old-dashboard" &&
+						result.Kind() == "Dashboard" &&
+						result.Group() == "dashboards" &&
+						result.Error() != nil &&
+						result.Error().Error() == "removing resource from file dashboards/old.json: delete failed"
 				})).Return()
 				progress.On("TooManyErrors").Return(nil)
 			},
