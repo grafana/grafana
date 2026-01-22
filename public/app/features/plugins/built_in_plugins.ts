@@ -66,9 +66,6 @@ const heatmapPanel = async () =>
 const nodeGraph = async () =>
   await import(/* webpackChunkName: "nodeGraphPanel" */ 'app/plugins/panel/nodeGraph/module');
 
-const radialBar = async () =>
-  await import(/* webpackChunkName: "radialBarPanel" */ 'app/plugins/panel/radialbar/module');
-
 const builtInPlugins: Record<string, System.Module | (() => Promise<System.Module>)> = {
   // datasources
   'core:plugin/cloudwatch': cloudwatchPlugin,
@@ -100,7 +97,7 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/debug': debugPanel,
   'core:plugin/flamegraph': flamegraphPanel,
   'core:plugin/gettingstarted': gettingStartedPanel,
-  'core:plugin/gauge': config.featureToggles.newGauge ? radialBar : gaugePanel,
+  'core:plugin/gauge': gaugePanel,
   'core:plugin/piechart': pieChartPanel,
   'core:plugin/bargauge': barGaugePanel,
   'core:plugin/barchart': barChartPanel,
@@ -109,7 +106,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/welcome': welcomeBanner,
   'core:plugin/nodeGraph': nodeGraph,
   'core:plugin/histogram': histogramPanel,
-  'core:plugin/radialbar': radialBar,
 };
 
 export function isBuiltinPluginPath(path: string): path is keyof typeof builtInPlugins {
