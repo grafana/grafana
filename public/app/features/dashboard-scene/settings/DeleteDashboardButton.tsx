@@ -7,6 +7,7 @@ import { Button, ConfirmModal, Modal, Space, Text, TextLink } from '@grafana/ui'
 import { DeleteProvisionedDashboardDrawer } from 'app/features/provisioning/components/Dashboards/DeleteProvisionedDashboardDrawer';
 
 import { useDeleteDashboardsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
+import { DeletedDashboardsInfo } from '../../browse-dashboards/components/DeletedDashboardsInfo';
 import { DashboardScene } from '../scene/DashboardScene';
 
 interface ButtonProps {
@@ -78,14 +79,7 @@ export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: Del
         <>
           {config.featureToggles.restoreDashboards && (
             <>
-              <Text element="p">
-                <Trans i18nKey="dashboard-settings.delete-modal-restore-dashboards-text">
-                  This action will delete the dashboard. Deleted dashboards will be kept in the history for up to 12
-                  months. Users with delete permissions can restore the dashboards they deleted, and admins can restore
-                  any user's deleted dashboards. The history is limited to 1000 dashboards—older ones will be removed
-                  sooner if the limit is reached.
-                </Trans>
-              </Text>
+              <DeletedDashboardsInfo target="dashboard" />
               <Space v={1} />
             </>
           )}
