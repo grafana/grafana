@@ -15,7 +15,7 @@ export const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflow
   return [...workflows, 'branch'];
 };
 
-export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
+export const dataToSpec = (data: RepositoryFormData, connectionName?: string): RepositorySpec => {
   const spec: RepositorySpec = {
     type: data.type,
     sync: data.sync,
@@ -35,6 +35,11 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
         ...baseConfig,
         generateDashboardPreviews: data.generateDashboardPreviews,
       };
+      // Add connection reference at spec level if using GitHub App
+      // connection name is only available for the app flow
+      if (connectionName) {
+        spec.connection = { name: connectionName };
+      }
       break;
     case 'gitlab':
       spec.gitlab = baseConfig;

@@ -52,18 +52,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		// parse dualWriter modes from the section
 		dualWriterMode := section.Key("dualWriterMode").MustInt(0)
 
-		// parse dualWriter periodic data syncer config
-		dualWriterPeriodicDataSyncJobEnabled := section.Key("dualWriterPeriodicDataSyncJobEnabled").MustBool(false)
-
-		// parse dualWriter migration data sync disabled from resource section
-		dualWriterMigrationDataSyncDisabled := section.Key("dualWriterMigrationDataSyncDisabled").MustBool(false)
-
-		// parse dataSyncerRecordsLimit from resource section
-		dataSyncerRecordsLimit := section.Key("dataSyncerRecordsLimit").MustInt(1000)
-
-		// parse dataSyncerInterval from resource section
-		dataSyncerInterval := section.Key("dataSyncerInterval").MustDuration(time.Hour)
-
 		// parse EnableMigration from resource section
 		enableMigration := MigratedUnifiedResources[resourceName]
 		if section.HasKey("enableMigration") {
@@ -78,13 +66,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		}
 
 		storageConfig[resourceName] = UnifiedStorageConfig{
-			DualWriterMode:                       rest.DualWriterMode(dualWriterMode),
-			DualWriterPeriodicDataSyncJobEnabled: dualWriterPeriodicDataSyncJobEnabled,
-			DualWriterMigrationDataSyncDisabled:  dualWriterMigrationDataSyncDisabled,
-			DataSyncerRecordsLimit:               dataSyncerRecordsLimit,
-			DataSyncerInterval:                   dataSyncerInterval,
-			EnableMigration:                      enableMigration,
-			AutoMigrationThreshold:               autoMigrationThreshold,
+			DualWriterMode:         rest.DualWriterMode(dualWriterMode),
+			EnableMigration:        enableMigration,
+			AutoMigrationThreshold: autoMigrationThreshold,
 		}
 	}
 	cfg.UnifiedStorage = storageConfig
@@ -137,8 +121,17 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.OverridesFilePath = section.Key("overrides_path").String()
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
 
+	// garbage collection
+	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)
+	cfg.GarbageCollectionInterval = section.Key("garbage_collection_interval").MustDuration(15 * time.Minute)
+	cfg.GarbageCollectionBatchSize = section.Key("garbage_collection_batch_size").MustInt(100)
+	cfg.GarbageCollectionMaxAge = section.Key("garbage_collection_max_age").MustDuration(24 * time.Hour)
+	cfg.DashboardsGarbageCollectionMaxAge = section.Key("dashboards_garbage_collection_max_age").MustDuration(365 * 24 * time.Hour)
+
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
+	// enable sqlkv backwards compatibility mode with sql/backend
+	cfg.EnableSQLKVCompatibilityMode = section.Key("enable_sqlkv_compatibility_mode").MustBool(true)
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
@@ -167,10 +160,9 @@ func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
 		}
 		cfg.Logger.Info("Enforcing mode 5 for resource in unified storage", "resource", resource)
 		cfg.UnifiedStorage[resource] = UnifiedStorageConfig{
-			DualWriterMode:                      5,
-			DualWriterMigrationDataSyncDisabled: true,
-			EnableMigration:                     true,
-			AutoMigrationThreshold:              resourceCfg.AutoMigrationThreshold,
+			DualWriterMode:         5,
+			EnableMigration:        true,
+			AutoMigrationThreshold: resourceCfg.AutoMigrationThreshold,
 		}
 	}
 }
@@ -208,7 +200,6 @@ func (cfg *Cfg) EnableMode5(resource string) {
 	}
 	config := cfg.UnifiedStorage[resource]
 	config.DualWriterMode = rest.Mode5
-	config.DualWriterMigrationDataSyncDisabled = true
 	config.EnableMigration = true
 	cfg.UnifiedStorage[resource] = config
 }

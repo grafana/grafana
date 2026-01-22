@@ -255,6 +255,17 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		"value": healthStatus,
 	})
 
+	// Update fieldErrors from test results - ensure fieldErrors are cleared when there are no errors
+	fieldErrors := testResults.Errors
+	if fieldErrors == nil {
+		fieldErrors = []provisioning.ErrorDetails{}
+	}
+	patchOperations = append(patchOperations, map[string]interface{}{
+		"op":    "replace",
+		"path":  "/status/fieldErrors",
+		"value": fieldErrors,
+	})
+
 	if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
 		return fmt.Errorf("failed to update connection status: %w", err)
 	}

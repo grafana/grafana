@@ -46,8 +46,9 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 	_, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err)
 
-	t.Run("endpoint returns not implemented", func(t *testing.T) {
+	t.Run("admin can access endpoint and get repository list", func(t *testing.T) {
 		var statusCode int
+		var resultList provisioning.ExternalRepositoryList
 		result := helper.AdminREST.Get().
 			Namespace("default").
 			Resource("connections").
@@ -56,25 +57,29 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 			Do(ctx).
 			StatusCode(&statusCode)
 
-		require.Error(t, result.Error(), "should return error for not implemented endpoint")
-		require.Equal(t, http.StatusMethodNotAllowed, statusCode, "should return 405 Method Not Allowed")
-		require.True(t, apierrors.IsMethodNotSupported(result.Error()), "error should be MethodNotSupported")
-	})
+		// Endpoint is implemented and should return 200 with repository list
+		err := result.Error()
+		require.NoError(t, err, "endpoint should succeed")
+		err = result.Into(&resultList)
+		require.NoError(t, err, "should parse response")
+		require.Equal(t, http.StatusOK, statusCode)
 
-	t.Run("admin can access endpoint (gets not implemented)", func(t *testing.T) {
-		var statusCode int
-		result := helper.AdminREST.Get().
-			Namespace("default").
-			Resource("connections").
-			Name("connection-repositories-test").
-			SubResource("repositories").
-			Do(ctx).StatusCode(&statusCode)
+		// Verify the repository list contains expected repositories
+		require.NotNil(t, resultList.Items)
+		require.Len(t, resultList.Items, 3, "should return 3 repositories")
 
-		// Endpoint exists but returns not implemented
-		require.Error(t, result.Error(), "should return error")
-		require.True(t, apierrors.IsMethodNotSupported(result.Error()), "error should be MethodNotSupported")
-		// Status code should be 405 (Method Not Allowed) for method not supported
-		require.Equal(t, http.StatusMethodNotAllowed, statusCode)
+		// Verify each repository has the expected structure
+		expectedRepos := []provisioning.ExternalRepository{
+			{Name: "test-repo-1", Owner: "test-owner-1", URL: "https://github.com/test-owner-1/test-repo-1"},
+			{Name: "test-repo-2", Owner: "test-owner-2", URL: "https://github.com/test-owner-2/test-repo-2"},
+			{Name: "test-repo-3", Owner: "test-owner-3", URL: "https://github.com/test-owner-3/test-repo-3"},
+		}
+
+		for i, expectedRepo := range expectedRepos {
+			require.Equal(t, expectedRepo.Name, resultList.Items[i].Name, "repository %d name should match", i)
+			require.Equal(t, expectedRepo.Owner, resultList.Items[i].Owner, "repository %d owner should match", i)
+			require.Equal(t, expectedRepo.URL, resultList.Items[i].URL, "repository %d URL should match", i)
+		}
 	})
 
 	t.Run("editor cannot access endpoint", func(t *testing.T) {

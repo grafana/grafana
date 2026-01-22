@@ -32,16 +32,17 @@ import {
 import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditorLazy } from '../components/QueryEditorLazy';
 import { MACRO_NAMES } from '../constants';
-import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
+import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat, SQLDialect } from '../types';
 import migrateAnnotation from '../utils/migration';
 
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
-  id: number;
+  uid: string;
   responseParser: ResponseParser;
   name: string;
   interval: string;
   db: DB;
   preconfiguredDatabase: string;
+  dialect: SQLDialect = 'other';
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<SQLOptions>,
@@ -50,7 +51,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     super(instanceSettings);
     this.name = instanceSettings.name;
     this.responseParser = new ResponseParser();
-    this.id = instanceSettings.id;
+    this.uid = instanceSettings.uid;
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
     this.db = this.getDB();
@@ -65,7 +66,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     };
   }
 
-  abstract getDB(dsID?: number): DB;
+  abstract getDB(): DB;
 
   abstract getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): SqlQueryModel;
 

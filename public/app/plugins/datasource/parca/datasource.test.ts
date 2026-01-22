@@ -43,7 +43,6 @@ describe('Parca data source', () => {
 });
 
 const defaultSettings: DataSourceInstanceSettings = {
-  id: 0,
   uid: 'parca',
   type: 'profiling',
   name: 'parca',

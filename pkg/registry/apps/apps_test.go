@@ -50,7 +50,8 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 			got := ProvideAppInstallers(features,
 				playlistInstaller,
 				pluginsInstaller,
-				nil,
+				nil, // live
+				nil, // ShortURL
 				tt.rulesInst,
 				correlationsAppInstaller,
 				notificationsAppInstaller,

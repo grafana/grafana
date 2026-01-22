@@ -2170,8 +2170,10 @@
       "badge-tooltip-provenance": "此資源已透過 {{provenance}} 設定，無法透過使用者介面編輯",
       "badge-tooltip-standard": "此資源已設定，無法透過使用者介面編輯",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "此{{resource}}已佈建，這表示其是透過設定所建立。請聯絡您的伺服器管理員以更新此{{resource}}。",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "此{{resource}}無法透過使用者介面編輯"
     },
     "provisioning-badge": {
@@ -3712,6 +3714,7 @@
       "non-folder-item": "非資料夾 {{itemKind}} {{itemUID}}",
       "root-title": "儀表板",
       "search-placeholder": "搜尋資料夾",
+      "shared-with-me": "",
       "unknown-error": "未知錯誤"
     },
     "manage-folder-nav": {
@@ -3812,6 +3815,7 @@
       "label-method": "方法",
       "label-payload": "裝載",
       "label-query-parameters": "查詢參數",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "測試 API",
         "title-test-api": "測試 API"
@@ -4527,6 +4531,14 @@
     "actions": {
       "open-settings": "設定"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "關閉「新增面板」小工具",
       "tooltip-close-widget": "關閉小工具"
@@ -4909,12 +4921,14 @@
       "add-visualization-body": "選取資料來源，然後使用圖表、統計資料及表格查詢並將資料可視化，或建立清單、標記及其他小工具。",
       "add-visualization-button": "新增可視化",
       "add-visualization-header": "透過新增可視化來啟動您的新儀表板",
+      "description": "",
       "import-a-dashboard-body": "從檔案或 <2>grafana.com</2> 匯入儀表板。",
       "import-a-dashboard-header": "匯入儀表板",
       "import-dashboard-button": "匯入儀表板",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5420,6 +5434,10 @@
       "loading-configuration": "正在匯入設定"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -6431,7 +6449,7 @@
       "loading-connected-dashboards": "正在載入已連接的儀表板…",
       "placeholder-search-affected-dashboards": "搜尋受影響的儀表板",
       "update-all": "全部更新",
-      "affected-dashboards_other": "此更新將影響 <1>{{count}} 個儀表板。</1>使用面板的以下儀表板將受到影響："
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "儲存儀表板時發生錯誤",
@@ -9522,7 +9540,7 @@
     "query-inspector": {
       "query-inspector": "查詢檢查器",
       "text-loading-query-inspector": "正在載入查詢檢查器…",
-      "count-frames_other": "{{count}} 個框架，",
+      "count-frames_other": "",
       "count-rows_other": "{{count}} 列"
     }
   },
@@ -9778,7 +9796,7 @@
       "loading-connected-dashboards": "正在載入已連接的儀表板…",
       "placeholder-search-affected-dashboards": "搜尋受影響的儀表板",
       "update-all": "全部更新",
-      "num-affected_other": "此更新將影響 <1>{{count}} 個儀表板。</1>"
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12489,13 +12507,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "收闔查詢列",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "顯示資料來源說明",
       "drag-and-drop": "拖放以重新排序",
       "duplicate-query": "複製查詢",
       "expand-row": "展開查詢列",
       "hide-response": "隱藏回應",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "移除查詢",
+      "selected-datasource-label": "",
       "show-response": "顯示回應"
     },
     "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"
@@ -13288,7 +13318,7 @@
       "label-never": "從不"
     },
     "status-history-panel": {
-      "too-many-points_other": "資料點過多，無法正確顯示。<1></1>更新查詢以回傳較少的資料點。<3></3>（已收到 {{count}} 點）"
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {
