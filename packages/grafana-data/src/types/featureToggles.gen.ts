@@ -594,6 +594,11 @@ export interface FeatureToggles {
   */
   suggestedDashboards?: boolean;
   /**
+  * Enables dashboard validator app to run compatibility checks between a dashboard and data source
+  * @default false
+  */
+  dashboardValidatorApp?: boolean;
+  /**
   * Enables a flow to get started with a new dashboard from a template
   * @default false
   */

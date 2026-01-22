@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -22,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -1136,6 +1138,9 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		require.Equal(collectT, r.Status.ObservedGeneration, r.Generation, "resource should be reconciled")
 		// Token should be there
 		require.False(collectT, r.Secure.Token.IsZero())
+		// Verify fieldErrors field exists (may be empty or contain validation warnings)
+		// fieldErrors are populated from testResults and may contain warnings even when healthy
+		require.NotNil(collectT, r.Status.FieldErrors, "fieldErrors field should exist in status")
 
 		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", r.GetNamespace(), r.Secure.Token.Name)
 		require.NoError(t, err, "decryption error")
@@ -1145,4 +1150,326 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		require.NotNil(t, val)
 		require.Equal(t, "someToken", val.DangerouslyExposeAndConsumeValue())
 	}, time.Second*10, time.Second, "Expected repo to be reconciled")
+}
+
+func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	namespace := "default"
+
+	// Create typed client from REST config
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories(namespace)
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	// Create a connection first
+	connection := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Connection",
+		"metadata": map[string]any{
+			"name":      "test-connection-invalid-repo",
+			"namespace": namespace,
+		},
+		"spec": map[string]any{
+			"type": "github",
+			"github": map[string]any{
+				"appID":          "123456",
+				"installationID": "789012",
+			},
+		},
+		"secure": map[string]any{
+			"privateKey": map[string]any{
+				"create": privateKeyBase64,
+			},
+		},
+	}}
+
+	_, err = helper.CreateGithubConnection(t, ctx, connection)
+	require.NoError(t, err, "failed to create connection")
+
+	t.Cleanup(func() {
+		_ = helper.Connections.Resource.Delete(ctx, "test-connection-invalid-repo", metav1.DeleteOptions{})
+	})
+
+	t.Run("repository with non-existent branch becomes unhealthy with fieldErrors", func(t *testing.T) {
+		// Create a repository with a non-existent branch
+		repoUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "test-repo-invalid-branch",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"title": "Repo With Invalid Branch",
+				"type":  "github",
+				"sync": map[string]any{
+					"enabled": false,
+					"target":  "folder",
+				},
+				"github": map[string]any{
+					"url":    "https://github.com/grafana/grafana-git-sync-demo",
+					"branch": "non-existent-branch-12345", // This branch doesn't exist
+				},
+				"connection": map[string]any{
+					"name": "test-connection-invalid-repo",
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.Repositories.Resource.Create(ctx, repoUnstructured, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		repoName := createdUnstructured.GetName()
+
+		t.Cleanup(func() {
+			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		})
+
+		// Wait for reconciliation - repository should become unhealthy due to invalid branch
+		require.Eventually(t, func() bool {
+			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			// Repository should be reconciled and marked unhealthy
+			return repo.Status.ObservedGeneration == repo.Generation &&
+				repo.Status.Health.Checked > 0 &&
+				!repo.Status.Health.Healthy
+		}, 15*time.Second, 500*time.Millisecond, "repository should be reconciled and marked unhealthy")
+
+		// Verify the repository is unhealthy and has fieldErrors
+		repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.False(t, repo.Status.Health.Healthy, "repository should be unhealthy")
+		assert.Equal(t, repo.Generation, repo.Status.ObservedGeneration, "repository should be reconciled")
+		assert.Greater(t, repo.Status.Health.Checked, int64(0), "health check timestamp should be set")
+
+		// Verify fieldErrors are populated with validation errors - be strict and explicit
+		require.Len(t, repo.Status.FieldErrors, 1, "fieldErrors should contain exactly one error")
+
+		tokenError := repo.Status.FieldErrors[0]
+
+		// Verify all fields explicitly - authorization check fails first before branch check
+		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, tokenError.Type, "Type must be FieldValueInvalid")
+		assert.Equal(t, "secure.token", tokenError.Field, "Field must be secure.token")
+		assert.Equal(t, "not authorized", tokenError.Detail, "Detail must be 'not authorized'")
+		assert.Empty(t, tokenError.Origin, "Origin must be empty")
+
+		t.Logf("Verified token fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
+			tokenError.Type, tokenError.Field, tokenError.Detail, tokenError.Origin)
+	})
+
+	t.Run("repository with non-existent repository URL becomes unhealthy with fieldErrors", func(t *testing.T) {
+		// Create a repository with a non-existent repository URL
+		repoUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      "test-repo-invalid-url",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"title": "Repo With Invalid URL",
+				"type":  "github",
+				"sync": map[string]any{
+					"enabled": false,
+					"target":  "folder",
+				},
+				"github": map[string]any{
+					"url":    "https://github.com/non-existent-org/non-existent-repo-12345",
+					"branch": "main",
+				},
+				"connection": map[string]any{
+					"name": "test-connection-invalid-repo",
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.Repositories.Resource.Create(ctx, repoUnstructured, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		repoName := createdUnstructured.GetName()
+
+		t.Cleanup(func() {
+			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		})
+
+		// Wait for reconciliation - repository should become unhealthy due to invalid repository URL
+		require.Eventually(t, func() bool {
+			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			// Repository should be reconciled and marked unhealthy
+			return repo.Status.ObservedGeneration == repo.Generation &&
+				repo.Status.Health.Checked > 0 &&
+				!repo.Status.Health.Healthy
+		}, 15*time.Second, 500*time.Millisecond, "repository should be reconciled and marked unhealthy")
+
+		// Verify the repository is unhealthy and has fieldErrors
+		repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.False(t, repo.Status.Health.Healthy, "repository should be unhealthy")
+		assert.Equal(t, repo.Generation, repo.Status.ObservedGeneration, "repository should be reconciled")
+		assert.Greater(t, repo.Status.Health.Checked, int64(0), "health check timestamp should be set")
+
+		// Verify fieldErrors are populated with validation errors - be strict and explicit
+		require.Len(t, repo.Status.FieldErrors, 1, "fieldErrors should contain exactly one error")
+
+		tokenError := repo.Status.FieldErrors[0]
+
+		// Verify all fields explicitly - authorization check fails first before URL check
+		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, tokenError.Type, "Type must be FieldValueInvalid")
+		assert.Equal(t, "secure.token", tokenError.Field, "Field must be secure.token")
+		assert.Equal(t, "not authorized", tokenError.Detail, "Detail must be 'not authorized'")
+		assert.Empty(t, tokenError.Origin, "Origin must be empty")
+
+		t.Logf("Verified token fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
+			tokenError.Type, tokenError.Field, tokenError.Detail, tokenError.Origin)
+	})
+}
+
+func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	namespace := "default"
+
+	// Create typed client from REST config
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories(namespace)
+
+	t.Run("repository fieldErrors are cleared when repository becomes healthy", func(t *testing.T) {
+		// Create a local repository that will be healthy
+		repoPath := helper.ProvisioningPath
+		repoName := "test-repo-field-errors-cleared"
+
+		// Create repository directory
+		err := os.MkdirAll(repoPath, 0o750)
+		require.NoError(t, err)
+
+		// Create a repository that will be healthy initially
+		repoUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Repository",
+			"metadata": map[string]any{
+				"name":      repoName,
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"title": "Repo Field Errors Cleared Test",
+				"type":  "local",
+				"sync": map[string]any{
+					"enabled": false,
+					"target":  "folder",
+				},
+				"local": map[string]any{
+					"path": repoPath,
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.Repositories.Resource.Create(ctx, repoUnstructured, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		t.Cleanup(func() {
+			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
+		})
+
+		// Wait for repository to become healthy
+		require.Eventually(t, func() bool {
+			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return repo.Status.ObservedGeneration == repo.Generation &&
+				repo.Status.Health.Checked > 0 &&
+				repo.Status.Health.Healthy &&
+				len(repo.Status.FieldErrors) == 0
+		}, 15*time.Second, 500*time.Millisecond, "repository should be healthy")
+
+		// Verify repository is healthy with no fieldErrors
+		repoHealthy, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.True(t, repoHealthy.Status.Health.Healthy, "repository should be healthy")
+		assert.Empty(t, repoHealthy.Status.FieldErrors, "fieldErrors should be empty when healthy")
+
+		// Remove the repository directory to make it unhealthy
+		err = os.RemoveAll(repoPath)
+		require.NoError(t, err)
+
+		// Trigger health check by updating the repository spec
+		latestUnstructured, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		updatedUnstructured := latestUnstructured.DeepCopy()
+		// Update title to trigger reconciliation
+		updatedUnstructured.Object["spec"].(map[string]any)["title"] = "Updated Title"
+		_, err = helper.Repositories.Resource.Update(ctx, updatedUnstructured, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// Wait for repository to become unhealthy with fieldErrors
+		require.Eventually(t, func() bool {
+			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return repo.Status.ObservedGeneration == repo.Generation &&
+				repo.Status.Health.Checked > 0 &&
+				!repo.Status.Health.Healthy &&
+				len(repo.Status.FieldErrors) > 0
+		}, 15*time.Second, 500*time.Millisecond, "repository should be unhealthy with fieldErrors")
+
+		// Verify fieldErrors are present
+		repoWithErrors, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Greater(t, len(repoWithErrors.Status.FieldErrors), 0, "fieldErrors should be present when unhealthy")
+
+		// Recreate the repository directory to make it healthy again
+		err = os.MkdirAll(repoPath, 0o750)
+		require.NoError(t, err)
+
+		// Trigger health check by updating the repository spec again
+		latestUnstructured2, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		updatedUnstructured2 := latestUnstructured2.DeepCopy()
+		// Update title again to trigger reconciliation
+		updatedUnstructured2.Object["spec"].(map[string]any)["title"] = "Final Title"
+		_, err = helper.Repositories.Resource.Update(ctx, updatedUnstructured2, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// Wait for reconciliation - repository should become healthy and fieldErrors should be cleared
+		require.Eventually(t, func() bool {
+			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			// First ensure it's reconciled
+			if repo.Status.ObservedGeneration != repo.Generation {
+				return false
+			}
+			// Then check health
+			if repo.Status.Health.Checked == 0 || !repo.Status.Health.Healthy {
+				return false
+			}
+			// Finally check fieldErrors are cleared
+			return len(repo.Status.FieldErrors) == 0
+		}, 30*time.Second, 1*time.Second, "repository should be healthy with fieldErrors cleared")
+
+		// Verify fieldErrors are cleared
+		repoHealthyAgain, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.True(t, repoHealthyAgain.Status.Health.Healthy, "repository should be healthy")
+		assert.Empty(t, repoHealthyAgain.Status.FieldErrors, "fieldErrors should be cleared when repository becomes healthy")
+	})
 }

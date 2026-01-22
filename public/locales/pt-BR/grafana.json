@@ -4550,6 +4550,14 @@
     "actions": {
       "open-settings": "Configurações"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Fechar o widget \"Adicionar painel\"",
       "tooltip-close-widget": "Fechar widget"
@@ -4932,12 +4940,14 @@
       "add-visualization-body": "Selecione uma fonte de dados e consulte e visualize seus dados com gráficos, estatísticas e tabelas ou crie listas, markdowns e outros widgets.",
       "add-visualization-button": "Adicionar visualização",
       "add-visualization-header": "Comece seu novo painel de controle adicionando uma visualização",
+      "description": "",
       "import-a-dashboard-body": "Importe painéis por meio de arquivos ou do <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importar um painel de controle",
       "import-dashboard-button": "Importar painel de controle",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5444,6 +5454,10 @@
       "loading-configuration": "Carregando configuração"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""

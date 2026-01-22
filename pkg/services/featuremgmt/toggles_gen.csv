@@ -114,6 +114,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2022-10-07,queryLibrary,preview,@grafana/sharing-squad,false,false,false
 2025-08-29,dashboardLibrary,experimental,@grafana/sharing-squad,false,false,false
 2025-11-07,suggestedDashboards,experimental,@grafana/sharing-squad,false,false,false
+2026-01-21,dashboardValidatorApp,experimental,@grafana/sharing-squad,false,false,false
 2025-10-28,dashboardTemplates,preview,@grafana/sharing-squad,false,false,false
 2024-05-24,alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 2026-01-14,alertingNavigationV2,experimental,@grafana/alerting-squad,false,false,false

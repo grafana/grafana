@@ -26,12 +26,14 @@ export const ConnectStep = memo(function ConnectStep() {
 
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = ''] = watch([
+  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = '', githubAuthType] = watch([
     'repository.url',
     'repository.token',
     'repository.tokenUser',
+    'githubAuthType',
   ]);
   const isGitBased = isGitProvider(type);
+  const isGitHubAppAuth = type === 'github' && githubAuthType === 'github-app';
 
   const {
     options: branchOptions,
@@ -50,53 +52,57 @@ export const ConnectStep = memo(function ConnectStep() {
 
   return (
     <Stack direction="column" gap={2}>
-      {hasTokenInstructions && <TokenPermissionsInfo type={type} />}
+      {hasTokenInstructions && !isGitHubAppAuth && <TokenPermissionsInfo type={type} />}
 
       {gitFields && (
         <>
-          <Field
-            noMargin
-            label={gitFields.tokenConfig.label}
-            required={gitFields.tokenConfig.required}
-            description={gitFields.tokenConfig.description}
-            error={errors?.repository?.token?.message}
-            invalid={!!errors?.repository?.token?.message}
-          >
-            <Controller
-              name="repository.token"
-              control={control}
-              rules={gitFields.tokenConfig.validation}
-              render={({ field: { ref, ...field } }) => (
-                <SecretInput
-                  {...field}
-                  id="token"
-                  placeholder={gitFields.tokenConfig.placeholder}
-                  isConfigured={tokenConfigured}
-                  invalid={!!errors?.repository?.token?.message}
-                  onReset={() => {
-                    setValue('repository.token', '');
-                    setTokenConfigured(false);
-                  }}
+          {!isGitHubAppAuth && (
+            <>
+              <Field
+                noMargin
+                label={gitFields.tokenConfig.label}
+                required={gitFields.tokenConfig.required}
+                description={gitFields.tokenConfig.description}
+                error={errors?.repository?.token?.message}
+                invalid={!!errors?.repository?.token?.message}
+              >
+                <Controller
+                  name="repository.token"
+                  control={control}
+                  rules={gitFields.tokenConfig.validation}
+                  render={({ field: { ref, ...field } }) => (
+                    <SecretInput
+                      {...field}
+                      id="token"
+                      placeholder={gitFields.tokenConfig.placeholder}
+                      isConfigured={tokenConfigured}
+                      invalid={!!errors?.repository?.token?.message}
+                      onReset={() => {
+                        setValue('repository.token', '');
+                        setTokenConfigured(false);
+                      }}
+                    />
+                  )}
                 />
-              )}
-            />
-          </Field>
+              </Field>
 
-          {gitFields.tokenUserConfig && (
-            <Field
-              noMargin
-              label={gitFields.tokenUserConfig.label}
-              required={gitFields.tokenUserConfig.required}
-              description={gitFields.tokenUserConfig.description}
-              error={errors?.repository?.tokenUser?.message}
-              invalid={!!errors?.repository?.tokenUser?.message}
-            >
-              <Input
-                {...register('repository.tokenUser', gitFields.tokenUserConfig.validation)}
-                id="tokenUser"
-                placeholder={gitFields.tokenUserConfig.placeholder}
-              />
-            </Field>
+              {gitFields.tokenUserConfig && (
+                <Field
+                  noMargin
+                  label={gitFields.tokenUserConfig.label}
+                  required={gitFields.tokenUserConfig.required}
+                  description={gitFields.tokenUserConfig.description}
+                  error={errors?.repository?.tokenUser?.message}
+                  invalid={!!errors?.repository?.tokenUser?.message}
+                >
+                  <Input
+                    {...register('repository.tokenUser', gitFields.tokenUserConfig.validation)}
+                    id="tokenUser"
+                    placeholder={gitFields.tokenUserConfig.placeholder}
+                  />
+                </Field>
+              )}
+            </>
           )}
 
           <Field
