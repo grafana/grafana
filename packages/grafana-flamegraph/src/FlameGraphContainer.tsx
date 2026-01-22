@@ -115,8 +115,7 @@ const FlameGraphContainer = ({
   const [sharedSandwichItem, setSharedSandwichItem] = useState<string | undefined>(undefined);
 
   // Determine if we can show Split view based on container width
-  const canShowSplitView =
-    containerWidth > 0 && (containerWidth >= MIN_WIDTH_FOR_SPLIT_VIEW || Boolean(vertical));
+  const canShowSplitView = containerWidth > 0 && (containerWidth >= MIN_WIDTH_FOR_SPLIT_VIEW || Boolean(vertical));
 
   // Use refs and stable wrappers to prevent child re-renders when callbacks change
   const onTableSymbolClickRef = useRef(onTableSymbolClick);
