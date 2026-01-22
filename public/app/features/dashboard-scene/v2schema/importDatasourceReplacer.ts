@@ -6,8 +6,7 @@ export interface SelectedDatasource {
   name?: string;
 }
 
-/** Maps datasource type (e.g. "prometheus", "loki") to user-selected datasource
- * from the import form */
+/** Maps datasource type (e.g. "prometheus", "loki") to user-selected datasource from the import form */
 export type DatasourceMappings = Record<string, SelectedDatasource>;
 
 export function isVariableRef(dsName: string | undefined): boolean {
