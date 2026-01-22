@@ -1,3 +1,13 @@
+/**
+ * NEW UI VERSION - Copy of ../../FlameGraph/FlameGraphContextMenu.tsx with modifications.
+ *
+ * Key changes from the legacy version:
+ * - GetExtraContextMenuButtonsFunction: state param changed from `{ selectedView }` to `{ viewMode, paneView }`
+ * - Props: Replaced `selectedView: SelectedView` with `viewMode: ViewMode` and `paneView: PaneView`
+ *
+ * When the new UI is stable, this file should replace ../../FlameGraph/FlameGraphContextMenu.tsx
+ */
+
 import { DataFrame } from '@grafana/data';
 import { MenuItem, MenuGroup, ContextMenu, IconName } from '@grafana/ui';
 

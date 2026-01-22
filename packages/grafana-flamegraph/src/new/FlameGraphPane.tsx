@@ -1,3 +1,23 @@
+/**
+ * NEW FILE - FlameGraphPane is a new component introduced for the new pane-based UI.
+ *
+ * This component renders a single pane that can display one of:
+ * - TopTable (function list with self/total values)
+ * - FlameGraph (the flame graph visualization)
+ * - CallTree (new tree-based visualization)
+ *
+ * It manages its own internal state for:
+ * - Focus/sandwich mode
+ * - Color scheme and text alignment
+ * - Collapsed map for grouping
+ * - Range selection
+ *
+ * Cross-pane synchronization is handled via props:
+ * - focusedItemIndexes/setFocusedItemIndexes for focus sync
+ * - sharedSandwichItem/setSharedSandwichItem for sandwich mode sync
+ * - resetKey for coordinated reset
+ */
+
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 

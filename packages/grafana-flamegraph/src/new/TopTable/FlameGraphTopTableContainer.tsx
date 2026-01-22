@@ -1,3 +1,14 @@
+/**
+ * NEW UI VERSION - Copy of ../../TopTable/FlameGraphTopTableContainer.tsx with modifications.
+ *
+ * Key changes from the legacy version:
+ * - Performance optimization: Uses refs and useCallback to prevent unnecessary re-renders
+ * - Memoizes base frame separately from width-dependent calculations
+ * - Uses widthRef to track width changes without triggering re-renders
+ *
+ * When the new UI is stable, this file should replace ../../TopTable/FlameGraphTopTableContainer.tsx
+ */
+
 import { css } from '@emotion/css';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';

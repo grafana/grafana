@@ -1,3 +1,17 @@
+/**
+ * NEW FILE - FlameGraphCallTreeContainer is a new visualization introduced for the new UI.
+ *
+ * This component provides a tree-based view of the flame graph data, showing:
+ * - Hierarchical call tree with expandable/collapsible nodes
+ * - Self and total time percentages with visual bars
+ * - Support for "callers" view (inverse call tree)
+ * - Sorting by self/total time
+ * - Search highlighting
+ * - Focus and sandwich mode integration
+ *
+ * Uses react-table for the tree structure.
+ */
+
 import { css, cx } from '@emotion/css';
 import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { useTable, useSortBy, useExpanded, Column, Row, UseExpandedRowProps } from 'react-table';

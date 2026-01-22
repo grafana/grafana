@@ -1,3 +1,18 @@
+/**
+ * NEW UI VERSION - Copy of ../FlameGraphHeader.tsx with significant modifications.
+ *
+ * Key changes from the legacy version:
+ * - Complete redesign to support the new pane-based UI with split view
+ * - Props: Replaced `selectedView/setSelectedView` with `viewMode/setViewMode` and pane view controls
+ * - Props: Added `leftPaneView`, `rightPaneView`, `singleView` and their setters for pane management
+ * - Props: Added `onSwapPanes`, `canShowSplitView` for split view functionality
+ * - Props: Removed `textAlign`, `colorScheme`, `collapsedMap` controls (moved to FlameGraph component)
+ * - Added pane selector RadioButtonGroups for left/right pane view selection
+ * - Added swap panes button
+ *
+ * When the new UI is stable, this file should replace ../FlameGraphHeader.tsx
+ */
+
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import * as React from 'react';

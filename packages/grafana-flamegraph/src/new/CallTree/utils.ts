@@ -1,3 +1,13 @@
+/**
+ * NEW FILE - Utility functions for the CallTree visualization.
+ *
+ * Provides functions to:
+ * - Build call tree nodes from FlameGraphDataContainer
+ * - Build callers tree (inverse view)
+ * - Calculate row bar colors based on color scheme
+ * - Determine the initial expanded state for tree nodes
+ */
+
 import { FlameGraphDataContainer, LevelItem } from '../../FlameGraph/dataTransform';
 
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from '../../FlameGraph/colors';

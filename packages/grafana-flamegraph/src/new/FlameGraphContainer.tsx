@@ -1,3 +1,19 @@
+/**
+ * NEW UI VERSION - Copy of ../FlameGraphContainer.tsx with significant modifications.
+ *
+ * Key changes from the legacy version:
+ * - Complete redesign to support the new pane-based UI architecture
+ * - State: Replaced `selectedView: SelectedView` with `viewMode: ViewMode` (Single/Split)
+ * - State: Added `leftPaneView`, `rightPaneView`, `singleView` for managing pane contents
+ * - State: Added `panesSwapped` for swap functionality, `focusedItemIndexes` for cross-pane sync
+ * - State: Added `sharedSandwichItem` for cross-pane sandwich mode synchronization
+ * - Renders FlameGraphPane components instead of directly rendering FlameGraph/TopTable
+ * - Supports horizontal split layout with CSS order-based swapping
+ * - Uses refs and stable callbacks to prevent unnecessary child re-renders
+ *
+ * When the new UI is stable, this file should replace ../FlameGraphContainer.tsx
+ */
+
 import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

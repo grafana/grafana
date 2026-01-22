@@ -16,6 +16,19 @@
 // OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
+
+/**
+ * NEW UI VERSION - Copy of ../FlameGraph/FlameGraph.tsx with modifications for the new pane-based UI.
+ *
+ * Key changes from the legacy version:
+ * - Props: Replaced `selectedView: SelectedView` with `viewMode: ViewMode` and `paneView: PaneView`
+ * - Props: Added `onTextAlignChange`, `onColorSchemeChange`, `isDiffMode` callbacks
+ * - Moved text align, color scheme, and collapse controls from FlameGraphHeader into this component's toolbar
+ *
+ * When the new UI is stable and the legacy UI is removed, this file should replace
+ * ../FlameGraph/FlameGraph.tsx and these comments should be removed.
+ */
+
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 

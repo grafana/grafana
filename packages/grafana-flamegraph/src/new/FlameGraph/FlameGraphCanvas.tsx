@@ -1,3 +1,13 @@
+/**
+ * NEW UI VERSION - Copy of ../../FlameGraph/FlameGraphCanvas.tsx with modifications.
+ *
+ * Key changes from the legacy version:
+ * - Props: Replaced `selectedView: SelectedView` with `viewMode: ViewMode` and `paneView: PaneView`
+ * - Passes new view props to FlameGraphContextMenu
+ *
+ * When the new UI is stable, this file should replace ../../FlameGraph/FlameGraphCanvas.tsx
+ */
+
 import { css } from '@emotion/css';
 import { MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
