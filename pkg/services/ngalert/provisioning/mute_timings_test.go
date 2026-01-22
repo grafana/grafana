@@ -212,7 +212,7 @@ func TestGetMuteTimings(t *testing.T) {
 	})
 }
 
-func TestGetMuteTiming(t *testing.T) {
+func TestGetMuteTimingByName(t *testing.T) {
 	orgID := int64(1)
 	revision := &legacy_storage.ConfigRevision{
 		Config: &definitions.PostableUserConfig{
@@ -242,7 +242,7 @@ func TestGetMuteTiming(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
-		result, err := sut.GetMuteTiming(context.Background(), "Test1", orgID)
+		result, err := sut.GetMuteTimingByName(context.Background(), "Test1", orgID)
 
 		require.NoError(t, err)
 
@@ -259,46 +259,82 @@ func TestGetMuteTiming(t *testing.T) {
 			return mt.Name == result.Name
 		}), orgID)
 
-		t.Run("and by UID", func(t *testing.T) {
-			result2, err := sut.GetMuteTiming(context.Background(), result.UID, orgID)
+		t.Run("service returns ErrTimeIntervalNotFound if no mute timing by name", func(t *testing.T) {
+			sut, store, _ := createMuteTimingSvcSut()
+			store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+				return revision, nil
+			}
 
-			require.NoError(t, err)
+			_, err := sut.GetMuteTimingByName(context.Background(), "Test123", orgID)
 
-			require.Equal(t, result, result2)
+			require.Truef(t, ErrTimeIntervalNotFound.Is(err), "expected ErrTimeIntervalNotFound but got %s", err)
 		})
+
+		t.Run("service propagates errors", func(t *testing.T) {
+			t.Run("when unable to read config", func(t *testing.T) {
+				sut, store, _ := createMuteTimingSvcSut()
+				expected := fmt.Errorf("failed")
+				store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+					return nil, expected
+				}
+
+				_, err := sut.GetMuteTimingByName(context.Background(), "Test1", orgID)
+
+				require.ErrorIs(t, err, expected)
+			})
+
+			t.Run("when unable to read provenance", func(t *testing.T) {
+				sut, store, prov := createMuteTimingSvcSut()
+				store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+					return revision, nil
+				}
+				expected := fmt.Errorf("failed")
+				prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return("", expected)
+
+				_, err := sut.GetMuteTimingByName(context.Background(), "Test1", orgID)
+
+				require.ErrorIs(t, err, expected)
+			})
+		})
+
 	})
 
-	t.Run("service looks in both places", func(t *testing.T) {
+}
+
+func TestGetMuteTimingByUID(t *testing.T) {
+	orgID := int64(1)
+	revision := &legacy_storage.ConfigRevision{
+		Config: &definitions.PostableUserConfig{
+			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					MuteTimeIntervals: []config.MuteTimeInterval{
+						{
+							Name:          "Test1",
+							TimeIntervals: nil,
+						},
+					},
+					TimeIntervals: []config.TimeInterval{
+						{
+							Name:          "Test2",
+							TimeIntervals: nil,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	t.Run("service returns timing by UID", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 			return revision, nil
 		}
-		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceFile, nil)
-
-		result, err := sut.GetMuteTiming(context.Background(), "Test2", orgID)
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
+		result, err := sut.GetMuteTimingByUID(context.Background(), legacy_storage.NameToUid("Test1"), orgID)
 
 		require.NoError(t, err)
 
-		require.Equal(t, "Test2", result.Name)
-		require.EqualValues(t, models.ProvenanceFile, result.Provenance)
-		require.Equal(t, legacy_storage.NameToUid(result.Name), result.UID)
-		require.NotEmpty(t, result.Version)
-
-		require.Len(t, store.Calls, 1)
-		require.Equal(t, "Get", store.Calls[0].Method)
-		require.Equal(t, orgID, store.Calls[0].Args[1])
-
-		prov.AssertCalled(t, "GetProvenance", mock.Anything, mock.MatchedBy(func(mt *definitions.MuteTimeInterval) bool {
-			return mt.Name == result.Name
-		}), orgID)
-
-		t.Run("and by UID", func(t *testing.T) {
-			result2, err := sut.GetMuteTiming(context.Background(), result.UID, orgID)
-
-			require.NoError(t, err)
-
-			require.Equal(t, result, result2)
-		})
+		require.Equal(t, result, result)
 	})
 
 	t.Run("service returns ErrTimeIntervalNotFound if no mute timings", func(t *testing.T) {
@@ -307,18 +343,7 @@ func TestGetMuteTiming(t *testing.T) {
 			return &legacy_storage.ConfigRevision{Config: &definitions.PostableUserConfig{}}, nil
 		}
 
-		_, err := sut.GetMuteTiming(context.Background(), "Test1", orgID)
-
-		require.Truef(t, ErrTimeIntervalNotFound.Is(err), "expected ErrTimeIntervalNotFound but got %s", err)
-	})
-
-	t.Run("service returns ErrTimeIntervalNotFound if no mute timing by name", func(t *testing.T) {
-		sut, store, _ := createMuteTimingSvcSut()
-		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
-			return revision, nil
-		}
-
-		_, err := sut.GetMuteTiming(context.Background(), "Test123", orgID)
+		_, err := sut.GetMuteTimingByUID(context.Background(), "Test1", orgID)
 
 		require.Truef(t, ErrTimeIntervalNotFound.Is(err), "expected ErrTimeIntervalNotFound but got %s", err)
 	})
@@ -331,7 +356,7 @@ func TestGetMuteTiming(t *testing.T) {
 				return nil, expected
 			}
 
-			_, err := sut.GetMuteTiming(context.Background(), "Test1", orgID)
+			_, err := sut.GetMuteTimingByUID(context.Background(), legacy_storage.NameToUid("Test1"), orgID)
 
 			require.ErrorIs(t, err, expected)
 		})
@@ -344,7 +369,7 @@ func TestGetMuteTiming(t *testing.T) {
 			expected := fmt.Errorf("failed")
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return("", expected)
 
-			_, err := sut.GetMuteTiming(context.Background(), "Test1", orgID)
+			_, err := sut.GetMuteTimingByUID(context.Background(), legacy_storage.NameToUid("Test1"), orgID)
 
 			require.ErrorIs(t, err, expected)
 		})
