@@ -33,9 +33,13 @@ type Connection interface {
 	Test(ctx context.Context) (*provisioning.TestResults, error)
 }
 
-// TokenGenerator is an optional interface that connections can implement if they need
-// to generate connection-level tokens.
-type TokenGenerator interface {
+// TokenConnection is an optional interface that connections can implement if they need
+// to handle tokens in their secrets.
+//
+//go:generate mockery --name TokenConnection --structname MockTokenConnection --inpackage --filename connection_token_mock.go --with-expecter
+type TokenConnection interface {
+	// TokenExpired returns true if the underlying token secret is expired.
+	TokenExpired(ctx context.Context) (bool, error)
 	// GenerateConnectionToken generates a connection-level token.
 	// Returns the generated token value.
 	GenerateConnectionToken(ctx context.Context) (common.RawSecureValue, error)

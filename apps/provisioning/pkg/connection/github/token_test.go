@@ -30,12 +30,12 @@ func TestGenerateJWTToken(t *testing.T) {
 		assert.Equal(t, appID, claims.Issuer)
 
 		// Verify expiration is ~10 minutes
-		expiresIn := claims.ExpiresAt.Time.Sub(claims.IssuedAt.Time)
+		expiresIn := claims.ExpiresAt.Sub(claims.IssuedAt.Time)
 		assert.InDelta(t, 10*time.Minute, expiresIn, float64(time.Second))
 	})
 
 	t.Run("fails with invalid base64", func(t *testing.T) {
-		_, err := github.GenerateJWTToken(appID, common.RawSecureValue("invalid!@#"))
+		_, err := github.GenerateJWTToken(appID, "invalid!@#")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "decode base64")
 	})

@@ -6,18 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	repository "github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
 )
-
-//TODO(Ferruvich): update tests since they're broken by latest changes
 
 func TestNewRepositoryHealthChecker(t *testing.T) {
 	mockPatcher := mocks.NewStatusPatcher(t)
@@ -25,7 +22,8 @@ func TestNewRepositoryHealthChecker(t *testing.T) {
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
 	validator := repository.NewValidator(30*time.Second, true, mockFactory)
-	hc := NewRepositoryHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewTester(validator))
+	mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
+	hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
 	assert.NotNil(t, hc)
 	assert.Equal(t, mockPatcher, hc.statusPatcher)
@@ -145,7 +143,8 @@ func TestShouldCheckHealth(t *testing.T) {
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 			validator := repository.NewValidator(30*time.Second, true, mockFactory)
-			hc := NewRepositoryHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewTester(validator))
+			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
+			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
 			result := hc.ShouldCheckHealth(tt.repo)
 			assert.Equal(t, tt.expected, result)
@@ -235,7 +234,8 @@ func TestHasRecentFailure(t *testing.T) {
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 			validator := repository.NewValidator(30*time.Second, true, mockFactory)
-			hc := NewRepositoryHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewTester(validator))
+			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
+			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
 			result := hc.HasRecentFailure(tt.healthStatus, tt.failureType)
 			assert.Equal(t, tt.expected, result)
@@ -280,7 +280,8 @@ func TestRecordFailure(t *testing.T) {
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 			validator := repository.NewValidator(30*time.Second, true, mockFactory)
-			hc := NewRepositoryHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewTester(validator))
+			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
+			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
 			repo := &provisioning.Repository{
 				Status: provisioning.RepositoryStatus{
@@ -328,7 +329,8 @@ func TestRecordFailureFunction(t *testing.T) {
 	mockFactory := repository.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 	validator := repository.NewValidator(30*time.Second, true, mockFactory)
-	hc := NewRepositoryHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewTester(validator))
+	mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
+	hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
 	testErr := errors.New("test error")
 	result := hc.recordFailure(provisioning.HealthFailureHook, testErr)
@@ -508,7 +510,9 @@ func TestRefreshHealth(t *testing.T) {
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 			validator := repository.NewValidator(30*time.Second, true, mockFactory)
-			hc := NewRepositoryHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewTester(validator))
+			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
+			mockMetricsRecorder.EXPECT().RecordHealthCheck("repository", mock.Anything, mock.Anything).Return()
+			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
 			if tt.expectPatch {
 				if tt.patchError != nil {
@@ -643,7 +647,9 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 			validator := repository.NewValidator(30*time.Second, true, mockFactory)
-			hc := NewRepositoryHealthChecker(nil, prometheus.NewPedanticRegistry(), repository.NewTester(validator))
+			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
+			mockMetricsRecorder.EXPECT().RecordHealthCheck("repository", mock.Anything, mock.Anything).Return()
+			hc := NewRepositoryHealthChecker(nil, repository.NewTester(validator), mockMetricsRecorder)
 
 			// Call RefreshHealthWithPatchOps
 			testResults, healthStatus, patchOps, err := hc.RefreshHealthWithPatchOps(context.Background(), mockRepo)
@@ -753,7 +759,8 @@ func TestHasHealthStatusChanged(t *testing.T) {
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 			validator := repository.NewValidator(30*time.Second, true, mockFactory)
-			hc := NewRepositoryHealthChecker(mockPatcher, prometheus.NewPedanticRegistry(), repository.NewTester(validator))
+			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
+			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
 			result := hc.hasHealthStatusChanged(tt.old, tt.new)
 			assert.Equal(t, tt.expected, result)

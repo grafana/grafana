@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
@@ -20,17 +19,21 @@ const (
 
 // ConnectionHealthCheckerInterface defines the interface for connection health checking operations
 //
-//go:generate mockery --name=ConnectionHealthCheckerInterface --structname=MockConnectionHealthChecker
+//go:generate mockery --name=ConnectionHealthCheckerInterface --structname=MockConnectionHealthChecker --inpackage --filename connection_health_mock.go --with-expecter
 type ConnectionHealthCheckerInterface interface {
 	ShouldCheckHealth(conn *provisioning.Connection) bool
 	RefreshHealthWithPatchOps(ctx context.Context, conn *provisioning.Connection) (*provisioning.TestResults, provisioning.HealthStatus, []map[string]interface{}, error)
 }
 
+//go:generate mockery --name=ConnectionTester --structname=MockConnectionTester --inpackage --filename connection_tester_mock.go --with-expecter
+type ConnectionTester interface {
+	TestConnection(ctx context.Context, conn *provisioning.Connection) (*provisioning.TestResults, error)
+}
+
 // ConnectionHealthChecker provides unified health checking for connections
 type ConnectionHealthChecker struct {
-	statusPatcher         ConnectionStatusPatcher
 	healthMetricsRecorder HealthMetricsRecorder
-	tester                connection.SimpleConnectionTester
+	tester                ConnectionTester
 }
 
 var (
@@ -39,12 +42,10 @@ var (
 
 // NewConnectionHealthChecker creates a new connection health checker
 func NewConnectionHealthChecker(
-	statusPatcher ConnectionStatusPatcher,
-	tester connection.SimpleConnectionTester,
+	tester ConnectionTester,
 	healthMetricsRecorder HealthMetricsRecorder,
 ) *ConnectionHealthChecker {
 	return &ConnectionHealthChecker{
-		statusPatcher:         statusPatcher,
 		tester:                tester,
 		healthMetricsRecorder: healthMetricsRecorder,
 	}

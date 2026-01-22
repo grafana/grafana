@@ -65,7 +65,7 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 	}
 	tester := connection.NewSimpleConnectionTester(connectionFactory)
 	healthMetrics := controller.NewHealthMetricsRecorder(deps.Registerer)
-	healthChecker := controller.NewConnectionHealthChecker(statusPatcher, tester, healthMetrics)
+	healthChecker := controller.NewConnectionHealthChecker(&tester, healthMetrics)
 
 	connController, err := controller.NewConnectionController(
 		controllerCfg.provisioningClient.ProvisioningV0alpha1(),

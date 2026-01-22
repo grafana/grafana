@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -152,16 +153,6 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	}, nil
 }
 
-// GenerateConnectionToken generates a JWT token for GitHub App authentication.
-// Implements the connection.TokenGenerator interface.
-func (c *Connection) GenerateConnectionToken(ctx context.Context) (common.RawSecureValue, error) {
-	if c.obj.Spec.GitHub == nil {
-		return "", errors.New("connection is not a GitHub connection")
-	}
-
-	return GenerateJWTToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
-}
-
 // GenerateRepositoryToken generates a repository-scoped access token.
 func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (*connection.ExpirableSecureValue, error) {
 	if repo == nil {
@@ -220,7 +211,27 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 	return result, nil
 }
 
+// GenerateConnectionToken generates a JWT token for GitHub App authentication.
+// Implements the connection.TokenConnection interface.
+func (c *Connection) GenerateConnectionToken(_ context.Context) (common.RawSecureValue, error) {
+	if c.obj.Spec.GitHub == nil {
+		return "", errors.New("connection is not a GitHub connection")
+	}
+
+	return GenerateJWTToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
+}
+
+// TokenExpired returns true if the underlying token secret is expired.
+func (c *Connection) TokenExpired(_ context.Context) (bool, error) {
+	expiration, err := getExpirationFromToken(c.secrets.Token, c.secrets.PrivateKey)
+	if err != nil {
+		return false, err
+	}
+
+	return expiration.Before(time.Now()), nil
+}
+
 var (
 	_ connection.Connection      = (*Connection)(nil)
-	_ connection.TokenGenerator = (*Connection)(nil)
+	_ connection.TokenConnection = (*Connection)(nil)
 )

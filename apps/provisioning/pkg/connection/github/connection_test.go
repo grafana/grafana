@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -408,6 +409,302 @@ func TestConnection_Test(t *testing.T) {
 			assert.Equal(t, tt.expectSuccess, result.Success)
 			if tt.expectedErrors != nil {
 				assert.Equal(t, tt.expectedErrors, result.Errors)
+			}
+		})
+	}
+}
+
+func TestConnection_TokenExpired(t *testing.T) {
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	// Generate a valid token using the existing function (expires in 10 minutes)
+	validToken, err := github.GenerateJWTToken("123", common.RawSecureValue(privateKeyBase64))
+	require.NoError(t, err)
+
+	// Create an expired token (manually construct a JWT that expired 1 hour ago)
+	expiredToken := createExpiredJWT(t, "123", privateKeyBase64)
+
+	tests := []struct {
+		name          string
+		secrets       github.ConnectionSecrets
+		expectedError string
+		expectExpired bool
+	}{
+		{
+			name: "valid token is not expired",
+			secrets: github.ConnectionSecrets{
+				Token:      validToken,
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+			},
+			expectExpired: false,
+		},
+		{
+			name: "expired token returns true",
+			secrets: github.ConnectionSecrets{
+				Token:      expiredToken,
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+			},
+			expectExpired: true,
+		},
+		{
+			name: "invalid token format returns error",
+			secrets: github.ConnectionSecrets{
+				Token:      common.RawSecureValue("not-a-valid-jwt-token"),
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+			},
+			expectedError: "failed to parse token",
+		},
+		{
+			name: "invalid private key returns error",
+			secrets: github.ConnectionSecrets{
+				Token:      validToken,
+				PrivateKey: common.RawSecureValue("not-base64"),
+			},
+			expectedError: "failed to decode base64 private key",
+		},
+		{
+			name: "empty token returns error",
+			secrets: github.ConnectionSecrets{
+				Token:      common.RawSecureValue(""),
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+			},
+			expectedError: "failed to parse token",
+		},
+		{
+			name: "malformed private key PEM returns error",
+			secrets: github.ConnectionSecrets{
+				Token:      validToken,
+				PrivateKey: common.RawSecureValue(base64.StdEncoding.EncodeToString([]byte("not-a-valid-pem"))),
+			},
+			expectedError: "failed to parse private key",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockFactory := github.NewMockGithubFactory(t)
+			connection := &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			}
+
+			conn := github.NewConnection(connection, mockFactory, tt.secrets)
+			expired, err := conn.TokenExpired(context.Background())
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectExpired, expired)
+			}
+		})
+	}
+}
+
+// createExpiredJWT creates a JWT token that has already expired for testing purposes
+func createExpiredJWT(t *testing.T, appID string, privateKeyBase64 string) common.RawSecureValue {
+	t.Helper()
+
+	// Decode the private key
+	privateKeyPEM, err := base64.StdEncoding.DecodeString(privateKeyBase64)
+	require.NoError(t, err)
+
+	// Parse the RSA private key
+	key, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyPEM)
+	require.NoError(t, err)
+
+	// Create claims with expiration in the past
+	pastTime := time.Now().Add(-1 * time.Hour)
+	claims := jwt.RegisteredClaims{
+		IssuedAt:  jwt.NewNumericDate(pastTime.Add(-10 * time.Minute)),
+		ExpiresAt: jwt.NewNumericDate(pastTime),
+		Issuer:    appID,
+	}
+
+	// Sign the token
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	signedToken, err := token.SignedString(key)
+	require.NoError(t, err)
+
+	return common.RawSecureValue(signedToken)
+}
+
+func TestConnection_GenerateConnectionToken(t *testing.T) {
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	tests := []struct {
+		name          string
+		connection    *provisioning.Connection
+		secrets       github.ConnectionSecrets
+		expectedError string
+		validateToken func(t *testing.T, token common.RawSecureValue)
+	}{
+		{
+			name: "success - generates valid JWT token",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+			},
+			validateToken: func(t *testing.T, token common.RawSecureValue) {
+				// Verify token is not empty
+				assert.NotEmpty(t, token)
+
+				// Verify token is a valid JWT by parsing it
+				privateKeyPEM, err := base64.StdEncoding.DecodeString(privateKeyBase64)
+				require.NoError(t, err)
+				key, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyPEM)
+				require.NoError(t, err)
+
+				parsedToken, err := jwt.Parse(string(token), func(_ *jwt.Token) (any, error) {
+					return &key.PublicKey, nil
+				}, jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
+				require.NoError(t, err)
+				assert.True(t, parsedToken.Valid)
+
+				// Verify claims
+				claims, ok := parsedToken.Claims.(jwt.MapClaims)
+				require.True(t, ok)
+				assert.Equal(t, "123", claims["iss"])
+			},
+		},
+		{
+			name: "success - generates different token each time",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "789",
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+			},
+			validateToken: func(t *testing.T, token common.RawSecureValue) {
+				// Generate a second token and verify they're different (due to different timestamps)
+				time.Sleep(1 * time.Second) // Ensure different iat claim
+				token2, err := github.GenerateJWTToken("789", common.RawSecureValue(privateKeyBase64))
+				require.NoError(t, err)
+				assert.NotEqual(t, token, token2, "tokens should differ due to timestamp")
+			},
+		},
+		{
+			name: "error - connection without GitHub config",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GitlabConnectionType,
+					Gitlab: &provisioning.GitlabConnectionConfig{
+						ClientID: "clientID",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+			},
+			expectedError: "connection is not a GitHub connection",
+		},
+		{
+			name: "error - nil GitHub config",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type:   provisioning.GithubConnectionType,
+					GitHub: nil,
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+			},
+			expectedError: "connection is not a GitHub connection",
+		},
+		{
+			name: "error - invalid private key (not base64)",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue("not-valid-base64!@#"),
+			},
+			expectedError: "failed to decode base64 private key",
+		},
+		{
+			name: "error - invalid PEM format",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(base64.StdEncoding.EncodeToString([]byte("not-a-valid-pem-format"))),
+			},
+			expectedError: "failed to parse private key",
+		},
+		{
+			name: "error - empty private key",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(""),
+			},
+			expectedError: "failed to parse private key",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockFactory := github.NewMockGithubFactory(t)
+
+			conn := github.NewConnection(tt.connection, mockFactory, tt.secrets)
+			token, err := conn.GenerateConnectionToken(context.Background())
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.NotEmpty(t, token)
+				if tt.validateToken != nil {
+					tt.validateToken(t, token)
+				}
 			}
 		})
 	}

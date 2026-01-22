@@ -11,14 +11,13 @@ import (
 
 const (
 	// JWTExpirationMinutes is the token expiration time for GitHub App JWT tokens
-	// TODO(ferruvich): this could be in settings
+	// TODO: this could be in settings
 	JWTExpirationMinutes = 10
 )
 
 // GenerateJWTToken creates a GitHub App JWT token from appID and base64-encoded private key.
 // The private key should be base64-encoded PEM format.
 // Returns the signed JWT token string.
-// TODO(ferruvich): this can be unexported - we're using it only in this package, and it's only
 // related to how Github wants their token to be built.
 func GenerateJWTToken(appID string, privateKey common.RawSecureValue) (common.RawSecureValue, error) {
 	// Decode base64-encoded private key
@@ -48,4 +47,34 @@ func GenerateJWTToken(appID string, privateKey common.RawSecureValue) (common.Ra
 	}
 
 	return common.RawSecureValue(signedToken), nil
+}
+
+func getExpirationFromToken(token, privateKey common.RawSecureValue) (time.Time, error) {
+	privateKeyPEM, err := base64.StdEncoding.DecodeString(string(privateKey))
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to decode base64 private key: %w", err)
+	}
+
+	key, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyPEM)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to parse private key: %w", err)
+	}
+
+	parser := jwt.NewParser(
+		jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}),
+		jwt.WithoutClaimsValidation(),
+	)
+	parsedToken, err := parser.ParseWithClaims(string(token), &jwt.RegisteredClaims{}, func(_ *jwt.Token) (any, error) {
+		return &key.PublicKey, nil
+	})
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to parse token: %w", err)
+	}
+
+	claims, ok := parsedToken.Claims.(*jwt.RegisteredClaims)
+	if !ok {
+		return time.Time{}, fmt.Errorf("unexpected token claims")
+	}
+
+	return claims.ExpiresAt.Time, nil
 }

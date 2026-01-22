@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -33,7 +34,7 @@ type connectionQueueItem struct {
 
 // ConnectionStatusPatcher defines the interface for updating connection status.
 //
-//go:generate mockery --name=ConnectionStatusPatcher
+//go:generate mockery --name=ConnectionStatusPatcher --structname=MockConnectionStatusPatcher --inpackage --filename=connection_status_patcher_mock.go --with-expecter
 type ConnectionStatusPatcher interface {
 	Patch(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) error
 }
@@ -46,7 +47,7 @@ type ConnectionController struct {
 	logger     logging.Logger
 
 	statusPatcher     ConnectionStatusPatcher
-	healthChecker     *ConnectionHealthChecker
+	healthChecker     ConnectionHealthCheckerInterface
 	connectionFactory connection.Factory
 
 	queue workqueue.TypedRateLimitingInterface[*connectionQueueItem]
@@ -208,17 +209,32 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		})
 	}
 
-	// Regenerate JWT token if needed (before health check)
-	// This ensures the health check uses a fresh, valid token
-	if cc.shouldRegenerateToken(conn) {
-		logger.Info("regenerating connection token")
+	c, err := cc.connectionFactory.Build(ctx, conn)
+	if err != nil {
+		logger.Error("failed to build connection", "error", err)
+		return err
+	}
 
-		tokenOps, err := cc.generateConnectionToken(ctx, conn)
+	tokenConn, ok := c.(connection.TokenConnection)
+	if ok {
+		expired, err := tokenConn.TokenExpired(ctx)
 		if err != nil {
-			// Log error but continue - health check will surface the issue
-			logger.Error("failed to generate connection token", "error", err)
-		} else if len(tokenOps) > 0 {
-			patchOperations = append(patchOperations, tokenOps...)
+			logger.Error("failed to check if token expired", "error", err)
+			return err
+		}
+
+		if expired {
+			logger.Info("regenerating connection token")
+
+			token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
+			if err != nil {
+				// Log error but continue - health check will surface the issue
+				logger.Error("failed to generate connection token", "error", err)
+			} else if len(tokenOps) > 0 {
+				patchOperations = append(patchOperations, tokenOps...)
+			}
+			// Substituting generated token for healthcheck
+			conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
 		}
 	}
 
@@ -267,42 +283,19 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	return nil
 }
 
-// shouldRegenerateToken determines if connection token should be regenerated.
-// Returns true only when the previous health check failed.
-func (cc *ConnectionController) shouldRegenerateToken(conn *provisioning.Connection) bool {
-	// Only regenerate if the previous health check failed
-	// TODO(ferruvich): here we should retrieve the secret (by building the connection)
-	//  gather the token, and decode it to properly verify the expiration is elapsed.
-	return conn.Status.Health.Checked != 0 && !conn.Status.Health.Healthy
-}
-
 // generateConnectionToken regenerates the connection token if the connection supports it.
 // Uses the TokenGenerator interface to generate tokens in a connection-type-agnostic way.
 // Returns patch operations to update the /secure/token field.
 func (cc *ConnectionController) generateConnectionToken(
 	ctx context.Context,
-	conn *provisioning.Connection,
-) ([]map[string]interface{}, error) {
+	conn connection.TokenConnection,
+) (string, []map[string]interface{}, error) {
 	logger := logging.FromContext(ctx)
 
-	builtConnection, err := cc.connectionFactory.Build(ctx, conn)
-	if err != nil {
-		logger.Error("failed to build connection", "error", err)
-		return nil, nil // Non-blocking: return empty patches
-	}
-
-	// TODO(ferruvich): move this to before shouldRegenerateToken is called.
-	//  We should check if the connection can generate a token, and only then verify we need to generate one.
-	tokenGen, ok := builtConnection.(connection.TokenGenerator)
-	if !ok {
-		logger.Debug("connection type does not support token generation, skipping")
-		return nil, nil
-	}
-
-	token, err := tokenGen.GenerateConnectionToken(ctx)
+	token, err := conn.GenerateConnectionToken(ctx)
 	if err != nil {
 		logger.Error("failed to generate connection token", "error", err)
-		return nil, nil // Non-blocking: return empty patches
+		return "", nil, nil // Non-blocking: return empty patches
 	}
 
 	logger.Info("successfully generated new connection token")
@@ -317,5 +310,5 @@ func (cc *ConnectionController) generateConnectionToken(
 		},
 	}
 
-	return patchOperations, nil
+	return string(token), patchOperations, nil
 }
