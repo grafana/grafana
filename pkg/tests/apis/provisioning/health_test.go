@@ -213,16 +213,6 @@ func TestIntegrationHealth(t *testing.T) {
 	})
 }
 
-// findCondition finds a condition by type in the conditions list
-func findCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
-	for i := range conditions {
-		if conditions[i].Type == conditionType {
-			return &conditions[i]
-		}
-	}
-	return nil
-}
-
 // parseTestResults extracts TestResults from the API response
 func parseTestResults(t *testing.T, obj runtime.Object) *provisioning.TestResults {
 	t.Helper()
