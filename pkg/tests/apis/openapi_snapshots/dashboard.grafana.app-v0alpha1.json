@@ -1735,6 +1735,25 @@
             }
           },
           {
+            "name": "ownerReference",
+            "in": "query",
+            "description": "filter by owner reference in the format {Group}/{Kind}/{Name}",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {},
+              "team": {
+                "summary": "Team owner reference",
+                "value": "iam.grafana.app/Team/xyz"
+              },
+              "user": {
+                "summary": "User owner reference",
+                "value": "iam.grafana.app/User/abc"
+              }
+            }
+          },
+          {
             "name": "explain",
             "in": "query",
             "description": "add debugging info that may help explain why the result matched",
