@@ -3,6 +3,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, userEvent, within } from 'test/test-utils';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
+import { config } from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -377,6 +378,15 @@ describe('NotificationPolicies', () => {
 });
 
 describe('Non-Grafana alertmanagers', () => {
+  beforeAll(() => {
+    setupDataSources(...Object.values(dataSources));
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsExternalRead,
+      AccessControlAction.AlertingNotificationsExternalWrite,
+      ...PERMISSIONS_NOTIFICATION_POLICIES,
+    ]);
+  });
+
   it.skip('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
     makeAllAlertmanagerConfigFetchFail(getErrorResponse('alertmanager storage object not found'));
     setAlertmanagerStatus(dataSources.mimir.uid, someCloudAlertManagerStatus);
@@ -526,5 +536,61 @@ describe('findRoutesMatchingFilters', () => {
     });
 
     expect(matchingRoutes).toMatchSnapshot();
+  });
+});
+
+const uiMultiRoute = {
+  /** Policy table row by name */
+  routeContainer: (name: string) => byTestId(`routing-tree_${name}`),
+  /** Search box for routing policies */
+  policyFilter: byRole('textbox', { name: /search routing trees/ }),
+};
+
+describe('alertingMultiplePolicies Feature Flag', () => {
+  const originalFeatureToggle = config.featureToggles.alertingMultiplePolicies;
+
+  afterAll(() => {
+    config.featureToggles.alertingMultiplePolicies = originalFeatureToggle;
+  });
+
+  beforeAll(() => {
+    setupDataSources(...Object.values(dataSources));
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsExternalRead,
+      ...PERMISSIONS_NOTIFICATION_POLICIES,
+    ]);
+  });
+
+  it('Should render PoliciesList when alertingMultiplePolicies feature flag is enabled', async () => {
+    config.featureToggles.alertingMultiplePolicies = true;
+
+    renderNotificationPolicies();
+    await uiMultiRoute.routeContainer('user-defined').find();
+
+    expect(uiMultiRoute.policyFilter.get()).toBeInTheDocument();
+    // This is rendered only when displaying the full policy, it shouldn't appear in the List view.
+    expect(ui.rootRouteContainer.query()).not.toBeInTheDocument();
+  });
+
+  it('Should not render PoliciesList when alertingMultiplePolicies feature flag is disabled', async () => {
+    config.featureToggles.alertingMultiplePolicies = false;
+
+    renderNotificationPolicies();
+    await getRootRoute();
+
+    expect(uiMultiRoute.policyFilter.query()).not.toBeInTheDocument();
+  });
+
+  it('Should not render PoliciesList when alertmanager is external', async () => {
+    config.featureToggles.alertingMultiplePolicies = true;
+
+    setAlertmanagerStatus(dataSources.promAlertManager.uid, {
+      ...someCloudAlertManagerStatus,
+      config: someCloudAlertManagerConfig.alertmanager_config,
+    });
+    renderNotificationPolicies(dataSources.promAlertManager.name);
+    await getRootRoute();
+
+    expect(uiMultiRoute.policyFilter.query()).not.toBeInTheDocument();
   });
 });
