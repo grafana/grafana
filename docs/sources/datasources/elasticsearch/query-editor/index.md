@@ -179,8 +179,8 @@ Grafana automatically applies the dashboard time range to your queries by adding
 The raw query editor supports all query types:
 
 - **Metrics queries** are used to query time series data with aggregations. The query parser will automatically extract bucket and metric aggregations from your DSL and use them for response processing.
-- **Logs queries** are used to query log data
-- **Raw data queries** are used for document-level data retrieval
+- **Logs queries** are used to query log data.
+- **Raw data queries** are used for document-level data retrieval.
 
 ## Use template variables
 
