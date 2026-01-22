@@ -165,10 +165,10 @@ jobs:
 
       - uses: paper2/github-actions-opentelemetry@main
         env:
-          OTEL_SERVICE_NAME: github-actions-opentelemetry
+          OTEL_SERVICE_NAME: test-gha-otel-export
           OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
           OTEL_EXPORTER_OTLP_ENDPOINT: "https://otlp-gateway-ops-eu-south-0.grafana-ops.net"
-          OTEL_EXPORTER_OTLP_HEADERS: "Authorization: Basic ${{ env.OTEL_EXPORTER_OTLP_API_KEY }}"
+          OTEL_EXPORTER_OTLP_HEADERS: "Authorization=Basic ${{ env.OTEL_EXPORTER_OTLP_API_KEY }}"
           OTEL_RESOURCE_ATTRIBUTES: team=grafanabackend,env=cd
         with:
          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
