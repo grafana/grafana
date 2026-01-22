@@ -4,7 +4,7 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
 import { isRecord } from 'app/core/utils/isRecord';
 import { Resource } from 'app/features/apiserver/types';
-import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
+import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
@@ -53,16 +53,11 @@ export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
   return 'legacy';
 }
 
-// This function is used to determine if the dashboard is a k8s resource in v2 format or also v1 format
+// This function is used to determine if the dashboard is a k8s resource (v1 or v2 format)
 export function isDashboardResource(
-  obj?: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | DashboardWithAccessInfo<DashboardDataDTO> | null
-): obj is DashboardWithAccessInfo<DashboardV2Spec> | DashboardWithAccessInfo<DashboardDataDTO> {
-  if (!obj) {
-    return false;
-  }
-  // is v1 or v2 format?
-  const isK8sDashboard = 'kind' in obj && obj.kind === 'DashboardWithAccessInfo';
-  return isK8sDashboard;
+  value: unknown
+): value is DashboardWithAccessInfo<DashboardV2Spec> | DashboardWithAccessInfo<DashboardDataDTO> {
+  return isRecord(value) && value.kind === 'DashboardWithAccessInfo' && isRecord(value.spec);
 }
 
 export function isDashboardV2Spec(obj: unknown): obj is DashboardV2Spec {
@@ -77,10 +72,8 @@ export function isDashboardV0Spec(obj: DashboardDataDTO | DashboardV2Spec): obj 
   return !isDashboardV2Spec(obj);
 }
 
-export function isDashboardV2Resource(
-  obj: DashboardDTO | DashboardWithAccessInfo<DashboardDataDTO> | DashboardWithAccessInfo<DashboardV2Spec>
-): obj is DashboardWithAccessInfo<DashboardV2Spec> {
-  return isDashboardResource(obj) && isDashboardV2Spec(obj.spec);
+export function isDashboardV2Resource(value: unknown): value is DashboardWithAccessInfo<DashboardV2Spec> {
+  return isDashboardResource(value) && isDashboardV2Spec(value.spec);
 }
 
 export function isV1DashboardCommand(
@@ -93,19 +86,8 @@ export function isV1ClassicDashboard(obj: Dashboard | DashboardV2Spec): obj is D
   return !isDashboardV2Spec(obj);
 }
 
-export function isV2Resource(value: unknown): boolean {
-  return (
-    isRecord(value) && value.kind === 'DashboardWithAccessInfo' && isRecord(value.spec) && isDashboardV2Spec(value.spec)
-  );
-}
-
-export function isV1Resource(value: unknown): boolean {
-  return (
-    isRecord(value) &&
-    value.kind === 'DashboardWithAccessInfo' &&
-    isRecord(value.spec) &&
-    !isDashboardV2Spec(value.spec)
-  );
+export function isDashboardV1Resource(value: unknown): value is DashboardWithAccessInfo<DashboardDataDTO> {
+  return isDashboardResource(value) && !isDashboardV2Spec(value.spec);
 }
 
 export function isV2DashboardCommand(
