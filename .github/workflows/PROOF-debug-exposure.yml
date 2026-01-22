@@ -1,0 +1,37 @@
+name: PROOF - Debug Secret Exposure
+on: [workflow_dispatch]  # Manual trigger only
+
+env:
+  ACTIONS_STEP_DEBUG: true
+  RUNNER_DEBUG: 1
+
+jobs:
+  demonstrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simulate fetching secret (like Vault would)
+        run: |
+          echo "SIMULATED_AZURE_PASSWORD=pretend-this-is-real-azure-secret-12345" >> $GITHUB_ENV
+          echo "SIMULATED_GRAFANA_KEY=glc_pretendthisisarealgrafanaapikey" >> $GITHUB_ENV
+          
+      - name: Show debug logs expose ALL env vars
+        run: |
+          echo "This step runs with debug mode enabled."
+          echo "GitHub's debug logging WILL show all environment variables."
+          echo ""
+          echo "If this were the real pr-e2e-tests.yml, it would show:"
+          echo "- Real Azure Service Principal password"
+          echo "- Real Grafana API key"
+          echo "- Other Vault-fetched secrets"
+          
+      - name: Prove with safe example
+        run: |
+          echo "Safe proof: Debug mode shows variable NAMES (values masked by GitHub)"
+          echo "But if secrets aren't properly registered as GitHub Secrets,"
+          echo "they appear in plain text in logs."
+          
+      - name: Documentation reference
+        run: |
+          echo "GitHub Documentation states:"
+          echo "'Debug logging can expose secrets in workflow logs.'"
+          echo "Source: https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/enabling-debug-logging"
