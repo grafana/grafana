@@ -193,15 +193,16 @@ The following errors occur when the data source is not configured correctly.
 
 ### Scrape interval mismatch
 
-**Error message:** Data appears sparse or aggregated incorrectly
+**Symptom:** Data appears sparse, or `rate()` queries return no data or incomplete results.
 
-**Cause:** The **Scrape interval** setting in Grafana does not match the actual scrape interval in Prometheus.
+**Cause:** The **Scrape interval** setting in Grafana does not match the actual scrape interval in Prometheus. This especially affects `rate()` queries, which require at least two data points within the specified time window. For example, if your actual scrape interval is 5 minutes but Grafana uses the default (15 seconds for OSS, 1 minute for Grafana Cloud), a query like `rate(http_requests_total[1m])` returns no data because there are no data points within that 1-minute window.
 
 **Solution:**
 
 1. Check your Prometheus configuration file for the `scrape_interval` setting.
 1. Update the **Scrape interval** in the Grafana data source configuration under **Interval behavior** to match.
-1. If the Grafana interval is higher than the Prometheus interval, you may see less data points than expected.
+1. Use `$__rate_interval` instead of hardcoded time windows in `rate()` queries. This variable automatically adjusts based on your scrape interval.
+1. For more information, refer to [$__rate_interval for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
 
 ## TLS and certificate errors
 
