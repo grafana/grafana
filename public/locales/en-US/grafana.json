@@ -3781,7 +3781,7 @@
       "all-failed_one": "Failed to restore {{count}} dashboard.",
       "all-failed_other": "Failed to restore {{count}} dashboard.",
       "failed-count_one": "{{count}} dashboard failed",
-      "failed-count_other": "{{count}} dashboards failed",
+      "failed-count_other": "{{count}} dashboard failed",
       "success-count_one": "{{count}} dashboard restored successfully",
       "success-count_other": "{{count}} dashboard restored successfully"
     },
@@ -12584,38 +12584,17 @@
       "title-data-source-help": "Data source help"
     }
   },
-<<<<<<< HEAD
   "query-editor-next": {
-    "actions": "Actions",
-    "add-query": "Add Query",
-    "annotations": "Annotations",
-    "data": "Data",
-    "datasource": "Datasource",
-    "description": "This is a scaffold showing all available context data. Each section uses granular hooks for optimal performance.",
-    "error": "Error",
-    "fields": "Fields",
-    "first-series": "First Series",
-    "hidden": "hidden",
-    "name": "Name",
-    "no-data-yet": "No data yet",
-    "no-queries-defined": "No queries defined",
-    "panel-key": "Panel Key",
-    "queries": "Queries",
-    "rows": "Rows",
-    "run-queries": "Run Queries",
-    "series": "Series",
-    "stable-action-references": "These buttons use stable action references (no re-renders on data change)",
-    "state": "State",
-    "time-range": "Time Range",
-    "title": "🚀 Next Generation Query Editor",
-    "type": "Type",
-    "uid": "UID"
-=======
+    "detail-placeholder": "Query/Transform detail view goes here",
+    "sidebar": {
+      "placeholder": "Sidebar content placeholder",
+      "toggle-size": "Toggle sidebar size"
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": "Open Query Library"
     }
->>>>>>> 719c832759e94b602145c8ffea09bfea8f22caef
   },
   "query-operation": {
     "header": {
