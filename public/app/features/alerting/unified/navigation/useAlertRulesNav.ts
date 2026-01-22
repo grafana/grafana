@@ -26,7 +26,6 @@ export function useAlertRulesNav() {
     // Legacy navigation: return simple navId
     return {
       navId: 'alert-list',
-      pageNav: undefined,
     };
   }
 
@@ -37,7 +36,6 @@ export function useAlertRulesNav() {
     // Fallback to legacy if nav item doesn't exist
     return {
       navId: 'alert-list',
-      pageNav: undefined,
     };
   }
 
@@ -64,9 +62,10 @@ export function useAlertRulesNav() {
   }
 
   // Create pageNav that represents the Alert rules page with tabs as children
+  // Don't show tabs bar if only one tab exists (avoids wasting vertical space for non-admin users)
   const pageNav: NavModelItem = {
     ...alertRulesNav,
-    children: tabs,
+    children: tabs.length > 1 ? tabs : undefined,
   };
 
   return {

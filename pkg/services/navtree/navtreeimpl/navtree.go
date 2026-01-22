@@ -446,18 +446,22 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
-			// New navigation: Alert rules (tabs managed on frontend)
-			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-				Text: "Alert rules", SubTitle: "Rules that determine whether an alert will fire", Id: "alert-rules", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
-			})
-		} else {
-			// Legacy navigation
-			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-				Text: "Alert rules", SubTitle: "Rules that determine whether an alert will fire", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
-			})
+		navLink := &navtree.NavLink{
+			Text:     "Alert rules",
+			SubTitle: "Rules that determine whether an alert will fire",
+			Url:      s.cfg.AppSubURL + "/alerting/list",
+			Icon:     "list-ul",
 		}
+
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		// Since we're changing the navigation structure we have to assign different nav IDs
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+			navLink.Id = "alert-rules" // New navigation: Alert rules (tabs managed on frontend)
+		} else {
+			navLink.Id = "alert-list" // Legacy navigation
+		}
+
+		alertChildNavs = append(alertChildNavs, navLink)
 	}
 
 	contactPointsPerms := []ac.Evaluator{
