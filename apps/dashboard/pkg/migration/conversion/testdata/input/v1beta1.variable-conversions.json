@@ -338,6 +338,17 @@
           "regex": "/host[0-9]+/",
           "regexApplyTo": "value",
           "skipUrlSync": false,
+          "staticOptions": [
+            {
+              "text": "All",
+              "value": "$__all"
+            },
+            {
+              "text": "host1",
+              "value": "host1"
+            }
+          ],
+          "staticOptionsOrder": "before",
           "refresh": 1,
           "sort": 2,
           "tagValuesQuery": "",

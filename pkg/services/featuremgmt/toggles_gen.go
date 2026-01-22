@@ -31,10 +31,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagLogRequestsInstrumentedAsUnknown
-	// Logs the path for requests that are instrumented as unknown
-	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
-
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -54,6 +50,10 @@ const (
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
+
+	// FlagLiveAPIServer
+	// Registers a live apiserver
+	FlagLiveAPIServer = "liveAPIServer"
 
 	// FlagKubernetesStars
 	// Routes stars requests from /api to the /apis endpoint
@@ -142,14 +142,6 @@ const (
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
-
-	// FlagEnableNativeHTTPHistogram
-	// Enables native HTTP Histograms
-	FlagEnableNativeHTTPHistogram = "enableNativeHTTPHistogram"
-
-	// FlagDisableClassicHTTPHistogram
-	// Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
-	FlagDisableClassicHTTPHistogram = "disableClassicHTTPHistogram"
 
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
@@ -362,6 +354,10 @@ const (
 	// FlagSuggestedDashboards
 	// Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page
 	FlagSuggestedDashboards = "suggestedDashboards"
+
+	// FlagDashboardValidatorApp
+	// Enables dashboard validator app to run compatibility checks between a dashboard and data source
+	FlagDashboardValidatorApp = "dashboardValidatorApp"
 
 	// FlagDashboardTemplates
 	// Enables a flow to get started with a new dashboard from a template
@@ -646,6 +642,10 @@ const (
 	// Registers AuthZ Roles /apis endpoint
 	FlagKubernetesAuthzRolesApi = "kubernetesAuthzRolesApi"
 
+	// FlagKubernetesAuthzTeamLBACRuleApi
+	// Registers AuthZ TeamLBACRule /apis endpoint
+	FlagKubernetesAuthzTeamLBACRuleApi = "kubernetesAuthzTeamLBACRuleApi"
+
 	// FlagKubernetesAuthzRoleBindingsApi
 	// Registers AuthZ Role Bindings /apis endpoint
 	FlagKubernetesAuthzRoleBindingsApi = "kubernetesAuthzRoleBindingsApi"
@@ -793,4 +793,8 @@ const (
 	// FlagAlertingSyncDispatchTimer
 	// Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
 	FlagAlertingSyncDispatchTimer = "alertingSyncDispatchTimer"
+
+	// FlagKubernetesTeamBindings
+	// Enables search for team bindings in the app platform API
+	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
 )

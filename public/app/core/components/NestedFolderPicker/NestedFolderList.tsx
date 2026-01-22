@@ -141,7 +141,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     idPrefix,
     emptyFolders,
   } = data;
-  const { item, isOpen, level, parentUID } = items[index];
+  const { item, isOpen, level, parentUID, disabled } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
   const rootCollection = useSelector(rootItemsSelector);
@@ -167,10 +167,10 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   );
 
   const handleSelect = useCallback(() => {
-    if (item.kind === 'folder') {
+    if (item.kind === 'folder' && !disabled) {
       onFolderSelect(item);
     }
-  }, [item, onFolderSelect]);
+  }, [item, onFolderSelect, disabled]);
 
   if (item.kind === 'ui' && item.uiKind === 'pagination-placeholder') {
     return (
@@ -215,6 +215,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       aria-labelledby={labelId}
       aria-level={level + 1} // aria-level is 1-indexed
       role="treeitem"
+      aria-disabled={disabled}
       aria-owns={children.length > 0 ? children.map((child) => getDOMId(idPrefix, child.uid)).join(' ') : undefined}
       aria-setsize={children.length}
       aria-posinset={siblings.findIndex((i) => i.uid === item.uid) + 1}

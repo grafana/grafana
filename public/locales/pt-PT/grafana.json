@@ -2138,8 +2138,8 @@
         "suffix": "Por favor, atualize a página e tente novamente.",
         "title": "Falha ao adicionar ou atualizar a política de notificação"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} políticas adicionais",
+      "n-more-policies_other": "{{count}} políticas adicionais"
     },
     "policy": {
       "label-new-child-policy": "Nova política secundária",
@@ -2178,8 +2178,10 @@
       "badge-tooltip-provenance": "Este recurso foi provisionado através de {{provenance}} e não pode ser editado através da interface do utilizador",
       "badge-tooltip-standard": "Este recurso foi provisionado e não pode ser editado através da interface do utilizador",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Este {{resource}} foi aprovisionado, o que significa que foi criado por configuração. Entre em contacto com o seu administrador do servidor para atualizar este {{resource}}.",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Este {{resource}} não pode ser editado através da interface do utilizador"
     },
     "provisioning-badge": {
@@ -3728,6 +3730,7 @@
       "non-folder-item": "Não pasta {{itemKind}} {{itemUID}}",
       "root-title": "Painéis de controlo",
       "search-placeholder": "Pesquisar pastas",
+      "shared-with-me": "",
       "unknown-error": "Erro desconhecido"
     },
     "manage-folder-nav": {
@@ -3831,6 +3834,7 @@
       "label-method": "Método",
       "label-payload": "Carga útil",
       "label-query-parameters": "Parâmetros da consulta",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Testar API",
         "title-test-api": "Testar API"
@@ -4546,6 +4550,14 @@
     "actions": {
       "open-settings": "Definições"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Fechar o widget 'Adicionar painel'",
       "tooltip-close-widget": "Fechar widget"
@@ -4928,12 +4940,14 @@
       "add-visualization-body": "Selecione uma origem de dados e, em seguida, consulte e visualize os seus dados com gráficos, estatísticas e tabelas ou crie listas, remarcações e outros widgets.",
       "add-visualization-button": "Adicionar visualização",
       "add-visualization-header": "Inicie o seu novo painel de controlo ao adicionar uma visualização",
+      "description": "",
       "import-a-dashboard-body": "Importe painéis de controlo de ficheiros ou de <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importar um painel de controlo",
       "import-dashboard-button": "Importar painel de controlo",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5440,6 +5454,10 @@
       "loading-configuration": "A carregar a configuração"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -6453,8 +6471,8 @@
       "loading-connected-dashboards": "A carregar painéis de controlo ligados...",
       "placeholder-search-affected-dashboards": "Pesquisar painéis de controlo afetados",
       "update-all": "Atualizar tudo",
-      "affected-dashboards_one": "Esta atualização afetará <1>{{count}} painéis de controlo.</1> Os seguintes painéis de controlo que utilizam o painel serão afetados:",
-      "affected-dashboards_other": "Esta atualização afetará <1>{{count}} painéis de controlo.</1> Os seguintes painéis de controlo que utilizam o painel serão afetados:"
+      "affected-dashboards_one": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Erro ao guardar o painel de controlo",
@@ -9558,8 +9576,8 @@
     "query-inspector": {
       "query-inspector": "Inspetor de consultas",
       "text-loading-query-inspector": "A carregar o inspetor de consultas...",
-      "count-frames_one": "{{count}} frames, ",
-      "count-frames_other": "{{count}} frames, ",
+      "count-frames_one": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} linhas",
       "count-rows_other": "{{count}} linhas"
     }
@@ -9818,8 +9836,8 @@
       "loading-connected-dashboards": "A carregar painéis de controlo ligados...",
       "placeholder-search-affected-dashboards": "Pesquisar painéis de controlo afetados",
       "update-all": "Atualizar tudo",
-      "num-affected_one": "Esta atualização afetará <1>{{count}} painéis de controlo.</1>",
-      "num-affected_other": "Esta atualização afetará <1>{{count}} painéis de controlo.</1>"
+      "num-affected_one": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -12542,13 +12560,25 @@
   },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Recolher linha de consulta",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Mostrar ajuda da origem de dados",
       "drag-and-drop": "Arrastar e largar para reordenar",
       "duplicate-query": "Duplicar consulta",
       "expand-row": "Expandir linha de consulta",
       "hide-response": "Ocultar resposta",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Remover consulta",
+      "selected-datasource-label": "",
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plugin de origem de dados não exporta nenhum componente do Editor de Consultas"
@@ -12605,10 +12635,10 @@
       "restore-button": "Restaurar",
       "restore-loading": "A restaurar...",
       "title": "Restaurar painéis de controlo",
-      "folder-picker-text_one": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_other": ""
+      "folder-picker-text_one": "Escolha uma pasta onde os seus painéis de controlo serão restaurados.",
+      "folder-picker-text_other": "Escolha uma pasta onde os seus painéis de controlo serão restaurados.",
+      "text_one": "Esta ação irá restaurar {{numberOfDashboards}} painéis de controlo.",
+      "text_other": "Esta ação irá restaurar {{numberOfDashboards}} painéis de controlo."
     }
   },
   "recentlyDeleted": {
@@ -13344,8 +13374,8 @@
       "label-never": "Nunca"
     },
     "status-history-panel": {
-      "too-many-points_one": "Demasiados pontos para visualizar corretamente. <1></1>Atualizar a consulta para devolver menos pontos. <3></3>({{count}} pontos recebidos)",
-      "too-many-points_other": "Demasiados pontos para visualizar corretamente. <1></1>Atualizar a consulta para devolver menos pontos. <3></3>({{count}} pontos recebidos)"
+      "too-many-points_one": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

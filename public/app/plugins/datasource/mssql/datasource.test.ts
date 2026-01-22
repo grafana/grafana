@@ -31,7 +31,6 @@ jest.mock('uuid', () => ({
 }));
 
 const instanceSettings = {
-  id: 1,
   uid: 'mssql-datasource',
   type: 'mssql',
   name: 'MSSQL',

@@ -59,11 +59,6 @@ export interface FeatureToggles {
   */
   canvasPanelNesting?: boolean;
   /**
-  * Logs the path for requests that are instrumented as unknown
-  * @default false
-  */
-  logRequestsInstrumentedAsUnknown?: boolean;
-  /**
   * Run the GRPC server
   * @default false
   */
@@ -108,6 +103,11 @@ export interface FeatureToggles {
   * @default true
   */
   influxdbBackendMigration?: boolean;
+  /**
+  * Registers a live apiserver
+  * @default false
+  */
+  liveAPIServer?: boolean;
   /**
   * populate star status from apiserver
   * @default false
@@ -243,16 +243,6 @@ export interface FeatureToggles {
   * @default false
   */
   externalServiceAccounts?: boolean;
-  /**
-  * Enables native HTTP Histograms
-  * @default false
-  */
-  enableNativeHTTPHistogram?: boolean;
-  /**
-  * Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
-  * @default false
-  */
-  disableClassicHTTPHistogram?: boolean;
   /**
   * Routes snapshot requests from /api to the /apis endpoint
   * @default false
@@ -608,6 +598,11 @@ export interface FeatureToggles {
   * @default false
   */
   suggestedDashboards?: boolean;
+  /**
+  * Enables dashboard validator app to run compatibility checks between a dashboard and data source
+  * @default false
+  */
+  dashboardValidatorApp?: boolean;
   /**
   * Enables a flow to get started with a new dashboard from a template
   * @default false
@@ -1111,6 +1106,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthzRolesApi?: boolean;
   /**
+  * Registers AuthZ TeamLBACRule /apis endpoint
+  * @default false
+  */
+  kubernetesAuthzTeamLBACRuleApi?: boolean;
+  /**
   * Registers AuthZ Role Bindings /apis endpoint
   * @default false
   */
@@ -1425,4 +1425,14 @@ export interface FeatureToggles {
   * @default false
   */
   alertingSyncDispatchTimer?: boolean;
+  /**
+  * Enables the Query with Assistant button in the query editor
+  * @default false
+  */
+  queryWithAssistant?: boolean;
+  /**
+  * Enables search for team bindings in the app platform API
+  * @default false
+  */
+  kubernetesTeamBindings?: boolean;
 }

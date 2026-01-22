@@ -116,7 +116,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 							Labels: map[string]string{
 								utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
 							},
-							Tags: []string{"aa", "bb"},
+							Tags:            []string{"aa", "bb"},
+							OwnerReferences: []string{"iam.grafana.app/Team/engineering"},
 							Manager: &utils.ManagerProperties{
 								Kind:     utils.ManagerKindRepo,
 								Identity: "repo-1",
@@ -151,6 +152,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 								"region":                           "east",
 								utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
 							},
+							OwnerReferences: []string{"iam.grafana.app/Team/marketing", "iam.grafana.app/User/admin"},
 							Manager: &utils.ManagerProperties{
 								Kind:     utils.ManagerKindRepo,
 								Identity: "repo-1",
@@ -266,6 +268,55 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			rsp.Results.Rows[0].Key.Name,
 			rsp.Results.Rows[1].Key.Name,
 		})
+
+		// search by owner reference
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Operator: "=",
+					Values:   []string{"iam.grafana.app/Team/engineering"},
+				}},
+			},
+			Limit: 100000,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), rsp.TotalHits)
+		require.Equal(t, "aaa", rsp.Results.Rows[0].Key.Name)
+
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Operator: "=",
+					Values:   []string{"iam.grafana.app/Team/marketing"},
+				}},
+			},
+			Limit: 100000,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), rsp.TotalHits)
+		require.Equal(t, "bbb", rsp.Results.Rows[0].Key.Name)
+
+		// search by owner reference - multiple values (OR)
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Operator: "in",
+					Values:   []string{"iam.grafana.app/Team/engineering", "iam.grafana.app/User/admin"},
+				}},
+			},
+			Limit: 100000,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), rsp.TotalHits)
+		names := []string{rsp.Results.Rows[0].Key.Name, rsp.Results.Rows[1].Key.Name}
+		assert.Contains(t, names, "aaa")
+		assert.Contains(t, names, "bbb")
 
 		// can get sprinkles fields and sort by them
 		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
@@ -647,16 +698,16 @@ func (nc *StubAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, re
 	}, authlib.NoopZookie{}, nil
 }
 
+func (nc *StubAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, errors.New("not implemented")
+}
+
 func (nc StubAccessClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	return nil, nil
 }
 
 func (nc StubAccessClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
 	return nil
-}
-
-func (nc StubAccessClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	return nil, nil
 }
 
 func TestSafeInt64ToInt(t *testing.T) {

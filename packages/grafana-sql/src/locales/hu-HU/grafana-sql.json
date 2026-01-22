@@ -69,6 +69,12 @@
         "placeholder-select-format": "Formátum kiválasztása",
         "run-query": "Lekérdezés"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "",
+          "valueField": ""
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "A lekérdezés futtatásához nyomja le a CTRL/CMD+Enter billentyűkombinációt",
         "tooltip-collapse": "Szerkesztő összecsukása",

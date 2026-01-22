@@ -266,7 +266,6 @@ function createDataSourceInstanceSettings(
   const { meta, ...rest } = settings;
 
   return {
-    id: 1,
     uid: '',
     name: '',
     meta: createPluginMeta(meta),
