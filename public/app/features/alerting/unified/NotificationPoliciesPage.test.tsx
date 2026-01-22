@@ -24,7 +24,6 @@ import {
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import {
-  AlertManagerCortexConfig,
   AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
   MatcherOperator,
@@ -42,6 +41,12 @@ import {
 } from './mocks';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { ROOT_ROUTE_NAME } from './utils/k8s/constants';
+import { getRoutingTree, setRoutingTree } from './mocks/server/entities/k8s/routingtrees';
+import {
+  createKubernetesRoutingTreeSpec,
+  k8sRouteToRoute,
+} from './components/notification-policies/useNotificationPolicyRoute';
 
 jest.mock('./useRouteGroupsMatcher');
 
@@ -69,6 +74,7 @@ const openEditModal = async (
   await user.click(await ui.editButton.find());
 };
 
+// This is the page for the default policy when alertingMultiplePolicies is disabled.
 const renderNotificationPolicies = (alertManagerSourceName: string = GRAFANA_RULES_SOURCE_NAME) =>
   render(
     <>
@@ -174,9 +180,7 @@ describe('NotificationPolicies', () => {
   });
 
   it('loads and shows routes', async () => {
-    const { alertmanager_config: testConfig } = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
-
-    const { route: defaultRoute } = testConfig;
+    const defaultRoute = k8sRouteToRoute(getRoutingTree(ROOT_ROUTE_NAME)!);
 
     renderNotificationPolicies();
     const rootRouteEl = await getRootRoute();
@@ -247,14 +251,18 @@ describe('NotificationPolicies', () => {
   });
 
   it('can edit root route if one is not defined yet', async () => {
-    setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, {
-      alertmanager_config: {
-        route: {},
-        receivers: [{ name: 'lotsa-emails' }],
-      },
-      template_files: {},
-    });
+    setRoutingTree(
+      ROOT_ROUTE_NAME,
+      createKubernetesRoutingTreeSpec({
+        routes: [],
+      })
+    );
     const { user } = renderNotificationPolicies();
+
+    // Sanity check to make sure we actually have an undefined root route.
+    const rootRouteEl = await getRootRoute();
+    expect(rootRouteEl).not.toHaveTextContent(new RegExp(`delivered to`, 'i'));
+    expect(rootRouteEl).not.toHaveTextContent(new RegExp(`grouped by`, 'i'));
 
     await openDefaultPolicyEditModal();
 
@@ -309,11 +317,11 @@ describe('NotificationPolicies', () => {
 
     await getRootRoute();
 
-    const existingConfig = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
+    const existingConfig = getRoutingTree(ROOT_ROUTE_NAME)!;
     const modifiedConfig = produce(existingConfig, (draft) => {
-      draft.alertmanager_config.route!.group_interval = NEW_INTERVAL;
+      draft.spec.defaults.group_interval = NEW_INTERVAL;
     });
-    setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, modifiedConfig);
+    setRoutingTree(ROOT_ROUTE_NAME, modifiedConfig);
 
     await openDefaultPolicyEditModal();
     await user.click(await screen.findByRole('button', { name: /update default policy/i }));
@@ -329,18 +337,14 @@ describe('NotificationPolicies', () => {
   });
 
   it('Should be able to delete an empty route', async () => {
-    const defaultConfig: AlertManagerCortexConfig = {
-      alertmanager_config: {
-        route: {
-          routes: [{}],
-        },
-      },
-      template_files: {},
-    };
+    setRoutingTree(
+      ROOT_ROUTE_NAME,
+      createKubernetesRoutingTreeSpec({
+        routes: [{}],
+      })
+    );
 
-    setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, defaultConfig);
-
-    const { user } = renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME);
+    const { user } = renderNotificationPolicies();
 
     await user.click(await ui.moreActions.find());
     const deleteButtons = await ui.deleteRouteButton.find();
@@ -555,10 +559,7 @@ describe('alertingMultiplePolicies Feature Flag', () => {
 
   beforeAll(() => {
     setupDataSources(...Object.values(dataSources));
-    grantUserPermissions([
-      AccessControlAction.AlertingNotificationsExternalRead,
-      ...PERMISSIONS_NOTIFICATION_POLICIES,
-    ]);
+    grantUserPermissions([AccessControlAction.AlertingNotificationsExternalRead, ...PERMISSIONS_NOTIFICATION_POLICIES]);
   });
 
   it('Should render PoliciesList when alertingMultiplePolicies feature flag is enabled', async () => {
