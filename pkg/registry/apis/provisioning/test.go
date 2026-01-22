@@ -27,7 +27,7 @@ type StatusPatcherProvider interface {
 }
 
 type HealthCheckerProvider interface {
-	GetHealthChecker() *controller.HealthChecker
+	GetHealthChecker() *controller.RepositoryHealthChecker
 }
 
 type ConnectorDependencies interface {
@@ -48,6 +48,9 @@ type ConnectorDependencies interface {
 // This is important because users can test new configurations before actually
 // creating/updating them - we want to catch validation errors and conflicts during
 // testing, not just during actual create/update operations.
+// TODO: This connector is deprecated and will be removed when we deprecate the test endpoint
+// We should use fieldErrors from status instead.
+// TODO: Remove this connector when we deprecate the test endpoint
 type testConnector struct {
 	repoGetter       RepoGetter
 	repoFactory      repository.Factory

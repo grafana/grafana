@@ -63,7 +63,7 @@ type RepositoryController struct {
 
 	repoFactory       repository.Factory
 	connectionFactory connection.Factory
-	healthChecker     *HealthChecker
+	healthChecker     *RepositoryHealthChecker
 	// To allow injection for testing.
 	processFn         func(item *queueItem) error
 	enqueueRepository func(obj any)
@@ -87,7 +87,7 @@ func NewRepositoryController(
 		jobs.Queue
 		jobs.Store
 	},
-	healthChecker *HealthChecker,
+	healthChecker *RepositoryHealthChecker,
 	statusPatcher StatusPatcher,
 	registry prometheus.Registerer,
 	tracer tracing.Tracer,
@@ -558,7 +558,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Handle health checks using the health checker
-	_, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
+	testResults, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("update health status: %w", err)
 	}
@@ -592,6 +592,19 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	// Add health patch operations first
 	if len(healthPatchOps) > 0 {
 		patchOperations = append(patchOperations, healthPatchOps...)
+	}
+
+	// Update fieldErrors from test results - always update to ensure fieldErrors are cleared when there are no errors
+	if testResults != nil {
+		fieldErrors := testResults.Errors
+		if fieldErrors == nil {
+			fieldErrors = []provisioning.ErrorDetails{}
+		}
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/fieldErrors",
+			"value": fieldErrors,
+		})
 	}
 
 	// determine the sync strategy and sync status to apply
