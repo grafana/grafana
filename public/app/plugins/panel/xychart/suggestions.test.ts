@@ -28,6 +28,16 @@ describe('xychart suggestions', () => {
     expect(suggestions?.[0].score).toBe(VisualizationSuggestionScore.Good);
   });
 
+  it('should not suggest XYChart if the data works with the default Auto series mapping', () => {
+    const dataSummary = getPanelDataSummary([
+      createDataFrame({
+        fields: [{ name: 'X', type: FieldType.number, values: [1, 2, 3, 4, 5] }],
+      }),
+    ]);
+    const suggestions = xychartSuggestionsSupplier(dataSummary);
+    expect(suggestions).toBeUndefined();
+  });
+
   it('weighs the suggestion a bit less if there is a time field', () => {
     const dataSummary = getPanelDataSummary([
       createDataFrame({

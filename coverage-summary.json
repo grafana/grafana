@@ -1,0 +1,19 @@
+{
+  "team": "@grafana/dataviz-squad",
+  "commit": "unknown",
+  "timestamp": "2026-01-22T15:38:51.218Z",
+  "summary": {
+    "lines": {
+      "pct": 40.12
+    },
+    "statements": {
+      "pct": 59.88
+    },
+    "functions": {
+      "pct": 45.72
+    },
+    "branches": {
+      "pct": 41.99
+    }
+  }
+}
