@@ -3921,7 +3921,7 @@ __metadata:
     rollup-plugin-copy: "npm:3.5.0"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
-    tslib: "npm:2.8.1"
+    tslib: "npm:^2.8.1"
     typescript: "npm:5.9.2"
   languageName: unknown
   linkType: soft
