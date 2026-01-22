@@ -962,7 +962,7 @@ func TestRepositoryController_Conditions(t *testing.T) {
 }
 
 func TestRepositoryController_WebhookConditions(t *testing.T) {
-	t.Run("updateWebhookConfiguredCondition - webhook not supported", func(t *testing.T) {
+	t.Run("reconcileWebhook - webhook not supported", func(t *testing.T) {
 		rc := &RepositoryController{}
 		obj := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{
@@ -974,16 +974,16 @@ func TestRepositoryController_WebhookConditions(t *testing.T) {
 		// A basic ConfigRepository doesn't implement WebhookSetup interface
 		repo := repository.NewMockConfigRepository(t)
 
-		ops := rc.updateWebhookConfiguredCondition(context.Background(), obj, repo)
+		ops := rc.reconcileWebhook(context.Background(), obj, repo)
 
 		conditions := ops[0]["value"].([]metav1.Condition)
 		assert.Len(t, conditions, 1)
 		assert.Equal(t, provisioning.ConditionTypeWebhookConfigured, conditions[0].Type)
 		assert.Equal(t, metav1.ConditionTrue, conditions[0].Status)
-		assert.Equal(t, provisioning.ReasonWebhookNotRequired, conditions[0].Reason)
+		assert.Equal(t, provisioning.ReasonNotRequired, conditions[0].Reason)
 	})
 
-	t.Run("updateWebhookConfiguredCondition - secret not ready", func(t *testing.T) {
+	t.Run("reconcileWebhook - secret not ready", func(t *testing.T) {
 		rc := &RepositoryController{}
 		obj := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{
@@ -999,7 +999,7 @@ func TestRepositoryController_WebhookConditions(t *testing.T) {
 			webhookURL: "https://example.com/webhook",
 		}
 
-		ops := rc.updateWebhookConfiguredCondition(context.Background(), obj, mockRepo)
+		ops := rc.reconcileWebhook(context.Background(), obj, mockRepo)
 
 		conditions := ops[0]["value"].([]metav1.Condition)
 		assert.Len(t, conditions, 1)
@@ -1008,7 +1008,7 @@ func TestRepositoryController_WebhookConditions(t *testing.T) {
 		assert.Equal(t, provisioning.ReasonSecretNotReady, conditions[0].Reason)
 	})
 
-	t.Run("updateWebhookConfiguredCondition - setup success", func(t *testing.T) {
+	t.Run("reconcileWebhook - setup success", func(t *testing.T) {
 		rc := &RepositoryController{}
 		obj := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1035,7 +1035,7 @@ func TestRepositoryController_WebhookConditions(t *testing.T) {
 			},
 		}
 
-		ops := rc.updateWebhookConfiguredCondition(context.Background(), obj, mockRepo)
+		ops := rc.reconcileWebhook(context.Background(), obj, mockRepo)
 
 		// Should have condition + status + secret patches
 		assert.Len(t, ops, 3)
@@ -1055,7 +1055,7 @@ func TestRepositoryController_WebhookConditions(t *testing.T) {
 		assert.Equal(t, "/secure/webhookSecret", ops[2]["path"])
 	})
 
-	t.Run("updateWebhookConfiguredCondition - setup failure", func(t *testing.T) {
+	t.Run("reconcileWebhook - setup failure", func(t *testing.T) {
 		rc := &RepositoryController{}
 		obj := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1080,7 +1080,7 @@ func TestRepositoryController_WebhookConditions(t *testing.T) {
 			setupError: fmt.Errorf("GitHub API error: rate limited"),
 		}
 
-		ops := rc.updateWebhookConfiguredCondition(context.Background(), obj, mockRepo)
+		ops := rc.reconcileWebhook(context.Background(), obj, mockRepo)
 
 		// Should preserve existing webhook status on failure
 		assert.Len(t, ops, 2)

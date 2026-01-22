@@ -152,8 +152,8 @@ const (
 	// ReasonWebhookFailed indicates webhook registration failed
 	ReasonWebhookFailed = "WebhookFailed"
 
-	// ReasonWebhookNotRequired indicates webhook is not required
-	ReasonWebhookNotRequired = "WebhookNotRequired"
+	// ReasonNotRequired indicates the feature is not required
+	ReasonNotRequired = "NotRequired"
 
 	// ReasonSecretNotReady indicates webhook secret is not ready
 	ReasonSecretNotReady = "SecretNotReady"

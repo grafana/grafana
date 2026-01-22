@@ -24,9 +24,9 @@ type WebhookSetup interface {
 	WebhookURL() string
 }
 
-// updateWebhookConfiguredCondition handles webhook setup and condition tracking
+// reconcileWebhook handles webhook setup and condition tracking
 // This consolidates all webhook logic into a single reconciliation step
-func (rc *RepositoryController) updateWebhookConfiguredCondition(
+func (rc *RepositoryController) reconcileWebhook(
 	ctx context.Context,
 	obj *provisioning.Repository,
 	repo repository.Repository,
@@ -42,7 +42,7 @@ func (rc *RepositoryController) updateWebhookConfiguredCondition(
 			Status:             metav1.ConditionTrue,
 			ObservedGeneration: obj.Generation,
 			LastTransitionTime: metav1.NewTime(time.Now()),
-			Reason:             provisioning.ReasonWebhookNotRequired,
+			Reason:             provisioning.ReasonNotRequired,
 			Message:            "Webhook is not required for this repository type",
 		}
 		return buildConditionPatchOps(obj, condition)
@@ -56,7 +56,7 @@ func (rc *RepositoryController) updateWebhookConfiguredCondition(
 			Status:             metav1.ConditionTrue,
 			ObservedGeneration: obj.Generation,
 			LastTransitionTime: metav1.NewTime(time.Now()),
-			Reason:             provisioning.ReasonWebhookNotRequired,
+			Reason:             provisioning.ReasonNotRequired,
 			Message:            "Webhook URL is not configured",
 		}
 		return buildConditionPatchOps(obj, condition)

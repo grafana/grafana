@@ -612,7 +612,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	// Update conditions based on validation, health, webhook, and sync status
 	patchOperations = append(patchOperations, rc.updateValidatedCondition(obj, validationErrors)...)
 	patchOperations = append(patchOperations, rc.updateHealthyCondition(obj, healthStatus)...)
-	patchOperations = append(patchOperations, rc.updateWebhookConfiguredCondition(ctx, obj, repo)...)
+	patchOperations = append(patchOperations, rc.reconcileWebhook(ctx, obj, repo)...)
 	patchOperations = append(patchOperations, rc.updateSyncedCondition(obj)...)
 	patchOperations = append(patchOperations, rc.updateReadyCondition(obj, validationErrors, healthStatus)...)
 
