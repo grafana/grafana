@@ -1,21 +1,19 @@
-package connection
+package admission
 
 import (
 	"context"
 
 	"k8s.io/apiserver/pkg/admission"
-
-	appadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 )
 
-// CombinedValidator combines multiple validators for connection resources.
+// CombinedValidator combines multiple validators for a resource type.
 // It calls all validators in order and returns the first error encountered.
 type CombinedValidator struct {
-	validators []appadmission.Validator
+	validators []Validator
 }
 
 // NewCombinedValidator creates a new combined validator that calls all provided validators.
-func NewCombinedValidator(validators ...appadmission.Validator) appadmission.Validator {
+func NewCombinedValidator(validators ...Validator) Validator {
 	return &CombinedValidator{
 		validators: validators,
 	}

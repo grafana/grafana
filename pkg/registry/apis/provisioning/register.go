@@ -624,7 +624,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// Connection mutator and validator
 	connAdmissionValidator := connection.NewAdmissionValidator(b.connectionFactory)
 	connDeleteValidator := connection.NewReferencedByRepositoriesValidator(b.repoLister)
-	connCombinedValidator := connection.NewCombinedValidator(connAdmissionValidator, connDeleteValidator)
+	connCombinedValidator := appadmission.NewCombinedValidator(connAdmissionValidator, connDeleteValidator)
 	b.admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(b.connectionFactory))
 	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connCombinedValidator)
 	// Jobs validator (no mutator needed)
