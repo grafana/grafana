@@ -288,7 +288,7 @@ func (cc *ConnectionController) shouldRefreshToken(expiration time.Time) bool {
 		maxTokenAge = time.Minute * 5
 	)
 
-	return expiration.After(time.Now().Add(-maxTokenAge))
+	return expiration.Before(time.Now().Add(maxTokenAge))
 }
 
 // generateConnectionToken regenerates the connection token if the connection supports it.
