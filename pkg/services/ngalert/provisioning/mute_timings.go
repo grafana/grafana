@@ -162,8 +162,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	}
 
-	grafanaIntervals := getGrafanaTimeIntervals(revision)
-	if idx := slices.IndexFunc(grafanaIntervals, findByName(mt.Name)); idx != -1 {
+	if grafanaTimeIntervalExists(revision, mt.Name) {
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalExists.Errorf("")
 	}
 
@@ -204,6 +203,12 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, err
 	} else if !found {
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalNotFound.Errorf("")
+	}
+
+	if existing.Name != mt.Name { // if mute timing is renamed, check if this name is already taken
+		if grafanaTimeIntervalExists(revision, mt.Name) {
+			return definitions.MuteTimeInterval{}, ErrTimeIntervalExists.Errorf("")
+		}
 	}
 
 	if existing.Provenance == definitions.Provenance(models.ProvenanceConvertedPrometheus) {
@@ -404,6 +409,11 @@ func getGrafanaTimeIntervals(rev *legacy_storage.ConfigRevision) []config.MuteTi
 		result = append(result, config.MuteTimeInterval(interval))
 	}
 	return append(result, rev.Config.AlertmanagerConfig.MuteTimeIntervals...)
+}
+
+func grafanaTimeIntervalExists(rev *legacy_storage.ConfigRevision, name string) bool {
+	grafanaIntervals := getGrafanaTimeIntervals(rev)
+	return slices.IndexFunc(grafanaIntervals, findByName(name)) != -1
 }
 
 func updateTimeInterval(rev *legacy_storage.ConfigRevision, interval config.MuteTimeInterval) {
