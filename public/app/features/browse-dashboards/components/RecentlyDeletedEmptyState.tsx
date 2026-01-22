@@ -19,7 +19,9 @@ export const RecentlyDeletedEmptyState = ({ searchState }: RecentlyDeletedEmptyS
       role="alert"
     >
       <Trans i18nKey={'recently-deleted.page.no-deleted-dashboards-text'}>
-        When you delete a dashboard, it will be kept in the history for up to 12 months before being permanently deleted. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user.
+        When you delete a dashboard, it will be kept in the history for up to 12 months before being permanently
+        deleted. Users with delete permissions can restore the dashboards they deleted, and admins can restore
+        dashboards deleted by any user.
       </Trans>
     </EmptyState>
   );
