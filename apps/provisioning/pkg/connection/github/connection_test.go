@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -414,37 +415,30 @@ func TestConnection_Test(t *testing.T) {
 	}
 }
 
-func TestConnection_TokenExpired(t *testing.T) {
+func TestConnection_TokenExpiration(t *testing.T) {
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
 	// Generate a valid token using the existing function (expires in 10 minutes)
 	validToken, err := github.GenerateJWTToken("123", common.RawSecureValue(privateKeyBase64))
 	require.NoError(t, err)
 
-	// Create an expired token (manually construct a JWT that expired 1 hour ago)
-	expiredToken := createExpiredJWT(t, "123", privateKeyBase64)
+	exp, err := getExpirationFromToken(validToken)
+	require.NoError(t, err)
+	require.False(t, exp.IsZero())
 
 	tests := []struct {
 		name          string
 		secrets       github.ConnectionSecrets
 		expectedError string
-		expectExpired bool
+		expectTime    time.Time
 	}{
 		{
-			name: "valid token is not expired",
+			name: "return correct expiration",
 			secrets: github.ConnectionSecrets{
 				Token:      validToken,
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 			},
-			expectExpired: false,
-		},
-		{
-			name: "expired token returns true",
-			secrets: github.ConnectionSecrets{
-				Token:      expiredToken,
-				PrivateKey: common.RawSecureValue(privateKeyBase64),
-			},
-			expectExpired: true,
+			expectTime: exp,
 		},
 		{
 			name: "invalid token format returns error",
@@ -495,45 +489,17 @@ func TestConnection_TokenExpired(t *testing.T) {
 			}
 
 			conn := github.NewConnection(connection, mockFactory, tt.secrets)
-			expired, err := conn.TokenExpired(context.Background())
+			exp, err := conn.TokenExpiration(context.Background())
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.expectExpired, expired)
+				assert.Equal(t, tt.expectTime, exp)
 			}
 		})
 	}
-}
-
-// createExpiredJWT creates a JWT token that has already expired for testing purposes
-func createExpiredJWT(t *testing.T, appID string, privateKeyBase64 string) common.RawSecureValue {
-	t.Helper()
-
-	// Decode the private key
-	privateKeyPEM, err := base64.StdEncoding.DecodeString(privateKeyBase64)
-	require.NoError(t, err)
-
-	// Parse the RSA private key
-	key, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyPEM)
-	require.NoError(t, err)
-
-	// Create claims with expiration in the past
-	pastTime := time.Now().Add(-1 * time.Hour)
-	claims := jwt.RegisteredClaims{
-		IssuedAt:  jwt.NewNumericDate(pastTime.Add(-10 * time.Minute)),
-		ExpiresAt: jwt.NewNumericDate(pastTime),
-		Issuer:    appID,
-	}
-
-	// Sign the token
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	signedToken, err := token.SignedString(key)
-	require.NoError(t, err)
-
-	return common.RawSecureValue(signedToken)
 }
 
 func TestConnection_GenerateConnectionToken(t *testing.T) {
@@ -1031,4 +997,19 @@ func TestConnection_ListRepositories(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, repos, 0)
 	})
+}
+
+func getExpirationFromToken(token common.RawSecureValue) (time.Time, error) {
+	parser := jwt.NewParser(jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
+	parsedToken, _, err := parser.ParseUnverified(string(token), &jwt.RegisteredClaims{})
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to parse token: %w", err)
+	}
+
+	claims, ok := parsedToken.Claims.(*jwt.RegisteredClaims)
+	if !ok {
+		return time.Time{}, fmt.Errorf("unexpected token claims")
+	}
+
+	return claims.ExpiresAt.Time, nil
 }

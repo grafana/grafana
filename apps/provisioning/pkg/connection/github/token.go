@@ -11,7 +11,8 @@ import (
 
 const (
 	// JWTExpirationMinutes is the token expiration time for GitHub App JWT tokens
-	// TODO: this could be in settings
+	// Based on https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app
+	// The expiration time muse max 10 minutes.
 	JWTExpirationMinutes = 10
 )
 

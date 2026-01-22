@@ -217,13 +217,13 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	tokenConn, ok := c.(connection.TokenConnection)
 	if ok {
-		expired, err := tokenConn.TokenExpired(ctx)
+		expiration, err := tokenConn.TokenExpiration(ctx)
 		if err != nil {
 			logger.Error("failed to check if token expired", "error", err)
 			return err
 		}
 
-		if expired {
+		if cc.shouldRefreshToken(expiration) {
 			logger.Info("regenerating connection token")
 
 			token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
@@ -281,6 +281,14 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	logger.Info("connection reconciled successfully", "healthy", healthStatus.Healthy)
 	return nil
+}
+
+func (cc *ConnectionController) shouldRefreshToken(expiration time.Time) bool {
+	const (
+		maxTokenAge = time.Minute * 5
+	)
+
+	return expiration.After(time.Now().Add(-maxTokenAge))
 }
 
 // generateConnectionToken regenerates the connection token if the connection supports it.

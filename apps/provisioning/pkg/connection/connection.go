@@ -38,8 +38,8 @@ type Connection interface {
 //
 //go:generate mockery --name TokenConnection --structname MockTokenConnection --inpackage --filename connection_token_mock.go --with-expecter
 type TokenConnection interface {
-	// TokenExpired returns true if the underlying token secret is expired.
-	TokenExpired(ctx context.Context) (bool, error)
+	// TokenExpiration returns the underlying token expiration.
+	TokenExpiration(ctx context.Context) (time.Time, error)
 	// GenerateConnectionToken generates a connection-level token.
 	// Returns the generated token value.
 	GenerateConnectionToken(ctx context.Context) (common.RawSecureValue, error)

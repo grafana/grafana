@@ -221,14 +221,14 @@ func (c *Connection) GenerateConnectionToken(_ context.Context) (common.RawSecur
 	return GenerateJWTToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
 }
 
-// TokenExpired returns true if the underlying token secret is expired.
-func (c *Connection) TokenExpired(_ context.Context) (bool, error) {
+// TokenExpiration returns the underlying token expiration.
+func (c *Connection) TokenExpiration(_ context.Context) (time.Time, error) {
 	expiration, err := getExpirationFromToken(c.secrets.Token, c.secrets.PrivateKey)
 	if err != nil {
-		return false, err
+		return time.Time{}, err
 	}
 
-	return expiration.Before(time.Now()), nil
+	return expiration, nil
 }
 
 var (
