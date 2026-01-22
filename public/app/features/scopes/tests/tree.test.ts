@@ -34,6 +34,7 @@ import {
   expectResultApplicationsCloudPresent,
   expectResultApplicationsGrafanaNotPresent,
   expectResultApplicationsGrafanaPresent,
+  expectResultApplicationsGrafanaPresentAsync,
   expectResultApplicationsGrafanaSelected,
   expectResultApplicationsMimirNotPresent,
   expectResultApplicationsMimirPresent,
@@ -183,7 +184,7 @@ describe('Tree', () => {
 
     await searchScopes('Grafana');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(5);
-    expectResultApplicationsGrafanaPresent();
+    await expectResultApplicationsGrafanaPresentAsync();
     expectResultApplicationsCloudNotPresent();
   });
 
@@ -244,7 +245,7 @@ describe('Tree', () => {
     await searchScopes('grafana');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectPersistedApplicationsMimirPresent();
-    expectResultApplicationsGrafanaPresent();
+    await expectResultApplicationsGrafanaPresentAsync();
   });
 
   it('Does not persist a retrieved scope', async () => {
@@ -266,7 +267,8 @@ describe('Tree', () => {
     await clearScopesSearch();
     expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
     expectResultApplicationsMimirPresent();
-    expectResultApplicationsGrafanaPresent();
+    // Wait for async operations to complete and nodes to be rendered after clearing search
+    await expectResultApplicationsGrafanaPresentAsync();
   });
 
   it('Persists nodes from search', async () => {
@@ -283,7 +285,8 @@ describe('Tree', () => {
     await clearScopesSearch();
     expect(fetchNodesSpy).toHaveBeenCalledTimes(5);
     expectResultApplicationsMimirPresent();
-    expectResultApplicationsGrafanaPresent();
+    // Wait for async operations to complete and nodes to be rendered after clearing search
+    await expectResultApplicationsGrafanaPresentAsync();
   });
 
   it('Selects a persisted scope', async () => {
