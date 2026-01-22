@@ -552,14 +552,15 @@ func TestRefreshHealth(t *testing.T) {
 
 func TestRefreshHealthWithPatchOps(t *testing.T) {
 	tests := []struct {
-		name              string
-		testResult        *provisioning.TestResults
-		testError         error
-		existingStatus    provisioning.HealthStatus
-		expectError       bool
-		expectedHealth    bool
-		expectPatchOps    bool
-		expectedPatchPath string
+		name               string
+		testResult         *provisioning.TestResults
+		testError          error
+		existingStatus     provisioning.HealthStatus
+		existingConditions []metav1.Condition
+		expectError        bool
+		expectedHealth     bool
+		expectPatchOps     bool
+		expectedPatchPath  string
 	}{
 		{
 			name: "successful health check with status change",
@@ -608,10 +609,19 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 				Healthy: true,
 				Checked: time.Now().Add(-15 * time.Second).UnixMilli(),
 			},
+			existingConditions: []metav1.Condition{
+				{
+					Type:               provisioning.ConditionTypeReady,
+					Status:             metav1.ConditionTrue,
+					Reason:             provisioning.ReasonAvailable,
+					Message:            "Resource is available",
+					ObservedGeneration: 1,
+					LastTransitionTime: metav1.Now(),
+				},
+			},
 			expectError:    false,
 			expectedHealth: true,
 			expectPatchOps: false,
-			// Note: Need to add existing condition to the mock repo below
 		},
 		{
 			name:       "test repository error",
@@ -629,25 +639,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create mock repository
-			repoStatus := provisioning.RepositoryStatus{
-				Health: tt.existingStatus,
-			}
-
-			// For "no status change" test, add existing condition
-			if tt.name == "no status change - no patch ops returned" {
-				repoStatus.Conditions = []metav1.Condition{
-					{
-						Type:               provisioning.ConditionTypeReady,
-						Status:             metav1.ConditionTrue,
-						Reason:             provisioning.ReasonAvailable,
-						Message:            "Resource is available",
-						ObservedGeneration: 1,
-						LastTransitionTime: metav1.Now(),
-					},
-				}
-			}
-
+			// Create mock repository with existing status and conditions
 			mockRepo := &mockRepository{
 				config: &provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -657,7 +649,10 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 						Title: "Test Repository",
 						Type:  provisioning.LocalRepositoryType,
 					},
-					Status: repoStatus,
+					Status: provisioning.RepositoryStatus{
+						Health:     tt.existingStatus,
+						Conditions: tt.existingConditions,
+					},
 				},
 				testResult: tt.testResult,
 				testError:  tt.testError,

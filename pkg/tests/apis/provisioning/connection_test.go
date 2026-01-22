@@ -798,6 +798,12 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		assert.Equal(t, initial.Generation, initial.Status.ObservedGeneration, "observed generation should match")
 		// When healthy, fieldErrors should be empty
 		assert.Empty(t, initial.Status.FieldErrors, "fieldErrors should be empty when connection is healthy")
+		// Verify Ready condition is set
+		assert.NotEmpty(t, initial.Status.Conditions, "conditions should be set")
+		readyCondition := findCondition(initial.Status.Conditions, provisioning.ConditionTypeReady)
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
+		assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
 	})
 
 	t.Run("health check updates when spec changes", func(t *testing.T) {
@@ -882,6 +888,12 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		assert.True(t, final.Status.Health.Healthy, "connection should remain healthy")
 		// When healthy after spec change, fieldErrors should be empty
 		assert.Empty(t, final.Status.FieldErrors, "fieldErrors should be empty when connection is healthy after spec change")
+		// Verify Ready condition is still set correctly
+		assert.NotEmpty(t, final.Status.Conditions, "conditions should be set")
+		readyCondition := findCondition(final.Status.Conditions, provisioning.ConditionTypeReady)
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
+		assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
 	})
 }
 
@@ -978,6 +990,12 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		assert.Equal(t, provisioning.ConnectionStateDisconnected, conn.Status.State, "connection should be disconnected")
 		assert.Equal(t, conn.Generation, conn.Status.ObservedGeneration, "connection should be reconciled")
 		assert.Greater(t, conn.Status.Health.Checked, int64(0), "health check timestamp should be set")
+		// Verify Ready condition reflects unhealthy state
+		assert.NotEmpty(t, conn.Status.Conditions, "conditions should be set")
+		readyCondition := findCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False for unhealthy connection")
+		assert.Equal(t, provisioning.ReasonUnavailable, readyCondition.Reason, "Ready condition should have Unavailable reason")
 
 		// Verify fieldErrors are populated with validation errors - be strict and explicit
 		require.Len(t, conn.Status.FieldErrors, 1, "fieldErrors should contain exactly one error for invalid installation ID")
@@ -1066,6 +1084,12 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		assert.Equal(t, provisioning.ConnectionStateDisconnected, conn.Status.State, "connection should be disconnected")
 		assert.Equal(t, conn.Generation, conn.Status.ObservedGeneration, "connection should be reconciled")
 		assert.Greater(t, conn.Status.Health.Checked, int64(0), "health check timestamp should be set")
+		// Verify Ready condition reflects unhealthy state
+		assert.NotEmpty(t, conn.Status.Conditions, "conditions should be set")
+		readyCondition := findCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False for unhealthy connection")
+		assert.Equal(t, provisioning.ReasonUnavailable, readyCondition.Reason, "Ready condition should have Unavailable reason")
 
 		// Verify fieldErrors are populated with validation errors - be strict and explicit
 		require.Len(t, conn.Status.FieldErrors, 1, "fieldErrors should contain exactly one error for app ID mismatch")
@@ -1219,6 +1243,12 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 		assert.True(t, connHealthy.Status.Health.Healthy, "connection should be healthy")
 		assert.Equal(t, provisioning.ConnectionStateConnected, connHealthy.Status.State, "connection should be connected")
 		assert.Empty(t, connHealthy.Status.FieldErrors, "fieldErrors should be cleared when connection becomes healthy")
+		// Verify Ready condition is now True
+		assert.NotEmpty(t, connHealthy.Status.Conditions, "conditions should be set")
+		readyCondition := findCondition(connHealthy.Status.Conditions, provisioning.ConditionTypeReady)
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True when connection becomes healthy")
+		assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
 	})
 }
 
@@ -1553,4 +1583,14 @@ func verifyToken(t *testing.T, appID, publicKey, token string) (bool, error) {
 	}
 
 	return claims.VerifyIssuer(appID, true), nil
+}
+
+// findCondition finds a condition by type in the conditions list
+func findCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
+	for i := range conditions {
+		if conditions[i].Type == conditionType {
+			return &conditions[i]
+		}
+	}
+	return nil
 }

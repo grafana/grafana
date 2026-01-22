@@ -39,43 +39,9 @@ func buildConditionPatchOps(obj *provisioning.Repository, newCondition metav1.Co
 	}
 }
 
-// buildConditionPatchOpsForRepository creates condition patch operations for a Repository.
+// buildConditionPatchOpsFromExisting creates condition patch operations for Repository or Connection resources.
 // Returns nil if the condition hasn't changed to avoid unnecessary patches.
-func buildConditionPatchOpsForRepository(existingConditions []metav1.Condition, generation int64, newCondition metav1.Condition) []map[string]interface{} {
-	// Check if condition already exists and is unchanged
-	existingCondition := meta.FindStatusCondition(existingConditions, newCondition.Type)
-	if existingCondition != nil &&
-		existingCondition.Status == newCondition.Status &&
-		existingCondition.Reason == newCondition.Reason &&
-		existingCondition.Message == newCondition.Message &&
-		existingCondition.ObservedGeneration == generation {
-		// Condition hasn't changed, no need to patch
-		return nil
-	}
-
-	// Clone the conditions to avoid mutating the original
-	conditions := make([]metav1.Condition, len(existingConditions))
-	copy(conditions, existingConditions)
-
-	// Ensure ObservedGeneration is set
-	newCondition.ObservedGeneration = generation
-
-	// Use meta.SetStatusCondition to handle LastTransitionTime correctly
-	meta.SetStatusCondition(&conditions, newCondition)
-
-	// Return patch operation to replace the entire conditions array
-	return []map[string]interface{}{
-		{
-			"op":    "replace",
-			"path":  "/status/conditions",
-			"value": conditions,
-		},
-	}
-}
-
-// buildConditionPatchOpsForConnection creates condition patch operations for a Connection.
-// Returns nil if the condition hasn't changed to avoid unnecessary patches.
-func buildConditionPatchOpsForConnection(existingConditions []metav1.Condition, generation int64, newCondition metav1.Condition) []map[string]interface{} {
+func buildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, generation int64, newCondition metav1.Condition) []map[string]interface{} {
 	// Check if condition already exists and is unchanged
 	existingCondition := meta.FindStatusCondition(existingConditions, newCondition.Type)
 	if existingCondition != nil &&
