@@ -222,6 +222,17 @@ func NewMapperRegistry() MapperRegistry {
 				// No need to skip scope on create for roles because we translate `permissions:type:delegate` to `roles:*``
 				skipScopeOnVerb: nil,
 			},
+			"globalroles": translation{
+				resource:  "roles",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:   "roles:read",
+					utils.VerbList:  "roles:read",
+					utils.VerbWatch: "roles:read",
+				},
+				folderSupport:    false,
+				useWildcardScope: true,
+			},
 			"roles": translation{
 				resource:  "roles",
 				attribute: "uid",

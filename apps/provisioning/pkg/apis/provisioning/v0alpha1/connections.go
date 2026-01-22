@@ -101,6 +101,11 @@ type ConnectionStatus struct {
 	// The generation of the spec last time reconciliation ran
 	ObservedGeneration int64 `json:"observedGeneration"`
 
+	// FieldErrors are errors that occurred during validation of the connection spec.
+	// These errors are intended to help users identify and fix issues in the spec.
+	// +listType=atomic
+	FieldErrors []ErrorDetails `json:"fieldErrors,omitempty"`
+
 	// Connection state
 	State ConnectionState `json:"state"`
 

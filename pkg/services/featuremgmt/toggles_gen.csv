@@ -280,3 +280,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-01-07,profilesExemplars,experimental,@grafana/observability-traces-and-profiling,false,false,false
 2026-01-14,alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
 2026-01-15,queryWithAssistant,experimental,@grafana/oss-big-tent,false,false,true
+2026-01-20,kubernetesTeamBindings,experimental,@grafana/identity-access-team,false,false,false

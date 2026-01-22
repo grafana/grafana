@@ -789,4 +789,8 @@ const (
 	// FlagAlertingSyncDispatchTimer
 	// Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
 	FlagAlertingSyncDispatchTimer = "alertingSyncDispatchTimer"
+
+	// FlagKubernetesTeamBindings
+	// Enables search for team bindings in the app platform API
+	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
 )

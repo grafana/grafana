@@ -2250,6 +2250,14 @@ var (
 			Owner:        grafanaOSSBigTent,
 			Expression:   "false",
 		},
+		{
+			Name:         "kubernetesTeamBindings",
+			Description:  "Enables search for team bindings in the app platform API",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
 	}
 )
 
