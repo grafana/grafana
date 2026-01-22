@@ -44,8 +44,10 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-09-07,sseGroupByDatasource,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-09-19,lokiRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
 2023-09-28,externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
-2023-12-06,kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
-2025-06-26,kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2023-10-03,enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
+2024-06-18,disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
+2023-12-05,kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
+2025-06-25,kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2024-06-05,kubernetesDashboards,GA,@grafana/dashboards-squad,false,false,false
 2025-08-01,kubernetesShortURLs,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2025-08-29,useKubernetesShortURLsAPI,experimental,@grafana/sharing-squad,false,false,true
@@ -63,6 +65,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-28,queryServiceWithConnections,experimental,@grafana/grafana-datasources-core-services,false,true,false
 2024-04-19,queryServiceRewrite,experimental,@grafana/grafana-datasources-core-services,false,true,false
 2024-04-19,queryServiceFromUI,experimental,@grafana/grafana-datasources-core-services,false,false,true
+2026-01-19,datasourcesRerouteLegacyCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-10-20,cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
 2023-10-12,cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2023-10-30,alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false

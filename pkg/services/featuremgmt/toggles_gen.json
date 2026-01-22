@@ -1371,6 +1371,19 @@
     },
     {
       "metadata": {
+        "name": "datasourcesRerouteLegacyCRUDAPIs",
+        "resourceVersion": "1768836802577",
+        "creationTimestamp": "2026-01-19T15:33:22Z"
+      },
+      "spec": {
+        "description": "Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "disableClassicHTTPHistogram",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-06-18T19:37:44Z",

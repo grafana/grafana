@@ -339,6 +339,11 @@ export interface FeatureToggles {
   */
   queryServiceFromUI?: boolean;
   /**
+  * Handle datasource CRUD requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesRerouteLegacyCRUDAPIs?: boolean;
+  /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
   */
