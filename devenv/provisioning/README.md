@@ -35,4 +35,7 @@ http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/
 
 this includes the output of what happens with `dryRun` applied to whatever is saved (nothing in this case)
 
-note you can edit and save
+note you can edit and save from the UI!
+
+The files swagger API:
+http://localhost:3000/swagger?api=provisioning.grafana.app-v0alpha1#/Repository/getRepositoryFiles
