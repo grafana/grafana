@@ -666,7 +666,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
-	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector()
+	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector(b)
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	testTester := repository.NewTester(b.repoValidator, existingReposValidator)
