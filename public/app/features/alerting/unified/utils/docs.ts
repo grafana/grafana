@@ -37,6 +37,13 @@ export const DOCS_URL_DATA_SOURCE_ALERTING = `${DOCS_BASE_URL}/alerting/fundamen
 // Query and Transform
 export const DOCS_URL_QUERY_TRANSFORM_DATA = `${DOCS_BASE_URL}/panels-visualizations/query-transform-data/`;
 
+// Tutorials
+export const TUTORIAL_URL_ALERTING_GET_STARTED = 'https://grafana.com/tutorials/alerting-get-started/';
+
 // External (Mimir/Metrics Enterprise)
 export const DOCS_URL_FEDERATED_RULES =
   'https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation';
+
+// External (Prometheus)
+export const EXTERNAL_URL_PROMETHEUS_ALERTING_RULES =
+  'https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/';
