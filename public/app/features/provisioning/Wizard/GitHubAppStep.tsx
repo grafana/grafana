@@ -98,7 +98,8 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
         <Controller
           name="githubAppMode"
           control={control}
-          render={({ field: { onChange, ...field } }) => (
+          // RadioButtonGroup doesn't support refs, so we need to remove it from fields
+          render={({ field: { ref, onChange, ...field } }) => (
             <RadioButtonGroup
               options={[
                 {
