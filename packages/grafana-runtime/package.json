@@ -61,13 +61,13 @@
     "@openfeature/core": "^1.9.0",
     "@openfeature/ofrep-web-provider": "^0.3.3",
     "@openfeature/web-sdk": "^1.6.1",
-    "@types/systemjs": "6.15.3",
-    "history": "4.10.1",
+    "@types/systemjs": "^6.15.3",
+    "history": "^4.10.1",
     "lodash": "^4.17.23",
-    "react-loading-skeleton": "3.5.0",
-    "react-use": "17.6.0",
-    "rxjs": "7.8.2",
-    "tslib": "2.8.1"
+    "react-loading-skeleton": "^3.5.0",
+    "react-use": "^17.6.0",
+    "rxjs": "^7.8.2",
+    "tslib": "^2.8.1"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "16.0.1",

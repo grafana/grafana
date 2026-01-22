@@ -3815,21 +3815,21 @@ __metadata:
     "@types/lodash": "npm:4.17.20"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
-    "@types/systemjs": "npm:6.15.3"
+    "@types/systemjs": "npm:^6.15.3"
     esbuild: "npm:0.25.8"
-    history: "npm:4.10.1"
+    history: "npm:^4.10.1"
     lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-loading-skeleton: "npm:3.5.0"
-    react-use: "npm:17.6.0"
+    react-loading-skeleton: "npm:^3.5.0"
+    react-use: "npm:^17.6.0"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     rollup-plugin-sourcemaps: "npm:0.6.3"
-    rxjs: "npm:7.8.2"
-    tslib: "npm:2.8.1"
+    rxjs: "npm:^7.8.2"
+    tslib: "npm:^2.8.1"
     typescript: "npm:5.9.2"
   peerDependencies:
     react: ^18.0.0
@@ -11628,6 +11628,13 @@ __metadata:
   version: 6.15.3
   resolution: "@types/systemjs@npm:6.15.3"
   checksum: 10/c2e6d7b3d83282657074e0b2d5bfcd6e4923f02d659e7bd3bca215466aee1960a444243d0f97dd26e8843a45e2b34ee33ecac39efb4e419ce2dc8f8f7fb03472
+  languageName: node
+  linkType: hard
+
+"@types/systemjs@npm:^6.15.3":
+  version: 6.15.4
+  resolution: "@types/systemjs@npm:6.15.4"
+  checksum: 10/0150d47cd5e94cb253753bbfb9fbaabec183943404019a55e7d4abcdfb05e9f38fd5e42e27074555aeb8a8d52b7173682c7fa8723cbee59be14fecaa31a5cf5e
   languageName: node
   linkType: hard
 
@@ -20692,7 +20699,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"history@npm:4.10.1, history@npm:^4.9.0":
+"history@npm:4.10.1, history@npm:^4.10.1, history@npm:^4.9.0":
   version: 4.10.1
   resolution: "history@npm:4.10.1"
   dependencies:
