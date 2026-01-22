@@ -1643,6 +1643,11 @@
       },
       "yaml-error": "Failed to parse YAML file: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "This Alertmanager has inhibition rules configured. Some alerts may be suppressed when matching alerts are firing.",
+      "learn-more": "Learn more about inhibition rules",
+      "title": "Inhibition rules are in effect"
+    },
     "insights": {
       "monitor-status-of-system": "Monitor the status of your system",
       "monitor-status-system-tooltip": "Alerting insights provides pre-built dashboards to monitor your alerting data.",
@@ -11869,10 +11874,7 @@
       "delete-title": "Delete connection",
       "error-loading": "Failed to load connections",
       "no-connections": "No connections configured",
-      "no-connections-message": "Add a connection to authenticate with external providers",
       "no-results": "No results matching your query",
-      "page-subtitle": "View and manage your app connections",
-      "page-title": "Connections",
       "search-placeholder": "Search connections",
       "status-connected": "Connected",
       "status-disconnected": "Disconnected",
@@ -12061,6 +12063,8 @@
       "error-delete-all-repositories": "Failed to delete all repositories",
       "subtitle": "View and manage your configured repositories",
       "success-all-repositories-deleted": "All configured repositories deleted",
+      "tab-connections": "Connections",
+      "tab-connections-title": "List of connections",
       "tab-getting-started": "Getting started",
       "tab-getting-started-title": "Getting started",
       "tab-repositories": "Repositories",
@@ -12144,7 +12148,6 @@
       "jobs": "Jobs"
     },
     "repository-actions": {
-      "connections": "Connections",
       "settings": "Settings",
       "source-code": "Source code"
     },
@@ -12582,6 +12585,11 @@
       "query-inspector": "Query inspector",
       "query-tab-help-button-title-open-data-source-help": "Open data source help",
       "title-data-source-help": "Data source help"
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": "Open Query Library"
     }
   },
   "query-operation": {

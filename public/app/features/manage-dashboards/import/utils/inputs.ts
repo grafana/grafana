@@ -5,11 +5,8 @@ import {
   AnnotationQueryKind,
   AnnotationQueryKind as AnnotationQueryKindV2,
   PanelQueryKind,
-  PanelSpec,
   QueryVariableKind,
   Spec as DashboardV2Spec,
-  VariableKind,
-  defaultDataQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { AnnotationQuery, Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { isRecord } from 'app/core/utils/isRecord';
@@ -21,7 +18,6 @@ import { getLibraryPanel } from '../../../library-panels/state/api';
 import { LibraryElementKind } from '../../../library-panels/types';
 import {
   DashboardInputs,
-  DatasourceSelection,
   DataSourceInput,
   ImportDashboardDTO,
   ImportFormDataV2,
@@ -29,6 +25,9 @@ import {
   LibraryPanelInput,
   LibraryPanelInputState,
 } from '../../types';
+
+/** Maps datasource type (e.g. "prometheus", "loki") to user-selected datasource from the import form */
+export type DatasourceMappings = Record<string, { uid: string; type: string; name?: string }>;
 
 /**
  * Detect the dashboard format from input.
@@ -184,7 +183,7 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
       if (variable.kind === 'QueryVariable') {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const queryVar = variable as QueryVariableKind;
-        const dsType = queryVar.spec.query?.spec.group;
+        const dsType = queryVar.spec.query?.group;
         if (dsType) {
           dsTypes.add(dsType);
         }
@@ -196,7 +195,7 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
     for (const annotation of dashboard.annotations) {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const annot = annotation as AnnotationQueryKindV2;
-      const dsType = annot.spec.query?.spec.group;
+      const dsType = annot.spec.query?.group;
       if (dsType) {
         dsTypes.add(dsType);
       }
@@ -210,7 +209,7 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
           if (query.kind === 'PanelQuery') {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             const panelQuery = query as PanelQueryKind;
-            const dsType = panelQuery.spec.query?.kind;
+            const dsType = panelQuery.spec.query?.group;
             if (dsType) {
               dsTypes.add(dsType);
             }
@@ -281,19 +280,180 @@ export function applyV1Inputs(
 }
 
 /**
- * Apply user's datasource selections to a v2 dashboard
+ * Apply user's datasource selections to a v2 dashboard.
+ * Builds mappings from the form and delegates to replaceDatasourcesInDashboard.
  */
 export function applyV2Inputs(dashboard: DashboardV2Spec, form: ImportFormDataV2): DashboardV2Spec {
-  const annotations = dashboard.annotations?.map((annotation) => processAnnotationV2(annotation, form));
-  const variables = dashboard.variables?.map((variable) => processVariableV2(variable, form));
-  const elements = processElementsV2(dashboard.elements, form);
+  const mappings: DatasourceMappings = {};
+  for (const key of Object.keys(form)) {
+    if (key.startsWith('datasource-')) {
+      const dsType = key.replace('datasource-', '');
+      const ds = form[key];
+      if (isRecord(ds) && typeof ds.uid === 'string' && typeof ds.type === 'string') {
+        const name = typeof ds.name === 'string' ? ds.name : undefined;
+        mappings[dsType] = { uid: ds.uid, type: ds.type, name };
+      }
+    }
+  }
+  return replaceDatasourcesInDashboard(dashboard, mappings);
+}
 
+export function isVariableRef(dsName: string | undefined): boolean {
+  return dsName?.startsWith('$') ?? false;
+}
+
+export function replaceDatasourcesInDashboard(
+  dashboard: DashboardV2Spec,
+  mappings: DatasourceMappings
+): DashboardV2Spec {
   return {
     ...dashboard,
-    annotations,
-    variables,
-    elements,
+    annotations: replaceAnnotationDatasources(dashboard.annotations, mappings),
+    variables: replaceVariableDatasources(dashboard.variables, mappings),
+    elements: replaceElementDatasources(dashboard.elements, mappings),
   };
+}
+
+function replaceAnnotationDatasources(
+  annotations: DashboardV2Spec['annotations'],
+  mappings: DatasourceMappings
+): DashboardV2Spec['annotations'] {
+  return annotations?.map((annotation: AnnotationQueryKind) => {
+    const dsType = annotation.spec.query?.group;
+    const currentDsName = annotation.spec.query?.datasource?.name;
+    const ds = dsType ? mappings[dsType] : undefined;
+
+    if (isVariableRef(currentDsName) || !dsType || !ds) {
+      return annotation;
+    }
+
+    return {
+      ...annotation,
+      spec: {
+        ...annotation.spec,
+        query: {
+          ...annotation.spec.query,
+          datasource: { name: ds.uid },
+        },
+      },
+    };
+  });
+}
+
+function replaceVariableDatasources(
+  variables: DashboardV2Spec['variables'],
+  mappings: DatasourceMappings
+): DashboardV2Spec['variables'] {
+  return variables?.map((variable) => {
+    if (variable.kind === 'QueryVariable') {
+      const dsType = variable.spec.query?.group;
+      const currentDsName = variable.spec.query?.datasource?.name;
+      const ds = dsType ? mappings[dsType] : undefined;
+
+      if (isVariableRef(currentDsName) || !dsType || !ds) {
+        return variable;
+      }
+
+      return {
+        ...variable,
+        spec: {
+          ...variable.spec,
+          query: {
+            ...variable.spec.query,
+            datasource: { name: ds.uid },
+          },
+          options: [],
+          current: { text: '', value: '' },
+          refresh: 'onDashboardLoad' as const,
+        },
+      };
+    }
+
+    if (variable.kind === 'DatasourceVariable') {
+      const dsType = variable.spec.pluginId;
+      const ds = dsType ? mappings[dsType] : undefined;
+
+      if (!dsType || !ds) {
+        return variable;
+      }
+
+      return {
+        ...variable,
+        spec: {
+          ...variable.spec,
+          current: {
+            text: ds.name ?? ds.uid,
+            value: ds.uid,
+          },
+        },
+      };
+    }
+
+    if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
+      const dsType = variable.group;
+      const currentDsName = variable.datasource?.name;
+      const ds = dsType ? mappings[dsType] : undefined;
+
+      if (isVariableRef(currentDsName) || !dsType || !ds) {
+        return variable;
+      }
+
+      return {
+        ...variable,
+        datasource: { name: ds.uid },
+      };
+    }
+
+    return variable;
+  });
+}
+
+function replaceElementDatasources(
+  elements: DashboardV2Spec['elements'],
+  mappings: DatasourceMappings
+): DashboardV2Spec['elements'] {
+  return Object.fromEntries(
+    Object.entries(elements).map(([key, element]) => {
+      if (element.kind === 'Panel') {
+        const panel = { ...element.spec };
+        if (panel.data?.kind === 'QueryGroup') {
+          const newQueries = panel.data.spec.queries.map((query) => {
+            if (query.kind !== 'PanelQuery') {
+              return query;
+            }
+
+            const queryType = query.spec.query?.group;
+            const currentDsName = query.spec.query?.datasource?.name;
+            const ds = queryType ? mappings[queryType] : undefined;
+
+            if (isVariableRef(currentDsName) || !queryType || !ds) {
+              return query;
+            }
+
+            return {
+              ...query,
+              spec: {
+                ...query.spec,
+                query: {
+                  ...query.spec.query,
+                  datasource: { name: ds.uid },
+                },
+              },
+            };
+          });
+          panel.data = {
+            ...panel.data,
+            spec: {
+              ...panel.data.spec,
+              queries: newQueries,
+            },
+          };
+        }
+        return [key, { kind: element.kind, spec: panel }];
+      }
+      return [key, element];
+    })
+  );
 }
 
 function checkUserInputMatch(
@@ -404,147 +564,4 @@ function processVariable(
   }
 
   return variable;
-}
-
-function getDatasourceSelection(form: ImportFormDataV2, key: string): DatasourceSelection | undefined {
-  const value = form[`datasource-${key}`];
-  if (!isRecord(value)) {
-    return undefined;
-  }
-
-  const uid = value.uid;
-  const type = value.type;
-  if (typeof uid === 'string' && typeof type === 'string') {
-    const name = typeof value.name === 'string' ? value.name : undefined;
-    return { uid, type, name };
-  }
-
-  return undefined;
-}
-
-function processAnnotationV2(annotation: AnnotationQueryKind, form: ImportFormDataV2): AnnotationQueryKind {
-  const dsType = annotation.spec.query?.spec.group;
-  const ds = dsType ? getDatasourceSelection(form, dsType) : undefined;
-
-  if (ds) {
-    return {
-      ...annotation,
-      spec: {
-        ...annotation.spec,
-        query: {
-          kind: 'DataQuery',
-          group: dsType,
-          version: defaultDataQueryKind().version,
-          datasource: { name: ds.uid },
-          spec: {
-            ...annotation.spec.query?.spec,
-          },
-        },
-      },
-    };
-  }
-
-  return annotation;
-}
-
-function processVariableV2(variable: VariableKind, form: ImportFormDataV2): VariableKind {
-  if (variable.kind === 'QueryVariable') {
-    const dsType = variable.spec.query?.spec.group;
-    const ds = dsType ? getDatasourceSelection(form, dsType) : undefined;
-
-    if (ds) {
-      return {
-        ...variable,
-        spec: {
-          ...variable.spec,
-          query: {
-            ...variable.spec.query,
-            spec: {
-              ...variable.spec.query.spec,
-              group: ds.type,
-              datasource: {
-                name: ds.uid,
-              },
-            },
-          },
-          options: [],
-          current: {
-            text: '',
-            value: '',
-          },
-          refresh: 'onDashboardLoad' as const,
-        },
-      };
-    }
-  }
-
-  if (variable.kind === 'DatasourceVariable') {
-    const dsType = variable.spec.pluginId;
-    const ds = dsType ? getDatasourceSelection(form, dsType) : undefined;
-
-    if (ds) {
-      return {
-        ...variable,
-        spec: {
-          ...variable.spec,
-          current: {
-            text: ds.name ?? '',
-            value: ds.uid,
-          },
-        },
-      };
-    }
-  }
-
-  return variable;
-}
-
-function processElementsV2(elements: DashboardV2Spec['elements'], form: ImportFormDataV2): DashboardV2Spec['elements'] {
-  return Object.fromEntries(
-    Object.entries(elements).map(([key, element]) => {
-      if (element.kind === 'Panel') {
-        const processedPanel = processPanelV2(element.spec, form);
-        return [key, { kind: element.kind, spec: processedPanel }];
-      }
-      return [key, element];
-    })
-  );
-}
-
-function processPanelV2(panel: PanelSpec, form: ImportFormDataV2): PanelSpec {
-  if (panel.data?.kind !== 'QueryGroup') {
-    return panel;
-  }
-
-  const newQueries = panel.data.spec.queries.map((query) => {
-    if (query.kind === 'PanelQuery') {
-      const queryType = query.spec.query?.kind;
-      const ds = queryType ? getDatasourceSelection(form, queryType) : undefined;
-
-      if (ds) {
-        return {
-          ...query,
-          spec: {
-            ...query.spec,
-            datasource: {
-              uid: ds.uid,
-              type: ds.type,
-            },
-          },
-        };
-      }
-    }
-    return query;
-  });
-
-  return {
-    ...panel,
-    data: {
-      ...panel.data,
-      spec: {
-        ...panel.data.spec,
-        queries: newQueries,
-      },
-    },
-  };
 }
