@@ -427,7 +427,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
             />
           ) : (
             <Stack gap={2} direction="column">
-              <Field label={exportExternallyTranslation}>
+              <Field label={exportExternallyTranslation} noMargin>
                 <Switch
                   id="share-externally-toggle"
                   value={isSharingExternally}

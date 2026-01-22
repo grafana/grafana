@@ -1967,11 +1967,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/sharing/ShareExportTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/sharing/ShareLinkTab.tsx": {
     "no-restricted-syntax": {
       "count": 4
