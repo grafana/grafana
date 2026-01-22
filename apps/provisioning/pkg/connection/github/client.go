@@ -67,7 +67,7 @@ type githubClient struct {
 }
 
 func NewClient(client *github.Client) Client {
-	return &githubClient{client}
+	return &githubClient{gh: client}
 }
 
 // GetApp gets the app by using the given token.
@@ -133,7 +133,8 @@ func (r *githubClient) ListInstallationRepositories(ctx context.Context, install
 	}
 
 	// Create a new client with the installation token
-	tokenClient := github.NewClient(nil).WithAuthToken(installationToken.GetToken())
+	// WithAuthToken creates a copy of the client with the new auth token while preserving the HTTP transport
+	tokenClient := r.gh.WithAuthToken(installationToken.GetToken())
 
 	var allRepos []Repository
 	opts := &github.ListOptions{
