@@ -75,19 +75,12 @@ export const RolePicker = ({
   const ref = useRef<HTMLDivElement>(null);
   const theme = useTheme2();
   const widthPx = typeof width === 'number' ? theme.spacing(width) : width;
-  const wasOpenRef = useRef(isOpen);
 
   // Sync internal state only when picker closes (transitions from open to closed)
   useEffect(() => {
-    const wasOpen = wasOpenRef.current;
-    wasOpenRef.current = isOpen;
-
-    // Only sync when transitioning from open to closed, not on every prop change
-    if (wasOpen && !isOpen) {
-      setSelectedBuiltInRole(basicRole);
-      setSelectedRoles(appliedRoles);
-    }
-  }, [appliedRoles, basicRole, isOpen]);
+    setSelectedBuiltInRole(basicRole);
+    setSelectedRoles(appliedRoles);
+  }, [appliedRoles, basicRole]);
 
   const setMenuPosition = useCallback(() => {
     const { horizontal, vertical, menuToLeft } = calculateMenuPosition();
@@ -184,20 +177,14 @@ export const RolePicker = ({
   };
 
   const onUpdate = (newRoles: Role[], newBuiltInRole?: OrgRole) => {
-    // Close the picker first
+    if (onBasicRoleChange && newBuiltInRole && newBuiltInRole !== basicRole) {
+      onBasicRoleChange(newBuiltInRole);
+    }
+    if (canUpdateRoles) {
+      onRolesChange(newRoles);
+    }
     setQuery('');
     setOpen(false);
-
-    // Trigger callbacks after a brief delay to allow React to process the close
-    // This prevents parent refetches from interfering with the picker closing
-    setTimeout(() => {
-      if (onBasicRoleChange && newBuiltInRole && newBuiltInRole !== basicRole) {
-        onBasicRoleChange(newBuiltInRole);
-      }
-      if (canUpdateRoles) {
-        onRolesChange(newRoles);
-      }
-    }, 0);
   };
 
   const getOptions = () => {
