@@ -24,12 +24,18 @@ func newValidatorTestAttributes(obj, old runtime.Object, op admission.Operation)
 }
 
 func newValidatorTestAttributesWithDryRun(obj, old runtime.Object, op admission.Operation, dryRun bool) admission.Attributes {
+	name := "test"
+	if obj != nil {
+		if conn, ok := obj.(*provisioning.Connection); ok {
+			name = conn.GetName()
+		}
+	}
 	return admission.NewAttributesRecord(
 		obj,
 		old,
 		provisioning.ConnectionResourceInfo.GroupVersionKind(),
 		"default",
-		"test",
+		name,
 		provisioning.ConnectionResourceInfo.GroupVersionResource(),
 		"",
 		op,
