@@ -565,6 +565,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
+			Expression:   "false",
 		},
 		{
 			Name:        "alertmanagerRemotePrimary",
