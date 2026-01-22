@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 
 import {
   AbsoluteTimeRange,
@@ -7,35 +7,23 @@ import {
   DataFrame,
   EventBusSrv,
   ExploreLogsPanelState,
-  FieldConfigSource,
-  LoadingState,
   LogLevel,
   LogRowModel,
   LogsMetaItem,
   LogsSortOrder,
-  PanelData,
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
-import { getAppEvents, getTemplateSrv } from '@grafana/runtime';
-import { PanelContextProvider } from '@grafana/ui';
-import { Options } from 'app/plugins/panel/logstable/panelcfg.gen';
 
-import { LogsTable } from '../../../plugins/panel/logstable/LogsTable';
 import { LogsVisualisationType } from '../../explore/Logs/Logs';
 
+import { ControlledLogsTable } from './ControlledLogsTable';
 import { InfiniteScroll } from './InfiniteScroll';
 import { LogRows, Props } from './LogRows';
 import { LogListOptions } from './panel/LogList';
 import { LogListContextProvider, useLogListContext } from './panel/LogListContext';
 import { LogListControls } from './panel/LogListControls';
 import { ScrollToLogsEvent } from './panel/virtualization';
-
-// @todo
-export const FILTER_FOR_OPERATOR = '=';
-export const FILTER_OUT_OPERATOR = '!=';
-export type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
-export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
 
 export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   loading: boolean;
@@ -45,7 +33,6 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   onLogOptionsChange?: (option: LogListOptions, value: string | boolean | string[]) => void;
   range: TimeRange;
   filterLevels?: LogLevel[];
-  fieldConfig: FieldConfigSource;
 
   /** Props added for Table **/
   visualisationType: LogsVisualisationType;
@@ -87,35 +74,10 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
       prettifyLogMessage,
       onLogOptionsChange,
       wrapLogMessage,
-      fieldConfig,
       ...rest
     }: ControlledLogRowsProps,
     ref
   ) => {
-    const dataFrames = rest.logsTableFrames ?? [];
-    const panelData: PanelData = {
-      state: rest.loading ? LoadingState.Loading : LoadingState.Done,
-      series: dataFrames,
-      timeRange: rest.timeRange,
-    };
-
-    const eventBus = getAppEvents();
-
-    const onCellFilterAdded = (filter: AdHocFilterItem) => {
-      const { value, key, operator } = filter;
-      const { onClickFilterLabel, onClickFilterOutLabel } = rest;
-      if (!onClickFilterLabel || !onClickFilterOutLabel) {
-        return;
-      }
-      if (operator === FILTER_FOR_OPERATOR) {
-        onClickFilterLabel(key, value, dataFrames[0]);
-      }
-
-      if (operator === FILTER_OUT_OPERATOR) {
-        onClickFilterOutLabel(key, value, dataFrames[0]);
-      }
-    };
-
     return (
       <LogListContextProvider
         app={rest.app || CoreApp.Unknown}
@@ -135,46 +97,9 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         wrapLogMessage={wrapLogMessage}
       >
         {rest.visualisationType === 'logs' && (
-          <LogRowsComponent
-            ref={ref}
-            {...rest}
-            deduplicatedRows={deduplicatedRows}
-            fieldConfig={{ defaults: {}, overrides: [] }}
-          />
+          <LogRowsComponent ref={ref} {...rest} deduplicatedRows={deduplicatedRows} />
         )}
-        {rest.visualisationType === 'table' && rest.updatePanelState && (
-          <PanelContextProvider
-            value={{
-              eventsScope: 'explore',
-              eventBus: eventBus ?? new EventBusSrv(),
-              onAddAdHocFilter: onCellFilterAdded,
-            }}
-          >
-            <LogsTable
-              id={0}
-              width={rest.width ?? 0}
-              data={panelData}
-              options={{}}
-              transparent={false}
-              height={800}
-              fieldConfig={fieldConfig}
-              renderCounter={0}
-              title={''}
-              eventBus={eventBus}
-              onOptionsChange={function (options: Options): void {
-                console.log('onOptionsChange not implemented');
-              }}
-              onFieldConfigChange={function (config: FieldConfigSource): void {
-                console.log('onFieldConfigChange not implemented');
-              }}
-              replaceVariables={getTemplateSrv().replace.bind(getTemplateSrv())}
-              onChangeTimeRange={function (timeRange: AbsoluteTimeRange): void {
-                console.log('onChangeTimeRange not implemented');
-              }}
-              {...rest}
-            />
-          </PanelContextProvider>
-        )}
+        {rest.visualisationType === 'table' && rest.updatePanelState && <ControlledLogsTable {...rest} />}
       </LogListContextProvider>
     );
   }
