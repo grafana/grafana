@@ -1,0 +1,16 @@
+name: TEST - Debug Exposure Auto
+on: [push]
+
+env:
+  ACTIONS_STEP_DEBUG: true
+  RUNNER_DEBUG: 1
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set test secret
+        run: echo "TEST_SECRET=debug-will-expose-this" >> $GITHUB_ENV
+        
+      - name: Show env
+        run: echo "Debug mode is enabled"
