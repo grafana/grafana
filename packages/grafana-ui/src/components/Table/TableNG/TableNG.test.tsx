@@ -343,21 +343,25 @@ describe('TableNG', () => {
 
   describe('initialRowIndex', () => {
     it('should not scroll by default', async () => {
-      render(<TableNG enableVirtualization={true} data={createSortingTestDataFrame()} width={100} height={100} />);
+      const { container } = render(
+        <TableNG enableVirtualization={true} data={createSortingTestDataFrame()} width={100} height={10} />
+      );
       expect(jestScrollIntoView).not.toHaveBeenCalled();
+      expect(container.querySelector('[aria-selected="true"]')).not.toBeInTheDocument();
     });
 
     it('initialRowIndex should scroll', async () => {
-      render(
+      const { container } = render(
         <TableNG
-          initialRowIndex={2}
-          enableVirtualization={true}
+          initialRowIndex={4}
+          enableVirtualization={false}
           data={createSortingTestDataFrame()}
           width={100}
-          height={100}
+          height={10}
         />
       );
       expect(jestScrollIntoView).toHaveBeenCalled();
+      expect(container.querySelector('[aria-selected="true"]')).toBeVisible();
     });
   });
 
