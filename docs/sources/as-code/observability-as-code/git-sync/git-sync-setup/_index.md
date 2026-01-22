@@ -34,8 +34,8 @@ Git Sync is under continuous development. [Report any issues](https://grafana.co
 To set up Git Sync and synchronize your Grafana dashboards and folders with a GitHub repository, follow these steps:
 
 1. [Before you begin](#before-you-begin): Get acquainted with the requirements and known limitations
-  - [Enable feature toggles in Grafana](#enable-required-feature-toggles) (first time setup)
-  - [Create a GitHub access token](#create-a-github-access-token)
+- [Enable feature toggles in Grafana](#enable-required-feature-toggles) (first time setup)
+- [Create a GitHub access token](#create-a-github-access-token)
 1. Set up Git Sync [using the UI](#set-up-git-sync-using-grafana-ui) or [as code](./set-up-code.md)
 1. After setup, [verify your dashboards](#verify-your-dashboards-in-grafana)
 1. Optionally, you can also [extend Git Sync with webhooks and image rendering](#extend-git-sync-for-real-time-notification-and-image-rendering)
@@ -108,11 +108,11 @@ To set up Git Sync from the Grafana UI, follow these steps:
 1. [Synchronize with external storage](#synchronize-with-external-storage)
 1. [Choose additional settings](#choose-additional-settings)
 
-## Choose the connection type
+### Choose the connection type
 
 On this screen you will configure your Git Sync connection, either using a Personal Access Token or with GitHub App.
 
-### Connect with a Personal Access Token
+#### Connect with a Personal Access Token
 
 1. Paste your GitHub personal access token into **Enter your access token**. Refer to [Create a GitHub access token](#create-a-github-access-token) for instructions.
 1. Paste the **Repository URL** for your GitHub repository into the text box.
@@ -121,11 +121,11 @@ On this screen you will configure your Git Sync connection, either using a Perso
 
 Select **Choose what to synchronize** to have the connection to your repository verified and continue setup.
 
-### Connect with GitHub App
+#### Connect with GitHub App
 
 TBD
 
-## Choose what to synchronize
+### Choose what to synchronize
 
 On this screen, you will sync your selected external resources with Grafana. These provisioned resources will be stored in a new folder in Grafana without affecting the rest of your instance.
 
@@ -144,15 +144,15 @@ Optionally, you can export any unmanaged resources into the provisioned folder. 
 
 Select **Choose additional settings** to continue setup.
 
-### Full instance sync
+#### Full instance sync
 
 Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise. To have access to this option you must enable experimental instance sync.
 
-## Synchronize with external storage
+### Synchronize with external storage
 
 Check the **Migrate existing resources** box to migrate your unmanaged dashboards to the provisioned folder. If you select this option, all future updates are automatically saved to the synced Git repository and provisioned back to the instance.
 
-## Choose additional settings
+### Choose additional settings
 
 You can configure the following additional settings:
 
