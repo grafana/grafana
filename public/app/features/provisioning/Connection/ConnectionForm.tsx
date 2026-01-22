@@ -9,7 +9,7 @@ import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { GitHubAppCredentialFields } from '../components/Shared/GitHubAppCredentialFields';
-import { PROVISIONING_URL } from '../constants';
+import { CONNECTIONS_TAB_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { ConnectionFormData } from '../types';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
@@ -58,7 +58,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
 
       reset(formData);
       // use timeout to ensure the form resets before navigating
-      setTimeout(() => navigate(`${PROVISIONING_URL}?tab=connections`), 300);
+      setTimeout(() => navigate(CONNECTIONS_TAB_URL), 300);
     }
   }, [request.isSuccess, reset, getValues, connectionName, navigate]);
 
