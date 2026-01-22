@@ -175,7 +175,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       actions={
         <>
           {config.featureToggles.restoreDashboards &&
-            (canDeleteDashboards || contextSrv.hasPermission(AccessControlAction.DashboardsDelete)) && (
+            contextSrv.hasPermission(AccessControlAction.DashboardsDelete) && (
               <LinkButton
                 variant="secondary"
                 href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
