@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -17,46 +17,20 @@ import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepositor
 import { dataToSpec, getWorkflows } from '../utils/data';
 import { getFormErrors } from '../utils/getFormErrors';
 
+import { AuthTypeStep } from './AuthTypeStep';
 import { BootstrapStep } from './BootstrapStep';
 import { ConnectStep } from './ConnectStep';
 import { FinishStep } from './FinishStep';
+import { GitHubAppStep, GitHubAppStepRef } from './GitHubAppStep';
 import { useStepStatus } from './StepStatusContext';
-import { Step, Stepper } from './Stepper';
+import { Stepper } from './Stepper';
 import { SynchronizeStep } from './SynchronizeStep';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
 import { useResourceStats } from './hooks/useResourceStats';
-import { RepoType, WizardFormData, WizardStep } from './types';
+import { ConnectionCreationResult, RepoType, WizardFormData, WizardStep } from './types';
+import { getSteps } from './utils/getSteps';
 
 const appEvents = getAppEvents();
-
-const getSteps = (): Array<Step<WizardStep>> => {
-  return [
-    {
-      id: 'connection',
-      name: t('provisioning.wizard.step-connect', 'Connect'),
-      title: t('provisioning.wizard.title-connect', 'Connect to external storage'),
-      submitOnNext: true,
-    },
-    {
-      id: 'bootstrap',
-      name: t('provisioning.wizard.step-bootstrap', 'Choose what to synchronize'),
-      title: t('provisioning.wizard.title-bootstrap', 'Choose what to synchronize'),
-      submitOnNext: true,
-    },
-    {
-      id: 'synchronize',
-      name: t('provisioning.wizard.step-synchronize', 'Synchronize with external storage'),
-      title: t('provisioning.wizard.title-synchronize', 'Synchronize with external storage'),
-      submitOnNext: false,
-    },
-    {
-      id: 'finish',
-      name: t('provisioning.wizard.step-finish', 'Choose additional settings'),
-      title: t('provisioning.wizard.title-finish', 'Choose additional settings'),
-      submitOnNext: true,
-    },
-  ];
-};
 
 export const ProvisioningWizard = memo(function ProvisioningWizard({
   type,
@@ -65,7 +39,8 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   type: RepoType;
   settingsData?: RepositoryViewList;
 }) {
-  const [activeStep, setActiveStep] = useState<WizardStep>('connection');
+  const initialStep: WizardStep = type === 'github' ? 'authType' : 'connection';
+  const [activeStep, setActiveStep] = useState<WizardStep>(initialStep);
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -84,14 +59,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   const { stepStatusInfo, setStepStatusInfo, isStepSuccess, isStepRunning, hasStepError, hasStepWarning } =
     useStepStatus();
 
-  const isSyncCompleted = activeStep === 'synchronize' && (isStepSuccess || hasStepWarning || hasStepError);
-  const isFinishWithSyncCompleted =
-    activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
-  const shouldUseCancelBehavior = activeStep === 'connection' || isSyncCompleted || isFinishWithSyncCompleted;
-
   const navigate = useNavigate();
-
-  const steps = getSteps();
   const styles = useStyles2(getStyles);
 
   const values = getDefaultValues({ allowedTargets: settingsData?.allowedTargets });
@@ -101,6 +69,9 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       migrate: {
         history: true,
       },
+      githubAuthType: 'pat',
+      githubAppMode: 'existing',
+      githubApp: {},
     },
   });
 
@@ -114,7 +85,27 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     handleSubmit,
   } = methods;
 
-  const [repoName = '', repoType, syncTarget] = watch(['repositoryName', 'repository.type', 'repository.sync.target']);
+  const [repoName = '', repoType, syncTarget, githubAuthType] = watch([
+    'repositoryName',
+    'repository.type',
+    'repository.sync.target',
+    'githubAuthType',
+  ]);
+
+  // Ref for GitHubAppStep to trigger submission
+  const githubAppStepRef = useRef<GitHubAppStepRef>(null);
+
+  const isSyncCompleted = activeStep === 'synchronize' && (isStepSuccess || hasStepWarning || hasStepError);
+  const isFinishWithSyncCompleted =
+    activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
+  const shouldUseCancelBehavior =
+    activeStep === 'authType' ||
+    (activeStep === 'connection' && repoType !== 'github') ||
+    isSyncCompleted ||
+    isFinishWithSyncCompleted;
+
+  const steps = useMemo(() => getSteps(repoType, githubAuthType), [repoType, githubAuthType]);
+  const visibleSteps = useMemo(() => steps.filter((s) => s.id !== 'authType'), [steps]);
   const [submitData] = useCreateOrUpdateRepository(repoName);
   const [deleteRepository] = useDeleteRepositoryMutation();
   const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget);
@@ -125,6 +116,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
   const currentStepIndex = steps.findIndex((s) => s.id === activeStep);
   const currentStepConfig = steps[currentStepIndex];
+  const visibleStepIndex = visibleSteps.findIndex((s) => s.id === activeStep);
 
   const canSkipSync = repoName && !isResourceStatsLoading && shouldSkipSync;
 
@@ -200,6 +192,12 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       return;
     }
 
+    // For GitHub connection step, if repo was created, show confirmation before going back
+    if (activeStep === 'connection' && repoName) {
+      setShowCancelConfirmation(true);
+      return;
+    }
+
     // For other steps, go back one step
     handleBack();
   };
@@ -247,10 +245,15 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       return t('provisioning.wizard-content.button-cancel', 'Cancel');
     }
 
-    return t('provisioning.wizard-content.button-previous', 'Previous');
-  }, [isCancelling, shouldUseCancelBehavior]);
+    // For GitHub connection step, show Cancel if repo was created
+    if (activeStep === 'connection' && repoName) {
+      return t('provisioning.wizard-content.button-cancel', 'Cancel');
+    }
 
-  const handleNext = async () => {
+    return t('provisioning.wizard-content.button-previous', 'Previous');
+  }, [isCancelling, shouldUseCancelBehavior, activeStep, repoName]);
+
+  const handleNext = useCallback(async () => {
     const isLastStep = currentStepIndex === steps.length - 1;
 
     // Only navigate to provisioning URL if we're on the actual last step
@@ -260,6 +263,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
         repositoryType: repoType,
         target: syncTarget,
         workflowsEnabled: getWorkflows(formData.repository),
+        ...(repoType === 'github' && { githubAuthType }),
       });
       navigate(PROVISIONING_URL);
     } else {
@@ -291,10 +295,70 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       setCompletedSteps((prev) => [...new Set([...prev, activeStep])]);
       setStepStatusInfo({ status: 'idle' });
     }
-  };
+  }, [
+    currentStepIndex,
+    steps,
+    getValues,
+    repoType,
+    syncTarget,
+    githubAuthType,
+    navigate,
+    activeStep,
+    canSkipSync,
+    createSyncJob,
+    setActiveStep,
+    setCompletedSteps,
+    setStepStatusInfo,
+  ]);
+
+  // Callback after a GH app has been created
+  const handleGitHubAppSubmit = useCallback(
+    (result: ConnectionCreationResult) => {
+      if (result.success) {
+        setValue('githubApp.connectionName', result.connectionName);
+        setStepStatusInfo({ status: 'success' });
+        reportInteraction('grafana_provisioning_wizard_github_app_created', { success: true });
+        handleNext();
+      } else {
+        setStepStatusInfo({
+          status: 'error',
+          error: {
+            title: t('provisioning.wizard.github-app-creation-failed', 'Failed to create GitHub App connection'),
+            message: result.error,
+          },
+        });
+        reportInteraction('grafana_provisioning_wizard_github_app_created', { success: false });
+      }
+    },
+    [setValue, setStepStatusInfo, handleNext]
+  );
 
   const onSubmit = async () => {
     if (currentStepConfig?.submitOnNext) {
+      // Special handling for GitHub App step
+      if (activeStep === 'githubApp') {
+        const formData = getValues();
+        const currentGithubAppMode = formData.githubAppMode;
+
+        // Validate based on mode
+        if (currentGithubAppMode === 'existing') {
+          const isValid = await trigger('githubApp.connectionName');
+          if (isValid) {
+            handleNext();
+          }
+          return;
+        } else if (currentGithubAppMode === 'new') {
+          // Step handles validation and API call internally via submit()
+          setIsSubmitting(true);
+          try {
+            await githubAppStepRef.current?.submit();
+          } finally {
+            setIsSubmitting(false);
+          }
+          return;
+        }
+      }
+
       // Validate form data before proceeding
       const fieldsToValidate =
         activeStep === 'connection' ? (['repository'] as const) : (['repository', 'repository.title'] as const);
@@ -307,8 +371,11 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       setIsSubmitting(true);
       try {
         const formData = getValues();
-        const spec = dataToSpec(formData.repository);
-        const rsp = await submitData(spec, formData.repository.token);
+        const connectionName =
+          formData.githubAuthType === 'github-app' ? formData.githubApp?.connectionName : undefined;
+        const spec = dataToSpec(formData.repository, connectionName);
+        const token = formData.githubAuthType === 'pat' ? formData.repository.token : undefined;
+        const rsp = await submitData(spec, token);
         if (rsp.error) {
           if (isFetchError(rsp.error)) {
             setStepStatusInfo({
@@ -339,7 +406,17 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       } catch (error) {
         if (isFetchError(error)) {
           const [field, errorMessage] = getFormErrors(error.data.errors);
-          if (field && errorMessage) {
+          // Special handling for token errors on connecting step with the app flow
+          // since we do not show the token field on that step
+          if (field === 'repository.token' && activeStep === 'connection' && githubAuthType !== 'pat') {
+            setStepStatusInfo({
+              status: 'error',
+              error: {
+                title: repositoryConnectionFailed,
+                message: errorMessage?.message ?? '',
+              },
+            });
+          } else if (field && errorMessage) {
             setError(field, errorMessage);
           } else {
             setStepStatusInfo({
@@ -360,7 +437,16 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
         setIsSubmitting(false);
       }
     } else {
-      // proceed if the job was successful or had warnings
+      // Special handling for authType step - validate selection and proceed
+      if (activeStep === 'authType') {
+        const formData = getValues();
+        if (formData.githubAuthType) {
+          handleNext();
+        }
+        return;
+      }
+
+      // For other steps without submission, proceed if the job was successful or had warnings
       if (isStepSuccess || hasStepWarning) {
         handleNext();
       }
@@ -368,6 +454,10 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   };
 
   const isNextButtonDisabled = () => {
+    // AuthType step is always enabled (user just needs to select an option)
+    if (activeStep === 'authType') {
+      return false;
+    }
     // If the step is not on Connect page, we only enable it if the job was successful
     if (activeStep !== 'connection' && hasStepError) {
       return true;
@@ -382,17 +472,25 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   return (
     <FormProvider {...methods}>
       <Stack gap={6} direction="row" alignItems="flex-start">
-        <Stepper steps={steps} activeStep={activeStep} visitedSteps={completedSteps} />
-        <div className={styles.divider} />
+        {activeStep === 'authType' ? (
+          <div className={styles.stepperSpacer} />
+        ) : (
+          <>
+            <Stepper steps={visibleSteps} activeStep={activeStep} visitedSteps={completedSteps} />
+            <div className={styles.divider} />
+          </>
+        )}
         <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
           <FormPrompt
             onDiscard={onDiscard}
-            confirmRedirect={isDirty && !['connection', 'finish'].includes(activeStep) && !isCancelling}
+            confirmRedirect={isDirty && !['authType', 'connection', 'finish'].includes(activeStep) && !isCancelling}
           />
           <Stack direction="column">
             <Box marginBottom={2}>
               <Text element="h2">
-                {currentStepIndex + 1}. {currentStepConfig?.title}
+                {activeStep === 'authType'
+                  ? currentStepConfig?.title
+                  : `${visibleStepIndex + 1}. ${currentStepConfig?.title}`}
               </Text>
             </Box>
 
@@ -401,6 +499,8 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
             {isStepSuccess && 'success' in stepStatusInfo && <ProvisioningAlert success={stepStatusInfo.success} />}
 
             <div className={styles.content}>
+              {activeStep === 'authType' && <AuthTypeStep />}
+              {activeStep === 'githubApp' && <GitHubAppStep ref={githubAppStepRef} onSubmit={handleGitHubAppSubmit} />}
               {activeStep === 'connection' && <ConnectStep />}
               {activeStep === 'bootstrap' && <BootstrapStep settingsData={settingsData} repoName={repoName} />}
               {activeStep === 'synchronize' && (
@@ -453,6 +553,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.border.weak,
     // align with the button row
     marginBottom: theme.spacing(13),
+  }),
+  stepperSpacer: css({
+    width: 201, // Stepper width (200px) + divider width (1px)
   }),
   content: css({
     borderBottom: `1px solid ${theme.colors.border.weak}`,

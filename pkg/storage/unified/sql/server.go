@@ -128,16 +128,18 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 				return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
 			}
 
-			rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-				Dialect: dialect,
-				DB:      dbConn,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("failed to create resource version manager: %w", err)
+			if opts.Cfg.EnableSQLKVCompatibilityMode {
+				rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+					Dialect: dialect,
+					DB:      dbConn,
+				})
+				if err != nil {
+					return nil, fmt.Errorf("failed to create resource version manager: %w", err)
+				}
+
+				kvBackendOpts.RvManager = rvManager
 			}
 
-			// TODO add config to decide whether to pass RvManager or not
-			kvBackendOpts.RvManager = rvManager
 			kvBackend, err := resource.NewKVStorageBackend(kvBackendOpts)
 			if err != nil {
 				return nil, fmt.Errorf("error creating kv backend: %s", err)
@@ -152,6 +154,13 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 				IsHA:                 isHA,
 				storageMetrics:       opts.StorageMetrics,
 				LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
+				GarbageCollection: GarbageCollectionConfig{
+					Enabled:          opts.Cfg.EnableGarbageCollection,
+					Interval:         opts.Cfg.GarbageCollectionInterval,
+					BatchSize:        opts.Cfg.GarbageCollectionBatchSize,
+					MaxAge:           opts.Cfg.GarbageCollectionMaxAge,
+					DashboardsMaxAge: opts.Cfg.DashboardsGarbageCollectionMaxAge,
+				},
 			})
 			if err != nil {
 				return nil, err

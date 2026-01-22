@@ -104,27 +104,23 @@ func exportResource(ctx context.Context,
 	// this will work well enough for now, but needs to be revisted as we have a bigger mix of active versions
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) (err error) {
 		gvk := item.GroupVersionKind()
-		result := jobs.JobResourceResult{
-			Name:   item.GetName(),
-			Group:  gvk.Group,
-			Kind:   gvk.Kind,
-			Action: repository.FileActionCreated,
-		}
+		name := item.GetName()
+		resultBuilder := jobs.NewGVKResult(name, gvk).WithAction(repository.FileActionCreated)
 
 		// Check if resource is already managed by a repository
 		meta, err := utils.MetaAccessor(item)
 		if err != nil {
-			result.Action = repository.FileActionIgnored
-			result.Error = fmt.Errorf("extracting meta accessor for resource %s: %w", result.Name, err)
-			progress.Record(ctx, result)
+			metaError := fmt.Errorf("extracting meta accessor for resource %s: %w", name, err)
+			resultBuilder.WithAction(repository.FileActionIgnored).WithError(metaError)
+			progress.Record(ctx, resultBuilder.Build())
 			return nil
 		}
 
 		manager, _ := meta.GetManagerProperties()
 		// Skip if already managed by any manager (repository, file provisioning, etc.)
 		if manager.Identity != "" {
-			result.Action = repository.FileActionIgnored
-			progress.Record(ctx, result)
+			resultBuilder.WithAction(repository.FileActionIgnored)
+			progress.Record(ctx, resultBuilder.Build())
 			return nil
 		}
 
@@ -133,20 +129,22 @@ func exportResource(ctx context.Context,
 		}
 
 		if err == nil {
-			result.Path, err = repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
+			var path string
+			path, err = repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
 				Path: options.Path,
 				Ref:  options.Branch,
 			})
+			resultBuilder.WithPath(path)
 		}
 
 		if errors.Is(err, resources.ErrAlreadyInRepository) {
-			result.Action = repository.FileActionIgnored
+			resultBuilder.WithAction(repository.FileActionIgnored)
 		} else if err != nil {
-			result.Action = repository.FileActionIgnored
-			result.Error = fmt.Errorf("writing resource file for %s: %w", result.Name, err)
+			resultBuilder.WithAction(repository.FileActionIgnored).
+				WithError(fmt.Errorf("writing resource file for %s: %w", name, err))
 		}
 
-		progress.Record(ctx, result)
+		progress.Record(ctx, resultBuilder.Build())
 		if err := progress.TooManyErrors(); err != nil {
 			return err
 		}
