@@ -42,10 +42,8 @@ function getV1ResourceSpec(dashboard: unknown): Record<string, unknown> | undefi
 }
 
 const IMPORT_STARTED_EVENT_NAME = 'dashboard_import_loaded';
+const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 
-// =====================
-// ImportResourceFormatError - Inline component for legacy error handling
-// =====================
 function ImportResourceFormatError({ model, onCancel }: { model: ImportModel; onCancel: () => void }) {
   const errorMessage =
     model === 'v1-resource'
@@ -72,9 +70,6 @@ function ImportResourceFormatError({ model, onCancel }: { model: ImportModel; on
   );
 }
 
-// =====================
-// ImportOverview - Inline Redux-connected component for legacy overview
-// =====================
 const overviewMapStateToProps = (state: StoreState) => {
   const searchObj = locationService.getSearchObject();
   return {
@@ -149,9 +144,6 @@ class ImportOverviewUnConnected extends PureComponent<OverviewProps, { uidReset:
 
 const ImportOverview = overviewConnector(ImportOverviewUnConnected);
 
-// =====================
-// DashboardImportLegacy - Main Redux-connected page component
-// =====================
 type DashboardImportPageRouteSearchParams = {
   gcomDashboardId?: string;
 };

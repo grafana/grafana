@@ -122,7 +122,9 @@ export async function processInputsFromDashboard(dashboard: unknown): Promise<Da
 
   // Process library panels from __elements
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  inputs.libraryPanels = await getLibraryPanelInputs(dashboard as { __elements?: Record<string, unknown> });
+  inputs.libraryPanels = await getLibraryPanelInputs(
+    dashboard as { __elements?: Record<string, LibraryElementExport> }
+  );
 
   return inputs;
 }

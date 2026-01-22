@@ -7,7 +7,7 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Dashboard, Panel, VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 
-import { DashboardInputs, ImportDashboardDTO, InputType } from '../../types';
+import { DashboardInputs, ImportDashboardDTO, ImportFormDataV2, InputType } from '../../types';
 
 import { applyV1DatasourceInputs, applyV2DatasourceInputs } from './transform';
 
@@ -20,8 +20,9 @@ interface QueryVariableModel extends VariableModel {
   datasource?: { uid?: string };
 }
 
-interface DatasourceVariableModel extends VariableModel {
-  current?: { value?: string; selected?: boolean };
+interface DatasourceVariableModel {
+  type: string;
+  current?: { value?: string; text?: string; selected?: boolean };
 }
 
 const makeV1Inputs = (): DashboardInputs => ({
@@ -45,6 +46,7 @@ describe('applyV1DatasourceInputs', () => {
     const dashboard = {
       title: 'old',
       uid: 'old',
+      schemaVersion: 39,
       annotations: {
         list: [
           {
@@ -70,11 +72,11 @@ describe('applyV1DatasourceInputs', () => {
           },
           {
             type: 'datasource',
-            current: { value: '${DS}', selected: true },
+            current: { value: '${DS}', text: '${DS}', selected: true },
           },
         ],
       },
-    } as Dashboard;
+    } as unknown as Dashboard;
 
     const form: ImportDashboardDTO = {
       title: 'new-title',
@@ -150,9 +152,14 @@ describe('applyV2DatasourceInputs', () => {
       ],
     } as unknown as DashboardV2Spec;
 
-    const result = applyV2DatasourceInputs(dashboard, {
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
       'datasource-prometheus': { uid: 'ds-uid', type: 'prometheus', name: 'My DS' },
-    });
+    };
+
+    const result = applyV2DatasourceInputs(dashboard, form);
 
     const updatedAnnotation = result.annotations?.[0] as AnnotationQueryKind;
     expect(updatedAnnotation.spec.query?.datasource?.name).toBe('ds-uid');
@@ -163,7 +170,9 @@ describe('applyV2DatasourceInputs', () => {
     const updatedPanel = result.elements.panel as PanelKind;
     const queries = updatedPanel.spec.data?.kind === 'QueryGroup' ? updatedPanel.spec.data.spec.queries : [];
     const updatedQuery = queries[0];
-    expect(updatedQuery?.spec?.datasource?.uid).toBe('ds-uid');
-    expect(updatedQuery?.spec?.datasource?.type).toBe('prometheus');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const querySpec = updatedQuery?.spec as any;
+    expect(querySpec?.datasource?.uid).toBe('ds-uid');
+    expect(querySpec?.datasource?.type).toBe('prometheus');
   });
 });

@@ -5791,7 +5791,7 @@
       "load": "Load"
     },
     "gcom-field": {
-      "label": "Find and import dashboards for common applications at <1></1>",
+      "label": "Find and import dashboards for common applications at <link />",
       "load-button": "Load",
       "placeholder": "Grafana.com dashboard URL or ID",
       "validation-required": "A Grafana dashboard URL or ID is required"
@@ -10288,7 +10288,7 @@
       "options": "Options"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Importing dashboard from <2>Grafana.com</2>",
+      "importing-from": "Importing dashboard from <1>Grafana.com</1>",
       "published-by": "Published by",
       "updated-on": "Updated on"
     },

@@ -911,6 +911,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/fetch* @grafana/grafana-frontend-platform
 /public/app/core/utils/flatten.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/isShallowEqual.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/isRecord.ts @grafana/dashboards-squad
 /public/app/core/utils/kbn* @grafana/grafana-frontend-platform
 /public/app/core/utils/navBarItem-translations.ts @grafana/grafana-search-navigate-organise
 /public/app/core/utils/object* @grafana/grafana-frontend-platform

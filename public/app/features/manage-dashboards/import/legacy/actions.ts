@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   QueryVariableKind,

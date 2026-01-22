@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LibraryPanel } from '@grafana/schema';
 import { Field, useStyles2 } from '@grafana/ui';
 
 import { LibraryPanelCard } from '../../../library-panels/components/LibraryPanelCard/LibraryPanelCard';
@@ -28,10 +27,17 @@ export function LibraryPanelsList({ inputs, label, description, folderName }: Pr
         <>
           {inputs.map((input, index) => {
             const libraryPanelIndex = `elements[${index}]`;
-            const libraryPanel: LibraryPanel =
+            const libraryPanel =
               input.state === LibraryPanelInputState.New
-                ? { ...input.model, meta: { ...input.model.meta, folderName: folderName ?? 'Dashboards' } }
-                : { ...input.model };
+                ? {
+                    ...input.model,
+                    meta: {
+                      ...input.model.meta,
+                      folderName: folderName ?? 'Dashboards',
+                      connectedDashboards: input.model.meta?.connectedDashboards ?? 0,
+                    },
+                  }
+                : input.model;
 
             return (
               <div className={styles.item} key={libraryPanelIndex}>
