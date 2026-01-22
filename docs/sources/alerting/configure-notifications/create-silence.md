@@ -178,8 +178,8 @@ Clicking **Unsilence** ends the silence immediately, which is the only way to en
 
 There is no maximum duration for a silence. You can create a silence for any length of time. However, administrators can configure the following limits:
 
-- `alertmanager_max_silences_count`: Maximum number of active and pending silences per tenant (default: 0, no limit)
-- `alertmanager_max_silence_size_bytes`: Maximum size of a silence in bytes (default: 0, no limit)
+- `alertmanager_max_silences_count`: Maximum number of active and pending silences per tenant (default: 0, no limit), expired silences are also counted.
+- `alertmanager_max_silence_size_bytes`: Maximum size of a silence in bytes (default: 0, no limit).
 
 **Expired silence retention**
 
