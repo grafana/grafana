@@ -49,11 +49,10 @@ export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplier<Opti
       let newMin = min;
       let newMax = max;
       for (const f of frame.fields) {
-        if (f.type !== FieldType.number) {
-          continue;
+        if (f.type === FieldType.number) {
+          newMin = Math.min(newMin, f.state?.calcs?.min ?? Infinity);
+          newMax = Math.max(newMax, f.state?.calcs?.max ?? -Infinity);
         }
-        newMin = Math.min(newMin, f.state?.calcs?.min ?? Infinity);
-        newMax = Math.max(newMax, f.state?.calcs?.max ?? -Infinity);
       }
       return [newMin, newMax];
     },

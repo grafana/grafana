@@ -152,16 +152,26 @@ describe('RadialBarPanel Suggestions', () => {
   it('figures out a suitable min and max for gauges', () => {
     const suggestions = radialBarSuggestionsSupplier(
       getPanelDataSummary([
-        createDataFrame({
-          fields: [{ name: 'value', type: FieldType.number, values: [40, 50, 60, 70, 80, 90] }],
-        }),
+        {
+          length: 1,
+          fields: [
+            {
+              name: 'value',
+              type: FieldType.number,
+              config: {},
+              values: [40, 50, 60, 70, 80, 90],
+              state: { calcs: { min: 40, max: 90 } },
+            },
+          ],
+        },
       ])
     );
-    if (Array.isArray(suggestions)) {
-      for (const suggestion of suggestions) {
-        expect(suggestion.fieldConfig?.defaults?.min).toBe(35);
-        expect(suggestion.fieldConfig?.defaults?.max).toBe(95);
-      }
+    if (!Array.isArray(suggestions)) {
+      throw new Error('expected suggestions to be an array');
+    }
+    for (const suggestion of suggestions) {
+      expect(suggestion.fieldConfig?.defaults?.min).toBe(35);
+      expect(suggestion.fieldConfig?.defaults?.max).toBe(95);
     }
   });
 });
