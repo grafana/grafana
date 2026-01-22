@@ -703,3 +703,258 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 		})
 	}
 }
+
+func TestRepositoryController_Conditions(t *testing.T) {
+	t.Run("updateValidatedCondition - no errors", func(t *testing.T) {
+		rc := &RepositoryController{}
+		obj := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Generation: 1,
+			},
+		}
+
+		ops := rc.updateValidatedCondition(obj, nil)
+
+		assert.Len(t, ops, 1)
+		assert.Equal(t, "replace", ops[0]["op"])
+		assert.Equal(t, "/status/conditions", ops[0]["path"])
+
+		conditions := ops[0]["value"].([]metav1.Condition)
+		assert.Len(t, conditions, 1)
+		assert.Equal(t, provisioning.ConditionTypeValidated, conditions[0].Type)
+		assert.Equal(t, metav1.ConditionTrue, conditions[0].Status)
+		assert.Equal(t, provisioning.ReasonValidationSucceeded, conditions[0].Reason)
+	})
+
+	t.Run("updateValidatedCondition - with errors", func(t *testing.T) {
+		rc := &RepositoryController{}
+		obj := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Generation: 1,
+			},
+		}
+		validationErrors := []provisioning.ErrorDetails{
+			{Field: "spec.github.url", Detail: "invalid URL"},
+			{Field: "spec.github.branch", Detail: "branch required"},
+		}
+
+		ops := rc.updateValidatedCondition(obj, validationErrors)
+
+		conditions := ops[0]["value"].([]metav1.Condition)
+		assert.Len(t, conditions, 1)
+		assert.Equal(t, provisioning.ConditionTypeValidated, conditions[0].Type)
+		assert.Equal(t, metav1.ConditionFalse, conditions[0].Status)
+		assert.Equal(t, provisioning.ReasonFieldValidationFailed, conditions[0].Reason)
+		assert.Contains(t, conditions[0].Message, "spec.github.url")
+		assert.Contains(t, conditions[0].Message, "spec.github.branch")
+	})
+
+	t.Run("updateHealthyCondition - healthy", func(t *testing.T) {
+		rc := &RepositoryController{}
+		obj := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Generation: 1,
+			},
+		}
+		healthStatus := provisioning.HealthStatus{
+			Healthy: true,
+		}
+
+		ops := rc.updateHealthyCondition(obj, healthStatus)
+
+		conditions := ops[0]["value"].([]metav1.Condition)
+		assert.Len(t, conditions, 1)
+		assert.Equal(t, provisioning.ConditionTypeHealthy, conditions[0].Type)
+		assert.Equal(t, metav1.ConditionTrue, conditions[0].Status)
+		assert.Equal(t, provisioning.ReasonHealthCheckPassed, conditions[0].Reason)
+	})
+
+	t.Run("updateHealthyCondition - unhealthy", func(t *testing.T) {
+		rc := &RepositoryController{}
+		obj := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Generation: 1,
+			},
+		}
+		healthStatus := provisioning.HealthStatus{
+			Healthy: false,
+			Error:   provisioning.HealthFailureHealth,
+			Message: []string{"connection failed", "timeout"},
+		}
+
+		ops := rc.updateHealthyCondition(obj, healthStatus)
+
+		conditions := ops[0]["value"].([]metav1.Condition)
+		assert.Len(t, conditions, 1)
+		assert.Equal(t, provisioning.ConditionTypeHealthy, conditions[0].Type)
+		assert.Equal(t, metav1.ConditionFalse, conditions[0].Status)
+		assert.Equal(t, provisioning.ReasonHealthCheckFailed, conditions[0].Reason)
+		assert.Contains(t, conditions[0].Message, "connection failed")
+		assert.Contains(t, conditions[0].Message, "timeout")
+	})
+
+	t.Run("updateSyncedCondition - sync disabled", func(t *testing.T) {
+		rc := &RepositoryController{}
+		obj := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Generation: 1,
+			},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{
+					Enabled: false,
+				},
+			},
+		}
+
+		ops := rc.updateSyncedCondition(obj)
+
+		conditions := ops[0]["value"].([]metav1.Condition)
+		assert.Len(t, conditions, 1)
+		assert.Equal(t, provisioning.ConditionTypeSynced, conditions[0].Type)
+		assert.Equal(t, metav1.ConditionTrue, conditions[0].Status)
+		assert.Equal(t, provisioning.ReasonSyncDisabled, conditions[0].Reason)
+	})
+
+	t.Run("updateSyncedCondition - sync success", func(t *testing.T) {
+		rc := &RepositoryController{}
+		obj := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Generation: 1,
+			},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{
+					Enabled: true,
+				},
+			},
+			Status: provisioning.RepositoryStatus{
+				Sync: provisioning.SyncStatus{
+					State: provisioning.JobStateSuccess,
+				},
+			},
+		}
+
+		ops := rc.updateSyncedCondition(obj)
+
+		conditions := ops[0]["value"].([]metav1.Condition)
+		assert.Len(t, conditions, 1)
+		assert.Equal(t, provisioning.ConditionTypeSynced, conditions[0].Type)
+		assert.Equal(t, metav1.ConditionTrue, conditions[0].Status)
+		assert.Equal(t, provisioning.ReasonSyncSucceeded, conditions[0].Reason)
+	})
+
+	t.Run("updateReadyCondition - ready when healthy and synced", func(t *testing.T) {
+		rc := &RepositoryController{}
+		obj := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Generation: 1,
+			},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{
+					Enabled: true,
+				},
+			},
+			Status: provisioning.RepositoryStatus{
+				Sync: provisioning.SyncStatus{
+					State: provisioning.JobStateSuccess,
+				},
+			},
+		}
+		healthStatus := provisioning.HealthStatus{
+			Healthy: true,
+		}
+
+		ops := rc.updateReadyCondition(obj, nil, healthStatus)
+
+		conditions := ops[0]["value"].([]metav1.Condition)
+		assert.Len(t, conditions, 1)
+		assert.Equal(t, provisioning.ConditionTypeReady, conditions[0].Type)
+		assert.Equal(t, metav1.ConditionTrue, conditions[0].Status)
+		assert.Equal(t, provisioning.ReasonRepositoryReady, conditions[0].Reason)
+	})
+
+	t.Run("updateReadyCondition - not ready due to validation errors", func(t *testing.T) {
+		rc := &RepositoryController{}
+		obj := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Generation: 1,
+			},
+		}
+		validationErrors := []provisioning.ErrorDetails{
+			{Field: "spec.github.url", Detail: "invalid URL"},
+		}
+		healthStatus := provisioning.HealthStatus{
+			Healthy: true,
+		}
+
+		ops := rc.updateReadyCondition(obj, validationErrors, healthStatus)
+
+		conditions := ops[0]["value"].([]metav1.Condition)
+		assert.Len(t, conditions, 1)
+		assert.Equal(t, provisioning.ConditionTypeReady, conditions[0].Type)
+		assert.Equal(t, metav1.ConditionFalse, conditions[0].Status)
+		assert.Equal(t, provisioning.ReasonValidationFailed, conditions[0].Reason)
+		assert.Contains(t, conditions[0].Message, "1 validation error(s)")
+	})
+
+	t.Run("updateReadyCondition - not ready due to health failure", func(t *testing.T) {
+		rc := &RepositoryController{}
+		obj := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Generation: 1,
+			},
+		}
+		healthStatus := provisioning.HealthStatus{
+			Healthy: false,
+			Message: []string{"connection failed"},
+		}
+
+		ops := rc.updateReadyCondition(obj, nil, healthStatus)
+
+		conditions := ops[0]["value"].([]metav1.Condition)
+		assert.Len(t, conditions, 1)
+		assert.Equal(t, provisioning.ConditionTypeReady, conditions[0].Type)
+		assert.Equal(t, metav1.ConditionFalse, conditions[0].Status)
+		assert.Equal(t, provisioning.ReasonHealthCheckFailed, conditions[0].Reason)
+		assert.Contains(t, conditions[0].Message, "connection failed")
+	})
+
+	t.Run("updateReadyCondition - multiple failures mentioned", func(t *testing.T) {
+		rc := &RepositoryController{}
+		obj := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Generation: 1,
+			},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{
+					Enabled: true,
+				},
+			},
+			Status: provisioning.RepositoryStatus{
+				Sync: provisioning.SyncStatus{
+					State:   provisioning.JobStateError,
+					Message: []string{"sync failed"},
+				},
+			},
+		}
+		validationErrors := []provisioning.ErrorDetails{
+			{Field: "spec.github.url", Detail: "invalid URL"},
+		}
+		healthStatus := provisioning.HealthStatus{
+			Healthy: false,
+			Message: []string{"unhealthy"},
+		}
+
+		ops := rc.updateReadyCondition(obj, validationErrors, healthStatus)
+
+		conditions := ops[0]["value"].([]metav1.Condition)
+		assert.Len(t, conditions, 1)
+		assert.Equal(t, provisioning.ConditionTypeReady, conditions[0].Type)
+		assert.Equal(t, metav1.ConditionFalse, conditions[0].Status)
+		// Validation has highest priority
+		assert.Equal(t, provisioning.ReasonValidationFailed, conditions[0].Reason)
+		// Should mention other failing conditions
+		assert.Contains(t, conditions[0].Message, "also:")
+		assert.Contains(t, conditions[0].Message, "Healthy=False")
+		assert.Contains(t, conditions[0].Message, "Synced=False")
+	})
+}

@@ -4,10 +4,15 @@
 
 package v0alpha1
 
+import (
+	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
+)
+
 // RepositoryStatusApplyConfiguration represents a declarative configuration of the RepositoryStatus type for use
 // with apply.
 type RepositoryStatusApplyConfiguration struct {
 	ObservedGeneration *int64                            `json:"observedGeneration,omitempty"`
+	Conditions         []v1.ConditionApplyConfiguration  `json:"conditions,omitempty"`
 	FieldErrors        []ErrorDetailsApplyConfiguration  `json:"fieldErrors,omitempty"`
 	Health             *HealthStatusApplyConfiguration   `json:"health,omitempty"`
 	Sync               *SyncStatusApplyConfiguration     `json:"sync,omitempty"`
@@ -28,6 +33,19 @@ func RepositoryStatus() *RepositoryStatusApplyConfiguration {
 // If called multiple times, the ObservedGeneration field is set to the value of the last call.
 func (b *RepositoryStatusApplyConfiguration) WithObservedGeneration(value int64) *RepositoryStatusApplyConfiguration {
 	b.ObservedGeneration = &value
+	return b
+}
+
+// WithConditions adds the given value to the Conditions field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Conditions field.
+func (b *RepositoryStatusApplyConfiguration) WithConditions(values ...*v1.ConditionApplyConfiguration) *RepositoryStatusApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithConditions")
+		}
+		b.Conditions = append(b.Conditions, *values[i])
+	}
 	return b
 }
 

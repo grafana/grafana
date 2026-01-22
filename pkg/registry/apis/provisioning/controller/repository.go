@@ -595,7 +595,9 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Update fieldErrors from test results
+	var validationErrors []provisioning.ErrorDetails
 	if testResults != nil {
+		validationErrors = testResults.Errors
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/fieldErrors",
@@ -606,6 +608,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	// determine the sync strategy and sync status to apply
 	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, healthStatus)
 	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)
+
+	// Update conditions based on validation, health, and sync status
+	patchOperations = append(patchOperations, rc.updateValidatedCondition(obj, validationErrors)...)
+	patchOperations = append(patchOperations, rc.updateHealthyCondition(obj, healthStatus)...)
+	patchOperations = append(patchOperations, rc.updateSyncedCondition(obj)...)
+	patchOperations = append(patchOperations, rc.updateReadyCondition(obj, validationErrors, healthStatus)...)
 
 	// Apply all patch operations
 	if len(patchOperations) > 0 {

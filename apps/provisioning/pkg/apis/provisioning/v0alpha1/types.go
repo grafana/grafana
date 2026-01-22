@@ -306,6 +306,12 @@ type RepositoryStatus struct {
 	// The generation of the spec last time reconciliation ran
 	ObservedGeneration int64 `json:"observedGeneration"`
 
+	// Conditions represent the latest available observations of the repository's state.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
 	// FieldErrors are errors that occurred during validation of the repository spec.
 	// These errors are intended to help users identify and fix issues in the spec.
 	// +listType=atomic
