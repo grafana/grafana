@@ -18,6 +18,7 @@ import { preparePlotFrame } from '../GraphNG/utils';
 import {
   findNextStateIndex,
   fmtDuration,
+  getSeriesAndRest,
   getThresholdItems,
   hasSpecialMappedValue,
   makeFramePerSeries,
@@ -561,5 +562,97 @@ describe('hasSpecialMappedValue', () => {
     const field = makeField(mappingsType, optionsMatch);
 
     expect(hasSpecialMappedValue(field, valueMatch)).toEqual(expected);
+  });
+});
+
+describe('getSeriesAndRest', () => {
+  it('should return all fields as series when none are hidden', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'value1', type: FieldType.number, values: [10, 20, 30] },
+        { name: 'value2', type: FieldType.string, values: ['a', 'b', 'c'] },
+      ],
+    });
+
+    const result = getSeriesAndRest(frame);
+
+    expect(result.seriesFrame.fields).toHaveLength(3);
+    expect(result.restFields).toHaveLength(0);
+    expect(result.seriesFrame.fields.map((f) => f.name)).toEqual(['time', 'value1', 'value2']);
+  });
+
+  it('should separate hidden fields from visible fields', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+        {
+          name: 'visible1',
+          type: FieldType.number,
+          values: [10, 20, 30],
+          config: { custom: { hideFrom: { viz: false, legend: true } } },
+        },
+        {
+          name: 'hidden1',
+          type: FieldType.string,
+          values: ['a', 'b', 'c'],
+          config: { custom: { hideFrom: { viz: true } } },
+        },
+        {
+          name: 'visible2',
+          type: FieldType.number,
+          values: [100, 200, 300],
+        },
+        {
+          name: 'hidden2',
+          type: FieldType.string,
+          values: ['x', 'y', 'z'],
+          config: { custom: { hideFrom: { viz: true, tooltip: false } } },
+        },
+      ],
+    });
+
+    const result = getSeriesAndRest(frame);
+
+    expect(result.seriesFrame.fields).toHaveLength(3);
+    expect(result.restFields).toHaveLength(2);
+    expect(result.seriesFrame.fields.map((f) => f.name)).toEqual(['time', 'visible1', 'visible2']);
+    expect(result.restFields.map((f) => f.name)).toEqual(['hidden1', 'hidden2']);
+  });
+
+  it('should handle all fields being hidden', () => {
+    const frame = toDataFrame({
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [1, 2, 3],
+          config: { custom: { hideFrom: { viz: true } } },
+        },
+        {
+          name: 'value1',
+          type: FieldType.number,
+          values: [10, 20, 30],
+          config: { custom: { hideFrom: { viz: true } } },
+        },
+      ],
+    });
+
+    const result = getSeriesAndRest(frame);
+
+    expect(result.seriesFrame.fields).toHaveLength(0);
+    expect(result.restFields).toHaveLength(2);
+    expect(result.restFields.map((f) => f.name)).toEqual(['time', 'value1']);
+  });
+
+  it('should handle empty frame', () => {
+    const frame = toDataFrame({
+      fields: [],
+    });
+
+    const result = getSeriesAndRest(frame);
+
+    expect(result.seriesFrame.fields).toHaveLength(0);
+    expect(result.restFields).toHaveLength(0);
   });
 });

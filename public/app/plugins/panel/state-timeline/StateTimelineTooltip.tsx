@@ -35,6 +35,7 @@ export const StateTimelineTooltip = ({
   maxHeight,
   replaceVariables,
   dataLinks,
+  _rest,
 }: StateTimelineTooltipProps) => {
   const pluginContext = usePluginContext();
   const xField = series.fields[0];
@@ -45,7 +46,17 @@ export const StateTimelineTooltip = ({
 
   mode = isPinned ? TooltipDisplayMode.Single : mode;
 
-  const contentItems = getContentItems(series.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
+  const contentItems = getContentItems(
+    series.fields,
+    xField,
+    dataIdxs,
+    seriesIdx,
+    mode,
+    sortOrder,
+    undefined,
+    undefined,
+    _rest
+  );
   let endTime = null;
 
   // append duration in single mode
