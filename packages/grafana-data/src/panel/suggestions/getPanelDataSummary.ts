@@ -19,7 +19,6 @@ export interface PanelDataSummary {
   hasDataFrameType: (type: DataFrameType) => boolean;
   /* returns true if any of the frames in this panel data summary have the type */
   hasPreferredVisualisationType: (type: PreferredVisualisationType) => boolean;
-
   /** true if time fields exist on the dataframe and the dataframe only contains a single time value */
   isInstant?: boolean;
 
