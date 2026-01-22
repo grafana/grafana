@@ -12578,6 +12578,11 @@
       "title-data-source-help": "Data source help"
     }
   },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": "Open Query Library"
+    }
+  },
   "query-operation": {
     "header": {
       "app-dashboard": "Dashboard",
@@ -12598,7 +12603,6 @@
       "other-queries": "Other queries",
       "query-with-assistant": "Query with Assistant",
       "remove-query": "Remove query",
-      "save-to-query-library": "Save query",
       "selected-datasource-label": "Selected data source:",
       "show-response": "Show response"
     },

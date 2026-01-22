@@ -66,7 +66,7 @@ export const OpenQueryLibraryExposedComponent = ({
   icon = 'save',
   query,
   onSelectQuery,
-  tooltip = t('query-operation.header.save-to-query-library', 'Save query'),
+  tooltip = t('query-library.exposed-compoment.tooltip', 'Open Query Library'),
 }: Props) => {
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
