@@ -2,6 +2,7 @@ package timeinterval
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"testing"
 
@@ -40,7 +41,7 @@ func TestIntegrationImportedTimeIntervals(t *testing.T) {
 	configYaml, err := testData.ReadFile(path.Join("test-data", "imported.yaml"))
 	require.NoError(t, err)
 
-	identifier := "test-imported-time-intervals"
+	identifier := "-test-imported-time-intervals"
 	mergeMatchers := "_imported=true"
 
 	headers := map[string]string{
@@ -98,7 +99,7 @@ func TestIntegrationImportedTimeIntervals(t *testing.T) {
 		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
 	})
 
-	t.Run("should prevent duplicate names across Grafana and imported intervals", func(t *testing.T) {
+	t.Run("should allow duplicate names across Grafana and imported intervals", func(t *testing.T) {
 		// Create a Grafana time interval with the same name as an imported one
 		interval := v0alpha1.TimeInterval{
 			ObjectMeta: metav1.ObjectMeta{
@@ -119,7 +120,20 @@ func TestIntegrationImportedTimeIntervals(t *testing.T) {
 			},
 		}
 
-		_, err := client.Create(context.Background(), &interval, resource.CreateOptions{})
-		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
+		createdInterval, err := client.Create(context.Background(), &interval, resource.CreateOptions{})
+		require.Nil(t, err)
+		require.Equal(t, "business-hours", createdInterval.Spec.Name)
+
+		timeIntervals, err := client.List(context.Background(), apis.DefaultNamespace, resource.ListOptions{})
+		require.Nil(t, err)
+		require.GreaterOrEqual(t, len(timeIntervals.Items), 3, "should have at least 3 time intervals after creating duplicate name")
+
+		var foundRenamed bool
+		for _, ti := range timeIntervals.Items {
+			if ti.Spec.Name == "business-hours"+identifier && ti.GetProvenanceStatus() == string(models.ProvenanceConvertedPrometheus) {
+				foundRenamed = true
+			}
+		}
+		require.True(t, foundRenamed, fmt.Sprintf("expected to find renamed imported time interval with name %q", "business-hours"+identifier))
 	})
 }

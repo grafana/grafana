@@ -140,11 +140,6 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, ErrTimeIntervalExists.Errorf("")
 	}
 
-	importedIntervals := svc.getImportedTimeIntervals(revision)
-	if idx := slices.IndexFunc(importedIntervals, findByName(mt.Name)); idx != -1 {
-		return definitions.MuteTimeInterval{}, ErrTimeIntervalExists.Errorf("")
-	}
-
 	revision.Config.AlertmanagerConfig.TimeIntervals = append(revision.Config.AlertmanagerConfig.TimeIntervals, config.TimeInterval(mt.MuteTimeInterval))
 
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
