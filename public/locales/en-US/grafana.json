@@ -12055,6 +12055,8 @@
       "error-delete-all-repositories": "Failed to delete all repositories",
       "subtitle": "View and manage your configured repositories",
       "success-all-repositories-deleted": "All configured repositories deleted",
+      "tab-connections": "Connections",
+      "tab-connections-title": "List of connections",
       "tab-getting-started": "Getting started",
       "tab-getting-started-title": "Getting started",
       "tab-repositories": "Repositories",
@@ -12138,7 +12140,6 @@
       "jobs": "Jobs"
     },
     "repository-actions": {
-      "connections": "Connections",
       "settings": "Settings",
       "source-code": "Source code"
     },
