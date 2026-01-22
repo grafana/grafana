@@ -1,4 +1,7 @@
+import { selectors } from '@grafana/e2e-selectors';
+
 import { e2e } from '../index';
+import { Selector } from '../support';
 import { fromBaseUrl } from '../support/url';
 
 const DEFAULT_USERNAME = 'admin';
@@ -23,10 +26,16 @@ const loginUi = (username: string, password: string) => {
     .type(username);
   e2e.pages.Login.password().type(password);
   e2e.pages.Login.submit().click();
+  e2e.pages.Login.submit().should('not.exist');
 
-  // Local tests will have insecure credentials
+  // Click the skip button, if it is offered, if we know we used the default password
   if (password === DEFAULT_PASSWORD) {
-    e2e.pages.Login.skip().should('be.visible').click();
+    cy.get('body').then(($body) => {
+      if ($body.find(Selector.fromDataTestId(selectors.pages.Login.skip)).length > 0) {
+        cy.logToConsole('Skipping password change for username:', username);
+        e2e.pages.Login.skip().should('be.visible').click();
+      }
+    });
   }
 
   cy.get('.login-page').should('not.exist');
