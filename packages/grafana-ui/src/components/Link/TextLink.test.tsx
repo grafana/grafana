@@ -22,6 +22,8 @@ describe('TextLink', () => {
 
   const link = 'http://www.grafana.com/grafana/after-sub-url';
   it('should keep the whole url, including app sub url, if external', () => {
+    //Adding this due to React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7.
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
     locationUtil.initialize({
       config: { appSubUrl: '/grafana' } as GrafanaConfig,
       getVariablesUrlParams: jest.fn(),
