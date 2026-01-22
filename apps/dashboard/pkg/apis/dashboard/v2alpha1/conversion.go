@@ -1,6 +1,9 @@
 package v2alpha1
 
-import "k8s.io/utils/ptr"
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
+)
 
 func (d *Dashboard) GetStoredVersion() string {
 	if d.Status.Conversion != nil && d.Status.Conversion.StoredVersion != nil {
@@ -21,5 +24,32 @@ func (d *Dashboard) SetConversionStatus(storedVersion string, failed bool, errMs
 			Error:         errMsg,
 			Source:        source,
 		},
+	}
+}
+
+func (d *Dashboard) GetObjectMeta() interface{} {
+	return d.ObjectMeta
+}
+
+func (d *Dashboard) SetObjectMeta(meta interface{}) {
+	d.ObjectMeta = meta.(metav1.ObjectMeta)
+}
+
+func (d *Dashboard) GetKind() string {
+	return d.Kind
+}
+
+func (d *Dashboard) SetKind(kind string) {
+	d.Kind = kind
+}
+
+func (d *Dashboard) SetAPIVersion(version string) {
+	d.APIVersion = version
+}
+
+func (d *Dashboard) EnsureDefaultSpec() {
+	if d.Spec.Layout.GridLayoutKind == nil && d.Spec.Layout.RowsLayoutKind == nil {
+		d.Spec.Layout = NewDashboardSpec().Layout
+		d.Spec.Layout.GridLayoutKind = NewDashboardGridLayoutKind()
 	}
 }
