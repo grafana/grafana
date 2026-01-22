@@ -255,6 +255,13 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		"value": healthStatus,
 	})
 
+	// Update fieldErrors from test results
+	patchOperations = append(patchOperations, map[string]interface{}{
+		"op":    "replace",
+		"path":  "/status/fieldErrors",
+		"value": testResults.Errors,
+	})
+
 	if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
 		return fmt.Errorf("failed to update connection status: %w", err)
 	}
