@@ -152,10 +152,7 @@ function setup(props: Partial<Props> = {}) {
       workflow: 'write',
     },
     readOnly: false,
-    workflowOptions: [
-      { label: 'Branch', value: 'branch' },
-      { label: 'Write', value: 'write' },
-    ],
+    canPushToConfiguredBranch: true,
     ...props,
   };
 
