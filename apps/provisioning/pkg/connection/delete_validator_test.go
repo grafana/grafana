@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/authentication/user"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -38,20 +40,37 @@ func (m *mockRepoByConnectionLister) ListByConnection(ctx context.Context, conne
 	return filtered, nil
 }
 
+func newDeleteValidatorTestAttributes(name, namespace string, op admission.Operation) admission.Attributes {
+	return admission.NewAttributesRecord(
+		nil, // obj is nil for delete operations
+		nil,
+		provisioning.ConnectionResourceInfo.GroupVersionKind(),
+		namespace,
+		name,
+		provisioning.ConnectionResourceInfo.GroupVersionResource(),
+		"",
+		op,
+		nil,
+		false,
+		&user.DefaultInfo{},
+	)
+}
+
 func TestNewReferencedByRepositoriesValidator(t *testing.T) {
 	lister := &mockRepoByConnectionLister{}
 	v := NewReferencedByRepositoriesValidator(lister)
 	require.NotNil(t, v)
 
-	// Verify it implements DeleteValidator interface
-	var _ DeleteValidator = v
+	// Verify it implements Validator interface
+	var _ Validator = v
 }
 
-func TestReferencedByRepositoriesValidator_ValidateDelete(t *testing.T) {
+func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 	tests := []struct {
 		name            string
 		connectionName  string
 		namespace       string
+		operation       admission.Operation
 		repos           []provisioning.Repository
 		listerErr       error
 		wantErrors      bool
@@ -62,6 +81,7 @@ func TestReferencedByRepositoriesValidator_ValidateDelete(t *testing.T) {
 			name:           "allows deletion when no repositories reference connection",
 			connectionName: "test-connection",
 			namespace:      "default",
+			operation:      admission.Delete,
 			repos:          []provisioning.Repository{},
 			wantErrors:     false,
 		},
@@ -69,6 +89,7 @@ func TestReferencedByRepositoriesValidator_ValidateDelete(t *testing.T) {
 			name:           "blocks deletion when one repository references connection",
 			connectionName: "test-connection",
 			namespace:      "default",
+			operation:      admission.Delete,
 			repos: []provisioning.Repository{
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
@@ -85,6 +106,7 @@ func TestReferencedByRepositoriesValidator_ValidateDelete(t *testing.T) {
 			name:           "blocks deletion when multiple repositories reference connection",
 			connectionName: "test-connection",
 			namespace:      "default",
+			operation:      admission.Delete,
 			repos: []provisioning.Repository{
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
@@ -107,6 +129,7 @@ func TestReferencedByRepositoriesValidator_ValidateDelete(t *testing.T) {
 			name:           "allows deletion when repositories reference different connections",
 			connectionName: "test-connection",
 			namespace:      "default",
+			operation:      admission.Delete,
 			repos: []provisioning.Repository{
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
@@ -121,6 +144,7 @@ func TestReferencedByRepositoriesValidator_ValidateDelete(t *testing.T) {
 			name:           "allows deletion when repositories have no connection",
 			connectionName: "test-connection",
 			namespace:      "default",
+			operation:      admission.Delete,
 			repos: []provisioning.Repository{
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
@@ -135,6 +159,7 @@ func TestReferencedByRepositoriesValidator_ValidateDelete(t *testing.T) {
 			name:            "returns error when lister fails",
 			connectionName:  "test-connection",
 			namespace:       "default",
+			operation:       admission.Delete,
 			listerErr:       errors.New("storage error"),
 			wantErrors:      true,
 			wantErrType:     field.ErrorTypeInternal,
@@ -144,7 +169,38 @@ func TestReferencedByRepositoriesValidator_ValidateDelete(t *testing.T) {
 			name:           "allows deletion when connection name is empty",
 			connectionName: "",
 			namespace:      "default",
+			operation:      admission.Delete,
 			wantErrors:     false,
+		},
+		{
+			name:           "skips validation for create operation",
+			connectionName: "test-connection",
+			namespace:      "default",
+			operation:      admission.Create,
+			repos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
+					Spec: provisioning.RepositorySpec{
+						Connection: &provisioning.ConnectionInfo{Name: "test-connection"},
+					},
+				},
+			},
+			wantErrors: false,
+		},
+		{
+			name:           "skips validation for update operation",
+			connectionName: "test-connection",
+			namespace:      "default",
+			operation:      admission.Update,
+			repos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
+					Spec: provisioning.RepositorySpec{
+						Connection: &provisioning.ConnectionInfo{Name: "test-connection"},
+					},
+				},
+			},
+			wantErrors: false,
 		},
 	}
 
@@ -156,7 +212,8 @@ func TestReferencedByRepositoriesValidator_ValidateDelete(t *testing.T) {
 			}
 			v := NewReferencedByRepositoriesValidator(lister)
 
-			errs := v.ValidateDelete(context.Background(), tt.namespace, tt.connectionName)
+			attr := newDeleteValidatorTestAttributes(tt.connectionName, tt.namespace, tt.operation)
+			errs := v.Validate(context.Background(), attr)
 
 			if tt.wantErrors {
 				require.NotEmpty(t, errs, "expected validation errors")
@@ -174,7 +231,7 @@ func TestReferencedByRepositoriesValidator_ValidateDelete(t *testing.T) {
 	}
 }
 
-func TestReferencedByRepositoriesValidator_ValidateDelete_ErrorDetails(t *testing.T) {
+func TestReferencedByRepositoriesValidator_Validate_ErrorDetails(t *testing.T) {
 	lister := &mockRepoByConnectionLister{
 		repos: []provisioning.Repository{
 			{
@@ -187,7 +244,8 @@ func TestReferencedByRepositoriesValidator_ValidateDelete_ErrorDetails(t *testin
 	}
 	v := NewReferencedByRepositoriesValidator(lister)
 
-	errs := v.ValidateDelete(context.Background(), "default", "my-connection")
+	attr := newDeleteValidatorTestAttributes("my-connection", "default", admission.Delete)
+	errs := v.Validate(context.Background(), attr)
 
 	require.Len(t, errs, 1)
 	assert.Equal(t, field.ErrorTypeForbidden, errs[0].Type)

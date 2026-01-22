@@ -12,10 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// DeleteValidator is the interface for connection delete validation.
-// It validates that a connection can be safely deleted.
-type DeleteValidator interface {
-	ValidateDelete(ctx context.Context, namespace, name string) field.ErrorList
+// Validator is the interface for connection validation.
+// Validators receive admission attributes and decide internally whether to run
+// based on the operation type (create, update, delete).
+type Validator interface {
+	Validate(ctx context.Context, a admission.Attributes) field.ErrorList
 }
 
 // AdmissionValidator handles validation for Connection resources during admission.
@@ -27,16 +28,17 @@ type DeleteValidator interface {
 // For runtime validation that requires secrets or external service checks, use the
 // Test() method on the Connection interface instead.
 type AdmissionValidator struct {
-	factory          Factory
-	deleteValidators []DeleteValidator
+	factory    Factory
+	validators []Validator
 }
 
 // NewAdmissionValidator creates a new connection admission validator.
-// deleteValidators are called for delete operations in order; the first error stops validation.
-func NewAdmissionValidator(factory Factory, deleteValidators ...DeleteValidator) *AdmissionValidator {
+// Validators are called in order; the first error stops validation.
+// Each validator decides internally whether to run based on the operation type.
+func NewAdmissionValidator(factory Factory, validators ...Validator) *AdmissionValidator {
 	return &AdmissionValidator{
-		factory:          factory,
-		deleteValidators: deleteValidators,
+		factory:    factory,
+		validators: validators,
 	}
 }
 
@@ -44,11 +46,16 @@ func NewAdmissionValidator(factory Factory, deleteValidators ...DeleteValidator)
 func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	obj := a.GetObject()
 
-	// Handle delete operations - obj may be nil for delete
-	if a.GetOperation() == admission.Delete {
-		return v.validateDelete(ctx, a)
+	// Run all validators - they decide internally whether to handle this operation
+	for _, validator := range v.validators {
+		if list := validator.Validate(ctx, a); len(list) > 0 {
+			return apierrors.NewInvalid(
+				provisioning.ConnectionResourceInfo.GroupVersionKind().GroupKind(),
+				a.GetName(), list)
+		}
 	}
 
+	// For delete operations, obj may be nil - validators above handle this
 	if obj == nil {
 		return nil
 	}
@@ -76,26 +83,6 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return apierrors.NewInvalid(
 			provisioning.ConnectionResourceInfo.GroupVersionKind().GroupKind(),
 			c.GetName(), list)
-	}
-
-	return nil
-}
-
-// validateDelete runs delete validators for the connection
-func (v *AdmissionValidator) validateDelete(ctx context.Context, a admission.Attributes) error {
-	name := a.GetName()
-	if name == "" {
-		return nil
-	}
-
-	namespace := a.GetNamespace()
-
-	for _, validator := range v.deleteValidators {
-		if list := validator.ValidateDelete(ctx, namespace, name); len(list) > 0 {
-			return apierrors.NewInvalid(
-				provisioning.ConnectionResourceInfo.GroupVersionKind().GroupKind(),
-				name, list)
-		}
 	}
 
 	return nil
