@@ -2007,7 +2007,7 @@
   },
   "public/app/features/dashboard-scene/v2schema/ImportDashboardOverviewV2.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 10
+      "count": 3
     }
   },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
