@@ -1250,40 +1250,18 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 		assert.Greater(t, repo.Status.Health.Checked, int64(0), "health check timestamp should be set")
 
 		// Verify fieldErrors are populated with validation errors - be strict and explicit
-		require.NotEmpty(t, repo.Status.FieldErrors, "fieldErrors should be populated when repository has validation errors")
-		
-		// Log all fieldErrors for debugging
-		for _, fieldErr := range repo.Status.FieldErrors {
-			t.Logf("Found fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
-				fieldErr.Type, fieldErr.Field, fieldErr.Detail, fieldErr.Origin)
-		}
-		
-		// Verify that all fieldErrors have required fields populated
-		for i, fieldErr := range repo.Status.FieldErrors {
-			assert.NotEmpty(t, fieldErr.Type, "fieldError[%d].Type must not be empty", i)
-			assert.NotEmpty(t, fieldErr.Detail, "fieldError[%d].Detail must not be empty", i)
-			assert.Equal(t, metav1.CauseTypeFieldValueInvalid, fieldErr.Type, "fieldError[%d].Type must be FieldValueInvalid", i)
-			assert.Empty(t, fieldErr.Origin, "fieldError[%d].Origin must be empty", i)
-		}
-		
-		// Find and verify the branch error explicitly
-		var branchError *provisioning.ErrorDetails
-		for i := range repo.Status.FieldErrors {
-			if repo.Status.FieldErrors[i].Field == "spec.github.branch" {
-				branchError = &repo.Status.FieldErrors[i]
-				break
-			}
-		}
-		
-		// If branch error exists, verify it explicitly
-		if branchError != nil {
-			assert.Equal(t, metav1.CauseTypeFieldValueInvalid, branchError.Type, "branch error Type must be FieldValueInvalid")
-			assert.Equal(t, "spec.github.branch", branchError.Field, "branch error Field must be spec.github.branch")
-			assert.Equal(t, "branch not found", branchError.Detail, "branch error Detail must be 'branch not found'")
-			assert.Empty(t, branchError.Origin, "branch error Origin must be empty")
-			t.Logf("Verified branch fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
-				branchError.Type, branchError.Field, branchError.Detail, branchError.Origin)
-		}
+		require.Len(t, repo.Status.FieldErrors, 1, "fieldErrors should contain exactly one error")
+
+		tokenError := repo.Status.FieldErrors[0]
+
+		// Verify all fields explicitly - authorization check fails first before branch check
+		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, tokenError.Type, "Type must be FieldValueInvalid")
+		assert.Equal(t, "secure.token", tokenError.Field, "Field must be secure.token")
+		assert.Equal(t, "not authorized", tokenError.Detail, "Detail must be 'not authorized'")
+		assert.Empty(t, tokenError.Origin, "Origin must be empty")
+
+		t.Logf("Verified token fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
+			tokenError.Type, tokenError.Field, tokenError.Detail, tokenError.Origin)
 	})
 
 	t.Run("repository with non-existent repository URL becomes unhealthy with fieldErrors", func(t *testing.T) {
@@ -1342,39 +1320,17 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 		assert.Greater(t, repo.Status.Health.Checked, int64(0), "health check timestamp should be set")
 
 		// Verify fieldErrors are populated with validation errors - be strict and explicit
-		require.NotEmpty(t, repo.Status.FieldErrors, "fieldErrors should be populated when repository has validation errors")
-		
-		// Log all fieldErrors for debugging
-		for _, fieldErr := range repo.Status.FieldErrors {
-			t.Logf("Found fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
-				fieldErr.Type, fieldErr.Field, fieldErr.Detail, fieldErr.Origin)
-		}
-		
-		// Verify that all fieldErrors have required fields populated
-		for i, fieldErr := range repo.Status.FieldErrors {
-			assert.NotEmpty(t, fieldErr.Type, "fieldError[%d].Type must not be empty", i)
-			assert.NotEmpty(t, fieldErr.Detail, "fieldError[%d].Detail must not be empty", i)
-			assert.Equal(t, metav1.CauseTypeFieldValueInvalid, fieldErr.Type, "fieldError[%d].Type must be FieldValueInvalid", i)
-			assert.Empty(t, fieldErr.Origin, "fieldError[%d].Origin must be empty", i)
-		}
-		
-		// Find and verify the repository URL error explicitly
-		var repoError *provisioning.ErrorDetails
-		for i := range repo.Status.FieldErrors {
-			if repo.Status.FieldErrors[i].Field == "spec.github.url" {
-				repoError = &repo.Status.FieldErrors[i]
-				break
-			}
-		}
-		
-		// If repository error exists, verify it explicitly
-		if repoError != nil {
-			assert.Equal(t, metav1.CauseTypeFieldValueInvalid, repoError.Type, "repository error Type must be FieldValueInvalid")
-			assert.Equal(t, "spec.github.url", repoError.Field, "repository error Field must be spec.github.url")
-			assert.Equal(t, "repository not found", repoError.Detail, "repository error Detail must be 'repository not found'")
-			assert.Empty(t, repoError.Origin, "repository error Origin must be empty")
-			t.Logf("Verified repository fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
-				repoError.Type, repoError.Field, repoError.Detail, repoError.Origin)
-		}
+		require.Len(t, repo.Status.FieldErrors, 1, "fieldErrors should contain exactly one error")
+
+		tokenError := repo.Status.FieldErrors[0]
+
+		// Verify all fields explicitly - authorization check fails first before URL check
+		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, tokenError.Type, "Type must be FieldValueInvalid")
+		assert.Equal(t, "secure.token", tokenError.Field, "Field must be secure.token")
+		assert.Equal(t, "not authorized", tokenError.Detail, "Detail must be 'not authorized'")
+		assert.Empty(t, tokenError.Origin, "Origin must be empty")
+
+		t.Logf("Verified token fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
+			tokenError.Type, tokenError.Field, tokenError.Detail, tokenError.Origin)
 	})
 }

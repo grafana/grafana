@@ -975,15 +975,15 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 
 		// Verify fieldErrors are populated with validation errors - be strict and explicit
 		require.Len(t, conn.Status.FieldErrors, 1, "fieldErrors should contain exactly one error for invalid installation ID")
-		
+
 		installationIDError := conn.Status.FieldErrors[0]
-		
+
 		// Verify all fields explicitly
 		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, installationIDError.Type, "Type must be FieldValueInvalid")
 		assert.Equal(t, "spec.installationID", installationIDError.Field, "Field must be spec.installationID")
 		assert.Equal(t, "invalid installation ID: 999999999", installationIDError.Detail, "Detail must match expected error message")
 		assert.Empty(t, installationIDError.Origin, "Origin should be empty")
-		
+
 		t.Logf("Verified installationID fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
 			installationIDError.Type, installationIDError.Field, installationIDError.Detail, installationIDError.Origin)
 	})
@@ -1063,15 +1063,15 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 
 		// Verify fieldErrors are populated with validation errors - be strict and explicit
 		require.Len(t, conn.Status.FieldErrors, 1, "fieldErrors should contain exactly one error for app ID mismatch")
-		
+
 		appIDError := conn.Status.FieldErrors[0]
-		
+
 		// Verify all fields explicitly
 		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, appIDError.Type, "Type must be FieldValueInvalid")
 		assert.Equal(t, "spec.appID", appIDError.Field, "Field must be spec.appID")
 		assert.Equal(t, "appID mismatch: expected 123456, got 999999", appIDError.Detail, "Detail must match expected error message")
 		assert.Empty(t, appIDError.Origin, "Origin should be empty")
-		
+
 		t.Logf("Verified appID fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
 			appIDError.Type, appIDError.Field, appIDError.Detail, appIDError.Origin)
 	})
