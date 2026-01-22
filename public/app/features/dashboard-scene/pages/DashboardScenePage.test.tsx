@@ -8,7 +8,13 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { PanelProps, store, systemDateFormats, SystemDateFormatsState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { LocationServiceProvider, config, locationService, setPluginImportUtils } from '@grafana/runtime';
+import {
+  LocationServiceProvider,
+  config,
+  locationSearchToObject,
+  locationService,
+  setPluginImportUtils,
+} from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
@@ -181,6 +187,30 @@ describe('DashboardScenePage', () => {
     expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
   });
 
+  it('shows Powered by footer when kiosk query param is present with no value (?kiosk)', async () => {
+    setup({ routeProps: { queryParams: locationSearchToObject('?kiosk') } });
+
+    await waitForDashboardToRender();
+
+    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
+  });
+
+  it('shows Powered by footer in kiosk mode when kiosk is an empty string', async () => {
+    setup({ routeProps: { queryParams: { kiosk: '' } } });
+
+    await waitForDashboardToRender();
+
+    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
+  });
+
+  it('does not show Powered by footer when kiosk=false', async () => {
+    setup({ routeProps: { queryParams: { kiosk: 'false' } } });
+
+    await waitForDashboardToRender();
+
+    expect(screen.queryByTestId(selectors.pages.PublicDashboard.footer)).not.toBeInTheDocument();
+  });
+
   it('uses kiosk dashboard CTA url', async () => {
     setup({ routeProps: { queryParams: { kiosk: true } } });
 
@@ -205,6 +235,22 @@ describe('DashboardScenePage', () => {
     await waitForDashboardToRender();
 
     expect(screen.queryByTestId(selectors.pages.PublicDashboard.footer)).not.toBeInTheDocument();
+  });
+
+  it('hides Powered by footer in kiosk mode when hideLogo is an empty string', async () => {
+    setup({ routeProps: { queryParams: { kiosk: true, hideLogo: '' } } });
+
+    await waitForDashboardToRender();
+
+    expect(screen.queryByTestId(selectors.pages.PublicDashboard.footer)).not.toBeInTheDocument();
+  });
+
+  it('shows Powered by footer in kiosk mode when hideLogo has an invalid value', async () => {
+    setup({ routeProps: { queryParams: { kiosk: true, hideLogo: 'maybe' } } });
+
+    await waitForDashboardToRender();
+
+    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
   });
 
   it('shows Powered by footer in kiosk mode when hideLogo=0', async () => {

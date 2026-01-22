@@ -1,5 +1,5 @@
-import { css } from '@emotion/css';
-import type { CSSProperties } from 'react';
+import { css, cx } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -31,21 +31,23 @@ export const PublicDashboardFooter = function ({ paddingX, useMinHeight, linkUrl
   const theme = useTheme2();
   const conf = useGetPublicDashboardConfig();
 
-  const footerStyle: CSSProperties = {};
-  if (paddingX !== undefined) {
-    footerStyle.boxSizing = 'border-box';
-    footerStyle.paddingLeft = theme.spacing(paddingX);
-    footerStyle.paddingRight = theme.spacing(paddingX);
-  }
-
-  if (useMinHeight) {
-    footerStyle.height = 'auto';
-    footerStyle.minHeight = '30px';
-    footerStyle.alignItems = 'center';
-  }
+  const footerVariantClassName = useMemo(() => {
+    return cx({
+      [css({
+        boxSizing: 'border-box',
+        paddingLeft: theme.spacing(paddingX ?? 0),
+        paddingRight: theme.spacing(paddingX ?? 0),
+      })]: paddingX !== undefined,
+      [css({
+        height: 'auto',
+        minHeight: '30px',
+        alignItems: 'center',
+      })]: Boolean(useMinHeight),
+    });
+  }, [paddingX, theme, useMinHeight]);
 
   return conf.footerHide ? null : (
-    <div className={styles.footer} data-testid={selectors.footer} style={footerStyle}>
+    <div className={cx(styles.footer, footerVariantClassName)} data-testid={selectors.footer}>
       <a className={styles.link} href={linkUrl ?? conf.footerLink} target="_blank" rel="noreferrer noopener">
         {conf.footerText} <img className={styles.logoImg} alt="" src={conf.footerLogo} />
       </a>

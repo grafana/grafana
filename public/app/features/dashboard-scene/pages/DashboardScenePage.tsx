@@ -25,7 +25,7 @@ import { getDashboardScenePageStateManager } from './DashboardScenePageStateMana
 const KIOSK_DASHBOARD_FOOTER_URL = 'https://grafana.com/?src=grafananet&cnt=kiosk-dashboard';
 
 function shouldHideDashboardKioskFooter(hideLogo?: string | true): boolean {
-  if (hideLogo === undefined || hideLogo === null) {
+  if (hideLogo === undefined) {
     return false;
   }
 
@@ -38,7 +38,8 @@ function shouldHideDashboardKioskFooter(hideLogo?: string | true): boolean {
     return true;
   }
 
-  return normalized !== 'false' && normalized !== '0';
+  // Only treat explicit values as enabling hideLogo. Anything else is treated as "not enabled" for predictability.
+  return false;
 }
 
 export interface Props
@@ -151,7 +152,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     return null;
   }
 
-  const showKioskFooter = queryParams.kiosk === '1' || queryParams.kiosk === true;
+  // `locationSearchToObject()` parses `?kiosk` as `true` (boolean param). Some clients can emit `?kiosk=`, which parses as ''.
+  const showKioskFooter = queryParams.kiosk === '1' || queryParams.kiosk === true || queryParams.kiosk === '';
   const hideKioskFooter = shouldHideDashboardKioskFooter(queryParams.hideLogo);
 
   return (
@@ -161,7 +163,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
       {showKioskFooter && !hideKioskFooter && (
-        <PublicDashboardFooter paddingX={2} useMinHeight linkUrl={KIOSK_DASHBOARD_FOOTER_URL} />
+        <PublicDashboardFooter paddingX={2} useMinHeight={true} linkUrl={KIOSK_DASHBOARD_FOOTER_URL} />
       )}
     </UrlSyncContextProvider>
   );
