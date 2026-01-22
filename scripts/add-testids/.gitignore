@@ -1,0 +1,10 @@
+# Auto-Generated Files
+
+# Output directory
+output/
+
+# Backup files from transformations
+**/*.backup
+
+# Node modules (if installed locally)
+node_modules/

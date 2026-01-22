@@ -1,0 +1,25 @@
+{
+  "targetComponents": {
+    "menus": ["Menu", "MenuItem", "SubMenu", "DropdownMenu", "ContextMenu"],
+    "toolbars": ["Toolbar", "ToolbarButton", "NavToolbar", "ActionToolbar", "Button"],
+    "forms": ["Input", "Button", "Select", "Checkbox", "RadioButton", "Switch", "Field", "TextArea", "Form"]
+  },
+  "importSources": ["@grafana/ui", "@grafana/runtime", "app/core/components"],
+  "scanDirectories": ["public/app/core/components", "public/app/features", "packages/grafana-ui/src/components"],
+  "excludePatterns": ["**/*.test.tsx", "**/*.test.ts", "**/*.story.tsx", "**/stories/**", "**/__mocks__/**"],
+  "namingPatterns": {
+    "menu": "Components.{FeatureArea}.Menu.{itemName}",
+    "toolbar": "Components.{FeatureArea}.Toolbar.{buttonName}",
+    "form": "Components.{FeatureArea}.{FormName}.{fieldName}"
+  },
+  "featureAreaMappings": {
+    "public/app/core/components/AppChrome": "AppChrome",
+    "public/app/core/components/Login": "Login",
+    "public/app/features/dashboard": "Dashboard",
+    "public/app/features/alerting": "Alerting",
+    "public/app/features/datasources": "DataSource",
+    "public/app/features/explore": "Explore",
+    "public/app/features/plugins": "Plugins",
+    "packages/grafana-ui": "UI"
+  }
+}

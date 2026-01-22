@@ -1,0 +1,22 @@
+{
+  "name": "add-testids",
+  "version": "1.0.0",
+  "description": "Automated scripts to add data-testid attributes to Grafana components",
+  "type": "module",
+  "scripts": {
+    "discover": "node 1-discover.mjs",
+    "analyze": "node 2-analyze.mjs",
+    "generate": "node 3-generate-selectors.mjs",
+    "transform": "node 4-transform-code.mjs",
+    "transform:apply": "node 4-transform-code.mjs --apply",
+    "all": "npm run discover && npm run analyze && npm run generate",
+    "clean": "rm -rf output"
+  },
+  "dependencies": {
+    "@babel/generator": "^7.23.0",
+    "@babel/parser": "^7.23.0",
+    "@babel/traverse": "^7.23.0",
+    "@babel/types": "^7.23.0",
+    "glob": "^10.3.0"
+  }
+}
