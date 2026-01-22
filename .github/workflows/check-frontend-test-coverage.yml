@@ -324,14 +324,14 @@ jobs:
 
       - name: Download PR coverage
         if: steps.check-affected.outputs.affected == 'true'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7.0.0
         with:
           name: coverage-pr-${{ steps.codeowner-slug.outputs.slug }}
           path: ./coverage-pr
 
       - name: Download main coverage
         if: steps.check-affected.outputs.affected == 'true'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7.0.0
         with:
           name: coverage-main-${{ steps.codeowner-slug.outputs.slug }}
           path: ./coverage-main
