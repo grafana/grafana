@@ -152,7 +152,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: meta.isSnapshot && !isEditing,
+    condition: meta.isSnapshot && !isEditing && !meta.isEmbedded,
     render: () => <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl()} />,
   });
 
@@ -315,7 +315,7 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
-  const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying;
+  const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying && !meta.isEmbedded;
 
   toolbarActions.push({
     group: 'main-buttons',

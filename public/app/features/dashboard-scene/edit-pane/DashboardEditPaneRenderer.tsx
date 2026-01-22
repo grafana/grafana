@@ -31,6 +31,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
   const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const { isEditing, meta, uid } = dashboard.useState();
   const hasUid = Boolean(uid);
+  const isEmbedded = meta.isEmbedded;
   const selectedObject = selection?.getFirstObject();
   const isNewElement = selection?.isNewElement() ?? false;
 
@@ -103,7 +104,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
             />
           </>
         )}
-        {hasUid && <ShareExportDashboardButton dashboard={dashboard} />}
+        {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
         <Sidebar.Button
           icon="list-ui-alt"
           onClick={() => editPane.openPane('outline')}

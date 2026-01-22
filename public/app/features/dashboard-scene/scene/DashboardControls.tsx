@@ -256,8 +256,9 @@ function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
   const canEditDashboard = dashboard.canEditDashboard();
   const hasUid = Boolean(uid);
   const isSnapshot = Boolean(meta.isSnapshot);
+  const isEmbedded = meta.isEmbedded;
   const isEditable = Boolean(editable);
-  const showShareButton = hasUid && !isSnapshot && !isPlaying;
+  const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying;
 
   return (
     <>

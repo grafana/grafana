@@ -753,8 +753,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   canEditDashboard() {
     const { meta } = this.state;
-
-    return !meta.isSnapshot && Boolean(meta.canEdit || meta.canMakeEditable || config.viewersCanEdit);
+    return (
+      !meta.isSnapshot && !meta.isEmbedded && Boolean(meta.canEdit || meta.canMakeEditable || config.viewersCanEdit)
+    );
   }
 
   public getInitialSaveModel() {

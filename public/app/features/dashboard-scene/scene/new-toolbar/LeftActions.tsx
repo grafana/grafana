@@ -48,7 +48,7 @@ export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
         key: 'open-snapshot-origin-button',
         component: OpenSnapshotOriginButton,
         group: 'actions',
-        condition: isSnapshot && !isEditingDashboard,
+        condition: isSnapshot && !isEditingDashboard && !meta.isEmbedded,
       },
     ],
     dashboard
