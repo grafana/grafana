@@ -3023,7 +3023,7 @@ func schema_pkg_apis_provisioning_v0alpha1_TestResults(ref common.ReferenceCallb
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "TestResults is the result of a test connection operation Deprecated: this will go way when we deprecate the test endpoint",
+				Description: "TestResults is the result of a test connection operation Deprecated: this will go way when we deprecate the test endpoint We should use fieldErrors from status instead.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {

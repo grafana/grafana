@@ -562,6 +562,8 @@ type ResourceCount struct {
 // TestResults is the result of a test connection operation
 // Deprecated: this will go way when we deprecate the test endpoint
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// TODO: This type is deprecated and will be removed when we deprecate the test endpoint
+// We should use fieldErrors from status instead.
 type TestResults struct {
 	metav1.TypeMeta `json:",inline"`
 

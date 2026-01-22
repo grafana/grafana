@@ -3863,7 +3863,7 @@
         "tags": [
           "Repository"
         ],
-        "description": "Check if the configuration is valid",
+        "description": "Check if the configuration is valid. Deprecated: this will go away in favour of fieldErrors from status",
         "operationId": "createRepositoryTest",
         "requestBody": {
           "content": {
@@ -3909,6 +3909,7 @@
             }
           }
         },
+        "deprecated": true,
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
@@ -6227,7 +6228,7 @@
         }
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.TestResults": {
-        "description": "TestResults is the result of a test connection operation Deprecated: this will go way when we deprecate the test endpoint",
+        "description": "TestResults is the result of a test connection operation Deprecated: this will go way when we deprecate the test endpoint We should use fieldErrors from status instead.",
         "type": "object",
         "required": [
           "code",
