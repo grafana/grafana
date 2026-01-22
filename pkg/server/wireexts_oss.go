@@ -7,9 +7,7 @@ package server
 import (
 	"github.com/google/wire"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/configprovider"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -60,7 +58,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsMigrator "github.com/grafana/grafana/pkg/services/secrets/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -206,15 +203,6 @@ var wireExtsModuleServerSet = wire.NewSet(
 	tracing.ProvideService,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
 	otelTracer,
-	// Bus
-	bus.ProvideBus,
-	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
-	// Database migrations
-	migrations.ProvideOSSMigrations,
-	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
-	// Database
-	sqlstore.ProvideService,
-	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
