@@ -62,6 +62,8 @@ describe('ConfigFormGithubCollapse', () => {
   });
 
   it('returns null when image rendering is not allowed on a public instance', () => {
+    //Adding this due to React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7.
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
     const { renderResult } = setup({ imageRenderingAllowed: false, isPublic: true });
 
     expect(renderResult.container).toBeEmptyDOMElement();
