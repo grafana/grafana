@@ -78,6 +78,8 @@ jobs:
       - name: Build Grafana
         continue-on-error: true
         env:
+          OTEL_EXPORTER_OTLP_HEADERS_API_KEY: "${{ env.OTEL_EXPORTER_OTLP_API_KEY}}"
+
           GOCACHE_LOCAL_ONLY: true
           GOCACHE_DIR: /tmp/gocache
           GOCACHE_ENABLE_TRACING: true
@@ -90,7 +92,7 @@ jobs:
           STEP_NAME: Build Grafana
           STEP_NUMBER: 8
         run: |
-          GOPROXY=http://localhost:5970/mod  GOCACHEPROG="./go-cache-plugin connect 5930" make build-go
+          GOPROXY=http://localhost:5970/mod  GOCACHEPROG="./go-cache-plugin connect 5930 --otel-collector=https://otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp" make build-go
 
       - name: Cleanup
         run: |
