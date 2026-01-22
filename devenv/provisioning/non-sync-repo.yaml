@@ -1,0 +1,14 @@
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: non-sync-repo
+spec:
+  title: ExternalFS
+  type: local
+  local:
+    path: devenv/provisioning/sample
+  sync:
+    enabled: false
+    target: folder
+  workflows:
+    - write
