@@ -27,9 +27,9 @@ export function useCreateOrUpdateConnection(name?: string) {
 
       // First validate with dryRun - unwrap will throw on validation errors
       if (name) {
-        await update({ name, connection, dryRun: 'true' }).unwrap();
+        await update({ name, connection, dryRun: 'All' }).unwrap();
       } else {
-        await create({ connection, dryRun: 'true' }).unwrap();
+        await create({ connection, dryRun: 'All' }).unwrap();
       }
 
       // If validation passes, proceed with actual create/update
