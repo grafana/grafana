@@ -12583,6 +12583,11 @@
       "title-data-source-help": "Data source help"
     }
   },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": "Open Query Library"
+    }
+  },
   "query-operation": {
     "header": {
       "app-dashboard": "Dashboard",
