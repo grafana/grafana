@@ -27,7 +27,7 @@ func flushSeedAssignment(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) 
 
 		rowsAffected, _ := result.RowsAffected()
 		logger.Infof("Flushed seed_assignment table (%d rows deleted).", rowsAffected)
-		logger.Info("Seeding will repopulate this table on next startup.")
+		logger.Info("Restart Grafana to repopulate this table on next startup with the default RBAC assignments.")
 		return nil
 	})
 }
