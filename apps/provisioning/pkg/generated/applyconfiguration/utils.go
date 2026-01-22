@@ -18,14 +18,30 @@ import (
 func ForKind(kind schema.GroupVersionKind) interface{} {
 	switch kind {
 	// Group=provisioning.grafana.app, Version=v0alpha1
+	case v0alpha1.SchemeGroupVersion.WithKind("BitbucketConnectionConfig"):
+		return &provisioningv0alpha1.BitbucketConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("BitbucketRepositoryConfig"):
 		return &provisioningv0alpha1.BitbucketRepositoryConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("Connection"):
+		return &provisioningv0alpha1.ConnectionApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionInfo"):
+		return &provisioningv0alpha1.ConnectionInfoApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionSecure"):
+		return &provisioningv0alpha1.ConnectionSecureApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionSpec"):
+		return &provisioningv0alpha1.ConnectionSpecApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("ConnectionStatus"):
+		return &provisioningv0alpha1.ConnectionStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("DeleteJobOptions"):
 		return &provisioningv0alpha1.DeleteJobOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ExportJobOptions"):
 		return &provisioningv0alpha1.ExportJobOptionsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("GitHubConnectionConfig"):
+		return &provisioningv0alpha1.GitHubConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitHubRepositoryConfig"):
 		return &provisioningv0alpha1.GitHubRepositoryConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("GitlabConnectionConfig"):
+		return &provisioningv0alpha1.GitlabConnectionConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitLabRepositoryConfig"):
 		return &provisioningv0alpha1.GitLabRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitRepositoryConfig"):
@@ -70,6 +86,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.SyncOptionsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("SyncStatus"):
 		return &provisioningv0alpha1.SyncStatusApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("TokenStatus"):
+		return &provisioningv0alpha1.TokenStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("WebhookStatus"):
 		return &provisioningv0alpha1.WebhookStatusApplyConfiguration{}
 

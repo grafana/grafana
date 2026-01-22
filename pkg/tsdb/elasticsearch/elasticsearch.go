@@ -88,6 +88,14 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			httpCliOpts.SigV4.Service = "es"
 		}
 
+		apiKeyAuth, ok := jsonData["apiKeyAuth"].(bool)
+		if ok && apiKeyAuth {
+			apiKey := settings.DecryptedSecureJSONData["apiKey"]
+			if apiKey != "" {
+				httpCliOpts.Header.Add("Authorization", "ApiKey "+apiKey)
+			}
+		}
+
 		httpCli, err := httpClientProvider.New(httpCliOpts)
 		if err != nil {
 			return nil, err
@@ -151,6 +159,15 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			includeFrozen = false
 		}
 
+		clusterInfo, err := es.GetClusterInfo(httpCli, settings.URL)
+		if err != nil {
+			// Log warning but continue with default (non-serverless) behavior
+			// This handles cases where users don't have permission to access the root endpoint (403)
+			// or other connectivity issues that shouldn't prevent basic datasource functionality
+			backend.Logger.Warn("Failed to get Elasticsearch cluster info, assuming non-serverless cluster", "error", err, "url", settings.URL)
+			clusterInfo = es.ClusterInfo{}
+		}
+
 		configuredFields := es.ConfiguredFields{
 			TimeField:       timeField,
 			LogLevelField:   logLevelField,
@@ -166,6 +183,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
 			IncludeFrozen:              includeFrozen,
+			ClusterInfo:                clusterInfo,
 		}
 		return model, nil
 	}

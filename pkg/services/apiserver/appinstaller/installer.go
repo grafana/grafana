@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -21,12 +20,9 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
-
-type LegacyStorageGetterFunc func(schema.GroupVersionResource) grafanarest.Storage
 
 type LegacyStorageProvider interface {
 	GetLegacyStorage(schema.GroupVersionResource) grafanarest.Storage
@@ -45,11 +41,6 @@ type AuthorizerProvider interface {
 type AppInstallerConfig struct {
 	CustomConfig             any
 	AllowedV0Alpha1Resources []string
-}
-
-// serverLock interface defines a lock mechanism for executing actions with a timeout
-type serverLock interface {
-	LockExecuteAndRelease(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error
 }
 
 // AddToScheme adds app installer schemas to the runtime scheme
@@ -108,9 +99,14 @@ func RegisterAuthorizers(
 		if authorizerProvider, ok := installer.(AuthorizerProvider); ok {
 			authorizer := authorizerProvider.GetAuthorizer()
 			for _, gv := range installer.GroupVersions() {
+				if authorizer == nil {
+					panic("authorizer cannot be nil for api group: " + gv.String())
+				}
 				registrar.Register(gv, authorizer)
 				logger.Debug("Registered authorizer", "group", gv.Group, "version", gv.Version, "app")
 			}
+		} else {
+			panic("authorizer cannot be nil for api group: " + installer.GroupVersions()[0].Group)
 		}
 	}
 }
@@ -134,11 +130,7 @@ func InstallAPIs(
 	server *genericapiserver.GenericAPIServer,
 	restOpsGetter generic.RESTOptionsGetter,
 	storageOpts *grafanaapiserveroptions.StorageOptions,
-	kvStore grafanarest.NamespacedKVStore,
-	lock serverLock,
-	namespaceMapper request.NamespaceMapper,
 	dualWriteService dualwrite.Service,
-	dualWriterMetrics *grafanarest.DualWriterMetrics,
 	builderMetrics *builder.BuilderMetrics,
 	apiResourceConfig *serverstore.ResourceConfig,
 ) error {
@@ -151,11 +143,7 @@ func InstallAPIs(
 			installer:         installer,
 			storageOpts:       storageOpts,
 			restOptionsGetter: restOpsGetter,
-			kvStore:           kvStore,
-			lock:              lock,
-			namespaceMapper:   namespaceMapper,
 			dualWriteService:  dualWriteService,
-			dualWriterMetrics: dualWriterMetrics,
 			builderMetrics:    builderMetrics,
 			apiResourceConfig: apiResourceConfig,
 		}

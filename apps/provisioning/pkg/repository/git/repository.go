@@ -82,42 +82,6 @@ func (r *gitRepository) Config() *provisioning.Repository {
 	return r.config
 }
 
-// Validate implements provisioning.Repository.
-func (r *gitRepository) Validate() (list field.ErrorList) {
-	cfg := r.gitConfig
-
-	t := string(r.config.Spec.Type)
-	if cfg.URL == "" {
-		list = append(list, field.Required(field.NewPath("spec", t, "url"), "a git url is required"))
-	} else {
-		if !isValidGitURL(cfg.URL) {
-			list = append(list, field.Invalid(field.NewPath("spec", t, "url"), cfg.URL, "invalid git URL format"))
-		}
-	}
-	if cfg.Branch == "" {
-		list = append(list, field.Required(field.NewPath("spec", t, "branch"), "a git branch is required"))
-	} else if !IsValidGitBranchName(cfg.Branch) {
-		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), cfg.Branch, "invalid branch name"))
-	}
-
-	// Readonly repositories may not need a token (if public)
-	if len(r.config.Spec.Workflows) > 0 {
-		if cfg.Token == "" && r.config.Secure.Token.IsZero() {
-			list = append(list, field.Required(field.NewPath("secure", "token"), "a git access token is required"))
-		}
-	}
-
-	if err := safepath.IsSafe(cfg.Path); err != nil {
-		list = append(list, field.Invalid(field.NewPath("spec", t, "path"), cfg.Path, err.Error()))
-	}
-
-	if safepath.IsAbs(cfg.Path) {
-		list = append(list, field.Invalid(field.NewPath("spec", t, "path"), cfg.Path, "path must be relative"))
-	}
-
-	return list
-}
-
 func isValidGitURL(gitURL string) bool {
 	// Parse URL
 	parsed, err := url.Parse(gitURL)
@@ -238,6 +202,8 @@ func (r *gitRepository) Read(ctx context.Context, filePath, ref string) (*reposi
 
 	// Check if the path represents a directory
 	if safepath.IsDir(filePath) {
+		// Strip trailing slash for git tree lookup to avoid empty path components
+		finalPath = strings.TrimSuffix(finalPath, "/")
 		tree, err := r.client.GetTreeByPath(ctx, commit.Tree, finalPath)
 		if err != nil {
 			if errors.Is(err, nanogit.ErrObjectNotFound) {

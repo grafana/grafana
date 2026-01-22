@@ -3,6 +3,7 @@ package datasource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 
@@ -20,6 +21,7 @@ import (
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
@@ -28,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
@@ -35,17 +38,22 @@ var (
 	_ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 )
 
+type DataSourceAPIBuilderConfig struct {
+	LoadQueryTypes bool
+	UseDualWriter  bool
+}
+
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
 	datasourceResourceInfo utils.ResourceInfo
-
-	pluginJSON           plugins.JSONData
-	client               PluginClient // will only ever be called with the same plugin id!
-	datasources          PluginDatasourceProvider
-	contextProvider      PluginContextWrapper
-	accessControl        accesscontrol.AccessControl
-	queryTypes           *queryV0.QueryTypeDefinitionList
-	configCrudUseNewApis bool
+	pluginJSON             plugins.JSONData
+	client                 PluginClient // will only ever be called with the same plugin id!
+	datasources            PluginDatasourceProvider
+	contextProvider        PluginContextWrapper
+	accessControl          accesscontrol.AccessControl
+	queryTypes             *queryV0.QueryTypeDefinitionList
+	cfg                    DataSourceAPIBuilderConfig
+	dataSourceCRUDMetric   *prometheus.HistogramVec
 }
 
 func RegisterAPIService(
@@ -59,12 +67,23 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) &&
+		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil
 	}
 
 	var err error
 	var builder *DataSourceAPIBuilder
+
+	dataSourceCRUDMetric := metricutil.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "grafana",
+		Name:      "ds_config_handler_apis_requests_duration_seconds",
+		Help:      "Duration of requests handled by new k8s style APIs datasource configuration handlers",
+	}, []string{"handler"})
+	regErr := metrics.ProvideRegisterer().Register(dataSourceCRUDMetric)
+	if regErr != nil && !errors.As(regErr, &prometheus.AlreadyRegisteredError{}) {
+		return nil, regErr
+	}
 
 	pluginJSONs, err := getDatasourcePlugins(pluginSources)
 	if err != nil {
@@ -77,20 +96,25 @@ func RegisterAPIService(
 			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
 		}
 
+		groupName := pluginJSON.ID + ".datasource.grafana.app"
 		builder, err = NewDataSourceAPIBuilder(
+			groupName,
 			pluginJSON,
 			client,
 			datasources.GetDatasourceProvider(pluginJSON),
 			contextProvider,
 			accessControl,
 			//nolint:staticcheck // not yet migrated to OpenFeature
-			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
-			//nolint:staticcheck // not yet migrated to OpenFeature
-			features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
+			DataSourceAPIBuilderConfig{
+				LoadQueryTypes: features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
+				UseDualWriter:  features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections),
+			},
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		builder.SetDataSourceCRUDMetrics(dataSourceCRUDMetric)
 
 		apiRegistrar.RegisterAPI(builder)
 	}
@@ -107,31 +131,27 @@ type PluginClient interface {
 }
 
 func NewDataSourceAPIBuilder(
+	groupName string,
 	plugin plugins.JSONData,
 	client PluginClient,
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl,
-	loadQueryTypes bool,
-	configCrudUseNewApis bool,
+	cfg DataSourceAPIBuilderConfig,
 ) (*DataSourceAPIBuilder, error) {
-	group, err := plugins.GetDatasourceGroupNameFromPluginID(plugin.ID)
-	if err != nil {
-		return nil, err
-	}
-
 	builder := &DataSourceAPIBuilder{
-		datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(group, plugin.ID),
+		datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(groupName, plugin.ID),
 		pluginJSON:             plugin,
 		client:                 client,
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
-		configCrudUseNewApis:   configCrudUseNewApis,
+		cfg:                    cfg,
 	}
-	if loadQueryTypes {
+	var err error
+	if cfg.LoadQueryTypes {
 		// In the future, this will somehow come from the plugin
-		builder.queryTypes, err = getHardcodedQueryTypes(group)
+		builder.queryTypes, err = getHardcodedQueryTypes(groupName)
 	}
 	return builder, err
 }
@@ -141,9 +161,9 @@ func getHardcodedQueryTypes(group string) (*queryV0.QueryTypeDefinitionList, err
 	var err error
 	var raw json.RawMessage
 	switch group {
-	case "testdata.datasource.grafana.app":
+	case "testdata.datasource.grafana.app", "grafana-testdata-datasource":
 		raw, err = kinds.QueryTypeDefinitionListJSON()
-	case "prometheus.datasource.grafana.app":
+	case "prometheus.datasource.grafana.app", "prometheus":
 		raw, err = models.QueryTypeDefinitionListJSON()
 	}
 	if err != nil {
@@ -159,6 +179,10 @@ func getHardcodedQueryTypes(group string) (*queryV0.QueryTypeDefinitionList, err
 
 func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.datasourceResourceInfo.GroupVersion()
+}
+
+func (b *DataSourceAPIBuilder) SetDataSourceCRUDMetrics(datasourceCRUDMetric *prometheus.HistogramVec) {
+	b.dataSourceCRUDMetric = datasourceCRUDMetric
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
@@ -202,6 +226,18 @@ func (b *DataSourceAPIBuilder) AllowedV0Alpha1Resources() []string {
 }
 
 func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	if opts.StorageOptsRegister != nil {
+		opts.StorageOptsRegister(b.datasourceResourceInfo.GroupResource(), apistore.StorageOptions{
+			EnableFolderSupport: false,
+
+			// Setting the schema explicitly will force the apistore to explicitly marshal with a matching Group+version
+			// This is required because we map the same go type (DataSourceConfig) across multiple api groups
+			// and the default k8s codec will pick the first one registered, regardless which group is set
+			// See: https://github.com/kubernetes/kubernetes/blob/v1.34.3/staging/src/k8s.io/apimachinery/pkg/runtime/serializer/versioning/versioning.go#L267
+			Scheme: opts.Scheme,
+		})
+	}
+
 	storage := map[string]rest.Storage{}
 
 	// Register the raw datasource connection
@@ -216,15 +252,11 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	storage["connections"] = &noopREST{}                            // hidden from openapi
 	storage["connections/query"] = storage[ds.StoragePath("query")] // deprecated in openapi
 
-	if b.configCrudUseNewApis {
+	if b.cfg.UseDualWriter {
 		legacyStore := &legacyStorage{
-			datasources:  b.datasources,
-			resourceInfo: &ds,
-			dsConfigHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
-				Namespace: "grafana",
-				Name:      "ds_config_handler_requests_duration_seconds",
-				Help:      "Duration of requests handled by datasource configuration handlers",
-			}, []string{"code_path", "handler"}),
+			datasources:                     b.datasources,
+			resourceInfo:                    &ds,
+			dsConfigHandlerRequestsDuration: b.dataSourceCRUDMetric,
 		}
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
 		if err != nil {

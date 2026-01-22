@@ -77,6 +77,10 @@
     "liveNow": false,
     "panels": [
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests null panel datasource migration with targets - should fallback to default",
         "gridPos": {
           "h": 3,
@@ -100,6 +104,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests null panel datasource with empty targets array - should create default target",
         "gridPos": {
           "h": 3,
@@ -123,6 +131,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "description": "Tests null panel datasource with missing targets - should create default target array",
         "gridPos": {
           "h": 3,
@@ -180,6 +192,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "existing-target-uid"
+        },
         "description": "Tests panel with already migrated datasource object - should preserve existing refs",
         "gridPos": {
           "h": 3,
@@ -203,6 +219,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "unknown-target-datasource"
+        },
         "description": "Tests panel with unknown datasource - should preserve as UID-only reference",
         "gridPos": {
           "h": 3,
@@ -260,6 +280,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "existing-target-uid"
+        },
         "description": "Tests panel inheriting datasource from target when panel datasource was default",
         "gridPos": {
           "h": 3,
@@ -283,6 +307,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "existing-target-uid"
+        },
         "description": "Tests panel with datasource referenced by name - should migrate to full object",
         "gridPos": {
           "h": 3,
@@ -306,6 +334,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "existing-target-uid"
+        },
         "description": "Tests panel with datasource referenced by UID - should migrate to full object",
         "gridPos": {
           "h": 3,
@@ -330,7 +362,7 @@
       },
       {
         "collapsed": false,
-        "id": -1,
+        "id": 15,
         "title": "Simple Row Panel",
         "type": "row"
       },
@@ -342,9 +374,13 @@
           "x": 0,
           "y": 0
         },
-        "id": -1,
+        "id": 16,
         "panels": [
           {
+            "datasource": {
+              "type": "elasticsearch",
+              "uid": "existing-target-uid"
+            },
             "description": "Nested panel in collapsed row with default datasource",
             "gridPos": {
               "h": 3,
@@ -368,6 +404,10 @@
             "type": "timeseries"
           },
           {
+            "datasource": {
+              "type": "elasticsearch",
+              "uid": "existing-target-uid"
+            },
             "description": "Nested panel in collapsed row with unknown datasource",
             "gridPos": {
               "h": 3,

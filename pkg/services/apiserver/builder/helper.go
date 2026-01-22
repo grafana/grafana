@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"context"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -10,7 +9,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
-	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
@@ -29,9 +26,9 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -75,19 +72,7 @@ var PathRewriters = []filters.PathRewriter{
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
-		requestHandler, err := GetCustomRoutesHandler(
-			delegateHandler,
-			c.LoopbackClientConfig,
-			builders,
-			reg,
-			c.MergedResourceConfig,
-		)
-		if err != nil {
-			panic(fmt.Sprintf("could not build the request handler for specified API builders: %s", err.Error()))
-		}
-
-		// Needs to run last in request chain to function as expected, hence we register it first.
-		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
 
 		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
 		handler = filters.WithRequester(handler)
@@ -264,19 +249,6 @@ func SetupConfig(
 	return nil
 }
 
-type ServerLockService interface {
-	LockExecuteAndRelease(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error
-}
-
-func getRequestInfo(gr schema.GroupResource, namespaceMapper request.NamespaceMapper) *k8srequest.RequestInfo {
-	return &k8srequest.RequestInfo{
-		APIGroup:  gr.Group,
-		Resource:  gr.Resource,
-		Name:      "",
-		Namespace: namespaceMapper(int64(1)),
-	}
-}
-
 func InstallAPIs(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
@@ -285,13 +257,9 @@ func InstallAPIs(
 	builders []APIGroupBuilder,
 	storageOpts *options.StorageOptions,
 	reg prometheus.Registerer,
-	namespaceMapper request.NamespaceMapper,
-	kvStore grafanarest.NamespacedKVStore,
-	serverLock ServerLockService,
 	dualWriteService dualwrite.Service,
 	optsregister apistore.StorageOptionsRegister,
 	features featuremgmt.FeatureToggles,
-	dualWriterMetrics *grafanarest.DualWriterMetrics,
 	builderMetrics *BuilderMetrics,
 	apiResourceConfig *serverstorage.ResourceConfig,
 ) error {
@@ -314,79 +282,20 @@ func InstallAPIs(
 			// when missing this will default to mode zero (legacy only)
 			var mode = grafanarest.DualWriterMode(0)
 
-			var (
-				err                                  error
-				dualWriterPeriodicDataSyncJobEnabled bool
-				dualWriterMigrationDataSyncDisabled  bool
-				dataSyncerInterval                   = time.Hour
-				dataSyncerRecordsLimit               = 1000
-			)
-
 			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
 			if resourceExists {
 				mode = resourceConfig.DualWriterMode
-				dualWriterPeriodicDataSyncJobEnabled = resourceConfig.DualWriterPeriodicDataSyncJobEnabled
-				dualWriterMigrationDataSyncDisabled = resourceConfig.DualWriterMigrationDataSyncDisabled
-				dataSyncerInterval = resourceConfig.DataSyncerInterval
-				dataSyncerRecordsLimit = resourceConfig.DataSyncerRecordsLimit
 			}
 
-			// Force using storage only -- regardless of internal synchronization state
-			if mode == grafanarest.Mode5 {
-				builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode, grafanarest.Mode5)
-				return storage, nil
-			}
+			builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode)
 
-			currentMode := mode
-			if !dualWriterMigrationDataSyncDisabled || dualWriterPeriodicDataSyncJobEnabled {
-				// TODO: inherited context from main Grafana process
-				ctx := context.Background()
-
-				// Moving from one version to the next can only happen after the previous step has
-				// successfully synchronized.
-				requestInfo := getRequestInfo(gr, namespaceMapper)
-
-				syncerCfg := &grafanarest.SyncerConfig{
-					Kind:                   key,
-					RequestInfo:            requestInfo,
-					Mode:                   mode,
-					SkipDataSync:           dualWriterMigrationDataSyncDisabled,
-					LegacyStorage:          legacy,
-					Storage:                storage,
-					ServerLockService:      serverLock,
-					DataSyncerInterval:     dataSyncerInterval,
-					DataSyncerRecordsLimit: dataSyncerRecordsLimit,
-				}
-
-				// This also sets the currentMode on the syncer config.
-				currentMode, err = grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg, dualWriterMetrics)
-				if err != nil {
-					return nil, err
-				}
-
-				// when unable to use
-				if currentMode != mode {
-					klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
-				}
-
-				if dualWriterPeriodicDataSyncJobEnabled && (currentMode >= grafanarest.Mode1 && currentMode <= grafanarest.Mode3) {
-					// The mode might have changed in SetDualWritingMode, so apply current mode first.
-					syncerCfg.Mode = currentMode
-					if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg, dualWriterMetrics); err != nil {
-						return nil, err
-					}
-				}
-			}
-
-			builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode, currentMode)
-
-			switch currentMode {
+			switch mode {
 			case grafanarest.Mode0:
 				return legacy, nil
 			case grafanarest.Mode4, grafanarest.Mode5:
 				return storage, nil
 			default:
-				return dualwrite.NewStaticStorage(gr, currentMode, legacy, storage)
+				return dualwrite.NewStaticStorage(gr, mode, legacy, storage)
 			}
 		}
 	}
@@ -418,12 +327,13 @@ func InstallAPIs(
 			continue
 		}
 
-		err := server.InstallAPIGroup(&g)
-		if err != nil {
+		// overrride the negotiated serializer to exclude protobuf, after the NewDefaultAPIGroupInfo, since it otherwise replaces the codecs
+		g.NegotiatedSerializer = grafanarest.DefaultNoProtobufNegotiatedSerializer(codecs)
+
+		if err := server.InstallAPIGroup(&g); err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -495,6 +405,32 @@ func AddPostStartHooks(
 		}
 	}
 	return nil
+}
+
+func EvaluatorPolicyRuleFromBuilders(builders []APIGroupBuilder) auditing.PolicyRuleEvaluators {
+	policyRuleEvaluators := make(auditing.PolicyRuleEvaluators, 0)
+
+	for _, b := range builders {
+		auditor, ok := b.(APIGroupAuditor)
+		if !ok {
+			continue
+		}
+
+		policyRuleEvaluator := auditor.GetPolicyRuleEvaluator()
+		if policyRuleEvaluator == nil {
+			continue
+		}
+
+		for _, gv := range GetGroupVersions(b) {
+			if gv.Empty() {
+				continue
+			}
+
+			policyRuleEvaluators[gv] = policyRuleEvaluator
+		}
+	}
+
+	return policyRuleEvaluators
 }
 
 func allowRegisteringResourceByInfo(allowedResources []string, name string) bool {

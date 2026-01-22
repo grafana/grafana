@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
 import { Dashboard } from '@grafana/schema';
@@ -6,31 +6,12 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardDataDTO } from 'app/types/dashboard';
 
+import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager';
+
+import { getFilesRecursively } from './serialization-test-utils';
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from './transformSaveModelToScene';
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
-
-// Helper function to recursively get all files from a directory
-function getFilesRecursively(dir: string, baseDir: string = dir): Array<{ filePath: string; relativePath: string }> {
-  const files: Array<{ filePath: string; relativePath: string }> = [];
-  const entries = readdirSync(dir);
-
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry);
-    const stat = statSync(fullPath);
-
-    if (stat.isDirectory()) {
-      files.push(...getFilesRecursively(fullPath, baseDir));
-    } else if (entry.endsWith('.json')) {
-      files.push({
-        filePath: fullPath,
-        relativePath: path.relative(baseDir, fullPath),
-      });
-    }
-  }
-
-  return files;
-}
 
 // Mock the config to provide datasource information
 jest.mock('@grafana/runtime', () => {
@@ -228,22 +209,26 @@ function removeMetadata(spec: Dashboard): Partial<Dashboard> {
  * identical processing.
  */
 function loadAndSerializeV1SaveModel(dashboard: Dashboard): Dashboard {
-  const scene = transformSaveModelToScene({
-    dashboard: dashboard as DashboardDataDTO,
-    meta: {
-      isNew: false,
-      isFolder: false,
-      canSave: true,
-      canEdit: true,
-      canDelete: false,
-      canShare: false,
-      canStar: false,
-      canAdmin: false,
-      isSnapshot: false,
-      provisioned: false,
-      version: 1,
+  const scene = transformSaveModelToScene(
+    {
+      dashboard: dashboard as DashboardDataDTO,
+      meta: {
+        isNew: false,
+        isFolder: false,
+        canSave: true,
+        canEdit: true,
+        canDelete: false,
+        canShare: false,
+        canStar: false,
+        canAdmin: false,
+        isSnapshot: false,
+        provisioned: false,
+        version: 1,
+      },
     },
-  });
+    undefined,
+    getSceneCreationOptions()
+  );
 
   return transformSceneToSaveModel(scene, false);
 }

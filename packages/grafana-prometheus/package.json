@@ -15,8 +15,18 @@
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-prometheus"
   },
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@grafana-app/source": "./src/index.ts",
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.cjs"
+    }
+  },
   "files": [
     "./dist",
     "./README.md",
@@ -24,9 +34,6 @@
     "./LICENSE_AGPL"
   ],
   "publishConfig": {
-    "main": "./dist/cjs/index.cjs",
-    "module": "./dist/esm/index.mjs",
-    "types": "./dist/types/index.d.ts",
     "access": "public"
   },
   "scripts": {
@@ -64,7 +71,7 @@
     "@types/semver": "7.7.1",
     "@types/uuid": "10.0.0",
     "debounce-promise": "3.1.2",
-    "lodash": "4.17.21",
+    "lodash": "4.17.23",
     "moment": "2.30.1",
     "moment-timezone": "0.5.47",
     "monaco-editor": "0.34.1",

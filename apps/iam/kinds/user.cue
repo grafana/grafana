@@ -29,20 +29,22 @@ userv0alpha1: userKind & {
 	// }
 	schema: {
 		spec: v0alpha1.UserSpec
+		status: {
+			lastSeenAt: int64 | 0
+		}
 	}
-	// TODO: Uncomment when the custom routes implementation is done
-	// routes: {
-	// 	"/teams": {
-	// 		"GET": {
-	// 			response: {
-	// 				#UserTeam: {
-	// 					title: string
-	// 					teamRef: v0alpha1.TeamRef
-	// 					permission: v0alpha1.TeamPermission
-	// 				}
-	// 				items: [...#UserTeam]
-	// 			}
-	// 		}
-	// 	}
-	// }
+	routes: {
+		"/teams": {
+			"GET": {
+				response: {
+					#UserTeam: {
+						teamRef: v0alpha1.TeamRef
+						permission: v0alpha1.TeamPermission
+						external: bool
+					}
+					items: [...#UserTeam]
+				}
+			}
+		}
+	}
 }

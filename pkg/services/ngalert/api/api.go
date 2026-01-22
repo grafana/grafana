@@ -64,8 +64,8 @@ type API struct {
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
-	StateManager         *state.Manager
-	Scheduler            apiprometheus.StatusReader
+	StateManager         state.AlertInstanceManager
+	RuleStatusReader     apiprometheus.StatusReader
 	AccessControl        ac.AccessControl
 	Policies             *provisioning.NotificationPolicyService
 	ReceiverService      *notifier.ReceiverService
@@ -132,7 +132,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.Scheduler, api.RuleStore, ruleAuthzService, api.ProvenanceStore),
+		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.RuleStatusReader, api.RuleStore, ruleAuthzService, api.ProvenanceStore),
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(
@@ -161,7 +161,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			authz:           ruleAuthzService,
 			evaluator:       api.EvaluatorFactory,
 			cfg:             &api.Cfg.UnifiedAlerting,
-			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory, api.Tracer),
+			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory, api.Tracer, api.Cfg.UnifiedAlerting, api.FeatureManager),
 			featureManager:  api.FeatureManager,
 			appUrl:          api.AppUrl,
 			tracer:          api.Tracer,

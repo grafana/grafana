@@ -1,10 +1,14 @@
 package historian
 
 import (
+	"context"
+
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	restclient "k8s.io/client-go/rest"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
-	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/apps/alerting/historian/pkg/apis"
 	historianApp "github.com/grafana/grafana/apps/alerting/historian/pkg/app"
@@ -16,17 +20,25 @@ import (
 )
 
 var (
-	_ appsdkapiserver.AppInstaller = (*AlertingHistorianAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller = (*AppInstaller)(nil)
 )
 
-type AlertingHistorianAppInstaller struct {
+type AppInstaller struct {
 	appsdkapiserver.AppInstaller
+}
+
+func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+			return authorizer.DecisionAllow, "", nil
+		},
+	)
 }
 
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
-) (*AlertingHistorianAppInstaller, error) {
+) (*AppInstaller, error) {
 	appSpecificConfig := historianAppConfig.RuntimeConfig{}
 
 	// If we're provided some config, then we can enable some things.
@@ -66,8 +78,8 @@ func RegisterAppInstaller(
 	return NewAppInstaller(appSpecificConfig)
 }
 
-func NewAppInstaller(appSpecificConfig historianAppConfig.RuntimeConfig) (*AlertingHistorianAppInstaller, error) {
-	installer := &AlertingHistorianAppInstaller{}
+func NewAppInstaller(appSpecificConfig historianAppConfig.RuntimeConfig) (*AppInstaller, error) {
+	installer := &AppInstaller{}
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), appSpecificConfig, historianApp.New)
 

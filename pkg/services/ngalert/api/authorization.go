@@ -81,9 +81,15 @@ func (api *API) authorize(method, path string) web.Handler {
 		// additional authorization is done in the request handler
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 	// Grafana Rules Testing Paths
-	case http.MethodPost + "/api/v1/rule/backtest":
+	case http.MethodPost + "/api/v1/rule/backtest": // TODO (yuri) this should be protected by dedicated permission
 		// additional authorization is done in the request handler
-		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleRead),
+			ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingRuleUpdate),
+				ac.EvalPermission(ac.ActionAlertingRuleCreate),
+			),
+		)
 	case http.MethodPost + "/api/v1/eval":
 		// additional authorization is done in the request handler
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
@@ -251,7 +257,7 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodPost + "/api/alertmanager/grafana/config/api/v1/templates/test":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesTest),
 		)
 
 	// External Alertmanager Paths

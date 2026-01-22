@@ -6,6 +6,14 @@ import { EventBus, GrafanaTheme2, MapLayerOptions } from '@grafana/data';
 
 import { xyzTiles, XYZConfig } from './generic';
 
+const replaceMock = jest.fn((text: string) => text);
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({
+    replace: replaceMock,
+  }),
+}));
+
 describe('XYZ tile layer', () => {
   let mockMap: OpenLayersMap;
   let mockEventBus: EventBus;
@@ -15,6 +23,41 @@ describe('XYZ tile layer', () => {
     mockMap = {} as OpenLayersMap;
     mockEventBus = {} as EventBus;
     mockTheme = {} as GrafanaTheme2;
+    replaceMock.mockClear();
+  });
+
+  it('should interpolate variables in URL and attribution', async () => {
+    const rawUrl = 'https://example.com/$version/{z}/{x}/{y}.png';
+    const interpolatedUrl = 'https://example.com/v1/{z}/{x}/{y}.png';
+    const rawAttr = 'Map version $version';
+    const interpolatedAttr = 'Map version v1';
+
+    replaceMock.mockImplementation((text) => {
+      if (text === rawUrl) {
+        return interpolatedUrl;
+      }
+      if (text === rawAttr) {
+        return interpolatedAttr;
+      }
+      return text;
+    });
+
+    const options: MapLayerOptions<XYZConfig> = {
+      name: 'Test Layer',
+      type: 'xyz',
+      config: {
+        url: rawUrl,
+        attribution: rawAttr,
+      },
+    };
+
+    const result = await xyzTiles.create(mockMap, options, mockEventBus, mockTheme);
+    const layer = result.init();
+    const source = (layer as TileLayer<XYZ>).getSource() as XYZ;
+
+    expect(replaceMock).toHaveBeenCalledWith(rawUrl);
+    expect(replaceMock).toHaveBeenCalledWith(rawAttr);
+    expect(source.getUrls()).toContain(interpolatedUrl);
   });
 
   describe('noRepeat functionality', () => {

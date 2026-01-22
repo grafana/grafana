@@ -1,10 +1,8 @@
-import { ReactNode } from 'react';
-import { Path, UseFormReturn } from 'react-hook-form';
-
-import { SelectableValue } from '@grafana/data';
+import { Path } from 'react-hook-form';
 
 import {
   BitbucketRepositoryConfig,
+  ConnectionSpec,
   GitHubRepositoryConfig,
   GitLabRepositoryConfig,
   GitRepositoryConfig,
@@ -15,26 +13,6 @@ import {
 // Repository type definition - extracted from API client
 export type RepositoryType = RepositorySpec['type'];
 export type RepoWorkflows = RepositorySpec['workflows'];
-
-// Field configuration interface
-export interface RepositoryFieldData {
-  label: string;
-  type: 'text' | 'secret' | 'switch' | 'select' | 'checkbox' | 'custom' | 'component' | 'number';
-  description?: string | ReactNode;
-  placeholder?: string;
-  path?: Path<RepositoryFormData>; // Optional nested field path, e.g., 'sync.intervalSeconds'
-  validation?: {
-    required?: boolean | string;
-    message?: string;
-    validate?: (value: unknown) => boolean | string;
-  };
-  defaultValue?: SelectableValue<string> | string | boolean;
-  options?: Array<SelectableValue<string>>;
-  multi?: boolean;
-  allowCustomValue?: boolean;
-  hidden?: boolean;
-  content?: (setValue: UseFormReturn<RepositoryFormData>['setValue']) => ReactNode; // For custom fields
-}
 
 export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySpec['type']> &
   BitbucketRepositoryConfig &
@@ -51,13 +29,15 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySp
 
 export type RepositorySettingsField = Path<RepositoryFormData>;
 
-// Section configuration
-export interface RepositorySection {
-  name: string;
-  id: string;
-  hidden?: boolean;
-  fields: RepositorySettingsField[];
-}
+// Connection type definition - extracted from API client
+export type ConnectionType = ConnectionSpec['type'];
+
+export type ConnectionFormData = {
+  type: ConnectionSpec['type'];
+  appID: string;
+  installationID: string;
+  privateKey?: string;
+};
 
 // Added to DashboardDTO to help editor
 export interface ProvisioningPreview {

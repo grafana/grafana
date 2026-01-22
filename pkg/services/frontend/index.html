@@ -82,7 +82,7 @@
           line-height: 1; /* prevent shift when css loads in that changes the body line-height */
         }
 
-        .fs-variant-loader, .fs-variant-error, .fs-custom-domain-error {
+        .fs-variant-loader, .fs-variant-error {
           display: contents;
         }
 
@@ -119,10 +119,6 @@
           opacity: 1;
         }
 
-        .fs-custom-domain-error .fs-loader-text {
-          opacity: 1;
-        }
-
         .fs-error-icon {
           fill: var(--fs-color-error);
         }
@@ -156,21 +152,7 @@
 
         <p class="fs-loader-text">Error loading Grafana</p>
       </div>
-      <div class="fs-custom-domain-error fs-hidden">
-        <svg
-          width="32"
-          height="32"
-          class="fs-error-icon"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path d="M12,14a1.25,1.25,0,1,0,1.25,1.25A1.25,1.25,0,0,0,12,14Zm0-1.5a1,1,0,0,0,1-1v-3a1,1,0,0,0-2,0v3A1,1,0,0,0,12,12.5ZM12,2A10,10,0,1,0,22,12,10.01114,10.01114,0,0,0,12,2Zm0,18a8,8,0,1,1,8-8A8.00917,8.00917,0,0,1,12,20Z"/>
-        </svg>
-
-        <p class="fs-loader-text">Error loading Grafana</p>
-        <p class="fs-loader-text">Please, use your URL custom domain directly</p>
-      </div>
-    </div>
+  </div>
 
     <div id="reactRoot"></div>
 
@@ -188,6 +170,7 @@
       // Wrap in an IIFE to avoid polluting the global scope. Intentionally global-scope properties
       // are explicitly assigned to the `window` object.
       (() => {
+        const publicDashboardAccessToken = [[.PublicDashboardAccessToken]]
         // Grafana can only fail to load once
         // However, it can fail to load in multiple different places
         // To avoid double reporting the error, we use this boolean to check if we've already failed
@@ -212,14 +195,6 @@
             console.error('Failed to report boot error to backend: ', err);
           });
         };
-        // Needed to stop retrying boot data when custom domain error occurs
-        // TODO remove when https://github.com/grafana/grafana/pull/113717 is released in backend
-        const CUSTOM_DOMAIN_ERROR = "Custom domain error";
-        window.__grafana_custom_domain_failed = function(err) {
-          console.error('Failed to load Grafana due to custom domain issue', err);
-          document.querySelector('.fs-variant-loader').classList.add('fs-hidden');
-          document.querySelector('.fs-custom-domain-error').classList.remove('fs-hidden');
-        }
 
         window.onload = function() {
           if (window.__grafana_app_bundle_loaded) {
@@ -249,11 +224,14 @@
             }
           }
 
-          return null;
+          return undefined;
         }
 
         function getSessionExpiration() {
-          const value = getCookie("grafana_session_expiry") || "0";
+          const value = getCookie("grafana_session_expiry");
+          if (!value) {
+            return undefined;
+          }
           const realExpiresSeconds = parseInt(value, 10);
           const expiresSeconds = Math.max(realExpiresSeconds - 10, 0); // Rotate 10s before the real expiration
           const expiration = new Date(expiresSeconds * 1000);
@@ -271,19 +249,20 @@
         async function fetchBootData() {
           const queryParams = new URLSearchParams(window.location.search);
 
+          let path = '/bootdata';
+          // call a special bootdata url with the public access token
+          // this is needed to set the access token and correct org for public dashboards on the ST backend
+          if (publicDashboardAccessToken) {
+            path += `/${publicDashboardAccessToken}`;
+          }
           // pass the search params through to the bootdata request
           // this allows for overriding the theme/language etc
-          const bootDataUrl = new URL('/bootdata', window.location.origin);
+          const bootDataUrl = new URL(path, window.location.origin);
           for (const [key, value] of queryParams.entries()) {
             bootDataUrl.searchParams.append(key, value);
           }
 
-          const resp = await fetch(bootDataUrl, {redirect: 'manual'});
-          // TODO remove when https://github.com/grafana/grafana/pull/113717 is released in backend
-          if (resp.type === 'opaqueredirect') {
-            window.__grafana_custom_domain_failed();
-            return CUSTOM_DOMAIN_ERROR;
-          }
+          const resp = await fetch(bootDataUrl);
           // manual redirect for custom domains
           // see pkg/middleware/validate_host.go
           if (resp.status === 204) {
@@ -325,7 +304,7 @@
                 const now = new Date();
 
                 // If the session has expired, don't continue trying to fetch boot data
-                if (now >= sessionExpiration) {
+                if (sessionExpiration && now >= sessionExpiration) {
                   await rotateSession();
                 }
               } catch (error) {
@@ -340,9 +319,6 @@
                 if (!bootData) {
                   setLoading();
                   setTimeout(attemptFetch, CHECK_INTERVAL);
-                  return;
-                // TODO remove when https://github.com/grafana/grafana/pull/113717 is released in backend
-                } else if (bootData === CUSTOM_DOMAIN_ERROR) {
                   return;
                 }
 

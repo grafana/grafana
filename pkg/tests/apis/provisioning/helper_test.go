@@ -10,11 +10,14 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"text/template"
 	"time"
 
+	"github.com/google/go-github/v70/github"
+	"github.com/grafana/grafana/pkg/extensions"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,6 +33,7 @@ import (
 	dashboardsV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -53,6 +57,7 @@ type provisioningTestHelper struct {
 	ProvisioningPath string
 
 	Repositories       *apis.K8sResourceClient
+	Connections        *apis.K8sResourceClient
 	Jobs               *apis.K8sResourceClient
 	Folders            *apis.K8sResourceClient
 	DashboardsV0       *apis.K8sResourceClient
@@ -680,28 +685,46 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 		},
+		// Provisioning requires resources to be fully migrated to unified storage.
+		// Mode5 ensures reads/writes go to unified storage, and EnableMigration
+		// enables the data migration at startup to migrate legacy data.
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {
-				DualWriterMode: grafanarest.Mode5,
+				DualWriterMode:  grafanarest.Mode5,
+				EnableMigration: true,
 			},
 			"folders.folder.grafana.app": {
-				DualWriterMode: grafanarest.Mode5,
+				DualWriterMode:  grafanarest.Mode5,
+				EnableMigration: true,
 			},
 		},
 		PermittedProvisioningPaths: ".|" + provisioningPath,
+		// Allow both folder and instance sync targets for tests
+		// (instance is needed for export jobs, folder for most operations)
+		ProvisioningAllowedTargets: []string{"folder", "instance"},
 	}
+
+	if extensions.IsEnterprise {
+		opts.ProvisioningRepositoryTypes = []string{"local", "github", "gitlab", "bitbucket"}
+	}
+
 	for _, o := range options {
 		o(&opts)
 	}
 	helper := apis.NewK8sTestHelper(t, opts)
 
-	// FIXME: keeping this line here to keep the dependency around until we have tests which use this again.
-	helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient()
+	// FIXME: keeping these lines here to keep the dependency around until we have tests which use this again.
+	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
 
 	repositories := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
 		GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
+	})
+	connections := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR:       provisioning.ConnectionResourceInfo.GroupVersionResource(),
 	})
 	jobs := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
@@ -763,6 +786,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		K8sTestHelper:    helper,
 
 		Repositories:       repositories,
+		Connections:        connections,
 		AdminREST:          adminClient,
 		EditorREST:         editorClient,
 		ViewerREST:         viewerClient,
@@ -956,4 +980,134 @@ func (h *provisioningTestHelper) CleanupAllRepos(t *testing.T) {
 		}
 		assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
 	}, waitTimeoutDefault, waitIntervalDefault, "repositories should be cleaned up between subtests")
+}
+
+func (h *provisioningTestHelper) CreateGithubConnection(
+	t *testing.T,
+	ctx context.Context,
+	connection *unstructured.Unstructured,
+) (*unstructured.Unstructured, error) {
+	t.Helper()
+
+	err := h.setGithubClient(t, connection)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+}
+
+func (h *provisioningTestHelper) UpdateGithubConnection(
+	t *testing.T,
+	ctx context.Context,
+	connection *unstructured.Unstructured,
+) (*unstructured.Unstructured, error) {
+	t.Helper()
+
+	err := h.setGithubClient(t, connection)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.Connections.Resource.Update(ctx, connection, metav1.UpdateOptions{FieldValidation: "Strict"})
+}
+
+func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstructured.Unstructured) error {
+	t.Helper()
+
+	objectSpec := connection.Object["spec"].(map[string]interface{})
+	githubObj := objectSpec["github"].(map[string]interface{})
+	appID := githubObj["appID"].(string)
+	id, err := strconv.ParseInt(appID, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	appSlug := "someSlug"
+	connectionFactory := h.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+	connectionFactory.Client = ghmock.NewMockedHTTPClient(
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetApp,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				app := github.App{
+					ID:   &id,
+					Slug: &appSlug,
+				}
+				_, _ = w.Write(ghmock.MustMarshal(app))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetAppInstallationsByInstallationId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				id := r.URL.Query().Get("installation_id")
+				idInt, _ := strconv.ParseInt(id, 10, 64)
+				w.WriteHeader(http.StatusOK)
+				installation := github.Installation{
+					ID: &idInt,
+				}
+				_, _ = w.Write(ghmock.MustMarshal(installation))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.PostAppInstallationsAccessTokensByInstallationId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				installation := github.InstallationToken{
+					Token:     github.Ptr("someToken"),
+					ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour * 2)},
+				}
+				_, _ = w.Write(ghmock.MustMarshal(installation))
+			}),
+		),
+	)
+	h.SetGithubConnectionFactory(connectionFactory)
+
+	return nil
+}
+
+func postHelper(t *testing.T, helper apis.K8sTestHelper, path string, body interface{}, user apis.User) (map[string]interface{}, int, error) {
+	return requestHelper(t, helper, http.MethodPost, path, body, user)
+}
+
+func patchHelper(t *testing.T, helper apis.K8sTestHelper, path string, body interface{}, user apis.User) (map[string]interface{}, int, error) {
+	return requestHelper(t, helper, http.MethodPatch, path, body, user)
+}
+
+func requestHelper(
+	t *testing.T,
+	helper apis.K8sTestHelper,
+	method string,
+	path string,
+	body interface{},
+	user apis.User,
+) (map[string]interface{}, int, error) {
+	bodyJSON, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	resp := apis.DoRequest(&helper, apis.RequestParams{
+		User:        user,
+		Method:      method,
+		Path:        path,
+		Body:        bodyJSON,
+		ContentType: "application/json",
+	}, &struct{}{})
+
+	if resp.Response.StatusCode != http.StatusOK {
+		res := map[string]interface{}{}
+		err := json.Unmarshal(resp.Body, &res)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to unmarshal response JSON: %v", err)
+		}
+
+		return res, resp.Response.StatusCode, fmt.Errorf("failure when making request: %s", resp.Response.Status)
+	}
+
+	var result map[string]interface{}
+	err = json.Unmarshal(resp.Body, &result)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to unmarshal response JSON: %v", err)
+	}
+
+	return result, resp.Response.StatusCode, nil
 }

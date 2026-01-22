@@ -343,6 +343,11 @@ export interface FieldConfig {
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	custom?: Record<string, any>;
+	// Calculate min max per field
+	fieldMinMax?: boolean;
+	// How null values should be handled when calculating field stats
+	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
+	nullValueMode?: NullValueMode;
 }
 
 export const defaultFieldConfig = (): FieldConfig => ({
@@ -605,6 +610,11 @@ export const defaultActionVariable = (): ActionVariable => ({
 
 // Action variable type
 export const ActionVariableType = "string";
+
+// How null values should be handled
+export type NullValueMode = "null" | "connected" | "null as zero";
+
+export const defaultNullValueMode = (): NullValueMode => ("null");
 
 export interface DynamicConfigValue {
 	id: string;
@@ -1105,6 +1115,7 @@ export interface QueryVariableSpec {
 	datasource?: DataSourceRef;
 	query: DataQueryKind;
 	regex: string;
+	regexApplyTo?: VariableRegexApplyTo;
 	sort: VariableSort;
 	definition?: string;
 	options: VariableOption[];
@@ -1125,6 +1136,7 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	skipUrlSync: false,
 	query: defaultDataQueryKind(),
 	regex: "",
+	regexApplyTo: "value",
 	sort: "disabled",
 	options: [],
 	multi: false,
@@ -1160,6 +1172,12 @@ export const defaultVariableHide = (): VariableHide => ("dontHide");
 export type VariableRefresh = "never" | "onDashboardLoad" | "onTimeRangeChanged";
 
 export const defaultVariableRefresh = (): VariableRefresh => ("never");
+
+// Determine whether regex applies to variable value or display text
+// Accepted values are `value` (apply to value used in queries) or `text` (apply to display text shown to users)
+export type VariableRegexApplyTo = "value" | "text";
+
+export const defaultVariableRegexApplyTo = (): VariableRegexApplyTo => ("value");
 
 // Sort variable options
 // Accepted values are:
@@ -1345,6 +1363,7 @@ export interface CustomVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
+	valuesFormat?: "csv" | "json";
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({

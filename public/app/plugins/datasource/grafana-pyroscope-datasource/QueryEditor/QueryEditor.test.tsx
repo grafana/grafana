@@ -33,6 +33,7 @@ describe('QueryEditor', () => {
           refId: 'A',
           maxNodes: 1000,
           groupBy: [],
+          includeExemplars: false,
         },
       },
     });
@@ -71,7 +72,6 @@ function setupDs() {
     uid: 'test',
     type: PluginType.datasource,
     access: 'proxy',
-    id: 1,
     jsonData: {},
     meta: {
       name: '',
@@ -125,6 +125,7 @@ function setup(options: { props: Partial<Props> } = { props: {} }) {
         maxNodes: 1000,
         groupBy: [],
         limit: 42,
+        includeExemplars: false,
       }}
       datasource={setupDs()}
       onChange={onChange}

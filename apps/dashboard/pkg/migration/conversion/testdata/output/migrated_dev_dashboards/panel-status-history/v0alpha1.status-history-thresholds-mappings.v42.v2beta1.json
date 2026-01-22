@@ -229,7 +229,8 @@
                     "insertNulls": false,
                     "lineWidth": 0,
                     "spanNulls": false
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }
@@ -328,7 +329,8 @@
                     "insertNulls": false,
                     "lineWidth": 0,
                     "spanNulls": false
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }
@@ -437,7 +439,8 @@
                     "insertNulls": false,
                     "lineWidth": 0,
                     "spanNulls": false
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }
@@ -523,7 +526,8 @@
                     "insertNulls": false,
                     "lineWidth": 0,
                     "spanNulls": false
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }
@@ -1537,5 +1541,10 @@
     "title": "StatusHistory - Thresholds \u0026 Mappings",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

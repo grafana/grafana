@@ -16,6 +16,9 @@ const mockScopesSelectorService = {
 
 const mockScopesDashboardsService = {
   setNavigationScope: jest.fn(),
+  state: {
+    navScopePath: undefined,
+  },
 };
 
 jest.mock('../ScopesContextProvider', () => ({
@@ -133,7 +136,7 @@ describe('ScopesDashboardsTreeFolderItem', () => {
     const exchangeButton = screen.getByRole('button', { name: /change root scope/i });
     await user.click(exchangeButton);
 
-    expect(mockScopesDashboardsService.setNavigationScope).toHaveBeenCalledWith(undefined, ['subScope1']);
+    expect(mockScopesDashboardsService.setNavigationScope).toHaveBeenCalledWith(undefined, undefined, []);
   });
 
   it('calls changeScopes when exchange icon is clicked', async () => {
@@ -152,7 +155,7 @@ describe('ScopesDashboardsTreeFolderItem', () => {
     const exchangeButton = screen.getByRole('button', { name: /change root scope/i });
     await user.click(exchangeButton);
 
-    expect(mockScopesSelectorService.changeScopes).toHaveBeenCalledWith(['subScope1']);
+    expect(mockScopesSelectorService.changeScopes).toHaveBeenCalledWith(['subScope1'], undefined, undefined, false);
   });
 
   it('passes subScope prop to ScopesDashboardsTree when folder is expanded', () => {
@@ -283,5 +286,64 @@ describe('ScopesDashboardsTreeFolderItem', () => {
     // Should not crash, but also should not call setNavigationScope if service is not available
     // The component checks for scopesSelectorService existence before calling setNavigationScope
     expect(mockScopesDashboardsService.setNavigationScope).not.toHaveBeenCalled();
+  });
+
+  describe('disableSubScopeSelection', () => {
+    it('does not show exchange icon when disableSubScopeSelection is true', () => {
+      const folder = createMockFolder({
+        subScopeName: 'subScope1',
+        disableSubScopeSelection: true,
+      });
+
+      render(
+        <ScopesDashboardsTreeFolderItem
+          folder={folder}
+          folderPath={['']}
+          folders={createMockFolders}
+          onFolderUpdate={mockOnFolderUpdate}
+        />
+      );
+
+      const exchangeButtons = screen.queryAllByRole('button', { name: /change root scope/i });
+      expect(exchangeButtons).toHaveLength(0);
+    });
+
+    it('shows exchange icon when disableSubScopeSelection is false', () => {
+      const folder = createMockFolder({
+        subScopeName: 'subScope1',
+        disableSubScopeSelection: false,
+      });
+
+      render(
+        <ScopesDashboardsTreeFolderItem
+          folder={folder}
+          folderPath={['']}
+          folders={createMockFolders}
+          onFolderUpdate={mockOnFolderUpdate}
+        />
+      );
+
+      const exchangeButton = screen.getByRole('button', { name: /change root scope/i });
+      expect(exchangeButton).toBeInTheDocument();
+    });
+
+    it('shows exchange icon when disableSubScopeSelection is undefined', () => {
+      const folder = createMockFolder({
+        subScopeName: 'subScope1',
+        disableSubScopeSelection: undefined,
+      });
+
+      render(
+        <ScopesDashboardsTreeFolderItem
+          folder={folder}
+          folderPath={['']}
+          folders={createMockFolders}
+          onFolderUpdate={mockOnFolderUpdate}
+        />
+      );
+
+      const exchangeButton = screen.getByRole('button', { name: /change root scope/i });
+      expect(exchangeButton).toBeInTheDocument();
+    });
   });
 });

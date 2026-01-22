@@ -310,6 +310,9 @@ func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfi
 		Links:             in.Links,
 		NoValue:           in.NoValue,
 		Custom:            in.Custom,
+		FieldMinMax:       in.FieldMinMax,
+		NullValueMode:     (*dashv2beta1.DashboardNullValueMode)(in.NullValueMode),
+		Actions:           convertActions_V2alpha1_to_V2beta1(in.Actions),
 	}
 
 	// Convert thresholds
@@ -685,6 +688,7 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 				SkipUrlSync:      in.CustomVariableKind.Spec.SkipUrlSync,
 				Description:      in.CustomVariableKind.Spec.Description,
 				AllowCustomValue: in.CustomVariableKind.Spec.AllowCustomValue,
+				ValuesFormat:     convertCustomValuesFormat_V2alpha1_to_V2beta1(in.CustomVariableKind.Spec.ValuesFormat),
 			},
 		}
 	}
@@ -758,6 +762,23 @@ func convertVariable_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardVariableKind,
 	return nil
 }
 
+func convertCustomValuesFormat_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardCustomVariableSpecValuesFormat) *dashv2beta1.DashboardCustomVariableSpecValuesFormat {
+	if in == nil {
+		return nil
+	}
+
+	switch *in {
+	case dashv2alpha1.DashboardCustomVariableSpecValuesFormatJson:
+		v := dashv2beta1.DashboardCustomVariableSpecValuesFormatJson
+		return &v
+	case dashv2alpha1.DashboardCustomVariableSpecValuesFormatCsv:
+		v := dashv2beta1.DashboardCustomVariableSpecValuesFormatCsv
+		return &v
+	default:
+		return nil
+	}
+}
+
 func convertQueryVariableSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardQueryVariableSpec, out *dashv2beta1.DashboardQueryVariableSpec, scope conversion.Scope) error {
 	out.Name = in.Name
 	out.Current = convertVariableOption_V2alpha1_to_V2beta1(in.Current)
@@ -767,6 +788,7 @@ func convertQueryVariableSpec_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardQuer
 	out.SkipUrlSync = in.SkipUrlSync
 	out.Description = in.Description
 	out.Regex = in.Regex
+	out.RegexApplyTo = (*dashv2beta1.DashboardVariableRegexApplyTo)(in.RegexApplyTo)
 	out.Sort = dashv2beta1.DashboardVariableSort(in.Sort)
 	out.Definition = in.Definition
 	out.Options = convertVariableOptions_V2alpha1_to_V2beta1(in.Options)
@@ -1000,5 +1022,61 @@ func convertAnnotationMappings_V2alpha1_to_V2beta1(in map[string]dashv2alpha1.Da
 			Regex:  mapping.Regex,
 		}
 	}
+	return out
+}
+
+func convertActions_V2alpha1_to_V2beta1(in []dashv2alpha1.DashboardAction) []dashv2beta1.DashboardAction {
+	if len(in) == 0 {
+		return nil
+	}
+
+	out := make([]dashv2beta1.DashboardAction, len(in))
+	for i, action := range in {
+		out[i] = dashv2beta1.DashboardAction{
+			Type:         dashv2beta1.DashboardActionType(action.Type),
+			Title:        action.Title,
+			Confirmation: action.Confirmation,
+			OneClick:     action.OneClick,
+		}
+
+		if action.Fetch != nil {
+			out[i].Fetch = &dashv2beta1.DashboardFetchOptions{
+				Method:      dashv2beta1.DashboardHttpRequestMethod(action.Fetch.Method),
+				Url:         action.Fetch.Url,
+				Body:        action.Fetch.Body,
+				QueryParams: action.Fetch.QueryParams,
+				Headers:     action.Fetch.Headers,
+			}
+		}
+
+		if action.Infinity != nil {
+			out[i].Infinity = &dashv2beta1.DashboardInfinityOptions{
+				Method:        dashv2beta1.DashboardHttpRequestMethod(action.Infinity.Method),
+				Url:           action.Infinity.Url,
+				Body:          action.Infinity.Body,
+				QueryParams:   action.Infinity.QueryParams,
+				Headers:       action.Infinity.Headers,
+				DatasourceUid: action.Infinity.DatasourceUid,
+			}
+		}
+
+		if len(action.Variables) > 0 {
+			out[i].Variables = make([]dashv2beta1.DashboardActionVariable, len(action.Variables))
+			for j, v := range action.Variables {
+				out[i].Variables[j] = dashv2beta1.DashboardActionVariable{
+					Key:  v.Key,
+					Name: v.Name,
+					Type: v.Type,
+				}
+			}
+		}
+
+		if action.Style != nil {
+			out[i].Style = &dashv2beta1.DashboardV2beta1ActionStyle{
+				BackgroundColor: action.Style.BackgroundColor,
+			}
+		}
+	}
+
 	return out
 }

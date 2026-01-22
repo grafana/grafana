@@ -3,6 +3,7 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
 import { MapLayerRegistryItem, MapLayerOptions, GrafanaTheme2, EventBus } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 
 export interface XYZConfig {
   url: string;
@@ -36,11 +37,13 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
         cfg.attribution = cfg.attribution ?? defaultXYZConfig.attribution;
       }
       const noRepeat = options.noRepeat ?? false;
+      const interpolatedUrl = getTemplateSrv().replace(cfg.url);
+      const interpolatedAttribution = getTemplateSrv().replace(cfg.attribution);
 
       return new TileLayer({
         source: new XYZ({
-          url: cfg.url,
-          attributions: cfg.attribution, // singular?
+          url: interpolatedUrl,
+          attributions: interpolatedAttribution,
           wrapX: !noRepeat,
           minZoom: cfg.minZoom,
           maxZoom: cfg.maxZoom,
@@ -53,7 +56,7 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
         .addTextInput({
           path: 'config.url',
           name: 'URL template',
-          description: 'Must include {x}, {y} or {-y}, and {z} placeholders',
+          description: 'Must include {x}, {y} or {-y}, and {z} placeholders. Dashboard variables are supported.',
           settings: {
             placeholder: defaultXYZConfig.url,
           },

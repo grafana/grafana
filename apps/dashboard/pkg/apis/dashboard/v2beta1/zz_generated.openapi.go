@@ -1560,6 +1560,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardCustomVariableSpec(ref common.Re
 							Format:  "",
 						},
 					},
+					"valuesFormat": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"name", "query", "current", "options", "multi", "includeAll", "hide", "skipUrlSync", "allowCustomValue"},
 			},
@@ -2276,6 +2282,20 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardFieldConfig(ref common.Reference
 									},
 								},
 							},
+						},
+					},
+					"fieldMinMax": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Calculate min max per field",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"nullValueMode": {
+						SchemaProps: spec.SchemaProps{
+							Description: "How null values should be handled when calculating field stats \"null\" - Include null values, \"connected\" - Ignore nulls, \"null as zero\" - Treat nulls as zero",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
@@ -3654,6 +3674,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardQueryVariableSpec(ref common.Ref
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
+						},
+					},
+					"regexApplyTo": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"sort": {

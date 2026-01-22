@@ -1,7 +1,6 @@
 import { createAction } from '@reduxjs/toolkit';
 
-import { MetricAggregation, MetricAggregationWithSettings } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
-
+import { MetricAggregation, MetricAggregationWithSettings } from '../../../../dataquery.gen';
 import { MetricAggregationWithMeta } from '../../../../types';
 
 export const addMetric = createAction<MetricAggregation['id']>('@metrics/add');
@@ -9,6 +8,9 @@ export const removeMetric = createAction<MetricAggregation['id']>('@metrics/remo
 export const toggleMetricVisibility = createAction<MetricAggregation['id']>('@metrics/toggle_visibility');
 export const changeMetricField = createAction<{ id: MetricAggregation['id']; field: string }>('@metrics/change_field');
 export const changeMetricType = createAction<{ id: MetricAggregation['id']; type: MetricAggregation['type'] }>(
+  '@metrics/change_type'
+);
+export const changeEditorType = createAction<{ id: MetricAggregation['id']; type: MetricAggregation['type'] }>(
   '@metrics/change_type'
 );
 export const changeMetricAttribute = createAction<{ metric: MetricAggregation; attribute: string; newValue: unknown }>(

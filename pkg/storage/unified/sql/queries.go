@@ -30,31 +30,28 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlResourceDelete                   = mustTemplate("resource_delete.sql")
-	sqlResourceInsert                   = mustTemplate("resource_insert.sql")
-	sqlResourceUpdate                   = mustTemplate("resource_update.sql")
-	sqlResourceRead                     = mustTemplate("resource_read.sql")
-	sqlResourceStats                    = mustTemplate("resource_stats.sql")
-	sqlResourceList                     = mustTemplate("resource_list.sql")
-	sqlResourceHistoryList              = mustTemplate("resource_history_list.sql")
-	sqlResourceHistoryListModifiedSince = mustTemplate("resource_history_list_since_modified.sql")
-	sqlResourceUpdateRV                 = mustTemplate("resource_update_rv.sql")
-	sqlResourceHistoryRead              = mustTemplate("resource_history_read.sql")
-	sqlResourceHistoryReadLatestRV      = mustTemplate("resource_history_read_latest_rv.sql")
-	sqlResourceHistoryUpdateRV          = mustTemplate("resource_history_update_rv.sql")
-	sqlResourceHistoryInsert            = mustTemplate("resource_history_insert.sql")
-	sqlResourceHistoryPoll              = mustTemplate("resource_history_poll.sql")
-	sqlResourceHistoryGet               = mustTemplate("resource_history_get.sql")
-	sqlResourceHistoryDelete            = mustTemplate("resource_history_delete.sql")
-	sqlResourceHistoryPrune             = mustTemplate("resource_history_prune.sql")
-	sqlResourceTrash                    = mustTemplate("resource_trash.sql")
-	sqlResourceInsertFromHistory        = mustTemplate("resource_insert_from_history.sql")
+	sqlResourceDelete                      = mustTemplate("resource_delete.sql")
+	sqlResourceInsert                      = mustTemplate("resource_insert.sql")
+	sqlResourceUpdate                      = mustTemplate("resource_update.sql")
+	sqlResourceRead                        = mustTemplate("resource_read.sql")
+	sqlResourceStats                       = mustTemplate("resource_stats.sql")
+	sqlResourceList                        = mustTemplate("resource_list.sql")
+	sqlResourceHistoryList                 = mustTemplate("resource_history_list.sql")
+	sqlResourceHistoryListModifiedSince    = mustTemplate("resource_history_list_since_modified.sql")
+	sqlResourceHistoryRead                 = mustTemplate("resource_history_read.sql")
+	sqlResourceHistoryReadLatestRV         = mustTemplate("resource_history_read_latest_rv.sql")
+	sqlResourceHistoryInsert               = mustTemplate("resource_history_insert.sql")
+	sqlResourceHistoryPoll                 = mustTemplate("resource_history_poll.sql")
+	sqlResourceHistoryGet                  = mustTemplate("resource_history_get.sql")
+	sqlResourceHistoryDelete               = mustTemplate("resource_history_delete.sql")
+	sqlResourceHistoryPrune                = mustTemplate("resource_history_prune.sql")
+	sqlResourceHistoryGarbageGetCandidates = mustTemplate("resource_history_gc_get_candidates.sql")
+	sqlResourceHistoryGCDeleteByNames      = mustTemplate("resource_history_gc_delete_by_names.sql")
+	sqlResourceTrash                       = mustTemplate("resource_trash.sql")
+	sqlResourceInsertFromHistory           = mustTemplate("resource_insert_from_history.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
-	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
-	sqlResourceVersionUpdate = mustTemplate("resource_version_update.sql")
-	sqlResourceVersionInsert = mustTemplate("resource_version_insert.sql")
-	sqlResourceVersionList   = mustTemplate("resource_version_list.sql")
+	sqlResourceVersionList = mustTemplate("resource_version_list.sql")
 
 	sqlResourceBlobInsert = mustTemplate("resource_blob_insert.sql")
 	sqlResourceBlobQuery  = mustTemplate("resource_blob_query.sql")
@@ -339,6 +336,61 @@ func (r *sqlPruneHistoryRequest) Validate() error {
 	return nil
 }
 
+type gcCandidateName struct {
+	Namespace string
+	Name      string
+}
+
+type sqlGarbageCollectCandidatesRequest struct {
+	sqltemplate.SQLTemplate
+	Group           string
+	Resource        string
+	CutoffTimestamp int64
+	BatchSize       int
+	Response        *gcCandidateName
+}
+
+func (r *sqlGarbageCollectCandidatesRequest) Validate() error {
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.CutoffTimestamp <= 0 {
+		return fmt.Errorf("invalid cutoff timestamp")
+	}
+	if r.BatchSize <= 0 {
+		return fmt.Errorf("invalid batch size")
+	}
+	return nil
+}
+
+func (r *sqlGarbageCollectCandidatesRequest) Results() (gcCandidateName, error) {
+	x := *r.Response
+	return x, nil
+}
+
+type sqlGarbageCollectDeleteByNamesRequest struct {
+	sqltemplate.SQLTemplate
+	Group      string
+	Resource   string
+	Candidates []gcCandidateName
+}
+
+func (r *sqlGarbageCollectDeleteByNamesRequest) Validate() error {
+	if r.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if len(r.Candidates) == 0 {
+		return fmt.Errorf("missing candidates")
+	}
+	return nil
+}
+
 type sqlResourceBlobInsertRequest struct {
 	sqltemplate.SQLTemplate
 	Now         time.Time
@@ -365,57 +417,9 @@ func (r sqlResourceBlobQueryRequest) Validate() error {
 	return nil
 }
 
-// update RV
-
-type sqlResourceUpdateRVRequest struct {
-	sqltemplate.SQLTemplate
-	GUIDToRV map[string]int64
-}
-
-func (r sqlResourceUpdateRVRequest) Validate() error {
-	return nil // TODO
-}
-
-// resource_version table requests.
-type resourceVersionResponse struct {
-	ResourceVersion int64
-	CurrentEpoch    int64
-}
-
-func (r *resourceVersionResponse) Results() (*resourceVersionResponse, error) {
-	return r, nil
-}
-
 type groupResourceVersion struct {
 	Group, Resource string
 	ResourceVersion int64
-}
-
-type sqlResourceVersionUpsertRequest struct {
-	sqltemplate.SQLTemplate
-	Group, Resource string
-	ResourceVersion int64
-}
-
-func (r sqlResourceVersionUpsertRequest) Validate() error {
-	return nil // TODO
-}
-
-type sqlResourceVersionGetRequest struct {
-	sqltemplate.SQLTemplate
-	Group, Resource string
-	ReadOnly        bool
-	Response        *resourceVersionResponse
-}
-
-func (r sqlResourceVersionGetRequest) Validate() error {
-	return nil // TODO
-}
-func (r sqlResourceVersionGetRequest) Results() (*resourceVersionResponse, error) {
-	return &resourceVersionResponse{
-		ResourceVersion: r.Response.ResourceVersion,
-		CurrentEpoch:    r.Response.CurrentEpoch,
-	}, nil
 }
 
 type sqlResourceVersionListRequest struct {

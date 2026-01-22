@@ -14,19 +14,19 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	index "github.com/blevesearch/bleve_index_api"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	bolterrors "go.etcd.io/bbolt/errors"
 	"go.uber.org/atomic"
 	"go.uber.org/goleak"
 
 	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -51,7 +51,8 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-	}, tracing.NewNoopTracerService(), nil)
+		ScoringModel:  index.BM25Scoring,
+	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
 
@@ -646,16 +647,16 @@ func (nc *StubAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, re
 	}, authlib.NoopZookie{}, nil
 }
 
+func (nc *StubAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, errors.New("not implemented")
+}
+
 func (nc StubAccessClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	return nil, nil
 }
 
 func (nc StubAccessClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
 	return nil
-}
-
-func (nc StubAccessClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	return nil, nil
 }
 
 func TestSafeInt64ToInt(t *testing.T) {
@@ -774,6 +775,7 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 		IndexCacheTTL: defaultIndexCacheTTL,
 		Logger:        log.NewNopLogger(),
 		BuildVersion:  buildVersion,
+		ScoringModel:  index.BM25Scoring,
 	}
 	for _, opt := range options {
 		opt(&opts)
@@ -782,7 +784,7 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 		opts.Root = t.TempDir()
 	}
 
-	backend, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), metrics)
+	backend, err := NewBleveBackend(opts, metrics)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	t.Cleanup(backend.Stop)
@@ -1558,7 +1560,7 @@ func TestInvalidBuildVersion(t *testing.T) {
 		Root:         t.TempDir(),
 		BuildVersion: "invalid",
 	}
-	_, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), nil)
+	_, err := NewBleveBackend(opts, nil)
 	require.ErrorContains(t, err, "cannot parse build version")
 }
 
@@ -1583,4 +1585,43 @@ func docCount(t *testing.T, idx resource.ResourceIndex) int {
 	cnt, err := idx.DocCount(context.Background(), "", nil)
 	require.NoError(t, err)
 	return int(cnt)
+}
+
+func TestBuildIndexReturnsErrorWhenIndexLocked(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	tmpDir := t.TempDir()
+
+	// First, create a file-based index with one backend and keep it open
+	backend1, reg1 := setupBleveBackend(t, withRootDir(tmpDir))
+	index1, err := backend1.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.NoError(t, err)
+	require.NotNil(t, index1)
+
+	// Verify first index is file-based
+	bleveIdx1, ok := index1.(*bleveIndex)
+	require.True(t, ok)
+	require.Equal(t, indexStorageFile, bleveIdx1.indexStorage)
+	checkOpenIndexes(t, reg1, 0, 1)
+
+	// Now create a second backend using the same directory
+	// This simulates another instance trying to open the same index
+	backend2, _ := setupBleveBackend(t, withRootDir(tmpDir))
+
+	// BuildIndex should detect the file is locked and return an error after timeout
+	now := time.Now()
+	timeout, err := time.ParseDuration(boltTimeout)
+	require.NoError(t, err)
+	index2, err := backend2.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.Error(t, err)
+	require.ErrorIs(t, err, bolterrors.ErrTimeout)
+	require.Nil(t, index2)
+	require.GreaterOrEqual(t, time.Since(now).Milliseconds(), timeout.Milliseconds()-500, "BuildIndex should have waited for approximately boltTimeout duration")
+
+	// Clean up: close first backend to release the file lock
+	backend1.Stop()
 }
