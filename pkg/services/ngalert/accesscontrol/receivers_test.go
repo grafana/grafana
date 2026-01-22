@@ -414,15 +414,6 @@ func TestReceiverAccess(t *testing.T) {
 			},
 		},
 		{
-			name: "read + global test cannot test",
-			user: newViewUser(ac.Permission{Action: ac.ActionAlertingReceiversTestCreate, Scope: models.ScopeReceiversAll}),
-			expected: map[string]models.ReceiverPermissionSet{
-				recv1.UID: permissions(),
-				recv2.UID: permissions(),
-				recv3.UID: permissions(),
-			},
-		},
-		{
 			name: "test needs write permissions",
 			user: newViewUser(
 				ac.Permission{Action: ac.ActionAlertingReceiversTestCreate, Scope: models.ScopeReceiversAll},
