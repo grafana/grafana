@@ -165,6 +165,7 @@ jobs:
 
       - uses: paper2/github-actions-opentelemetry@main
         env:
+          OTEL_LOG_LEVEL: debug
           OTEL_SERVICE_NAME: test-gha-otel-export
 #          OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "https://otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp/v1/metrics"
 #          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "https://otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp/v1/traces"
