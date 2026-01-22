@@ -35,7 +35,6 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   const styles = useStyles2(getStyles);
   const context = usePanelContext();
   const dataSummary = getPanelDataSummary(props.data.series);
-  const message = getMessageFor(props, dataSummary);
   const dispatch = useDispatch();
 
   const dashboardScene: DashboardScene | undefined = window.__grafanaSceneContext;
@@ -101,8 +100,10 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
 
   const noData = !hasData(props.data);
   const noQueryConfigured = hasNoQueryConfigured(props.data);
-  const showEmptyState =
-    config.featureToggles.newVizSuggestions && context.app === CoreApp.PanelEditor && noQueryConfigured && noData;
+  const showEmptyState = Boolean(
+    config.featureToggles.newVizSuggestions && context.app === CoreApp.PanelEditor && noQueryConfigured && noData
+  );
+  const message = getMessageFor(props, dataSummary, showEmptyState);
 
   return (
     <div className={styles.wrapper}>
@@ -137,16 +138,16 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
 
 function getMessageFor(
   { data, fieldConfig, message, needsNumberField, needsTimeField, needsStringField }: PanelDataErrorViewProps,
-  dataSummary: PanelDataSummary
+  dataSummary: PanelDataSummary,
+  showEmptyState: boolean
 ): string {
   if (message) {
     return message;
   }
 
   const noData = !hasData(data);
-  const noQueryConfigured = hasNoQueryConfigured(data);
 
-  if (config.featureToggles.newVizSuggestions && noQueryConfigured && noData) {
+  if (showEmptyState) {
     return t(
       'dashboard.new-panel.empty-state-message',
       'Run a query to visualize it here or go to all visualizations to add other panel types'
