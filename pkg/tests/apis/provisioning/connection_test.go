@@ -874,6 +874,206 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		assert.Equal(t, final.Generation, final.Status.ObservedGeneration, "observed generation should match generation")
 		assert.Greater(t, final.Status.Health.Checked, initialHealthChecked, "health check should be updated after spec change")
 		assert.True(t, final.Status.Health.Healthy, "connection should remain healthy")
+		// When healthy after spec change, fieldErrors should be empty
+		assert.Empty(t, final.Status.FieldErrors, "fieldErrors should be empty when connection is healthy after spec change")
+	})
+}
+
+func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	namespace := "default"
+
+	// Create typed client from REST config
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	t.Run("connection with invalid installation ID becomes unhealthy with fieldErrors", func(t *testing.T) {
+		// Create a connection first with valid credentials
+		connUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-invalid-installation",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "999999999", // Invalid installation ID that doesn't exist
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		// Now set up a mock that will fail for this installation ID
+		var appID int64 = 123456
+		appSlug := "appSlug"
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatch(
+				ghmock.GetApp, github.App{
+					ID:   &appID,
+					Slug: &appSlug,
+				},
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetAppInstallationsByInstallationId,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					// Return 404 Not Found for invalid installation ID
+					w.WriteHeader(http.StatusNotFound)
+					_, _ = w.Write(ghmock.MustMarshal(github.ErrorResponse{
+						Response: &http.Response{
+							StatusCode: http.StatusNotFound,
+						},
+						Message: "installation ID 999999999 not found",
+					}))
+				}),
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		connName := createdUnstructured.GetName()
+
+		t.Cleanup(func() {
+			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+		})
+
+		// Wait for reconciliation - connection should become unhealthy due to invalid installation ID
+		require.Eventually(t, func() bool {
+			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			// Connection should be reconciled and marked unhealthy
+			return conn.Status.ObservedGeneration == conn.Generation &&
+				conn.Status.Health.Checked > 0 &&
+				!conn.Status.Health.Healthy
+		}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
+
+		// Verify the connection is unhealthy and has fieldErrors
+		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
+		assert.Equal(t, provisioning.ConnectionStateDisconnected, conn.Status.State, "connection should be disconnected")
+		assert.Equal(t, conn.Generation, conn.Status.ObservedGeneration, "connection should be reconciled")
+		assert.Greater(t, conn.Status.Health.Checked, int64(0), "health check timestamp should be set")
+
+		// Verify fieldErrors are populated with validation errors - be strict and explicit
+		require.Len(t, conn.Status.FieldErrors, 1, "fieldErrors should contain exactly one error for invalid installation ID")
+		
+		installationIDError := conn.Status.FieldErrors[0]
+		
+		// Verify all fields explicitly
+		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, installationIDError.Type, "Type must be FieldValueInvalid")
+		assert.Equal(t, "spec.installationID", installationIDError.Field, "Field must be spec.installationID")
+		assert.Equal(t, "invalid installation ID: 999999999", installationIDError.Detail, "Detail must match expected error message")
+		assert.Empty(t, installationIDError.Origin, "Origin should be empty")
+		
+		t.Logf("Verified installationID fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
+			installationIDError.Type, installationIDError.Field, installationIDError.Detail, installationIDError.Origin)
+	})
+
+	t.Run("connection with invalid app ID becomes unhealthy with fieldErrors", func(t *testing.T) {
+		// Create a connection first with the app ID that will mismatch
+		connUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-invalid-appid",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "123456", // This will mismatch with the returned app ID
+					"installationID": "789012",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		// Now set up a mock that returns a different app ID (mismatch)
+		var appID int64 = 999999 // Different from the one in spec (123456)
+		appSlug := "appSlug"
+		var installationID int64 = 789012
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatch(
+				ghmock.GetApp, github.App{
+					ID:   &appID,
+					Slug: &appSlug,
+				},
+			),
+			ghmock.WithRequestMatch(
+				ghmock.GetAppInstallationsByInstallationId, github.Installation{
+					ID: &installationID,
+				},
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		connName := createdUnstructured.GetName()
+
+		t.Cleanup(func() {
+			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+		})
+
+		// Wait for reconciliation - connection should become unhealthy due to invalid app ID
+		require.Eventually(t, func() bool {
+			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			// Connection should be reconciled and marked unhealthy
+			return conn.Status.ObservedGeneration == conn.Generation &&
+				conn.Status.Health.Checked > 0 &&
+				!conn.Status.Health.Healthy
+		}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
+
+		// Verify the connection is unhealthy and has fieldErrors
+		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
+		assert.Equal(t, provisioning.ConnectionStateDisconnected, conn.Status.State, "connection should be disconnected")
+		assert.Equal(t, conn.Generation, conn.Status.ObservedGeneration, "connection should be reconciled")
+		assert.Greater(t, conn.Status.Health.Checked, int64(0), "health check timestamp should be set")
+
+		// Verify fieldErrors are populated with validation errors - be strict and explicit
+		require.Len(t, conn.Status.FieldErrors, 1, "fieldErrors should contain exactly one error for app ID mismatch")
+		
+		appIDError := conn.Status.FieldErrors[0]
+		
+		// Verify all fields explicitly
+		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, appIDError.Type, "Type must be FieldValueInvalid")
+		assert.Equal(t, "spec.appID", appIDError.Field, "Field must be spec.appID")
+		assert.Equal(t, "appID mismatch: expected 123456, got 999999", appIDError.Detail, "Detail must match expected error message")
+		assert.Empty(t, appIDError.Origin, "Origin should be empty")
+		
+		t.Logf("Verified appID fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
+			appIDError.Type, appIDError.Field, appIDError.Detail, appIDError.Origin)
 	})
 }
 

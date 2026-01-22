@@ -156,6 +156,8 @@ func TestIntegrationHealth(t *testing.T) {
 
 		// For unhealthy repositories, the timestamp should change as the health check will be triggered
 		require.NotEqual(t, beforeTest.Status.Health.Checked, afterTest.Status.Health.Checked, "should change the timestamp for unhealthy repository check")
+		// When unhealthy, fieldErrors may be populated if there are validation errors
+		// Note: fieldErrors are only populated from testResults, so they may not always be present for runtime errors
 
 		// Recreate the repository directory to restore healthy state
 		err = os.MkdirAll(repoPath, 0o750)
