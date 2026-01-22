@@ -46,7 +46,7 @@ describe('InhibitionRulesAlert', () => {
 
     render(<InhibitionRulesAlert alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME} />);
 
-    expect(await screen.findByRole('status')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('Inhibition rules are in effect')).toBeInTheDocument();
     expect(screen.getByText(/This Alertmanager has inhibition rules configured/i)).toBeInTheDocument();
   });

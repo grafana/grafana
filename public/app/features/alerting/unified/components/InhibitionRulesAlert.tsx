@@ -22,7 +22,7 @@ export function InhibitionRulesAlert({ alertmanagerSourceName, ...rest }: Inhibi
   }
 
   return (
-    <Alert title={t('alerting.inhibition-rules.title', 'Inhibition rules are in effect')} severity="info" {...rest}>
+    <Alert title={t('alerting.inhibition-rules.title', 'Inhibition rules are in effect')} severity="warning" {...rest}>
       <Trans i18nKey="alerting.inhibition-rules.body">
         This Alertmanager has inhibition rules configured. Some alerts may be suppressed when matching alerts are
         firing.
