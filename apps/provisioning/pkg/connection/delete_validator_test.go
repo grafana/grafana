@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/user"
 
+	appadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
@@ -61,8 +61,8 @@ func TestNewReferencedByRepositoriesValidator(t *testing.T) {
 	v := NewReferencedByRepositoriesValidator(lister)
 	require.NotNil(t, v)
 
-	// Verify it implements Validator interface
-	checkValidator := func(Validator) {}
+	// Verify it implements admission.Validator interface
+	checkValidator := func(appadmission.Validator) {}
 	checkValidator(v)
 }
 
@@ -74,8 +74,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 		operation       admission.Operation
 		repos           []provisioning.Repository
 		listerErr       error
-		wantErrors      bool
-		wantErrType     field.ErrorType
+		wantErr         bool
 		wantErrContains string
 	}{
 		{
@@ -84,7 +83,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 			namespace:      "default",
 			operation:      admission.Delete,
 			repos:          []provisioning.Repository{},
-			wantErrors:     false,
+			wantErr:        false,
 		},
 		{
 			name:           "blocks deletion when one repository references connection",
@@ -99,8 +98,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErrors:      true,
-			wantErrType:     field.ErrorTypeForbidden,
+			wantErr:         true,
 			wantErrContains: "referenced by 1 repository(s): [repo-1]",
 		},
 		{
@@ -122,8 +120,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErrors:      true,
-			wantErrType:     field.ErrorTypeForbidden,
+			wantErr:         true,
 			wantErrContains: "referenced by 2 repository(s)",
 		},
 		{
@@ -139,7 +136,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErrors: false,
+			wantErr: false,
 		},
 		{
 			name:           "allows deletion when repositories have no connection",
@@ -154,7 +151,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErrors: false,
+			wantErr: false,
 		},
 		{
 			name:            "returns error when lister fails",
@@ -162,8 +159,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 			namespace:       "default",
 			operation:       admission.Delete,
 			listerErr:       errors.New("storage error"),
-			wantErrors:      true,
-			wantErrType:     field.ErrorTypeInternal,
+			wantErr:         true,
 			wantErrContains: "failed to check for referencing repositories",
 		},
 		{
@@ -171,7 +167,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 			connectionName: "",
 			namespace:      "default",
 			operation:      admission.Delete,
-			wantErrors:     false,
+			wantErr:        false,
 		},
 		{
 			name:           "skips validation for create operation",
@@ -186,7 +182,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErrors: false,
+			wantErr: false,
 		},
 		{
 			name:           "skips validation for update operation",
@@ -201,7 +197,7 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErrors: false,
+			wantErr: false,
 		},
 	}
 
@@ -214,20 +210,17 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 			v := NewReferencedByRepositoriesValidator(lister)
 
 			attr := newDeleteValidatorTestAttributes(tt.connectionName, tt.namespace, tt.operation)
-			errs := v.Validate(context.Background(), attr)
+			err := v.Validate(context.Background(), attr, nil)
 
-			if tt.wantErrors {
-				require.NotEmpty(t, errs, "expected validation errors")
+			if tt.wantErr {
+				require.Error(t, err, "expected validation error")
 				if tt.wantErrContains != "" {
-					assert.Contains(t, errs[0].Detail, tt.wantErrContains)
-				}
-				if tt.wantErrType != "" {
-					assert.Equal(t, tt.wantErrType, errs[0].Type)
+					assert.Contains(t, err.Error(), tt.wantErrContains)
 				}
 				return
 			}
 
-			require.Empty(t, errs, "expected no validation errors")
+			require.NoError(t, err, "expected no validation error")
 		})
 	}
 }
@@ -246,11 +239,10 @@ func TestReferencedByRepositoriesValidator_Validate_ErrorDetails(t *testing.T) {
 	v := NewReferencedByRepositoriesValidator(lister)
 
 	attr := newDeleteValidatorTestAttributes("my-connection", "default", admission.Delete)
-	errs := v.Validate(context.Background(), attr)
+	err := v.Validate(context.Background(), attr, nil)
 
-	require.Len(t, errs, 1)
-	assert.Equal(t, field.ErrorTypeForbidden, errs[0].Type)
-	assert.Equal(t, "metadata.name", errs[0].Field)
-	assert.Contains(t, errs[0].Detail, "my-repo")
-	assert.Contains(t, errs[0].Detail, "cannot delete connection")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "my-repo")
+	assert.Contains(t, err.Error(), "cannot delete connection")
+	assert.Contains(t, err.Error(), "my-connection")
 }
