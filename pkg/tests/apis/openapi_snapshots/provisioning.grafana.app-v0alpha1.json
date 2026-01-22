@@ -3863,7 +3863,7 @@
         "tags": [
           "Repository"
         ],
-        "description": "Check if the configuration is valid",
+        "description": "Check if the configuration is valid. Deprecated: this will go away in favour of fieldErrors from status",
         "operationId": "createRepositoryTest",
         "requestBody": {
           "content": {
@@ -3909,6 +3909,7 @@
             }
           }
         },
+        "deprecated": true,
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
@@ -4335,6 +4336,19 @@
           "health"
         ],
         "properties": {
+          "fieldErrors": {
+            "description": "FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
+                }
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
           "health": {
             "description": "The connection health status",
             "default": {},
@@ -4391,18 +4405,26 @@
         }
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails": {
+        "description": "ErrorDetails describes an individual field error intended to help users identify and fix issues in resource specifications. This type is modeled after Kubernetes' StatusCause and serves the same purpose: to deliver actionable feedback about fields in the spec that require attention. Errors may relate to invalid formats, missing or invalid values, or cases where a referenced value does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to communicate validation or external reference errors that users can resolve by editing spec fields.",
         "type": "object",
         "required": [
           "type"
         ],
         "properties": {
           "detail": {
+            "description": "Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable.",
             "type": "string"
           },
           "field": {
+            "description": "Field is the path to the field or JSON pointer that caused the error. This helps users and tools identify exactly where to correct the problem. This field is optional and may be empty if not applicable.",
+            "type": "string"
+          },
+          "origin": {
+            "description": "Origin indicates where the error originated in validation, or the name of the external service that reported the error. This can be useful for tooling or debugging, and may reference a specific rule, function, or service. This field is optional and may be empty.",
             "type": "string"
           },
           "type": {
+            "description": "Type is a machine-readable description of the cause of the error. This is intended for programmatic handling and matches Kubernetes' CauseType values.",
             "type": "string",
             "default": ""
           }
@@ -5482,6 +5504,19 @@
             "description": "Error information during repository deletion (if any)",
             "type": "string"
           },
+          "fieldErrors": {
+            "description": "FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ErrorDetails"
+                }
+              ]
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
           "health": {
             "description": "This will get updated with the current health status (and updated periodically)",
             "default": {},
@@ -6193,7 +6228,7 @@
         }
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.TestResults": {
-        "description": "HistoryList is a list of versions of a resource",
+        "description": "TestResults is the result of a test connection operation Deprecated: this will go way when we deprecate the test endpoint We should use fieldErrors from status instead.",
         "type": "object",
         "required": [
           "code",

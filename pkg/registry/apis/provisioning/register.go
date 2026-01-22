@@ -666,11 +666,13 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	storage[provisioning.ConnectionResourceInfo.StoragePath()] = connectionsStore
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
-	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector()
+	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector(b)
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	testTester := repository.NewTester(b.repoValidator, existingReposValidator)
 
+	// TODO: Remove this connector when we deprecate the test endpoint
+	// We should use fieldErrors from status instead.
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, testTester)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
@@ -939,10 +941,13 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	defsBase := "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1."
 	refsBase := "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1."
 
+	// TODO: Remove this endpoint when we deprecate the test endpoint
+	// We should use fieldErrors from status instead.
 	sub := oas.Paths.Paths[repoprefix+"/test"]
 	if sub != nil {
 		repoSchema := defs[defsBase+"Repository"].Schema
-		sub.Post.Description = "Check if the configuration is valid"
+		sub.Post.Description = "Check if the configuration is valid. Deprecated: this will go away in favour of fieldErrors from status"
+		sub.Post.Deprecated = true
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
 				Required: false,
