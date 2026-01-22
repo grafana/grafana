@@ -192,15 +192,16 @@ func newClient(opts options.StorageOptions,
 		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
 
 	default:
-		storageOptions := sql.StorageServerOptions{
-			Backend:        backend,
-			DB:             db,
-			Cfg:            cfg,
-			Tracer:         tracer,
-			Reg:            reg,
-			AccessClient:   authzc,
+		storageOptions := sql.ResourceServerOptions{
+			ServerOptions: sql.ServerOptions{
+				Backend:      backend,
+				DB:           db,
+				Cfg:          cfg,
+				Tracer:       tracer,
+				Reg:          reg,
+				AccessClient: authzc,
+			},
 			StorageMetrics: storageMetrics,
-			Features:       features,
 			SecureValues:   secure,
 		}
 
@@ -250,7 +251,7 @@ func newClient(opts options.StorageOptions,
 		}
 
 		// Create the storage server with shared backend
-		storageServer, err := sql.NewStorageServer(&storageOptions)
+		storageServer, err := sql.NewResourceServer(&storageOptions)
 		if err != nil {
 			return nil, err
 		}

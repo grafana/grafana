@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 	"gocloud.dev/blob"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -28,6 +29,20 @@ type CDKBlobSupportOptions struct {
 	Bucket        CDKBucket
 	RootFolder    string
 	URLExpiration time.Duration
+}
+
+func NewBlobSupport(ctx context.Context, reg prometheus.Registerer, cfg BlobConfig) (BlobSupport, error) {
+	if cfg.Backend != nil {
+		return cfg.Backend, nil
+	}
+	bucket, err := OpenBlobBucket(ctx, cfg.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
+		Bucket: NewInstrumentedBucket(bucket, reg),
+	})
 }
 
 // Called in a context that loaded the possible drivers

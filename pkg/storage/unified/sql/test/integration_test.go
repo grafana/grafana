@@ -179,7 +179,7 @@ func TestClientServer(t *testing.T) {
 	t.Run("Create a client", func(t *testing.T) {
 		conn, err := unified.GrpcConn(svc.GetAddress(), prometheus.NewPedanticRegistry())
 		require.NoError(t, err)
-		client, err = resource.NewRemoteResourceClient(tracing.NewNoopTracerService(), conn, conn, resource.RemoteResourceClientConfig{
+		client, err = resource.NewRemoteStorageClient(tracing.NewNoopTracerService(), conn, resource.RemoteClientConfig{
 			Token:            "some-token",
 			TokenExchangeURL: "http://some-change-url",
 			AllowInsecure:    true,

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	claims "github.com/grafana/authlib/types"
+	"github.com/fullstorydev/grpchan"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -22,6 +22,8 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 	"k8s.io/component-base/metrics/legacyregistry"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -33,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
@@ -70,8 +73,10 @@ func TestIntegrationDistributor(t *testing.T) {
 	testServers := make([]testModuleServer, 0, 2)
 	memberlistPort := getRandomPort()
 	distributorServer := initDistributorServerForTest(t, memberlistPort)
+	// create one storage-server with search enabled and one search-server instance
 	testServers = append(testServers, createStorageServerApi(t, 1, dbType, db.ConnStr, memberlistPort))
 	testServers = append(testServers, createStorageServerApi(t, 2, dbType, db.ConnStr, memberlistPort))
+	//testServers = append(testServers, createSearchServerAPI(t, 2, dbType, db.ConnStr, memberlistPort))
 
 	startAndWaitHealthy(t, distributorServer)
 
@@ -309,7 +314,8 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	)
 	require.NoError(t, err)
 
-	client := resource.NewAuthlessSearchClient(conn)
+	searchConn := grpchan.InterceptClientConn(conn, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
+	client := resource.NewAuthlessSearchClient(searchConn)
 
 	server := initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
 
@@ -318,6 +324,9 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	return server
 }
 
+// createStorageServerApi creates a storage-server module server with search enabled for testing.
+// This tests that storage target still works with the distributor
+// TODO: remove once we fully migrate to search-server target
 func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr string, memberlistPort int) testModuleServer {
 	cfg := setting.NewCfg()
 	section, err := cfg.Raw.NewSection("database")
@@ -351,6 +360,39 @@ func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr stri
 	return initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
 }
 
+func createSearchServerAPI(t *testing.T, instanceId int, dbType, dbConnStr string, memberlistPort int) testModuleServer {
+	cfg := setting.NewCfg()
+	section, err := cfg.Raw.NewSection("database")
+	require.NoError(t, err)
+
+	_, err = section.NewKey("type", dbType)
+	require.NoError(t, err)
+	_, err = section.NewKey("connection_string", dbConnStr)
+	require.NoError(t, err)
+
+	cfg.HTTPPort = strconv.Itoa(getRandomPort())
+	cfg.GRPCServer.Network = "tcp"
+	cfg.GRPCServer.Address = "127.0.0.1:" + strconv.Itoa(getRandomPort())
+	cfg.EnableSharding = true
+	cfg.MemberlistBindAddr = "127.0.0.1"
+	cfg.MemberlistJoinMember = "127.0.0.1:" + strconv.Itoa(memberlistPort)
+	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
+	cfg.MemberlistAdvertisePort = getRandomPort()
+	cfg.SearchRingReplicationFactor = 1
+	cfg.InstanceID = "instance-" + strconv.Itoa(instanceId)
+	cfg.IndexPath = t.TempDir() + cfg.InstanceID
+	cfg.IndexFileThreshold = testIndexFileThreshold
+	cfg.Target = []string{modules.SearchServer}
+	// make sure the resource server has enough time to join the ring
+	// before the tests start sending traffic
+	// otherwise the tests will be flaky,
+	// also, tests are going to timeout after 300 seconds anyway
+	cfg.ResourceServerJoinRingTimeout = 300 * time.Second
+	cfg.EnableSearch = true
+
+	return initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
+}
+
 func initModuleServerForTest(
 	t *testing.T,
 	cfg *setting.Cfg,
@@ -373,7 +415,7 @@ func initModuleServerForTest(
 	return testModuleServer{server: ms, grpcAddress: cfg.GRPCServer.Address, httpPort: cfg.HTTPPort, healthClient: healthClient, id: cfg.InstanceID}
 }
 
-func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces []string) resource.SearchServer {
+func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces []string) resource.ResourceServer {
 	cfg := setting.NewCfg()
 	section, err := cfg.Raw.NewSection("database")
 	require.NoError(t, err)
@@ -385,25 +427,17 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	cfg.IndexPath = t.TempDir()
 	cfg.IndexFileThreshold = testIndexFileThreshold
 	cfg.EnableSearch = true
-	features := featuremgmt.WithFeatures()
 	docBuilders, err := InitializeDocumentBuilders(cfg)
-	require.NoError(t, err)
-	tracer := noop.NewTracerProvider().Tracer("test-tracer")
 	require.NoError(t, err)
 	searchOpts, err := search.NewSearchOptions(cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
-	searchServer, err := sql.NewSearchServer(sql.SearchServerOptions{
-		Cfg:           cfg,
-		Tracer:        tracer,
-		SearchOptions: searchOpts,
+	server, err := sql.NewResourceServer(&sql.ResourceServerOptions{
+		ServerOptions: sql.ServerOptions{
+			Cfg:    cfg,
+			Tracer: noop.NewTracerProvider().Tracer("test-tracer"),
+		},
+		SearchOptions: &searchOpts,
 	})
-	require.NoError(t, err)
-	storageServer, err := sql.NewStorageServer(&sql.StorageServerOptions{
-		Cfg:      cfg,
-		Tracer:   tracer,
-		Features: features,
-	})
-	require.NoError(t, err)
 
 	testUserA := &identity.StaticRequester{
 		Type:           claims.TypeUser,
@@ -417,12 +451,12 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 
 	for _, ns := range testNamespaces {
 		for range rand.Intn(maxPlaylistPerNamespace) + 1 {
-			_, err = storageServer.Create(ctx, generatePlaylistPayload(ns))
+			_, err = server.Create(ctx, generatePlaylistPayload(ns))
 			require.NoError(t, err)
 		}
 	}
 
-	return searchServer
+	return server
 }
 
 var counter int

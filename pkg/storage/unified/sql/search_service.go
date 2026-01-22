@@ -70,7 +70,7 @@ type searchService struct {
 	hasSubservices     bool
 }
 
-func ProvideSearchGrpcService(
+func ProvideSearchService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
@@ -226,12 +226,14 @@ func (s *searchService) starting(ctx context.Context) error {
 
 	// Create the search server
 	searchServer, err := NewSearchServer(SearchServerOptions{
-		Backend:       s.backend,
-		DB:            s.db,
-		Cfg:           s.cfg,
-		Tracer:        s.tracing,
-		Reg:           s.reg,
-		AccessClient:  authzClient,
+		ServerOptions: ServerOptions{
+			Backend:      s.backend,
+			DB:           s.db,
+			Cfg:          s.cfg,
+			Tracer:       s.tracing,
+			Reg:          s.reg,
+			AccessClient: authzClient,
+		},
 		SearchOptions: searchOptions,
 		IndexMetrics:  s.indexMetrics,
 		OwnsIndexFn:   s.OwnsIndex,

@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -85,6 +84,7 @@ type service struct {
 // ProvideUnifiedStorageGrpcService provides a combined storage and search service running on the same gRPC server.
 // This is used when running Grafana as a monolith where both services share the same process.
 // Each service (storage and search) maintains its own lifecycle but shares the gRPC server.
+// Deprecated: use ProvideStorageService and ProvideSearchService instead.
 func ProvideUnifiedStorageGrpcService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
@@ -100,7 +100,7 @@ func ProvideUnifiedStorageGrpcService(
 	backend resource.StorageBackend,
 ) (UnifiedGrpcService, error) {
 	var err error
-	tracer := otel.Tracer("unified-storage-combined")
+	tracer := otel.Tracer("unified-storage")
 
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
@@ -256,87 +256,48 @@ func (s *service) starting(ctx context.Context) error {
 		return err
 	}
 
+	serverOptions := &ResourceServerOptions{
+		ServerOptions: ServerOptions{
+			Backend:      s.backend,
+			DB:           s.db,
+			Cfg:          s.cfg,
+			Tracer:       s.tracing,
+			Reg:          s.reg,
+			AccessClient: authzClient,
+		},
+		StorageMetrics: s.storageMetrics,
+		QOSQueue:       s.queue,
+		// Search
+		OwnsIndexFn:  s.OwnsIndex,
+		IndexMetrics: s.indexMetrics,
+	}
+
+	// Create search options for the search server
+	if s.cfg.EnableSearch {
+		searchOptions, err := search.NewSearchOptions(s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex)
+		if err != nil {
+			return err
+		}
+		serverOptions.SearchOptions = &searchOptions
+	}
+
 	// Setup overrides service if enabled
-	var overridesSvc *resource.OverridesService
 	if s.cfg.OverridesFilePath != "" {
-		overridesSvc, err = resource.NewOverridesService(context.Background(), s.log, s.reg, s.tracing, resource.ReloadOptions{
+		overridesSvc, err := resource.NewOverridesService(context.Background(), s.log, s.reg, s.tracing, resource.ReloadOptions{
 			FilePath:     s.cfg.OverridesFilePath,
 			ReloadPeriod: s.cfg.OverridesReloadInterval,
 		})
 		if err != nil {
 			return err
 		}
+		serverOptions.OverridesService = overridesSvc
 	}
 
 	// Ensure we have a backend - create one if needed
 	// This is critical: we create the backend ONCE and share it between search and storage servers
 	// to avoid duplicate metrics registration
-	backend := s.backend
-	if backend == nil {
-		eDB, err := dbimpl.ProvideResourceDB(s.db, s.cfg, s.tracing)
-		if err != nil {
-			return fmt.Errorf("failed to create resource DB: %w", err)
-		}
 
-		isHA := isHighAvailabilityEnabled(s.cfg.SectionWithEnvOverrides("database"),
-			s.cfg.SectionWithEnvOverrides("resource_api"))
-
-		b, err := NewBackend(BackendOptions{
-			DBProvider:           eDB,
-			Reg:                  s.reg,
-			IsHA:                 isHA,
-			storageMetrics:       s.storageMetrics,
-			LastImportTimeMaxAge: s.cfg.MaxFileIndexAge,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to create backend: %w", err)
-		}
-
-		// Initialize the backend
-		if err := b.Init(context.Background()); err != nil {
-			return fmt.Errorf("failed to initialize backend: %w", err)
-		}
-		backend = b
-	}
-
-	var searchServer resource.SearchServer
-	if s.cfg.EnableSearch {
-		// Create search options for the search server
-		searchOptions, err := search.NewSearchOptions(s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex)
-		if err != nil {
-			return err
-		}
-
-		// Create the search server - pass the shared backend
-		searchServer, err = NewSearchServer(SearchServerOptions{
-			Backend:       backend, // Use the shared backend
-			DB:            s.db,
-			Cfg:           s.cfg,
-			Tracer:        s.tracing,
-			Reg:           s.reg,
-			AccessClient:  authzClient,
-			SearchOptions: searchOptions,
-			IndexMetrics:  s.indexMetrics,
-			OwnsIndexFn:   s.OwnsIndex,
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	// Create the storage server - pass the shared backend
-	storageServer, err := NewStorageServer(&StorageServerOptions{
-		Backend:          backend, // Use the shared backend
-		OverridesService: overridesSvc,
-		DB:               s.db,
-		Cfg:              s.cfg,
-		Tracer:           s.tracing,
-		Reg:              s.reg,
-		AccessClient:     authzClient,
-		StorageMetrics:   s.storageMetrics,
-		Features:         s.features,
-		QOSQueue:         s.queue,
-	})
+	server, err := NewResourceServer(serverOptions)
 	if err != nil {
 		return err
 	}
@@ -346,21 +307,21 @@ func (s *service) starting(ctx context.Context) error {
 		return err
 	}
 
-	healthService, err := resource.ProvideHealthService(storageServer)
+	healthService, err := resource.ProvideHealthService(server)
 	if err != nil {
 		return err
 	}
 
 	srv := s.handler.GetServer()
 	// Register storage services
-	resourcepb.RegisterResourceStoreServer(srv, storageServer)
-	resourcepb.RegisterBulkStoreServer(srv, storageServer)
-	resourcepb.RegisterBlobStoreServer(srv, storageServer)
-	resourcepb.RegisterDiagnosticsServer(srv, storageServer)
-	resourcepb.RegisterQuotasServer(srv, storageServer)
+	resourcepb.RegisterResourceStoreServer(srv, server)
+	resourcepb.RegisterBulkStoreServer(srv, server)
+	resourcepb.RegisterBlobStoreServer(srv, server)
+	resourcepb.RegisterDiagnosticsServer(srv, server)
+	resourcepb.RegisterQuotasServer(srv, server)
 	// Register search services
-	resourcepb.RegisterResourceIndexServer(srv, searchServer)
-	resourcepb.RegisterManagedObjectIndexServer(srv, searchServer)
+	resourcepb.RegisterResourceIndexServer(srv, server)
+	resourcepb.RegisterManagedObjectIndexServer(srv, server)
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
 
 	// register reflection service

@@ -242,7 +242,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 
 	const resourceStoreAudience = "resourceStore"
 
-	storageClient, err := resource.NewRemoteStorageClient(tracer, conn, resource.RemoteResourceClientConfig{
+	storageClient, err := resource.NewRemoteStorageClient(tracer, conn, resource.RemoteClientConfig{
 		Token:            o.GrpcClientAuthenticationToken,
 		TokenExchangeURL: o.GrpcClientAuthenticationTokenExchangeURL,
 		Namespace:        o.GrpcClientAuthenticationTokenNamespace,

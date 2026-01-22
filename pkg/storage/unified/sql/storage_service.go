@@ -150,15 +150,16 @@ func (s *storageService) starting(ctx context.Context) error {
 
 	// Create the storage server
 	storageServer, err := NewStorageServer(&StorageServerOptions{
-		Backend:          s.backend,
+		ServerOptions: ServerOptions{
+			Backend:      s.backend,
+			DB:           s.db,
+			Cfg:          s.cfg,
+			Tracer:       s.tracing,
+			Reg:          s.reg,
+			AccessClient: authzClient,
+		},
 		OverridesService: overridesSvc,
-		DB:               s.db,
-		Cfg:              s.cfg,
-		Tracer:           s.tracing,
-		Reg:              s.reg,
-		AccessClient:     authzClient,
 		StorageMetrics:   s.storageMetrics,
-		Features:         s.features,
 		QOSQueue:         s.queue,
 	})
 	if err != nil {

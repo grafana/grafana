@@ -15,7 +15,6 @@ import (
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
@@ -31,12 +30,7 @@ type QOSEnqueueDequeuer interface {
 
 // SearchServerOptions contains the options for creating a new SearchServer
 type SearchServerOptions struct {
-	Backend       resource.StorageBackend
-	DB            infraDB.DB
-	Cfg           *setting.Cfg
-	Tracer        trace.Tracer
-	Reg           prometheus.Registerer
-	AccessClient  types.AccessClient
+	ServerOptions
 	SearchOptions resource.SearchOptions
 	IndexMetrics  *resource.BleveIndexMetrics
 	OwnsIndexFn   func(key resource.NamespacedResource) (bool, error)
@@ -44,18 +38,61 @@ type SearchServerOptions struct {
 
 // StorageServerOptions contains the options for creating a storage-only server (without search)
 type StorageServerOptions struct {
-	Backend          resource.StorageBackend
+	ServerOptions
 	OverridesService *resource.OverridesService
-	DB               infraDB.DB
-	Cfg              *setting.Cfg
-	Tracer           trace.Tracer
-	Reg              prometheus.Registerer
-	AccessClient     types.AccessClient
 	StorageMetrics   *resource.StorageMetrics
-	Features         featuremgmt.FeatureToggles
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport
 	SearchOptions    *resource.SearchOptions // Deprecated: use NewSearchServer for search capabilities
+}
+
+type ResourceServerOptions struct {
+	// Common options
+	ServerOptions
+	// Storage
+	OverridesService *resource.OverridesService
+	StorageMetrics   *resource.StorageMetrics
+	QOSQueue         QOSEnqueueDequeuer
+	SecureValues     secrets.InlineSecureValueSupport
+
+	// Search
+	SearchOptions *resource.SearchOptions // Deprecated: use NewSearchServer for search capabilities
+	IndexMetrics  *resource.BleveIndexMetrics
+	OwnsIndexFn   func(key resource.NamespacedResource) (bool, error)
+}
+
+type ServerOptions struct {
+	Backend      resource.StorageBackend
+	DB           infraDB.DB
+	Cfg          *setting.Cfg
+	Tracer       trace.Tracer
+	Reg          prometheus.Registerer
+	AccessClient types.AccessClient
+}
+
+func NewCommonServerOptions(commonOpts ServerOptions) (*resource.CommonServerOptions, error) {
+	apiserverCfg := commonOpts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+
+	serverOptions := &resource.CommonServerOptions{
+		Blob: resource.BlobConfig{
+			URL: apiserverCfg.Key("blob_url").MustString(""),
+		},
+		Reg: commonOpts.Reg,
+	}
+	if commonOpts.AccessClient != nil {
+		serverOptions.AccessClient = resource.NewAuthzLimitedClient(commonOpts.AccessClient, resource.AuthzOptions{Registry: commonOpts.Reg})
+	}
+	// Support local file blob
+	if strings.HasPrefix(serverOptions.Blob.URL, "./data/") {
+		dir := strings.Replace(serverOptions.Blob.URL, "./data", commonOpts.Cfg.DataPath, 1)
+		err := os.MkdirAll(dir, 0700)
+		if err != nil {
+			return nil, err
+		}
+		serverOptions.Blob.URL = "file:///" + dir
+	}
+
+	return serverOptions, nil
 }
 
 // NewSearchServer creates a new SearchServer with the given options.
@@ -66,7 +103,27 @@ type StorageServerOptions struct {
 // to avoid duplicate metrics registration. Only in standalone microservice mode should
 // this function create its own backend.
 func NewSearchServer(opts SearchServerOptions) (resource.SearchServer, error) {
-	backend := opts.Backend
+	serverOptions, err := NewCommonServerOptions(ServerOptions{
+		Backend:      opts.Backend,
+		DB:           opts.DB,
+		Cfg:          opts.Cfg,
+		Tracer:       opts.Tracer,
+		Reg:          opts.Reg,
+		AccessClient: opts.AccessClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var blobStore resource.BlobSupport
+	if serverOptions.Blob.URL != "" {
+		blobStore, err = resource.NewBlobSupport(context.Background(), opts.Reg, serverOptions.Blob)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		blobStore, _ = opts.Backend.(resource.BlobSupport)
+	}
+	backend := serverOptions.Backend
 	if backend == nil {
 		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
 		if err != nil {
@@ -93,7 +150,7 @@ func NewSearchServer(opts SearchServerOptions) (resource.SearchServer, error) {
 		backend = b
 	}
 
-	search, err := resource.NewSearchServer(opts.SearchOptions, backend, opts.AccessClient, nil, opts.IndexMetrics, opts.OwnsIndexFn)
+	search, err := resource.NewSearchServer(opts.SearchOptions, backend, opts.AccessClient, blobStore, opts.IndexMetrics, opts.OwnsIndexFn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create search server: %w", err)
 	}
@@ -218,16 +275,8 @@ func NewStorageServer(opts *StorageServerOptions) (resource.ResourceServer, erro
 				return nil, err
 			}
 			serverOptions.Backend = backend
-			opts.Backend = backend // hack to reuse the backend on search server for monolith grafana
 			serverOptions.Diagnostics = backend
 			serverOptions.Lifecycle = backend
-		}
-	}
-
-	// Initialize the backend before creating server
-	if serverOptions.Lifecycle != nil {
-		if err := serverOptions.Lifecycle.Init(context.Background()); err != nil {
-			return nil, fmt.Errorf("failed to initialize backend: %w", err)
 		}
 	}
 
@@ -237,32 +286,121 @@ func NewStorageServer(opts *StorageServerOptions) (resource.ResourceServer, erro
 	return resource.NewResourceServer(serverOptions)
 }
 
-// ProvideSearchBackend creates a SearchServer for Wire dependency injection.
-// This is used in monolith mode where both storage and search run in the same process.
-func ProvideSearchBackend(
-	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
-	tracer trace.Tracer,
-	reg prometheus.Registerer,
-	backend resource.StorageBackend,
-	docs resource.DocumentBuilderSupplier,
-	indexMetrics *resource.BleveIndexMetrics,
-) (resource.SearchServer, error) {
-	//searchOptions, err := search.NewSearchOptions(features, cfg, docs, indexMetrics, nil)
-	//if err != nil {
-	//	return nil, fmt.Errorf("failed to create search options: %w", err)
-	//}
-	//
-	//return NewSearchServer(SearchServerOptions{
-	//	Backend:       backend,
-	//	DB:            db,
-	//	Cfg:           cfg,
-	//	Tracer:        tracer,
-	//	Reg:           reg,
-	//	AccessClient:  nil, // Will be set by the caller if needed
-	//	SearchOptions: searchOptions,
-	//	IndexMetrics:  indexMetrics,
-	//})
-	return nil, nil
+func NewResourceServer(opts *ResourceServerOptions) (resource.ResourceServer, error) {
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+
+	if opts.SecureValues == nil && opts.Cfg != nil && opts.Cfg.SecretsManagement.GrpcClientEnable {
+		inlineSecureValueService, err := inlinesecurevalue.ProvideInlineSecureValueService(
+			opts.Cfg,
+			opts.Tracer,
+			nil, // not needed for gRPC client mode
+			nil, // not needed for gRPC client mode
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create inline secure value service: %w", err)
+		}
+		opts.SecureValues = inlineSecureValueService
+	}
+
+	serverOptions := resource.ResourceServerOptions{
+		Blob: resource.BlobConfig{
+			URL: apiserverCfg.Key("blob_url").MustString(""),
+		},
+		Reg:            opts.Reg,
+		SecureValues:   opts.SecureValues,
+		StorageMetrics: opts.StorageMetrics,
+		Search:         opts.SearchOptions,
+	}
+	if opts.AccessClient != nil {
+		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
+	}
+	// Support local file blob
+	if strings.HasPrefix(serverOptions.Blob.URL, "./data/") {
+		dir := strings.Replace(serverOptions.Blob.URL, "./data", opts.Cfg.DataPath, 1)
+		err := os.MkdirAll(dir, 0700)
+		if err != nil {
+			return nil, err
+		}
+		serverOptions.Blob.URL = "file:///" + dir
+	}
+
+	// This is mostly for testing, being able to influence when we paginate
+	// based on the page size during tests.
+	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
+	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
+	serverOptions.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
+
+	if opts.Backend != nil {
+		serverOptions.Backend = opts.Backend
+	} else {
+		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
+		if err != nil {
+			return nil, err
+		}
+
+		if opts.Cfg.EnableSQLKVBackend {
+			sqlkv, err := resource.NewSQLKV(eDB)
+			if err != nil {
+				return nil, fmt.Errorf("error creating sqlkv: %s", err)
+			}
+
+			kvBackendOpts := resource.KVBackendOptions{
+				KvStore: sqlkv,
+				Tracer:  opts.Tracer,
+				Reg:     opts.Reg,
+			}
+
+			ctx := context.Background()
+			dbConn, err := eDB.Init(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("error initializing DB: %w", err)
+			}
+
+			dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
+			if dialect == nil {
+				return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
+			}
+
+			rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+				Dialect: dialect,
+				DB:      dbConn,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to create resource version manager: %w", err)
+			}
+
+			kvBackendOpts.RvManager = rvManager
+			kvBackend, err := resource.NewKVStorageBackend(kvBackendOpts)
+			if err != nil {
+				return nil, fmt.Errorf("error creating kv backend: %s", err)
+			}
+
+			serverOptions.Backend = kvBackend
+			opts.Backend = kvBackend // hack to reuse the backend on search server for monolith grafana
+			serverOptions.Diagnostics = kvBackend
+		} else {
+			isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+				opts.Cfg.SectionWithEnvOverrides("resource_api"))
+
+			backend, err := NewBackend(BackendOptions{
+				DBProvider:           eDB,
+				Reg:                  opts.Reg,
+				IsHA:                 isHA,
+				storageMetrics:       opts.StorageMetrics,
+				LastImportTimeMaxAge: opts.Cfg.MaxFileIndexAge,
+			})
+			if err != nil {
+				return nil, err
+			}
+			serverOptions.Backend = backend
+			serverOptions.Diagnostics = backend
+			serverOptions.Lifecycle = backend
+		}
+	}
+
+	serverOptions.QOSQueue = opts.QOSQueue
+	serverOptions.OwnsIndexFn = opts.OwnsIndexFn
+	serverOptions.OverridesService = opts.OverridesService
+
+	return resource.NewResourceServer(serverOptions)
 }

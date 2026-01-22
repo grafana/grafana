@@ -6,11 +6,10 @@ package server
 
 import (
 	"github.com/google/wire"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -61,6 +60,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsMigrator "github.com/grafana/grafana/pkg/services/secrets/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -150,12 +150,11 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
 	wire.Struct(new(unified.Options), "*"),
 	sql.ProvideStorageBackend,
-	sql.ProvideSearchBackend,
 	unified.ProvideUnifiedResourceClient,
-	unified.ProvideUnifiedSearchClient,
-	unified.ProvideUnifiedStorageClient,
-	unified.ProvideUnifiedMigratorClient,
-	unified.ProvideUnifiedQuotaClient,
+	unified.ProvideSearchClient,
+	unified.ProvideStorageClient,
+	unified.ProvideMigratorClient,
+	unified.ProvideQuotaClient,
 	wire.Bind(new(resourcepb.ResourceIndexClient), new(resource.ResourceClient)),
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,

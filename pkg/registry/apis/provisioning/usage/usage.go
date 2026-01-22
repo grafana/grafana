@@ -12,10 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func MetricCollector(tracer tracing.Tracer, repositoryLister func(ctx context.Context) ([]provisioning.Repository, error), searchClient resourcepb.ManagedObjectIndexClient) usagestats.MetricsFunc {
+func MetricCollector(tracer tracing.Tracer, repositoryLister func(ctx context.Context) ([]provisioning.Repository, error), searchClient resource.SearchClient) usagestats.MetricsFunc {
 	return func(ctx context.Context) (metrics map[string]any, err error) {
 		ctx, span := tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats")
 		defer func() {

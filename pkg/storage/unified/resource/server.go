@@ -240,12 +240,15 @@ type ResourceServerOptions struct {
 	Blob BlobConfig
 
 	// Search options
+	// Deprecated: use NewSearchServer for search capabilities
 	Search *SearchOptions
 
 	// Function to determine if this server "owns" the index for a given resource
+	// Deprecated: use NewSearchServer for search capabilities
 	IndexMetrics *BleveIndexMetrics
 
 	// Function to determine if this server "owns" the index for a given resource
+	// Deprecated: use NewSearchServer for search capabilities
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
 
 	// Quota service
@@ -276,6 +279,50 @@ type ResourceServerOptions struct {
 	StorageMetrics *StorageMetrics
 
 	// MaxPageSizeBytes is the maximum size of a page in bytes.
+	// Storage only.
+	MaxPageSizeBytes int
+	// IndexMinUpdateInterval is the time to wait after a successful write operation to ensure read-after-write consistency in search.
+	// This config is shared with search
+	IndexMinUpdateInterval time.Duration
+
+	// QOSQueue is the quality of service queue used to enqueue
+	QOSQueue  QOSEnqueuer
+	QOSConfig QueueConfig
+}
+
+type CommonServerOptions struct {
+	// Real storage backend
+	Backend StorageBackend
+
+	// The blob configuration
+	Blob BlobConfig
+
+	// Diagnostics
+	Diagnostics resourcepb.DiagnosticsServer
+
+	// Check if a user has access to write folders
+	// When this is nil, no resources can have folders configured
+	WriteHooks WriteAccessHooks
+
+	// Link RBAC
+	AccessClient claims.AccessClient
+
+	// Manage secure values
+	SecureValues secrets.InlineSecureValueSupport
+
+	// Callbacks for startup and shutdown
+	Lifecycle LifecycleHooks
+
+	// Get the current time in unix millis
+	Now func() int64
+
+	// Registerer to register prometheus Metrics for the Resource server
+	Reg prometheus.Registerer
+
+	StorageMetrics *StorageMetrics
+
+	// MaxPageSizeBytes is the maximum size of a page in bytes.
+	// Storage only.
 	MaxPageSizeBytes int
 	// IndexMinUpdateInterval is the time to wait after a successful write operation to ensure read-after-write consistency in search.
 	// This config is shared with search
@@ -333,15 +380,8 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	blobstore := opts.Blob.Backend
 	if blobstore == nil {
 		if opts.Blob.URL != "" {
-			ctx := context.Background()
-			bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
-			if err != nil {
-				return nil, err
-			}
-
-			blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
-				Bucket: NewInstrumentedBucket(bucket, opts.Reg),
-			})
+			var err error
+			blobstore, err = NewBlobSupport(context.Background(), opts.Reg, opts.Blob)
 			if err != nil {
 				return nil, err
 			}
@@ -368,7 +408,6 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		ctx:              ctx,
 		cancel:           cancel,
 		storageMetrics:   opts.StorageMetrics,
-		indexMetrics:     opts.IndexMetrics,
 		maxPageSizeBytes: opts.MaxPageSizeBytes,
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
@@ -380,7 +419,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 
 	if opts.Search != nil {
 		var err error
-		s.search, err = newSearchSupport(*opts.Search, s.backend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
+		s.search, err = newSearchSupport(*opts.Search, s.backend, s.access, blobstore, opts.IndexMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}
@@ -410,7 +449,6 @@ type server struct {
 	now              func() int64
 	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics   *StorageMetrics
-	indexMetrics     *BleveIndexMetrics
 	overridesService *OverridesService
 
 	// Background watch task -- this has permissions for everything

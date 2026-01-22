@@ -131,7 +131,7 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 	// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
 	// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
 	// go through the api server. Once there is a global search endpoint, we will switch to that here as well.
-	resourceClientCfg := resource.RemoteResourceClientConfig{
+	resourceClientCfg := resource.RemoteClientConfig{
 		Token:            token,
 		TokenExchangeURL: tokenExchangeURL,
 		Namespace:        gRPCAuth.Key("token_namespace").String(),
@@ -324,7 +324,7 @@ func setupDecrypter(cfg *setting.Cfg, tracer tracing.Tracer, tokenExchangeClient
 // HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
 // search endpoint. But controllers, in general, should not connect directly to unified storage and instead
 // go through the api server. Once there is a global search endpoint, we will switch to that here as well.
-func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resourceClientCfg resource.RemoteResourceClientConfig) (resources.ResourceStore, error) {
+func setupUnifiedStorageClient(cfg *setting.Cfg, tracer tracing.Tracer, resourceClientCfg resource.RemoteClientConfig) (resources.ResourceStore, error) {
 	unifiedStorageSec := cfg.SectionWithEnvOverrides("unified_storage")
 	// Connect to Server
 	address := unifiedStorageSec.Key("grpc_address").String()

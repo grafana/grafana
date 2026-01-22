@@ -149,7 +149,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		storage, err := sql.ProvideStorageService(env.Cfg, env.FeatureToggles, env.SQLStore,
 			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil)
 		require.NoError(t, err)
-		search, err := sql.ProvideSearchGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
+		search, err := sql.ProvideSearchService(env.Cfg, env.FeatureToggles, env.SQLStore,
 			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, kv.Config{}, nil, nil)
 		require.NoError(t, err)
 		ctx := context.Background()

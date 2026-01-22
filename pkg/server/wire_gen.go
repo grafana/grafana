@@ -513,13 +513,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	storageBackend, err := sql.ProvideStorageBackend(cfg, sqlStore, tracer, registerer, storageMetrics)
-	if err != nil {
-		return nil, err
-	}
-	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
-	searchServer, err := sql.ProvideSearchBackend(cfg, featureToggles, sqlStore, tracer, registerer, storageBackend, documentBuilderSupplier, bleveIndexMetrics)
+	storageBackend, err := sql.ProvideStorageBackend(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -533,13 +527,14 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		Docs:         documentBuilderSupplier,
 		SecureValues: inlineSecureValueSupport,
 		Backend:      storageBackend,
-		SearchServer: searchServer,
 	}
+	storageMetrics := resource.ProvideStorageMetrics(registerer)
+	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
 	resourceClient, err := unified.ProvideUnifiedResourceClient(options, storageMetrics, bleveIndexMetrics)
 	if err != nil {
 		return nil, err
 	}
-	searchClient, err := unified.ProvideUnifiedSearchClient(resourceClient)
+	searchClient, err := unified.ProvideSearchClient(resourceClient)
 	if err != nil {
 		return nil, err
 	}
@@ -549,7 +544,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	migrationDashboardAccessor := legacy.ProvideMigratorDashboardAccessor(legacyDatabaseProvider, stubProvisioningService, accessControl)
-	migratorClient, err := unified.ProvideUnifiedMigratorClient(resourceClient)
+	migratorClient, err := unified.ProvideMigratorClient(resourceClient)
 	if err != nil {
 		return nil, err
 	}
@@ -797,7 +792,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 		return nil, err
 	}
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service15, cacheServiceImpl, plugincontextProvider, cfg)
-	storageClient, err := unified.ProvideUnifiedStorageClient(resourceClient)
+	storageClient, err := unified.ProvideStorageClient(resourceClient)
 	if err != nil {
 		return nil, err
 	}
@@ -848,7 +843,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	quotaClient, err := unified.ProvideUnifiedQuotaClient(resourceClient)
+	quotaClient, err := unified.ProvideQuotaClient(resourceClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1199,13 +1194,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	storageBackend, err := sql.ProvideStorageBackend(cfg, sqlStore, tracer, registerer, storageMetrics)
-	if err != nil {
-		return nil, err
-	}
-	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
-	searchServer, err := sql.ProvideSearchBackend(cfg, featureToggles, sqlStore, tracer, registerer, storageBackend, documentBuilderSupplier, bleveIndexMetrics)
+	storageBackend, err := sql.ProvideStorageBackend(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1219,13 +1208,14 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		Docs:         documentBuilderSupplier,
 		SecureValues: inlineSecureValueSupport,
 		Backend:      storageBackend,
-		SearchServer: searchServer,
 	}
+	storageMetrics := resource.ProvideStorageMetrics(registerer)
+	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
 	resourceClient, err := unified.ProvideUnifiedResourceClient(options, storageMetrics, bleveIndexMetrics)
 	if err != nil {
 		return nil, err
 	}
-	searchClient, err := unified.ProvideUnifiedSearchClient(resourceClient)
+	searchClient, err := unified.ProvideSearchClient(resourceClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1235,7 +1225,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	migrationDashboardAccessor := legacy.ProvideMigratorDashboardAccessor(legacyDatabaseProvider, stubProvisioningService, accessControl)
-	migratorClient, err := unified.ProvideUnifiedMigratorClient(resourceClient)
+	migratorClient, err := unified.ProvideMigratorClient(resourceClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1485,7 +1475,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service15, cacheServiceImpl, plugincontextProvider, cfg)
-	storageClient, err := unified.ProvideUnifiedStorageClient(resourceClient)
+	storageClient, err := unified.ProvideStorageClient(resourceClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1536,7 +1526,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	quotaClient, err := unified.ProvideUnifiedQuotaClient(resourceClient)
+	quotaClient, err := unified.ProvideQuotaClient(resourceClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1800,14 +1790,7 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	hooksService := hooks.ProvideService()
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	moduleRegisterer := ProvideNoopModuleRegisterer()
-	ossMigrations := migrations.ProvideOSSMigrations(featureToggles)
-	inProcBus := bus.ProvideBus(tracingService)
-	sqlStore, err := sqlstore.ProvideService(cfg, featureToggles, ossMigrations, inProcBus, tracingService)
-	if err != nil {
-		return nil, err
-	}
-	tracer := otelTracer()
-	storageBackend, err := sql.ProvideStorageBackend(cfg, sqlStore, tracer, registerer, storageMetrics)
+	storageBackend, err := sql.ProvideStorageBackend(cfg)
 	if err != nil {
 		return nil, err
 	}

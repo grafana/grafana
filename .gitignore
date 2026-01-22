@@ -98,6 +98,7 @@ example-apiserver/
 conf/custom.ini
 conf/operator.ini
 conf/storage.ini
+conf/search.ini
 
 /conf/provisioning/**/*.yaml
 !/conf/provisioning/**/sample.yaml

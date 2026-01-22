@@ -131,8 +131,7 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceSta
 	if err != nil {
 		return nil, err
 	}
-	// Use unified client if reading from unified AND unified client is available
-	if unified && s.searchClient != nil {
+	if unified {
 		client = s.searchClient
 	}
 
@@ -141,8 +140,7 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceSta
 		return nil, err
 	}
 
-	// Only make background call if unified client is available
-	if makeBackgroundCall && s.searchClient != nil {
+	if makeBackgroundCall {
 		// Create background context with timeout but ignore parent cancelation
 		ctxBg := context.WithoutCancel(ctx)
 
@@ -217,9 +215,6 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 
 func (s *searchWrapper) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest,
 	opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
-	if s.searchClient == nil {
-		return nil, fmt.Errorf("unified search client is not available for RebuildIndexes")
-	}
 	return s.searchClient.RebuildIndexes(ctx, in, opts...)
 }
 
