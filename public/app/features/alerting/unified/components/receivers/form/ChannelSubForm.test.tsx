@@ -269,6 +269,7 @@ describe('ChannelSubForm', () => {
 
     const webhookWithVersions: NotifierDTO = {
       ...grafanaAlertNotifiers.webhook,
+      currentVersion: 'v1',
       versions: [
         {
           version: 'v0mimir1',
