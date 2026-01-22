@@ -236,27 +236,17 @@ describe('useWizardNavigation', () => {
     });
   });
 
-  describe('markStepComplete', () => {
-    it('should add step to completed steps', () => {
+  describe('visibleSteps', () => {
+    it('should return steps excluding authType', () => {
       const { result } = setup();
 
-      act(() => {
-        result.current.markStepComplete('connection');
-      });
-
-      expect(result.current.completedSteps).toContain('connection');
-    });
-
-    it('should not duplicate steps in completed steps', () => {
-      const { result } = setup();
-
-      act(() => {
-        result.current.markStepComplete('connection');
-        result.current.markStepComplete('connection');
-      });
-
-      const connectionCount = result.current.completedSteps.filter((s) => s === 'connection').length;
-      expect(connectionCount).toBe(1);
+      expect(result.current.visibleSteps).toHaveLength(4);
+      expect(result.current.visibleSteps.map((s) => s.id)).toEqual([
+        'connection',
+        'bootstrap',
+        'synchronize',
+        'finish',
+      ]);
     });
   });
 });

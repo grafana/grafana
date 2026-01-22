@@ -88,9 +88,9 @@ export function useWizardCancellation({
   const onDiscard = useCallback(async () => {
     if (repoName) {
       await handleRepositoryDeletion(repoName);
+      return; // handleRepositoryDeletion already navigates
     }
-
-    await handlePrevious();
+    handlePrevious();
   }, [repoName, handleRepositoryDeletion, handlePrevious]);
 
   return {

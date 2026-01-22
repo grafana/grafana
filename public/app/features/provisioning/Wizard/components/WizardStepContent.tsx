@@ -14,7 +14,7 @@ export interface WizardStepContentProps {
   activeStep: WizardStep;
   settingsData?: RepositoryViewList;
   repoName: string;
-  githubAppStepRef: RefObject<GitHubAppStepRef>;
+  githubAppStepRef: RefObject<GitHubAppStepRef | null>;
   onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
   onRepositoryDeletion: (name: string) => Promise<void>;
   isCancelling: boolean;

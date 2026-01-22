@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -88,18 +88,25 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   const canSkipSync = Boolean(repoName && !isResourceStatsLoading && shouldSkipSync);
 
   // Navigation hook (must be first since other hooks depend on activeStep and completedSteps)
-  const { activeStep, completedSteps, currentStepConfig, visibleStepIndex, goToNextStep, goToPreviousStep } =
-    useWizardNavigation({
-      initialStep,
-      steps,
-      canSkipSync,
-      setStepStatusInfo,
-      createSyncJob,
-      getValues,
-      repoType,
-      syncTarget,
-      githubAuthType,
-    });
+  const {
+    activeStep,
+    completedSteps,
+    currentStepConfig,
+    visibleSteps,
+    visibleStepIndex,
+    goToNextStep,
+    goToPreviousStep,
+  } = useWizardNavigation({
+    initialStep,
+    steps,
+    canSkipSync,
+    setStepStatusInfo,
+    createSyncJob,
+    getValues,
+    repoType,
+    syncTarget,
+    githubAuthType,
+  });
 
   // Precompute cancel behavior state (used by both cancellation and buttons hooks)
   const isSyncCompleted = activeStep === 'synchronize' && (isStepSuccess || hasStepWarning || hasStepError);
@@ -167,24 +174,24 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     }
   }, [navigate, repoName, settingsData?.items]);
 
-  // Callback after a GH app has been created
-  const handleGitHubAppSubmit = (result: ConnectionCreationResult) => {
-    if (result.success) {
-      setValue('githubApp.connectionName', result.connectionName);
-      setStepStatusInfo({ status: 'success' });
-      goToNextStep();
-    } else {
-      setStepStatusInfo({
-        status: 'error',
-        error: {
-          title: t('provisioning.wizard.github-app-creation-failed', 'Failed to create GitHub App connection'),
-          message: result.error,
-        },
-      });
-    }
-  };
-
-  const visibleSteps = useMemo(() => steps.filter((s) => s.id !== 'authType'), [steps]);
+  const handleGitHubAppSubmit = useCallback(
+    (result: ConnectionCreationResult) => {
+      if (result.success) {
+        setValue('githubApp.connectionName', result.connectionName);
+        setStepStatusInfo({ status: 'success' });
+        goToNextStep();
+      } else {
+        setStepStatusInfo({
+          status: 'error',
+          error: {
+            title: t('provisioning.wizard.github-app-creation-failed', 'Failed to create GitHub App connection'),
+            message: result.error,
+          },
+        });
+      }
+    },
+    [setValue, setStepStatusInfo, goToNextStep]
+  );
 
   return (
     <FormProvider {...methods}>

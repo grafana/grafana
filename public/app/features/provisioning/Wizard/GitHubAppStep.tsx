@@ -22,7 +22,7 @@ interface GitHubAppStepProps {
   onSubmit: (result: ConnectionCreationResult) => void;
 }
 
-export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(function GitHubAppStep(
+export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepProps>(function GitHubAppStep(
   { onSubmit },
   ref
 ) {

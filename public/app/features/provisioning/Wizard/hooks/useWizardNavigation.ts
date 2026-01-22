@@ -25,10 +25,10 @@ export interface UseWizardNavigationReturn {
   completedSteps: WizardStep[];
   currentStepIndex: number;
   currentStepConfig: Step<WizardStep> | undefined;
+  visibleSteps: Array<Step<WizardStep>>;
   visibleStepIndex: number;
   goToNextStep: () => Promise<void>;
   goToPreviousStep: () => void;
-  markStepComplete: (step: WizardStep) => void;
 }
 
 export function useWizardNavigation({
@@ -131,18 +131,14 @@ export function useWizardNavigation({
     setStepStatusInfo,
   ]);
 
-  const markStepComplete = useCallback((step: WizardStep) => {
-    setCompletedSteps((prev) => [...new Set([...prev, step])]);
-  }, []);
-
   return {
     activeStep,
     completedSteps,
     currentStepIndex,
     currentStepConfig,
+    visibleSteps,
     visibleStepIndex,
     goToNextStep,
     goToPreviousStep,
-    markStepComplete,
   };
 }

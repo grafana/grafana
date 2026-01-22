@@ -115,7 +115,16 @@ export function useWizardSubmission({
           setStepStatusInfo({ status: 'success' });
           onSuccess();
         } else {
-          console.error('Saved repository without a name:', rsp);
+          setStepStatusInfo({
+            status: 'error',
+            error: {
+              title: repositoryRequestFailed,
+              message: t(
+                'provisioning.provisioning-wizard.on-submit.error.no-repository-name',
+                'Repository was saved but no name was returned'
+              ),
+            },
+          });
         }
       } catch (error) {
         const formData = getValues();
