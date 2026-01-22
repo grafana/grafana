@@ -52,7 +52,8 @@ export const expectScopesHeadline = (value: string) => expectTextContent(getTree
 export const expectPersistedApplicationsGrafanaNotPresent = () =>
   expectNotInDocument(queryPersistedApplicationsGrafanaSelect);
 export const expectResultApplicationsGrafanaSelected = () => expectChecked(getResultApplicationsGrafanaSelect);
-export const expectResultApplicationsGrafanaPresent = async () =>
+export const expectResultApplicationsGrafanaPresent = () => expectInDocument(getResultApplicationsGrafanaSelect);
+export const expectResultApplicationsGrafanaPresentAsync = async () =>
   expect(await findResultApplicationsGrafanaSelect()).toBeInTheDocument();
 export const expectResultApplicationsGrafanaNotPresent = () =>
   expectNotInDocument(queryResultApplicationsGrafanaSelect);

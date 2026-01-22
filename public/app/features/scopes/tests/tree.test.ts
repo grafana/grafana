@@ -34,6 +34,7 @@ import {
   expectResultApplicationsCloudPresent,
   expectResultApplicationsGrafanaNotPresent,
   expectResultApplicationsGrafanaPresent,
+  expectResultApplicationsGrafanaPresentAsync,
   expectResultApplicationsGrafanaSelected,
   expectResultApplicationsMimirNotPresent,
   expectResultApplicationsMimirPresent,
@@ -183,7 +184,7 @@ describe('Tree', () => {
 
     await searchScopes('Grafana');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(5);
-    await expectResultApplicationsGrafanaPresent();
+    await expectResultApplicationsGrafanaPresentAsync();
     expectResultApplicationsCloudNotPresent();
   });
 
@@ -209,7 +210,7 @@ describe('Tree', () => {
     await openSelector();
 
     // Verify all sibling nodes (Grafana, Mimir, Cloud) are visible
-    await expectResultApplicationsGrafanaPresent();
+    expectResultApplicationsGrafanaPresent();
     expectResultApplicationsMimirPresent();
     expectResultApplicationsCloudPresent();
 
@@ -244,7 +245,7 @@ describe('Tree', () => {
     await searchScopes('grafana');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectPersistedApplicationsMimirPresent();
-    await expectResultApplicationsGrafanaPresent();
+    await expectResultApplicationsGrafanaPresentAsync();
   });
 
   it('Does not persist a retrieved scope', async () => {
@@ -267,7 +268,7 @@ describe('Tree', () => {
     expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
     expectResultApplicationsMimirPresent();
     // Wait for async operations to complete and nodes to be rendered after clearing search
-    await expectResultApplicationsGrafanaPresent();
+    await expectResultApplicationsGrafanaPresentAsync();
   });
 
   it('Persists nodes from search', async () => {
@@ -285,7 +286,7 @@ describe('Tree', () => {
     expect(fetchNodesSpy).toHaveBeenCalledTimes(5);
     expectResultApplicationsMimirPresent();
     // Wait for async operations to complete and nodes to be rendered after clearing search
-    await expectResultApplicationsGrafanaPresent();
+    await expectResultApplicationsGrafanaPresentAsync();
   });
 
   it('Selects a persisted scope', async () => {
@@ -464,8 +465,6 @@ describe('Tree', () => {
       // Click outside search to lose focus
       const outsideElement = screen.getByText('Select scopes');
       await user.click(outsideElement);
-      // Advance timers to ensure setTimeout(0) in blur handler completes
-      await jest.runOnlyPendingTimersAsync();
 
       // Try to navigate with arrow keys
       await user.keyboard('{ArrowDown}');
