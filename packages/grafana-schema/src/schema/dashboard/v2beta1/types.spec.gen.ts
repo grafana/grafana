@@ -728,19 +728,21 @@ export const defaultElementReference = (): ElementReference => ({
 });
 
 export interface RepeatOptions {
-	mode: "variable";
+	mode: RepeatMode;
 	value: string;
 	direction?: "h" | "v";
 	maxPerRow?: number;
 }
 
 export const defaultRepeatOptions = (): RepeatOptions => ({
-	mode: RepeatMode,
+	mode: "variable",
 	value: "",
 });
 
 // other repeat modes will be added in the future: label, frame
-export const RepeatMode = "variable";
+export type RepeatMode = "variable" | "splitByLabel";
+
+export const defaultRepeatMode = (): RepeatMode => ("variable");
 
 export interface RowsLayoutKind {
 	kind: "RowsLayout";
@@ -865,12 +867,12 @@ export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRende
 });
 
 export interface RowRepeatOptions {
-	mode: "variable";
+	mode: RepeatMode;
 	value: string;
 }
 
 export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
-	mode: RepeatMode,
+	mode: "variable",
 	value: "",
 });
 
@@ -923,12 +925,12 @@ export const defaultAutoGridLayoutItemSpec = (): AutoGridLayoutItemSpec => ({
 });
 
 export interface AutoGridRepeatOptions {
-	mode: "variable";
+	mode: RepeatMode;
 	value: string;
 }
 
 export const defaultAutoGridRepeatOptions = (): AutoGridRepeatOptions => ({
-	mode: RepeatMode,
+	mode: "variable",
 	value: "",
 });
 
@@ -972,12 +974,12 @@ export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
 });
 
 export interface TabRepeatOptions {
-	mode: "variable";
+	mode: RepeatMode;
 	value: string;
 }
 
 export const defaultTabRepeatOptions = (): TabRepeatOptions => ({
-	mode: RepeatMode,
+	mode: "variable",
 	value: "",
 });
 

@@ -1,4 +1,4 @@
-import { getNextRefId } from '@grafana/data';
+import { getNextRefId, PanelData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   SceneDataProvider,
@@ -46,7 +46,11 @@ import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModel
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
 
-export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
+export function buildVizPanel(
+  panel: PanelKind,
+  id?: number,
+  dataProcessor?: (queryRunner: SceneQueryRunner, data: PanelData) => PanelData
+): VizPanel {
   const titleItems: SceneObject[] = [];
 
   titleItems.push(
@@ -83,7 +87,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     hoverHeader: !panel.spec.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
     seriesLimit: config.panelSeriesLimit,
-    $data: createPanelDataProvider(panel),
+    $data: createPanelDataProvider(panel, dataProcessor),
     titleItems,
     headerActions: new VizPanelHeaderActions({
       hideGroupByAction: !config.featureToggles.panelGroupBy,
@@ -165,7 +169,10 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   return new VizPanel(vizPanelState);
 }
 
-export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider | undefined {
+export function createPanelDataProvider(
+  panelKind: PanelKind,
+  dataProcessor?: (queryRunner: SceneQueryRunner, data: PanelData) => PanelData
+): SceneDataProvider | undefined {
   const panel = panelKind.spec;
 
   const targets =
@@ -196,6 +203,7 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
     maxDataPointsFromWidth: true,
     cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
     queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
+    dataProcessor: dataProcessor,
     minInterval: panel.data.spec.queryOptions.interval ?? undefined,
     dataLayerFilter: {
       panelId: panel.id,
