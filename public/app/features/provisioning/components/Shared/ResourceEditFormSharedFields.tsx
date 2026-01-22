@@ -17,7 +17,7 @@ import { generateNewBranchName } from '../utils/newBranchName';
 
 interface DashboardEditFormSharedFieldsProps {
   resourceType: 'dashboard' | 'folder';
-  workflowOptions: Array<{ label: string; value: string }>;
+  canPushToConfiguredBranch: boolean;
   isNew?: boolean;
   readOnly?: boolean;
   workflow?: WorkflowOption;
@@ -26,7 +26,7 @@ interface DashboardEditFormSharedFieldsProps {
 }
 
 export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
-  ({ readOnly = false, workflow, workflowOptions, repository, isNew, resourceType, hidePath = false }) => {
+  ({ readOnly = false, workflow, canPushToConfiguredBranch, repository, isNew, resourceType, hidePath = false }) => {
     const {
       control,
       register,
@@ -35,6 +35,17 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       formState: { errors },
     } = useFormContext();
 
+    // always display push to existing branch and create new branch options, but disable configured branch if not allowed
+    const branchSelectionOptions: Array<{ label: string; value: 'write' | 'branch' }> = [
+      {
+        label: t('provisioning.workflow-options-label.push-to-existing-branch', 'Push to an existing branch'),
+        value: 'write',
+      },
+      {
+        label: t('provisioning.workflow-options-label.push-to-a-new-branch', 'Push to a new branch'),
+        value: 'branch',
+      },
+    ];
     const {
       data: branchData,
       isLoading: branchLoading,
@@ -52,6 +63,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       prBranch,
       lastBranch,
       branchData,
+      canPushToConfiguredBranch,
     });
 
     const newBranchDefaultName = useMemo(() => generateNewBranchName(resourceType), [resourceType]);
@@ -115,14 +127,16 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                   <RadioButtonGroup
                     id="provisioned-resource-form-workflow"
                     {...field}
-                    options={workflowOptions}
+                    options={branchSelectionOptions}
                     onChange={(nextWorkflow) => {
                       onChange(nextWorkflow);
                       clearErrors('ref');
                       if (nextWorkflow === 'branch') {
                         setValue('ref', newBranchDefaultName);
                       } else if (nextWorkflow === 'write' && repository?.branch) {
-                        setValue('ref', repository.branch);
+                        // when allow to push to configured branch, set configured branch as default selection
+                        // when not allowed, leave it empty for user to select
+                        setValue('ref', canPushToConfiguredBranch ? repository.branch : '');
                       }
                     }}
                   />

@@ -18,7 +18,7 @@ import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidati
 import { StatusInfo } from '../../types';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { getDefaultWorkflow, getWorkflowOptions } from '../defaults';
+import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../defaults';
 import { generateTimestamp } from '../utils/timestamp';
 
 import { DeleteJobSpec, useBulkActionJob } from './useBulkActionJob';
@@ -27,10 +27,10 @@ import { BulkActionFormData, BulkActionProvisionResourceProps } from './utils';
 interface FormProps extends BulkActionProvisionResourceProps {
   initialValues: BulkActionFormData;
   repository: RepositoryView;
-  workflowOptions: Array<{ label: string; value: string }>;
+  canPushToConfiguredBranch: boolean;
 }
 
-function FormContent({ initialValues, selectedItems, repository, workflowOptions, onDismiss }: FormProps) {
+function FormContent({ initialValues, selectedItems, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
   const [jobError, setJobError] = useState<string | StatusInfo>();
@@ -114,8 +114,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
                 resourceType="folder"
                 isNew={false}
                 workflow={workflow}
-                workflowOptions={workflowOptions}
-                repository={repository}
+                canPushToConfiguredBranch={canPushToConfiguredBranch}
                 hidePath
               />
               <Stack gap={2}>
@@ -149,7 +148,7 @@ export function BulkDeleteProvisionedResource({
   const { repository, isReadOnlyRepo } = useGetResourceRepositoryView({
     folderName: isRootPage ? selectedItemsRepoUID : folderUid,
   });
-  const workflowOptions = getWorkflowOptions(repository);
+  const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const timestamp = generateTimestamp();
 
   const initialValues = {
@@ -168,7 +167,7 @@ export function BulkDeleteProvisionedResource({
       onDismiss={onDismiss}
       initialValues={initialValues}
       repository={repository}
-      workflowOptions={workflowOptions}
+      canPushToConfiguredBranch={canPushToConfiguredBranch}
     />
   );
 }

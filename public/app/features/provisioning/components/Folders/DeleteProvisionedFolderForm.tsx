@@ -24,7 +24,7 @@ import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFi
 interface FormProps extends DeleteProvisionedFolderFormProps {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
-  workflowOptions: Array<{ label: string; value: string }>;
+  canPushToConfiguredBranch: boolean;
   folder?: Folder;
 }
 
@@ -33,7 +33,7 @@ interface DeleteProvisionedFolderFormProps {
   onDismiss?: () => void;
 }
 
-function FormContent({ initialValues, parentFolder, repository, workflowOptions, folder, onDismiss }: FormProps) {
+function FormContent({ initialValues, parentFolder, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
   const resourceId = parentFolder?.uid || '';
   const { createBulkJob, isLoading } = useBulkActionJob();
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
@@ -182,7 +182,7 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
                 resourceType="folder"
                 isNew={false}
                 workflow={workflow}
-                workflowOptions={workflowOptions}
+                canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
               />
 
@@ -205,7 +205,7 @@ function FormContent({ initialValues, parentFolder, repository, workflowOptions,
 }
 
 export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteProvisionedFolderFormProps) {
-  const { workflowOptions, repository, folder, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
+  const { canPushToConfiguredBranch, repository, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
     title: parentFolder?.title,
   });
@@ -229,8 +229,7 @@ export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteP
       onDismiss={onDismiss}
       initialValues={initialValues}
       repository={repository}
-      workflowOptions={workflowOptions}
-      folder={folder}
+      canPushToConfiguredBranch={canPushToConfiguredBranch}
     />
   );
 }
