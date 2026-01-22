@@ -11,6 +11,7 @@ import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alertin
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarning';
+import { InhibitionRulesAlert } from './components/InhibitionRulesAlert';
 import { TimeIntervalsTable } from './components/mute-timings/MuteTimingsTable';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
@@ -49,6 +50,7 @@ const NotificationPoliciesTabs = () => {
   return (
     <>
       <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
+      <InhibitionRulesAlert alertmanagerSourceName={selectedAlertmanager} />
       <TabsBar>
         {policiesSupported && canSeePoliciesTab && (
           <Tab
