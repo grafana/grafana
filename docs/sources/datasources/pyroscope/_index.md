@@ -122,3 +122,7 @@ datasources:
     jsonData:
       minStep: '15s'
 ```
+
+## Troubleshoot
+
+If you encounter issues when configuring or using the Pyroscope data source, refer to the [Troubleshooting guide](./troubleshooting/) for solutions to common problems.
