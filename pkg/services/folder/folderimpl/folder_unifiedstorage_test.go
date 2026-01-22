@@ -97,7 +97,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	}
 
 	notFooFolder := &folder.Folder{
-		ID:        fooFolder.ID + 123456,
+		ID:        543,
 		Title:     "Foo Folder",
 		OrgID:     orgID,
 		UID:       "not-foo",
