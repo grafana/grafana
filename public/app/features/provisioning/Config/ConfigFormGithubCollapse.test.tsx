@@ -68,6 +68,7 @@ describe('ConfigFormGithubCollapse', () => {
 
     expect(renderResult.container).toBeEmptyDOMElement();
     expect(screen.queryByText('GitHub features')).not.toBeInTheDocument();
+    jest.spyOn(console, 'warn').mockRestore();
   });
 
   it('renders preview checkbox when image rendering is allowed', () => {
