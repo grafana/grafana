@@ -1289,6 +1289,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardValidatorApp",
+        "resourceVersion": "1768995060416",
+        "creationTimestamp": "2026-01-21T11:31:00Z"
+      },
+      "spec": {
+        "description": "Enables dashboard validator app to run compatibility checks between a dashboard and data source",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashgpt",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2023-08-30T20:22:05Z"
