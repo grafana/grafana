@@ -25,10 +25,10 @@ cards:
       height: 24
       href: ./thresholds/
       title: Thresholds
-    - description: Configure knowledge graph SLOs with entity-centric monitoring and RCA workbench integration for root cause analysis.
+    - description: Define custom Prometheus recording and alerting rules that are evaluated against your metrics data.
       height: 24
-      href: ./knowledge-graph-slo/
-      title: Knowledge graph SLOs
+      href: ./prometheus-rules/
+      title: Prometheus rules
   title_class: pt-0 lh-1
 description: Manage Grafana Cloud Knowledge Graph using Terraform
 hero:
