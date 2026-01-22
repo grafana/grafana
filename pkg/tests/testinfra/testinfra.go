@@ -70,35 +70,24 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 	signingKeysUrl := grpcServerAuthSection.Key("signing_keys_url")
 	signingKeysUrl.SetValue(strings.Replace(signingKeysUrl.String(), "<placeholder>", listener.Addr().String(), 1))
 
-	// Potentially allocate real gRPC ports for unified storage and search
+	// Potentially allocate a real gRPC port for unified storage
 	runstore := false
-	//var storageAddr, searchAddr string
-	var storageAddr string
 	unistore, _ := cfg.Raw.GetSection("grafana-apiserver")
 	if unistore != nil &&
 		unistore.Key("storage_type").MustString("") == string(options.StorageTypeUnifiedGrpc) &&
 		unistore.Key("address").String() == "" {
-		// Allocate address for storage server
+		// Allocate a new address
 		listener2, err := net.Listen("tcp", "127.0.0.1:0")
 		require.NoError(t, err)
-		storageAddr = listener2.Addr().String()
+		cfg.GRPCServer.Network = "tcp"
+		cfg.GRPCServer.Address = listener2.Addr().String()
+		cfg.GRPCServer.TLSConfig = nil
+		_, err = unistore.NewKey("address", cfg.GRPCServer.Address)
+		require.NoError(t, err)
+
+		// release the one we just discovered -- it will be used by the services on startup
 		err = listener2.Close()
 		require.NoError(t, err)
-
-		//// Allocate address for search server
-		//listener3, err := net.Listen("tcp", "127.0.0.1:0")
-		//require.NoError(t, err)
-		//searchAddr = listener3.Addr().String()
-		//err = listener3.Close()
-		//require.NoError(t, err)
-
-		cfg.GRPCServer.Network = "tcp"
-		cfg.GRPCServer.Address = storageAddr
-		cfg.GRPCServer.TLSConfig = nil
-		_, err = unistore.NewKey("address", storageAddr)
-		require.NoError(t, err)
-		//_, err = unistore.NewKey("search_server_address", searchAddr)
-		//require.NoError(t, err)
 		runstore = true
 	}
 
@@ -144,29 +133,16 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 
 	// UnifiedStorageOverGRPC
 	var storage sql.UnifiedGrpcService
-	var searchSvc sql.UnifiedGrpcService
 	if runstore {
-		storage, err := sql.ProvideStorageService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil)
-		require.NoError(t, err)
-		search, err := sql.ProvideSearchService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, kv.Config{}, nil, nil)
+		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
+			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil)
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
 		require.NoError(t, err)
-		err = search.StartAsync(ctx)
-		require.NoError(t, err)
 		err = storage.AwaitRunning(ctx)
 		require.NoError(t, err)
-		err = search.AwaitRunning(ctx)
-		require.NoError(t, err)
 		t.Logf("Unified storage running on %s", storage.GetAddress())
-		//err = searchSvc.StartAsync(ctx)
-		//require.NoError(t, err)
-		//err = searchSvc.AwaitRunning(ctx)
-		//require.NoError(t, err)
-		//t.Logf("Search server running on %s", searchSvc.GetAddress())
 	}
 
 	go func() {
@@ -181,9 +157,6 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		}
 		if storage != nil {
 			storage.StopAsync()
-		}
-		if searchSvc != nil {
-			searchSvc.StopAsync()
 		}
 	})
 
