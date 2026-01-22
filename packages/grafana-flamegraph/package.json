@@ -81,6 +81,7 @@
     "@types/lodash": "4.17.20",
     "@types/node": "24.10.1",
     "@types/react": "18.3.18",
+    "@types/react-table": "^7.7.20",
     "@types/react-virtualized-auto-sizer": "1.0.8",
     "@types/tinycolor2": "1.4.6",
     "babel-jest": "29.7.0",
@@ -99,6 +100,7 @@
   "peerDependencies": {
     "@grafana/assistant": "^0.1.1",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "react-table": "^7.8.0"
   }
 }
