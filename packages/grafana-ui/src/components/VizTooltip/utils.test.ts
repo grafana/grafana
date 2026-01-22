@@ -1,7 +1,7 @@
 import { DataFrame, Field, FieldType } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
-import { calculateTooltipPosition, getContentItems, getDisplayValueString } from './utils';
+import { calculateTooltipPosition, getContentItems, getTooltipDisplayValue } from './utils';
 
 describe('utils', () => {
   describe('calculateTooltipPosition', () => {
@@ -377,17 +377,17 @@ describe('utils', () => {
         numeric: typeof value === 'number' ? value : NaN,
         color: '#000',
       }),
-    } as unknown as Field;
+    } satisfies Field;
 
     it('returns empty string for empty arrays', () => {
-      const result = getDisplayValueString([], mockField);
+      const result = getTooltipDisplayValue([], mockField);
       expect(result.text).toBe('');
       expect(result.numeric).toBeNaN();
     });
 
     it('returns JSON.stringify for non-empty arrays', () => {
       const value = [1, 2, 3];
-      const result = getDisplayValueString(value, mockField);
+      const result = getTooltipDisplayValue(value, mockField);
       expect(result.text).toBe('[1,2,3]');
       expect(result.numeric).toBeNaN();
     });
@@ -397,20 +397,20 @@ describe('utils', () => {
         { key: 'foo', value: 'bar' },
         { key: 'baz', value: 'qux' },
       ];
-      const result = getDisplayValueString(value, mockField);
+      const result = getTooltipDisplayValue(value, mockField);
       expect(result.text).toBe('[{"key":"foo","value":"bar"},{"key":"baz","value":"qux"}]');
       expect(result.numeric).toBeNaN();
     });
 
     it('returns JSON.stringify for objects', () => {
       const value = { refType: 'EXTERNAL', spanID: '123', tags: [{ key: 'service', value: 'api' }] };
-      const result = getDisplayValueString(value, mockField);
+      const result = getTooltipDisplayValue(value, mockField);
       expect(result.text).toBe('{"refType":"EXTERNAL","spanID":"123","tags":[{"key":"service","value":"api"}]}');
       expect(result.numeric).toBeNaN();
     });
 
     it('uses field.display for standard string values', () => {
-      const result = getDisplayValueString('test-string', mockField);
+      const result = getTooltipDisplayValue('test-string', mockField);
       expect(result.text).toBe('test-string');
       expect(result.numeric).toBeNaN();
       expect(result.color).toBe('#000');
@@ -425,9 +425,9 @@ describe('utils', () => {
           numeric: Number(value),
           color: '#00f',
         }),
-      } as unknown as Field;
+      } satisfies Field;
 
-      const result = getDisplayValueString(42, numericField);
+      const result = getTooltipDisplayValue(42, numericField);
       expect(result.text).toBe('42');
       expect(result.numeric).toBe(42);
       expect(result.color).toBe('#00f');

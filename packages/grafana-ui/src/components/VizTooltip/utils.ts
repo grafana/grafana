@@ -74,13 +74,23 @@ const numberCmp = (a: VizTooltipItem, b: VizTooltipItem) => a.numeric! - b.numer
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 const stringCmp = (a: VizTooltipItem, b: VizTooltipItem) => collator.compare(`${a.value}`, `${b.value}`);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const getDisplayValueString = (value: any, field: Field): { text: string; numeric: number; color?: string } => {
-  if (Array.isArray(value) && value.length === 0) {
-    return { text: '', numeric: NaN };
+export const getTooltipDisplayValue = (
+  value: unknown,
+  field: Field
+): {
+  text: string;
+  numeric: number;
+  color?: string;
+} => {
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return { text: '', numeric: NaN };
+    }
+
+    return { text: JSON.stringify(value), numeric: NaN };
   }
 
-  if ((Array.isArray(value) && value.length > 0) || (value && typeof value === 'object')) {
+  if (value && typeof value === 'object') {
     return { text: JSON.stringify(value), numeric: NaN };
   }
 
@@ -137,7 +147,7 @@ export const getContentItems = (
       continue;
     }
 
-    const display = getDisplayValueString(v, field);
+    const display = getTooltipDisplayValue(v, field);
 
     // sort NaN and non-numeric to bottom (regardless of sort order)
     const numeric = !Number.isNaN(display.numeric)
@@ -164,7 +174,7 @@ export const getContentItems = (
     if (!field.config.custom?.hideFrom?.tooltip) {
       const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
       const rawValue = field.values[dataIdxs[0]!];
-      const display = getDisplayValueString(rawValue, field);
+      const display = getTooltipDisplayValue(rawValue, field);
 
       rows.push({
         label: field.state?.displayName ?? field.name,
