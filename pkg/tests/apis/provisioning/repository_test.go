@@ -11,8 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-github/v70/github"
+	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/pkg/extensions"
 	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1375,6 +1378,28 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 	t.Cleanup(func() {
 		_ = helper.Connections.Resource.Delete(ctx, "test-connection-field-errors-cleared", metav1.DeleteOptions{})
 	})
+
+	// Set up GitHub mocks to support repository branch validation
+	// The connection is already set up by CreateGithubConnection, but we need to ensure
+	// the mocks support branch validation for the repository health check
+	var appID int64 = 11111
+	appSlug := "appSlug"
+	var installationID int64 = 22222
+	connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+	connectionFactory.Client = ghmock.NewMockedHTTPClient(
+		ghmock.WithRequestMatch(
+			ghmock.GetApp, github.App{
+				ID:   &appID,
+				Slug: &appSlug,
+			},
+		),
+		ghmock.WithRequestMatch(
+			ghmock.GetAppInstallationsByInstallationId, github.Installation{
+				ID: &installationID,
+			},
+		),
+	)
+	helper.SetGithubConnectionFactory(connectionFactory)
 
 	t.Run("repository fieldErrors are cleared when repository becomes healthy", func(t *testing.T) {
 		// Create a repository with an invalid branch that will cause fieldErrors
