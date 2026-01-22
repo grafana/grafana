@@ -4550,6 +4550,14 @@
     "actions": {
       "open-settings": "Ayarlar"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "\"Panel Ekle\" widget'ını kapat",
       "tooltip-close-widget": "Widget'ı kapat"
@@ -4932,12 +4940,14 @@
       "add-visualization-body": "Bir veri kaynağı seçin ve ardından grafikler, istatistikler ve tablolarla verilerinizi sorgulayın ve görselleştirin veya listeler, markdown'lar ve diğer widget'lar oluşturun.",
       "add-visualization-button": "Görselleştirme ekle",
       "add-visualization-header": "Bir görselleştirme ekleyerek yeni panonuzu başlatın",
+      "description": "",
       "import-a-dashboard-body": "Panoları dosyalardan veya <2>grafana.com</2>'dan içe aktarın.",
       "import-a-dashboard-header": "Bir panoyu içe aktar",
       "import-dashboard-button": "Panoyu içe aktar",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5444,6 +5454,10 @@
       "loading-configuration": "Yapılandırma yükleniyor"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""

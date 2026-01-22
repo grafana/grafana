@@ -439,7 +439,7 @@ export const browseDashboardsAPI = createApi({
           }
 
           if (isV1DashboardCommand(cmd)) {
-            const rsp = await getDashboardAPI().saveDashboard(cmd);
+            const rsp = await getDashboardAPI('v1').saveDashboard(cmd);
             return { data: rsp };
           }
           throw new Error('Invalid dashboard version');

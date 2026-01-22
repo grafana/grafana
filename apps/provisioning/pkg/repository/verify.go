@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -15,78 +13,53 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// RepositoryLister interface for listing repositories
-type RepositoryLister interface {
-	List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error)
-}
-
 // ErrRepositoryDuplicatePath is returned when a repository has the same path as another
 var ErrRepositoryDuplicatePath = fmt.Errorf("duplicate repository path")
 
 // ErrRepositoryParentFolderConflict is returned when a repository path conflicts with a parent folder
 var ErrRepositoryParentFolderConflict = fmt.Errorf("repository path conflicts with existing repository")
 
-// GetRepositoriesInNamespace retrieves all repositories in a given namespace
-func GetRepositoriesInNamespace(ctx context.Context, store RepositoryLister) ([]provisioning.Repository, error) {
-	var allRepositories []provisioning.Repository
-	continueToken := ""
-
-	for {
-		obj, err := store.List(ctx, &internalversion.ListOptions{
-			Limit:    100,
-			Continue: continueToken,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		repositoryList, ok := obj.(*provisioning.RepositoryList)
-		if !ok {
-			return nil, fmt.Errorf("expected repository list")
-		}
-
-		allRepositories = append(allRepositories, repositoryList.Items...)
-
-		continueToken = repositoryList.GetContinue()
-		if continueToken == "" {
-			break
-		}
-	}
-
-	return allRepositories, nil
+type VerifyAgainstExistingRepositoriesValidator struct {
+	lister RepositoryLister
 }
 
-// VerifyAgainstExisting validates a repository configuration against existing repositories.
-// It checks for:
-// - Instance sync repositories can only be created if no other repositories exist
-// - Folder sync repositories cannot be created if an instance repository exists
-// - Git repositories cannot have duplicate or conflicting paths
-// - Maximum of 10 repositories per namespace
-func VerifyAgainstExisting(ctx context.Context, store RepositoryLister, cfg *provisioning.Repository) *field.Error {
+func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Validator {
+	return &VerifyAgainstExistingRepositoriesValidator{lister: lister}
+}
+
+// VerifyAgainstExistingRepositoriesValidator verifies repository configurations for conflicts within a namespace.
+//
+// This validator enforces the following rules:
+// - You can only create an instance sync repository if no other repositories exist in the namespace.
+// - You cannot create a folder sync repository if an instance repository already exists in the namespace.
+// - Git repositories must not have duplicate or overlapping paths with existing repositories.
+// - The total number of repositories in a single namespace cannot exceed 10.
+func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
 	if err != nil {
-		return &field.Error{Type: field.ErrorTypeInternal, Detail: err.Error()}
+		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
 	}
-	all, err := GetRepositoriesInNamespace(request.WithNamespace(ctx, cfg.Namespace), store)
+	ctx = request.WithNamespace(ctx, cfg.Namespace)
+
+	all, err := v.lister.List(ctx)
 	if err != nil {
-		return field.Forbidden(field.NewPath("spec"),
-			"Unable to verify root target: "+err.Error())
+		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
 	}
 
 	if cfg.Spec.Sync.Target == provisioning.SyncTargetTypeInstance {
 		// Instance sync can only be created if NO other repositories exist
 		for _, v := range all {
 			if v.Name != cfg.Name {
-				return field.Forbidden(field.NewPath("spec", "sync", "target"),
-					"Instance repository can only be created when no other repositories exist. Found: "+v.Name)
+				return field.ErrorList{field.Forbidden(field.NewPath("spec", "sync", "target"),
+					"Instance repository can only be created when no other repositories exist. Found: "+v.Name)}
 			}
 		}
 	} else {
 		// Folder sync cannot be created if an instance repository exists
 		for _, v := range all {
 			if v.Spec.Sync.Target == provisioning.SyncTargetTypeInstance && v.Name != cfg.Name {
-				return field.Forbidden(field.NewPath("spec", "sync", "target"),
-					"Cannot create folder repository when instance repository exists: "+v.Name)
+				return field.ErrorList{field.Forbidden(field.NewPath("spec", "sync", "target"),
+					"Cannot create folder repository when instance repository exists: "+v.Name)}
 			}
 		}
 	}
@@ -100,20 +73,20 @@ func VerifyAgainstExisting(ctx context.Context, store RepositoryLister, cfg *pro
 			}
 			if v.URL() == cfg.URL() {
 				if v.Path() == cfg.Path() {
-					return field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"),
+					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"),
 						cfg.Path(),
-						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))
+						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))}
 				}
 
 				relPath, err := filepath.Rel(v.Path(), cfg.Path())
 				if err != nil {
-					return field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(), "failed to evaluate path: "+err.Error())
+					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(), "failed to evaluate path: "+err.Error())}
 				}
 				// https://pkg.go.dev/path/filepath#Rel
 				// Rel will return "../" if the relative paths are not related
 				if !strings.HasPrefix(relPath, "../") {
-					return field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(),
-						fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))
+					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(),
+						fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))}
 				}
 			}
 		}
@@ -126,9 +99,10 @@ func VerifyAgainstExisting(ctx context.Context, store RepositoryLister, cfg *pro
 			count++
 		}
 	}
+
 	if count >= 10 {
-		return field.Forbidden(field.NewPath("spec"),
-			"Maximum number of 10 repositories reached")
+		return field.ErrorList{field.Forbidden(field.NewPath("spec"),
+			"Maximum number of 10 repositories reached")}
 	}
 
 	return nil

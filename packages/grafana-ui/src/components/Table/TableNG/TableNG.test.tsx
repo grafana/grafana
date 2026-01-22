@@ -14,7 +14,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
-import { PanelContext, PanelContextProvider } from '../../../components/PanelChrome';
+import { PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
@@ -308,8 +308,10 @@ describe('TableNG', () => {
   let user: ReturnType<typeof userEvent.setup>;
   let origResizeObserver = global.ResizeObserver;
   let origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+  let jestScrollIntoView = jest.fn();
 
   beforeEach(() => {
+    jestScrollIntoView = jest.fn();
     user = userEvent.setup();
     origResizeObserver = global.ResizeObserver;
     origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
@@ -331,12 +333,32 @@ describe('TableNG', () => {
       }
     };
 
-    window.HTMLElement.prototype.scrollIntoView = jest.fn();
+    window.HTMLElement.prototype.scrollIntoView = jestScrollIntoView;
   });
 
   afterEach(() => {
     global.ResizeObserver = origResizeObserver;
     window.HTMLElement.prototype.scrollIntoView = origScrollIntoView;
+  });
+
+  describe('initialRowIndex', () => {
+    it('should not scroll by default', async () => {
+      render(<TableNG enableVirtualization={true} data={createSortingTestDataFrame()} width={100} height={100} />);
+      expect(jestScrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it('initialRowIndex should scroll', async () => {
+      render(
+        <TableNG
+          initialRowIndex={2}
+          enableVirtualization={true}
+          data={createSortingTestDataFrame()}
+          width={100}
+          height={100}
+        />
+      );
+      expect(jestScrollIntoView).toHaveBeenCalled();
+    });
   });
 
   describe('Basic TableNG rendering', () => {
