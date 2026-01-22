@@ -85,6 +85,11 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
     locationService.push(parentUrl);
   };
 
+  const handleManageOwnersDrawer = () => {
+    reportInteraction('grafana_manage_dashboards_manage_owners_opened');
+    setShowManageOwnersDrawer(true);
+  };
+
   const showMoveModal = () => {
     appEvents.publish(
       new ShowModalReactEvent({
@@ -139,7 +144,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
       {canViewPermissions && !isProvisionedFolder && (
         <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />
       )}
-      {showManageOwners && <MenuItem onClick={() => setShowManageOwnersDrawer(true)} label={manageOwnersLabel} />}
+      {showManageOwners && <MenuItem onClick={handleManageOwnersDrawer} label={manageOwnersLabel} />}
       {canMoveFolder && !isReadOnlyRepo && (
         <MenuItem
           onClick={isProvisionedFolder ? handleShowMoveProvisionedFolderDrawer : showMoveModal}
