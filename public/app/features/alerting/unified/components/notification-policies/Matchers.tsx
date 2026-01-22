@@ -26,7 +26,6 @@ const Matchers: FC<MatchersProps> = ({ matchers, formatter = 'default' }) => {
       {firstFew.map((matcher) => (
         <MatcherBadge key={uniqueId()} matcher={matcher} formatter={formatter} />
       ))}
-      {/* TODO hover state to show all matchers we're not showing */}
       {hasMoreMatchers && (
         <PopupCard
           arrow
