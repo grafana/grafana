@@ -25,11 +25,16 @@ export function useCreateOrUpdateConnection(name?: string) {
         secure,
       };
 
+      // First validate with dryRun - unwrap will throw on validation errors
       if (name) {
-        return update({
-          name,
-          connection,
-        });
+        await update({ name, connection, dryRun: 'true' }).unwrap();
+      } else {
+        await create({ connection, dryRun: 'true' }).unwrap();
+      }
+
+      // If validation passes, proceed with actual create/update
+      if (name) {
+        return update({ name, connection });
       }
 
       return create({ connection });

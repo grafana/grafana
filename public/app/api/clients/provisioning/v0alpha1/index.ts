@@ -253,14 +253,17 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       },
     },
     createConnection: {
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+      onQueryStarted: async (arg, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
-          dispatch(
-            notifyApp(
-              createSuccessNotification(t('provisioning.connection-form.alert-connection-saved', 'Connection saved'))
-            )
-          );
+          // Only show success notification for actual saves, not dryRun validation
+          if (!arg.dryRun) {
+            dispatch(
+              notifyApp(
+                createSuccessNotification(t('provisioning.connection-form.alert-connection-saved', 'Connection saved'))
+              )
+            );
+          }
         } catch (e) {
           handleProvisioningFormError(
             e,
@@ -271,16 +274,19 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       },
     },
     replaceConnection: {
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+      onQueryStarted: async (arg, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
-          dispatch(
-            notifyApp(
-              createSuccessNotification(
-                t('provisioning.connection-form.alert-connection-updated', 'Connection updated')
+          // Only show success notification for actual saves, not dryRun validation
+          if (!arg.dryRun) {
+            dispatch(
+              notifyApp(
+                createSuccessNotification(
+                  t('provisioning.connection-form.alert-connection-updated', 'Connection updated')
+                )
               )
-            )
-          );
+            );
+          }
         } catch (e) {
           handleProvisioningFormError(
             e,
