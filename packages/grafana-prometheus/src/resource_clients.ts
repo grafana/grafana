@@ -379,7 +379,6 @@ export function processSeries(
   const labelKeys: Set<string> = new Set();
   const labelValues: Set<string> = new Set();
 
-  // Filter series if the datasource doesn't have match[] API support
   let filteredSeries = series;
   if (!hasLabelsMatchAPISupport) {
     // The datasource doesn't have match[] parameter support.
