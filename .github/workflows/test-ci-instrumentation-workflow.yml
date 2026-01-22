@@ -71,7 +71,7 @@ jobs:
           STEP_NAME: Build Grafana
           STEP_NUMBER: 8
         run: |
-          ./go-cache-plugin serve --plugin 5930 --http=localhost:5970 --modproxy --otel-collector=https://otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp &
+          ./go-cache-plugin serve --plugin 5930 --http=localhost:5970 --modproxy --otel-collector=otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp &
 
           echo $! > go-cache-plugin.pid
 
@@ -92,7 +92,7 @@ jobs:
           STEP_NAME: Build Grafana
           STEP_NUMBER: 8
         run: |
-          GOPROXY=http://localhost:5970/mod  GOCACHEPROG="./go-cache-plugin connect 5930 --otel-collector=https://otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp" make build-go
+          GOPROXY=http://localhost:5970/mod  GOCACHEPROG="./go-cache-plugin connect 5930 --otel-collector=otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp" make build-go
 
       - name: Cleanup
         run: |
