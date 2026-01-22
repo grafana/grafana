@@ -124,7 +124,7 @@ function generateMarkdown(mainCoverage, prCoverage) {
     })
     .join('\n');
 
-  const overallStatus = overallPass ? '✅ Pass' : '❌ Fail';
+  const overallStatus = overallPass ? '✅ Passed' : '❌ Failed';
 
   return `## Test Coverage Checks ${overallStatus} for ${teamName}
 
@@ -135,12 +135,6 @@ ${tableRows}
 **Run locally:** 💻 \`yarn test:coverage:by-codeowner ${teamName}\`
 
 **Break glass:** 🚨 In case of emergency, adding the \`no-check-frontend-test-coverage\` label to this PR will skip checks.
-
-**Compared:**
-
-- PR: \`${prCoverage.commit.substring(0, 7)}\` (${prCoverage.timestamp})
-- Main: \`${mainCoverage.commit.substring(0, 7)}\` (${mainCoverage.timestamp})
-
 `;
 }
 
