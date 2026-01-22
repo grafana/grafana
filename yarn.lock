@@ -3489,10 +3489,10 @@ __metadata:
     "@babel/core": "npm:7.28.0"
     "@babel/preset-env": "npm:7.28.0"
     "@babel/preset-react": "npm:7.27.1"
-    "@emotion/css": "npm:11.13.5"
+    "@emotion/css": "npm:^11.13.5"
     "@grafana/data": "npm:12.4.0-pre"
     "@grafana/ui": "npm:12.4.0-pre"
-    "@leeoniya/ufuzzy": "npm:1.0.19"
+    "@leeoniya/ufuzzy": "npm:^1.0.19"
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@storybook/addon-webpack5-compiler-swc": "npm:^4.0.2"
     "@storybook/react": "npm:^10.0.8"
@@ -3516,17 +3516,17 @@ __metadata:
     jest: "npm:^29.6.4"
     jest-canvas-mock: "npm:2.5.2"
     lodash: "npm:^4.17.23"
-    react: "npm:18.3.1"
-    react-use: "npm:17.6.0"
-    react-virtualized-auto-sizer: "npm:1.0.26"
+    react: "npm:^18.3.1"
+    react-use: "npm:^17.6.0"
+    react-virtualized-auto-sizer: "npm:^1.0.26"
     rollup: "npm:^4.22.4"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
     storybook: "npm:^10.1.11"
-    tinycolor2: "npm:1.6.0"
+    tinycolor2: "npm:^1.6.0"
     ts-jest: "npm:29.4.0"
     ts-node: "npm:10.9.2"
-    tslib: "npm:2.8.1"
+    tslib: "npm:^2.8.1"
     typescript: "npm:5.9.2"
   peerDependencies:
     "@grafana/assistant": ^0.1.1
@@ -29990,7 +29990,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-virtualized-auto-sizer@npm:*, react-virtualized-auto-sizer@npm:1.0.26, react-virtualized-auto-sizer@npm:^1.0.6":
+"react-virtualized-auto-sizer@npm:*, react-virtualized-auto-sizer@npm:1.0.26, react-virtualized-auto-sizer@npm:^1.0.26, react-virtualized-auto-sizer@npm:^1.0.6":
   version: 1.0.26
   resolution: "react-virtualized-auto-sizer@npm:1.0.26"
   peerDependencies:
@@ -30033,7 +30033,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:18.3.1":
+"react@npm:18.3.1, react@npm:^18.3.1":
   version: 18.3.1
   resolution: "react@npm:18.3.1"
   dependencies:
