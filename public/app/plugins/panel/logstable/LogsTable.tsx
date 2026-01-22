@@ -128,7 +128,7 @@ export const LogsTable = ({
         bodyFieldName={bodyFieldName}
         dataFrame={extractedFrame}
         onDisplayedFieldsChange={(displayedFields: string[]) => handleLogsTableOptionChange({ displayedFields })}
-        onWidthChange={(width: number) => handleLogsTableOptionChange({ fieldSelectorWidth: width })}
+        onSidebarWidthChange={(width: number) => handleLogsTableOptionChange({ fieldSelectorWidth: width })}
       />
 
       <TableNGWrap

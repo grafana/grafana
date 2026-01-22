@@ -17,7 +17,7 @@ interface Props {
   dataFrame: DataFrame;
   displayedFields: string[] | undefined;
   onDisplayedFieldsChange: (displayedFields: string[]) => void;
-  onWidthChange: (width: number) => void;
+  onSidebarWidthChange: (width: number) => void;
   logsFrame: LogsFrame;
   timeFieldName: string;
   bodyFieldName: string;
@@ -32,7 +32,7 @@ export function LogsTableFields({
   timeFieldName,
   bodyFieldName,
   logsFrame,
-  onWidthChange,
+  onSidebarWidthChange,
 }: Props) {
   const sidebarWidth = width ?? DEFAULT_SIDEBAR_WIDTH;
   const styles = useStyles2(getStyles, sidebarWidth, height);
@@ -77,11 +77,12 @@ export function LogsTableFields({
       <LogsTableFieldSelector
         clear={() => {
           onDisplayedFieldsChange(defaultDisplayedFields);
+          // @todo can we reset user column widths on fields reset?
         }}
         columnsWithMeta={columnsWithMeta}
         dataFrames={[dataFrame]}
         reorder={onDisplayedFieldsChange}
-        setSidebarWidth={onWidthChange}
+        setSidebarWidth={onSidebarWidthChange}
         sidebarWidth={sidebarWidth}
         toggle={(key: string) => {
           if (displayedFields.includes(key)) {

@@ -82,7 +82,7 @@ const organizeFields = async (
         filterable: field.config?.filterable ?? doesFieldSupportAdHocFiltering(field, timeFieldName, bodyFieldName),
         custom: {
           ...field.config.custom,
-          width: getFieldWidth(field.config.custom?.width, field, fieldIndex, timeFieldName),
+          width: getFieldWidth(field.config.custom?.width, field, fieldIndex, timeFieldName, options),
           inspect: field.config?.custom?.inspect ?? doesFieldSupportInspector(field),
           cellOptions:
             isFirstField && bodyFieldName && (options.showCopyLogLink || options.showInspectLogLine)
@@ -93,6 +93,7 @@ const organizeFields = async (
                       showCopyLogLink={options.showCopyLogLink ?? false}
                       showInspectLogLine={options.showInspectLogLine ?? true}
                       cellProps={cellProps}
+                      options={options}
                       bodyFieldName={bodyFieldName}
                       buildLinkToLog={
                         isBuildLinkToLogLine(options.buildLinkToLogLine) ? options.buildLinkToLogLine : undefined

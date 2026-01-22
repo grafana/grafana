@@ -4,6 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { CustomCellRendererProps, useStyles2 } from '@grafana/ui';
 
 import { ROW_ACTION_BUTTON_WIDTH } from '../LogsTable';
+import type { Options as LogsTableOptions } from '../panelcfg.gen';
 import { LogsNGTableRowActionButtons } from '../rows/LogsNGTableRowActionButtons';
 import { BuildLinkToLogLine } from '../types';
 
@@ -13,9 +14,16 @@ export function LogsTableCustomCellRenderer(props: {
   buildLinkToLog?: BuildLinkToLogLine;
   showCopyLogLink: boolean;
   showInspectLogLine: boolean;
+  options: LogsTableOptions;
 }) {
-  const styles = useStyles2(getStyles);
-  const { bodyFieldName, showInspectLogLine, showCopyLogLink } = props;
+  const { bodyFieldName, showInspectLogLine, showCopyLogLink, options } = props;
+  const cellPadding =
+    options.showInspectLogLine && options.showCopyLogLink
+      ? ROW_ACTION_BUTTON_WIDTH
+      : options.showInspectLogLine || options.showCopyLogLink
+        ? ROW_ACTION_BUTTON_WIDTH / 2
+        : 0;
+  const styles = useStyles2(getStyles, cellPadding);
   return (
     <>
       <LogsNGTableRowActionButtons
@@ -35,10 +43,10 @@ const buildLinkToLog: BuildLinkToLogLine = (logsFrame, rowIndex, field) => {
   return '@todo';
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, cellPadding: number) => {
   return {
     firstColumnCell: css({
-      paddingLeft: ROW_ACTION_BUTTON_WIDTH,
+      paddingLeft: cellPadding,
     }),
   };
 };
