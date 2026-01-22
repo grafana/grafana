@@ -64,12 +64,15 @@ describe('ScopesNavigationTreeLink', () => {
 
   it('renders link with correct props', () => {
     renderWithRouter(<ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" />);
+    //Adding this due to React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7.
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const link = screen.getByTestId('scopes-dashboards-test-id');
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/test-path');
     expect(link).toHaveAttribute('role', 'treeitem');
     expect(link).toHaveTextContent('Test Link');
+    jest.spyOn(console, 'warn').mockRestore();
   });
 
   it('sets aria-current when path matches', () => {
