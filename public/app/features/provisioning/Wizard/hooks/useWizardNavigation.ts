@@ -6,7 +6,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { PROVISIONING_URL } from '../../constants';
 import { getWorkflows } from '../../utils/data';
 import { Step } from '../Stepper';
-import { StepStatusInfo, WizardFormData, WizardStep } from '../types';
+import { RepoType, StepStatusInfo, WizardFormData, WizardStep } from '../types';
 
 export interface UseWizardNavigationParams {
   initialStep: WizardStep;
@@ -15,7 +15,7 @@ export interface UseWizardNavigationParams {
   setStepStatusInfo: (info: StepStatusInfo) => void;
   createSyncJob: (requiresMigration: boolean) => Promise<unknown>;
   getValues: () => WizardFormData;
-  repoType: string;
+  repoType: RepoType;
   syncTarget: string;
   githubAuthType?: string;
 }
