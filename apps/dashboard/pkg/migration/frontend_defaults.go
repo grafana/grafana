@@ -140,18 +140,12 @@ func ensureTemplatingExists(dashboard map[string]interface{}) {
 
 // ensureAnnotationsExist ensures annotations.list exists
 func ensureAnnotationsExist(dashboard map[string]interface{}) {
-	dashboardJSON, ok := dashboard["dashboard"].(map[string]interface{})
-	if !ok {
-		// If no "dashboard" key, treat the entire object as the dashboard
-		dashboardJSON = dashboard
-	}
-
-	if annotations, ok := dashboardJSON["annotations"].(map[string]interface{}); ok {
+	if annotations, ok := dashboard["annotations"].(map[string]interface{}); ok {
 		if annotations["list"] == nil {
 			annotations["list"] = []interface{}{}
 		}
 	} else {
-		dashboardJSON["annotations"] = map[string]interface{}{
+		dashboard["annotations"] = map[string]interface{}{
 			"list": []interface{}{},
 		}
 	}
@@ -241,13 +235,7 @@ func sortPanelsByGridPos(dashboard map[string]interface{}) {
 
 // addBuiltInAnnotationQuery adds the built-in "Annotations & Alerts" annotation
 func addBuiltInAnnotationQuery(dashboard map[string]interface{}) {
-	dashboardJSON, ok := dashboard["dashboard"].(map[string]interface{})
-	if !ok {
-		// If no "dashboard" key, treat the entire object as the dashboard
-		dashboardJSON = dashboard
-	}
-
-	annotations, ok := dashboardJSON["annotations"].(map[string]interface{})
+	annotations, ok := dashboard["annotations"].(map[string]interface{})
 	if !ok {
 		return
 	}

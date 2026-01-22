@@ -111,6 +111,11 @@ func (m *migrator) migrate(ctx context.Context, dash map[string]interface{}, tar
 		return schemaversion.NewMigrationError("dashboard is nil", 0, targetVersion, "")
 	}
 
+	// If no "dashboard" key, treat the entire object as the dashboard
+	if inner, ok := dash["dashboard"].(map[string]interface{}); ok {
+		dash = inner
+	}
+
 	// wait for the migrator to be initialized
 	<-m.ready
 
