@@ -345,6 +345,17 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			wantErrContains: "expected repository configuration",
 		},
 		{
+			name: "skips validation for DELETE operations",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: provisioning.RepositorySpec{
+					// Invalid - missing title
+				},
+			},
+			operation: admission.Delete,
+			wantErr:   false,
+		},
+		{
 			name: "skips validation for objects being deleted",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{

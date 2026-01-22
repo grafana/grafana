@@ -93,6 +93,15 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			wantErrContains: "expected connection configuration",
 		},
 		{
+			name: "skips validation for DELETE operations",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+			},
+			operation: admission.Delete,
+			wantErr:   false,
+		},
+		{
 			name: "skips validation for objects being deleted",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{

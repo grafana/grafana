@@ -34,6 +34,11 @@ func NewAdmissionValidator(factory Factory) *AdmissionValidator {
 
 // Validate validates Connection resources during admission
 func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	// AdmissionValidator is only for CREATE and UPDATE operations
+	if a.GetOperation() == admission.Delete {
+		return nil
+	}
+
 	obj := a.GetObject()
 	if obj == nil {
 		return nil
