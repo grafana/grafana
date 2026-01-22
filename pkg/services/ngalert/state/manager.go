@@ -2,9 +2,7 @@ package state
 
 import (
 	"context"
-	"errors"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -29,8 +27,8 @@ type takeImageFn func(reason string) *ngModels.Image
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
 type AlertInstanceManager interface {
-	GetAll(orgID int64) []*State
-	GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State
+	GetAll(ctx context.Context, orgID int64) []*State
+	GetStatesForRuleUID(ctx context.Context, orgID int64, alertRuleUID string) []*State
 }
 
 type StatePersister interface {
@@ -185,48 +183,16 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				continue
 			}
 
+			state := AlertInstanceToState(entry, logger)
+
 			// Use persisted annotations if available, otherwise fall back to rule annotations
-			annotations := entry.Annotations
-			if len(annotations) == 0 {
-				annotations = ruleForEntry.Annotations
+			if len(state.Annotations) == 0 {
+				state.Annotations = ruleForEntry.Annotations
 			}
-			if annotations == nil {
-				annotations = make(map[string]string)
+			if state.Annotations == nil {
+				state.Annotations = make(map[string]string)
 			}
 
-			lbs := map[string]string(entry.Labels)
-			cacheID := entry.Labels.Fingerprint()
-			var resultFp data.Fingerprint
-			if entry.ResultFingerprint != "" {
-				fp, err := strconv.ParseUint(entry.ResultFingerprint, 16, 64)
-				if err != nil {
-					logger.Error("Failed to parse result fingerprint of alert instance", "error", err, "rule_uid", entry.RuleUID)
-				}
-				resultFp = data.Fingerprint(fp)
-			}
-			var stateError error
-			if entry.LastError != "" {
-				stateError = errors.New(entry.LastError)
-			}
-			state := &State{
-				AlertRuleUID:         entry.RuleUID,
-				OrgID:                entry.RuleOrgID,
-				CacheID:              cacheID,
-				Labels:               lbs,
-				State:                translateInstanceState(entry.CurrentState),
-				StateReason:          entry.CurrentReason,
-				LastEvaluationString: "",
-				StartsAt:             entry.CurrentStateSince,
-				EndsAt:               entry.CurrentStateEnd,
-				FiredAt:              entry.FiredAt,
-				LastEvaluationTime:   entry.LastEvalTime,
-				EvaluationDuration:   entry.EvaluationDuration,
-				Annotations:          annotations,
-				ResultFingerprint:    resultFp,
-				ResolvedAt:           entry.ResolvedAt,
-				LastSentAt:           entry.LastSentAt,
-				Error:                stateError,
-			}
 			st.cache.set(state)
 			statesCount++
 		}
@@ -495,41 +461,23 @@ func (st *Manager) setNextStateForAll(alertRule *ngModels.AlertRule, result eval
 	return transitions
 }
 
-func (st *Manager) GetAll(orgID int64) []*State {
+func (st *Manager) GetAll(_ context.Context, orgID int64) []*State {
 	allStates := st.cache.getAll(orgID)
 	return allStates
 }
-func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
+
+func (st *Manager) GetStatesForRuleUID(_ context.Context, orgID int64, alertRuleUID string) []*State {
 	return st.cache.getStatesForRuleUID(orgID, alertRuleUID)
 }
 
-func (st *Manager) GetStatusForRuleUID(orgID int64, alertRuleUID string) ngModels.RuleStatus {
-	states := st.GetStatesForRuleUID(orgID, alertRuleUID)
+func (st *Manager) GetStatusForRuleUID(ctx context.Context, orgID int64, alertRuleUID string) ngModels.RuleStatus {
+	states := st.GetStatesForRuleUID(ctx, orgID, alertRuleUID)
 	return StatesToRuleStatus(states)
 }
 
 func (st *Manager) Put(states []*State) {
 	for _, s := range states {
 		st.cache.set(s)
-	}
-}
-
-func translateInstanceState(state ngModels.InstanceStateType) eval.State {
-	switch state {
-	case ngModels.InstanceStateFiring:
-		return eval.Alerting
-	case ngModels.InstanceStateNormal:
-		return eval.Normal
-	case ngModels.InstanceStateError:
-		return eval.Error
-	case ngModels.InstanceStateNoData:
-		return eval.NoData
-	case ngModels.InstanceStatePending:
-		return eval.Pending
-	case ngModels.InstanceStateRecovering:
-		return eval.Recovering
-	default:
-		return eval.Error
 	}
 }
 

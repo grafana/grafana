@@ -2,7 +2,10 @@
   "openapi": "3.0.0",
   "info": {
     "description": "Generates test data in different forms",
-    "title": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1"
+    "title": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
+    "x-grafana-plugin": {
+      "id": "grafana-testdata-datasource"
+    }
   },
   "paths": {
     "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/": {
@@ -64,8 +67,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "QueryDataResponse"
+          "kind": "QueryDataResponse",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -215,8 +218,8 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSource",
+          "version": "v0alpha1"
         }
       },
       "post": {
@@ -319,8 +322,8 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSource",
+          "version": "v0alpha1"
         }
       },
       "delete": {
@@ -468,8 +471,8 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSource",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -521,8 +524,8 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSource",
+          "version": "v0alpha1"
         }
       },
       "put": {
@@ -610,8 +613,8 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSource",
+          "version": "v0alpha1"
         }
       },
       "delete": {
@@ -702,8 +705,8 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSource",
+          "version": "v0alpha1"
         }
       },
       "patch": {
@@ -810,8 +813,8 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "DataSource"
+          "kind": "DataSource",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -868,8 +871,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "HealthCheckResult"
+          "kind": "HealthCheckResult",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -926,8 +929,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "QueryDataResponse"
+          "kind": "QueryDataResponse",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -975,8 +978,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Status"
+          "kind": "Status",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
@@ -1024,8 +1027,8 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "version": "v0alpha1",
-          "kind": "QueryDataRequest"
+          "kind": "QueryDataRequest",
+          "version": "v0alpha1"
         }
       },
       "parameters": [

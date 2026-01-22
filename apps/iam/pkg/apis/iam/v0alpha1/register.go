@@ -233,6 +233,35 @@ var TeamBindingResourceInfo = utils.NewResourceInfo(
 	},
 )
 
+var teamLBACRuleKind = TeamLBACRuleKind()
+var TeamLBACRuleInfo = utils.NewResourceInfo(
+	teamLBACRuleKind.Group(), teamLBACRuleKind.Version(),
+	teamLBACRuleKind.GroupVersionResource().Resource,
+	strings.ToLower(teamLBACRuleKind.Kind()), teamLBACRuleKind.Kind(),
+	func() runtime.Object { return teamLBACRuleKind.ZeroValue() },
+	func() runtime.Object { return teamLBACRuleKind.ZeroListValue() },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Datasource UID", Type: "string", Format: "string", Description: "Data source UID"},
+			{Name: "Team UID", Type: "string", Format: "string", Description: "Team UID"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			t, ok := obj.(*TeamLBACRule)
+			if !ok {
+				return nil, fmt.Errorf("expected teamlbacrule")
+			}
+			return []interface{}{
+				t.Name,
+				t.Spec.DatasourceUid,
+				t.Spec.TeamUid,
+				t.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
+		},
+	},
+)
+
 var ExternalGroupMappingResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"externalgroupmappings", "externalgroupmapping", "ExternalGroupMapping",
 	func() runtime.Object { return &ExternalGroupMapping{} },
@@ -315,6 +344,18 @@ func AddAuthZKnownTypes(scheme *runtime.Scheme) error {
 		&RoleList{},
 		&RoleBinding{},
 		&RoleBindingList{},
+
+		// What is this about?
+		&metav1.PartialObjectMetadata{},
+		&metav1.PartialObjectMetadataList{},
+	)
+	return nil
+}
+
+func AddTeamLBACRuleTypes(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(SchemeGroupVersion,
+		&TeamLBACRule{},
+		&TeamLBACRuleList{},
 
 		// What is this about?
 		&metav1.PartialObjectMetadata{},
