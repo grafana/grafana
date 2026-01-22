@@ -11,7 +11,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { addLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { DashboardInputs, DashboardSource, ImportDashboardDTO, LibraryPanelInputState } from '../../types';
-import { applyV1DatasourceInputs } from '../utils/transform';
+import { applyV1Inputs } from '../utils/inputs';
 
 import { GcomDashboardInfo } from './GcomDashboardInfo';
 import { ImportForm } from './ImportForm';
@@ -35,7 +35,7 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
     reportInteraction(IMPORT_FINISHED_EVENT_NAME);
 
     try {
-      const dashboardWithDataSources = applyV1DatasourceInputs(dashboard, inputs, form);
+      const dashboardWithDataSources = applyV1Inputs(dashboard, inputs, form);
 
       // Import new library panels first
       const newLibraryPanels = inputs.libraryPanels.filter((lp) => lp.state === LibraryPanelInputState.New);

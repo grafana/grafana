@@ -8,10 +8,10 @@ import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardFormat } from 'app/features/dashboard/api/types';
+import { isDashboardV1Resource, isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 
 import { DashboardInputs, DashboardSource } from '../../types';
-import { detectDashboardFormat, extractDashboardSpec } from '../utils/detect';
-import { processInputsFromDashboard, processV2Inputs } from '../utils/process';
+import { detectDashboardFormat, extractV1Inputs, extractV2Inputs } from '../utils/inputs';
 
 import { ImportOverview } from './ImportOverview';
 import { ImportSourceForm } from './ImportSourceForm';
@@ -63,9 +63,7 @@ export function DashboardImportK8s({ queryParams }: Props) {
       const dashboard = response.json;
       const format = detectDashboardFormat(dashboard);
       const inputs =
-        format === DashboardFormat.V2Resource
-          ? processV2Inputs(dashboard)
-          : await processInputsFromDashboard(dashboard);
+        format === DashboardFormat.V2Resource ? extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
 
       setState({
         status: LoadingState.Done,
@@ -117,11 +115,10 @@ export function DashboardImportK8s({ queryParams }: Props) {
 
     try {
       const format = detectDashboardFormat(json);
-      const dashboard = extractDashboardSpec(json);
+      // Unwrap k8s resource to get the spec, or use as-is for classic dashboards
+      const dashboard = isDashboardV2Resource(json) || isDashboardV1Resource(json) ? json.spec : json;
       const inputs =
-        format === DashboardFormat.V2Resource
-          ? processV2Inputs(dashboard)
-          : await processInputsFromDashboard(dashboard);
+        format === DashboardFormat.V2Resource ? extractV2Inputs(dashboard) : await extractV1Inputs(dashboard);
 
       setState({
         status: LoadingState.Done,

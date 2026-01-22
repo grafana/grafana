@@ -15,7 +15,7 @@ import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { PanelModel } from '../../../dashboard/state/PanelModel';
 import { LibraryElementDTO } from '../../../library-panels/types';
 import { DashboardJson, DataSourceInput, ImportDashboardDTO, InputType } from '../../types';
-import { getLibraryPanelInputs } from '../utils/process';
+import { getLibraryPanelInputs } from '../utils/inputs';
 import { validateDashboardJson } from '../utils/validation';
 
 import { importDashboard, processDashboard, processV2DatasourceInput, processV2Datasources } from './actions';

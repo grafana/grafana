@@ -20,7 +20,7 @@ import { DashboardSource, ImportDashboardDTO } from '../../types';
 import { GcomDashboardInfo } from '../components/GcomDashboardInfo';
 import { ImportForm } from '../components/ImportForm';
 import { ImportSourceForm } from '../components/ImportSourceForm';
-import { detectDashboardFormat } from '../utils/detect';
+import { detectDashboardFormat } from '../utils/inputs';
 
 import {
   clearLoadedDashboard,

@@ -6,7 +6,7 @@ import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
 import { DashboardInputs, DashboardSource, ImportFormDataV2 } from '../../types';
-import { applyV2DatasourceInputs } from '../utils/transform';
+import { applyV2Inputs } from '../utils/inputs';
 
 import { GcomDashboardInfo } from './GcomDashboardInfo';
 import { ImportDashboardFormV2 } from './ImportDashboardFormV2';
@@ -28,7 +28,7 @@ export function ImportOverviewV2({ dashboard, inputs, meta, source, folderUid, o
 
     try {
       const dashboardWithDataSources = {
-        ...applyV2DatasourceInputs(dashboard, form),
+        ...applyV2Inputs(dashboard, form),
         title: form.dashboard.title,
       };
 

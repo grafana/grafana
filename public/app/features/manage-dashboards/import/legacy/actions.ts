@@ -21,7 +21,7 @@ import {
   LibraryPanel,
 } from '../../../dashboard/components/DashExportModal/DashboardExporter';
 import { DataSourceInput, ImportDashboardDTO, InputType, LibraryPanelInputState, DashboardJson } from '../../types';
-import { getLibraryPanelInputs } from '../utils/process';
+import { getLibraryPanelInputs } from '../utils/inputs';
 
 import {
   clearDashboard,

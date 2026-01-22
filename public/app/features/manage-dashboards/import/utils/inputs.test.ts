@@ -1,6 +1,16 @@
-import { InputType } from '../../types';
+import { DataSourceInstanceSettings } from '@grafana/data';
+import {
+  AnnotationQueryKind,
+  PanelKind,
+  QueryVariableKind,
+  Spec as DashboardV2Spec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Dashboard, Panel, VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
+import { DashboardFormat } from 'app/features/dashboard/api/types';
 
-import { processInputsFromDashboard, processV2Inputs } from './process';
+import { DashboardInputs, ImportDashboardDTO, ImportFormDataV2, InputType } from '../../types';
+
+import { applyV1Inputs, applyV2Inputs, detectDashboardFormat, extractV1Inputs, extractV2Inputs } from './inputs';
 
 // Mock getDataSourceSrv
 jest.mock('@grafana/runtime', () => ({
@@ -14,9 +24,61 @@ jest.mock('../../../library-panels/state/api', () => ({
   getLibraryPanel: jest.fn().mockRejectedValue({ status: 404 }),
 }));
 
-describe('processInputsFromDashboard', () => {
+describe('detectDashboardFormat', () => {
+  it('detects v2 resource format', () => {
+    const dashboard = { kind: 'DashboardWithAccessInfo', spec: { elements: {} } };
+    expect(detectDashboardFormat(dashboard)).toBe(DashboardFormat.V2Resource);
+  });
+
+  it('detects v2 spec format (raw)', () => {
+    const dashboard = { elements: {}, layout: {} };
+    expect(detectDashboardFormat(dashboard)).toBe(DashboardFormat.V2Resource);
+  });
+
+  it('detects v1 resource format', () => {
+    const dashboard = { kind: 'DashboardWithAccessInfo', spec: { title: 'v1' } };
+    expect(detectDashboardFormat(dashboard)).toBe(DashboardFormat.V1Resource);
+  });
+
+  it('detects classic format', () => {
+    const dashboard = { title: 'v1' };
+    expect(detectDashboardFormat(dashboard)).toBe(DashboardFormat.Classic);
+  });
+});
+
+// Test helper types for accessing nested properties
+interface PanelWithTargets extends Panel {
+  targets?: Array<{ datasource?: { uid?: string } }>;
+}
+
+interface QueryVariableModel extends VariableModel {
+  datasource?: { uid?: string };
+}
+
+interface DatasourceVariableModel {
+  type: string;
+  current?: { value?: string; text?: string; selected?: boolean };
+}
+
+const makeV1Inputs = (): DashboardInputs => ({
+  dataSources: [
+    {
+      name: 'DS',
+      label: 'DS',
+      description: 'test',
+      info: 'info',
+      value: '',
+      type: InputType.DataSource,
+      pluginId: 'prometheus',
+    },
+  ],
+  constants: [],
+  libraryPanels: [],
+});
+
+describe('extractV1Inputs', () => {
   it('should return empty inputs for non-object dashboard', async () => {
-    const result = await processInputsFromDashboard(null);
+    const result = await extractV1Inputs(null);
 
     expect(result).toEqual({
       dataSources: [],
@@ -26,7 +88,7 @@ describe('processInputsFromDashboard', () => {
   });
 
   it('should return empty inputs for dashboard without __inputs', async () => {
-    const result = await processInputsFromDashboard({ title: 'Test Dashboard' });
+    const result = await extractV1Inputs({ title: 'Test Dashboard' });
 
     expect(result).toEqual({
       dataSources: [],
@@ -49,7 +111,7 @@ describe('processInputsFromDashboard', () => {
       ],
     };
 
-    const result = await processInputsFromDashboard(dashboard);
+    const result = await extractV1Inputs(dashboard);
 
     expect(result.dataSources).toHaveLength(1);
     expect(result.dataSources[0].name).toBe('DS_PROMETHEUS');
@@ -71,7 +133,7 @@ describe('processInputsFromDashboard', () => {
       ],
     };
 
-    const result = await processInputsFromDashboard(dashboard);
+    const result = await extractV1Inputs(dashboard);
 
     expect(result.constants).toHaveLength(1);
     expect(result.constants[0].name).toBe('VAR_CONSTANT');
@@ -92,7 +154,7 @@ describe('processInputsFromDashboard', () => {
       ],
     };
 
-    const result = await processInputsFromDashboard(dashboard);
+    const result = await extractV1Inputs(dashboard);
 
     expect(result.constants[0].info).toBe('Specify a string constant');
   });
@@ -122,7 +184,7 @@ describe('processInputsFromDashboard', () => {
       ],
     };
 
-    const result = await processInputsFromDashboard(dashboard);
+    const result = await extractV1Inputs(dashboard);
 
     expect(result.dataSources).toHaveLength(2);
     expect(result.constants).toHaveLength(1);
@@ -134,16 +196,16 @@ describe('processInputsFromDashboard', () => {
       __inputs: [null, 'invalid', { name: 'VALID', type: InputType.Constant, label: 'Valid', value: 'test' }],
     };
 
-    const result = await processInputsFromDashboard(dashboard);
+    const result = await extractV1Inputs(dashboard);
 
     expect(result.constants).toHaveLength(1);
     expect(result.constants[0].name).toBe('VALID');
   });
 });
 
-describe('processV2Inputs', () => {
+describe('extractV2Inputs', () => {
   it('should return empty inputs for non-object dashboard', () => {
-    const result = processV2Inputs(null);
+    const result = extractV2Inputs(null);
 
     expect(result).toEqual({
       dataSources: [],
@@ -170,7 +232,7 @@ describe('processV2Inputs', () => {
       ],
     };
 
-    const result = processV2Inputs(dashboard);
+    const result = extractV2Inputs(dashboard);
 
     expect(result.dataSources).toHaveLength(1);
     expect(result.dataSources[0].pluginId).toBe('prometheus');
@@ -194,7 +256,7 @@ describe('processV2Inputs', () => {
       ],
     };
 
-    const result = processV2Inputs(dashboard);
+    const result = extractV2Inputs(dashboard);
 
     expect(result.dataSources).toHaveLength(1);
     expect(result.dataSources[0].pluginId).toBe('prometheus');
@@ -226,7 +288,7 @@ describe('processV2Inputs', () => {
       },
     };
 
-    const result = processV2Inputs(dashboard);
+    const result = extractV2Inputs(dashboard);
 
     expect(result.dataSources).toHaveLength(1);
     expect(result.dataSources[0].pluginId).toBe('prometheus');
@@ -261,7 +323,7 @@ describe('processV2Inputs', () => {
       ],
     };
 
-    const result = processV2Inputs(dashboard);
+    const result = extractV2Inputs(dashboard);
 
     expect(result.dataSources).toHaveLength(1);
     expect(result.dataSources[0].pluginId).toBe('prometheus');
@@ -288,7 +350,7 @@ describe('processV2Inputs', () => {
       ],
     };
 
-    const result = processV2Inputs(dashboard);
+    const result = extractV2Inputs(dashboard);
 
     expect(result.dataSources).toHaveLength(2);
     expect(result.dataSources.map((ds) => ds.pluginId)).toContain('prometheus');
@@ -308,7 +370,7 @@ describe('processV2Inputs', () => {
       ],
     };
 
-    const result = processV2Inputs(dashboard);
+    const result = extractV2Inputs(dashboard);
 
     expect(result.dataSources).toHaveLength(0);
   });
@@ -328,8 +390,144 @@ describe('processV2Inputs', () => {
       },
     };
 
-    const result = processV2Inputs(dashboard);
+    const result = extractV2Inputs(dashboard);
 
     expect(result.dataSources).toHaveLength(0);
+  });
+});
+
+describe('applyV1Inputs', () => {
+  it('replaces templateized datasources across v1 dashboard', () => {
+    const dashboard = {
+      title: 'old',
+      uid: 'old',
+      schemaVersion: 39,
+      annotations: {
+        list: [
+          {
+            name: 'anno',
+            datasource: { uid: '${DS}' },
+            enable: true,
+            iconColor: 'red',
+            target: { limit: 1, matchAny: true, tags: [], type: 'tags' },
+          },
+        ],
+      },
+      panels: [
+        {
+          datasource: { uid: '${DS}' },
+          targets: [{ datasource: { uid: '${DS}' } }],
+        },
+      ],
+      templating: {
+        list: [
+          {
+            type: 'query',
+            datasource: { uid: '${DS}' },
+          },
+          {
+            type: 'datasource',
+            current: { value: '${DS}', text: '${DS}', selected: true },
+          },
+        ],
+      },
+    } as unknown as Dashboard;
+
+    const form: ImportDashboardDTO = {
+      title: 'new-title',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'ds-uid', type: 'prometheus', name: 'My DS' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, makeV1Inputs(), form);
+
+    expect(result.title).toBe('new-title');
+    expect(result.uid).toBe('new-uid');
+    expect(result.annotations?.list?.[0].datasource?.uid).toBe('ds-uid');
+    expect(result.panels?.[0].datasource?.uid).toBe('ds-uid');
+
+    const panelWithTargets = result.panels?.[0] as PanelWithTargets;
+    expect(panelWithTargets.targets?.[0].datasource?.uid).toBe('ds-uid');
+
+    const queryVariable = result.templating?.list?.[0] as QueryVariableModel;
+    expect(queryVariable.datasource?.uid).toBe('ds-uid');
+
+    const dsVariable = result.templating?.list?.[1] as DatasourceVariableModel;
+    expect(dsVariable.current?.value).toBe('ds-uid');
+  });
+});
+
+describe('applyV2Inputs', () => {
+  it('updates v2 annotations, variables, and panel queries', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {
+        panel: {
+          kind: 'Panel',
+          spec: {
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      query: { kind: 'prometheus' },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      annotations: [
+        {
+          kind: 'AnnotationQuery',
+          spec: {
+            query: {
+              spec: { group: 'prometheus' },
+            },
+          },
+        },
+      ],
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: {
+            query: {
+              spec: { group: 'prometheus' },
+            },
+          },
+        },
+      ],
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+      'datasource-prometheus': { uid: 'ds-uid', type: 'prometheus', name: 'My DS' },
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+
+    const updatedAnnotation = result.annotations?.[0] as AnnotationQueryKind;
+    expect(updatedAnnotation.spec.query?.datasource?.name).toBe('ds-uid');
+
+    const updatedVariable = result.variables?.[0] as QueryVariableKind;
+    expect(updatedVariable.spec.query?.spec?.datasource?.name).toBe('ds-uid');
+
+    const updatedPanel = result.elements.panel as PanelKind;
+    const queries = updatedPanel.spec.data?.kind === 'QueryGroup' ? updatedPanel.spec.data.spec.queries : [];
+    const updatedQuery = queries[0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const querySpec = updatedQuery?.spec as any;
+    expect(querySpec?.datasource?.uid).toBe('ds-uid');
+    expect(querySpec?.datasource?.type).toBe('prometheus');
   });
 });
