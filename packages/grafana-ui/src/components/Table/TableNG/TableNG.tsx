@@ -2,7 +2,7 @@ import 'react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
-import { CSSProperties, Key, ReactNode, useCallback, useMemo, useRef, useState, type JSX } from 'react';
+import { CSSProperties, Key, ReactNode, useCallback, useMemo, useRef, useState, useEffect, type JSX } from 'react';
 import {
   Cell,
   CellRendererProps,
@@ -124,6 +124,7 @@ export function TableNG(props: TableNGProps) {
     timeRange,
     transparent,
     width,
+    initialRowIndex,
   } = props;
 
   const theme = useTheme2();
@@ -251,6 +252,14 @@ export function TableNG(props: TableNGProps) {
     headerHeight: hasHeader ? TABLE.HEADER_ROW_HEIGHT : 0,
     rowHeight,
   });
+
+  useEffect(() => {
+    if (initialRowIndex && gridRef.current?.scrollToCell) {
+      gridRef.current.scrollToCell({
+        rowIdx: initialRowIndex,
+      });
+    }
+  }, [initialRowIndex]);
 
   const [footers, isUniformFooter] = useMemo(() => {
     const footers: Array<TableFooterOptions | undefined> = [];
