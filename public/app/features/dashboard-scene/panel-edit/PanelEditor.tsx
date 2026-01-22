@@ -17,7 +17,7 @@ import {
   sceneUtils,
   VizPanel,
 } from '@grafana/scenes';
-import { Panel } from '@grafana/schema';
+import { Panel, DataQuery } from '@grafana/schema';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
@@ -54,6 +54,7 @@ export interface PanelEditorState extends SceneObjectState {
   editPreview?: VizPanel;
   tableView?: VizPanel;
   pluginLoadErrror?: string;
+  isSelectingSavedQuery?: boolean;
   /**
    * Waiting for library panel or panel plugin to load
    */
@@ -267,6 +268,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         listMode: OptionFilter.All,
         isVizPickerOpen: isUnconfigured,
         isNewPanel: this.state.isNewPanel,
+        isSelectingSavedQuery: this.state.isSelectingSavedQuery,
+        showSavedQueries: false,
       });
 
       this.setState({
@@ -320,7 +323,21 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     if (!skipDataQuery) {
       if (!this.state.dataPane) {
-        const dataPane = PanelDataPane.createFor(this.getPanel());
+        const dataPane = PanelDataPane.createFor(this.getPanel(), {
+          onShowSavedQueries: (handler: (query: DataQuery) => void) => {
+            const optionsPane = this.state.optionsPane;
+            if (!optionsPane) {
+              return;
+            }
+
+            const wrappedHandler = (query: DataQuery) => {
+              handler(query);
+              optionsPane.setState({ showSavedQueries: false, savedQuerySelectionHandler: undefined });
+            };
+
+            optionsPane.setState({ showSavedQueries: true, savedQuerySelectionHandler: wrappedHandler });
+          },
+        });
         this.setState({ dataPane });
         // This is to notify UrlSyncManager that a new object has been added to scene that requires url sync
         this.publishEvent(new NewSceneObjectAddedEvent(dataPane), true);

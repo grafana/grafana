@@ -46,6 +46,7 @@ interface PanelDataQueriesTabState extends SceneObjectState {
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
   panelRef: SceneObjectRef<VizPanel>;
+  onShowSavedQueries?: (handler: (query: DataQuery) => void) => void;
 }
 export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabState> implements PanelDataPaneTab {
   static Component = PanelDataQueriesTabRendered;
@@ -346,9 +347,9 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 }
 
 export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
-  const { datasource, dsSettings } = model.useState();
+  const { datasource, dsSettings, onShowSavedQueries } = model.useState();
   const { data, queries } = model.queryRunner.useState();
-  const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
+  const { queryLibraryEnabled } = useQueryLibraryContext();
 
   const handleAddExpression = useCallback(
     (type: ExpressionQueryType) => {
@@ -431,14 +432,9 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
             {queryLibraryEnabled && (
               <Button
                 icon="plus"
-                onClick={() =>
-                  openQueryLibraryDrawer({
-                    onSelectQuery: onSelectQueryFromLibrary,
-                    options: {
-                      context: CoreApp.PanelEditor,
-                    },
-                  })
-                }
+                onClick={() => {
+                  onShowSavedQueries?.(onSelectQueryFromLibrary);
+                }}
                 variant="secondary"
                 data-testid={selectors.components.QueryTab.addQueryFromLibrary}
               >

@@ -65,6 +65,11 @@ export type QueryLibraryContextType = {
     onSelectQuery?: (query: DataQuery) => void
   ) => ReactNode;
 
+  /**
+   * Returns a container for the saved queries list.
+   */
+  renderSavedQueriesList: (onSelectQuery?: (query: DataQuery) => void) => ReactNode;
+
   queryLibraryEnabled: boolean;
   context: string;
   triggerAnalyticsEvent: (
@@ -103,6 +108,10 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   },
 
   renderQueryLibraryEditingHeader: () => {
+    return null;
+  },
+
+  renderSavedQueriesList: () => {
     return null;
   },
 

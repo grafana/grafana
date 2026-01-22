@@ -11,6 +11,7 @@ import {
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
+import { DataQuery } from '@grafana/schema';
 import { Container, ScrollContainer, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -32,10 +33,13 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   static Component = PanelDataPaneRendered;
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
 
-  public static createFor(panel: VizPanel) {
+  public static createFor(
+    panel: VizPanel,
+    opts?: { onShowSavedQueries?: (handler: (query: DataQuery) => void) => void }
+  ) {
     const panelRef = panel.getRef();
     const tabs: PanelDataPaneTab[] = [
-      new PanelDataQueriesTab({ panelRef }),
+      new PanelDataQueriesTab({ panelRef, onShowSavedQueries: opts?.onShowSavedQueries }),
       new PanelDataTransformationsTab({ panelRef }),
     ];
 

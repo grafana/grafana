@@ -23,8 +23,10 @@ import {
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
+import { DataQuery } from '@grafana/schema';
 import { Button, FilterInput, ScrollContainer, Stack, ToolbarButton, useStyles2, Text } from '@grafana/ui';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
@@ -42,6 +44,9 @@ export interface PanelOptionsPaneState extends SceneObjectState {
   isNewPanel?: boolean;
   hasPickedViz?: boolean;
   editPreviewRef?: SceneObjectRef<VizPanel>;
+  showSavedQueries?: boolean;
+  isSelectingSavedQuery?: boolean;
+  savedQuerySelectionHandler?: (query: DataQuery) => void;
 }
 
 interface PluginOptionsCache {
@@ -138,8 +143,20 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 }
 
 function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPane>) {
-  const { isVizPickerOpen, searchQuery, listMode, panelRef, isNewPanel, hasPickedViz, editPreviewRef } =
-    model.useState();
+  const {
+    isVizPickerOpen,
+    searchQuery,
+    listMode,
+    panelRef,
+    isNewPanel,
+    hasPickedViz,
+    editPreviewRef,
+    showSavedQueries,
+    savedQuerySelectionHandler,
+  } = model.useState();
+
+  const { renderSavedQueriesList, queryLibraryEnabled } = useQueryLibraryContext();
+
   const panel = panelRef.resolve();
   const editPreview = editPreviewRef?.resolve() ?? panel; // if something goes wrong, at least update the panel.
   const { pluginId } = panel.useState();
@@ -159,6 +176,10 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
     }
     return meta;
   }, [pluginId]);
+
+  if (queryLibraryEnabled && showSavedQueries) {
+    return renderSavedQueriesList(savedQuerySelectionHandler);
+  }
 
   return (
     <>
