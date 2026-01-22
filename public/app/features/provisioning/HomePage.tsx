@@ -1,18 +1,21 @@
 import { useMemo, useState } from 'react';
 
-import { t } from '@grafana/i18n';
-import { ConfirmModal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { ConfirmModal, LinkButton, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { useDeletecollectionRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 
+import { ConnectionsTabContent } from './Connection/ConnectionsTabContent';
 import GettingStarted from './GettingStarted/GettingStarted';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
 import { ConnectRepositoryButton } from './Shared/ConnectRepositoryButton';
 import { RepositoryList } from './Shared/RepositoryList';
+import { CONNECTIONS_URL } from './constants';
 import { useRepositoryList } from './hooks/useRepositoryList';
 
 enum TabSelection {
   Repositories = 'repositories',
+  Connections = 'connections',
   GettingStarted = 'getting-started',
 }
 
@@ -28,6 +31,11 @@ export default function HomePage() {
         value: TabSelection.Repositories,
         label: t('provisioning.home-page.tab-repositories', 'Repositories'),
         title: t('provisioning.home-page.tab-repositories-title', 'List of repositories'),
+      },
+      {
+        value: TabSelection.Connections,
+        label: t('provisioning.home-page.tab-connections', 'Connections'),
+        title: t('provisioning.home-page.tab-connections-title', 'List of connections'),
       },
       {
         value: TabSelection.GettingStarted,
@@ -52,8 +60,25 @@ export default function HomePage() {
     switch (activeTab) {
       case TabSelection.Repositories:
         return <RepositoryList items={items ?? []} />;
+      case TabSelection.Connections:
+        return <ConnectionsTabContent />;
       case TabSelection.GettingStarted:
         return <GettingStarted items={items ?? []} />;
+      default:
+        return null;
+    }
+  };
+
+  const renderActions = () => {
+    switch (activeTab) {
+      case TabSelection.Repositories:
+        return <ConnectRepositoryButton items={items} />;
+      case TabSelection.Connections:
+        return (
+          <LinkButton variant="primary" href={`${CONNECTIONS_URL}/new`}>
+            <Trans i18nKey="provisioning.connections.add-connection">Add connection</Trans>
+          </LinkButton>
+        );
       default:
         return null;
     }
@@ -63,7 +88,7 @@ export default function HomePage() {
     <Page
       navId="provisioning"
       subTitle={t('provisioning.home-page.subtitle', 'View and manage your configured repositories')}
-      actions={activeTab === TabSelection.Repositories && <ConnectRepositoryButton items={items} />}
+      actions={renderActions()}
     >
       <Page.Contents isLoading={isLoading}>
         <ConfirmModal
