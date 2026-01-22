@@ -1412,6 +1412,38 @@
     },
     {
       "metadata": {
+        "name": "datasourceDisableIdApi",
+        "resourceVersion": "1769095508888",
+        "creationTimestamp": "2026-01-22T15:24:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-22 15:25:08.888626 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Does not register datasource apis that use the numeric id",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourceIdBasedAPIEnabled",
+        "resourceVersion": "1769095222868",
+        "creationTimestamp": "2026-01-22T15:20:22Z",
+        "deletionTimestamp": "2026-01-22T15:23:04Z"
+      },
+      "spec": {
+        "description": "Registers datasource apis that use the numeric id",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "requiresRestart": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourceQueryTypes",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-05-23T16:46:28Z",
@@ -1423,6 +1455,24 @@
         "description": "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourceRemoveDeprecatedIdApi",
+        "resourceVersion": "1769095435732",
+        "creationTimestamp": "2026-01-22T15:23:04Z",
+        "deletionTimestamp": "2026-01-22T15:24:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-22 15:23:55.732998 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Does not registers datasource apis that use the numeric id",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "requiresRestart": true,
         "expression": "false"
       }
