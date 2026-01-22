@@ -67,9 +67,7 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	// If dryRun, also run runtime validation (external systems, internal state)
 	// This allows full validation without persisting the resource
 	if a.IsDryRun() {
-		if err := v.validateRuntime(ctx, c); err != nil {
-			return err // Return errors immediately - resource won't be created
-		}
+		return v.validateRuntime(ctx, c) // Return errors immediately - resource won't be created
 	}
 
 	return nil
