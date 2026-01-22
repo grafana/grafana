@@ -1022,9 +1022,9 @@ func TestPatch(t *testing.T) {
 			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
 		}
 
-		state := randomSate(key)
+		state := randomState(key)
 		orig := state.Copy()
-		current := randomSate(key)
+		current := randomState(key)
 
 		patch(&state, &current, result)
 
@@ -1052,10 +1052,10 @@ func TestPatch(t *testing.T) {
 	})
 
 	t.Run("copies system-owned annotations from current state", func(t *testing.T) {
-		state := randomSate(key)
+		state := randomState(key)
 		orig := state.Copy()
 		expectedAnnotations := data.Labels(state.Annotations).Copy()
-		current := randomSate(key)
+		current := randomState(key)
 
 		for key := range ngmodels.InternalAnnotationNameSet {
 			val := util.GenerateShortUID()

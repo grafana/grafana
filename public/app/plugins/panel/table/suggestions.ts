@@ -1,5 +1,5 @@
 import { PanelDataSummary, VisualizationSuggestionScore, VisualizationSuggestionsSupplier } from '@grafana/data';
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
 import icnTablePanelSvg from 'app/plugins/panel/table/img/icn-table-panel.svg';
 
 import { Options, FieldConfig } from './panelcfg.gen';

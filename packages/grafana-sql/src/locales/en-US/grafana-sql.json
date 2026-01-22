@@ -69,6 +69,12 @@
         "placeholder-select-format": "Select format",
         "run-query": "Run query"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "Text Field",
+          "valueField": "Value Field"
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "Hit CTRL/CMD+Return to run query",
         "tooltip-collapse": "Collapse editor",

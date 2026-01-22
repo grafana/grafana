@@ -187,6 +187,112 @@ func TestFrontendService_Middleware(t *testing.T) {
 	})
 }
 
+func TestFrontendService_LoginErrorCookie(t *testing.T) {
+	publicDir := setupTestWebAssets(t)
+	cfg := &setting.Cfg{
+		HTTPPort:               "3000",
+		StaticRootPath:         publicDir,
+		BuildVersion:           "10.3.0",
+		OAuthLoginErrorMessage: "oauth.login.error",
+		CookieSecure:           false,
+		CookieSameSiteDisabled: false,
+		CookieSameSiteMode:     http.SameSiteLaxMode,
+	}
+
+	t.Run("should detect login_error cookie and set generic error message", func(t *testing.T) {
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		// Set the login_error cookie (with some encrypted-looking value)
+		req.AddCookie(&http.Cookie{
+			Name:  "login_error",
+			Value: "abc123encryptedvalue",
+		})
+		recorder := httptest.NewRecorder()
+
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		body := recorder.Body.String()
+
+		// Check that the generic error message is in the response
+		assert.Contains(t, body, "loginError", "Should contain loginError when cookie is present")
+		assert.Contains(t, body, "oauth.login.error", "Should contain the generic OAuth error message")
+
+		// Check that the cookie was deleted (MaxAge=-1)
+		cookies := recorder.Result().Cookies()
+		var foundDeletedCookie bool
+		for _, cookie := range cookies {
+			if cookie.Name == "login_error" {
+				assert.Equal(t, -1, cookie.MaxAge, "Cookie should be deleted (MaxAge=-1)")
+				assert.Equal(t, "", cookie.Value, "Cookie value should be empty")
+				foundDeletedCookie = true
+				break
+			}
+		}
+		assert.True(t, foundDeletedCookie, "Should have set a cookie deletion header")
+	})
+
+	t.Run("should not set error when login_error cookie is absent", func(t *testing.T) {
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		// No login_error cookie
+		recorder := httptest.NewRecorder()
+
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		body := recorder.Body.String()
+
+		// The page should render but without the login error
+		assert.Contains(t, body, "window.grafanaBootData")
+		// Check that loginError is not set (or is empty/omitted in JSON)
+		// Since it's omitempty, it shouldn't appear at all
+		assert.NotContains(t, body, "loginError", "Should not contain loginError when cookie is absent")
+	})
+
+	t.Run("should handle custom OAuth error message from config", func(t *testing.T) {
+		customCfg := &setting.Cfg{
+			HTTPPort:               "3000",
+			StaticRootPath:         publicDir,
+			BuildVersion:           "10.3.0",
+			OAuthLoginErrorMessage: "Oh no a boo-boo happened!",
+			CookieSecure:           false,
+			CookieSameSiteDisabled: false,
+			CookieSameSiteMode:     http.SameSiteLaxMode,
+		}
+		service := createTestService(t, customCfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req.AddCookie(&http.Cookie{
+			Name:  "login_error",
+			Value: "abc123encryptedvalue",
+		})
+		recorder := httptest.NewRecorder()
+
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		body := recorder.Body.String()
+
+		// Check that the custom error message is used
+		assert.Contains(t, body, "Oh no a boo-boo happened!", "Should use custom OAuth error message from config")
+	})
+}
+
 func TestFrontendService_IndexHooks(t *testing.T) {
 	publicDir := setupTestWebAssets(t)
 	cfg := &setting.Cfg{

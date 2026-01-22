@@ -14,8 +14,16 @@ export function getFieldDisplayProcessor(displayValue: FieldDisplay) {
 }
 
 export function getFieldConfigMinMax(fieldDisplay: FieldDisplay) {
-  const min = fieldDisplay.field.min ?? 0;
-  const max = fieldDisplay.field.max ?? 100;
+  let min = fieldDisplay.field.min ?? 0;
+  let max = fieldDisplay.field.max ?? 100;
+
+  // If min and max are equal (can happen for single value fields or if all values are the same)
+  // Then we need to adjust them a bit to avoid division by zero
+  if (min === max) {
+    min -= min * 0.1;
+    max += max * 0.1;
+  }
+
   return [min, max];
 }
 
@@ -28,19 +36,32 @@ export function getValueAngleForValue(
   fieldDisplay: FieldDisplay,
   startAngle: number,
   endAngle: number,
-  value = fieldDisplay.display.numeric
+  neutral?: number
 ) {
   const angleRange = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
+  const value = fieldDisplay.display.numeric;
 
-  let angle = getValuePercentageForValue(fieldDisplay, value) * angleRange;
+  const valueAngle = getValuePercentageForValue(fieldDisplay, value) * angleRange;
 
-  if (angle > angleRange) {
-    angle = angleRange;
-  } else if (angle < 0) {
-    angle = 0;
+  let endValueAngle = valueAngle;
+
+  let startValueAngle = 0;
+  if (typeof neutral === 'number') {
+    const [min, max] = getFieldConfigMinMax(fieldDisplay);
+    const clampedNeutral = Math.min(Math.max(min, neutral), max);
+    const neutralAngle = getValuePercentageForValue(fieldDisplay, clampedNeutral) * angleRange;
+    if (neutralAngle <= valueAngle) {
+      startValueAngle = neutralAngle;
+      endValueAngle = valueAngle - neutralAngle;
+    } else {
+      startValueAngle = valueAngle;
+      endValueAngle = neutralAngle - valueAngle;
+    }
   }
 
-  return { angleRange, angle };
+  const clampedEndValueAngle = Math.min(Math.max(endValueAngle, 0), angleRange);
+
+  return { angleRange, startValueAngle, endValueAngle: clampedEndValueAngle };
 }
 
 /**

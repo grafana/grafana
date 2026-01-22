@@ -403,6 +403,9 @@ export function useUpdateFolder() {
         spec: { title: folder.title },
         metadata: {
           name: folder.uid,
+          annotations: {
+            ...(folder.parentUid && { [AnnoKeyFolder]: folder.parentUid }),
+          },
         },
       },
     };

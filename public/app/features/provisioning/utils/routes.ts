@@ -1,11 +1,17 @@
+import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { checkRequiredFeatures } from '../GettingStarted/features';
-import { PROVISIONING_URL, CONNECT_URL, GETTING_STARTED_URL } from '../constants';
+import { CONNECTIONS_URL, CONNECT_URL, GETTING_STARTED_URL, PROVISIONING_URL } from '../constants';
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
+  const featureToggles = config.featureToggles || {};
+  if (!featureToggles.provisioning) {
+    return [];
+  }
+
   if (!checkRequiredFeatures()) {
     return [
       {
@@ -34,6 +40,26 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
           import(
             /* webpackChunkName: "GettingStartedPage"*/ 'app/features/provisioning/GettingStarted/GettingStartedPage'
           )
+      ),
+    },
+    {
+      path: CONNECTIONS_URL,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ConnectionsPage"*/ 'app/features/provisioning/Connection/ConnectionsPage')
+      ),
+    },
+    {
+      path: `${CONNECTIONS_URL}/:name/edit`,
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "ConnectionFormPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')
+      ),
+    },
+    {
+      path: `${CONNECTIONS_URL}/new`,
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "ConnectionFormPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')
       ),
     },
     {

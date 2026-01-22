@@ -251,7 +251,9 @@ const injectedRtkApi = api
             permission: queryArg.permission,
             sort: queryArg.sort,
             limit: queryArg.limit,
+            ownerReference: queryArg.ownerReference,
             explain: queryArg.explain,
+            panelTitleSearch: queryArg.panelTitleSearch,
           },
         }),
         providesTags: ['Search'],
@@ -686,8 +688,12 @@ export type SearchDashboardsAndFoldersApiArg = {
   sort?: string;
   /** number of results to return */
   limit?: number;
+  /** filter by owner reference in the format {Group}/{Kind}/{Name} */
+  ownerReference?: string;
   /** add debugging info that may help explain why the result matched */
   explain?: boolean;
+  /** [experimental] optionally include matches from panel titles */
+  panelTitleSearch?: boolean;
 };
 export type GetSortableFieldsApiResponse = /** status 200 undefined */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */

@@ -5595,3 +5595,32 @@ func setCacheID(s *State) *State {
 
 	return s
 }
+
+func TestStatesToRuleStatus(t *testing.T) {
+	t.Run("should pick EvaluationDuration from state with newest LastEvaluationTime", func(t *testing.T) {
+		now := time.Now()
+		newerTime := now.Add(2 * time.Minute)
+		olderTime := now.Add(1 * time.Minute)
+		newerDuration := 5 * time.Second
+		olderDuration := 10 * time.Second
+
+		// State with newer evaluation time added first, older added last.
+		states := []*State{
+			{
+				LastEvaluationTime: newerTime,
+				EvaluationDuration: newerDuration,
+				State:              eval.Normal,
+			},
+			{
+				LastEvaluationTime: olderTime,
+				EvaluationDuration: olderDuration,
+				State:              eval.Normal,
+			},
+		}
+
+		status := StatesToRuleStatus(states)
+
+		require.Equal(t, newerTime, status.EvaluationTimestamp, "EvaluationTimestamp should be from the newest state")
+		require.Equal(t, newerDuration, status.EvaluationDuration, "EvaluationDuration should be from the state with newest LastEvaluationTime")
+	})
+}

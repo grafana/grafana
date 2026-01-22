@@ -97,7 +97,7 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 	require.Equal(t, 16, fileCount, "file count from %s", devenv)
 
 	// Helper to call search
-	callSearch := func(user apis.User, params string) dashboardV0.SearchResults {
+	callSearch := func(user apis.User, params map[string]string) dashboardV0.SearchResults {
 		require.NotNil(t, user)
 		ns := user.Identity.GetNamespace()
 		cfg := dynamic.ConfigFor(user.NewRestConfig())
@@ -107,17 +107,12 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 
 		var statusCode int
 		req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+			//Param("explain", "true") // helpful to understand which field made things match
 			Param("limit", "1000").
 			Param("type", "dashboard") // Only search dashboards
 
-		for kv := range strings.SplitSeq(params, "&") {
-			if kv == "" {
-				continue
-			}
-			parts := strings.SplitN(kv, "=", 2)
-			if len(parts) == 2 {
-				req = req.Param(parts[0], parts[1])
-			}
+		for k, v := range params {
+			req = req.Param(k, v)
 		}
 		res := req.Do(ctx).StatusCode(&statusCode)
 		require.NoError(t, res.Error())
@@ -132,33 +127,76 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 		sr.MaxScore = roundTo(sr.MaxScore, 3)
 		for i := range sr.Hits {
 			sr.Hits[i].Score = roundTo(sr.Hits[i].Score, 3) // 0.6250571494814442 -> 0.625
+			if sr.Hits[i].Explain != nil {
+				roundExplainValues(sr.Hits[i].Explain.Object, 3)
+			}
 		}
 		return sr
 	}
+
+	// debug helper
+	testCase := ""
 
 	// Compare a results to snapshots
 	testCases := []struct {
 		name   string
 		user   apis.User
-		params string
+		params map[string]string
 	}{
 		{
-			name:   "all",
-			user:   helper.Org1.Admin,
-			params: "", // only dashboards
+			name: "all",
+			user: helper.Org1.Admin,
 		},
 		{
-			name:   "simple-query",
-			user:   helper.Org1.Admin,
-			params: "query=stacking",
+			name: "query-single-word",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "stacking",
+			},
 		},
 		{
-			name:   "with-text-panel",
-			user:   helper.Org1.Admin,
-			params: "field=panel_types&panelType=text",
+			name: "query-multiple-words",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "graph softMin", // must match ALL terms
+			},
+		},
+		{
+			name: "with-text-panel",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"field":     "panel_types", // return panel types
+				"panelType": "text",
+			},
+		},
+		{
+			name: "title-ngram-prefix",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "zer", // should match "Zero Decimals Y Ticks"
+			},
+		},
+		{
+			name: "title-ngram-middle-word",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "decim", // should match "Zero Decimals Y Ticks"
+			},
+		},
+		{
+			name: "panel-title-orange",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query":            "orange",
+				"panelTitleSearch": "true",
+				"explain":          "true",
+			},
 		},
 	}
 	for i, tc := range testCases {
+		if testCase != "" && testCase != tc.name {
+			continue
+		}
 		t.Run(tc.name, func(t *testing.T) {
 			res := callSearch(tc.user, tc.params)
 			jj, err := json.MarshalIndent(res, "", "  ")
@@ -444,6 +482,27 @@ func setFolderPermissions(t *testing.T, helper *apis.K8sTestHelper, actingUser a
 	}, &struct{}{})
 
 	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "Failed to set permissions for folder %s", folderUID)
+}
+
+func roundExplainValues(obj map[string]any, decimals uint32) {
+	for k, val := range obj {
+		switch k {
+		case "value":
+			v, ok := val.(float64)
+			if ok {
+				obj[k] = roundTo(v, decimals)
+			}
+		case "children":
+			children, ok := val.([]any)
+			if ok {
+				for _, child := range children {
+					if v, ok := child.(map[string]any); ok {
+						roundExplainValues(v, decimals)
+					}
+				}
+			}
+		}
+	}
 }
 
 // roundTo rounds a float64 to a specified number of decimal places.

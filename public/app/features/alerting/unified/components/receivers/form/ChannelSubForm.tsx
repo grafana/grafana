@@ -6,7 +6,7 @@ import { Controller, FieldErrors, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 
 import {
@@ -16,6 +16,12 @@ import {
   GrafanaChannelValues,
   ReceiverFormValues,
 } from '../../../types/receiver-form';
+import {
+  canCreateNotifier,
+  getLegacyVersionLabel,
+  getOptionsForVersion,
+  isLegacyVersion,
+} from '../../../utils/notifier-versions';
 import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { ChannelOptions } from './ChannelOptions';
@@ -62,6 +68,7 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   const channelFieldPath = `items.${integrationIndex}` as const;
   const typeFieldPath = `${channelFieldPath}.type` as const;
+  const versionFieldPath = `${channelFieldPath}.version` as const;
   const settingsFieldPath = `${channelFieldPath}.settings` as const;
   const secureFieldsPath = `${channelFieldPath}.secureFields` as const;
 
@@ -104,6 +111,9 @@ export function ChannelSubForm<R extends ChannelValues>({
 
         setValue(settingsFieldPath, defaultNotifierSettings);
         setValue(secureFieldsPath, {});
+
+        // Reset version when changing type - backend will use its default
+        setValue(versionFieldPath, undefined);
       }
 
       // Restore initial value of an existing oncall integration
@@ -123,6 +133,7 @@ export function ChannelSubForm<R extends ChannelValues>({
     setValue,
     settingsFieldPath,
     typeFieldPath,
+    versionFieldPath,
     secureFieldsPath,
     getValues,
     watch,
@@ -164,24 +175,30 @@ export function ChannelSubForm<R extends ChannelValues>({
     setValue(`${settingsFieldPath}.${fieldPath}`, undefined);
   };
 
-  const typeOptions = useMemo(
-    (): SelectableValue[] =>
-      sortBy(notifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
-        ({ dto: { name, type }, meta }) => ({
-          // @ts-expect-error ReactNode is supported
+  const typeOptions = useMemo((): SelectableValue[] => {
+    // Filter out notifiers that can't be created (e.g., v0-only integrations like WeChat)
+    // These are legacy integrations that only exist in Mimir and can't be created in Grafana
+    const creatableNotifiers = notifiers.filter(({ dto }) => canCreateNotifier(dto));
+
+    return sortBy(creatableNotifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
+      ({ dto: { name, type }, meta }) => {
+        return {
+          // ReactNode is supported in Select label, but types don't reflect it
+          /* eslint-disable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
           label: (
             <Stack alignItems="center" gap={1}>
               {name}
               {meta?.badge}
             </Stack>
-          ),
+          ) as any,
+          /* eslint-enable @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any */
           value: type,
           description: meta?.description,
           isDisabled: meta ? !meta.enabled : false,
-        })
-      ),
-    [notifiers]
-  );
+        };
+      }
+    );
+  }, [notifiers]);
 
   const handleTest = async () => {
     await trigger();
@@ -198,10 +215,21 @@ export function ChannelSubForm<R extends ChannelValues>({
   // Cloud AM takes no value at all
   const isParseModeNone = parse_mode === 'None' || !parse_mode;
   const showTelegramWarning = isTelegram && !isParseModeNone;
+
+  // Check if current integration is a legacy version (canCreate: false)
+  // Legacy integrations are read-only and cannot be edited
+  // Read version from existing integration data (stored in receiver config)
+  const integrationVersion = initialValues?.version || defaultValues.version;
+  const isLegacy = notifier ? isLegacyVersion(notifier.dto, integrationVersion) : false;
+
+  // Get the correct options based on the integration's version
+  // This ensures legacy (v0) integrations display the correct schema
+  const versionedOptions = notifier ? getOptionsForVersion(notifier.dto, integrationVersion) : [];
+
   // if there are mandatory options defined, optional options will be hidden by a collapse
   // if there aren't mandatory options, all options will be shown without collapse
-  const mandatoryOptions = notifier?.dto.options.filter((o) => o.required) ?? [];
-  const optionalOptions = notifier?.dto.options.filter((o) => !o.required) ?? [];
+  const mandatoryOptions = versionedOptions.filter((o) => o.required);
+  const optionalOptions = versionedOptions.filter((o) => !o.required);
 
   const contactPointTypeInputId = `contact-point-type-${pathPrefix}`;
   return (
@@ -214,21 +242,35 @@ export function ChannelSubForm<R extends ChannelValues>({
             data-testid={`${pathPrefix}type`}
             noMargin
           >
-            <Controller
-              name={typeFieldPath}
-              control={control}
-              defaultValue={defaultValues.type}
-              render={({ field: { ref, onChange, ...field } }) => (
-                <Select
-                  disabled={!isEditable}
-                  inputId={contactPointTypeInputId}
-                  {...field}
-                  width={37}
-                  options={typeOptions}
-                  onChange={(value) => onChange(value?.value)}
+            <Stack direction="row" alignItems="center" gap={1}>
+              <Controller
+                name={typeFieldPath}
+                control={control}
+                defaultValue={defaultValues.type}
+                render={({ field: { ref, onChange, ...field } }) => (
+                  <Select
+                    disabled={!isEditable}
+                    inputId={contactPointTypeInputId}
+                    {...field}
+                    width={37}
+                    options={typeOptions}
+                    onChange={(value) => onChange(value?.value)}
+                  />
+                )}
+              />
+              {isLegacy && integrationVersion && (
+                <Badge
+                  text={getLegacyVersionLabel(integrationVersion)}
+                  color="orange"
+                  icon="exclamation-triangle"
+                  tooltip={t(
+                    'alerting.channel-sub-form.tooltip-legacy-version',
+                    'This is a legacy integration (version: {{version}}). It cannot be modified.',
+                    { version: integrationVersion }
+                  )}
                 />
               )}
-            />
+            </Stack>
           </Field>
         </div>
         <div className={styles.buttons}>
@@ -292,7 +334,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 name: notifier.dto.name,
               })}
             >
-              {notifier.dto.info !== '' && (
+              {notifier.dto.info && (
                 <Alert title="" severity="info">
                   {notifier.dto.info}
                 </Alert>

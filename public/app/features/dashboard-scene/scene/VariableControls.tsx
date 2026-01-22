@@ -34,15 +34,18 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
     (v) => v.state.name !== adHocVar?.state.name && v.state.name !== groupByVar?.state.name
   );
 
-  // Variables to render (exclude adhoc/groupby when drilldown controls are shown in top row)
+  //  Variables to render (exclude adhoc/groupby when drilldown controls are shown in top row)
   const variablesToRender = hasDrilldownControls
     ? restVariables.filter((v) => v.state.hide !== VariableHide.inControlsMenu)
-    : variables.filter(
-        (v) =>
-          // if we're editing in dynamic dashboards, still shows hidden variable but greyed out
-          (isEditingNewLayouts && v.state.hide === VariableHide.hideVariable) ||
-          v.state.hide !== VariableHide.inControlsMenu
-      );
+    : isEditingNewLayouts
+      ? variables.filter(
+          (v) =>
+            v.state.hide !== VariableHide.inControlsMenu &&
+            // UNSAFE_renderAsHidden used for scopes variables, should always be hidden
+            // if we're editing in dynamic dashboards, still shows hidden variable but greyed out
+            (v.state.hide !== VariableHide.hideVariable || !v.UNSAFE_renderAsHidden)
+        )
+      : variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
 
   return (
     <>

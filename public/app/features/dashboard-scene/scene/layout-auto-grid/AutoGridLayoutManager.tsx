@@ -23,6 +23,7 @@ import {
 } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
+import { DashboardDropTarget } from '../types/DashboardDropTarget';
 import { DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -37,6 +38,10 @@ interface AutoGridLayoutManagerState extends SceneObjectState {
   rowHeight: AutoGridRowHeight;
   columnWidth: AutoGridColumnWidth;
   fillScreen: boolean;
+  /** Whether this grid is currently a drop target */
+  isDropTarget?: boolean;
+  /** Position index where a placeholder should be shown for external drops */
+  dropPosition?: number | null;
 }
 
 export type AutoGridColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
@@ -46,10 +51,14 @@ export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
 export const AUTO_GRID_DEFAULT_ROW_HEIGHT = 'standard';
 
-export class AutoGridLayoutManager extends SceneObjectBase<AutoGridLayoutManagerState> implements DashboardLayoutGrid {
+export class AutoGridLayoutManager
+  extends SceneObjectBase<AutoGridLayoutManagerState>
+  implements DashboardLayoutGrid, DashboardDropTarget
+{
   public static Component = AutoGridLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
+  public readonly isDashboardDropTarget = true as const;
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
@@ -358,6 +367,58 @@ export class AutoGridLayoutManager extends SceneObjectBase<AutoGridLayoutManager
     gridItem.clearParent();
 
     this.state.layout.setState({ children: [...this.state.layout.state.children, gridItem] });
+  }
+
+  public setIsDropTarget(isDropTarget: boolean): void {
+    this.setState({ isDropTarget });
+  }
+
+  public setDropPosition(position: number | null): void {
+    this.setState({ dropPosition: position });
+  }
+
+  public draggedGridItemOutside(gridItem: SceneGridItemLike): void {
+    if (gridItem instanceof AutoGridItem) {
+      this.state.layout.setState({
+        children: this.state.layout.state.children.filter((child) => child !== gridItem),
+      });
+    }
+    this.setState({ isDropTarget: false });
+  }
+
+  public draggedGridItemInside(gridItem: SceneGridItemLike, position?: number): void {
+    let newGridItem: AutoGridItem;
+
+    if (gridItem instanceof AutoGridItem) {
+      gridItem.clearParent();
+      newGridItem = gridItem;
+    } else if (gridItem instanceof DashboardGridItem) {
+      if (!(gridItem.state.body instanceof VizPanel)) {
+        throw new Error('DashboardGridItem body is not a VizPanel');
+      }
+      const panel = gridItem.state.body;
+      panel.clearParent();
+
+      newGridItem = new AutoGridItem({
+        body: panel,
+        variableName: gridItem.state.variableName,
+      });
+    } else {
+      throw new Error('Grid item must be an AutoGridItem or DashboardGridItem');
+    }
+
+    const children = [...this.state.layout.state.children];
+
+    if (position !== undefined && position >= 0 && position <= children.length) {
+      // Insert at specific position
+      children.splice(position, 0, newGridItem);
+    } else {
+      // Append to end
+      children.push(newGridItem);
+    }
+
+    this.state.layout.setState({ children });
+    this.setState({ isDropTarget: false, dropPosition: null });
   }
 }
 

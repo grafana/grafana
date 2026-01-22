@@ -25,6 +25,10 @@ export class ExportAsCode extends ShareExportTab {
   public getTabLabel(): string {
     return t('export.json.title', 'Export dashboard');
   }
+
+  public getSubtitle(): string | undefined {
+    return t('export.json.info-text', 'Copy or download a file containing the definition of your dashboard');
+  }
 }
 
 function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
@@ -53,12 +57,6 @@ function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
 
   return (
     <div data-testid={selector.container} className={styles.container}>
-      <p>
-        <Trans i18nKey="export.json.info-text">
-          Copy or download a file containing the definition of your dashboard
-        </Trans>
-      </p>
-
       {config.featureToggles.kubernetesDashboards ? (
         <ResourceExport
           dashboardJson={dashboardJson}

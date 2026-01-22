@@ -306,9 +306,12 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 				v0Route.ReqAction = &route.ReqAction
 			}
 			if len(route.Headers) > 0 {
-				headers := make([]string, 0, len(route.Headers))
+				headers := make([]pluginsv0alpha1.MetaV0alpha1RouteHeaders, 0, len(route.Headers))
 				for _, header := range route.Headers {
-					headers = append(headers, header.Name+": "+header.Content)
+					headers = append(headers, pluginsv0alpha1.MetaV0alpha1RouteHeaders{
+						Name:    header.Name,
+						Content: header.Content,
+					})
 				}
 				v0Route.Headers = headers
 			}
@@ -506,7 +509,7 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 // pluginStorePluginToMeta converts a pluginstore.Plugin to a pluginsv0alpha1.MetaSpec.
 // This is similar to pluginToPluginMetaSpec but works with the plugin store DTO.
 // loadingStrategy and moduleHash are optional calculated values that can be provided.
-func pluginStorePluginToMeta(plugin pluginstore.Plugin, loadingStrategy plugins.LoadingStrategy, moduleHash string) pluginsv0alpha1.MetaSpec {
+func pluginStorePluginToMeta(plugin pluginstore.Plugin, moduleHash string) pluginsv0alpha1.MetaSpec {
 	metaSpec := pluginsv0alpha1.MetaSpec{
 		PluginJson: jsonDataToMetaJSONData(plugin.JSONData),
 	}
@@ -527,9 +530,9 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, loadingStrategy plugins.
 		if moduleHash != "" {
 			module.Hash = &moduleHash
 		}
-		if loadingStrategy != "" {
+		if plugin.LoadingStrategy != "" {
 			var ls pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategy
-			switch loadingStrategy {
+			switch plugin.LoadingStrategy {
 			case plugins.LoadingStrategyFetch:
 				ls = pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyFetch
 			case plugins.LoadingStrategyScript:
@@ -563,10 +566,6 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, loadingStrategy plugins.
 
 	if len(plugin.Children) > 0 {
 		metaSpec.Children = plugin.Children
-	}
-
-	metaSpec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
-		Detected: plugin.Angular.Detected,
 	}
 
 	if len(plugin.Translations) > 0 {
@@ -668,10 +667,6 @@ func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
 		metaSpec.Children = children
 	}
 
-	metaSpec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
-		Detected: plugin.Angular.Detected,
-	}
-
 	if len(plugin.Translations) > 0 {
 		metaSpec.Translations = plugin.Translations
 	}
@@ -712,8 +707,7 @@ type grafanaComPluginVersionMeta struct {
 		Rel  string `json:"rel"`
 		Href string `json:"href"`
 	} `json:"links"`
-	AngularDetected bool     `json:"angularDetected"`
-	Scopes          []string `json:"scopes"`
+	Scopes []string `json:"scopes"`
 }
 
 // grafanaComPluginVersionMetaToMetaSpec converts a grafanaComPluginVersionMeta to a pluginsv0alpha1.MetaSpec.
@@ -751,11 +745,6 @@ func grafanaComPluginVersionMetaToMetaSpec(gcomMeta grafanaComPluginVersionMeta)
 		}
 
 		metaSpec.Signature = signature
-	}
-
-	// Set angular info
-	metaSpec.Angular = &pluginsv0alpha1.MetaV0alpha1SpecAngular{
-		Detected: gcomMeta.AngularDetected,
 	}
 
 	return metaSpec
