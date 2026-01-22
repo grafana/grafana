@@ -18,7 +18,7 @@ aliases:
   - ../provision-resources/git-sync-setup/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
 ---
 
-# Set up Git Sync
+# Synchronize your repository with Git Sync 
 
 {{< admonition type="caution" >}}
 
@@ -91,64 +91,63 @@ To enable the required feature toggle:
 
 ## Create a GitHub access token
 
-Whenever you connect to a GitHub repository, you need to create a GitHub access token with specific repository permissions. This token needs to be added to your Git Sync configuration to enable read and write permissions between Grafana and GitHub repository.
+To connect to a GitHub repository you need to create a GitHub access token with specific repository permissions. This token needs to be added to your Git Sync configuration to enable read and write permissions between Grafana and GitHub repository.
 
 To create a GitHub access token:
 
-1. Create a new token using [Create new fine-grained personal access token](https://github.com/settings/personal-access-tokens/new). Refer to [Managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for instructions.
+1. [Create a new fine-grained personal access token](https://github.com/settings/personal-access-tokens/new). Refer to [Managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for instructions.
 1. Under **Permissions**, click **Select permissions** and select the following:
-   - **Contents**: Read and write permission
-   - **Metadata**: Read-only permission
-   - **Pull requests**: Read and write permission
-   - **Webhooks**: Read and write permission
-
+  - **Contents**: Read and write permission
+  - **Metadata**: Read-only permission
+  - **Pull requests**: Read and write permission
+  - **Webhooks**: Read and write permission
 1. Select any additional options and then press **Generate token**.
-1. Verify the options and select **Generate token**.
 1. Copy the access token. Leave the browser window available with the token until you've completed configuration.
 
 GitHub Apps aren't currently supported.
 
 ## Set up Git Sync using Grafana UI
 
-1. [Configure a connection to your GitHub repository](#set-up-the-connection-to-github)
-1. [Choose what content to sync with Grafana](#choose-what-to-synchronize)
-1. [Choose additional settings](#choose-additional-settings)
-
-### Set up the connection to GitHub
-
-Use **Provisioning** to guide you through setting up Git Sync to use a GitHub repository:
+To set up Git Sync from the Grafana UI, follow these steps:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
-1. Select **Administration > General > Provisioning** in the left-side menu.
-1. Select **Configure Git Sync**.
+1. Select **Administration > General > Provisioning** in the left-side menu to access the Git Sync configuration wizard.
+1. Select **Configure with GitHub** and follow the instructions to Configure Git Sync:
+  1. [Connect to external storage](#connect-to-external-storage)
+  1. [Choose what content to sync with Grafana](#choose-what-to-synchronize)
+  1. [Synchronize with external storage]
+  1. [Choose additional settings](#choose-additional-settings)
 
-To connect your GitHub repository:
+### Connect to external storage
+
+On this screen you will configure your Git Sync connection:
 
 1. Paste your GitHub personal access token into **Enter your access token**. Refer to [Create a GitHub access token](#create-a-github-access-token) for instructions.
 1. Paste the **Repository URL** for your GitHub repository into the text box.
-1. Enter a branch to use. The default value is `main`.
-1. Add a **Path** to a subdirectory where your dashboards are stored. The default value is `grafana/`. If your dashboards are stored in the root of your repository, then remove the directory name.
-1. Select **Choose what to synchronize** to have the connection to your repository verified and continue setup.
+1. Enter a branch to use for provisioning. The default value is `main`.
+1. Optionally, you can add a **Path** to a subdirectory where your dashboards are stored. The default value is `grafana/`. If your dashboards are stored in the root of your repository, then remove the directory name.
+
+Select **Choose what to synchronize** to have the connection to your repository verified and continue setup.
 
 ### Choose what to synchronize
 
-You can sync external resources into a new folder without affecting the rest of your instance.
+On this screen, you will sync your selected external resources with Grafana. These provisioned resources will be stored in a new folder in Grafana without affecting the rest of your instance.
 
 To set up synchronization:
 
 1. Select which resources you want to sync.
-
 1. Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
-
 1. Click **Synchronize** to continue.
 
-1. You can repeat this process for up to 10 connections.
-
 {{< admonition type="note" >}}
+
+You can repeat this process for up to 10 connections.
 
 Optionally, you can export any unmanaged resources into the provisioned folder. See how in [Synchronize with external storage](#synchronize-with-external-storage).
 
 {{< /admonition >}}
+
+Select **Choose additional settings** to continue setup.
 
 #### Full instance sync
 
@@ -164,21 +163,23 @@ Check the **Migrate existing resources** box to migrate your unmanaged dashboard
 
 ### Choose additional settings
 
-Finally, you can set up how often your configured storage is polled for updates.
+You can configure the following additional settings:
 
-To configure additional settings:
+- **Sync interval (seconds)**. Enter how often you want your Grafana instance to pull updates from GitHub. The default value is 60 seconds.
 
-1. For **Update instance interval (seconds)**, enter how often you want the instance to pull updates from GitHub. The default value is 60 seconds.
-1. Optional: Select **Read only** to ensure resources can't be modified in Grafana.
-1. Optional: If you have the Grafana Image Renderer plugin configured, you can **Enable dashboards previews in pull requests**. If image rendering isn't available, then you can't select this option. For more information, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
-1. Select **Finish** to proceed.
+Optional settings: 
+- Check **Read only** to ensure resources can't be modified in Grafana.
+- Check **Enable pull request option when saving** to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.
+- Check **Enable push to configured branch** to allow direct commits to the configured branch.
+
+Select **Finish** to complete the setup.
 
 ### Modify your configuration after setup is complete
 
 To update your repository configuration after you've completed setup:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
-1. Select **Administration** in the left-side menu and then **Provisioning**.
+1. Select **Administration > General > Provisioning**.
 1. Select **Settings** for the repository you wish to modify.
 1. Use the **Configure repository** screen to update any of the settings.
 1. Select **Save** to preserve the updates.
