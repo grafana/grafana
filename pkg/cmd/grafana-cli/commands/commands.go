@@ -119,7 +119,7 @@ var pluginCommands = []*cli.Command{
 	},
 }
 
-var adminCommands = []*cli.Command{
+var adminCommands = append([]*cli.Command{
 	{
 		Name:   "reset-admin-password",
 		Usage:  "reset-admin-password <new password>",
@@ -197,7 +197,12 @@ var adminCommands = []*cli.Command{
 			},
 		},
 	},
-}
+	{
+		Name:   "flush-rbac-seed-assignment",
+		Usage:  "Clears RBAC seeding to force re-seeding on next startup. Use after running an Enterprise build, then an OSS build, then an Enterprise build again.",
+		Action: runDbCommand(flushSeedAssignment),
+	},
+})
 
 var Commands = []*cli.Command{
 	{
