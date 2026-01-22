@@ -1151,7 +1151,7 @@ describe('processSeries', () => {
         { __name__: 'metric1', instance: 'host1', job: 'api' },
         { __name__: 'metric1', instance: 'host2' }, // Missing 'job' label
         { __name__: 'metric1', instance: 'host3', job: 'worker' },
-      ];
+      ] as Array<{ [key: string]: string }>;
       const hasMatchApiSupport = false;
       const matchSelector = `{job!="api"}`;
 
@@ -1167,7 +1167,7 @@ describe('processSeries', () => {
         { __name__: 'metric1', instance: 'host1', env: 'production' },
         { __name__: 'metric1', instance: 'host2' }, // Missing 'env' label
         { __name__: 'metric1', instance: 'host3', env: 'development' },
-      ];
+      ] as Array<{ [key: string]: string }>;
       const hasMatchApiSupport = false;
       const matchSelector = `{env!~"prod.*"}`;
 
@@ -1183,7 +1183,7 @@ describe('processSeries', () => {
         { __name__: 'metric1', instance: 'host1', job: 'api' },
         { __name__: 'metric1', instance: 'host2' }, // Missing 'job' label
         { __name__: 'metric1', instance: 'host3', job: 'api' },
-      ];
+      ] as Array<{ [key: string]: string }>;
       const hasMatchApiSupport = false;
       const matchSelector = `{job="api"}`;
 
@@ -1199,7 +1199,7 @@ describe('processSeries', () => {
         { __name__: 'metric1', instance: 'host1', env: 'production' },
         { __name__: 'metric1', instance: 'host2' }, // Missing 'env' label
         { __name__: 'metric1', instance: 'host3', env: 'prod-eu' },
-      ];
+      ] as Array<{ [key: string]: string }>;
       const hasMatchApiSupport = false;
       const matchSelector = `{env=~"prod.*"}`;
 
