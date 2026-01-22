@@ -149,7 +149,7 @@ The option to run a **raw document query** is deprecated as of Grafana v10.1.
 ## Raw query editor
 
 {{< admonition type="note" >}}
-The raw query editor is an experimental feature that must be enabled using the `elasticsearchRawDSLQuery` feature toggle.
+The raw query editor is an experimental feature that must be enabled using the `elasticsearchRawDSLQuery` [feature toggle](ref:configure-grafana-feature-toggles).
 {{< /admonition >}}
 
 The raw query editor allows you to write Elasticsearch queries using the native [Elasticsearch Query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html).
@@ -180,7 +180,7 @@ The raw query editor supports all query types:
 
 - **Metrics queries** are used to query time series data with aggregations. The query parser will automatically extract bucket and metric aggregations from your DSL and use them for response processing.
 - **Logs queries** are used to query log data
-- **Raw data queries** are used to query document-level data retrieval
+- **Raw data queries** are used for document-level data retrieval
 
 ## Use template variables
 
