@@ -32,7 +32,7 @@ export function ScopesTree({
   onRecentScopesSelect,
   scopeNodes,
 }: ScopesTreeProps) {
-  const { filterNode, selectScope, deselectScope, toggleExpandedNode } = useScopeActions();
+  const { selectScope, deselectScope, toggleExpandedNode } = useScopeActions();
   const styles = useStyles2(getStyles);
 
   // Used for a11y reference
