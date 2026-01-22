@@ -8,6 +8,7 @@ import { ToolbarButton } from '@grafana/ui';
 import { useQueryLibraryContext } from './QueryLibraryContext';
 
 interface Props {
+  className?: string;
   datasourceFilters?: string[];
   // Query to save
   query?: DataQuery;
@@ -62,6 +63,7 @@ interface Props {
  * ```
  */
 export const OpenQueryLibraryExposedComponent = ({
+  className,
   datasourceFilters,
   icon = 'save',
   query,
@@ -82,5 +84,5 @@ export const OpenQueryLibraryExposedComponent = ({
     return null;
   }
 
-  return <ToolbarButton variant="canvas" icon={icon} onClick={handleClick} tooltip={tooltip} />;
+  return <ToolbarButton className={className} variant="canvas" icon={icon} onClick={handleClick} tooltip={tooltip} />;
 };
