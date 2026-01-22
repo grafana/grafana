@@ -1025,6 +1025,31 @@ func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 
 	appSlug := "someSlug"
 	connectionFactory := h.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+	// Setup mock repositories for the ListRepos endpoint
+	expectedRepos := []*github.Repository{
+		{
+			Name: github.Ptr("test-repo-1"),
+			Owner: &github.User{
+				Login: github.Ptr("test-owner-1"),
+			},
+			HTMLURL: github.Ptr("https://github.com/test-owner-1/test-repo-1"),
+		},
+		{
+			Name: github.Ptr("test-repo-2"),
+			Owner: &github.User{
+				Login: github.Ptr("test-owner-2"),
+			},
+			HTMLURL: github.Ptr("https://github.com/test-owner-2/test-repo-2"),
+		},
+		{
+			Name: github.Ptr("test-repo-3"),
+			Owner: &github.User{
+				Login: github.Ptr("test-owner-3"),
+			},
+			HTMLURL: github.Ptr("https://github.com/test-owner-3/test-repo-3"),
+		},
+	}
+
 	connectionFactory.Client = ghmock.NewMockedHTTPClient(
 		ghmock.WithRequestMatchHandler(
 			ghmock.GetApp,
@@ -1047,6 +1072,28 @@ func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstr
 					ID: &idInt,
 				}
 				_, _ = w.Write(ghmock.MustMarshal(installation))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.PostAppInstallationsAccessTokensByInstallationId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				installation := github.InstallationToken{
+					Token:     github.Ptr("someToken"),
+					ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour * 2)},
+				}
+				_, _ = w.Write(ghmock.MustMarshal(installation))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetInstallationRepositories,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				reposResponse := &github.ListRepositories{
+					Repositories: expectedRepos,
+					TotalCount:   github.Ptr(len(expectedRepos)),
+				}
+				_, _ = w.Write(ghmock.MustMarshal(reposResponse))
 			}),
 		),
 	)

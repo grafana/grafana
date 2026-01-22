@@ -72,5 +72,10 @@ func All(sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, e
 		return nil, err
 	}
 
-	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams}, nil
+	teamBindings, err := GetTeamBindingBuilder()
+	if err != nil {
+		return nil, err
+	}
+
+	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings}, nil
 }

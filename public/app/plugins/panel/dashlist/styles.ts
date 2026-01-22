@@ -8,42 +8,73 @@ export const getStyles = (theme: GrafanaTheme2) => {
     ${colorManipulator.alpha(theme.colors.primary.text, 0.1)} 0%,
     ${colorManipulator.alpha(theme.colors.secondary.main, 0.1)} 100%
   )`;
+
   return {
     dashlistLink: css({
       display: 'flex',
-      cursor: 'pointer',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       margin: theme.spacing(1),
       padding: theme.spacing(1),
       alignItems: 'center',
 
-      '&:hover': {
-        a: {
-          color: theme.colors.text.link,
-          textDecoration: 'underline',
+      a: {
+        flex: 1,
+
+        '&:hover': {
+          '> p': {
+            '&:first-child': {
+              color: theme.colors.text.link,
+              textDecoration: 'underline',
+            },
+          },
         },
       },
     }),
-    dashlistCard: css({
-      display: 'flex',
-      flexDirection: 'column',
-      '&:hover a': {
-        color: theme.colors.text.link,
-        textDecoration: 'underline',
-      },
+    dashlistCardContainer: css({
+      display: 'block',
       height: '100%',
-      paddingTop: theme.spacing(1.5),
 
-      '&:hover': {
+      '&:has(a:hover)': {
         backgroundImage: gradient,
         color: theme.colors.text.primary,
       },
     }),
+    dashlistCard: css({
+      display: 'grid',
+      gridTemplateRows: '1fr 1fr',
+      gap: theme.spacing(2),
+      flexDirection: 'column',
+      height: '100%',
+      width: '100%',
+
+      '&:hover': {
+        '> div': {
+          '&:first-child': {
+            color: theme.colors.text.link,
+            textDecoration: 'underline',
+          },
+        },
+      },
+    }),
     dashlistCardIcon: css({
-      marginRight: theme.spacing(0.5),
+      marginRight: theme.spacing(0.25),
+      marginTop: theme.spacing(0.25),
     }),
     dashlistCardLink: css({
-      paddingTop: theme.spacing(0.5),
+      whiteSpace: 'normal',
+      overflowWrap: 'break-word',
+      wordBreak: 'break-word',
+      display: '-webkit-box',
+      WebkitBoxOrient: 'vertical',
+      WebkitLineClamp: 2,
+      overflow: 'hidden',
+    }),
+    dashlistCardFolder: css({
+      display: '-webkit-box',
+      WebkitBoxOrient: 'vertical',
+      WebkitLineClamp: 2,
+      overflow: 'hidden',
+      whiteSpace: 'normal',
     }),
   };
 };

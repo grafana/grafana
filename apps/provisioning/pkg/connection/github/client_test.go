@@ -326,7 +326,7 @@ func TestGithubClient_CreateInstallationAccessToken(t *testing.T) {
 			repo:           "test-repo",
 			wantToken: conngh.InstallationToken{
 				Token:     "ghs_test_token_123456789",
-				ExpiresAt: "2024-01-01 00:00:00 +0000 UTC",
+				ExpiresAt: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
 			wantErr: false,
 		},

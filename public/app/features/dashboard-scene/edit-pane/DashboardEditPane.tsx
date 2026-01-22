@@ -31,7 +31,7 @@ export interface DashboardEditPaneState extends SceneObjectState {
   isDocked?: boolean;
 }
 
-export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters';
+export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add';
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public constructor() {

@@ -74,6 +74,7 @@ export function trackDashboardSceneCreatedOrSaved(
     config.featureToggles.dashboardTemplates ||
     config.featureToggles.suggestedDashboards
       ? {
+          isDashboardTemplatesEnabled: config.featureToggles.dashboardTemplates ?? false,
           datasourceTypes,
           sourceEntryPoint,
           libraryItemId,

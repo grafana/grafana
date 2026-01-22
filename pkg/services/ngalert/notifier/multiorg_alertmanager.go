@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify/nfstatus"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -71,6 +72,7 @@ type Alertmanager interface {
 	// Receivers
 	GetReceivers(ctx context.Context) ([]apimodels.Receiver, error)
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error)
+	TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error)
 	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
 
 	// Lifecycle
@@ -419,6 +421,12 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 		moa.settleCancel()
 		r.Shutdown()
 	}
+}
+
+// Peer returns the cluster peer for this Alertmanager.
+// Returns nil if clustering is not configured.
+func (moa *MultiOrgAlertmanager) Peer() alertingNotify.ClusterPeer {
+	return moa.peer
 }
 
 // AlertmanagerFor returns the Alertmanager instance for the organization provided.

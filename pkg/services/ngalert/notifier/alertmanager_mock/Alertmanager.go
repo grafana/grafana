@@ -813,6 +813,65 @@ func (_c *AlertmanagerMock_StopAndWait_Call) RunAndReturn(run func()) *Alertmana
 	return _c
 }
 
+// TestIntegration provides a mock function with given fields: ctx, receiverName, integrationConfig, alert
+func (_m *AlertmanagerMock) TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingmodels.TestReceiversConfigAlertParams) (alertingmodels.IntegrationStatus, error) {
+	ret := _m.Called(ctx, receiverName, integrationConfig, alert)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TestIntegration")
+	}
+
+	var r0 alertingmodels.IntegrationStatus
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, models.Integration, alertingmodels.TestReceiversConfigAlertParams) (alertingmodels.IntegrationStatus, error)); ok {
+		return rf(ctx, receiverName, integrationConfig, alert)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, models.Integration, alertingmodels.TestReceiversConfigAlertParams) alertingmodels.IntegrationStatus); ok {
+		r0 = rf(ctx, receiverName, integrationConfig, alert)
+	} else {
+		r0 = ret.Get(0).(alertingmodels.IntegrationStatus)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, models.Integration, alertingmodels.TestReceiversConfigAlertParams) error); ok {
+		r1 = rf(ctx, receiverName, integrationConfig, alert)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AlertmanagerMock_TestIntegration_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TestIntegration'
+type AlertmanagerMock_TestIntegration_Call struct {
+	*mock.Call
+}
+
+// TestIntegration is a helper method to define mock.On call
+//   - ctx context.Context
+//   - receiverName string
+//   - integrationConfig models.Integration
+//   - alert alertingmodels.TestReceiversConfigAlertParams
+func (_e *AlertmanagerMock_Expecter) TestIntegration(ctx interface{}, receiverName interface{}, integrationConfig interface{}, alert interface{}) *AlertmanagerMock_TestIntegration_Call {
+	return &AlertmanagerMock_TestIntegration_Call{Call: _e.mock.On("TestIntegration", ctx, receiverName, integrationConfig, alert)}
+}
+
+func (_c *AlertmanagerMock_TestIntegration_Call) Run(run func(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingmodels.TestReceiversConfigAlertParams)) *AlertmanagerMock_TestIntegration_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(models.Integration), args[3].(alertingmodels.TestReceiversConfigAlertParams))
+	})
+	return _c
+}
+
+func (_c *AlertmanagerMock_TestIntegration_Call) Return(_a0 alertingmodels.IntegrationStatus, _a1 error) *AlertmanagerMock_TestIntegration_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AlertmanagerMock_TestIntegration_Call) RunAndReturn(run func(context.Context, string, models.Integration, alertingmodels.TestReceiversConfigAlertParams) (alertingmodels.IntegrationStatus, error)) *AlertmanagerMock_TestIntegration_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // TestReceivers provides a mock function with given fields: ctx, c
 func (_m *AlertmanagerMock) TestReceivers(ctx context.Context, c definitions.TestReceiversConfigBodyParams) (*notify.TestReceiversResult, int, error) {
 	ret := _m.Called(ctx, c)

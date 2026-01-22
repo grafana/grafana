@@ -22,6 +22,10 @@ var (
 		"Time interval cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}",
 		errutil.WithPublic(`Time interval cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}. You must update those resources first using the original provision method.`),
 	)
+	ErrTimeIntervalOrigin = errutil.BadRequest("alerting.notifications.time-intervals.originInvalid").MustTemplate(
+		"Time interval '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
+		errutil.WithPublic("Time interval '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
+	)
 
 	ErrTemplateNotFound = errutil.NotFound("alerting.notifications.templates.notFound")
 	ErrTemplateInvalid  = errutil.BadRequest("alerting.notifications.templates.invalidFormat").MustTemplate("Invalid format of the submitted template", errutil.WithPublic("Template is in invalid format. Correct the payload and try again."))
@@ -137,4 +141,10 @@ func MakeErrContactPointUidExists(uid, name string) error {
 
 func makeErrTemplateOrigin(t definitions.NotificationTemplate, action string) error {
 	return ErrTemplateOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": t.Name}})
+}
+
+func makeErrMuteTimeIntervalOrigin(mt definitions.MuteTimeInterval, action string) error {
+	return ErrTimeIntervalOrigin.Build(errutil.TemplateData{
+		Public: map[string]interface{}{"Action": action, "Name": mt.Name},
+	})
 }

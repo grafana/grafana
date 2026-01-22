@@ -45,19 +45,24 @@ func (m *finalizerMetrics) RecordFinalizer(finalizerType string, outcome string,
 	}
 }
 
+//go:generate mockery --name=HealthMetricsRecorder --structname=MockHealthMetricsRecorder --inpackage --filename metrics_mock.go --with-expecter
+type HealthMetricsRecorder interface {
+	RecordHealthCheck(resource, outcome string, duration float64)
+}
+
 type healthMetrics struct {
 	registry              prometheus.Registerer
 	healthCheckedTotal    *prometheus.CounterVec
 	healthCheckedDuration *prometheus.HistogramVec
 }
 
-func registerHealthMetrics(registry prometheus.Registerer) healthMetrics {
+func NewHealthMetricsRecorder(registry prometheus.Registerer) HealthMetricsRecorder {
 	healthCheckedTotal := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "grafana_provisioning_health_checked_total",
 			Help: "Total number of health checks performed",
 		},
-		[]string{"outcome"},
+		[]string{"resource", "outcome"},
 	)
 	registry.MustRegister(healthCheckedTotal)
 
@@ -67,18 +72,18 @@ func registerHealthMetrics(registry prometheus.Registerer) healthMetrics {
 			Help:    "Duration of health checks",
 			Buckets: []float64{0.1, 0.2, 0.5, 1.0, 2.0, 5.0},
 		},
-		[]string{},
+		[]string{"resource"},
 	)
 	registry.MustRegister(healthCheckedDuration)
 
-	return healthMetrics{
+	return &healthMetrics{
 		registry:              registry,
 		healthCheckedTotal:    healthCheckedTotal,
 		healthCheckedDuration: healthCheckedDuration,
 	}
 }
 
-func (m *healthMetrics) RecordHealthCheck(outcome string, duration float64) {
-	m.healthCheckedTotal.WithLabelValues(outcome).Inc()
-	m.healthCheckedDuration.WithLabelValues().Observe(duration)
+func (m *healthMetrics) RecordHealthCheck(resource, outcome string, duration float64) {
+	m.healthCheckedTotal.WithLabelValues(resource, outcome).Inc()
+	m.healthCheckedDuration.WithLabelValues(resource).Observe(duration)
 }

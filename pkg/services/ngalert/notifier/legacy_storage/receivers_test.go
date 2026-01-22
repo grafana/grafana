@@ -318,7 +318,7 @@ func TestGetReceiver(t *testing.T) {
 			Name:       "receiver1",
 			Provenance: models.Provenance("test"),
 			Origin:     models.ResourceOriginGrafana,
-			Version:    "6e2fb0f572bc90f7",
+			Version:    "0d67768f299ef0fe",
 			Integrations: []*models.Integration{
 				{
 					UID:            "integration-uid-1",

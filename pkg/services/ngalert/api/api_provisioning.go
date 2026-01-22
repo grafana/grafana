@@ -62,7 +62,7 @@ type NotificationPolicyService interface {
 
 type MuteTimingService interface {
 	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error)
-	GetMuteTiming(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error)
+	GetMuteTimingByName(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error)
 	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
 	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
 	DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance, version string) error
@@ -245,7 +245,7 @@ func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, name
 }
 
 func (srv *ProvisioningSrv) RouteGetMuteTiming(c *contextmodel.ReqContext, name string) response.Response {
-	timing, err := srv.muteTimings.GetMuteTiming(c.Req.Context(), name, c.GetOrgID())
+	timing, err := srv.muteTimings.GetMuteTimingByName(c.Req.Context(), name, c.GetOrgID())
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get mute timing by name", err)
 	}

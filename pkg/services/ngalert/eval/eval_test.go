@@ -747,7 +747,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 			if testCase.reader == nil {
 				require.Empty(t, cmds[0].LoadedDimensions)
 			} else {
-				require.EqualValues(t, testCase.reader.Read(), cmds[0].LoadedDimensions)
+				require.EqualValues(t, testCase.reader.Read(context.Background()), cmds[0].LoadedDimensions)
 			}
 		})
 	}

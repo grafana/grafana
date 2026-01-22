@@ -63,6 +63,7 @@ export function ThresholdsBar({
         roundedBars={roundedBars}
         shape={shape}
         startAngle={currentStart}
+        data-testid="radial-gauge-thresholds-bar"
         {...colorProps}
       />
     );

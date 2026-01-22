@@ -120,7 +120,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
     const receivers: Receiver[] = [
       {
-        name: 'test',
+        name: contactPoint?.name ?? '', // for new receivers we can use empty string as name
         grafana_managed_receiver_configs: [chan],
       },
     ];

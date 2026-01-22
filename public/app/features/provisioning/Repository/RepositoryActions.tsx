@@ -4,7 +4,7 @@ import { Badge, Button, LinkButton, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StatusBadge } from '../Shared/StatusBadge';
-import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
+import { PROVISIONING_URL } from '../constants';
 import { getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
@@ -34,9 +34,6 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
         </Button>
       )}
       <SyncRepository repository={repository} />
-      <LinkButton variant="secondary" icon="link" href={CONNECTIONS_URL}>
-        <Trans i18nKey="provisioning.repository-actions.connections">Connections</Trans>
-      </LinkButton>
       <LinkButton
         variant="secondary"
         icon="cog"

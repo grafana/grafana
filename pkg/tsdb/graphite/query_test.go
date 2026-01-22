@@ -182,7 +182,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
+		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "target")
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -196,7 +196,7 @@ func TestConvertResponses(t *testing.T) {
 		body := `
 		[
 			{
-				"target": "aliasedTarget(target)",
+				"target": "alias(target)",
 				"tags": { "name": "target", "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
 				"datapoints": [[50, 1], [null, 2], [100, 3]]
 			}
@@ -211,13 +211,13 @@ func TestConvertResponses(t *testing.T) {
 				"barTag": "barValue",
 				"int":    "100",
 				"float":  "3.14",
-				"name":   "target",
-			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "aliasedTarget(target)"}),
+				"name":   "alias(target)",
+			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "alias(target)"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
+		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "alias(target)")
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -240,7 +240,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
+		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "")
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -281,7 +281,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, false)
+		dataFrames, err := service.toDataFrames(httpResponse, refId, false, "target")
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -295,7 +295,7 @@ func TestConvertResponses(t *testing.T) {
 		body := `
 		[
 			{
-				"target": "aliasedTarget(target)",
+				"target": "alias(target)",
 				"tags": { "name": "target", "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
 				"datapoints": [[50, 1], [null, 2], [100, 3]]
 			}
@@ -310,13 +310,13 @@ func TestConvertResponses(t *testing.T) {
 				"barTag": "barValue",
 				"int":    "100",
 				"float":  "3.14",
-				"name":   "aliasedTarget(target)",
-			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "aliasedTarget(target)"}),
+				"name":   "alias(target)",
+			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "alias(target)"}),
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(httpResponse, refId, true)
+		dataFrames, err := service.toDataFrames(httpResponse, refId, true, "alias(target)")
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -734,6 +734,119 @@ Error: Target not found
 					experimental.CheckGoldenJSONResponse(t, "testdata", fmt.Sprintf("%s-RefID-%s.golden", testName, refID), &resp, false)
 				}
 			}
+		})
+	}
+}
+
+func TestAliasMatching(t *testing.T) {
+	service := &Service{
+		logger: backend.Logger,
+	}
+
+	testCases := []struct {
+		name              string
+		target            string
+		tagsName          string
+		fromAlert         bool
+		expectedLabelName string
+	}{
+		{
+			name:              "alias() function sets name tag to target",
+			target:            "alias(stats.counters.web.hits, 'Web Hits')",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "alias(stats.counters.web.hits, 'Web Hits')",
+		},
+		{
+			name:              "aliasByNode() function sets name tag to target",
+			target:            "aliasByNode(stats.counters.web.hits, 2)",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "aliasByNode(stats.counters.web.hits, 2)",
+		},
+		{
+			name:              "aliasByMetric() function sets name tag to target",
+			target:            "aliasByMetric(stats.counters.web.hits)",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "aliasByMetric(stats.counters.web.hits)",
+		},
+		{
+			name:              "aliasByTags() function sets name tag to target",
+			target:            "aliasByTags(stats.counters.web.hits, 'host')",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "aliasByTags(stats.counters.web.hits, 'host')",
+		},
+		{
+			name:              "aliasSub() function sets name tag to target",
+			target:            "aliasSub(stats.counters.web.hits, 'stats', 'metrics')",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "aliasSub(stats.counters.web.hits, 'stats', 'metrics')",
+		},
+		{
+			name:              "aliasQuery() function sets name tag to target",
+			target:            "aliasQuery(stats.counters.web.hits, 'SELECT name FROM hosts')",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "aliasQuery(stats.counters.web.hits, 'SELECT name FROM hosts')",
+		},
+		{
+			name:              "no alias function keeps original name tag",
+			target:            "stats.counters.web.hits",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "stats.counters.web.hits",
+		},
+		{
+			name:              "fromAlert overrides name tag even without alias",
+			target:            "stats.counters.web.hits",
+			tagsName:          "original.name",
+			fromAlert:         true,
+			expectedLabelName: "stats.counters.web.hits",
+		},
+		{
+			name:              "nested alias function matches",
+			target:            "sumSeries(alias(stats.counters.*.hits, 'Hits'))",
+			tagsName:          "stats.counters.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "sumSeries(alias(stats.counters.*.hits, 'Hits'))",
+		},
+		{
+			name:              "alias in metric path should not match",
+			target:            "stats.alias.web.hits",
+			tagsName:          "stats.alias.web.hits",
+			fromAlert:         false,
+			expectedLabelName: "stats.alias.web.hits",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			body := fmt.Sprintf(`[
+				{
+					"target": %q,
+					"tags": { "name": %q, "host": "server1" },
+					"datapoints": [[100, 1609459200]]
+				}
+			]`, tc.target, tc.tagsName)
+
+			httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
+			dataFrames, err := service.toDataFrames(httpResponse, "A", tc.fromAlert, tc.target)
+
+			require.NoError(t, err)
+			require.Len(t, dataFrames, 1)
+
+			frame := dataFrames[0]
+			require.GreaterOrEqual(t, len(frame.Fields), 2)
+
+			valueField := frame.Fields[1]
+			require.NotNil(t, valueField.Labels)
+
+			actualName, ok := valueField.Labels["name"]
+			require.True(t, ok, "name label should exist")
+			assert.Equal(t, tc.expectedLabelName, actualName, "name label should match expected value")
 		})
 	}
 }

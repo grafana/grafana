@@ -3,10 +3,12 @@ package opentsdb
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -162,31 +164,48 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger := logger.FromContext(ctx)
+	result := backend.NewQueryDataResponse()
 
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
-		return nil, err
+		for _, q := range req.Queries {
+			result.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(backend.PluginError(err))
+		}
+		return result, nil
 	}
 
-	result := backend.NewQueryDataResponse()
-
 	for _, query := range req.Queries {
+		metric, err := BuildMetric(query)
+		if err != nil {
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(backend.PluginError(err))
+			continue
+		}
+
 		tsdbQuery := OpenTsdbQuery{
 			Start: query.TimeRange.From.Unix(),
 			End:   query.TimeRange.To.Unix(),
 			Queries: []map[string]any{
-				BuildMetric(query),
+				metric,
 			},
 		}
 
 		httpReq, err := CreateRequest(ctx, logger, dsInfo, tsdbQuery)
 		if err != nil {
-			return nil, err
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+			continue
 		}
 
 		httpRes, err := dsInfo.HTTPClient.Do(httpReq)
 		if err != nil {
-			return nil, err
+			if backend.IsDownstreamHTTPError(err) {
+				err = backend.DownstreamError(err)
+			}
+			var urlErr *url.Error
+			if errors.As(err, &urlErr) && urlErr.Err != nil && strings.HasPrefix(urlErr.Err.Error(), "unsupported protocol scheme") {
+				err = backend.DownstreamError(err)
+			}
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+			continue
 		}
 
 		defer func() {
@@ -197,7 +216,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 		queryRes, err := ParseResponse(logger, httpRes, query.RefID, dsInfo.TSDBVersion)
 		if err != nil {
-			return nil, err
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(err))
+			continue
 		}
 
 		result.Responses[query.RefID] = queryRes.Responses[query.RefID]

@@ -161,7 +161,11 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 
 		clusterInfo, err := es.GetClusterInfo(httpCli, settings.URL)
 		if err != nil {
-			return nil, err
+			// Log warning but continue with default (non-serverless) behavior
+			// This handles cases where users don't have permission to access the root endpoint (403)
+			// or other connectivity issues that shouldn't prevent basic datasource functionality
+			backend.Logger.Warn("Failed to get Elasticsearch cluster info, assuming non-serverless cluster", "error", err, "url", settings.URL)
+			clusterInfo = es.ClusterInfo{}
 		}
 
 		configuredFields := es.ConfiguredFields{

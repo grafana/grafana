@@ -210,6 +210,32 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "ownerReference", // singular
+										In:          "query",
+										Description: "filter by owner reference in the format {Group}/{Kind}/{Name}",
+										Required:    false,
+										Schema:      spec.StringProperty(),
+										Examples: map[string]*spec3.Example{
+											"": {
+												ExampleProps: spec3.ExampleProps{},
+											},
+											"team": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "Team owner reference",
+													Value:   "iam.grafana.app/Team/xyz",
+												},
+											},
+											"user": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "User owner reference",
+													Value:   "iam.grafana.app/User/abc",
+												},
+											},
+										},
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "explain",
 										In:          "query",
 										Description: "add debugging info that may help explain why the result matched",
@@ -523,6 +549,19 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 			Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 			Operator: "=",
 			Values:   v,
+		})
+	}
+
+	// Multiple values for the same param = OR logic (use "in" operator)
+	if vals, ok := queryParams["ownerReference"]; ok {
+		operator := "="
+		if len(vals) > 1 {
+			operator = "in"
+		}
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+			Operator: operator,
+			Values:   vals,
 		})
 	}
 

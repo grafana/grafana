@@ -21,18 +21,21 @@ import (
 	"golang.org/x/net/html"
 )
 
+type queryModel struct {
+	req       *http.Request
+	formData  url.Values
+	rawTarget string
+}
+
 func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataResponse, error) {
 	emptyQueries := []string{}
-	graphiteQueries := map[string]struct {
-		req      *http.Request
-		formData url.Values
-	}{}
+	graphiteQueries := map[string]queryModel{}
 	// FromAlert header is defined in pkg/services/ngalert/models/constants.go
 	fromAlert := req.Headers["FromAlert"] == "true"
 	result := backend.NewQueryDataResponse()
 
 	for _, query := range req.Queries {
-		graphiteReq, formData, emptyQuery, err := s.createGraphiteRequest(ctx, query, dsInfo)
+		graphiteReq, formData, emptyQuery, target, err := s.createGraphiteRequest(ctx, query, dsInfo)
 		if err != nil {
 			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
 			return result, nil
@@ -43,12 +46,10 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			continue
 		}
 
-		graphiteQueries[query.RefID] = struct {
-			req      *http.Request
-			formData url.Values
-		}{
-			req:      graphiteReq,
-			formData: formData,
+		graphiteQueries[query.RefID] = queryModel{
+			req:       graphiteReq,
+			formData:  formData,
+			rawTarget: target,
 		}
 	}
 
@@ -99,7 +100,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			}
 		}()
 
-		queryFrames, err := s.toDataFrames(res, refId, fromAlert)
+		queryFrames, err := s.toDataFrames(res, refId, fromAlert, graphiteReq.rawTarget)
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
@@ -147,7 +148,7 @@ func (s *Service) processQuery(query backend.DataQuery) (string, *GraphiteQuery,
 	return target, nil, queryJSON.IsMetricTank, nil
 }
 
-func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQuery, dsInfo *datasourceInfo) (*http.Request, url.Values, *GraphiteQuery, error) {
+func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQuery, dsInfo *datasourceInfo) (*http.Request, url.Values, *GraphiteQuery, string, error) {
 	/*
 		graphite doc about from and until, with sdk we are getting absolute instead of relative time
 		https://graphite-api.readthedocs.io/en/latest/api.html#from-until
@@ -163,12 +164,12 @@ func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQ
 
 	target, emptyQuery, isMetricTank, err := s.processQuery(query)
 	if err != nil {
-		return nil, formData, nil, err
+		return nil, formData, nil, "", err
 	}
 
 	if emptyQuery != nil {
 		s.logger.Debug("Graphite", "empty query target", emptyQuery)
-		return nil, formData, emptyQuery, nil
+		return nil, formData, emptyQuery, "", nil
 	}
 
 	formData["target"] = []string{target}
@@ -188,13 +189,15 @@ func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQ
 		QueryParams: params,
 	})
 	if err != nil {
-		return nil, formData, nil, err
+		return nil, formData, nil, "", err
 	}
 
-	return graphiteReq, formData, emptyQuery, nil
+	return graphiteReq, formData, emptyQuery, target, nil
 }
 
-func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert bool) (frames data.Frames, error error) {
+var aliasRegex = regexp.MustCompile(`(alias|aliasByMetric|aliasByNode|aliasByTags|aliasQuery|aliasSub)\(`)
+
+func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert bool, rawTarget string) (frames data.Frames, error error) {
 	responseData, err := s.parseResponse(response)
 	if err != nil {
 		return nil, err
@@ -202,6 +205,7 @@ func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert 
 
 	frames = data.Frames{}
 	for _, series := range responseData {
+		aliasMatch := aliasRegex.MatchString(rawTarget)
 		timeVector := make([]time.Time, 0, len(series.DataPoints))
 		values := make([]*float64, 0, len(series.DataPoints))
 
@@ -217,7 +221,9 @@ func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert 
 		tags := make(map[string]string)
 		for name, value := range series.Tags {
 			if name == "name" {
-				if fromAlert {
+				// Queries with aliases should use the target as the name
+				// to ensure multi-dimensional queries are distinguishable from each other
+				if fromAlert || aliasMatch {
 					value = series.Target
 				}
 			}

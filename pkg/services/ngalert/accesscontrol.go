@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -134,7 +135,7 @@ var (
 			Group:       models.AlertRolesGroup,
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingReceiversCreate},
-				{Action: accesscontrol.ActionAlertingReceiversTest},
+				{Action: accesscontrol.ActionAlertingReceiversTestCreate, Scope: models.ScopeReceiversProvider.GetResourceScopeType(alertingac.NewReceiverType)},
 			},
 		},
 	}
@@ -148,6 +149,7 @@ var (
 			Permissions: accesscontrol.ConcatPermissions(receiversReaderRole.Role.Permissions, receiversCreatorRole.Role.Permissions, []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingReceiversUpdate, Scope: models.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingReceiversDelete, Scope: models.ScopeReceiversAll},
+				{Action: accesscontrol.ActionAlertingReceiversTestCreate, Scope: models.ScopeReceiversAll},
 			}),
 		},
 	}

@@ -20,7 +20,7 @@ const (
 // OpenFeatureConfig holds configuration for initializing OpenFeature
 type OpenFeatureConfig struct {
 	// ProviderType is either "static", "features-service", or "ofrep"
-	ProviderType string
+	ProviderType setting.OpenFeatureProviderType
 	// URL is the remote provider's URL (required for features-service + OFREP providers)
 	URL *url.URL
 	// HTTPClient is a pre-configured HTTP client (optional, used by features-service + OFREP providers)
@@ -98,7 +98,7 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 }
 
 func createProvider(
-	providerType string,
+	providerType setting.OpenFeatureProviderType,
 	u *url.URL,
 	staticFlags map[string]memprovider.InMemoryFlag,
 	httpClient *http.Client,

@@ -64,10 +64,15 @@ func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path st
 	}
 
 	// Readonly repositories may not need a token (if public)
+	// HACK - we're checking if the object is new by looking at the generation instead of the action
+	// We should fix this in https://github.com/grafana/git-ui-sync-project/issues/746
+	isNewObject := repo.Generation == 0
 	if len(repo.Spec.Workflows) > 0 {
-		// If a token is provided, then the connection should not be there
+		// For new objects, if a token is provided, then the connection should not be there
 		if !repo.Secure.Token.IsZero() {
-			if repo.Spec.Connection != nil && repo.Spec.Connection.Name != "" {
+			if isNewObject &&
+				repo.Spec.Connection != nil &&
+				repo.Spec.Connection.Name != "" {
 				list = append(
 					list,
 					field.Invalid(

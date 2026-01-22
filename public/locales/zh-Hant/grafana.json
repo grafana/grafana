@@ -3714,6 +3714,7 @@
       "non-folder-item": "非資料夾 {{itemKind}} {{itemUID}}",
       "root-title": "儀表板",
       "search-placeholder": "搜尋資料夾",
+      "shared-with-me": "",
       "unknown-error": "未知錯誤"
     },
     "manage-folder-nav": {
@@ -3814,6 +3815,7 @@
       "label-method": "方法",
       "label-payload": "裝載",
       "label-query-parameters": "查詢參數",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "測試 API",
         "title-test-api": "測試 API"
@@ -4529,6 +4531,14 @@
     "actions": {
       "open-settings": "設定"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "關閉「新增面板」小工具",
       "tooltip-close-widget": "關閉小工具"
@@ -4911,12 +4921,14 @@
       "add-visualization-body": "選取資料來源，然後使用圖表、統計資料及表格查詢並將資料可視化，或建立清單、標記及其他小工具。",
       "add-visualization-button": "新增可視化",
       "add-visualization-header": "透過新增可視化來啟動您的新儀表板",
+      "description": "",
       "import-a-dashboard-body": "從檔案或 <2>grafana.com</2> 匯入儀表板。",
       "import-a-dashboard-header": "匯入儀表板",
       "import-dashboard-button": "匯入儀表板",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5422,6 +5434,10 @@
       "loading-configuration": "正在匯入設定"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""

@@ -26,11 +26,11 @@ export function showDefaultSuggestion(fn: (panelDataSummary: PanelDataSummary) =
  * @param shouldUseRawValues if true, reduceOptions will be set to use raw values,
  *   otherwise a calcs will be used with the default value of `lastNotNull`.
  */
-export function defaultNumericVizOptions(
-  suggestion: VisualizationSuggestion<{ reduceOptions?: ReduceDataOptions }>,
+export function defaultNumericVizOptions<S extends VisualizationSuggestion<{ reduceOptions?: ReduceDataOptions }>>(
+  suggestion: S,
   panelDataSummary: PanelDataSummary,
   shouldUseRawValues: boolean
-): VisualizationSuggestion {
+): S {
   suggestion.score =
     (suggestion.score ??
     (panelDataSummary.hasDataFrameType(DataFrameType.NumericLong) ||

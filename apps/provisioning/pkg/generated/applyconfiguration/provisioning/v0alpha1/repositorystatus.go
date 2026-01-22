@@ -8,10 +8,12 @@ package v0alpha1
 // with apply.
 type RepositoryStatusApplyConfiguration struct {
 	ObservedGeneration *int64                            `json:"observedGeneration,omitempty"`
+	FieldErrors        []ErrorDetailsApplyConfiguration  `json:"fieldErrors,omitempty"`
 	Health             *HealthStatusApplyConfiguration   `json:"health,omitempty"`
 	Sync               *SyncStatusApplyConfiguration     `json:"sync,omitempty"`
 	Stats              []ResourceCountApplyConfiguration `json:"stats,omitempty"`
 	Webhook            *WebhookStatusApplyConfiguration  `json:"webhook,omitempty"`
+	Token              *TokenStatusApplyConfiguration    `json:"token,omitempty"`
 	DeleteError        *string                           `json:"deleteError,omitempty"`
 }
 
@@ -26,6 +28,19 @@ func RepositoryStatus() *RepositoryStatusApplyConfiguration {
 // If called multiple times, the ObservedGeneration field is set to the value of the last call.
 func (b *RepositoryStatusApplyConfiguration) WithObservedGeneration(value int64) *RepositoryStatusApplyConfiguration {
 	b.ObservedGeneration = &value
+	return b
+}
+
+// WithFieldErrors adds the given value to the FieldErrors field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the FieldErrors field.
+func (b *RepositoryStatusApplyConfiguration) WithFieldErrors(values ...*ErrorDetailsApplyConfiguration) *RepositoryStatusApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithFieldErrors")
+		}
+		b.FieldErrors = append(b.FieldErrors, *values[i])
+	}
 	return b
 }
 
@@ -63,6 +78,14 @@ func (b *RepositoryStatusApplyConfiguration) WithStats(values ...*ResourceCountA
 // If called multiple times, the Webhook field is set to the value of the last call.
 func (b *RepositoryStatusApplyConfiguration) WithWebhook(value *WebhookStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
 	b.Webhook = value
+	return b
+}
+
+// WithToken sets the Token field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Token field is set to the value of the last call.
+func (b *RepositoryStatusApplyConfiguration) WithToken(value *TokenStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
+	b.Token = value
 	return b
 }
 

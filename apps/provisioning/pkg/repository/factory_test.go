@@ -625,3 +625,191 @@ func TestProvideFactory_EnabledParameter(t *testing.T) {
 		localExtra.AssertExpectations(t)
 	})
 }
+
+func TestFactory_Mutate(t *testing.T) {
+	t.Run("calls mutate only for matching type", func(t *testing.T) {
+		localExtra := &MockExtra{}
+		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
+		localExtra.On("Mutate", mock.Anything, mock.Anything).Return(nil)
+
+		gitExtra := &MockExtra{}
+		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
+		// Note: gitExtra.Mutate should NOT be called
+
+		enabled := map[provisioning.RepositoryType]struct{}{
+			provisioning.LocalRepositoryType: {},
+			provisioning.GitRepositoryType:   {},
+		}
+		factory, err := ProvideFactory(enabled, []Extra{localExtra, gitExtra})
+		require.NoError(t, err)
+
+		repo := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+			},
+		}
+
+		err = factory.Mutate(context.Background(), repo)
+		require.NoError(t, err)
+
+		localExtra.AssertExpectations(t)
+		gitExtra.AssertNotCalled(t, "Mutate")
+	})
+
+	t.Run("returns nil for non-repository object", func(t *testing.T) {
+		localExtra := &MockExtra{}
+		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
+
+		enabled := map[provisioning.RepositoryType]struct{}{
+			provisioning.LocalRepositoryType: {},
+		}
+		factory, err := ProvideFactory(enabled, []Extra{localExtra})
+		require.NoError(t, err)
+
+		// Pass a non-repository object
+		err = factory.Mutate(context.Background(), &provisioning.Connection{})
+		require.NoError(t, err)
+
+		localExtra.AssertNotCalled(t, "Mutate")
+	})
+
+	t.Run("returns nil for unsupported type (caught by Validate)", func(t *testing.T) {
+		localExtra := &MockExtra{}
+		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
+
+		enabled := map[provisioning.RepositoryType]struct{}{
+			provisioning.LocalRepositoryType: {},
+		}
+		factory, err := ProvideFactory(enabled, []Extra{localExtra})
+		require.NoError(t, err)
+
+		repo := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType, // Unsupported
+			},
+		}
+
+		err = factory.Mutate(context.Background(), repo)
+		require.NoError(t, err) // Mutate returns nil for unsupported types
+
+		localExtra.AssertNotCalled(t, "Mutate")
+	})
+
+	t.Run("propagates error from extra.Mutate", func(t *testing.T) {
+		expectedError := errors.New("mutate failed")
+		localExtra := &MockExtra{}
+		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
+		localExtra.On("Mutate", mock.Anything, mock.Anything).Return(expectedError)
+
+		enabled := map[provisioning.RepositoryType]struct{}{
+			provisioning.LocalRepositoryType: {},
+		}
+		factory, err := ProvideFactory(enabled, []Extra{localExtra})
+		require.NoError(t, err)
+
+		repo := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+			},
+		}
+
+		err = factory.Mutate(context.Background(), repo)
+		assert.Error(t, err)
+		assert.Equal(t, expectedError, err)
+
+		localExtra.AssertExpectations(t)
+	})
+}
+
+func TestFactory_Validate(t *testing.T) {
+	t.Run("validates only for matching type", func(t *testing.T) {
+		localExtra := &MockExtra{}
+		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
+		localExtra.On("Validate", mock.Anything, mock.Anything).Return(nil)
+
+		gitExtra := &MockExtra{}
+		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
+		// Note: gitExtra.Validate should NOT be called
+
+		enabled := map[provisioning.RepositoryType]struct{}{
+			provisioning.LocalRepositoryType: {},
+			provisioning.GitRepositoryType:   {},
+		}
+		factory, err := ProvideFactory(enabled, []Extra{localExtra, gitExtra})
+		require.NoError(t, err)
+
+		repo := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+			},
+		}
+
+		errors := factory.Validate(context.Background(), repo)
+		assert.Empty(t, errors)
+
+		localExtra.AssertExpectations(t)
+		gitExtra.AssertNotCalled(t, "Validate")
+	})
+
+	t.Run("returns error for unsupported type", func(t *testing.T) {
+		localExtra := &MockExtra{}
+		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
+
+		enabled := map[provisioning.RepositoryType]struct{}{
+			provisioning.LocalRepositoryType: {},
+		}
+		factory, err := ProvideFactory(enabled, []Extra{localExtra})
+		require.NoError(t, err)
+
+		repo := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType, // Unsupported
+			},
+		}
+
+		errors := factory.Validate(context.Background(), repo)
+		require.Len(t, errors, 1)
+		assert.Contains(t, errors[0].Detail, "repository type \"git\" is not supported")
+
+		localExtra.AssertNotCalled(t, "Validate")
+	})
+
+	t.Run("returns error for disabled type", func(t *testing.T) {
+		localExtra := &MockExtra{}
+		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
+
+		// Type is registered but not enabled
+		enabled := map[provisioning.RepositoryType]struct{}{}
+		factory, err := ProvideFactory(enabled, []Extra{localExtra})
+		require.NoError(t, err)
+
+		repo := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+			},
+		}
+
+		errors := factory.Validate(context.Background(), repo)
+		require.Len(t, errors, 1)
+		assert.Contains(t, errors[0].Detail, "repository type \"local\" is not enabled")
+
+		localExtra.AssertNotCalled(t, "Validate")
+	})
+
+	t.Run("returns empty for non-repository object", func(t *testing.T) {
+		localExtra := &MockExtra{}
+		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
+
+		enabled := map[provisioning.RepositoryType]struct{}{
+			provisioning.LocalRepositoryType: {},
+		}
+		factory, err := ProvideFactory(enabled, []Extra{localExtra})
+		require.NoError(t, err)
+
+		// Pass a non-repository object
+		errors := factory.Validate(context.Background(), &provisioning.Connection{})
+		assert.Empty(t, errors)
+
+		localExtra.AssertNotCalled(t, "Validate")
+	})
+}

@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { getTestIdForLayout } from '../../utils/test-utils';
 import { useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
@@ -56,6 +58,7 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
 
   return (
     <div
+      data-testid={selectors.components.LayoutContainer(getTestIdForLayout(model))}
       className={cx(styles.container, fillScreen && styles.containerFillScreen, isEditing && styles.containerEditing)}
       ref={model.containerRef}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: layoutManager.state.key }}

@@ -327,7 +327,8 @@ describe('Policy', () => {
 
     const defaultPolicy = screen.getByTestId('am-root-route-container');
     expect(within(defaultPolicy).queryByTestId('matches-all')).not.toBeInTheDocument();
-    expect(within(defaultPolicy).getByText('1 error')).toBeInTheDocument();
+    // Errors are now shown as an icon in the gutter
+    expect(within(defaultPolicy).getByTestId('policy-errors')).toBeInTheDocument();
 
     const customPolicy = screen.getByTestId('am-route-container');
     expect(within(customPolicy).getByTestId('matches-all')).toBeInTheDocument();

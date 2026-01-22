@@ -18,7 +18,12 @@ export const VizSuggestionsInteractions = {
     reportVizSuggestionsInteraction('suggestion_previewed', properties);
   },
 
-  suggestionAccepted: (properties: { pluginId: string; suggestionName: string; panelState: PanelState }) => {
+  suggestionAccepted: (properties: {
+    pluginId: string;
+    suggestionName: string;
+    panelState: PanelState;
+    suggestionIndex: number;
+  }) => {
     reportVizSuggestionsInteraction('suggestion_accepted', properties);
   },
 };

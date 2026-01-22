@@ -1,3 +1,4 @@
+import { omit } from 'lodash';
 import { useId, memo, HTMLAttributes, SVGProps } from 'react';
 
 import { FieldDisplay } from '@grafana/data';
@@ -7,7 +8,7 @@ import { getBarEndcapColors, getGradientCss } from './colors';
 import { RadialShape, RadialGaugeDimensions, GradientStop } from './types';
 import { drawRadialArcPath, toRad } from './utils';
 
-export interface RadialArcPathPropsBase {
+export interface RadialArcPathPropsBase extends SVGProps<SVGGElement> {
   arcLengthDeg: number;
   barEndcaps?: boolean;
   dimensions: RadialGaugeDimensions;
@@ -98,7 +99,7 @@ export const RadialArcPath = memo(
           </defs>
         )}
 
-        <g filter={glowFilter}>
+        <g filter={glowFilter} {...omit(rest, 'color', 'gradient')}>
           {isGradient ? (
             <foreignObject x={0} y={0} width={vizWidth} height={vizHeight} mask={`url(#${id})`}>
               <div style={bgDivStyle} />

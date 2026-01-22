@@ -24,10 +24,10 @@ function readCoverageFile(filePath) {
 /**
  * Formats a number as a percentage string
  * @param {number} value - Percentage value
- * @returns {string} Formatted percentage (e.g., "85.3%")
+ * @returns {string} Formatted percentage (e.g., "85.34%")
  */
 function formatPercentage(value) {
-  return `${value.toFixed(1)}%`;
+  return `${value.toFixed(2)}%`;
 }
 
 /**
@@ -37,7 +37,11 @@ function formatPercentage(value) {
  * @returns {string} Status icon and text
  */
 function getStatusIcon(mainValue, prValue) {
-  if (prValue >= mainValue) {
+  // Round to 2 decimal places for comparison to match display precision
+  const prPct = Math.round(prValue * 100) / 100;
+  const mainPct = Math.round(mainValue * 100) / 100;
+
+  if (prPct >= mainPct) {
     return '✅ Pass';
   }
   return '❌ Fail';
@@ -51,8 +55,29 @@ function getStatusIcon(mainValue, prValue) {
  */
 function getOverallStatus(mainSummary, prSummary) {
   const metrics = ['lines', 'statements', 'functions', 'branches'];
-  const allPass = metrics.every((metric) => prSummary[metric].pct >= mainSummary[metric].pct);
+  const allPass = metrics.every((metric) => {
+    // Round to 2 decimal places for comparison to match display precision
+    const prPct = Math.round(prSummary[metric].pct * 100) / 100;
+    const mainPct = Math.round(mainSummary[metric].pct * 100) / 100;
+    return prPct >= mainPct;
+  });
   return allPass;
+}
+
+/**
+ * Calculates the difference between PR and main coverage
+ * @param {number} prValue - PR coverage percentage
+ * @param {number} mainValue - Main coverage percentage
+ * @returns {string} Formatted delta (e.g., "+1.2%" or "-0.5%")
+ */
+function formatDelta(prValue, mainValue) {
+  const delta = prValue - mainValue;
+  if (delta > 0) {
+    return `+${delta.toFixed(2)}%`;
+  } else if (delta < 0) {
+    return `${delta.toFixed(2)}%`;
+  }
+  return '—';
 }
 
 /**
@@ -94,28 +119,22 @@ function generateMarkdown(mainCoverage, prCoverage) {
   const tableRows = rows
     .map((row) => {
       const status = getStatusIcon(row.main, row.pr);
-      return `| ${row.metric} | ${formatPercentage(row.main)} | ${formatPercentage(row.pr)} | ${status} |`;
+      const delta = formatDelta(row.pr, row.main);
+      return `| ${row.metric} | ${formatPercentage(row.main)} | ${formatPercentage(row.pr)} | ${delta} | ${status} |`;
     })
     .join('\n');
 
-  const overallStatus = overallPass ? '✅ Pass' : '❌ Fail';
-  const overallMessage = overallPass ? 'Coverage maintained or improved' : 'Coverage decreased in one or more metrics';
+  const overallStatus = overallPass ? '✅ Passed' : '❌ Failed';
 
-  return `## Test Coverage Report - ${teamName}
+  return `## Test Coverage Checks ${overallStatus} for ${teamName}
 
-| Metric | Main Branch | PR Branch | Status |
-|--------|-------------|-----------|--------|
+| Metric | Main | PR | Change | Status |
+|--------|------|----|----|--------|
 ${tableRows}
 
-**Overall: ${overallStatus}** - ${overallMessage}
+**Run locally:** 💻 \`yarn test:coverage:by-codeowner ${teamName}\`
 
-<details>
-<summary>Coverage Details</summary>
-
-- **PR Branch**: \`${prCoverage.commit.substring(0, 7)}\` (${prCoverage.timestamp})
-- **Main Branch**: \`${mainCoverage.commit.substring(0, 7)}\` (${mainCoverage.timestamp})
-
-</details>
+**Break glass:** 🚨 In case of emergency, adding the \`no-check-frontend-test-coverage\` label to this PR will skip checks.
 `;
 }
 
@@ -124,6 +143,7 @@ ${tableRows}
  * @param {string} mainPath - Path to main branch coverage summary JSON
  * @param {string} prPath - Path to PR branch coverage summary JSON
  * @param {string} outputPath - Path to write comparison markdown
+ * @returns {boolean} True if coverage check passed
  */
 function compareCoverageByCodeowner(
   mainPath = COVERAGE_MAIN_PATH,
@@ -139,6 +159,7 @@ function compareCoverageByCodeowner(
   }
 
   const markdown = generateMarkdown(mainCoverage, prCoverage);
+  const overallPass = getOverallStatus(mainCoverage.summary, prCoverage.summary);
 
   try {
     fs.writeFileSync(outputPath, markdown, 'utf8');
@@ -147,10 +168,17 @@ function compareCoverageByCodeowner(
     console.error(`Error writing output file: ${err.message}`);
     process.exit(1);
   }
+
+  return overallPass;
 }
 
 if (require.main === module) {
-  compareCoverageByCodeowner();
+  const passed = compareCoverageByCodeowner();
+  if (!passed) {
+    console.error('❌ Coverage check failed: One or more metrics decreased');
+    process.exit(1);
+  }
+  console.log('✅ Coverage check passed: All metrics maintained or improved');
 }
 
 module.exports = { compareCoverageByCodeowner, generateMarkdown, getOverallStatus };

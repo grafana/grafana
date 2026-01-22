@@ -12,7 +12,6 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
 	models2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -22,14 +21,10 @@ import (
 	fake_ds "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -47,7 +42,7 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 
 	mockedClock := clock.NewMock()
 
-	moa := createMultiOrgAlertmanager(t, []int64{1})
+	moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1}), notifier.WithWaitReady())
 
 	appUrl := &url.URL{
 		Scheme: "http",
@@ -116,7 +111,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 
 	mockedClock := clock.NewMock()
 
-	moa := createMultiOrgAlertmanager(t, []int64{1, 2})
+	moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1, 2}), notifier.WithWaitReady())
 
 	appUrl := &url.URL{
 		Scheme: "http",
@@ -276,7 +271,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	mockedClock := clock.NewMock()
 	mockedClock.Set(time.Now())
 
-	moa := createMultiOrgAlertmanager(t, []int64{1})
+	moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1}), notifier.WithWaitReady())
 
 	appUrl := &url.URL{
 		Scheme: "http",
@@ -368,7 +363,7 @@ func TestAlertmanagersChoiceWithDisableExternalFeatureToggle(t *testing.T) {
 	mockedClock := clock.NewMock()
 	mockedClock.Set(time.Now())
 
-	moa := createMultiOrgAlertmanager(t, []int64{1})
+	moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1}), notifier.WithWaitReady())
 
 	appUrl := &url.URL{
 		Scheme: "http",
@@ -468,56 +463,6 @@ func generatePostableAlert(t *testing.T, clk clock.Clock) models2.PostableAlert 
 			Labels:       models2.LabelSet(models.GenerateAlertLabels(5, "lbl-")),
 		},
 	}
-}
-
-func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAlertmanager {
-	t.Helper()
-
-	tmpDir := t.TempDir()
-	orgStore := notifier.NewFakeOrgStore(t, orgs)
-
-	cfg := &setting.Cfg{
-		DataPath: tmpDir,
-		UnifiedAlerting: setting.UnifiedAlertingSettings{
-			AlertmanagerConfigPollInterval: 3 * time.Minute,
-			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
-			DisabledOrgs:                   map[int64]struct{}{},
-		}, // do not poll in tests.
-	}
-
-	cfgStore := notifier.NewFakeConfigStore(t, make(map[int64]*models.AlertConfiguration))
-	kvStore := fakes.NewFakeKVStore(t)
-	registry := prometheus.NewPedanticRegistry()
-	m := metrics.NewNGAlert(registry)
-	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
-	decryptFn := secretsService.GetDecryptedValue
-	moa, err := notifier.NewMultiOrgAlertmanager(
-		cfg,
-		cfgStore,
-		orgStore,
-		kvStore,
-		fakes.NewFakeProvisioningStore(),
-		decryptFn,
-		m.GetMultiOrgAlertmanagerMetrics(),
-		nil,
-		fakes.NewFakeReceiverPermissionsService(),
-		log.New("testlogger"),
-		secretsService,
-		featuremgmt.WithFeatures(),
-		nil,
-	)
-	require.NoError(t, err)
-	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
-	require.Eventually(t, func() bool {
-		for _, org := range orgs {
-			_, err := moa.AlertmanagerFor(org)
-			if err != nil {
-				return false
-			}
-		}
-		return true
-	}, 10*time.Second, 100*time.Millisecond)
-	return moa
 }
 
 func TestBuildExternalURL(t *testing.T) {

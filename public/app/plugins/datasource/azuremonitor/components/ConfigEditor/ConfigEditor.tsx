@@ -44,7 +44,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.state = {
       unsaved: false,
     };
-    this.baseURL = `/api/datasources/${this.props.options.id}/resources/${routeNames.azureMonitor}/subscriptions`;
+    this.baseURL = `/api/datasources/uid/${this.props.options.uid}/resources/${routeNames.azureMonitor}/subscriptions`;
   }
 
   private updateOptions = (
@@ -59,7 +59,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   private saveOptions = async (): Promise<void> => {
     if (this.state.unsaved) {
       await getBackendSrv()
-        .put(`/api/datasources/${this.props.options.id}`, this.props.options)
+        .put(`/api/datasources/uid/${this.props.options.uid}`, this.props.options)
         .then((result: { datasource: AzureMonitorDataSourceSettings }) => {
           updateDatasourcePluginOption(this.props, 'version', result.datasource.version);
         });

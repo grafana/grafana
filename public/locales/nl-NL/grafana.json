@@ -3730,6 +3730,7 @@
       "non-folder-item": "Niet-map {{itemKind}} {{itemUID}}",
       "root-title": "Dashboards",
       "search-placeholder": "Mappen doorzoeken",
+      "shared-with-me": "",
       "unknown-error": "Onbekende fout"
     },
     "manage-folder-nav": {
@@ -3833,6 +3834,7 @@
       "label-method": "Methode",
       "label-payload": "Laadvermogen",
       "label-query-parameters": "Query-parameters",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Test-API",
         "title-test-api": "Test-API"
@@ -4548,6 +4550,14 @@
     "actions": {
       "open-settings": "Instellingen"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Widget 'Paneel toevoegen' sluiten",
       "tooltip-close-widget": "Widget sluiten"
@@ -4930,12 +4940,14 @@
       "add-visualization-body": "Selecteer een gegevensbron en zoek en visualiseer je gegevens met grafieken, statistieken en tabellen of maak lijsten, prijsverlagingen en andere widgets.",
       "add-visualization-button": "Visualisatie toevoegen",
       "add-visualization-header": "Begin je nieuwe dashboard door een visualisatie toe te voegen",
+      "description": "",
       "import-a-dashboard-body": "Importeer dashboards uit bestanden of <1>grafana.com</1>.",
       "import-a-dashboard-header": "Dashboard importeren",
       "import-dashboard-button": "Dashboard importeren",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5442,6 +5454,10 @@
       "loading-configuration": "Configuratie laden"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""

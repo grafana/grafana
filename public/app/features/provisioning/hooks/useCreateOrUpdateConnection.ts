@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 
 import {
   Connection,
-  ConnectionSpec,
   ConnectionSecure,
+  ConnectionSpec,
   useCreateConnectionMutation,
   useReplaceConnectionMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
@@ -14,8 +14,9 @@ export function useCreateOrUpdateConnection(name?: string) {
 
   const updateOrCreate = useCallback(
     async (data: ConnectionSpec, privateKey?: string) => {
+      // API expects base64-encoded private key
       const secure: ConnectionSecure | undefined = privateKey?.length
-        ? { privateKey: { create: privateKey } }
+        ? { privateKey: { create: btoa(privateKey) } }
         : undefined;
 
       const connection: Connection = {
@@ -24,11 +25,16 @@ export function useCreateOrUpdateConnection(name?: string) {
         secure,
       };
 
+      // First validate with dryRun - unwrap will throw on validation errors
       if (name) {
-        return update({
-          name,
-          connection,
-        });
+        await update({ name, connection, dryRun: 'All' }).unwrap();
+      } else {
+        await create({ connection, dryRun: 'All' }).unwrap();
+      }
+
+      // If validation passes, proceed with actual create/update
+      if (name) {
+        return update({ name, connection });
       }
 
       return create({ connection });

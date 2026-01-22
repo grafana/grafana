@@ -3730,6 +3730,7 @@
       "non-folder-item": "Icke-mapp {{itemKind}} {{itemUID}}",
       "root-title": "Kontrollpaneler",
       "search-placeholder": "Sök mappar",
+      "shared-with-me": "",
       "unknown-error": "Okänt fel"
     },
     "manage-folder-nav": {
@@ -3833,6 +3834,7 @@
       "label-method": "Metod",
       "label-payload": "Nyttolast",
       "label-query-parameters": "Frågeparametrar",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Test-API",
         "title-test-api": "Test-API"
@@ -4548,6 +4550,14 @@
     "actions": {
       "open-settings": "Inställningar"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Stäng widgeten ”Lägg till panel”",
       "tooltip-close-widget": "Stäng widgeten"
@@ -4930,12 +4940,14 @@
       "add-visualization-body": "Välj en datakälla och sedan en fråga och visualisera dina data med diagram, statistik och tabeller eller skapa listor, markdown-dokument och andra widgetar.",
       "add-visualization-button": "Lägg till visualisering",
       "add-visualization-header": "Starta din nya instrumentpanel genom att lägga till en visualisering",
+      "description": "",
       "import-a-dashboard-body": "Importera instrumentpaneler från filer eller från <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importera en instrumentpanel",
       "import-dashboard-button": "Importera instrumentpanel",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5442,6 +5454,10 @@
       "loading-configuration": "Läser in konfiguration"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""

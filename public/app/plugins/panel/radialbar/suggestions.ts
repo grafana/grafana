@@ -1,6 +1,12 @@
 import { defaultsDeep } from 'lodash';
 
-import { FieldColorModeId, FieldType, VisualizationSuggestion, VisualizationSuggestionsSupplier } from '@grafana/data';
+import {
+  FieldColorModeId,
+  FieldConfigSource,
+  FieldType,
+  VisualizationSuggestion,
+  VisualizationSuggestionsSupplier,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { GraphFieldConfig } from '@grafana/ui';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
@@ -11,6 +17,10 @@ const withDefaults = (
   suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
 ): VisualizationSuggestion<Options, GraphFieldConfig> =>
   defaultsDeep(suggestion, {
+    options: {
+      barWidthFactor: 0.3,
+      showThresholdMarkers: false,
+    },
     cardOptions: {
       previewModifier: (s) => {
         if (s.options?.reduceOptions) {
@@ -34,15 +44,43 @@ export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplier<Opti
     return;
   }
 
+  const suggestedRange = dataSummary.rawFrames?.reduce(
+    ([min, max], frame) => {
+      let newMin = min;
+      let newMax = max;
+      for (const f of frame.fields) {
+        if (f.type === FieldType.number) {
+          newMin = Math.min(newMin, f.state?.calcs?.min ?? Infinity);
+          newMax = Math.max(newMax, f.state?.calcs?.max ?? -Infinity);
+        }
+      }
+      return [newMin, newMax];
+    },
+    [Infinity, -Infinity]
+  );
+
+  let fieldConfig: FieldConfigSource<Partial<GraphFieldConfig>> | undefined = undefined;
+  if (suggestedRange && suggestedRange.every(isFinite)) {
+    const delta = suggestedRange[1] - suggestedRange[0];
+    fieldConfig = {
+      defaults: {
+        min: Math.floor(suggestedRange[0] - delta * 0.1),
+        max: Math.ceil(suggestedRange[1] + delta * 0.1),
+      },
+      overrides: [],
+    };
+  }
+
   const suggestions: Array<VisualizationSuggestion<Options, GraphFieldConfig>> = [
-    { name: t('gauge.suggestions.arc', 'Gauge') },
+    {
+      name: t('gauge.suggestions.arc', 'Gauge'),
+      fieldConfig,
+      options: { shape: 'gauge' },
+    },
     {
       name: t('gauge.suggestions.circular', 'Circular gauge'),
-      options: {
-        shape: 'circle',
-        showThresholdMarkers: false,
-        barWidthFactor: 0.3,
-      },
+      fieldConfig,
+      options: { shape: 'circle' },
     },
   ];
 
@@ -51,8 +89,14 @@ export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplier<Opti
     dataSummary.frameCount === 1 &&
     dataSummary.rowCountTotal <= MAX_GAUGES;
 
+  const showSparkline =
+    !shouldUseRawValues && dataSummary.rowCountTotal > 1 && dataSummary.hasFieldType(FieldType.time);
+
   return suggestions.map((s) => {
     const suggestion = defaultNumericVizOptions(withDefaults(s), dataSummary, shouldUseRawValues);
+
+    suggestion.options = suggestion.options ?? {};
+    suggestion.options.sparkline = showSparkline;
 
     if (shouldUseRawValues) {
       suggestion.fieldConfig = suggestion.fieldConfig ?? {

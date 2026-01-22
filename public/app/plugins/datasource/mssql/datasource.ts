@@ -101,7 +101,6 @@ export class MssqlDatasource extends SqlDatasource {
       },
       validateQuery: (query) =>
         Promise.resolve({ isError: false, isValid: true, query, error: '', rawSql: query.rawSql }),
-      dsID: () => this.id,
       dispose: (_dsID?: string) => {},
       toRawSql,
       functions: () => this.getFunctions(),

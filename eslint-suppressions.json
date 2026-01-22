@@ -1796,11 +1796,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneSplitter.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 5
-    }
-  },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
     "no-restricted-syntax": {
       "count": 3
@@ -2012,7 +2007,7 @@
   },
   "public/app/features/dashboard-scene/v2schema/ImportDashboardOverviewV2.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 10
+      "count": 3
     }
   },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
@@ -2965,11 +2960,6 @@
   "public/app/features/plugins/extensions/validators.ts": {
     "no-restricted-syntax": {
       "count": 4
-    }
-  },
-  "public/app/features/plugins/sandbox/codeLoader.ts": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/plugins/sandbox/distortions.ts": {

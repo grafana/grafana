@@ -64,6 +64,9 @@ export const versionedComponents = {
     dockToggle: {
       '12.4.0': 'data-testid sidebar-dock-toggle',
     },
+    newPanelButton: {
+      '12.4.0': 'data-testid sidebar add new panel',
+    },
   },
   EditPaneHeader: {
     deleteButton: {
@@ -78,6 +81,9 @@ export const versionedComponents = {
     duplicate: {
       '12.1.0': 'data-testid EditPaneHeader duplicate',
     },
+  },
+  LayoutContainer: {
+    '12.4.0': (identifier: string) => `data-testid Layout container ${identifier}`,
   },
   TimePicker: {
     openButton: {

@@ -62,7 +62,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields) *mapping.Docu
 	}
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_DESCRIPTION, descriptionMapping)
 
-	tagsMapping := &mapping.FieldMapping{
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TAGS, &mapping.FieldMapping{
 		Name:               resource.SEARCH_FIELD_TAGS,
 		Type:               "text",
 		Analyzer:           keyword.Name,
@@ -71,8 +71,18 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields) *mapping.Docu
 		IncludeTermVectors: false,
 		IncludeInAll:       true,
 		DocValues:          false,
-	}
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TAGS, tagsMapping)
+	})
+
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_OWNER_REFERENCES, &mapping.FieldMapping{
+		Name:               resource.SEARCH_FIELD_OWNER_REFERENCES,
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              false,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       false,
+		DocValues:          false,
+	})
 
 	folderMapping := &mapping.FieldMapping{
 		Name:               resource.SEARCH_FIELD_FOLDER,

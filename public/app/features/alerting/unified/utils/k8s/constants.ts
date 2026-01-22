@@ -20,6 +20,9 @@ export enum K8sAnnotations {
   AccessDelete = 'grafana.com/access/canDelete',
   /** Annotation key that indicates that the calling user is able to modify protected fields of this entity */
   AccessModifyProtected = 'grafana.com/access/canModifyProtected',
+
+  /** Annotation key that indicates whether this entity can be used in routes and rules */
+  CanUse = 'grafana.com/canUse',
 }
 
 /**

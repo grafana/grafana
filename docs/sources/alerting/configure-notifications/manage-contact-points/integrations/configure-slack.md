@@ -63,7 +63,11 @@ If you are using a Slack API Token, complete the following steps.
 
 ### Webhook URL
 
-If you are using a Webhook URL, follow steps 1 and 5 in the [Slack API Quickstart](https://api.slack.com/start/quickstart), and copy the Slack app Webhook URL. You need this when setting up your contact point integration in Grafana Alerting.
+If you are using a Webhook URL, complete the following steps.
+
+1. Follow the [Creating an app](https://docs.slack.dev/app-management/quickstart-app-settings/#creating) section of the Slack API Quickstart to create the app.
+1. Follow the [Create an incoming webhook](https://api.slack.com/messaging/webhooks#create_a_webhook) section of the Slack Incoming Webhooks guide to enable incoming webhooks for your app and create a webhook for your workspace.
+1. Copy the **Webhook URL** that starts with `https://hooks.slack.com/services/`. You need this when setting up your contact point integration in Grafana Alerting.
 
 ## Procedure
 

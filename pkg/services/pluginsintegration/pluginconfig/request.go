@@ -198,5 +198,7 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		m[backend.AppClientSecret] = externalService.ClientSecret
 	}
 
+	m[backend.LiveClientQueueMaxSize] = strconv.Itoa(s.cfg.LiveClientQueueMaxSize)
+
 	return m
 }

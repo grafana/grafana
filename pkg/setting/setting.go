@@ -626,6 +626,11 @@ type Cfg struct {
 	OverridesReloadInterval                    time.Duration
 	EnableSQLKVBackend                         bool
 	EnableSQLKVCompatibilityMode               bool
+	EnableGarbageCollection                    bool
+	GarbageCollectionInterval                  time.Duration
+	GarbageCollectionBatchSize                 int
+	GarbageCollectionMaxAge                    time.Duration
+	DashboardsGarbageCollectionMaxAge          time.Duration
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings

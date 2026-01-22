@@ -11,7 +11,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,16 +22,12 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -216,7 +211,11 @@ func TestGetAlertmanagerConfiguration_NewSecretField(t *testing.T) {
 	}
 
 	// Store the config as-is in the database. Bypasses normal save route so it doesn't get pre-emptively fixed.
-	mam := createMultiOrgAlertmanager(t, configs)
+	mam := notifier.NewTestMultiOrgAlertmanager(t,
+		notifier.WithOrgs([]int64{1, 2, 3}),
+		notifier.WithConfigs(configs),
+		notifier.WithDisabledOrgs(map[int64]struct{}{5: {}}),
+	)
 	sut.mam = mam
 
 	rc := createRequestCtxInOrg(orgId)
@@ -292,7 +291,12 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 			2: {AlertmanagerConfiguration: validConfigWithoutAutogen, OrgID: 2},
 		}
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingUseNewSimplifiedRoutingHashAlgorithm)
-		sut.mam = createMultiOrgAlertmanager(t, configs, withAMFeatureToggles(ft))
+		sut.mam = notifier.NewTestMultiOrgAlertmanager(t,
+			notifier.WithOrgs([]int64{1, 2, 3}),
+			notifier.WithConfigs(configs),
+			notifier.WithDisabledOrgs(map[int64]struct{}{5: {}}),
+			notifier.WithFeatureToggles(ft),
+		)
 		return sut, configs
 	}
 
@@ -563,7 +567,11 @@ func createSut(t *testing.T) AlertmanagerSrv {
 		2: {AlertmanagerConfiguration: validConfig, OrgID: 2},
 		3: {AlertmanagerConfiguration: brokenConfig, OrgID: 3},
 	}
-	mam := createMultiOrgAlertmanager(t, configs)
+	mam := notifier.NewTestMultiOrgAlertmanager(t,
+		notifier.WithOrgs([]int64{1, 2, 3}),
+		notifier.WithConfigs(configs),
+		notifier.WithDisabledOrgs(map[int64]struct{}{5: {}}),
+	)
 	log := log.NewNopLogger()
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	ruleStore := ngfakes.NewRuleStore(t)
@@ -576,68 +584,6 @@ func createSut(t *testing.T) AlertmanagerSrv {
 		featureManager: featuremgmt.WithFeatures(),
 		silenceSvc:     notifier.NewSilenceService(accesscontrol.NewSilenceService(ac, ruleStore), ruleStore, log, mam, ruleStore, ruleAuthzService),
 	}
-}
-
-type createMultiOrgAMOptions struct {
-	featureToggles featuremgmt.FeatureToggles
-}
-
-type createMultiOrgAMOptionsFunc func(*createMultiOrgAMOptions)
-
-func withAMFeatureToggles(toggles featuremgmt.FeatureToggles) createMultiOrgAMOptionsFunc {
-	return func(opts *createMultiOrgAMOptions) {
-		opts.featureToggles = toggles
-	}
-}
-
-func createMultiOrgAlertmanager(t *testing.T, configs map[int64]*ngmodels.AlertConfiguration, opts ...createMultiOrgAMOptionsFunc) *notifier.MultiOrgAlertmanager {
-	t.Helper()
-
-	options := createMultiOrgAMOptions{
-		featureToggles: featuremgmt.WithFeatures(),
-	}
-
-	for _, opt := range opts {
-		opt(&options)
-	}
-
-	configStore := notifier.NewFakeConfigStore(t, configs)
-	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3})
-	provStore := ngfakes.NewFakeProvisioningStore()
-	tmpDir := t.TempDir()
-	kvStore := ngfakes.NewFakeKVStore(t)
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	reg := prometheus.NewPedanticRegistry()
-	m := metrics.NewNGAlert(reg)
-	decryptFn := secretsService.GetDecryptedValue
-	cfg := &setting.Cfg{
-		DataPath: tmpDir,
-		UnifiedAlerting: setting.UnifiedAlertingSettings{
-			AlertmanagerConfigPollInterval: 3 * time.Minute,
-			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
-			DisabledOrgs:                   map[int64]struct{}{5: {}},
-		}, // do not poll in tests.
-	}
-
-	mam, err := notifier.NewMultiOrgAlertmanager(
-		cfg,
-		configStore,
-		orgStore,
-		kvStore,
-		provStore,
-		decryptFn,
-		m.GetMultiOrgAlertmanagerMetrics(),
-		nil,
-		ngfakes.NewFakeReceiverPermissionsService(),
-		log.New("testlogger"),
-		secretsService,
-		options.featureToggles,
-		nil,
-	)
-	require.NoError(t, err)
-	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
-	require.NoError(t, err)
-	return mam
 }
 
 var validConfig = `{
