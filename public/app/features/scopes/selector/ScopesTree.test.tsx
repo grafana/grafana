@@ -132,10 +132,11 @@ describe('ScopesTree', () => {
     });
 
     it('should not show selectedNodesToShow when first scope has no scopeNodeId', () => {
-      const selectedScopes: SelectedScope[] = [
+      // Set mock selected scopes
+      mockSelectedScopes.push(
         { scopeId: 'scope-1', scopeNodeId: undefined }, // No scopeNodeId
-        { scopeId: 'scope-2', scopeNodeId: 'child-2' },
-      ];
+        { scopeId: 'scope-2', scopeNodeId: 'child-2' }
+      );
 
       // Tree with no children to make it obvious if selectedNodesToShow is populated
       const tree: TreeNode = {
@@ -146,17 +147,18 @@ describe('ScopesTree', () => {
         childrenLoaded: true,
       };
 
-      render(<ScopesTree {...defaultProps} tree={tree} selectedScopes={selectedScopes} />);
+      render(<ScopesTree {...defaultProps} tree={tree} />);
 
       // child-2 should NOT appear because only first scope is considered and it has no scopeNodeId
       expect(screen.queryByText('Title child-2')).not.toBeInTheDocument();
     });
 
     it('should not show selectedNodesToShow when first scope node is not in scopeNodes cache', () => {
-      const selectedScopes: SelectedScope[] = [
+      // Set mock selected scopes
+      mockSelectedScopes.push(
         { scopeId: 'scope-1', scopeNodeId: 'missing-node' }, // Node not in scopeNodes
-        { scopeId: 'scope-2', scopeNodeId: 'child-2' },
-      ];
+        { scopeId: 'scope-2', scopeNodeId: 'child-2' }
+      );
 
       // Tree with no children
       const tree: TreeNode = {
@@ -167,7 +169,7 @@ describe('ScopesTree', () => {
         childrenLoaded: true,
       };
 
-      render(<ScopesTree {...defaultProps} tree={tree} selectedScopes={selectedScopes} />);
+      render(<ScopesTree {...defaultProps} tree={tree} />);
 
       // Neither should appear since first scope's node is missing from cache
       expect(screen.queryByText('Title missing-node')).not.toBeInTheDocument();
@@ -175,9 +177,8 @@ describe('ScopesTree', () => {
     });
 
     it('should not show selectedNodesToShow when tree scopeNodeId does not match first scope parent', () => {
-      const selectedScopes: SelectedScope[] = [
-        { scopeId: 'scope-1', scopeNodeId: 'child-1' }, // child-1's parent is 'parent-container'
-      ];
+      // Set mock selected scopes
+      mockSelectedScopes.push({ scopeId: 'scope-1', scopeNodeId: 'child-1' }); // child-1's parent is 'parent-container'
 
       // Tree with different scopeNodeId
       const tree: TreeNode = {
@@ -196,14 +197,18 @@ describe('ScopesTree', () => {
         },
       };
 
-      render(<ScopesTree {...defaultProps} tree={tree} scopeNodes={scopeNodes} selectedScopes={selectedScopes} />);
+      // Update mock scope nodes
+      Object.assign(mockScopeNodes, scopeNodes);
+
+      render(<ScopesTree {...defaultProps} tree={tree} />);
 
       // child-1 should NOT appear since tree's scopeNodeId doesn't match child-1's parent
       expect(screen.queryByText('Title child-1')).not.toBeInTheDocument();
     });
 
     it('should not duplicate scope in selectedNodesToShow if already in children', () => {
-      const selectedScopes: SelectedScope[] = [{ scopeId: 'scope-1', scopeNodeId: 'child-1' }];
+      // Set mock selected scopes
+      mockSelectedScopes.push({ scopeId: 'scope-1', scopeNodeId: 'child-1' });
 
       // Tree already has child-1 in children
       const tree: TreeNode = {
@@ -217,7 +222,7 @@ describe('ScopesTree', () => {
         childrenLoaded: true,
       };
 
-      render(<ScopesTree {...defaultProps} tree={tree} selectedScopes={selectedScopes} />);
+      render(<ScopesTree {...defaultProps} tree={tree} />);
 
       // child-1 should appear exactly once (in regular children, not duplicated)
       const child1Elements = screen.getAllByText('Title child-1');
