@@ -26,49 +26,49 @@ jobs:
           #          cat trace-toolexec.log
           echo "============================="
 
-  send-telemetry:
-    runs-on: ubuntu-x64-small
-    if: always()
-    needs:
-      - build
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Get Vault secrets
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          repo_secrets: |
-            OTEL_EXPORTER_OTLP_API_KEY=grafana-otlp-api-key:api-key-base64
-
-      - name: send curl
-        run: |
-          curl -v \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Basic ${{ env.OTEL_EXPORTER_OTLP_API_KEY }}" \
-            -d '{
-            "resourceSpans": [{
-              "resource": {
-                "attributes": [{
-                  "key": "service.name",
-                  "value": { "stringValue": "otel-debug-test" }
-                }]
-              },
-              "scopeSpans": [{
-                "scope": { "name": "debugger" },
-                "spans": [{
-                  "traceId": "AAAAAAAAAAAAAAAAAAAAAA==",
-                  "spanId": "AAAAAAAAAAA=",
-                  "name": "debug-span",
-                  "kind": 1,
-                  "startTimeUnixNano": "1710000000000000000",
-                  "endTimeUnixNano": "1710000001000000000"
-                }]
-              }]
-            }]
-          }' \
-            "https://otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp/v1/traces"
+#  send-telemetry:
+#    runs-on: ubuntu-x64-small
+#    if: always()
+#    needs:
+#      - build
+#    permissions:
+#      id-token: write
+#      contents: read
+#    steps:
+#      - name: Get Vault secrets
+#        id: vault-secrets
+#        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+#        with:
+#          repo_secrets: |
+#            OTEL_EXPORTER_OTLP_API_KEY=grafana-otlp-api-key:api-key-base64
+#
+#      - name: send curl
+#        run: |
+#          curl -v \
+#            -H "Content-Type: application/json" \
+#            -H "Authorization: Basic ${{ env.OTEL_EXPORTER_OTLP_API_KEY }}" \
+#            -d '{
+#            "resourceSpans": [{
+#              "resource": {
+#                "attributes": [{
+#                  "key": "service.name",
+#                  "value": { "stringValue": "otel-debug-test" }
+#                }]
+#              },
+#              "scopeSpans": [{
+#                "scope": { "name": "debugger" },
+#                "spans": [{
+#                  "traceId": "AAAAAAAAAAAAAAAAAAAAAA==",
+#                  "spanId": "AAAAAAAAAAA=",
+#                  "name": "debug-span",
+#                  "kind": 1,
+#                  "startTimeUnixNano": "1710000000000000000",
+#                  "endTimeUnixNano": "1710000001000000000"
+#                }]
+#              }]
+#            }]
+#          }' \
+#            "https://otlp-gateway-ops-eu-south-0.grafana-ops.net/otlp/v1/traces"
 
 #
 #  - uses: paper2/github-actions-opentelemetry@main
