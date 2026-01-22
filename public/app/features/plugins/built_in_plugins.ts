@@ -1,5 +1,3 @@
-import { config } from '@grafana/runtime';
-
 const cloudwatchPlugin = async () =>
   await import(/* webpackChunkName: "cloudwatchPlugin" */ 'app/plugins/datasource/cloudwatch/module');
 const dashboardDSPlugin = async () =>
