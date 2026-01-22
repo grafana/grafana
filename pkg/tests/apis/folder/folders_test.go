@@ -2258,12 +2258,10 @@ func TestIntegrationFolderSearchWithOwner(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, folder.GetName(), out.GetName())
 
-	// Get everything - wait for both folders to be indexed
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		results, err := client.Resource.List(context.Background(), metav1.ListOptions{})
-		assert.NoError(collect, err)
-		assert.Equal(collect, []string{"folderA", "folderB"}, getNames(results.Items))
-	}, 10*time.Second, 100*time.Millisecond)
+	// Get everything
+	results, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, []string{"folderA", "folderB"}, getNames(results.Items))
 
 	// Verify folderB has owner references set
 	folderB, err := client.Resource.Get(context.Background(), "folderB", metav1.GetOptions{})
@@ -2274,7 +2272,8 @@ func TestIntegrationFolderSearchWithOwner(t *testing.T) {
 	require.Equal(t, "Team", owners[0].Kind)
 
 	// Find results with a specific owner (with trimming suffix)
-	sr := callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/engineering ")
+	suffixToTrim := " "
+	sr := callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/engineering"+suffixToTrim)
 	require.Len(t, sr.Hits, 1)
 	require.Equal(t, "folderB", sr.Hits[0].Name)
 

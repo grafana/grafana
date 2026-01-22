@@ -1599,6 +1599,10 @@ var termFields = []string{
 // exactTermFields fields to use termQuery for filtering without any extra queries
 var exactTermFields = []string{
 	resource.SEARCH_FIELD_OWNER_REFERENCES,
+	// FIXME: special case for login and email to use term query only because those fields are using keyword analyzer
+	// This should be fixed by using the info from the schema
+	"login",
+	"email",
 }
 
 // Convert a "requirement" into a bleve query
@@ -1608,12 +1612,6 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 	case selection.Equals, selection.DoubleEquals:
 		if len(req.Values) == 0 {
 			return query.NewMatchAllQuery(), nil
-		}
-
-		// FIXME: special case for login and email to use term query only because those fields are using keyword analyzer
-		// This should be fixed by using the info from the schema
-		if (req.Key == "login" || req.Key == "email") && len(req.Values) == 1 {
-			return newExactTermsQuery(req.Key, req.Values[0], prefix), nil
 		}
 
 		if len(req.Values) == 1 && useExactTermQuery {
@@ -1714,7 +1712,7 @@ func newTermsQuery(key string, value string, delimiter string, prefix string) qu
 	return bleve.NewDisjunctionQuery(q, cq)
 }
 
-// newTermsQuery will create a query that will match on term without any extra queries
+// newExactTermsQuery will create a query that will match on term without any extra queries
 func newExactTermsQuery(key string, value string, prefix string) query.Query {
 	// won't match with ending space
 	value = strings.TrimSuffix(value, " ")
