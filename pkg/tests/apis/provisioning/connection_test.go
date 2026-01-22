@@ -1198,10 +1198,10 @@ func TestIntegrationConnectionController_DryRunValidation(t *testing.T) {
 		require.Error(t, err, "dryRun create should fail with invalid installation ID")
 
 		// Verify it's an Invalid error with field error details
-		statusErr, ok := err.(*k8serrors.StatusError)
-		require.True(t, ok, "error should be StatusError")
+		var statusErr *k8serrors.StatusError
+		require.True(t, errors.As(err, &statusErr), "error should be StatusError")
 		// Check if it's an Invalid error (could be Invalid or BadRequest depending on how errors are returned)
-		require.True(t, statusErr.Status().Reason == metav1.StatusReasonInvalid || statusErr.Status().Code == 422, 
+		require.True(t, statusErr.Status().Reason == metav1.StatusReasonInvalid || statusErr.Status().Code == 422,
 			"error reason should be Invalid or status code should be 422")
 
 		// Verify the error message contains information about invalid installation ID
@@ -1264,8 +1264,8 @@ func TestIntegrationConnectionController_DryRunValidation(t *testing.T) {
 		require.Error(t, err, "dryRun create should fail with invalid app ID")
 
 		// Verify it's an Invalid error
-		statusErr, ok := err.(*k8serrors.StatusError)
-		require.True(t, ok, "error should be StatusError")
+		var statusErr *k8serrors.StatusError
+		require.True(t, errors.As(err, &statusErr), "error should be StatusError")
 		// Check if it's an Invalid error (could be Invalid or BadRequest depending on how errors are returned)
 		require.True(t, statusErr.Status().Reason == metav1.StatusReasonInvalid || statusErr.Status().Code == 422,
 			"error reason should be Invalid or status code should be 422")
@@ -1329,8 +1329,8 @@ func TestIntegrationConnectionController_DryRunValidation(t *testing.T) {
 		require.Error(t, err, "dryRun create should fail with invalid token")
 
 		// Verify it's an Invalid error
-		statusErr, ok := err.(*k8serrors.StatusError)
-		require.True(t, ok, "error should be StatusError")
+		var statusErr *k8serrors.StatusError
+		require.True(t, errors.As(err, &statusErr), "error should be StatusError")
 		// Check if it's an Invalid error (could be Invalid or BadRequest depending on how errors are returned)
 		require.True(t, statusErr.Status().Reason == metav1.StatusReasonInvalid || statusErr.Status().Code == 422,
 			"error reason should be Invalid or status code should be 422")
@@ -1372,8 +1372,8 @@ func TestIntegrationConnectionController_DryRunValidation(t *testing.T) {
 		require.Error(t, err, "dryRun create should fail with structural validation error")
 
 		// Verify it's an Invalid error
-		statusErr, ok := err.(*k8serrors.StatusError)
-		require.True(t, ok, "error should be StatusError")
+		var statusErr *k8serrors.StatusError
+		require.True(t, errors.As(err, &statusErr), "error should be StatusError")
 		require.Equal(t, metav1.StatusReasonInvalid, statusErr.Status().Reason, "error reason should be Invalid")
 
 		// Verify the error message contains information about missing github config
