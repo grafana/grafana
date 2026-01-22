@@ -13,6 +13,29 @@
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-schema"
   },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@grafana-app/source": "./src/index.ts",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./raw/composable/*/dataquery": {
+      "@grafana-app/source": "./src/raw/composable/*/dataquery/x/*dataquery_types.gen.ts",
+      "types": "./dist/esm/raw/composable/*/dataquery/x/*dataquery_types.gen.d.ts",
+      "default": "./dist/esm/raw/composable/*/dataquery/x/*dataquery_types.gen.js"
+    },
+    "./raw/composable/*/panelcfg": {
+      "@grafana-app/source": "./src/raw/composable/*/panelcfg/x/*panelcfg_types.gen.ts",
+      "types": "./dist/esm/raw/composable/*/panelcfg/x/*panelcfg_types.gen.d.ts",
+      "default": "./dist/esm/raw/composable/*/panelcfg/x/*panelcfg_types.gen.js"
+    },
+    "./dist/esm/raw/composable/barchart/panelcfg/x/BarChartPanelCfg_types.gen": {
+      "@grafana-app/source": "./src/raw/composable/barchart/panelcfg/x/barchartpanelcfg_types.gen.ts",
+      "types": "./dist/esm/raw/composable/barchart/panelcfg/x/barchartpanelcfg_types.gen.d.ts",
+      "default": "./dist/esm/raw/composable/barchart/panelcfg/x/barchartpanelcfg_types.gen.js"
+    },
+    "./TODO: Repeate for all entries ask the AI to do it for me": "./"
+  },
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "types": "./src/index.ts",
