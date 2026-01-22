@@ -82,7 +82,6 @@ func TestHandler_RegisterValidator(t *testing.T) {
 	assert.Equal(t, v, h.validators["repositories"])
 }
 
-
 func TestHandler_Mutate(t *testing.T) {
 	tests := []struct {
 		name            string
