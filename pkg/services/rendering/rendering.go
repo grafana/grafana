@@ -256,7 +256,9 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts, session Sessi
 }
 
 func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProvider renderKeyProvider) (*RenderResult, error) {
-	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
+	inProgressCount := atomic.LoadInt32(&rs.inProgressCount)
+	newInProgressCount := inProgressCount + 1
+	if int(newInProgressCount) > opts.ConcurrentLimit || !atomic.CompareAndSwapInt32(&rs.inProgressCount, inProgressCount, newInProgressCount) {
 		rs.log.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
 		if opts.ErrorConcurrentLimitReached {
 			return nil, ErrConcurrentLimitReached
@@ -297,7 +299,7 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProv
 		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
 	}()
 
-	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
+	metrics.MRenderingQueue.Set(float64(newInProgressCount))
 	return rs.renderAction(ctx, renderKey, opts)
 }
 
