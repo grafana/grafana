@@ -1,5 +1,6 @@
 import { OwnerReference } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { useGetTeamMembersQuery } from '@grafana/api-clients/rtkq/iam/v0alpha1';
+import { reportInteraction } from '@grafana/runtime';
 import { Stack, Text, Avatar, Link, Tooltip } from '@grafana/ui';
 
 export const getGravatarUrl = (text: string) => {
@@ -7,10 +8,23 @@ export const getGravatarUrl = (text: string) => {
   return `avatar/bd38b9ecaf6169ca02b848f60a44cb95`;
 };
 
-export const TeamOwnerReference = ({ ownerReference }: { ownerReference: OwnerReference }) => {
+export const TeamOwnerReference = ({
+  ownerReference,
+  pointOfUse,
+}: {
+  ownerReference: OwnerReference;
+  pointOfUse: string;
+}) => {
   const { data: teamMembers } = useGetTeamMembersQuery({ name: ownerReference.uid });
 
   const avatarURL = getGravatarUrl(ownerReference.name);
+
+  const handleLinkClick = () => {
+    reportInteraction('grafana_owner_reference_link_clicked', {
+      pointOfUse: pointOfUse,
+    });
+    console.log('Owner reference link clicked from', pointOfUse);
+  };
 
   const membersTooltip = (
     <>
@@ -26,7 +40,7 @@ export const TeamOwnerReference = ({ ownerReference }: { ownerReference: OwnerRe
   );
 
   return (
-    <Link href={`/org/teams/edit/${ownerReference.uid}/members`} key={ownerReference.uid}>
+    <Link href={`/org/teams/edit/${ownerReference.uid}/members`} key={ownerReference.uid} onClick={handleLinkClick}>
       <Tooltip content={membersTooltip}>
         <Stack gap={1} alignItems="center">
           <Avatar src={avatarURL} alt={ownerReference.name} /> {ownerReference.name}

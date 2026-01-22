@@ -55,7 +55,7 @@ export const ManageOwnerReferences = ({
           .filter((ownerReference) => ownerReference.kind === 'Team')
           .map((ownerReference) => (
             <>
-              <TeamOwnerReference key={ownerReference.uid} ownerReference={ownerReference} />
+              <TeamOwnerReference key={ownerReference.uid} ownerReference={ownerReference} pointOfUse="manageOwners" />
               <Divider />
             </>
           ))}
