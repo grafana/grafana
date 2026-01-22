@@ -7,8 +7,8 @@ import (
 	"testing/synctest"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -24,7 +24,7 @@ func setupTestNotifier(t *testing.T) (*pollingNotifier, *eventStore) {
 	})
 	kv := NewBadgerKV(db)
 	eventStore := newEventStore(kv)
-	notifier := newNotifier(eventStore, notifierOptions{log: &logging.NoOpLogger{}})
+	notifier := newNotifier(eventStore, notifierOptions{log: log.NewNopLogger()})
 	return notifier.(*pollingNotifier), eventStore
 }
 
@@ -35,7 +35,7 @@ func setupTestNotifierSqlKv(t *testing.T) (*pollingNotifier, *eventStore) {
 	kv, err := NewSQLKV(eDB)
 	require.NoError(t, err)
 	eventStore := newEventStore(kv)
-	notifier := newNotifier(eventStore, notifierOptions{log: &logging.NoOpLogger{}})
+	notifier := newNotifier(eventStore, notifierOptions{log: log.NewNopLogger()})
 	return notifier.(*pollingNotifier), eventStore
 }
 
@@ -501,7 +501,7 @@ func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier
 }
 
 func TestChannelNotifier(t *testing.T) {
-	log := &logging.NoOpLogger{}
+	log := log.NewNopLogger()
 	opts := watchOptions{BufferSize: 5}
 
 	var eventCount int64

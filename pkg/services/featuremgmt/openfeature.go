@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"time"
 
-	clientauthmiddleware "github.com/grafana/grafana/pkg/clientauth/middleware"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 
@@ -21,7 +20,7 @@ const (
 // OpenFeatureConfig holds configuration for initializing OpenFeature
 type OpenFeatureConfig struct {
 	// ProviderType is either "static", "features-service", or "ofrep"
-	ProviderType string
+	ProviderType setting.OpenFeatureProviderType
 	// URL is the remote provider's URL (required for features-service + OFREP providers)
 	URL *url.URL
 	// HTTPClient is a pre-configured HTTP client (optional, used by features-service + OFREP providers)
@@ -68,10 +67,10 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 
 	var httpcli *http.Client
 	if cfg.OpenFeature.ProviderType == setting.FeaturesServiceProviderType || cfg.OpenFeature.ProviderType == setting.OFREPProviderType {
-		var m *clientauthmiddleware.TokenExchangeMiddleware
+		var m *TokenExchangeMiddleware
 
 		if cfg.OpenFeature.ProviderType == setting.FeaturesServiceProviderType {
-			m, err = clientauthmiddleware.NewTokenExchangeMiddleware(cfg)
+			m, err = NewTokenExchangeMiddleware(cfg)
 			if err != nil {
 				return fmt.Errorf("failed to create token exchange middleware: %w", err)
 			}
@@ -99,7 +98,7 @@ func InitOpenFeatureWithCfg(cfg *setting.Cfg) error {
 }
 
 func createProvider(
-	providerType string,
+	providerType setting.OpenFeatureProviderType,
 	u *url.URL,
 	staticFlags map[string]memprovider.InMemoryFlag,
 	httpClient *http.Client,
@@ -121,7 +120,7 @@ func createProvider(
 	return newStaticProvider(staticFlags, standardFeatureFlags)
 }
 
-func createHTTPClient(m *clientauthmiddleware.TokenExchangeMiddleware) (*http.Client, error) {
+func createHTTPClient(m *TokenExchangeMiddleware) (*http.Client, error) {
 	options := sdkhttpclient.Options{
 		TLS: &sdkhttpclient.TLSOptions{InsecureSkipVerify: true},
 		Timeouts: &sdkhttpclient.TimeoutOptions{

@@ -362,7 +362,7 @@
       },
       {
         "collapsed": false,
-        "id": -1,
+        "id": 15,
         "title": "Simple Row Panel",
         "type": "row"
       },
@@ -374,7 +374,7 @@
           "x": 0,
           "y": 0
         },
-        "id": -1,
+        "id": 16,
         "panels": [
           {
             "datasource": {

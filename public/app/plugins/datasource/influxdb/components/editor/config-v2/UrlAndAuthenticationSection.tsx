@@ -74,8 +74,8 @@ export const UrlAndAuthenticationSection = (props: Props) => {
   };
 
   const pingInfluxForProductDetection = async (urlValue: string) => {
-    const dsId = options.id;
-    if (!dsId) {
+    const dsUID = options.uid;
+    if (!dsUID) {
       return;
     }
 
@@ -83,7 +83,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       const res = await firstValueFrom(
         getBackendSrv().fetch({
           method: 'GET',
-          url: `/api/datasources/proxy/${dsId}/ping`,
+          url: `/api/datasources/proxy/uid/${dsUID}/ping`,
           headers: { Accept: 'application/json' },
           responseType: 'text',
           showErrorAlert: false,

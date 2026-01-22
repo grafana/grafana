@@ -15,13 +15,13 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -63,7 +63,7 @@ type kvStorageBackend struct {
 	eventStore                   *eventStore
 	notifier                     notifier
 	builder                      DocumentBuilder
-	log                          logging.Logger
+	log                          log.Logger
 	withPruner                   bool
 	eventRetentionPeriod         time.Duration
 	eventPruningInterval         time.Duration
@@ -90,6 +90,7 @@ type KVBackendOptions struct {
 	EventPruningInterval         time.Duration         // How often to run the event pruning (default: 5 minutes)
 	Tracer                       trace.Tracer          // TODO add tracing
 	Reg                          prometheus.Registerer // TODO add metrics
+	Log                          log.Logger
 
 	UseChannelNotifier bool
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
@@ -100,6 +101,11 @@ type KVBackendOptions struct {
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	ctx := context.Background()
 	kv := opts.KvStore
+
+	logger := opts.Log
+	if opts.Log == nil {
+		logger = log.NewNopLogger()
+	}
 
 	s, err := snowflake.NewNode(rand.Int64N(1024))
 	if err != nil {
@@ -122,10 +128,10 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		bulkLock:                     NewBulkLock(),
 		dataStore:                    newDataStore(kv),
 		eventStore:                   eventStore,
-		notifier:                     newNotifier(eventStore, notifierOptions{useChannelNotifier: opts.UseChannelNotifier}),
+		notifier:                     newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
 		snowflake:                    s,
 		builder:                      StandardDocumentBuilder(), // For now we use the standard document builder.
-		log:                          &logging.NoOpLogger{},     // Make this configurable
+		log:                          logger,
 		eventRetentionPeriod:         eventRetentionPeriod,
 		eventPruningInterval:         eventPruningInterval,
 		withExperimentalClusterScope: opts.WithExperimentalClusterScope,
@@ -138,6 +144,8 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Start the event cleanup background job
 	go backend.runCleanupOldEvents(ctx)
+
+	logger.Info("backend initialized", "kv", fmt.Sprintf("%T", kv))
 
 	return backend, nil
 }
