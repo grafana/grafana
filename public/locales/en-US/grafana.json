@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "Deprecated",
       "delete": "Delete",
       "duplicate": "Duplicate",
       "label-integration": "Integration",
       "label-notification-settings": "Notification settings",
       "label-section": "Optional {{name}} settings",
       "test": "Test",
+      "tooltip-deprecated": "This integration is deprecated and will be removed in a future release.",
       "tooltip-legacy-version": "This is a legacy integration (version: {{version}}). It cannot be modified."
     },
     "classic-condition-viewer": {
