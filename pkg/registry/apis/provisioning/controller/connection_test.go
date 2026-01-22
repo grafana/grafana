@@ -756,7 +756,7 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 				Code:    200,
 				Errors:  nil,
 			},
-			expectedFieldErrors: nil,
+			expectedFieldErrors: []provisioning.ErrorDetails{},
 			description:         "fieldErrors should be nil when testResults.Errors is nil",
 		},
 	}
