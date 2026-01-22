@@ -172,7 +172,7 @@ When in Code mode, you can write complete Elasticsearch query DSL in JSON format
 
 ### Time range handling
 
-Grafana automatically applies the dashboard time range to your queries by adding a time range filter to the query. You can override this by including your own time range in the `query` section.
+If you want to filter by the dashboard's time range, you need to use Grafana's template variable `$__timeFilter()` in your raw DSL.
 
 ### Supported query types
 
