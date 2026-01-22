@@ -540,35 +540,35 @@ Manage Prometheus recording and alerting rules through the Knowledge Graph API. 
 
 #### Arguments
 
-| Name     | Type           | Required | Description                                                                                                              |
-| -------- | -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `name`   | `string`       | Yes      | The name of the Prometheus rules file. This field is immutable and forces recreation if changed.                         |
-| `active` | `bool`         | No       | Whether the rules file is active. Inactive rules are not evaluated. Defaults to `true`.                                  |
-| `group`  | `list(object)` | Yes      | List of Prometheus rule groups. Refer to [group block](#group-block) for details.                                        |
+| Name     | Type           | Required | Description                                                                                      |
+| -------- | -------------- | -------- | ------------------------------------------------------------------------------------------------ |
+| `name`   | `string`       | Yes      | The name of the Prometheus rules file. This field is immutable and forces recreation if changed. |
+| `active` | `bool`         | No       | Whether the rules file is active. Inactive rules are not evaluated. Defaults to `true`.          |
+| `group`  | `list(object)` | Yes      | List of Prometheus rule groups. Refer to [group block](#group-block) for details.                |
 
 #### Group block
 
 Each `group` block contains a set of related rules with a shared evaluation interval:
 
-| Name       | Type           | Required | Description                                                                                        |
-| ---------- | -------------- | -------- | -------------------------------------------------------------------------------------------------- |
-| `name`     | `string`       | Yes      | The name of the rule group (for example, `latency_monitoring`).                                    |
+| Name       | Type           | Required | Description                                                                                                           |
+| ---------- | -------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
+| `name`     | `string`       | Yes      | The name of the rule group (for example, `latency_monitoring`).                                                       |
 | `interval` | `string`       | No       | Evaluation interval for this group (for example, `30s`, `1m`). If not specified, uses the global evaluation interval. |
-| `rule`     | `list(object)` | Yes      | List of Prometheus rules in this group. Refer to [rule block](#rule-block) for details.           |
+| `rule`     | `list(object)` | Yes      | List of Prometheus rules in this group. Refer to [rule block](#rule-block) for details.                               |
 
 #### Rule block
 
 Each `rule` block defines a recording or alerting rule. Either `record` or `alert` must be specified, but not both:
 
-| Name                | Type          | Required                 | Description                                                                                                  |
-| ------------------- | ------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `record`            | `string`      | Conditional              | The name of the time series to output for recording rules. Required if `alert` is not specified.             |
-| `alert`             | `string`      | Conditional              | The name of the alert for alerting rules. Required if `record` is not specified.                             |
-| `expr`              | `string`      | Yes                      | The PromQL expression to evaluate.                                                                           |
-| `duration`          | `string`      | No                       | How long the condition must be true before firing the alert (for example, `5m`). Only for alerting rules. Maps to `for` in Prometheus. |
-| `labels`            | `map(string)` | No                       | Labels to attach to the resulting time series or alert.                                                      |
-| `annotations`       | `map(string)` | No                       | Annotations to add to alerts (for example, `summary`, `description`). Only applicable for alerting rules.   |
-| `disable_in_groups` | `set(string)` | No                       | List of group names where this rule should be disabled. Useful for conditional rule enablement.              |
+| Name                | Type          | Required    | Description                                                                                                                            |
+| ------------------- | ------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `record`            | `string`      | Conditional | The name of the time series to output for recording rules. Required if `alert` is not specified.                                       |
+| `alert`             | `string`      | Conditional | The name of the alert for alerting rules. Required if `record` is not specified.                                                       |
+| `expr`              | `string`      | Yes         | The PromQL expression to evaluate.                                                                                                     |
+| `duration`          | `string`      | No          | How long the condition must be true before firing the alert (for example, `5m`). Only for alerting rules. Maps to `for` in Prometheus. |
+| `labels`            | `map(string)` | No          | Labels to attach to the resulting time series or alert.                                                                                |
+| `annotations`       | `map(string)` | No          | Annotations to add to alerts (for example, `summary`, `description`). Only applicable for alerting rules.                              |
+| `disable_in_groups` | `set(string)` | No          | List of group names where this rule should be disabled. Useful for conditional rule enablement.                                        |
 
 #### Example
 
