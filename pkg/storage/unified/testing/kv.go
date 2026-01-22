@@ -276,8 +276,7 @@ func runTestKVDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("delete non-existent key", func(t *testing.T) {
 		err := kv.Delete(ctx, testSection, namespacedKey(nsPrefix, "non-existent-delete-key"))
-		assert.Error(t, err)
-		assert.Equal(t, resource.ErrNotFound, err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("delete with empty section", func(t *testing.T) {

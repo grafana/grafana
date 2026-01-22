@@ -816,8 +816,7 @@ func testDataStoreDelete(t *testing.T, ctx context.Context, ds *dataStore) {
 		}
 
 		err := ds.Delete(ctx, nonExistentKey)
-		require.Error(t, err)
-		require.Equal(t, ErrNotFound, err)
+		require.NoError(t, err)
 	})
 }
 
