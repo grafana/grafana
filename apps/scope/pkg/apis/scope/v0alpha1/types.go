@@ -213,8 +213,6 @@ type ScopeNavigationSpec struct {
 	SubScope string `json:"subScope,omitempty"`
 	// Preload the subscope children, as soon as the ScopeNavigation is loaded.
 	PreLoadSubScopeChildren bool `json:"preLoadSubScopeChildren,omitempty"`
-	// Expands to display the subscope children when the ScopeNavigation is loaded.
-	ExpandOnLoad bool `json:"expandOnLoad,omitempty"`
 	// Makes the subscope not selectable, only serving as a way to build the tree.
 	DisableSubScopeSelection bool `json:"disableSubScopeSelection,omitempty"`
 }
