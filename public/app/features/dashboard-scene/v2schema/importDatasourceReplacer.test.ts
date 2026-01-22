@@ -49,7 +49,6 @@ describe('replaceDatasourcesInDashboard', () => {
               kind: 'PanelQuery' as const,
               spec: {
                 ...defaultPanelQuerySpec(),
-                refId: 'A',
                 query: {
                   ...defaultDataQueryKind(),
                   kind: 'DataQuery' as const,
@@ -206,50 +205,39 @@ describe('replaceDatasourcesInDashboard', () => {
     });
   });
 
-  describe('AdhocVariable', () => {
-    const createAdhocVariable = (group: string, datasourceName: string) => ({
-      kind: 'AdhocVariable' as const,
-      group,
-      datasource: { name: datasourceName },
-      spec: { ...defaultAdhocVariableSpec(), name: 'Filters' },
-    });
-
-    it.each([
-      { inputDs: 'old-loki-uid', expectedDs: 'new-loki-uid', desc: 'replaces hardcoded datasource' },
-      { inputDs: '${ds}', expectedDs: '${ds}', desc: 'preserves variable reference' },
-    ])('$desc', ({ inputDs, expectedDs }) => {
-      const dashboard: DashboardV2Spec = {
-        ...baseDashboard,
-        variables: [createAdhocVariable('loki', inputDs)],
-      };
-
-      const result = replaceDatasourcesInDashboard(dashboard, mappings);
-      const variable = getAdhocVariable(result);
-
-      expect(variable).toBeDefined();
-      expect(variable?.datasource?.name).toBe(expectedDs);
-    });
-  });
-
-  describe('GroupBy variable', () => {
-    const createGroupByVariable = (group: string, datasourceName: string) => ({
-      kind: 'GroupByVariable' as const,
-      group,
-      datasource: { name: datasourceName },
-      spec: { ...defaultGroupByVariableSpec(), name: 'groupby' },
-    });
-
+  describe.each([
+    {
+      variableType: 'AdhocVariable',
+      createVariable: (group: string, datasourceName: string) => ({
+        kind: 'AdhocVariable' as const,
+        group,
+        datasource: { name: datasourceName },
+        spec: { ...defaultAdhocVariableSpec(), name: 'Filters' },
+      }),
+      getVariable: getAdhocVariable,
+    },
+    {
+      variableType: 'GroupByVariable',
+      createVariable: (group: string, datasourceName: string) => ({
+        kind: 'GroupByVariable' as const,
+        group,
+        datasource: { name: datasourceName },
+        spec: { ...defaultGroupByVariableSpec(), name: 'groupby' },
+      }),
+      getVariable: getGroupByVariable,
+    },
+  ])('$variableType', ({ createVariable, getVariable }) => {
     it.each([
       { inputDs: 'old-prom-uid', expectedDs: 'new-prom-uid', desc: 'replaces hardcoded datasource' },
       { inputDs: '${ds}', expectedDs: '${ds}', desc: 'preserves variable reference' },
     ])('$desc', ({ inputDs, expectedDs }) => {
       const dashboard: DashboardV2Spec = {
         ...baseDashboard,
-        variables: [createGroupByVariable('prometheus', inputDs)],
+        variables: [createVariable('prometheus', inputDs)],
       };
 
       const result = replaceDatasourcesInDashboard(dashboard, mappings);
-      const variable = getGroupByVariable(result);
+      const variable = getVariable(result);
 
       expect(variable).toBeDefined();
       expect(variable?.datasource?.name).toBe(expectedDs);
