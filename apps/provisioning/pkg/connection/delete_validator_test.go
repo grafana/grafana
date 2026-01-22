@@ -7,10 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/admission"
-	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -40,48 +38,37 @@ func (m *mockRepoByConnectionLister) ListByConnection(ctx context.Context, conne
 	return filtered, nil
 }
 
-func newDeleteValidatorTestAttributes(name string) admission.Attributes {
-	return admission.NewAttributesRecord(
-		nil, // obj is nil for delete operations
-		nil,
-		provisioning.ConnectionResourceInfo.GroupVersionKind(),
-		"default",
-		name,
-		provisioning.ConnectionResourceInfo.GroupVersionResource(),
-		"",
-		admission.Delete,
-		nil,
-		false,
-		&user.DefaultInfo{},
-	)
-}
-
-func TestNewDeleteValidator(t *testing.T) {
+func TestNewReferencedByRepositoriesValidator(t *testing.T) {
 	lister := &mockRepoByConnectionLister{}
-	v := NewDeleteValidator(lister)
+	v := NewReferencedByRepositoriesValidator(lister)
 	require.NotNil(t, v)
-	assert.Equal(t, lister, v.repoLister)
+
+	// Verify it implements DeleteValidator interface
+	var _ DeleteValidator = v
 }
 
-func TestDeleteValidator_ValidateDelete(t *testing.T) {
+func TestReferencedByRepositoriesValidator_ValidateDelete(t *testing.T) {
 	tests := []struct {
 		name            string
 		connectionName  string
+		namespace       string
 		repos           []provisioning.Repository
 		listerErr       error
-		wantErr         bool
-		wantForbidden   bool
+		wantErrors      bool
+		wantErrType     field.ErrorType
 		wantErrContains string
 	}{
 		{
 			name:           "allows deletion when no repositories reference connection",
 			connectionName: "test-connection",
+			namespace:      "default",
 			repos:          []provisioning.Repository{},
-			wantErr:        false,
+			wantErrors:     false,
 		},
 		{
 			name:           "blocks deletion when one repository references connection",
 			connectionName: "test-connection",
+			namespace:      "default",
 			repos: []provisioning.Repository{
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
@@ -90,13 +77,14 @@ func TestDeleteValidator_ValidateDelete(t *testing.T) {
 					},
 				},
 			},
-			wantErr:         true,
-			wantForbidden:   true,
+			wantErrors:      true,
+			wantErrType:     field.ErrorTypeForbidden,
 			wantErrContains: "referenced by 1 repository(s): [repo-1]",
 		},
 		{
 			name:           "blocks deletion when multiple repositories reference connection",
 			connectionName: "test-connection",
+			namespace:      "default",
 			repos: []provisioning.Repository{
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
@@ -111,13 +99,14 @@ func TestDeleteValidator_ValidateDelete(t *testing.T) {
 					},
 				},
 			},
-			wantErr:         true,
-			wantForbidden:   true,
+			wantErrors:      true,
+			wantErrType:     field.ErrorTypeForbidden,
 			wantErrContains: "referenced by 2 repository(s)",
 		},
 		{
 			name:           "allows deletion when repositories reference different connections",
 			connectionName: "test-connection",
+			namespace:      "default",
 			repos: []provisioning.Repository{
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
@@ -126,11 +115,12 @@ func TestDeleteValidator_ValidateDelete(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErrors: false,
 		},
 		{
 			name:           "allows deletion when repositories have no connection",
 			connectionName: "test-connection",
+			namespace:      "default",
 			repos: []provisioning.Repository{
 				{
 					ObjectMeta: metav1.ObjectMeta{Name: "repo-1"},
@@ -139,19 +129,22 @@ func TestDeleteValidator_ValidateDelete(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErrors: false,
 		},
 		{
 			name:            "returns error when lister fails",
 			connectionName:  "test-connection",
+			namespace:       "default",
 			listerErr:       errors.New("storage error"),
-			wantErr:         true,
+			wantErrors:      true,
+			wantErrType:     field.ErrorTypeInternal,
 			wantErrContains: "failed to check for referencing repositories",
 		},
 		{
 			name:           "allows deletion when connection name is empty",
 			connectionName: "",
-			wantErr:        false,
+			namespace:      "default",
+			wantErrors:     false,
 		},
 	}
 
@@ -161,28 +154,27 @@ func TestDeleteValidator_ValidateDelete(t *testing.T) {
 				repos: tt.repos,
 				err:   tt.listerErr,
 			}
-			v := NewDeleteValidator(lister)
+			v := NewReferencedByRepositoriesValidator(lister)
 
-			attr := newDeleteValidatorTestAttributes(tt.connectionName)
-			err := v.ValidateDelete(context.Background(), attr, nil)
+			errs := v.ValidateDelete(context.Background(), tt.namespace, tt.connectionName)
 
-			if tt.wantErr {
-				require.Error(t, err)
+			if tt.wantErrors {
+				require.NotEmpty(t, errs, "expected validation errors")
 				if tt.wantErrContains != "" {
-					assert.Contains(t, err.Error(), tt.wantErrContains)
+					assert.Contains(t, errs[0].Detail, tt.wantErrContains)
 				}
-				if tt.wantForbidden {
-					assert.True(t, apierrors.IsForbidden(err), "expected Forbidden error, got: %v", err)
+				if tt.wantErrType != "" {
+					assert.Equal(t, tt.wantErrType, errs[0].Type)
 				}
 				return
 			}
 
-			require.NoError(t, err)
+			require.Empty(t, errs, "expected no validation errors")
 		})
 	}
 }
 
-func TestDeleteValidator_ValidateDelete_ErrorMessage(t *testing.T) {
+func TestReferencedByRepositoriesValidator_ValidateDelete_ErrorDetails(t *testing.T) {
 	lister := &mockRepoByConnectionLister{
 		repos: []provisioning.Repository{
 			{
@@ -193,17 +185,13 @@ func TestDeleteValidator_ValidateDelete_ErrorMessage(t *testing.T) {
 			},
 		},
 	}
-	v := NewDeleteValidator(lister)
+	v := NewReferencedByRepositoriesValidator(lister)
 
-	attr := newDeleteValidatorTestAttributes("my-connection")
-	err := v.ValidateDelete(context.Background(), attr, nil)
+	errs := v.ValidateDelete(context.Background(), "default", "my-connection")
 
-	require.Error(t, err)
-
-	// Verify the error is a Forbidden error with the correct resource info
-	statusErr, ok := err.(*apierrors.StatusError)
-	require.True(t, ok, "expected StatusError")
-	assert.Equal(t, int32(403), statusErr.ErrStatus.Code)
-	assert.Contains(t, statusErr.ErrStatus.Message, "my-connection")
-	assert.Contains(t, statusErr.ErrStatus.Message, "my-repo")
+	require.Len(t, errs, 1)
+	assert.Equal(t, field.ErrorTypeForbidden, errs[0].Type)
+	assert.Equal(t, "metadata.name", errs[0].Field)
+	assert.Contains(t, errs[0].Detail, "my-repo")
+	assert.Contains(t, errs[0].Detail, "cannot delete connection")
 }

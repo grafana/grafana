@@ -193,3 +193,94 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	assert.Equal(t, "old-key", newConn.Secure.PrivateKey.Name)
 	assert.Equal(t, "old-secret", newConn.Secure.ClientSecret.Name)
 }
+
+// mockDeleteValidator is a mock implementation of DeleteValidator for testing
+type mockDeleteValidator struct {
+	called    bool
+	namespace string
+	name      string
+	errs      field.ErrorList
+}
+
+func (m *mockDeleteValidator) ValidateDelete(ctx context.Context, namespace, name string) field.ErrorList {
+	m.called = true
+	m.namespace = namespace
+	m.name = name
+	return m.errs
+}
+
+func newDeleteTestAttributes(name string) admission.Attributes {
+	return admission.NewAttributesRecord(
+		nil, // obj is nil for delete operations
+		nil,
+		provisioning.ConnectionResourceInfo.GroupVersionKind(),
+		"default",
+		name,
+		provisioning.ConnectionResourceInfo.GroupVersionResource(),
+		"",
+		admission.Delete,
+		nil,
+		false,
+		&user.DefaultInfo{},
+	)
+}
+
+func TestAdmissionValidator_ValidateDelete(t *testing.T) {
+	tests := []struct {
+		name            string
+		connectionName  string
+		deleteValidator *mockDeleteValidator
+		wantErr         bool
+		wantCalled      bool
+	}{
+		{
+			name:           "calls delete validators on delete operation",
+			connectionName: "test-connection",
+			deleteValidator: &mockDeleteValidator{
+				errs: nil,
+			},
+			wantErr:    false,
+			wantCalled: true,
+		},
+		{
+			name:           "returns error from delete validator",
+			connectionName: "test-connection",
+			deleteValidator: &mockDeleteValidator{
+				errs: field.ErrorList{
+					field.Forbidden(field.NewPath("metadata", "name"), "cannot delete"),
+				},
+			},
+			wantErr:    true,
+			wantCalled: true,
+		},
+		{
+			name:            "skips delete validation when name is empty",
+			connectionName:  "",
+			deleteValidator: &mockDeleteValidator{},
+			wantErr:         false,
+			wantCalled:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			factory := NewMockFactory(t)
+			v := NewAdmissionValidator(factory, tt.deleteValidator)
+
+			attr := newDeleteTestAttributes(tt.connectionName)
+			err := v.Validate(context.Background(), attr, nil)
+
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			assert.Equal(t, tt.wantCalled, tt.deleteValidator.called)
+			if tt.wantCalled {
+				assert.Equal(t, "default", tt.deleteValidator.namespace)
+				assert.Equal(t, tt.connectionName, tt.deleteValidator.name)
+			}
+		})
+	}
+}

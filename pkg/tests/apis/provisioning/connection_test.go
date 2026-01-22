@@ -1101,9 +1101,10 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 		err := helper.Connections.Resource.Delete(ctx, "test-conn-delete-blocked", deleteOptions)
 		require.Error(t, err, "expected deletion to be blocked")
 
-		// Verify it's a Forbidden error
-		assert.True(t, k8serrors.IsForbidden(err), "expected Forbidden error, got: %v", err)
+		// Verify it's an Invalid error (containing Forbidden field error)
+		assert.True(t, k8serrors.IsInvalid(err), "expected Invalid error, got: %v", err)
 		assert.Contains(t, err.Error(), "repo-referencing-connection", "error should mention the referencing repository")
+		assert.Contains(t, err.Error(), "cannot delete connection", "error should explain the reason")
 	})
 
 	t.Run("should allow connection deletion after repository is deleted", func(t *testing.T) {

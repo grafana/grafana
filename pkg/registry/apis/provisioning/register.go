@@ -622,10 +622,10 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	b.admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(b.repoFactory))
 	b.admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), repoAdmissionValidator)
 	// Connection mutator and validator
+	// DeleteValidator is passed to AdmissionValidator to prevent deletion when repositories reference the connection
+	connDeleteValidator := connection.NewReferencedByRepositoriesValidator(b.repoLister)
 	b.admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(b.connectionFactory))
-	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionValidator(b.connectionFactory))
-	// Connection delete validator - prevents deletion when repositories reference the connection
-	b.admissionHandler.RegisterDeleteValidator(provisioning.ConnectionResourceInfo.GetName(), connection.NewDeleteValidator(b.repoLister))
+	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionValidator(b.connectionFactory, connDeleteValidator))
 	// Jobs validator (no mutator needed)
 	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator())
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
@@ -709,16 +709,6 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 // Validate delegates to the admission handler for resource-specific validation
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	// Handle delete validation separately - for delete, obj may be nil
-	if a.GetOperation() == admission.Delete {
-		return b.admissionHandler.ValidateDelete(ctx, a, o)
-	}
-
-	obj := a.GetObject()
-	if obj == nil || a.GetOperation() == admission.Connect {
-		return nil // This is normal for sub-resource
-	}
-
 	return b.admissionHandler.Validate(ctx, a, o)
 }
 
