@@ -9,7 +9,6 @@ import { AlertLabel, getInheritedProperties } from '@grafana/alerting';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
-  Badge,
   Button,
   Dropdown,
   Icon,
