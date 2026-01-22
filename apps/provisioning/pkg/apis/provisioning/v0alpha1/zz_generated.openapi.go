@@ -400,6 +400,25 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 							Format:      "int64",
 						},
 					},
+					"fieldErrors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ErrorDetails"),
+									},
+								},
+							},
+						},
+					},
 					"state": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Connection state\n\nPossible enum values:\n - `\"connected\"`\n - `\"disconnected\"`",
@@ -421,7 +440,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ErrorDetails", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus"},
 	}
 }
 
@@ -479,25 +498,36 @@ func schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref common.ReferenceCall
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "ErrorDetails describes an individual field error intended to help users identify and fix issues in resource specifications. This type is modeled after Kubernetes' StatusCause and serves the same purpose: to deliver actionable feedback about fields in the spec that require attention. Errors may relate to invalid formats, missing or invalid values, or cases where a referenced value does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to communicate validation or external reference errors that users can resolve by editing spec fields.",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Type is a machine-readable description of the cause of the error. This is intended for programmatic handling and matches Kubernetes' CauseType values.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"field": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Field is the path to the field or JSON pointer that caused the error. This helps users and tools identify exactly where to correct the problem. This field is optional and may be empty if not applicable.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"detail": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"origin": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Origin indicates where the error originated in validation, or the name of the external service that reported the error. This can be useful for tooling or debugging, and may reference a specific rule, function, or service. This field is optional and may be empty.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
@@ -2005,6 +2035,25 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 							Format:      "int64",
 						},
 					},
+					"fieldErrors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ErrorDetails"),
+									},
+								},
+							},
+						},
+					},
 					"health": {
 						SchemaProps: spec.SchemaProps{
 							Description: "This will get updated with the current health status (and updated periodically)",
@@ -2063,7 +2112,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceCount", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.TokenStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.WebhookStatus"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ErrorDetails", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceCount", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.TokenStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.WebhookStatus"},
 	}
 }
 
@@ -2974,7 +3023,7 @@ func schema_pkg_apis_provisioning_v0alpha1_TestResults(ref common.ReferenceCallb
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "HistoryList is a list of versions of a resource",
+				Description: "TestResults is the result of a test connection operation Deprecated: this will go way when we deprecate the test endpoint",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
