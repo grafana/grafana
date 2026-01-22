@@ -12,37 +12,61 @@ import { DashboardInputs, ImportDashboardDTO, ImportFormDataV2, InputType } from
 
 import { applyV1Inputs, applyV2Inputs, detectExportFormat, extractV1Inputs, extractV2Inputs } from './inputs';
 
-// Mock getDataSourceSrv
+// Mock external dependencies
 jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     getList: jest.fn().mockReturnValue([{ uid: 'ds-1', name: 'Prometheus', type: 'prometheus' }]),
   }),
 }));
 
-// Mock getLibraryPanel from library-panels/state/api
 jest.mock('../../../library-panels/state/api', () => ({
   getLibraryPanel: jest.fn().mockRejectedValue({ status: 404 }),
 }));
 
+// Test data constants
+const emptyInputs: DashboardInputs = { dataSources: [], constants: [], libraryPanels: [] };
+
+const sampleV1Inputs: DashboardInputs = {
+  dataSources: [
+    {
+      name: 'DS',
+      label: 'DS',
+      description: 'test',
+      info: 'info',
+      value: '',
+      type: InputType.DataSource,
+      pluginId: 'prometheus',
+    },
+  ],
+  constants: [],
+  libraryPanels: [],
+};
+
+// Helper functions for creating test data
+function createV1DashboardWithInputs(
+  inputs: Array<{
+    name: string;
+    type: InputType;
+    label: string;
+    description?: string;
+    pluginId?: string;
+    value?: string;
+  }>
+) {
+  return {
+    title: 'Test Dashboard',
+    __inputs: inputs,
+  };
+}
+
 describe('detectExportFormat', () => {
-  it('detects v2 resource format', () => {
-    const dashboard = { kind: 'DashboardWithAccessInfo', spec: { elements: {} } };
-    expect(detectExportFormat(dashboard)).toBe(ExportFormat.V2Resource);
-  });
-
-  it('detects v2 spec format (raw)', () => {
-    const dashboard = { elements: {}, layout: {} };
-    expect(detectExportFormat(dashboard)).toBe(ExportFormat.V2Resource);
-  });
-
-  it('detects v1 resource format', () => {
-    const dashboard = { kind: 'DashboardWithAccessInfo', spec: { title: 'v1' } };
-    expect(detectExportFormat(dashboard)).toBe(ExportFormat.V1Resource);
-  });
-
-  it('detects classic format', () => {
-    const dashboard = { title: 'v1' };
-    expect(detectExportFormat(dashboard)).toBe(ExportFormat.Classic);
+  it.each([
+    ['v2 resource', { kind: 'DashboardWithAccessInfo', spec: { elements: {} } }, ExportFormat.V2Resource],
+    ['v2 spec (raw)', { elements: {}, layout: {} }, ExportFormat.V2Resource],
+    ['v1 resource', { kind: 'DashboardWithAccessInfo', spec: { title: 'v1' } }, ExportFormat.V1Resource],
+    ['classic', { title: 'v1' }, ExportFormat.Classic],
+  ])('detects %s format', (_name, dashboard, expected) => {
+    expect(detectExportFormat(dashboard)).toBe(expected);
   });
 });
 
@@ -60,56 +84,27 @@ interface DatasourceVariableModel {
   current?: { value?: string; text?: string; selected?: boolean };
 }
 
-const makeV1Inputs = (): DashboardInputs => ({
-  dataSources: [
-    {
-      name: 'DS',
-      label: 'DS',
-      description: 'test',
-      info: 'info',
-      value: '',
-      type: InputType.DataSource,
-      pluginId: 'prometheus',
-    },
-  ],
-  constants: [],
-  libraryPanels: [],
-});
+// Removed duplicate constants - now defined at top of file
 
 describe('extractV1Inputs', () => {
-  it('should return empty inputs for non-object dashboard', async () => {
-    const result = await extractV1Inputs(null);
-
-    expect(result).toEqual({
-      dataSources: [],
-      constants: [],
-      libraryPanels: [],
-    });
+  it.each([
+    ['non-object dashboard', null],
+    ['dashboard without __inputs', { title: 'Test Dashboard' }],
+  ])('should return empty inputs for %s', async (_name, dashboard) => {
+    const result = await extractV1Inputs(dashboard);
+    expect(result).toEqual(emptyInputs);
   });
 
-  it('should return empty inputs for dashboard without __inputs', async () => {
-    const result = await extractV1Inputs({ title: 'Test Dashboard' });
-
-    expect(result).toEqual({
-      dataSources: [],
-      constants: [],
-      libraryPanels: [],
-    });
-  });
-
-  it('should process datasource inputs', async () => {
-    const dashboard = {
-      title: 'Test Dashboard',
-      __inputs: [
-        {
-          name: 'DS_PROMETHEUS',
-          type: InputType.DataSource,
-          label: 'Prometheus',
-          description: 'Prometheus datasource',
-          pluginId: 'prometheus',
-        },
-      ],
-    };
+  it('should extract datasource inputs from __inputs array', async () => {
+    const dashboard = createV1DashboardWithInputs([
+      {
+        name: 'DS_PROMETHEUS',
+        type: InputType.DataSource,
+        label: 'Prometheus',
+        description: 'Prometheus datasource',
+        pluginId: 'prometheus',
+      },
+    ]);
 
     const result = await extractV1Inputs(dashboard);
 
@@ -119,19 +114,16 @@ describe('extractV1Inputs', () => {
     expect(result.dataSources[0].type).toBe(InputType.DataSource);
   });
 
-  it('should process constant inputs', async () => {
-    const dashboard = {
-      title: 'Test Dashboard',
-      __inputs: [
-        {
-          name: 'VAR_CONSTANT',
-          type: InputType.Constant,
-          label: 'My Constant',
-          description: 'A constant value',
-          value: 'default-value',
-        },
-      ],
-    };
+  it('should extract constant inputs from __inputs array', async () => {
+    const dashboard = createV1DashboardWithInputs([
+      {
+        name: 'VAR_CONSTANT',
+        type: InputType.Constant,
+        label: 'My Constant',
+        description: 'A constant value',
+        value: 'default-value',
+      },
+    ]);
 
     const result = await extractV1Inputs(dashboard);
 
@@ -159,30 +151,27 @@ describe('extractV1Inputs', () => {
     expect(result.constants[0].info).toBe('Specify a string constant');
   });
 
-  it('should process multiple inputs of different types', async () => {
-    const dashboard = {
-      title: 'Test Dashboard',
-      __inputs: [
-        {
-          name: 'DS_PROMETHEUS',
-          type: InputType.DataSource,
-          label: 'Prometheus',
-          pluginId: 'prometheus',
-        },
-        {
-          name: 'DS_LOKI',
-          type: InputType.DataSource,
-          label: 'Loki',
-          pluginId: 'loki',
-        },
-        {
-          name: 'VAR_NAMESPACE',
-          type: InputType.Constant,
-          label: 'Namespace',
-          value: 'default',
-        },
-      ],
-    };
+  it('should extract multiple inputs of different types', async () => {
+    const dashboard = createV1DashboardWithInputs([
+      {
+        name: 'DS_PROMETHEUS',
+        type: InputType.DataSource,
+        label: 'Prometheus',
+        pluginId: 'prometheus',
+      },
+      {
+        name: 'DS_LOKI',
+        type: InputType.DataSource,
+        label: 'Loki',
+        pluginId: 'loki',
+      },
+      {
+        name: 'VAR_NAMESPACE',
+        type: InputType.Constant,
+        label: 'Namespace',
+        value: 'default',
+      },
+    ]);
 
     const result = await extractV1Inputs(dashboard);
 
@@ -190,7 +179,7 @@ describe('extractV1Inputs', () => {
     expect(result.constants).toHaveLength(1);
   });
 
-  it('should skip invalid inputs', async () => {
+  it('should skip invalid inputs and only process valid ones', async () => {
     const dashboard = {
       title: 'Test Dashboard',
       __inputs: [null, 'invalid', { name: 'VALID', type: InputType.Constant, label: 'Valid', value: 'test' }],
@@ -201,97 +190,76 @@ describe('extractV1Inputs', () => {
     expect(result.constants).toHaveLength(1);
     expect(result.constants[0].name).toBe('VALID');
   });
+
+  it('should handle inputs with missing required fields', async () => {
+    const dashboard = {
+      title: 'Test Dashboard',
+      __inputs: [
+        { name: 'MISSING_TYPE' }, // Missing type
+        { type: InputType.Constant }, // Missing name
+        { name: 'MISSING_LABEL', type: InputType.Constant }, // Missing label
+      ] as Array<Partial<{ name: string; type: InputType; label: string }>>,
+    };
+
+    const result = await extractV1Inputs(dashboard);
+    expect(result.dataSources).toHaveLength(0);
+    expect(result.constants).toHaveLength(0);
+  });
+
+  it('should handle empty __inputs array', async () => {
+    const dashboard = { title: 'Test Dashboard', __inputs: [] };
+    const result = await extractV1Inputs(dashboard);
+    expect(result).toEqual(emptyInputs);
+  });
 });
 
 describe('extractV2Inputs', () => {
   it('should return empty inputs for non-object dashboard', () => {
-    const result = extractV2Inputs(null);
-
-    expect(result).toEqual({
-      dataSources: [],
-      constants: [],
-      libraryPanels: [],
-    });
+    expect(extractV2Inputs(null)).toEqual(emptyInputs);
   });
 
-  it('should collect datasource types from query variables', () => {
-    const dashboard = {
-      elements: {},
-      variables: [
-        {
-          kind: 'QueryVariable',
-          spec: {
-            name: 'myvar',
-            query: {
-              spec: {
-                group: 'prometheus',
-              },
-            },
-          },
-        },
-      ],
-    };
-
-    const result = extractV2Inputs(dashboard);
-
-    expect(result.dataSources).toHaveLength(1);
-    expect(result.dataSources[0].pluginId).toBe('prometheus');
-  });
-
-  it('should collect datasource types from annotations', () => {
-    const dashboard = {
-      elements: {},
-      annotations: [
-        {
-          kind: 'AnnotationQuery',
-          spec: {
-            name: 'Deployments',
-            query: {
-              spec: {
-                group: 'prometheus',
-              },
-            },
-          },
-        },
-      ],
-    };
-
-    const result = extractV2Inputs(dashboard);
-
-    expect(result.dataSources).toHaveLength(1);
-    expect(result.dataSources[0].pluginId).toBe('prometheus');
-  });
-
-  it('should collect datasource types from panel queries', () => {
-    const dashboard = {
-      elements: {
-        'panel-1': {
-          kind: 'Panel',
-          spec: {
-            data: {
-              kind: 'QueryGroup',
-              spec: {
-                queries: [
-                  {
-                    kind: 'PanelQuery',
-                    spec: {
-                      query: {
-                        kind: 'prometheus',
-                      },
-                    },
-                  },
-                ],
+  it.each([
+    [
+      'query variables',
+      {
+        elements: {},
+        variables: [{ kind: 'QueryVariable', spec: { name: 'myvar', query: { spec: { group: 'prometheus' } } } }],
+      },
+    ],
+    [
+      'annotations',
+      {
+        elements: {},
+        annotations: [
+          { kind: 'AnnotationQuery', spec: { name: 'Deployments', query: { spec: { group: 'prometheus' } } } },
+        ],
+      },
+    ],
+    [
+      'panel queries',
+      {
+        elements: {
+          'panel-1': {
+            kind: 'Panel',
+            spec: {
+              data: {
+                kind: 'QueryGroup',
+                spec: { queries: [{ kind: 'PanelQuery', spec: { query: { kind: 'prometheus' } } }] },
               },
             },
           },
         },
       },
-    };
-
+    ],
+  ])('should collect datasource types from %s', (_source, dashboard) => {
     const result = extractV2Inputs(dashboard);
-
     expect(result.dataSources).toHaveLength(1);
     expect(result.dataSources[0].pluginId).toBe('prometheus');
+  });
+
+  it('should handle empty dashboard gracefully', () => {
+    const result = extractV2Inputs({});
+    expect(result).toEqual(emptyInputs);
   });
 
   it('should deduplicate datasource types', () => {
@@ -357,47 +325,22 @@ describe('extractV2Inputs', () => {
     expect(result.dataSources.map((ds) => ds.pluginId)).toContain('loki');
   });
 
-  it('should skip non-QueryVariable variables', () => {
-    const dashboard = {
-      variables: [
-        {
-          kind: 'TextVariable',
-          spec: {
-            name: 'textvar',
-            value: 'test',
-          },
-        },
-      ],
-    };
-
-    const result = extractV2Inputs(dashboard);
-
-    expect(result.dataSources).toHaveLength(0);
-  });
-
-  it('should skip panels without QueryGroup data', () => {
-    const dashboard = {
-      elements: {
-        'panel-1': {
-          kind: 'Panel',
-          spec: {
-            data: {
-              kind: 'Snapshot',
-              spec: {},
-            },
-          },
-        },
-      },
-    };
-
-    const result = extractV2Inputs(dashboard);
-
-    expect(result.dataSources).toHaveLength(0);
+  it.each([
+    [
+      'non-QueryVariable variables',
+      { variables: [{ kind: 'TextVariable', spec: { name: 'textvar', value: 'test' } }] },
+    ],
+    [
+      'panels without QueryGroup data',
+      { elements: { 'panel-1': { kind: 'Panel', spec: { data: { kind: 'Snapshot', spec: {} } } } } },
+    ],
+  ])('should skip %s', (_name, dashboard) => {
+    expect(extractV2Inputs(dashboard).dataSources).toHaveLength(0);
   });
 });
 
 describe('applyV1Inputs', () => {
-  it('replaces templateized datasources across v1 dashboard', () => {
+  it('replaces templateized datasources across v1 dashboard elements', () => {
     const dashboard = {
       title: 'old',
       uid: 'old',
@@ -443,7 +386,7 @@ describe('applyV1Inputs', () => {
       folder: { uid: 'folder' },
     };
 
-    const result = applyV1Inputs(dashboard, makeV1Inputs(), form);
+    const result = applyV1Inputs(dashboard, sampleV1Inputs, form);
 
     expect(result.title).toBe('new-title');
     expect(result.uid).toBe('new-uid');
