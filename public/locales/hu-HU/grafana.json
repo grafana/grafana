@@ -3730,6 +3730,7 @@
       "non-folder-item": "Nem mappa {{itemKind}} {{itemUID}}",
       "root-title": "Irányítópultok",
       "search-placeholder": "Mappák keresése",
+      "shared-with-me": "",
       "unknown-error": "Ismeretlen hiba"
     },
     "manage-folder-nav": {
@@ -3833,6 +3834,7 @@
       "label-method": "Metódus",
       "label-payload": "Hasznos tartalom",
       "label-query-parameters": "Lekérdezési paraméterek",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "API tesztelése",
         "title-test-api": "API tesztelése"
@@ -4548,6 +4550,14 @@
     "actions": {
       "open-settings": "Beállítások"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "„Panel hozzáadása” widget bezárása",
       "tooltip-close-widget": "Widget bezárása"
@@ -4930,12 +4940,14 @@
       "add-visualization-body": "Válasszon ki egy adatforrást, majd kérdezze le és jelenítse meg az adatait diagramokkal, statisztikákkal és táblázatokkal, vagy hozzon létre listákat, Markdown-elemeket és egyéb widgeteket.",
       "add-visualization-button": "Vizualizáció hozzáadása",
       "add-visualization-header": "Indítsa el az új irányítópultot vizualizáció hozzáadásával",
+      "description": "",
       "import-a-dashboard-body": "Irányítópultok importálása fájlokból vagy a <2>grafana.com</2> webhelyről.",
       "import-a-dashboard-header": "Irányítópult importálása",
       "import-dashboard-button": "Irányítópult importálása",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5442,6 +5454,10 @@
       "loading-configuration": "Konfiguráció betöltése"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""

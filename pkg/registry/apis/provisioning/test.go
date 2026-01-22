@@ -37,17 +37,31 @@ type ConnectorDependencies interface {
 	GetRepoFactory() repository.Factory
 }
 
+// testConnector handles the /test subresource for repositories.
+// It allows users to validate repository configurations before creating or updating them.
+//
+// This connector uses a Tester configured with AdmissionValidator (via adapter) to perform
+// the same validation that would occur during actual admission. This includes:
+// - Basic configuration validation (RepositoryValidator)
+// - Checking for conflicts with existing repositories (ExistingRepositoriesValidator)
+//
+// This is important because users can test new configurations before actually
+// creating/updating them - we want to catch validation errors and conflicts during
+// testing, not just during actual create/update operations.
+// TODO: This connector is deprecated and will be removed when we deprecate the test endpoint
+// We should use fieldErrors from status instead.
+// TODO: Remove this connector when we deprecate the test endpoint
 type testConnector struct {
 	repoGetter       RepoGetter
 	repoFactory      repository.Factory
 	connectionGetter ConnectionGetter
 	healthProvider   HealthCheckerProvider
-	tester           repository.RepositoryTesterWithExistingChecker
+	tester           repository.Tester
 }
 
 func NewTestConnector(
 	deps ConnectorDependencies,
-	tester repository.RepositoryTesterWithExistingChecker,
+	tester repository.Tester,
 ) *testConnector {
 	return &testConnector{
 		repoFactory:      deps.GetRepoFactory(),
@@ -116,7 +130,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					old, _ := s.repoGetter.GetRepository(ctx, name)
 					if old != nil {
 						oldCfg := old.Config()
-						copyRepositorySecureValues(&cfg, oldCfg)
+						repository.CopySecureValues(&cfg, oldCfg)
 					}
 				}
 
@@ -167,7 +181,11 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 						return
 					}
 
-					cfg.Secure.Token.Create = token
+					cfg.Secure.Token.Create = token.Token
+					// HACK: currently, Repository validator does not allow for Connection and token
+					// to be declared together in a new / temporary Repository.
+					// We are therefore removing it in such cases.
+					cfg.Spec.Connection = nil
 				}
 
 				// Create a temporary repository
@@ -234,7 +252,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 			}
 		} else {
 			// Testing temporary repository - just run test without status update
-			rsp, err = s.tester.TestRepositoryAndCheckExisting(ctx, repo)
+			rsp, err = s.tester.Test(ctx, repo)
 			if err != nil {
 				responder.Error(err)
 				return

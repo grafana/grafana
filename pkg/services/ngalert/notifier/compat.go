@@ -1,6 +1,9 @@
 package notifier
 
 import (
+	"encoding/json"
+
+	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -30,4 +33,19 @@ func SilenceToPostableSilence(s models.Silence) *alertingNotify.PostableSilence 
 		ID:      id,
 		Silence: s.Silence,
 	}
+}
+
+func IntegrationToIntegrationConfig(i models.Integration) (alertingModels.IntegrationConfig, error) {
+	raw, err := json.Marshal(i.Settings)
+	if err != nil {
+		return alertingModels.IntegrationConfig{}, err
+	}
+	return alertingModels.IntegrationConfig{
+		UID:                   i.UID,
+		Name:                  i.Name,
+		Type:                  string(i.Config.Type()),
+		DisableResolveMessage: i.DisableResolveMessage,
+		Settings:              raw,
+		SecureSettings:        i.SecureSettings,
+	}, nil
 }

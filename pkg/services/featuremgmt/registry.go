@@ -77,13 +77,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "logRequestsInstrumentedAsUnknown",
-			Description: "Logs the path for requests that are instrumented as unknown",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendGroup,
-			Expression:  "false",
-		},
-		{
 			Name:        "grpcServer",
 			Description: "Run the GRPC server",
 			Stage:       FeatureStagePublicPreview,
@@ -371,24 +364,6 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 			Expression:  "false",
-		},
-		{
-			Name:            "enableNativeHTTPHistogram",
-			Description:     "Enables native HTTP Histograms",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           grafanaBackendServicesSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-		},
-		{
-			Name:            "disableClassicHTTPHistogram",
-			Description:     "Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           grafanaBackendServicesSquad,
-			RequiresRestart: true,
-			Expression:      "false",
 		},
 		{
 			Name:            "kubernetesSnapshots",
@@ -1742,6 +1717,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesAuthzTeamLBACRuleApi",
+			Description:  "Registers AuthZ TeamLBACRule /apis endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesAuthzRoleBindingsApi",
 			Description:  "Registers AuthZ Role Bindings /apis endpoint",
 			Stage:        FeatureStageExperimental,
@@ -2257,6 +2240,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaOSSBigTent,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesTeamBindings",
+			Description:  "Enables search for team bindings in the app platform API",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
 			Expression:   "false",
 		},
 	}
