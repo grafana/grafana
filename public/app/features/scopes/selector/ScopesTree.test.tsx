@@ -1,25 +1,54 @@
 import { render, screen } from '@testing-library/react';
+import { Observable } from 'rxjs';
 
 import { ScopeNode } from '@grafana/data';
 
 import { ScopesTree } from './ScopesTree';
 import { NodesMap, SelectedScope, TreeNode } from './types';
 
+const mockScopeNodes: NodesMap = {};
+const mockSelectedScopes: SelectedScope[] = [];
+const mockLoadingNodeName: string | undefined = undefined;
+
+const mockSelectScope = jest.fn();
+const mockDeselectScope = jest.fn();
+const mockFilterNode = jest.fn();
+const mockToggleExpandedNode = jest.fn();
+
+// Mock the hooks
+jest.mock('./useScopesTree', () => ({
+  useScopesTree: () => mockScopeNodes,
+}));
+
+jest.mock('./useScopeActions', () => ({
+  useScopeActions: () => ({
+    selectScope: mockSelectScope,
+    deselectScope: mockDeselectScope,
+    filterNode: mockFilterNode,
+    toggleExpandedNode: mockToggleExpandedNode,
+  }),
+}));
+
 // Mock the ScopesContextProvider hook since it requires a full context setup
 jest.mock('../ScopesContextProvider', () => ({
   useScopesServices: () => ({
     scopesSelectorService: {
       closeAndApply: jest.fn(),
+      stateObservable: new Observable((subscriber) => {
+        subscriber.next({
+          loadingNodeName: mockLoadingNodeName,
+          selectedScopes: mockSelectedScopes,
+        });
+      }),
+      state: {
+        loadingNodeName: mockLoadingNodeName,
+        selectedScopes: mockSelectedScopes,
+      },
     },
   }),
 }));
 
 describe('ScopesTree', () => {
-  const mockFilterNode = jest.fn();
-  const mockSelectScope = jest.fn();
-  const mockDeselectScope = jest.fn();
-  const mockToggleExpandedNode = jest.fn();
-
   const createMockScopeNode = (name: string, parentName?: string): ScopeNode => ({
     metadata: { name },
     spec: {
@@ -57,22 +86,18 @@ describe('ScopesTree', () => {
 
   const defaultProps = {
     tree: defaultTree,
-    loadingNodeName: undefined,
-    selectedScopes: [] as SelectedScope[],
-    scopeNodes: defaultScopeNodes,
-    filterNode: mockFilterNode,
-    selectScope: mockSelectScope,
-    deselectScope: mockDeselectScope,
-    toggleExpandedNode: mockToggleExpandedNode,
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset mock values before each test
+    Object.assign(mockScopeNodes, defaultScopeNodes);
+    mockSelectedScopes.length = 0;
   });
 
   describe('selectedNodesToShow logic', () => {
     it('should not show selectedNodesToShow when no scopes are selected', () => {
-      render(<ScopesTree {...defaultProps} selectedScopes={[]} />);
+      render(<ScopesTree {...defaultProps} />);
 
       // Both child-1 and child-2 should be visible in the regular children list
       expect(screen.getByText('Title child-1')).toBeInTheDocument();
@@ -80,10 +105,11 @@ describe('ScopesTree', () => {
     });
 
     it('should only consider first selected scope for selectedNodesToShow', () => {
-      const selectedScopes: SelectedScope[] = [
+      // Set mock selected scopes
+      mockSelectedScopes.push(
         { scopeId: 'scope-1', scopeNodeId: 'child-1' },
-        { scopeId: 'scope-2', scopeNodeId: 'child-2' },
-      ];
+        { scopeId: 'scope-2', scopeNodeId: 'child-2' }
+      );
 
       // Use a tree where child-1 is NOT in the children (to trigger selectedNodesToShow)
       const tree: TreeNode = {
@@ -97,7 +123,7 @@ describe('ScopesTree', () => {
         childrenLoaded: true,
       };
 
-      render(<ScopesTree {...defaultProps} tree={tree} selectedScopes={selectedScopes} />);
+      render(<ScopesTree {...defaultProps} tree={tree} />);
 
       // child-1 should be shown (from selectedNodesToShow - only first scope is considered)
       expect(screen.getByText('Title child-1')).toBeInTheDocument();

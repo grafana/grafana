@@ -45,28 +45,10 @@ export const ScopesSelector = () => {
     return null;
   }
 
-  const {
-    nodes,
-    loadingNodeName,
-    opened,
-    selectedScopes,
-    appliedScopes,
-    tree,
-    scopes: scopesMap,
-  } = selectorServiceState;
+  const { nodes, opened, appliedScopes, tree, scopes: scopesMap } = selectorServiceState;
   const { scopesService, scopesSelectorService } = services;
   const { readOnly, loading } = scopes.state;
-  const {
-    open,
-    removeAllScopes,
-    closeAndApply,
-    closeAndReset,
-    filterNode,
-    selectScope,
-    deselectScope,
-    getRecentScopes,
-    toggleExpandedNode,
-  } = scopesSelectorService;
+  const { open, removeAllScopes, closeAndApply, closeAndReset, getRecentScopes } = scopesSelectorService;
 
   const recentScopes = getRecentScopes();
 
@@ -108,14 +90,7 @@ export const ScopesSelector = () => {
                       <>
                         <ScopesTree
                           tree={tree}
-                          loadingNodeName={loadingNodeName}
-                          filterNode={filterNode}
                           recentScopes={recentScopes}
-                          selectedScopes={selectedScopes}
-                          scopeNodes={nodes}
-                          selectScope={selectScope}
-                          deselectScope={deselectScope}
-                          toggleExpandedNode={toggleExpandedNode}
                           onRecentScopesSelect={(scopeIds: string[], parentNodeId?: string, scopeNodeId?: string) => {
                             scopesSelectorService.changeScopes(scopeIds, parentNodeId, scopeNodeId);
                             scopesSelectorService.closeAndReset();

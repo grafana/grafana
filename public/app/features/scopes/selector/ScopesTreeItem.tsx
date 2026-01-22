@@ -9,6 +9,8 @@ import { useScopesServices } from '../ScopesContextProvider';
 import { ScopesTree } from './ScopesTree';
 import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
 import { NodesMap, SelectedScope, TreeNode } from './types';
+import { useScopeActions } from './useScopeActions';
+import { useScopesTree } from './useScopesTree';
 
 // Helper components for rendering different selectable content types
 interface RadioButtonDotProps {
@@ -175,38 +177,23 @@ function ScopeExpandButton({
 
 export interface ScopesTreeItemProps {
   anyChildExpanded: boolean;
-  loadingNodeName: string | undefined;
   treeNode: TreeNode;
-  scopeNodes: NodesMap;
-  selected: boolean;
-  selectedScopes: SelectedScope[];
   highlighted: boolean;
-
-  filterNode: (scopeNodeId: string, query: string) => void;
-  selectScope: (scopeNodeId: string) => void;
-  deselectScope: (scopeNodeId: string) => void;
-  toggleExpandedNode: (scopeNodeId: string) => void;
 }
 
-export function ScopesTreeItem({
-  anyChildExpanded,
-  loadingNodeName,
-  treeNode,
-  filterNode,
-  scopeNodes,
-  selected,
-  selectedScopes,
-  selectScope,
-  deselectScope,
-  highlighted,
-  toggleExpandedNode,
-}: ScopesTreeItemProps) {
+export function ScopesTreeItem({ anyChildExpanded, treeNode, highlighted }: ScopesTreeItemProps) {
+  // Get state and actions from hooks instead of props
+  const scopeNodes: NodesMap = useScopesTree();
+  const { selectScope, deselectScope, toggleExpandedNode } = useScopeActions();
   const styles = useStyles2(getStyles);
   const services = useScopesServices();
-  const { closeAndApply } = services?.scopesSelectorService || {};
+  const { closeAndApply, state: selectorState } = services?.scopesSelectorService || {};
+
   if (anyChildExpanded && !treeNode.expanded) {
     return null;
   }
+
+  const selectedScopes: SelectedScope[] = selectorState?.selectedScopes ?? [];
 
   const scopeNode = scopeNodes[treeNode.scopeNodeId];
   if (!scopeNode) {
@@ -215,6 +202,19 @@ export function ScopesTreeItem({
   }
 
   const parentNode = scopeNode.spec.parentName ? scopeNodes[scopeNode.spec.parentName] : undefined;
+
+  // Calculate if this node is selected
+  const selected =
+    isNodeSelectable(scopeNode) &&
+    selectedScopes.some((s) => {
+      if (s.scopeNodeId) {
+        // If we have scopeNodeId we only match based on that so even if the actual scope is the same we don't
+        // mark different scopeNode as selected.
+        return s.scopeNodeId === treeNode.scopeNodeId;
+      } else {
+        return s.scopeId === scopeNode.spec.linkId;
+      }
+    });
   const disableMultiSelect = parentNode?.spec.disableMultiSelect ?? false;
 
   const isSelectable = isNodeSelectable(scopeNode);
@@ -297,18 +297,7 @@ export function ScopesTreeItem({
       </div>
 
       <div id={childrenId} className={styles.children}>
-        {treeNode.expanded && (
-          <ScopesTree
-            tree={treeNode}
-            loadingNodeName={loadingNodeName}
-            filterNode={filterNode}
-            scopeNodes={scopeNodes}
-            selectedScopes={selectedScopes}
-            selectScope={selectScope}
-            deselectScope={deselectScope}
-            toggleExpandedNode={toggleExpandedNode}
-          />
-        )}
+        {treeNode.expanded && <ScopesTree tree={treeNode} />}
       </div>
     </div>
   );

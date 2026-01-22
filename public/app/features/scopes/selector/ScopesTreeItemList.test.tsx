@@ -1,37 +1,54 @@
 import { render, screen } from '@testing-library/react';
+import { Observable } from 'rxjs';
 
 import { ScopeNode } from '@grafana/data';
 
 import { ScopesTreeItemList } from './ScopesTreeItemList';
-import { NodesMap, SelectedScope, TreeNode } from './types';
+import { TreeNode } from './types';
+
+const mockSelectScope = jest.fn();
+const mockDeselectScope = jest.fn();
+const mockFilterNode = jest.fn();
+const mockToggleExpandedNode = jest.fn();
+
+// Mock the hooks
+jest.mock('./useScopesTree', () => ({
+  useScopesTree: jest.fn(() => ({})),
+}));
+
+jest.mock('./useScopeActions', () => ({
+  useScopeActions: () => ({
+    selectScope: mockSelectScope,
+    deselectScope: mockDeselectScope,
+    filterNode: mockFilterNode,
+    toggleExpandedNode: mockToggleExpandedNode,
+  }),
+}));
 
 // Mock the ScopesContextProvider hook since it requires a full context setup
 jest.mock('../ScopesContextProvider', () => ({
   useScopesServices: () => ({
     scopesSelectorService: {
       closeAndApply: jest.fn(),
+      stateObservable: new Observable((subscriber) => {
+        subscriber.next({
+          selectedScopes: [],
+        });
+      }),
+      state: {
+        selectedScopes: [],
+      },
     },
   }),
 }));
 
 describe('ScopesTreeItemList', () => {
-  const mockFilterNode = jest.fn();
-  const mockSelectScope = jest.fn();
-  const mockDeselectScope = jest.fn();
-  const mockToggleExpandedNode = jest.fn();
-
   const defaultProps = {
     anyChildExpanded: false,
     lastExpandedNode: false,
-    loadingNodeName: undefined,
     maxHeight: '100%',
-    selectedScopes: [] as SelectedScope[],
-    filterNode: mockFilterNode,
-    selectScope: mockSelectScope,
-    deselectScope: mockDeselectScope,
     highlightedId: undefined,
     id: 'test-tree',
-    toggleExpandedNode: mockToggleExpandedNode,
   };
 
   const createMockScopeNode = (name: string, parentName = 'parent'): ScopeNode => ({
@@ -50,7 +67,7 @@ describe('ScopesTreeItemList', () => {
   });
 
   it('should render nothing when items array is empty', () => {
-    const { container } = render(<ScopesTreeItemList {...defaultProps} items={[]} scopeNodes={{}} />);
+    const { container } = render(<ScopesTreeItemList {...defaultProps} items={[]} />);
 
     expect(container.firstChild).toBeNull();
   });
@@ -61,7 +78,7 @@ describe('ScopesTreeItemList', () => {
       { scopeNodeId: 'node-2', expanded: false, query: '' },
     ];
 
-    const scopeNodes: NodesMap = {
+    const scopeNodes = {
       'node-1': createMockScopeNode('node-1'),
       'node-2': createMockScopeNode('node-2'),
       parent: {
@@ -70,7 +87,11 @@ describe('ScopesTreeItemList', () => {
       },
     };
 
-    render(<ScopesTreeItemList {...defaultProps} items={items} scopeNodes={scopeNodes} />);
+    // Set mock return value for useScopesTree
+    const { useScopesTree } = require('./useScopesTree');
+    useScopesTree.mockReturnValue(scopeNodes);
+
+    render(<ScopesTreeItemList {...defaultProps} items={items} />);
 
     expect(screen.getByText('Title node-1')).toBeInTheDocument();
     expect(screen.getByText('Title node-2')).toBeInTheDocument();
@@ -83,7 +104,7 @@ describe('ScopesTreeItemList', () => {
       { scopeNodeId: 'node-2', expanded: false, query: '' },
     ];
 
-    const scopeNodes: NodesMap = {
+    const scopeNodes = {
       'node-1': createMockScopeNode('node-1'),
       'node-2': createMockScopeNode('node-2'),
       parent: {
@@ -93,7 +114,11 @@ describe('ScopesTreeItemList', () => {
       // 'missing-node' is intentionally not included
     };
 
-    render(<ScopesTreeItemList {...defaultProps} items={items} scopeNodes={scopeNodes} />);
+    // Set mock return value for useScopesTree
+    const { useScopesTree } = require('./useScopesTree');
+    useScopesTree.mockReturnValue(scopeNodes);
+
+    render(<ScopesTreeItemList {...defaultProps} items={items} />);
 
     // Should render the available nodes
     expect(screen.getByText('Title node-1')).toBeInTheDocument();

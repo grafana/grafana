@@ -5,15 +5,16 @@ import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { NodesMap, TreeNode } from './types';
+import { useScopesTree } from './useScopesTree';
 
 export interface ScopesTreeHeadlineProps {
   anyChildExpanded: boolean;
   query: string;
   resultsNodes: TreeNode[];
-  scopeNodes: NodesMap;
 }
 
-export function ScopesTreeHeadline({ anyChildExpanded, query, resultsNodes, scopeNodes }: ScopesTreeHeadlineProps) {
+export function ScopesTreeHeadline({ anyChildExpanded, query, resultsNodes }: ScopesTreeHeadlineProps) {
+  const scopeNodes: NodesMap = useScopesTree();
   const styles = useStyles2(getStyles);
 
   if (

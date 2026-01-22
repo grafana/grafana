@@ -1,47 +1,42 @@
 import { css } from '@emotion/css';
 import { useId } from 'react';
 import Skeleton from 'react-loading-skeleton';
+import { useObservable } from 'react-use';
 
 import { GrafanaTheme2, Scope } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+
+import { useScopesServices } from '../ScopesContextProvider';
 
 import { RecentScopes } from './RecentScopes';
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
 import { NodesMap, SelectedScope, TreeNode } from './types';
+import { useScopeActions } from './useScopeActions';
 import { useScopesHighlighting } from './useScopesHighlighting';
+import { useScopesTree } from './useScopesTree';
 
 export interface ScopesTreeProps {
   tree: TreeNode;
-  loadingNodeName: string | undefined;
-  selectedScopes: SelectedScope[];
-  scopeNodes: NodesMap;
-
-  filterNode: (scopeNodeId: string, query: string) => void;
-
-  selectScope: (scopeNodeId: string) => void;
-  deselectScope: (scopeNodeId: string) => void;
 
   // Recent scopes are only shown at the root node
   recentScopes?: Scope[][];
   onRecentScopesSelect?: (scopeIds: string[], parentNodeId?: string, scopeNodeId?: string) => void;
-
-  toggleExpandedNode: (scopeNodeId: string) => void;
 }
 
-export function ScopesTree({
-  tree,
-  loadingNodeName,
-  selectedScopes,
-  recentScopes,
-  onRecentScopesSelect,
-  filterNode,
-  scopeNodes,
-  selectScope,
-  deselectScope,
-  toggleExpandedNode,
-}: ScopesTreeProps) {
+export function ScopesTree({ tree, recentScopes, onRecentScopesSelect }: ScopesTreeProps) {
+  // Get state and actions from hooks instead of props
+  const scopeNodes: NodesMap = useScopesTree();
+  const { filterNode, selectScope, deselectScope, toggleExpandedNode } = useScopeActions();
+  const services = useScopesServices();
+  const selectorState = useObservable(
+    services?.scopesSelectorService.stateObservable,
+    services?.scopesSelectorService.state
+  );
+
+  const loadingNodeName: string | undefined = selectorState?.loadingNodeName;
+  const selectedScopes: SelectedScope[] = selectorState?.selectedScopes ?? [];
   const styles = useStyles2(getStyles);
 
   // Used for a11y reference
@@ -95,7 +90,6 @@ export function ScopesTree({
       <ScopesTreeSearch
         anyChildExpanded={anyChildExpanded}
         searchArea={searchArea}
-        filterNode={filterNode}
         treeNode={tree}
         aria-controls={`${selectedNodesToShowId} ${childrenArrayId}`}
         aria-activedescendant={ariaActiveDescendant}
@@ -117,36 +111,17 @@ export function ScopesTree({
             items={selectedNodesToShow}
             anyChildExpanded={anyChildExpanded}
             lastExpandedNode={lastExpandedNode}
-            loadingNodeName={loadingNodeName}
-            filterNode={filterNode}
-            selectedScopes={selectedScopes}
-            scopeNodes={scopeNodes}
-            selectScope={selectScope}
-            deselectScope={deselectScope}
-            toggleExpandedNode={toggleExpandedNode}
             maxHeight={`${Math.min(5, selectedNodesToShow.length) * 30}px`}
             highlightedId={highlightedId}
             id={selectedNodesToShowId}
           />
 
-          <ScopesTreeHeadline
-            anyChildExpanded={anyChildExpanded}
-            query={tree.query}
-            resultsNodes={childrenArray}
-            scopeNodes={scopeNodes}
-          />
+          <ScopesTreeHeadline anyChildExpanded={anyChildExpanded} query={tree.query} resultsNodes={childrenArray} />
 
           <ScopesTreeItemList
             items={childrenArray}
             anyChildExpanded={anyChildExpanded}
             lastExpandedNode={lastExpandedNode}
-            loadingNodeName={loadingNodeName}
-            filterNode={filterNode}
-            selectedScopes={selectedScopes}
-            scopeNodes={scopeNodes}
-            selectScope={selectScope}
-            toggleExpandedNode={toggleExpandedNode}
-            deselectScope={deselectScope}
             maxHeight={'100%'}
             highlightedId={highlightedId}
             id={childrenArrayId}
