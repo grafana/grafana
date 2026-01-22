@@ -1340,7 +1340,7 @@ func TestIntegrationConnectionController_DryRunValidation(t *testing.T) {
 		statusErr, ok := err.(*k8serrors.StatusError)
 		require.True(t, ok, "error should be StatusError")
 		// Check if it's an Invalid error (could be Invalid or BadRequest depending on how errors are returned)
-		require.True(t, statusErr.Status().Reason == metav1.StatusReasonInvalid || statusErr.Status().Code == 422, 
+		require.True(t, statusErr.Status().Reason == metav1.StatusReasonInvalid || statusErr.Status().Code == 422,
 			"error reason should be Invalid or status code should be 422")
 
 		// Verify the error message contains information about invalid installation ID

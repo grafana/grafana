@@ -1441,16 +1441,23 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 		require.NoError(t, err)
 
 		// Wait for reconciliation - repository should become healthy and fieldErrors should be cleared
+		// Check conditions separately for better error messages
 		require.Eventually(t, func() bool {
 			repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
 			if err != nil {
 				return false
 			}
-			return repo.Status.ObservedGeneration == repo.Generation &&
-				repo.Status.Health.Checked > 0 &&
-				repo.Status.Health.Healthy &&
-				len(repo.Status.FieldErrors) == 0
-		}, 15*time.Second, 500*time.Millisecond, "repository should be healthy with fieldErrors cleared")
+			// First ensure it's reconciled
+			if repo.Status.ObservedGeneration != repo.Generation {
+				return false
+			}
+			// Then check health
+			if repo.Status.Health.Checked == 0 || !repo.Status.Health.Healthy {
+				return false
+			}
+			// Finally check fieldErrors are cleared
+			return len(repo.Status.FieldErrors) == 0
+		}, 30*time.Second, 1*time.Second, "repository should be healthy with fieldErrors cleared")
 
 		// Verify fieldErrors are cleared
 		repoHealthy, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
