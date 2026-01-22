@@ -12,24 +12,29 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     dashlistLink: css({
       display: 'flex',
-      cursor: 'pointer',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       margin: theme.spacing(1),
       padding: theme.spacing(1),
       alignItems: 'center',
 
-      '&:hover': {
-        a: {
-          color: theme.colors.text.link,
-          textDecoration: 'underline',
+      a: {
+        flex: 1,
+
+        '&:hover': {
+          '> p': {
+            '&:first-child': {
+              color: theme.colors.text.link,
+              textDecoration: 'underline',
+            },
+          },
         },
       },
     }),
     dashlistCardContainer: css({
       display: 'block',
       height: '100%',
-      paddingBottom: theme.spacing(0.5),
-      '&:hover': {
+
+      '&:has(a:hover)': {
         backgroundImage: gradient,
         color: theme.colors.text.primary,
       },
@@ -39,12 +44,17 @@ export const getStyles = (theme: GrafanaTheme2) => {
       gridTemplateRows: '1fr 1fr',
       gap: theme.spacing(2),
       flexDirection: 'column',
-      '&:hover a': {
-        color: theme.colors.text.link,
-        textDecoration: 'underline',
-      },
       height: '100%',
       width: '100%',
+
+      '&:hover': {
+        '> div': {
+          '&:first-child': {
+            color: theme.colors.text.link,
+            textDecoration: 'underline',
+          },
+        },
+      },
     }),
     dashlistCardIcon: css({
       marginRight: theme.spacing(0.25),

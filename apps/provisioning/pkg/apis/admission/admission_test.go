@@ -211,12 +211,12 @@ func TestHandler_Validate(t *testing.T) {
 			wantErr:           false,
 		},
 		{
-			name:              "returns nil for Delete operation",
+			name:              "calls validator for Delete operation",
 			resource:          "repositories",
 			operation:         admission.Delete,
-			obj:               &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test"}},
+			obj:               nil, // obj is nil for delete operations
 			registerValidator: true,
-			wantCalled:        false,
+			wantCalled:        true,
 			wantErr:           false,
 		},
 		{
