@@ -2,6 +2,7 @@ package connection
 
 import (
 	"context"
+
 	"errors"
 	"time"
 
@@ -23,6 +24,10 @@ type Connection interface {
 	// GenerateRepositoryToken generates a repository-scoped access token.
 	// The repo parameter specifies the repository name the token should be scoped to.
 	GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (*ExpirableSecureValue, error)
+
+	// ListRepositories returns the list of repositories accessible through this connection.
+	// The repositories returned are external repositories from the git provider (e.g., GitHub, GitLab).
+	ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error)
 
 	// Test checks if the connection information actually works.
 	Test(ctx context.Context) (*provisioning.TestResults, error)

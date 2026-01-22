@@ -181,6 +181,11 @@ func NewAdmissionValidator(allowedTargets []provisioning.SyncTargetType, validat
 // The returned error is an apierrors.StatusError containing field.ErrorList when
 // validation fails. Callers can use apierrors.StatusError to extract the field errors.
 func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	// AdmissionValidator is only for CREATE and UPDATE operations
+	if a.GetOperation() == admission.Delete {
+		return nil
+	}
+
 	obj := a.GetObject()
 	if obj == nil {
 		return nil

@@ -306,6 +306,11 @@ type RepositoryStatus struct {
 	// The generation of the spec last time reconciliation ran
 	ObservedGeneration int64 `json:"observedGeneration"`
 
+	// FieldErrors are errors that occurred during validation of the repository spec.
+	// These errors are intended to help users identify and fix issues in the spec.
+	// +listType=atomic
+	FieldErrors []ErrorDetails `json:"fieldErrors,omitempty"`
+
 	// This will get updated with the current health status (and updated periodically)
 	Health HealthStatus `json:"health"`
 
@@ -554,8 +559,11 @@ type ResourceCount struct {
 	Count    int64  `json:"count"`
 }
 
-// HistoryList is a list of versions of a resource
+// TestResults is the result of a test connection operation
+// Deprecated: this will go way when we deprecate the test endpoint
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// TODO: This type is deprecated and will be removed when we deprecate the test endpoint
+// We should use fieldErrors from status instead.
 type TestResults struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -569,10 +577,36 @@ type TestResults struct {
 	Errors []ErrorDetails `json:"errors,omitempty"`
 }
 
+// ErrorDetails describes an individual field error intended to help users identify and fix issues
+// in resource specifications. This type is modeled after Kubernetes' StatusCause and serves the same
+// purpose: to deliver actionable feedback about fields in the spec that require attention.
+// Errors may relate to invalid formats, missing or invalid values, or cases where a referenced value
+// does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to
+// communicate validation or external reference errors that users can resolve by editing spec fields.
+// TODO: Rename this type to FieldError for consistency with Kubernetes conventions and to more clearly indicate that it represents field-level validation errors, not arbitrary error details.
 type ErrorDetails struct {
-	Type   metav1.CauseType `json:"type"`
-	Field  string           `json:"field,omitempty"`
-	Detail string           `json:"detail,omitempty"`
+	// Type is a machine-readable description of the cause of the error.
+	// This is intended for programmatic handling and matches Kubernetes' CauseType values.
+	Type metav1.CauseType `json:"type"`
+
+	// Field is the path to the field or JSON pointer that caused the error.
+	// This helps users and tools identify exactly where to correct the problem.
+	// This field is optional and may be empty if not applicable.
+	Field string `json:"field,omitempty"`
+
+	// Detail provides a human-readable explanation of what went wrong.
+	// This message may be shown directly to users and should be actionable.
+	Detail string `json:"detail,omitempty"`
+
+	// Origin indicates where the error originated in validation, or the name of the external service that reported the error.
+	// This can be useful for tooling or debugging, and may reference a specific rule, function, or service.
+	// This field is optional and may be empty.
+	Origin string `json:"origin,omitempty"`
+
+	// BadValue is the value of the field that was determined to be invalid, if applicable.
+	// This can be any type. This field is optional and may be omitted if not relevant.
+	// FIXME: DeepCopyInto and DeepCopy are not generated for interface{} or any
+	// BadValue interface{} `json:"badValue,omitempty"`
 }
 
 // HistoryList is a list of versions of a resource

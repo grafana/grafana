@@ -22,6 +22,64 @@ func (_m *MockConnection) EXPECT() *MockConnection_Expecter {
 	return &MockConnection_Expecter{mock: &_m.Mock}
 }
 
+// ListRepositories provides a mock function with given fields: ctx
+func (_m *MockConnection) ListRepositories(ctx context.Context) ([]v0alpha1.ExternalRepository, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListRepositories")
+	}
+
+	var r0 []v0alpha1.ExternalRepository
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]v0alpha1.ExternalRepository, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []v0alpha1.ExternalRepository); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]v0alpha1.ExternalRepository)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockConnection_ListRepositories_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListRepositories'
+type MockConnection_ListRepositories_Call struct {
+	*mock.Call
+}
+
+// ListRepositories is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockConnection_Expecter) ListRepositories(ctx interface{}) *MockConnection_ListRepositories_Call {
+	return &MockConnection_ListRepositories_Call{Call: _e.mock.On("ListRepositories", ctx)}
+}
+
+func (_c *MockConnection_ListRepositories_Call) Run(run func(ctx context.Context)) *MockConnection_ListRepositories_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockConnection_ListRepositories_Call) Return(_a0 []v0alpha1.ExternalRepository, _a1 error) *MockConnection_ListRepositories_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockConnection_ListRepositories_Call) RunAndReturn(run func(context.Context) ([]v0alpha1.ExternalRepository, error)) *MockConnection_ListRepositories_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GenerateRepositoryToken provides a mock function with given fields: ctx, repo
 func (_m *MockConnection) GenerateRepositoryToken(ctx context.Context, repo *v0alpha1.Repository) (*ExpirableSecureValue, error) {
 	ret := _m.Called(ctx, repo)

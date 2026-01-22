@@ -34,6 +34,8 @@ func TestIntegrationHealth(t *testing.T) {
 	require.True(t, originalRepo.Status.Health.Healthy, "repository should be marked healthy")
 	require.Empty(t, originalRepo.Status.Health.Error, "should be empty")
 	require.Empty(t, originalRepo.Status.Health.Message, "should not have messages")
+	// When healthy, fieldErrors should be empty
+	require.Empty(t, originalRepo.Status.FieldErrors, "fieldErrors should be empty when repository is healthy")
 
 	t.Run("test endpoint with new repository configuration works", func(t *testing.T) {
 		newRepoConfig := map[string]any{
@@ -106,6 +108,8 @@ func TestIntegrationHealth(t *testing.T) {
 		require.True(t, afterTest.Status.Health.Healthy, "repository should be marked healthy")
 		require.Empty(t, afterTest.Status.Health.Error, "should be empty")
 		require.Empty(t, afterTest.Status.Health.Message, "should not have messages")
+		// When healthy, fieldErrors should be empty
+		require.Empty(t, afterTest.Status.FieldErrors, "fieldErrors should be empty when repository is healthy")
 		// For healthy repositories, timestamp may not change immediately as it can take up to 30 seconds to update
 	})
 
@@ -152,6 +156,8 @@ func TestIntegrationHealth(t *testing.T) {
 
 		// For unhealthy repositories, the timestamp should change as the health check will be triggered
 		require.NotEqual(t, beforeTest.Status.Health.Checked, afterTest.Status.Health.Checked, "should change the timestamp for unhealthy repository check")
+		// When unhealthy, fieldErrors may be populated if there are validation errors
+		// Note: fieldErrors are only populated from testResults, so they may not always be present for runtime errors
 
 		// Recreate the repository directory to restore healthy state
 		err = os.MkdirAll(repoPath, 0o750)
@@ -181,6 +187,8 @@ func TestIntegrationHealth(t *testing.T) {
 		t.Logf("After recreating directory - Healthy: %v, Checked: %d", finalRepo.Status.Health.Healthy, finalRepo.Status.Health.Checked)
 		require.True(t, finalRepo.Status.Health.Healthy, "repository should be healthy again after recreating directory")
 		require.Empty(t, finalRepo.Status.Health.Error, "should have no error after recreating directory")
+		// When healthy again, fieldErrors should be empty
+		require.Empty(t, finalRepo.Status.FieldErrors, "fieldErrors should be empty when repository is healthy again")
 
 		// Timestamp should have changed again due to the health check
 		require.NotEqual(t, afterTest.Status.Health.Checked, finalRepo.Status.Health.Checked, "timestamp should change when repository becomes healthy again")
