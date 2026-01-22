@@ -1,22 +1,19 @@
 import { AnnotationQueryKind, Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-export interface DatasourceRef {
+export interface SelectedDatasource {
   uid: string;
   type: string;
   name?: string;
 }
 
-export type DatasourceMappings = Record<string, DatasourceRef>;
+/** Maps datasource type (e.g. "prometheus", "loki") to user-selected datasource
+ * from the import form */
+export type DatasourceMappings = Record<string, SelectedDatasource>;
 
-/** Check if datasource name is a variable reference (e.g., ${ds}, $ds) */
 export function isVariableRef(dsName: string | undefined): boolean {
   return dsName?.startsWith('$') ?? false;
 }
 
-/**
- * Replace datasource references in a dashboard spec with mapped datasources.
- * Preserves variable references (e.g., ${ds}, $ds).
- */
 export function replaceDatasourcesInDashboard(
   dashboard: DashboardV2Spec,
   mappings: DatasourceMappings
