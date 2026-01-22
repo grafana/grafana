@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useLayoutEffect } from 'react';
-import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -75,11 +74,11 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     }
   }, [isEditing, editPane]);
 
-  useEffectOnce(() => {
+  useEffect(() => {
     if (isEditingNewDashboard) {
-       editPane.openPane('add'); 
+      editPane.openPane('add');
     }
-  });
+  }, [isEditingNewDashboard, editPane]);
 
   const { selectionContext, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
 
