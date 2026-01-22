@@ -3725,8 +3725,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/prometheus@workspace:packages/grafana-prometheus"
   dependencies:
-    "@emotion/css": "npm:11.13.5"
-    "@floating-ui/react": "npm:0.27.16"
+    "@emotion/css": "npm:^11.13.5"
+    "@floating-ui/react": "npm:^0.27.16"
     "@grafana/data": "npm:12.4.0-pre"
     "@grafana/e2e-selectors": "npm:12.4.0-pre"
     "@grafana/i18n": "npm:12.4.0-pre"
@@ -3734,13 +3734,13 @@ __metadata:
     "@grafana/runtime": "npm:12.4.0-pre"
     "@grafana/schema": "npm:12.4.0-pre"
     "@grafana/ui": "npm:12.4.0-pre"
-    "@hello-pangea/dnd": "npm:18.0.1"
-    "@leeoniya/ufuzzy": "npm:1.0.19"
-    "@lezer/common": "npm:1.3.0"
-    "@lezer/highlight": "npm:1.2.3"
-    "@lezer/lr": "npm:1.4.3"
-    "@prometheus-io/lezer-promql": "npm:0.307.3"
-    "@reduxjs/toolkit": "npm:2.10.1"
+    "@hello-pangea/dnd": "npm:^18.0.1"
+    "@leeoniya/ufuzzy": "npm:^1.0.19"
+    "@lezer/common": "npm:^1.3.0"
+    "@lezer/highlight": "npm:^1.2.3"
+    "@lezer/lr": "npm:^1.4.3"
+    "@prometheus-io/lezer-promql": "npm:^0.307.3"
+    "@reduxjs/toolkit": "npm:^2.10.1"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-json": "npm:6.1.0"
@@ -3748,45 +3748,45 @@ __metadata:
     "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
-    "@types/debounce-promise": "npm:3.1.9"
+    "@types/debounce-promise": "npm:^3.1.9"
     "@types/jest": "npm:29.5.14"
-    "@types/lodash": "npm:4.17.20"
+    "@types/lodash": "npm:^4.17.20"
     "@types/node": "npm:24.10.1"
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.5"
-    "@types/react": "npm:18.3.18"
-    "@types/react-dom": "npm:18.3.5"
-    "@types/react-highlight-words": "npm:0.20.0"
-    "@types/react-window": "npm:1.8.8"
-    "@types/semver": "npm:7.7.1"
-    "@types/uuid": "npm:10.0.0"
-    debounce-promise: "npm:3.1.2"
+    "@types/react": "npm:^18.3.18"
+    "@types/react-dom": "npm:^18.3.5"
+    "@types/react-highlight-words": "npm:^0.20.0"
+    "@types/react-window": "npm:^1.8.8"
+    "@types/semver": "npm:^7.7.1"
+    "@types/uuid": "npm:^10.0.0"
+    debounce-promise: "npm:^3.1.2"
     esbuild: "npm:0.25.8"
     i18next-cli: "npm:^1.24.22"
     jest: "npm:29.7.0"
     jest-environment-jsdom: "npm:29.7.0"
     lodash: "npm:^4.17.23"
-    moment: "npm:2.30.1"
-    moment-timezone: "npm:0.5.47"
-    monaco-editor: "npm:0.34.1"
-    monaco-promql: "npm:1.8.0"
-    pluralize: "npm:8.0.0"
-    prismjs: "npm:1.30.0"
+    moment: "npm:^2.30.1"
+    moment-timezone: "npm:^0.5.47"
+    monaco-editor: "npm:^0.34.1"
+    monaco-promql: "npm:^1.8.0"
+    pluralize: "npm:^8.0.0"
+    prismjs: "npm:^1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-highlight-words: "npm:0.21.0"
+    react-highlight-words: "npm:^0.21.0"
     react-select-event: "npm:5.5.1"
-    react-use: "npm:17.6.0"
-    react-window: "npm:1.8.11"
+    react-use: "npm:^17.6.0"
+    react-window: "npm:^1.8.11"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.22.4"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
-    rxjs: "npm:7.8.2"
-    semver: "npm:7.7.3"
+    rxjs: "npm:^7.8.2"
+    semver: "npm:^7.7.3"
     testing-library-selector: "npm:0.3.1"
     typescript: "npm:5.9.2"
-    uuid: "npm:11.1.0"
+    uuid: "npm:^11.1.0"
   peerDependencies:
     react: ^18.0.0
     react-dom: ^18.0.0
@@ -5351,7 +5351,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@leeoniya/ufuzzy@npm:1.0.19, @leeoniya/ufuzzy@npm:^1.0.16":
+"@leeoniya/ufuzzy@npm:1.0.19, @leeoniya/ufuzzy@npm:^1.0.16, @leeoniya/ufuzzy@npm:^1.0.19":
   version: 1.0.19
   resolution: "@leeoniya/ufuzzy@npm:1.0.19"
   checksum: 10/097153dbdc1eb36939513e275e63f573d11f06adfbc885d80b90090996ecdb77fc7c643d53a22f4cee968f4d435e62cc2284d020161193fb6875b3bd73566ffc
@@ -5440,7 +5440,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/highlight@npm:1.2.3":
+"@lezer/highlight@npm:1.2.3, @lezer/highlight@npm:^1.2.3":
   version: 1.2.3
   resolution: "@lezer/highlight@npm:1.2.3"
   dependencies:
@@ -5455,6 +5455,15 @@ __metadata:
   dependencies:
     "@lezer/common": "npm:^1.0.0"
   checksum: 10/d6dfecedcd51027b38bac756026bcbdffa2e086d9a48a4ef0f84176ca28b300d9da0e508fc77d8d64181540b6027571a7fe1dc3705abdcc5d6db45386d6fb482
+  languageName: node
+  linkType: hard
+
+"@lezer/lr@npm:^1.4.3":
+  version: 1.4.7
+  resolution: "@lezer/lr@npm:1.4.7"
+  dependencies:
+    "@lezer/common": "npm:^1.0.0"
+  checksum: 10/5407e10c8f983eedd8eaace9f2582aac39f7b280cdcf4e396d53ca6c1e654ce1bb2fdbddfbf9a63c8462046be37c8c4da180be7ffaf2d2aa24eb71622f624d85
   languageName: node
   linkType: hard
 
@@ -6937,7 +6946,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prometheus-io/lezer-promql@npm:0.307.3":
+"@prometheus-io/lezer-promql@npm:^0.307.3":
   version: 0.307.3
   resolution: "@prometheus-io/lezer-promql@npm:0.307.3"
   peerDependencies:
@@ -7801,6 +7810,28 @@ __metadata:
     react-redux:
       optional: true
   checksum: 10/0d444d749d2261103bc1ad8a3eb43700aef5fd0417c21e758005d5c2e67f567248cc18708a336a8d407245642b863cb14a8db90aaa5bc18fd13ca53fe7fb0ab7
+  languageName: node
+  linkType: hard
+
+"@reduxjs/toolkit@npm:^2.10.1":
+  version: 2.11.2
+  resolution: "@reduxjs/toolkit@npm:2.11.2"
+  dependencies:
+    "@standard-schema/spec": "npm:^1.0.0"
+    "@standard-schema/utils": "npm:^0.3.0"
+    immer: "npm:^11.0.0"
+    redux: "npm:^5.0.1"
+    redux-thunk: "npm:^3.1.0"
+    reselect: "npm:^5.1.0"
+  peerDependencies:
+    react: ^16.9.0 || ^17.0.0 || ^18 || ^19
+    react-redux: ^7.2.1 || ^8.1.3 || ^9.0.0
+  peerDependenciesMeta:
+    react:
+      optional: true
+    react-redux:
+      optional: true
+  checksum: 10/2e1098c7fcd10b770344d0b39c58a3b9cb3aec7da0979c02f1ac1ef8f56619ac787c623e480bef0cf6f2c05f1c13fd4d44045c794e2c2d3460f9bf0d2875995c
   languageName: node
   linkType: hard
 
@@ -10834,7 +10865,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/debounce-promise@npm:3.1.9":
+"@types/debounce-promise@npm:3.1.9, @types/debounce-promise@npm:^3.1.9":
   version: 3.1.9
   resolution: "@types/debounce-promise@npm:3.1.9"
   checksum: 10/ea6c38c8d4b6006aea25fb9891281b0ea908aab7ae32755e85dfda1ae78331dab1884da7143aa4ca5166741884bc9f7665391072ddce800b5d2c1f44d4a11b9d
@@ -11383,6 +11414,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-dom@npm:^18.3.5":
+  version: 18.3.7
+  resolution: "@types/react-dom@npm:18.3.7"
+  peerDependencies:
+    "@types/react": ^18.0.0
+  checksum: 10/317569219366d487a3103ba1e5e47154e95a002915fdcf73a44162c48fe49c3a57fcf7f57fc6979e70d447112681e6b13c6c3c1df289db8b544df4aab2d318f3
+  languageName: node
+  linkType: hard
+
 "@types/react-grid-layout@npm:1.3.5":
   version: 1.3.5
   resolution: "@types/react-grid-layout@npm:1.3.5"
@@ -11398,6 +11438,15 @@ __metadata:
   dependencies:
     "@types/react": "npm:*"
   checksum: 10/56246d8678ef5cf32b7c02bce7759946e28da7b079d5a59c7f1ca5b3e5a8bd521c4151fac192281cf56c0a62b2276d990162253f869e9ff3ef451c603e783bc4
+  languageName: node
+  linkType: hard
+
+"@types/react-highlight-words@npm:^0.20.0":
+  version: 0.20.1
+  resolution: "@types/react-highlight-words@npm:0.20.1"
+  dependencies:
+    "@types/react": "npm:*"
+  checksum: 10/e05af8065d51eb3f3a306c3769a3cf475ea039811882c4b6f523ce5e92af107dafa1004f53f86c468c59bb0c95859b3003b023eaebcab8187da51c7d9434827d
   languageName: node
   linkType: hard
 
@@ -11468,7 +11517,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-window@npm:*, @types/react-window@npm:1.8.8":
+"@types/react-window@npm:*, @types/react-window@npm:1.8.8, @types/react-window@npm:^1.8.8":
   version: 1.8.8
   resolution: "@types/react-window@npm:1.8.8"
   dependencies:
@@ -11484,6 +11533,16 @@ __metadata:
     "@types/prop-types": "npm:*"
     csstype: "npm:^3.0.2"
   checksum: 10/7fdd8b853e0d291d4138133f93f8d5c333da918e5804afcea61a923aab4bdfc9bb15eb21a5640959b452972b8715ddf10ffb12b3bd071898b9e37738636463f2
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:^18.3.18":
+  version: 18.3.27
+  resolution: "@types/react@npm:18.3.27"
+  dependencies:
+    "@types/prop-types": "npm:*"
+    csstype: "npm:^3.2.2"
+  checksum: 10/90155820a2af315cad1ff47df695f3f2f568c12ad641a7805746a6a9a9aa6c40b1374e819e50d39afe0e375a6b9160a73176cbdb4e09807262bc6fcdc06e67db
   languageName: node
   linkType: hard
 
@@ -11526,7 +11585,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/semver@npm:7.7.1, @types/semver@npm:^7.3.12, @types/semver@npm:^7.3.4":
+"@types/semver@npm:7.7.1, @types/semver@npm:^7.3.12, @types/semver@npm:^7.3.4, @types/semver@npm:^7.7.1":
   version: 7.7.1
   resolution: "@types/semver@npm:7.7.1"
   checksum: 10/8f09e7e6ca3ded67d78ba7a8f7535c8d9cf8ced83c52e7f3ac3c281fe8c689c3fe475d199d94390dc04fc681d51f2358b430bb7b2e21c62de24f2bee2c719068
@@ -11705,7 +11764,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/uuid@npm:10.0.0":
+"@types/uuid@npm:10.0.0, @types/uuid@npm:^10.0.0":
   version: 10.0.0
   resolution: "@types/uuid@npm:10.0.0"
   checksum: 10/e3958f8b0fe551c86c14431f5940c3470127293280830684154b91dc7eb3514aeb79fe3216968833cf79d4d1c67f580f054b5be2cd562bebf4f728913e73e944
@@ -15858,6 +15917,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"csstype@npm:^3.2.2":
+  version: 3.2.3
+  resolution: "csstype@npm:3.2.3"
+  checksum: 10/ad41baf7e2ffac65ab544d79107bf7cd1a4bb9bab9ac3302f59ab4ba655d5e30942a8ae46e10ba160c6f4ecea464cc95b975ca2fefbdeeacd6ac63f12f99fe1f
+  languageName: node
+  linkType: hard
+
 "cwd@npm:^0.10.0":
   version: 0.10.0
   resolution: "cwd@npm:0.10.0"
@@ -16386,7 +16452,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debounce-promise@npm:3.1.2":
+"debounce-promise@npm:3.1.2, debounce-promise@npm:^3.1.2":
   version: 3.1.2
   resolution: "debounce-promise@npm:3.1.2"
   checksum: 10/9a06b4f4674abf92ccda608510ba896f1a6f25c594d6288b787f40e99de836461ad8122f6cd8ce335816b693a678dfb37b7470961888ea4b08863208f3eea348
@@ -21398,6 +21464,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"immer@npm:^11.0.0":
+  version: 11.1.3
+  resolution: "immer@npm:11.1.3"
+  checksum: 10/d0c591381d8022fcad868d36f087635d5e5cddfd7f43c069bc0d2fee946ddc9969cd5f886e76a4ef0a36f2ce81b5e0228177e2cb4d85b3215aca40e6cb53ad2a
+  languageName: node
+  linkType: hard
+
 "immutable@npm:5.1.4, immutable@npm:^5.0.2, immutable@npm:^5.1.4":
   version: 5.1.4
   resolution: "immutable@npm:5.1.4"
@@ -25412,6 +25485,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"moment-timezone@npm:^0.5.47":
+  version: 0.5.48
+  resolution: "moment-timezone@npm:0.5.48"
+  dependencies:
+    moment: "npm:^2.29.4"
+  checksum: 10/8e0b7a05577623552293b28eeee4e60634b8be87fdb74084fa6d5ccc516771eb42d88f29c5a5e50a94c494048d14cdef94f94526a9dfd5e1b0050ff29d0a6c0a
+  languageName: node
+  linkType: hard
+
 "moment@npm:2.30.1, moment@npm:^2.29.4, moment@npm:^2.30.1":
   version: 2.30.1
   resolution: "moment@npm:2.30.1"
@@ -25426,7 +25508,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"monaco-promql@npm:1.8.0":
+"monaco-promql@npm:^1.8.0":
   version: 1.8.0
   resolution: "monaco-promql@npm:1.8.0"
   checksum: 10/d757ecd46fb3fb3ee31d1ee06b21e2860735d24d41ca161e8d4e576a956a83e86103b7ddbecdf1e02ea9fac6a3782694c996e3ce46b7483f3c47630627b40c68
@@ -27861,7 +27943,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pluralize@npm:8.0.0, pluralize@npm:^8.0.0":
+"pluralize@npm:^8.0.0":
   version: 8.0.0
   resolution: "pluralize@npm:8.0.0"
   checksum: 10/17877fdfdb7ddb3639ce257ad73a7c51a30a966091e40f56ea9f2f545b5727ce548d4928f8cb3ce38e7dc0c5150407d318af6a4ed0ea5265d378473b4c2c61ec
@@ -31142,7 +31224,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:7.7.3, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.0, semver@npm:^7.6.2, semver@npm:^7.6.3, semver@npm:^7.7.0, semver@npm:^7.7.1, semver@npm:^7.7.2, semver@npm:~7.7.1":
+"semver@npm:7.7.3, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.0, semver@npm:^7.6.2, semver@npm:^7.6.3, semver@npm:^7.7.0, semver@npm:^7.7.1, semver@npm:^7.7.2, semver@npm:^7.7.3, semver@npm:~7.7.1":
   version: 7.7.3
   resolution: "semver@npm:7.7.3"
   bin:
