@@ -3,7 +3,6 @@ package datasource
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -92,14 +91,4 @@ func (cl *connectionClientImpl) GetConnectionByTypeAndUID(c *contextmodel.ReqCon
 	group := pluginType + ".datasource.grafana.app"
 	name := queryV0.DataSourceConnectionName(group, uid)
 	return cl.GetConnectionByUID(c, name)
-}
-
-// WriteK8sError writes a K8s API error as an HTTP response.
-func WriteK8sError(c *contextmodel.ReqContext, err error) {
-	statusError, ok := err.(*errors.StatusError)
-	if ok {
-		c.JsonApiErr(int(statusError.Status().Code), statusError.Status().Message, err)
-		return
-	}
-	c.JsonApiErr(http.StatusInternalServerError, "internal error", err)
 }
