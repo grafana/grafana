@@ -639,6 +639,37 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.ErrorIs(t, err, expectedErr)
 	})
 
+	t.Run("rejects mute timings if new name already exists", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{Config: initialConfig()}, nil
+		}
+		sut.validator = func(from, to models.Provenance) error {
+			return nil
+		}
+		timing := definitions.MuteTimeInterval{
+			UID: legacy_storage.NameToUid("Test2"),
+			MuteTimeInterval: config.MuteTimeInterval{
+				Name: "Test",
+				TimeIntervals: []timeinterval.TimeInterval{
+					{
+						Times: []timeinterval.TimeRange{
+							{
+								StartMinute: 10, EndMinute: 60,
+							},
+						},
+					},
+				},
+			},
+			Provenance: definitions.Provenance(expectedProvenance),
+		}
+
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedProvenance, nil)
+
+		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
+		require.ErrorIs(t, err, ErrTimeIntervalExists)
+	})
+
 	t.Run("returns ErrVersionConflict if storage version does not match", func(t *testing.T) {
 		sut, store, prov := createMuteTimingSvcSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
