@@ -1,5 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 
+import { useDeleteRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
+
 import { PROVISIONING_URL } from '../../constants';
 import { RepoType, WizardStep } from '../types';
 
@@ -8,6 +10,12 @@ import { useWizardCancellation, UseWizardCancellationParams } from './useWizardC
 jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
+
+jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
+  useDeleteRepositoryMutation: jest.fn(),
+}));
+
+const mockUseDeleteRepositoryMutation = jest.mocked(useDeleteRepositoryMutation);
 
 describe('useWizardCancellation', () => {
   const mockDeleteRepository = jest.fn();
@@ -18,7 +26,6 @@ describe('useWizardCancellation', () => {
     repoName: 'test-repo',
     repoType: 'github' as RepoType,
     activeStep: 'bootstrap' as WizardStep,
-    deleteRepository: mockDeleteRepository,
     navigate: mockNavigate,
     handleBack: mockHandleBack,
     shouldUseCancelBehavior: false,
@@ -27,6 +34,7 @@ describe('useWizardCancellation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+    mockUseDeleteRepositoryMutation.mockReturnValue([mockDeleteRepository, { reset: jest.fn() }]);
   });
 
   afterEach(() => {

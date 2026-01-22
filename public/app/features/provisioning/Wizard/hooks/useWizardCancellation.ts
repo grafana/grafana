@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { NavigateFunction } from 'react-router-dom-v5-compat';
 
 import { reportInteraction } from '@grafana/runtime';
+import { useDeleteRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 import { PROVISIONING_URL } from '../../constants';
 import { RepoType, WizardStep } from '../types';
@@ -10,7 +11,6 @@ export interface UseWizardCancellationParams {
   repoName: string;
   repoType: RepoType;
   activeStep: WizardStep;
-  deleteRepository: (params: { name: string }) => Promise<unknown>;
   navigate: NavigateFunction;
   handleBack: () => void;
   shouldUseCancelBehavior: boolean;
@@ -30,13 +30,13 @@ export function useWizardCancellation({
   repoName,
   repoType,
   activeStep,
-  deleteRepository,
   navigate,
   handleBack,
   shouldUseCancelBehavior,
 }: UseWizardCancellationParams): UseWizardCancellationReturn {
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  const [deleteRepository] = useDeleteRepositoryMutation();
 
   const handleRepositoryDeletion = useCallback(
     async (name: string) => {

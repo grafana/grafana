@@ -7,7 +7,7 @@ import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Box, ConfirmModal, Stack, Text, useStyles2 } from '@grafana/ui';
-import { RepositoryViewList, useDeleteRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { getDefaultValues } from '../Config/defaults';
@@ -79,7 +79,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
   const steps = useMemo(() => getSteps(repoType, githubAuthType), [repoType, githubAuthType]);
   const [submitData] = useCreateOrUpdateRepository(repoName);
-  const [deleteRepository] = useDeleteRepositoryMutation();
   const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget);
   const { createSyncJob, isLoading: isCreatingSkipJob } = useCreateSyncJob({
     repoName: repoName,
@@ -125,7 +124,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     repoName,
     repoType,
     activeStep,
-    deleteRepository,
     navigate,
     handleBack: goToPreviousStep,
     shouldUseCancelBehavior,
