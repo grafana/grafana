@@ -3,6 +3,7 @@ package conversion
 import (
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -10,6 +11,33 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
+
+// DashboardConversion provides methods for managing conversion status on dashboard objects.
+type DashboardConversion interface {
+	// returns the stored version from status.conversion.storedVersion,
+	// or empty string if not set.
+	GetStoredVersion() string
+	// returns the API version of this dashboard (e.g., "v2beta1").
+	GetAPIVersion() string
+	// sets the conversion status on the dashboard.
+	SetConversionStatus(storedVersion string, failed bool, errMsg *string, source interface{})
+}
+
+func getStoredVersion(in DashboardConversion) string {
+	if sv := in.GetStoredVersion(); sv != "" {
+		return sv
+	}
+	return in.GetAPIVersion()
+}
+
+func setConversionStatus(in DashboardConversion, out DashboardConversion, err error, source interface{}) {
+	storedVersion := getStoredVersion(in)
+	var errMsg *string
+	if err != nil {
+		errMsg = ptr.To(err.Error())
+	}
+	out.SetConversionStatus(storedVersion, err != nil, errMsg, source)
+}
 
 func RegisterConversions(s *runtime.Scheme, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
 	// v0 conversions
