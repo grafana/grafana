@@ -153,7 +153,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 	})
 
 	t.Run("sends gcom token in Authorization header", func(t *testing.T) {
-		expectedToken := "test-gcom-token-12345"
+		expectedToken := "test-gcom-token-12345" //nolint:gosec // G101: test token value
 		expectedMeta := pluginsv0alpha1.MetaJSONData{
 			Id:   "test-plugin",
 			Name: "Test Plugin",
