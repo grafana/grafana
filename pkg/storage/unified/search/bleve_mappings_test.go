@@ -13,7 +13,7 @@ import (
 )
 
 func TestDocumentMapping(t *testing.T) {
-	mappings, err := search.GetBleveMappings(nil)
+	mappings, err := search.GetBleveMappings("", nil)
 	require.NoError(t, err)
 	data := resource.IndexableDocument{
 		Title:       "title",
@@ -36,6 +36,7 @@ func TestDocumentMapping(t *testing.T) {
 			Checksum:        "ooo",
 			TimestampMillis: 1234,
 		},
+		OwnerReferences: []string{"iam.grafana.app/Team/devops", "iam.grafana.app/User/xyz"},
 	}
 	data.UpdateCopyFields()
 
@@ -49,5 +50,5 @@ func TestDocumentMapping(t *testing.T) {
 
 	fmt.Printf("DOC: fields %d\n", len(doc.Fields))
 	fmt.Printf("DOC: size %d\n", doc.Size())
-	require.Equal(t, 17, len(doc.Fields))
+	require.Equal(t, 19, len(doc.Fields))
 }

@@ -11,6 +11,7 @@ import {
   SQLQuery,
   SQLSelectableValue,
   SqlDatasource,
+  SQLVariableSupport,
   formatSQL,
 } from '@grafana/sql';
 
@@ -25,6 +26,8 @@ export class PostgresDatasource extends SqlDatasource {
 
   constructor(instanceSettings: DataSourceInstanceSettings<PostgresOptions>) {
     super(instanceSettings);
+    this.dialect = 'postgres';
+    this.variables = new SQLVariableSupport(this);
   }
 
   getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): PostgresQueryModel {
@@ -143,7 +146,6 @@ export class PostgresDatasource extends SqlDatasource {
       },
       validateQuery: (query) =>
         Promise.resolve({ isError: false, isValid: true, query, error: '', rawSql: query.rawSql }),
-      dsID: () => this.id,
       toRawSql,
       functions: () => this.getFunctions(),
       lookup: async () => {

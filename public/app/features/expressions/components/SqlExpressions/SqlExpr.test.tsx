@@ -1,4 +1,4 @@
-import { act, fireEvent, render, testWithFeatureToggles } from 'test/test-utils';
+import { render, testWithFeatureToggles, userEvent, waitFor } from 'test/test-utils';
 
 import { ExpressionQuery, ExpressionQueryType } from '../../types';
 
@@ -72,12 +72,12 @@ describe('SqlExpr', () => {
     const refIds = [{ value: 'A' }];
     const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
 
-    await act(async () => {
-      render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
-    });
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
 
     // Verify onChange was called
-    expect(onChange).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalled();
+    });
 
     // Verify essential SQL structure without exact string matching
     const updatedQuery = onChange.mock.calls[0][0];
@@ -90,19 +90,12 @@ describe('SqlExpr', () => {
     const existingExpression = 'SELECT 1 AS foo';
     const query = { refId: 'expr1', type: 'sql', expression: existingExpression } as ExpressionQuery;
 
-    await act(async () => {
-      render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
-    });
-
-    // Check if onChange was called
-    if (onChange.mock.calls.length > 0) {
-      // If called, ensure it didn't change the expression value
-      const updatedQuery = onChange.mock.calls[0][0];
-      expect(updatedQuery.expression).toBe(existingExpression);
-    }
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
 
     // The SQLEditor should receive the existing expression
-    expect(query.expression).toBe(existingExpression);
+    await waitFor(() => {
+      expect(query.expression).toBe(existingExpression);
+    });
   });
 
   it('adds alerting format when alerting prop is true', async () => {
@@ -110,40 +103,12 @@ describe('SqlExpr', () => {
     const refIds = [{ value: 'A' }];
     const query = { refId: 'expr1', type: 'sql' } as ExpressionQuery;
 
-    await act(async () => {
-      render(<SqlExpr onChange={onChange} refIds={refIds} query={query} alerting queries={[]} />);
+    render(<SqlExpr onChange={onChange} refIds={refIds} query={query} alerting queries={[]} />);
+
+    await waitFor(() => {
+      const updatedQuery = onChange.mock.calls[0][0];
+      expect(updatedQuery.format).toBe('alerting');
     });
-
-    const updatedQuery = onChange.mock.calls[0][0];
-    expect(updatedQuery.format).toBe('alerting');
-  });
-});
-
-describe('SqlExpr with GenAI features', () => {
-  const defaultProps: SqlExprProps = {
-    onChange: jest.fn(),
-    refIds: [{ value: 'A' }],
-    query: { refId: 'expression_1', type: ExpressionQueryType.sql, expression: `SELECT * FROM A LIMIT 10` },
-    queries: [],
-  };
-
-  it('renders suggestions drawer when isDrawerOpen is true', async () => {
-    const { useSQLSuggestions } = require('./GenAI/hooks/useSQLSuggestions');
-    useSQLSuggestions.mockImplementation(() => ({
-      isDrawerOpen: true,
-      suggestions: ['suggestion1', 'suggestion2'],
-    }));
-
-    const { findByTestId } = render(<SqlExpr {...defaultProps} />);
-    expect(await findByTestId('suggestions-drawer')).toBeInTheDocument();
-  });
-
-  it('renders explanation drawer when isExplanationOpen is true', async () => {
-    const { useSQLExplanations } = require('./GenAI/hooks/useSQLExplanations');
-    useSQLExplanations.mockImplementation(() => ({ isExplanationOpen: true }));
-
-    const { findByTestId } = render(<SqlExpr {...defaultProps} />);
-    expect(await findByTestId('explanation-drawer')).toBeInTheDocument();
   });
 });
 
@@ -166,10 +131,10 @@ describe('Schema Inspector feature toggle', () => {
       });
     });
 
-    it('renders panel open by default', () => {
-      const { getByText } = render(<SqlExpr {...defaultProps} />);
+    it('renders panel open by default', async () => {
+      const { findByText } = render(<SqlExpr {...defaultProps} />);
 
-      expect(getByText('No schema information available')).toBeInTheDocument();
+      expect(await findByText('No schema information available')).toBeInTheDocument();
     });
 
     it('closes panel and shows reopen button when close button clicked', async () => {
@@ -178,7 +143,7 @@ describe('Schema Inspector feature toggle', () => {
       expect(queryByText('No schema information available')).toBeInTheDocument();
 
       const closeButton = getByText('Schema inspector');
-      await act(async () => fireEvent.click(closeButton));
+      await userEvent.click(closeButton);
 
       expect(queryByText('No schema information available')).not.toBeInTheDocument();
       expect(await findByText('Schema inspector')).toBeInTheDocument();
@@ -188,12 +153,12 @@ describe('Schema Inspector feature toggle', () => {
       const { queryByText, getByText } = render(<SqlExpr {...defaultProps} />);
 
       const closeButton = getByText('Schema inspector');
-      await act(async () => fireEvent.click(closeButton));
+      await userEvent.click(closeButton);
 
       expect(queryByText('No schema information available')).not.toBeInTheDocument();
 
       const reopenButton = getByText('Schema inspector');
-      await act(async () => fireEvent.click(reopenButton));
+      await userEvent.click(reopenButton);
 
       expect(queryByText('No schema information available')).toBeInTheDocument();
     });
@@ -231,5 +196,35 @@ describe('Schema Inspector feature toggle', () => {
       expect(queryByText('Schema inspector')).not.toBeInTheDocument();
       expect(queryByText('No schema information available')).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('SqlExpr with GenAI features', () => {
+  const defaultProps: SqlExprProps = {
+    onChange: jest.fn(),
+    refIds: [{ value: 'A' }],
+    query: { refId: 'expression_1', type: ExpressionQueryType.sql, expression: `SELECT * FROM A LIMIT 10` },
+    queries: [],
+  };
+
+  it('renders suggestions drawer when isDrawerOpen is true', async () => {
+    // TODO this inline require breaks future tests - do it differently!
+    const { useSQLSuggestions } = require('./GenAI/hooks/useSQLSuggestions');
+    useSQLSuggestions.mockImplementation(() => ({
+      isDrawerOpen: true,
+      suggestions: ['suggestion1', 'suggestion2'],
+    }));
+
+    const { findByTestId } = render(<SqlExpr {...defaultProps} />);
+    expect(await findByTestId('suggestions-drawer')).toBeInTheDocument();
+  });
+
+  it('renders explanation drawer when isExplanationOpen is true', async () => {
+    // TODO this inline require breaks future tests - do it differently!
+    const { useSQLExplanations } = require('./GenAI/hooks/useSQLExplanations');
+    useSQLExplanations.mockImplementation(() => ({ isExplanationOpen: true }));
+
+    const { findByTestId } = render(<SqlExpr {...defaultProps} />);
+    expect(await findByTestId('explanation-drawer')).toBeInTheDocument();
   });
 });

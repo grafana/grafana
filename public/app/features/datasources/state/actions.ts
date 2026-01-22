@@ -17,8 +17,8 @@ import {
   isFetchError,
   locationService,
 } from '@grafana/runtime';
-import { updateNavIndex } from 'app/core/actions';
 import { appEvents } from 'app/core/app_events';
+import { updateNavIndex } from 'app/core/reducers/navModel';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DatasourceAPIVersions } from 'app/features/apiserver/client';
@@ -200,7 +200,7 @@ export function loadDataSources(): ThunkResult<Promise<void>> {
 
 export function loadDataSource(uid: string): ThunkResult<Promise<DataSourceSettings>> {
   return async (dispatch) => {
-    let dataSource = await api.getDataSourceByIdOrUid(uid);
+    let dataSource = await api.getDataSourceByUid(uid);
 
     // Reload route to use UID instead
     // -------------------------------

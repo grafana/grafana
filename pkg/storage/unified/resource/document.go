@@ -101,6 +101,11 @@ type IndexableDocument struct {
 	// metadata, annotations, or external data linked at index time
 	Fields map[string]any `json:"fields,omitempty"`
 
+	// The list of owner references,
+	// each value is of the form {group}/{kind}/{name}
+	// ex: iam.grafana.app/Team/abc-engineering
+	OwnerReferences []string `json:"ownerReferences,omitempty"`
+
 	// Maintain a list of resource references.
 	// Someday this will likely be part of https://github.com/grafana/gamma
 	References ResourceReferences `json:"references,omitempty"`
@@ -217,6 +222,12 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 	if err != nil && tt != nil {
 		doc.Updated = tt.UnixMilli()
 	}
+	for _, owner := range obj.GetOwnerReferences() {
+		gv, err := schema.ParseGroupVersion(owner.APIVersion)
+		if err == nil {
+			doc.OwnerReferences = append(doc.OwnerReferences, fmt.Sprintf("%s/%s/%s", gv.Group, owner.Kind, owner.Name))
+		}
+	}
 	return doc.UpdateCopyFields()
 }
 
@@ -290,11 +301,11 @@ const SEARCH_FIELD_NAMESPACE = "namespace"
 const SEARCH_FIELD_NAME = "name"
 const SEARCH_FIELD_RV = "rv"
 const SEARCH_FIELD_TITLE = "title"
-const SEARCH_FIELD_TITLE_NGRAM = "title_ngram"
 const SEARCH_FIELD_TITLE_PHRASE = "title_phrase" // filtering/sorting on title by full phrase
 const SEARCH_FIELD_DESCRIPTION = "description"
 const SEARCH_FIELD_TAGS = "tags"
 const SEARCH_FIELD_LABELS = "labels" // All labels, not a specific one
+const SEARCH_FIELD_OWNER_REFERENCES = "ownerReferences"
 
 const SEARCH_FIELD_FOLDER = "folder"
 const SEARCH_FIELD_CREATED = "created"

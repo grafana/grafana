@@ -34,7 +34,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
+	apiprometheus "github.com/grafana/grafana/pkg/services/ngalert/api/prometheus"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/cluster"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -213,6 +215,9 @@ func (ng *AlertNG) init() error {
 			SkipVerify:     ng.Cfg.Smtp.SkipVerify,
 			StaticHeaders:  ng.Cfg.Smtp.StaticHeaders,
 		}
+		runtimeConfig := remoteClient.RuntimeConfig{
+			DispatchTimer: notifier.GetDispatchTimer(ng.FeatureToggles).String(),
+		}
 
 		cfg := remote.AlertmanagerConfig{
 			BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
@@ -222,6 +227,7 @@ func (ng *AlertNG) init() error {
 			ExternalURL:       ng.Cfg.AppURL,
 			SmtpConfig:        smtpCfg,
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
+			RuntimeConfig:     runtimeConfig,
 		}
 		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, invalidReceiverAction notifier.InvalidReceiversAction) error {
 			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, invalidReceiverAction, ng.FeatureToggles)
@@ -349,6 +355,10 @@ func (ng *AlertNG) init() error {
 		FeatureToggles:       ng.FeatureToggles,
 	}
 
+	if ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation {
+		schedCfg.EvaluationCoordinator = cluster.NewEvaluationCoordinator(ng.MultiOrgAlertmanager.Peer())
+	}
+
 	history, err := configureHistorianBackend(
 		initCtx,
 		ng.Cfg.UnifiedAlerting.StateHistory,
@@ -399,6 +409,17 @@ func (ng *AlertNG) init() error {
 
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
+
+	// For HA single-node evaluation mode, use StoreStateReader for API calls.
+	// This ensures Grafana instances read alert rule state from DB instead of memory,
+	// which has no data on non-primary nodes.
+	apiStateManager, apiStatusReader := initAPIStateReaders(
+		ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation,
+		stateManager,
+		scheduler,
+		ng.InstanceStore,
+		ng.Log,
+	)
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService))
 	receiverService := notifier.NewReceiverService(
@@ -451,8 +472,8 @@ func (ng *AlertNG) init() error {
 		AdminConfigStore:     ng.store,
 		ProvenanceStore:      ng.store,
 		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
-		StateManager:         ng.stateManager,
-		Scheduler:            scheduler,
+		StateManager:         apiStateManager,
+		RuleStatusReader:     apiStatusReader,
 		AccessControl:        ng.accesscontrol,
 		Policies:             policyService,
 		ReceiverService:      receiverService,
@@ -516,6 +537,24 @@ func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles feature
 	}
 
 	return instanceStore, state.NewMultiInstanceReader(logger, protoInstanceStore, simpleInstanceStore)
+}
+
+// initAPIStateReaders returns the appropriate state manager and status reader for the API.
+// When HASingleNodeEvaluation is enabled, it returns a StoreStateReader that reads from the database,
+// ensuring non-primary instances can serve correct data even though they don't evaluate rules.
+// Otherwise, it returns the in-memory state manager and scheduler.
+func initAPIStateReaders(
+	haSingleNodeEvaluation bool,
+	stateManager *state.Manager,
+	scheduler apiprometheus.StatusReader,
+	instanceStore state.InstanceReader,
+	logger log.Logger,
+) (state.AlertInstanceManager, apiprometheus.StatusReader) {
+	if haSingleNodeEvaluation {
+		storeStateReader := state.NewStoreStateReader(instanceStore, logger)
+		return storeStateReader, storeStateReader
+	}
+	return stateManager, scheduler
 }
 
 func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {

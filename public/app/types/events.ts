@@ -1,6 +1,5 @@
 import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data';
 import { IconName, ButtonVariant } from '@grafana/ui';
-import { HistoryEntryView } from 'app/core/components/AppChrome/types';
 
 /**
  * Event Payloads
@@ -160,6 +159,10 @@ export class AbsoluteTimeEvent extends BusEventWithPayload<AbsoluteTimeEventPayl
   static type = 'absolute-time';
 }
 
+export class RunQueriesEvent extends BusEventBase {
+  static type = 'run-queries';
+}
+
 export class RemovePanelEvent extends BusEventWithPayload<number> {
   static type = 'remove-panel';
 }
@@ -216,8 +219,4 @@ export class PanelEditEnteredEvent extends BusEventWithPayload<number> {
 
 export class PanelEditExitedEvent extends BusEventWithPayload<number> {
   static type = 'panel-edit-finished';
-}
-
-export class RecordHistoryEntryEvent extends BusEventWithPayload<HistoryEntryView> {
-  static type = 'record-history-entry';
 }

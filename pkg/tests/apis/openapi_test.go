@@ -30,10 +30,10 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagInvestigationsBackend,
 			featuremgmt.FlagGrafanaAdvisor,
 			featuremgmt.FlagKubernetesAlertingRules,
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
+			featuremgmt.FlagQueryServiceWithConnections,
 			featuremgmt.FlagKubernetesShortURLs,
 			featuremgmt.FlagKubernetesCorrelations,
 			featuremgmt.FlagKubernetesAlertingHistorian,
@@ -98,9 +98,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "iam.grafana.app",
 		Version: "v0alpha1",
 	}, {
-		Group:   "investigations.grafana.app",
-		Version: "v0alpha1",
-	}, {
 		Group:   "advisor.grafana.app",
 		Version: "v0alpha1",
 	}, {
@@ -128,11 +125,11 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "shorturl.grafana.app",
 		Version: "v1beta1",
 	}, {
-		Group:   "testdata.datasource.grafana.app",
+		Group:   "grafana-testdata-datasource.datasource.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "logsdrilldown.grafana.app",
-		Version: "v1alpha1",
+		Version: "v1beta1",
 	}}
 	for _, gv := range groups {
 		VerifyOpenAPISnapshots(t, dir, gv, h)

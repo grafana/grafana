@@ -44,7 +44,7 @@ var groupVersion = schema.GroupVersion{
 }
 
 type APIBuilder struct {
-	providerType    string
+	providerType    setting.OpenFeatureProviderType
 	url             *url.URL
 	insecure        bool
 	caFile          string
@@ -52,7 +52,7 @@ type APIBuilder struct {
 	logger          log.Logger
 }
 
-func NewAPIBuilder(providerType string, url *url.URL, insecure bool, caFile string, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
+func NewAPIBuilder(providerType setting.OpenFeatureProviderType, url *url.URL, insecure bool, caFile string, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
 	return &APIBuilder{
 		providerType:    providerType,
 		url:             url,
@@ -276,7 +276,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if b.providerType == setting.GOFFProviderType || b.providerType == setting.OFREPProviderType {
+	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
 		b.proxyFlagReq(ctx, flagKey, isAuthedReq, w, r)
 		return
 	}
@@ -304,7 +304,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	isAuthedReq := b.isAuthenticatedRequest(r)
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
-	if b.providerType == setting.GOFFProviderType || b.providerType == setting.OFREPProviderType {
+	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
 		b.proxyAllFlagReq(ctx, isAuthedReq, w, r)
 		return
 	}

@@ -66,7 +66,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `sharingDashboardImage`               | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `tabularNumbers`                      | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
 | `azureResourcePickerUpdates`          | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
-| `tempoSearchBackendMigration`         | Run search queries through the tempo backend                                                                                                                  |                    |
 | `opentsdbBackendMigration`            | Run queries through the data source backend                                                                                                                   |                    |
 
 ## Public preview feature toggles
@@ -84,6 +83,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `reportingRetries`                | Enables rendering retries for the reporting feature                                                    |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `cloudWatchBatchQueries`          | Runs CloudWatch metrics queries as separate batches                                                    |
+| `dashboardNewLayouts`             | Enables new dashboard layouts                                                                          |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
@@ -96,6 +96,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `localeFormatPreference`          | Specifies the locale so the correct format for numbers and dates can be shown                          |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
+| `newGauge`                        | Enable new gauge visualization                                                                         |
 | `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
 | `newPanelPadding`                 | Increases panel padding globally                                                                       |
