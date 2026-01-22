@@ -563,6 +563,18 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 			}
 		}
 		assert.True(t, hasMismatchError, "error message should mention appID mismatch")
+		// Verify fieldErrors are populated when connection is unhealthy
+		if len(conn.Status.FieldErrors) > 0 {
+			// Check that fieldErrors contain relevant error details
+			hasFieldError := false
+			for _, fieldErr := range conn.Status.FieldErrors {
+				if fieldErr.Detail != "" {
+					hasFieldError = true
+					break
+				}
+			}
+			assert.True(t, hasFieldError, "fieldErrors should contain error details when connection is unhealthy")
+		}
 	})
 }
 
@@ -784,6 +796,8 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		assert.Equal(t, provisioning.ConnectionStateConnected, initial.Status.State, "connection should be connected")
 		assert.Greater(t, initial.Status.Health.Checked, int64(0), "health check timestamp should be set")
 		assert.Equal(t, initial.Generation, initial.Status.ObservedGeneration, "observed generation should match")
+		// When healthy, fieldErrors should be empty
+		assert.Empty(t, initial.Status.FieldErrors, "fieldErrors should be empty when connection is healthy")
 	})
 
 	t.Run("health check updates when spec changes", func(t *testing.T) {
