@@ -663,7 +663,7 @@ After applying the Terraform configuration, verify that:
 If your rules are not being evaluated:
 
 1. Verify that `active = true` is set on the rule file
-2. Check that the rule file name follows naming validation rules (alphanumeric, hyphens, underscores)
+2. Check that the rule filename follows naming validation rules (alphanumeric, hyphens, underscores)
 3. Ensure the PromQL expression is valid by testing it in Grafana
 
 ### Recording rule not producing data
