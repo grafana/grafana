@@ -840,6 +840,17 @@ func unstructuredToRepository(t *testing.T, obj *unstructured.Unstructured) *pro
 	return repo
 }
 
+func unstructuredToConnection(t *testing.T, obj *unstructured.Unstructured) *provisioning.Connection {
+	bytes, err := obj.MarshalJSON()
+	require.NoError(t, err)
+
+	c := &provisioning.Connection{}
+	err = json.Unmarshal(bytes, c)
+	require.NoError(t, err)
+
+	return c
+}
+
 // postFilesRequest performs a direct HTTP POST request to the files API.
 // This bypasses Kubernetes REST client limitations with '/' characters in subresource names.
 type filesPostOptions struct {

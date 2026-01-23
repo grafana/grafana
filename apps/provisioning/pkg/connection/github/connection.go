@@ -221,9 +221,19 @@ func (c *Connection) GenerateConnectionToken(_ context.Context) (common.RawSecur
 	return GenerateJWTToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
 }
 
+// TokenCreationTime returns when the underlying token has been created.
+func (c *Connection) TokenCreationTime(_ context.Context) (time.Time, error) {
+	issuingTime, _, err := getIssuingAndExpirationTimeFromToken(c.secrets.Token, c.secrets.PrivateKey)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return issuingTime, nil
+}
+
 // TokenExpiration returns the underlying token expiration.
 func (c *Connection) TokenExpiration(_ context.Context) (time.Time, error) {
-	expiration, err := getExpirationFromToken(c.secrets.Token, c.secrets.PrivateKey)
+	_, expiration, err := getIssuingAndExpirationTimeFromToken(c.secrets.Token, c.secrets.PrivateKey)
 	if err != nil {
 		return time.Time{}, err
 	}
