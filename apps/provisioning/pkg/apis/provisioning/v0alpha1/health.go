@@ -19,6 +19,11 @@ const (
 	// This is an aggregated condition that can track multiple quota types (resources, storage, etc.).
 	// True = within quota or no limits configured, False = quota reached or exceeded.
 	ConditionTypeQuota = "Quota"
+
+	// ConditionTypeToken indicates the status of the connection token.
+	// This condition tracks the token lifecycle for connections that support token refresh.
+	// True = token is valid, False = token has issues (expired, invalid, generation failed).
+	ConditionTypeToken = "TokenReady"
 )
 
 // Condition reasons for the Ready condition
@@ -56,6 +61,27 @@ const (
 	ReasonResourceQuotaReached = "ResourceQuotaReached"
 	// ReasonResourceQuotaExceeded indicates the resource count exceeds the limit.
 	ReasonResourceQuotaExceeded = "ResourceQuotaExceeded"
+)
+
+// Condition reasons for the Token condition
+const (
+	// ReasonTokenValid indicates the token is valid and not expiring soon.
+	ReasonTokenValid = "Valid"
+
+	// ReasonTokenRefreshed indicates the token was successfully refreshed.
+	ReasonTokenRefreshed = "Refreshed"
+
+	// ReasonTokenExpiring indicates the token is expiring soon and needs refresh.
+	ReasonTokenExpiring = "Expiring"
+
+	// ReasonTokenExpired indicates the token has expired.
+	ReasonTokenExpired = "Expired"
+
+	// ReasonTokenInvalid indicates the token failed to parse or validate.
+	ReasonTokenInvalid = "Invalid"
+
+	// ReasonTokenGenerationFailed indicates failed to generate a new token.
+	ReasonTokenGenerationFailed = "GenerationFailed"
 )
 
 type HealthStatus struct {

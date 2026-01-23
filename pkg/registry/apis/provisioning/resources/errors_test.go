@@ -155,11 +155,7 @@ func TestResourceOwnershipConflictError(t *testing.T) {
 			Identity: "repo-2",
 		}
 		conflictErr := NewResourceOwnershipConflictError("test-resource", currentManager, requestingManager)
-
-		require.Contains(t, conflictErr.Error(), "test-resource")
-		require.Contains(t, conflictErr.Error(), "repo-1")
-		require.Contains(t, conflictErr.Error(), "repo-2")
-		require.Contains(t, conflictErr.Error(), "repo")
+		require.Equal(t, "resource 'test-resource' is managed by repo 'repo-1' and cannot be modified by repo 'repo-2'", conflictErr.Error())
 	})
 
 	t.Run("Error method returns message with different manager kinds", func(t *testing.T) {
@@ -172,12 +168,7 @@ func TestResourceOwnershipConflictError(t *testing.T) {
 			Identity: "repo-1",
 		}
 		conflictErr := NewResourceOwnershipConflictError("dashboard-1", currentManager, requestingManager)
-
-		require.Contains(t, conflictErr.Error(), "dashboard-1")
-		require.Contains(t, conflictErr.Error(), "terraform")
-		require.Contains(t, conflictErr.Error(), "terraform-workspace-1")
-		require.Contains(t, conflictErr.Error(), "repo")
-		require.Contains(t, conflictErr.Error(), "repo-1")
+		require.Equal(t, "resource 'dashboard-1' is managed by terraform 'terraform-workspace-1' and cannot be modified by repo 'repo-1'", conflictErr.Error())
 	})
 
 	t.Run("Unwrap returns underlying error", func(t *testing.T) {

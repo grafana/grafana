@@ -220,24 +220,31 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	tokenConn, ok := c.(connection.TokenConnection)
 	if ok {
-		refresh, err := cc.shouldRefreshToken(ctx, tokenConn)
-		if err != nil {
-			logger.Error("failed to check if token needs to be refreshed", "error", err)
-			return err
-		}
+		// Check token status - don't block on errors
+		tokenCondition, refresh := cc.checkTokenStatus(ctx, tokenConn, conn)
+
 		if refresh {
 			logger.Info("regenerating connection token")
 
 			token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
 			if err != nil {
 				logger.Error("failed to generate connection token", "error", err)
-				return err
+				// Update condition to reflect generation failure
+				tokenCondition = buildTokenConditionFromError(err, provisioning.ReasonTokenGenerationFailed)
+			} else {
+				if len(tokenOps) > 0 {
+					patchOperations = append(patchOperations, tokenOps...)
+				}
+				// Substituting generated token for healthcheck
+				conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
+				// Update condition to reflect successful refresh
+				tokenCondition = buildTokenRefreshedCondition()
 			}
-			if len(tokenOps) > 0 {
-				patchOperations = append(patchOperations, tokenOps...)
-			}
-			// Substituting generated token for healthcheck
-			conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
+		}
+
+		// Add token condition to patches (always, even on error)
+		if conditionPatchOps := BuildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.Generation, tokenCondition); conditionPatchOps != nil {
+			patchOperations = append(patchOperations, conditionPatchOps...)
 		}
 	}
 
