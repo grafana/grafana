@@ -83,6 +83,7 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType) {
       color: QUERY_EDITOR_TYPE_CONFIG[editorType].color,
       borderTopRightRadius: theme.shape.radius.default,
       borderTopLeftRadius: theme.shape.radius.default,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     cardContent: css({
       display: 'flex',
