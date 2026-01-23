@@ -10,16 +10,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
-type connectionAccess struct {
-	connections queryV0.DataSourceConnectionProvider
-}
-
 type connectionsProvider struct {
 	dsService datasources.DataSourceService
 	registry  queryV0.DataSourceApiServerRegistry
 }
 
 var (
+	// TODO: After https://github.com/grafana/grafana/pull/116745 is merged
+	// the datasources.DataSourceService can implement this interface directly.
 	_ queryV0.DataSourceConnectionProvider = (*connectionsProvider)(nil)
 )
 
