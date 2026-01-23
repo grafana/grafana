@@ -44,6 +44,11 @@ const (
 	// User may need to take action (upgrade plan, reduce load). Automation should retry with
 	// longer backoff and respect Retry-After headers.
 	ReasonRateLimited = "RateLimited"
+
+	// ReasonTokenGenerationFailed indicates failed to generate a connection token.
+	// This applies to connections that support token generation (e.g., GitHub App).
+	// Automation should NOT automatically retry - indicates a configuration or API issue.
+	ReasonTokenGenerationFailed = "TokenGenerationFailed"
 )
 
 // Condition reasons for the Quota condition

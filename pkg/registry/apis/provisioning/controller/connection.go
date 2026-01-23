@@ -218,12 +218,15 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return err
 	}
 
+	var tokenGenError error
 	tokenConn, ok := c.(connection.TokenConnection)
 	if ok {
+		// Check if token needs to be generated - don't block on errors
 		refresh, err := cc.shouldGenerateToken(ctx, conn, tokenConn)
 		if err != nil {
-			logger.Error("failed to check if token needs to be generated", "error", err)
-			return err
+			logger.Warn("failed to check if token needs to be generated", "error", err)
+			// Don't block - let health check determine if there's a real issue
+			refresh = false
 		}
 
 		if refresh {
@@ -232,13 +235,15 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 			token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
 			if err != nil {
 				logger.Error("failed to generate connection token", "error", err)
-				return err
+				// Store error to set Ready=False after health check
+				tokenGenError = err
+			} else {
+				if len(tokenOps) > 0 {
+					patchOperations = append(patchOperations, tokenOps...)
+				}
+				// Substituting generated token for healthcheck
+				conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
 			}
-			if len(tokenOps) > 0 {
-				patchOperations = append(patchOperations, tokenOps...)
-			}
-			// Substituting generated token for healthcheck
-			conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
 		}
 	}
 
@@ -250,8 +255,21 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 	patchOperations = append(patchOperations, healthPatchOps...)
 
-	// Update state based on health status
-	if healthStatus.Healthy {
+	// If token generation failed, override Ready condition with TokenGenerationFailed
+	if tokenGenError != nil {
+		failedCondition := buildReadyConditionWithReason(
+			provisioning.HealthStatus{Healthy: false},
+			provisioning.ReasonTokenGenerationFailed,
+		)
+		failedCondition.Message = fmt.Sprintf("Failed to generate connection token: %v", tokenGenError)
+		if conditionPatchOps := BuildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.Generation, failedCondition); conditionPatchOps != nil {
+			patchOperations = append(patchOperations, conditionPatchOps...)
+		}
+	}
+
+	// Update state based on health status and token generation
+	// Token generation failure means the connection is not connected
+	if healthStatus.Healthy && tokenGenError == nil {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/state",
