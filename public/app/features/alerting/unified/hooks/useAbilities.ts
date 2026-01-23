@@ -289,6 +289,8 @@ export function useAllRulerRuleAbilities(
     // const isFederated = isFederatedRuleGroup();
     const isFederated = false;
     const isGrafanaManagedAlertRule = rulerRuleType.grafana.rule(rule);
+
+    // @TODO check if the plugin is still installed, otherwise the user won't be able to remove the rule ever
     const isPluginProvided = isPluginProvidedRule(rule);
 
     // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited

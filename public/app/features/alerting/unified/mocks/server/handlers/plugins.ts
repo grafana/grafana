@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
 import { PluginLoadingStrategy, PluginMeta } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { type AppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
 import { plugins } from 'app/features/alerting/unified/testSetup/plugins';
 
 const PLUGIN_NOT_FOUND_RESPONSE = { message: 'Plugin not found, no installed plugin with that id' };
@@ -11,8 +11,8 @@ const PLUGIN_NOT_FOUND_RESPONSE = { message: 'Plugin not found, no installed plu
  * config side effects that are expected to come along with this API behaviour
  */
 export const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
-  plugins.forEach(({ id, baseUrl, info, angular }) => {
-    config.apps[id] = {
+  const appPluginMetas = plugins.reduce((acc, { id, baseUrl, info, angular }) => {
+    acc[id] = {
       id,
       path: baseUrl,
       preload: true,
@@ -34,7 +34,10 @@ export const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
         },
       },
     };
-  });
+    return acc;
+  }, {} as AppPluginMetas);
+
+  setAppPluginMetas(appPluginMetas);
 
   return http.get<{ pluginId: string }>(`/api/plugins/:pluginId/settings`, ({ params: { pluginId } }) => {
     const matchingPlugin = pluginsArray.find((plugin) => plugin.id === pluginId);
