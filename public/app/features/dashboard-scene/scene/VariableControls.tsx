@@ -71,8 +71,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const shouldShowHiddenVariables = isEditingNewLayouts && isHidden;
   const styles = useStyles2(getStyles);
 
-  // UNSAFE_renderAsHidden variables (like ScopesVariable) should always render invisibly,
-  // regardless of edit mode - they need to mount to receive their React context
+  // UNSAFE_renderAsHidden variables (like ScopesVariable) should always render invisibly
   if (isHidden && variable.UNSAFE_renderAsHidden) {
     return <variable.Component model={variable} />;
   }
