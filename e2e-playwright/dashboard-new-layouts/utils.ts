@@ -304,8 +304,9 @@ export async function getTabPosition(dashboardPage: DashboardPage, selectors: E2
 
 export async function getRowPosition(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
   const row = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).first();
+  await expect(row).toBeVisible();
   const boundingBox = await row.boundingBox();
-  return boundingBox;
+  return boundingBox!;
 }
 
 export async function checkRepeatedRowTitles(
