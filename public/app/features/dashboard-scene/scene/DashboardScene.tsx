@@ -1,6 +1,6 @@
 import * as H from 'history';
 
-import { CoreApp, DataQueryRequest, locationUtil, NavIndex, NavModelItem, store } from '@grafana/data';
+import { CoreApp, DataQueryRequest, FieldConfig, locationUtil, NavIndex, NavModelItem, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
@@ -19,7 +19,7 @@ import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { appEvents } from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
-import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -31,6 +31,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { VariablesChanged } from 'app/features/variables/types';
+import { defaultGraphStyleConfig } from 'app/plugins/panel/timeseries/config';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -624,6 +625,132 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.addPanel(panel);
 
     store.delete(LS_PANEL_COPY_KEY);
+  }
+
+  /**
+   * Hardcoded to Timeseries for this PoC
+   */
+  private static extractPanelStyles(panel: VizPanel): {
+    fieldConfig?: { defaults?: Partial<FieldConfig> };
+  } {
+    const styles: { fieldConfig?: { defaults?: Partial<FieldConfig> } } = {};
+
+    if (!panel.state.fieldConfig?.defaults) {
+      return styles;
+    }
+
+    styles.fieldConfig = { defaults: {} };
+
+    /* eslint-disable @typescript-eslint/consistent-type-assertions */
+    const defaults = styles.fieldConfig.defaults as Record<string, unknown>;
+    const panelDefaults = panel.state.fieldConfig.defaults as Record<string, unknown>;
+
+    // default props (color)
+    if (defaultGraphStyleConfig.fieldConfig?.defaultsProps) {
+      for (const key of defaultGraphStyleConfig.fieldConfig.defaultsProps) {
+        const value = panelDefaults[key];
+        if (value !== undefined) {
+          defaults[key] = value;
+        }
+      }
+    }
+
+    // custom props (lineWidth, fillOpacity, etc)
+    if (panel.state.fieldConfig.defaults.custom && defaultGraphStyleConfig.fieldConfig?.defaults) {
+      /* eslint-disable @typescript-eslint/consistent-type-assertions */
+      const customDefaults = {} as Record<string, unknown>;
+      const panelCustom = panel.state.fieldConfig.defaults.custom as Record<string, unknown>;
+
+      for (const key of defaultGraphStyleConfig.fieldConfig.defaults) {
+        const value = panelCustom[key];
+        if (value !== undefined) {
+          customDefaults[key] = value;
+        }
+      }
+
+      defaults.custom = customDefaults;
+    }
+
+    return styles;
+  }
+
+  public copyPanelStyles(vizPanel: VizPanel) {
+    const panelType = vizPanel.state.pluginId;
+
+    if (panelType !== 'timeseries') {
+      return;
+    }
+
+    const stylesToCopy = {
+      panelType,
+      styles: DashboardScene.extractPanelStyles(vizPanel),
+    };
+
+    store.set(LS_STYLES_COPY_KEY, JSON.stringify(stylesToCopy));
+    appEvents.emit('alert-success', ['Panel styles copied.']);
+  }
+
+  public static hasPanelStylesToPaste(panelType: string): boolean {
+    const stylesJson = store.get(LS_STYLES_COPY_KEY);
+    if (!stylesJson) {
+      return false;
+    }
+
+    try {
+      const stylesCopy: { panelType: string } = JSON.parse(stylesJson);
+      return stylesCopy.panelType === panelType;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  public pastePanelStyles(vizPanel: VizPanel) {
+    const stylesJson = store.get(LS_STYLES_COPY_KEY);
+    if (!stylesJson) {
+      return;
+    }
+
+    try {
+      const stylesCopy: {
+        panelType: string;
+        styles: {
+          fieldConfig?: { defaults?: Record<string, unknown> };
+        };
+      } = JSON.parse(stylesJson);
+
+      const panelType = vizPanel.state.pluginId;
+
+      if (stylesCopy.panelType !== panelType) {
+        return;
+      }
+
+      if (!stylesCopy.styles.fieldConfig?.defaults) {
+        return;
+      }
+
+      const newDefaults = {
+        ...vizPanel.state.fieldConfig?.defaults,
+        ...stylesCopy.styles.fieldConfig.defaults,
+      };
+
+      if (stylesCopy.styles.fieldConfig.defaults.custom) {
+        newDefaults.custom = {
+          ...vizPanel.state.fieldConfig?.defaults?.custom,
+          ...stylesCopy.styles.fieldConfig.defaults.custom,
+        };
+      }
+
+      const newFieldConfig = {
+        ...vizPanel.state.fieldConfig,
+        defaults: newDefaults,
+      };
+      vizPanel.onFieldConfigChange(newFieldConfig);
+
+      appEvents.emit('alert-success', ['Panel styles applied.']);
+    } catch (e) {
+      console.error('Error pasting panel styles:', e);
+      appEvents.emit('alert-error', ['Error pasting panel styles.']);
+    }
   }
 
   public removePanel(panel: VizPanel) {
