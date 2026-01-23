@@ -8,6 +8,7 @@ import { Button, Text, useStyles2 } from '@grafana/ui';
 import { useQueryRunnerContext } from '../QueryEditorContext';
 
 import { SidebarCard } from './SidebarCard';
+import { SidebarDivider } from './SidebarDivider';
 
 export enum SidebarSize {
   Mini = 'mini',
@@ -47,6 +48,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           {t('query-editor-next.sidebar.queries', 'Queries')}
         </Text>
       </div>
+      <SidebarDivider text={t('query-editor-next.sidebar.divider-text', 'Queries & Expressions')} />
       <div className={styles.body}>
         {queries.map((query) => (
           <SidebarCard key={query.refId} query={query} />
