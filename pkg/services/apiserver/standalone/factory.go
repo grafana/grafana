@@ -14,7 +14,6 @@ type BuildInfo struct {
 
 type APIServerFactory interface {
 	GetCLICommand(info BuildInfo) *cli.Command
-	GetSandboxCommand() *cli.Command
 }
 
 // NOOP
@@ -25,9 +24,5 @@ func ProvideAPIServerFactory() APIServerFactory {
 type NoOpAPIServerFactory struct{}
 
 func (f *NoOpAPIServerFactory) GetCLICommand(info BuildInfo) *cli.Command {
-	return nil
-}
-
-func (f *NoOpAPIServerFactory) GetSandboxCommand() *cli.Command {
 	return nil
 }
