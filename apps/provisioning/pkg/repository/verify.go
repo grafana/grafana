@@ -29,6 +29,17 @@ func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Vali
 	return &VerifyAgainstExistingRepositoriesValidator{lister: lister}
 }
 
+// NewVerifyAgainstExistingRepositoriesValidatorWithQuotas creates a validator with quota limits.
+// HACK: This is a workaround to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature which would require
+// changes in the enterprise repository. This should be merged into NewVerifyAgainstExistingRepositoriesValidator parameters
+// once we can coordinate the change across repositories.
+func NewVerifyAgainstExistingRepositoriesValidatorWithQuotas(lister RepositoryLister, limits quotas.QuotaLimits) Validator {
+	return &VerifyAgainstExistingRepositoriesValidator{
+		lister: lister,
+		limits: limits,
+	}
+}
+
 // SetQuotaLimits sets the quota limits (including repository limits).
 // HACK: This is a workaround to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature which would require
 // changes in the enterprise repository. This should be moved to NewVerifyAgainstExistingRepositoriesValidator parameters
@@ -102,14 +113,11 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	// Check repository limit (default 10, -1 = unlimited (HACK), 0 = use default)
+	// Check repository limit (-1 = unlimited (HACK), > 0 = use value)
+	// HACK: The HACK logic for converting 0 -> 10 default and 0 -> -1 unlimited is handled
+	// during QuotaLimits construction in register.go. Here we just use the value directly.
 	maxRepos := v.limits.MaxRepositories
-	if maxRepos == 0 {
-		maxRepos = 10 // default limit when not explicitly set
-	}
 	// HACK: Early return if unlimited (-1) to avoid unnecessary counting.
-	// Using -1 for unlimited is a workaround since 0 is used for default and we need to distinguish
-	// between "not set" (0 -> default to 10) and "unlimited" (-1).
 	if maxRepos == -1 {
 		return nil
 	}

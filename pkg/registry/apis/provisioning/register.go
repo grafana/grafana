@@ -97,6 +97,7 @@ type APIBuilder struct {
 	minSyncInterval           time.Duration
 	maxResourcesPerRepository int64
 	maxRepositories           int64
+	quotaLimits               quotas.QuotaLimits
 
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
@@ -643,23 +644,13 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	// Repository mutator and validator
 	b.repoValidator = repository.NewValidator(b.minSyncInterval, b.allowImageRendering, b.repoFactory)
-	existingReposValidatorRaw := repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister)
-	// HACK: Set quota limits after construction to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature.
-	// See SetQuotaLimits for details.
-	// Config defaults to 10. If user explicitly sets it to 0, that means unlimited (pass -1).
-	// Validator: 0 = default (10), -1 = unlimited (HACK), > 0 = use value
-	if existingReposValidator, ok := existingReposValidatorRaw.(*repository.VerifyAgainstExistingRepositoriesValidator); ok {
-		maxRepos := b.maxRepositories
-		// HACK: Config value 0 means user explicitly set unlimited (since default is 10).
-		// We use -1 to indicate unlimited because 0 is already used for "not set" -> default to 10.
-		// This is a workaround to distinguish between unset (0) and unlimited (-1).
-		if maxRepos == 0 {
-			maxRepos = -1 // Pass -1 to validator to indicate unlimited (HACK)
-		}
-		existingReposValidator.SetQuotaLimits(quotas.QuotaLimits{
-			MaxRepositories: maxRepos,
-		})
-	}
+	// HACK: Construct QuotaLimits with repository limit conversion logic using NewHackyQuota.
+	// See NewHackyQuota for details on the HACK logic.
+	b.quotaLimits = quotas.NewHackyQuota(b.maxResourcesPerRepository, b.maxRepositories)
+
+	// HACK: Use NewVerifyAgainstExistingRepositoriesValidatorWithQuotas to pass QuotaLimits directly.
+	// This avoids the need for SetQuotaLimits and moves the HACK logic to construction.
+	existingReposValidatorRaw := repository.NewVerifyAgainstExistingRepositoriesValidatorWithQuotas(b.repoLister, b.quotaLimits)
 	repoAdmissionValidator := repository.NewAdmissionValidator(b.allowedTargets, b.repoValidator, existingReposValidatorRaw)
 	b.admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(b.repoFactory))
 	b.admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), repoAdmissionValidator)
@@ -829,9 +820,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.tracer,
 				10,
 			)
-			// HACK: Set maxResourcesPerRepository after construction to avoid changing NewSyncWorker signature.
-			// See SetMaxResourcesPerRepository for details.
-			syncWorker.SetMaxResourcesPerRepository(b.maxResourcesPerRepository)
+			// HACK: Set quota limits after construction to avoid changing NewSyncWorker signature.
+			// See SetQuotaLimits for details. Use the same quotaLimits constructed for the validator.
+			syncWorker.SetQuotaLimits(b.quotaLimits)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(

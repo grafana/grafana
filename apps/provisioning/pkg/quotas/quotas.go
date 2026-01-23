@@ -20,6 +20,28 @@ type QuotaLimits struct {
 	MaxRepositories int64
 }
 
+// NewHackyQuota creates a QuotaLimits struct with HACK logic for repository limits.
+// HACK: This function handles the conversion of config values to internal representation:
+// - Config defaults to 10. If user explicitly sets it to 0, that means unlimited (convert to -1).
+// - Validator: -1 = unlimited (HACK), > 0 = use value
+// - Config value 0 means user explicitly set unlimited (since default is 10).
+// - We use -1 to indicate unlimited because 0 is already used for "not set" -> default to 10.
+// - This is a workaround to distinguish between unset (0) and unlimited (-1).
+// This HACK should be removed once we can coordinate changes across repositories.
+func NewHackyQuota(maxResourcesPerRepository, maxRepositories int64) QuotaLimits {
+	maxRepos := maxRepositories
+	// HACK: Config value 0 means user explicitly set unlimited (since default is 10).
+	// We use -1 to indicate unlimited because 0 is already used for "not set" -> default to 10.
+	// This is a workaround to distinguish between unset (0) and unlimited (-1).
+	if maxRepos == 0 {
+		maxRepos = -1 // Convert 0 to -1 to indicate unlimited (HACK)
+	}
+	return QuotaLimits{
+		MaxResources:    maxResourcesPerRepository,
+		MaxRepositories: maxRepos,
+	}
+}
+
 // EvaluateCondition creates a Quota condition based on current stats and limits.
 // Returns True if all quotas pass (or no limits configured), False if any quota is reached/exceeded.
 func (q QuotaLimits) EvaluateCondition(stats []provisioning.ResourceCount) metav1.Condition {

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -128,6 +129,59 @@ func TestCalculateTotalResources(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := calculateTotalResources(tt.stats)
 			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestNewHackyQuota(t *testing.T) {
+	tests := []struct {
+		name                     string
+		maxResourcesPerRepository int64
+		maxRepositories           int64
+		want                     QuotaLimits
+	}{
+		{
+			name:                     "default values",
+			maxResourcesPerRepository: 100,
+			maxRepositories:           10,
+			want: QuotaLimits{
+				MaxResources:    100,
+				MaxRepositories: 10,
+			},
+		},
+		{
+			name:                     "unlimited repositories (0 -> -1 HACK)",
+			maxResourcesPerRepository: 50,
+			maxRepositories:           0, // Config value 0 means unlimited
+			want: QuotaLimits{
+				MaxResources:    50,
+				MaxRepositories: -1, // HACK: Converted to -1 for unlimited
+			},
+		},
+		{
+			name:                     "custom repository limit",
+			maxResourcesPerRepository: 200,
+			maxRepositories:           5,
+			want: QuotaLimits{
+				MaxResources:    200,
+				MaxRepositories: 5,
+			},
+		},
+		{
+			name:                     "unlimited resources and repositories",
+			maxResourcesPerRepository: 0,
+			maxRepositories:           0,
+			want: QuotaLimits{
+				MaxResources:    0,
+				MaxRepositories: -1, // HACK: Converted to -1 for unlimited
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := NewHackyQuota(tt.maxResourcesPerRepository, tt.maxRepositories)
+			require.Equal(t, tt.want, got, "NewHackyQuota should convert 0 -> -1 for unlimited repositories")
 		})
 	}
 }

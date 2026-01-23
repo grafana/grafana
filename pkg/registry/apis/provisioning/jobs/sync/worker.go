@@ -42,6 +42,8 @@ type SyncWorker struct {
 
 	maxSyncWorkers            int
 	maxResourcesPerRepository int64 // 0 = unlimited
+	quotaLimits               quotas.QuotaLimits
+	quotaLimitsSet            bool // tracks if quotaLimits was explicitly set
 }
 
 func NewSyncWorker(
@@ -71,6 +73,15 @@ func NewSyncWorker(
 // once we can coordinate the change across repositories.
 func (r *SyncWorker) SetMaxResourcesPerRepository(maxResourcesPerRepository int64) {
 	r.maxResourcesPerRepository = maxResourcesPerRepository
+}
+
+// SetQuotaLimits sets the quota limits (including repository limits).
+// HACK: This is a workaround to avoid changing NewSyncWorker signature which would require
+// changes in the enterprise repository. This should be moved to NewSyncWorker parameters
+// once we can coordinate the change across repositories.
+func (r *SyncWorker) SetQuotaLimits(limits quotas.QuotaLimits) {
+	r.quotaLimits = limits
+	r.quotaLimitsSet = true
 }
 
 func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
@@ -231,10 +242,13 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	//    the natural place to evaluate quotas against those stats.
 	// 3. This ensures quota conditions reflect the actual resource state after reconciliation,
 	//    not just what the controller thinks should exist.
-	quotaLimits := quotas.QuotaLimits{
-		MaxResources: r.maxResourcesPerRepository,
+	// Use quotaLimits if set, otherwise fall back to maxResourcesPerRepository for backward compatibility
+	quotaLimitsToUse := r.quotaLimits
+	if !r.quotaLimitsSet {
+		// Fall back to maxResourcesPerRepository if quotaLimits wasn't explicitly set
+		quotaLimitsToUse.MaxResources = r.maxResourcesPerRepository
 	}
-	quotaCondition := quotaLimits.EvaluateCondition(repoStats)
+	quotaCondition := quotaLimitsToUse.EvaluateCondition(repoStats)
 	if quotaConditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition); quotaConditionOps != nil {
 		patchOperations = append(patchOperations, quotaConditionOps...)
 	}

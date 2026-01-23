@@ -278,18 +278,18 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &verifyTestStorage{repositories: tt.existingRepos}
 			lister := NewStorageLister(store)
-			validatorRaw := NewVerifyAgainstExistingRepositoriesValidator(lister)
-			// Set quota limits for tests that expect a different limit (default is 10, set to -1 to disable)
-			if validator, ok := validatorRaw.(*VerifyAgainstExistingRepositoriesValidator); ok {
-				switch tt.name {
-				case "allows unlimited repositories when maxRepositories is 0":
-					// HACK: Use -1 to indicate unlimited (0 would default to 10).
-					// This is a workaround to distinguish between unset (0) and unlimited (-1).
-					validator.SetQuotaLimits(quotas.QuotaLimits{MaxRepositories: -1})
-				case "enforces custom maxRepositories limit":
-					validator.SetQuotaLimits(quotas.QuotaLimits{MaxRepositories: 5})
-				}
+			// Default quota limits: MaxRepositories = 10
+			quotaLimits := quotas.QuotaLimits{MaxRepositories: 10}
+			// Set quota limits for tests that expect a different limit
+			switch tt.name {
+			case "allows unlimited repositories when maxRepositories is 0":
+				// HACK: Use -1 to indicate unlimited (0 would default to 10).
+				// This is a workaround to distinguish between unset (0) and unlimited (-1).
+				quotaLimits = quotas.QuotaLimits{MaxRepositories: -1}
+			case "enforces custom maxRepositories limit":
+				quotaLimits = quotas.QuotaLimits{MaxRepositories: 5}
 			}
+			validatorRaw := NewVerifyAgainstExistingRepositoriesValidatorWithQuotas(lister, quotaLimits)
 			errList := validatorRaw.Validate(context.Background(), tt.cfg)
 
 			if tt.wantErr {
