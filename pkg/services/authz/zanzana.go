@@ -86,7 +86,7 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, fea
 			return ctx, nil
 		}))
 
-		openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
+		// openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 		authzv1.RegisterAuthzServiceServer(channel, srv)
 		authzextv1.RegisterAuthzExtentionServiceServer(channel, srv)
 
@@ -99,6 +99,44 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, fea
 	default:
 		return nil, fmt.Errorf("unsupported zanzana mode: %s", cfg.ZanzanaClient.Mode)
 	}
+}
+
+func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Server, error) {
+	logger := log.New("zanzana.server")
+	store, err := zStore.NewEmbeddedStore(cfg, db, logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start zanzana: %w", err)
+	}
+
+	openfga, err := zServer.NewOpenFGAServer(cfg.ZanzanaServer, store)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start zanzana: %w", err)
+	}
+
+	srv, err := zServer.NewServer(cfg.ZanzanaServer, openfga, logger, tracer, reg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start zanzana: %w", err)
+	}
+
+	channel := &inprocgrpc.Channel{}
+	// Put * as a namespace so we can properly authorize request with in-proc mode
+	channel.WithServerUnaryInterceptor(grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
+		ctx = types.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
+			Rest: authnlib.AccessTokenClaims{
+				Namespace: "*",
+				Permissions: []string{
+					zanzana.TokenPermissionUpdate,
+				},
+			},
+		}))
+		return ctx, nil
+	}))
+
+	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
+	authzv1.RegisterAuthzServiceServer(channel, srv)
+	authzextv1.RegisterAuthzExtentionServiceServer(channel, srv)
+
+	return srv, nil
 }
 
 // ProvideStandaloneZanzanaClient provides a standalone Zanzana client, without registering the Zanzana service.
