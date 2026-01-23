@@ -948,7 +948,7 @@ func TestConnectionController_process(t *testing.T) {
 						{"op": "replace", "path": "/status/health", "value": healthStatus},
 					}, nil)
 				mockStatusPatcher.EXPECT().Patch(
-					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Return(nil)
 
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
