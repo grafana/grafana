@@ -213,7 +213,7 @@ func TestBuildConditionPatchOpsFromExisting(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			patchOps := buildConditionPatchOpsFromExisting(tt.existingConditions, tt.generation, tt.newCondition)
+			patchOps := BuildConditionPatchOpsFromExisting(tt.existingConditions, tt.generation, tt.newCondition)
 
 			if !tt.expectPatch {
 				assert.Nil(t, patchOps, "expected no patch operations")
@@ -289,7 +289,7 @@ func TestBuildConditionPatchOpsFromExisting_Connection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			patchOps := buildConditionPatchOpsFromExisting(tt.existingConditions, tt.generation, tt.newCondition)
+			patchOps := BuildConditionPatchOpsFromExisting(tt.existingConditions, tt.generation, tt.newCondition)
 
 			if !tt.expectPatch {
 				assert.Nil(t, patchOps, "expected no patch operations")

@@ -15,24 +15,18 @@ import (
 )
 
 func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
-	// Get a list of all datasource instances
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !b.features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
-		return nil
-	}
-
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	searchResults := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionList"].Schema
-	return &builder.APIRoutes{
+	sqlSchemas := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryResponseSQLSchemas"].Schema
+	routes := &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
-				Path: "connections",
+				Path: "sqlschemas",
 				Spec: &spec3.PathProps{
-					Get: &spec3.Operation{
+					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
-							Tags:        []string{"Connections"},
-							OperationId: "listDataSourceConnections",
-							Description: "List data source connections across all types",
+							Tags:        []string{"Query SQL Schemas"},
+							OperationId: "querySqlSchemas",
+							Description: "Get a SQL Schema for a set of queries",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{
@@ -41,24 +35,6 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 										Required:    true,
 										Example:     "default",
 										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "name",
-										In:          "query",
-										Description: "datasource name (UID in legacy grafana APIs)",
-										Required:    false,
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "plugin",
-										In:          "query",
-										Description: "plugin identifier",
-										Required:    false,
 										Schema:      spec.StringProperty(),
 									},
 								},
@@ -71,7 +47,7 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &searchResults,
+															Schema: &sqlSchemas,
 														},
 													},
 												},
@@ -83,26 +59,95 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 						},
 					},
 				},
-				Handler: func(w http.ResponseWriter, r *http.Request) {
-					query := r.URL.Query()
-					list, err := b.connections.ListConnections(r.Context(), queryV1.DataSourceConnectionQuery{
-						Namespace: mux.Vars(r)["namespace"],
-						Name:      query.Get("name"),
-						Plugin:    query.Get("plugin"),
-					})
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-
-					encoder := json.NewEncoder(w)
-					encoder.SetIndent("", "  ") // pretty print
-					if err := encoder.Encode(list); err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-				},
+				Handler: b.GetSQLSchemas,
 			},
 		},
 	}
+
+	// Get a list of all datasource instances
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !b.features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
+		return routes
+	}
+
+	searchResults := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionList"].Schema
+	routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
+		Path: "connections",
+		Spec: &spec3.PathProps{
+			Get: &spec3.Operation{
+				OperationProps: spec3.OperationProps{
+					Tags:        []string{"Connections"},
+					OperationId: "listDataSourceConnections",
+					Description: "List data source connections across all types",
+					Parameters: []*spec3.Parameter{
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
+							},
+						},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "name",
+								In:          "query",
+								Description: "datasource name (UID in legacy grafana APIs)",
+								Required:    false,
+								Schema:      spec.StringProperty(),
+							},
+						},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "plugin",
+								In:          "query",
+								Description: "plugin identifier",
+								Required:    false,
+								Schema:      spec.StringProperty(),
+							},
+						},
+					},
+					Responses: &spec3.Responses{
+						ResponsesProps: spec3.ResponsesProps{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &searchResults,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Handler: func(w http.ResponseWriter, r *http.Request) {
+			query := r.URL.Query()
+			list, err := b.connections.ListConnections(r.Context(), queryV1.DataSourceConnectionQuery{
+				Namespace: mux.Vars(r)["namespace"],
+				Name:      query.Get("name"),
+				Plugin:    query.Get("plugin"),
+			})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			encoder := json.NewEncoder(w)
+			encoder.SetIndent("", "  ") // pretty print
+			if err := encoder.Encode(list); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		},
+	})
+	return routes
 }

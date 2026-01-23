@@ -126,7 +126,7 @@ func (hc *ConnectionHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 
 	// Update Ready condition based on health status
 	readyCondition := buildReadyConditionFromHealth(newHealthStatus)
-	if conditionPatchOps := buildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.GetGeneration(), readyCondition); conditionPatchOps != nil {
+	if conditionPatchOps := BuildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.GetGeneration(), readyCondition); conditionPatchOps != nil {
 		patchOps = append(patchOps, conditionPatchOps...)
 	}
 
