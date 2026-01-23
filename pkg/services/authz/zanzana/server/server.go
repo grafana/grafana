@@ -36,8 +36,8 @@ type Server struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
-	openfga       OpenFGAServer
-	openfgaClient openfgav1.OpenFGAServiceClient
+	openFGAServer OpenFGAServer
+	openFGAClient openfgav1.OpenFGAServiceClient
 
 	cfg      setting.ZanzanaServerSettings
 	stores   map[string]storeInfo
@@ -60,8 +60,8 @@ func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger 
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
 
 	s := &Server{
-		openfga:       openfga,
-		openfgaClient: openFGAClient,
+		openFGAServer: openfga,
+		openFGAClient: openFGAClient,
 		storesMU:      &sync.Mutex{},
 		stores:        make(map[string]storeInfo),
 		cfg:           cfg,
@@ -75,7 +75,7 @@ func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger 
 }
 
 func (s *Server) IsHealthy(ctx context.Context) (bool, error) {
-	_, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
+	_, err := s.openFGAClient.ListStores(ctx, &openfgav1.ListStoresRequest{
 		PageSize: wrapperspb.Int32(1),
 	})
 	return err == nil, nil

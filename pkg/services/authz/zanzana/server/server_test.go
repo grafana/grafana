@@ -171,7 +171,7 @@ func setupOpenFGADatabase(t *testing.T, srv *Server, tuples []*openfgav1.TupleKe
 	require.NoError(t, err)
 
 	// Clean up any existing store
-	_, err = srv.openfga.DeleteStore(context.Background(), &openfgav1.DeleteStoreRequest{
+	_, err = srv.openFGAClient.DeleteStore(context.Background(), &openfgav1.DeleteStoreRequest{
 		StoreId: storeInf.ID,
 	})
 	require.NoError(t, err)
@@ -193,7 +193,7 @@ func setupOpenFGADatabase(t *testing.T, srv *Server, tuples []*openfgav1.TupleKe
 	}
 
 	// Try to delete existing tuples (ignore errors if they don't exist)
-	_, err = srv.openfga.Write(context.Background(), &openfgav1.WriteRequest{
+	_, err = srv.openFGAClient.Write(context.Background(), &openfgav1.WriteRequest{
 		StoreId:              storeInf.ID,
 		AuthorizationModelId: storeInf.ModelID,
 		Deletes: &openfgav1.WriteRequestDeletes{
@@ -204,7 +204,7 @@ func setupOpenFGADatabase(t *testing.T, srv *Server, tuples []*openfgav1.TupleKe
 	require.NoError(t, err)
 
 	// Now write the new tuples
-	_, err = srv.openfga.Write(context.Background(), &openfgav1.WriteRequest{
+	_, err = srv.openFGAClient.Write(context.Background(), &openfgav1.WriteRequest{
 		StoreId:              storeInf.ID,
 		AuthorizationModelId: storeInf.ModelID,
 		Writes:               writes,

@@ -403,7 +403,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 		}
 		batch := allTuples[i:end]
 
-		_, err = srv.openfga.Write(ctx, &openfgav1.WriteRequest{
+		_, err = srv.openFGAClient.Write(ctx, &openfgav1.WriteRequest{
 			StoreId:              storeInf.ID,
 			AuthorizationModelId: storeInf.ModelID,
 			Writes: &openfgav1.WriteRequestWrites{
