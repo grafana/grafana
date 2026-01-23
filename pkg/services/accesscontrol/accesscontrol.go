@@ -284,7 +284,7 @@ func GroupScopesByActionContext(ctx context.Context, permissions []Permission) m
 	scopes := make([][]string, numActions)
 	offset := 0
 	for i, count := range actionCounts {
-		scopes[i] = backingArray[offset:offset:offset+count]
+		scopes[i] = backingArray[offset : offset : offset+count]
 		offset += count
 	}
 
