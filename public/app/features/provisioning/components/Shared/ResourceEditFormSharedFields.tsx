@@ -35,8 +35,10 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       formState: { errors },
     } = useFormContext();
 
+    const canPushToNonConfiguredBranch = repository?.workflows?.includes('branch');
+
     // always display push to existing branch and create new branch options, but disable configured branch if not allowed
-    const branchSelectionOptions: Array<{ label: string; value: 'write' | 'branch' }> = [
+    const branchSelectionOptions: Array<{ label: string; value: 'write' | 'branch'; description?: string }> = [
       {
         label: t('provisioning.workflow-options-label.push-to-existing-branch', 'Push to an existing branch'),
         value: 'write',
@@ -44,6 +46,12 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       {
         label: t('provisioning.workflow-options-label.push-to-a-new-branch', 'Push to a new branch'),
         value: 'branch',
+        description: canPushToNonConfiguredBranch
+          ? undefined
+          : t(
+              'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch-workflow-not-allowed',
+              'Creating a new branch is not allowed for this repository.'
+            ),
       },
     ];
     const {
@@ -64,6 +72,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       lastBranch,
       branchData,
       canPushToConfiguredBranch,
+      canPushToNonConfiguredBranch,
     });
 
     const newBranchDefaultName = useMemo(() => generateNewBranchName(resourceType), [resourceType]);
@@ -124,10 +133,12 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                 control={control}
                 name="workflow"
                 render={({ field: { ref, onChange, ...field } }) => (
-                  <RadioButtonGroup
+                  <RadioButtonGroup<'write' | 'branch'>
                     id="provisioned-resource-form-workflow"
                     {...field}
                     options={branchSelectionOptions}
+                    // disable branch option if repo is not allowed to push to non-configured branch
+                    disabledOptions={canPushToNonConfiguredBranch ? undefined : ['branch']}
                     onChange={(nextWorkflow) => {
                       onChange(nextWorkflow);
                       clearErrors('ref');
