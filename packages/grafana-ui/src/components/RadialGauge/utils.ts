@@ -120,9 +120,9 @@ export function calculateDimensions(
 
   // If rounded bars is enabled they need a bit more vertical space
   if (yMaxAngle < 180 && roundedBars) {
-    outerRadius -= barWidth;
-    maxRadiusH -= barWidth;
-    maxRadiusW -= barWidth;
+    outerRadius -= barWidth / 4;
+    maxRadiusH -= barWidth / 4;
+    maxRadiusW -= barWidth / 4;
   }
 
   // Scale labels
@@ -169,7 +169,11 @@ export function calculateDimensions(
   const belowCenterY = maxRadius * Math.sin(toRad(yMaxAngle));
   const rest = height - belowCenterY - margin * 2 - maxRadius;
   const centerX = width / 2;
-  const centerY = maxRadius + margin + rest / 2;
+  let centerY = maxRadius + margin + rest / 2;
+
+  if (yMaxAngle < 180 && roundedBars) {
+    centerY -= barWidth / 4;
+  }
 
   if (barIndex > 0) {
     innerRadius = innerRadius - (barWidth + 4) * barIndex;
@@ -202,12 +206,7 @@ export function toCartesian(centerX: number, centerY: number, radius: number, an
   };
 }
 
-export function drawRadialArcPath(
-  startAngle: number,
-  endAngle: number,
-  dimensions: RadialGaugeDimensions,
-  roundedBars?: boolean
-): string {
+export function drawRadialArcPath(startAngle: number, endAngle: number, dimensions: RadialGaugeDimensions): string {
   const { radius, centerX, centerY } = dimensions;
 
   // For some reason a 100% full arc cannot be rendered
