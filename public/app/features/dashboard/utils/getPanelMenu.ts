@@ -80,16 +80,6 @@ export function getPanelMenu(
     copyPanel(panel);
   };
 
-  const onCopyPanelStyles = (event: React.MouseEvent) => {
-    event.preventDefault();
-    copyPanelStyles(panel);
-  };
-
-  const onPastePanelStyles = (event: React.MouseEvent) => {
-    event.preventDefault();
-    pastePanelStyles(panel);
-  };
-
   const onRemovePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     removePanel(dashboard, panel, true);
