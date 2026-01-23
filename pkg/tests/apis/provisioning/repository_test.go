@@ -1067,11 +1067,7 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
-	// TODO: flaky test, its currently causing post merge checks to fail
-	// as well as gating PRs pretty consistently.
-	t.Skip("skipping repository connection test")
-
-	// testutil.SkipIntegrationTestInShortMode(t)
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
@@ -1106,6 +1102,16 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 	_, err := helper.CreateGithubConnection(t, ctx, connection)
 	require.NoError(t, err, "failed to create connection")
 
+	require.EventuallyWithT(t, func(collectT *assert.CollectT) {
+		c, err := helper.Connections.Resource.Get(ctx, "test-connection", metav1.GetOptions{})
+		require.NoError(collectT, err, "can list values")
+		conn := unstructuredToConnection(t, c)
+		require.NotEqual(collectT, 0, conn.Status.ObservedGeneration, "resource should be reconciled at least once")
+		require.Equal(collectT, conn.Status.ObservedGeneration, conn.Generation, "resource should be reconciled")
+		// Token should be there
+		require.False(collectT, conn.Secure.Token.IsZero())
+	}, time.Second*10, time.Second, "Expected connection to be reconciled")
+
 	// Create a repository WITH the connection
 	repoWithConnection := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "provisioning.grafana.app/v0alpha1",
@@ -1138,7 +1144,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		repo, err := helper.Repositories.Resource.Get(ctx, "repo-with-connection", metav1.GetOptions{})
 		require.NoError(collectT, err, "can list values")
 		r := unstructuredToRepository(t, repo)
-		require.NotEqual(t, 0, r.Status.ObservedGeneration, "resource should be reconciled at least once")
+		require.NotEqual(collectT, 0, r.Status.ObservedGeneration, "resource should be reconciled at least once")
 		require.Equal(collectT, r.Status.ObservedGeneration, r.Generation, "resource should be reconciled")
 		// Token should be there
 		require.False(collectT, r.Secure.Token.IsZero())
@@ -1147,12 +1153,12 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 		require.NotNil(collectT, r.Status.FieldErrors, "fieldErrors field should exist in status")
 
 		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", r.GetNamespace(), r.Secure.Token.Name)
-		require.NoError(t, err, "decryption error")
-		require.Len(t, decrypted, 1)
+		require.NoError(collectT, err, "decryption error")
+		require.Len(collectT, decrypted, 1)
 
 		val := decrypted[r.Secure.Token.Name].Value()
-		require.NotNil(t, val)
-		require.Equal(t, "someToken", val.DangerouslyExposeAndConsumeValue())
+		require.NotNil(collectT, val)
+		require.Equal(collectT, "someToken", val.DangerouslyExposeAndConsumeValue())
 	}, time.Second*10, time.Second, "Expected repo to be reconciled")
 }
 
