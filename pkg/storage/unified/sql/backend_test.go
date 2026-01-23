@@ -36,7 +36,7 @@ type (
 )
 
 type testBackend struct {
-	*backend
+	*storageBackendImpl
 	test.TestDBProvider
 }
 
@@ -95,10 +95,11 @@ func setupBackendTest(t *testing.T) (testBackend, context.Context) {
 	bb, ok := b.(*backend)
 	require.True(t, ok)
 	require.NotNil(t, bb)
+	require.NotNil(t, bb.storage)
 
 	return testBackend{
-		backend:        bb,
-		TestDBProvider: dbp,
+		storageBackendImpl: bb.storage,
+		TestDBProvider:     dbp,
 	}, ctx
 }
 

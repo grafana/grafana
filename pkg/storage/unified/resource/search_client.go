@@ -167,8 +167,7 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 	if err != nil {
 		return nil, err
 	}
-	// Use unified client if reading from unified AND unified client is available
-	if unified && s.searchClient != nil {
+	if unified {
 		client = s.searchClient
 	}
 
@@ -177,8 +176,7 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 		return nil, err
 	}
 
-	// Only make background call if unified client is available
-	if makeBackgroundCall && s.searchClient != nil {
+	if makeBackgroundCall {
 		// Get the legacy result first
 		legacyResponse, legacyErr := s.legacyClient.Search(ctx, in, opts...)
 		if legacyErr != nil {

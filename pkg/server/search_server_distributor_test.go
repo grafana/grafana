@@ -73,7 +73,7 @@ func TestIntegrationDistributor(t *testing.T) {
 	testServers := make([]testModuleServer, 0, 2)
 	memberlistPort := getRandomPort()
 	distributorServer := initDistributorServerForTest(t, memberlistPort)
-	// create one storage-server with search enabled and one search-server instance
+	// create one storage-server with search enabled and one search-server instance while storage supports search too
 	testServers = append(testServers, createStorageServerApi(t, 1, dbType, db.ConnStr, memberlistPort))
 	testServers = append(testServers, createStorageServerApi(t, 2, dbType, db.ConnStr, memberlistPort))
 	//testServers = append(testServers, createSearchServerAPI(t, 2, dbType, db.ConnStr, memberlistPort))
@@ -326,7 +326,7 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 
 // createStorageServerApi creates a storage-server module server with search enabled for testing.
 // This tests that storage target still works with the distributor
-// TODO: remove once we fully migrate to search-server target
+// TODO: migrate to search-server target
 func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr string, memberlistPort int) testModuleServer {
 	cfg := setting.NewCfg()
 	section, err := cfg.Raw.NewSection("database")
@@ -350,39 +350,6 @@ func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr stri
 	cfg.IndexPath = t.TempDir() + cfg.InstanceID
 	cfg.IndexFileThreshold = testIndexFileThreshold
 	cfg.Target = []string{modules.StorageServer}
-	// make sure the resource server has enough time to join the ring
-	// before the tests start sending traffic
-	// otherwise the tests will be flaky,
-	// also, tests are going to timeout after 300 seconds anyway
-	cfg.ResourceServerJoinRingTimeout = 300 * time.Second
-	cfg.EnableSearch = true
-
-	return initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
-}
-
-func createSearchServerAPI(t *testing.T, instanceId int, dbType, dbConnStr string, memberlistPort int) testModuleServer {
-	cfg := setting.NewCfg()
-	section, err := cfg.Raw.NewSection("database")
-	require.NoError(t, err)
-
-	_, err = section.NewKey("type", dbType)
-	require.NoError(t, err)
-	_, err = section.NewKey("connection_string", dbConnStr)
-	require.NoError(t, err)
-
-	cfg.HTTPPort = strconv.Itoa(getRandomPort())
-	cfg.GRPCServer.Network = "tcp"
-	cfg.GRPCServer.Address = "127.0.0.1:" + strconv.Itoa(getRandomPort())
-	cfg.EnableSharding = true
-	cfg.MemberlistBindAddr = "127.0.0.1"
-	cfg.MemberlistJoinMember = "127.0.0.1:" + strconv.Itoa(memberlistPort)
-	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
-	cfg.MemberlistAdvertisePort = getRandomPort()
-	cfg.SearchRingReplicationFactor = 1
-	cfg.InstanceID = "instance-" + strconv.Itoa(instanceId)
-	cfg.IndexPath = t.TempDir() + cfg.InstanceID
-	cfg.IndexFileThreshold = testIndexFileThreshold
-	cfg.Target = []string{modules.SearchServer}
 	// make sure the resource server has enough time to join the ring
 	// before the tests start sending traffic
 	// otherwise the tests will be flaky,
@@ -438,6 +405,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 		},
 		SearchOptions: &searchOpts,
 	})
+	require.NoError(t, err)
 
 	testUserA := &identity.StaticRequester{
 		Type:           claims.TypeUser,

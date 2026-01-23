@@ -71,31 +71,6 @@ type ServerOptions struct {
 	AccessClient types.AccessClient
 }
 
-func NewCommonServerOptions(commonOpts ServerOptions) (*resource.CommonServerOptions, error) {
-	apiserverCfg := commonOpts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
-
-	serverOptions := &resource.CommonServerOptions{
-		Blob: resource.BlobConfig{
-			URL: apiserverCfg.Key("blob_url").MustString(""),
-		},
-		Reg: commonOpts.Reg,
-	}
-	if commonOpts.AccessClient != nil {
-		serverOptions.AccessClient = resource.NewAuthzLimitedClient(commonOpts.AccessClient, resource.AuthzOptions{Registry: commonOpts.Reg})
-	}
-	// Support local file blob
-	if strings.HasPrefix(serverOptions.Blob.URL, "./data/") {
-		dir := strings.Replace(serverOptions.Blob.URL, "./data", commonOpts.Cfg.DataPath, 1)
-		err := os.MkdirAll(dir, 0700)
-		if err != nil {
-			return nil, err
-		}
-		serverOptions.Blob.URL = "file:///" + dir
-	}
-
-	return serverOptions, nil
-}
-
 // NewSearchServer creates a new SearchServer with the given options.
 // This can be used to create a standalone search server or to create a search server
 // that will be passed to NewResourceServer.
@@ -104,27 +79,33 @@ func NewCommonServerOptions(commonOpts ServerOptions) (*resource.CommonServerOpt
 // to avoid duplicate metrics registration. Only in standalone microservice mode should
 // this function create its own backend.
 func NewSearchServer(opts SearchServerOptions) (resource.SearchServer, error) {
-	serverOptions, err := NewCommonServerOptions(ServerOptions{
-		Backend:      opts.Backend,
-		DB:           opts.DB,
-		Cfg:          opts.Cfg,
-		Tracer:       opts.Tracer,
-		Reg:          opts.Reg,
-		AccessClient: opts.AccessClient,
-	})
-	if err != nil {
-		return nil, err
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+
+	blobConfig := resource.BlobConfig{
+		URL: apiserverCfg.Key("blob_url").MustString(""),
 	}
+
+	// Support local file blob
+	if strings.HasPrefix(blobConfig.URL, "./data/") {
+		dir := strings.Replace(blobConfig.URL, "./data", opts.Cfg.DataPath, 1)
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			return nil, err
+		}
+		blobConfig.URL = "file:///" + dir
+	}
+
 	var blobStore resource.BlobSupport
-	if serverOptions.Blob.URL != "" {
-		blobStore, err = resource.NewBlobSupport(context.Background(), opts.Reg, serverOptions.Blob)
+	var err error
+	if blobConfig.URL != "" {
+		blobStore, err = resource.NewBlobSupport(context.Background(), opts.Reg, blobConfig)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		blobStore, _ = opts.Backend.(resource.BlobSupport)
 	}
-	backend := serverOptions.Backend
+
+	backend := opts.Backend
 	if backend == nil {
 		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
 		if err != nil {
@@ -139,6 +120,7 @@ func NewSearchServer(opts SearchServerOptions) (resource.SearchServer, error) {
 			Reg:                  opts.Reg,
 			IsHA:                 isHA,
 			LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge,
+			EnableSearch:         true,
 		})
 		if err != nil {
 			return nil, err
@@ -271,6 +253,7 @@ func NewStorageServer(opts *StorageServerOptions) (resource.ResourceServer, erro
 				IsHA:                 isHA,
 				storageMetrics:       opts.StorageMetrics,
 				LastImportTimeMaxAge: opts.Cfg.MaxFileIndexAge,
+				EnableStorage:        true,
 			})
 			if err != nil {
 				return nil, err
@@ -400,6 +383,8 @@ func NewResourceServer(opts *ResourceServerOptions) (resource.ResourceServer, er
 					MaxAge:           opts.Cfg.GarbageCollectionMaxAge,
 					DashboardsMaxAge: opts.Cfg.DashboardsGarbageCollectionMaxAge,
 				},
+				EnableStorage: true,
+				EnableSearch:  opts.Cfg.EnableSearch,
 			})
 			if err != nil {
 				return nil, err

@@ -131,6 +131,7 @@ func RegisterAPIService(
 		logger:                            log.New("iam.apis"),
 		features:                          features,
 		dual:                              dual,
+		searchClient:                      searchClient,
 		userSearchClient: resource.NewSearchWrapperClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
 			searchClient, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
 		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService), searchClient, features),
@@ -476,7 +477,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	teamBindingSearchClient := resource.NewSearchWrapperClient(
 		dualwrite.NewSearchAdapter(b.dual),
 		iamv0.TeamBindingResourceInfo.GroupResource(),
-		b.userSearchClient,
+		b.searchClient,
 		legacyTeamBindingSearchClient,
 		b.features,
 	)

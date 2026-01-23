@@ -86,6 +86,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	logger log.Logger
 
 	dual                              dualwrite.Service
+	searchClient                      resource.SearchClient
 	userSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
 	teamSearch                        *TeamSearchHandler
