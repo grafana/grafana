@@ -95,7 +95,8 @@ describe('useRegisterScopesActions', () => {
     });
 
     expect(result.current.scopesRow).toBeUndefined();
-    expect(useRegisterActions).not.toHaveBeenCalled();
+    // useRegisterActions is called unconditionally (to follow React Hooks rules) but with empty array when feature toggle is off
+    expect(useRegisterActions).toHaveBeenCalledWith([], [[]]);
   });
 
   it('should register scope tree actions and return scopesRow when scopes are selected', () => {

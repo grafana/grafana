@@ -12,6 +12,22 @@ import { SCOPES_PRIORITY } from '../values';
 
 export function useScopeServicesState() {
   const services = useScopesServices();
+  // Call hook unconditionally to follow React Hooks rules
+  const selectorServiceState: ScopesSelectorServiceState | undefined = useObservable(
+    services?.scopesSelectorService.stateObservable ?? new Observable(),
+    services?.scopesSelectorService.state ?? {
+      nodes: {},
+      scopes: {},
+      selectedScopes: [],
+      appliedScopes: [],
+      tree: {
+        scopeNodeId: '',
+        expanded: false,
+        query: '',
+      },
+    }
+  );
+
   if (!services) {
     return {
       filterNode: () => Promise.resolve(),
@@ -34,10 +50,6 @@ export function useScopeServicesState() {
   }
   const { filterNode, selectScope, resetSelection, searchAllNodes, deselectScope, apply, getScopeNodes } =
     services.scopesSelectorService;
-  const selectorServiceState: ScopesSelectorServiceState | undefined = useObservable(
-    services.scopesSelectorService.stateObservable ?? new Observable(),
-    services.scopesSelectorService.state
-  );
 
   return {
     getScopeNodes,
