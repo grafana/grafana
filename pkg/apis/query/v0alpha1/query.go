@@ -28,15 +28,6 @@ type QueryDataResponse struct {
 	backend.QueryDataResponse `json:",inline"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type SQLSchemasWrapper struct {
-	metav1.TypeMeta `json:",inline"`
-
-	// Backend wrapper (external dependency)
-	// The keys represent ???
-	SQLSchemas `json:"sqlSchemas"`
-}
-
 // GetResponseCode return the right status code for the response by checking the responses.
 func GetResponseCode(rsp *backend.QueryDataResponse) int {
 	if rsp == nil {

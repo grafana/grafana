@@ -11,14 +11,19 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+// SQLSchemas returns info about what the Schema for a DS query will be like if the
+// query were to be used an input to SQL expressions. So effectively post SQL expressions input
+// conversion.
+//
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type SQLSchemasWrapper struct {
+type QueryResponseSQLSchemas struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// Backend wrapper (external dependency)
-	// The keys represent ???
-	SQLSchemas `json:"sqlSchemas"`
+	// SchemaInfo for each requested query by refID
+	Query SQLSchemas `json:"query"`
 }
+
+type SQLSchemas = map[string]SchemaInfo
 
 // BasicColumn represents the column type for data that is input to a SQL expression.
 type BasicColumn struct {
@@ -41,6 +46,9 @@ type SchemaInfo struct {
 	Error      string        `json:"error,omitempty"`
 }
 
+// There is a a manual DeepCopy at the end of this file that will need to be updated when this our the
+// underlying structs are change. The hack script will also need to be run to update the Query service API
+// generated types.
 type SampleRows struct {
 	// +listType=atomic
 	values [][]any
@@ -74,14 +82,6 @@ func (u SampleRows) OpenAPIDefinition() openapi.OpenAPIDefinition {
 		)).WithDescription("[][]any"), // frontend says number | string | boolean | object
 	}
 }
-
-// SQLSchemas returns info about what the Schema for a DS query will be like if the
-// query were to be used an input to SQL expressions. So effectively post SQL expressions input
-// conversion.
-// There is a a manual DeepCopy at the end of this file that will need to be updated when this our the
-// underlying structs are change. The hack script will also need to be run to update the Query service API
-// generated types.
-type SQLSchemas map[string]SchemaInfo
 
 // DeepCopy returns a deep copy of the SampleRows.
 func (in *SampleRows) DeepCopy() *SampleRows {

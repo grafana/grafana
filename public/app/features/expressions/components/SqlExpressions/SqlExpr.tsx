@@ -267,7 +267,7 @@ LIMIT
       </div>
       {isSchemaInspectorOpen && isSchemasFeatureEnabled && (
         <div className={styles.schemaInspector}>
-          <SchemaInspectorPanel schemas={schemas?.sqlSchemas ?? null} loading={schemasLoading} error={schemasError} />
+          <SchemaInspectorPanel schemas={schemas?.query ?? null} loading={schemasLoading} error={schemasError} />
         </div>
       )}
     </div>

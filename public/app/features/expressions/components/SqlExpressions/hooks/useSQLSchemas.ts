@@ -23,12 +23,13 @@ export interface SQLSchemaData {
   error?: string;
 }
 
+// Lookup of SQL schema data by query ref ID
 export type SQLSchemas = Record<string, SQLSchemaData>;
 
 export interface SQLSchemasResponse {
   kind: string;
   apiVersion: string;
-  sqlSchemas: SQLSchemas;
+  query: SQLSchemas;
 }
 
 interface UseSQLSchemasOptions {
@@ -70,7 +71,7 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
       const nonDashboardQueries = currentQueries.filter((q) => !isDashboardDatasource(q));
 
       if (nonDashboardQueries.length === 0) {
-        setSchemas({ kind: 'SQLSchemaResponse', apiVersion: 'query.grafana.app/v0alpha1', sqlSchemas: {} });
+        setSchemas({ kind: 'SQLSchemaResponse', apiVersion: 'query.grafana.app/v0alpha1', query: {} });
         setLoading(false);
         return;
       }
