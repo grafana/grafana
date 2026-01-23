@@ -224,7 +224,7 @@ func (a *dashboardSqlAccess) CountResources(ctx context.Context, opts MigrateOpt
 			case "folder.grafana.app/folders":
 				summary := &resourcepb.BulkResponse_Summary{}
 				summary.Group = folders.GROUP
-				summary.Group = folders.RESOURCE
+				summary.Resource = folders.RESOURCE
 				_, err = sess.SQL("SELECT COUNT(*) FROM "+sql.Table("dashboard")+
 					" WHERE is_folder=TRUE AND org_id=?", orgId).Get(&summary.Count)
 				rsp.Summary = append(rsp.Summary, summary)

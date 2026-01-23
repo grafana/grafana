@@ -19,6 +19,7 @@ import allPluginHandlers from 'app/features/alerting/unified/mocks/server/handle
 import provisioningHandlers from 'app/features/alerting/unified/mocks/server/handlers/provisioning';
 import searchHandlers from 'app/features/alerting/unified/mocks/server/handlers/search';
 import silenceHandlers from 'app/features/alerting/unified/mocks/server/handlers/silences';
+import userStorageHandlers from 'app/features/alerting/unified/mocks/server/handlers/userStorage';
 
 /**
  * All alerting-specific handlers that are required across tests
@@ -55,6 +56,7 @@ const allHandlers = [
   ...datasourcesHandlers,
   ...evalHandlers,
   ...pluginsHandlers,
+  ...userStorageHandlers,
 ];
 
 export default allHandlers;

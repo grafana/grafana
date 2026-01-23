@@ -8,6 +8,10 @@ import (
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
+// DefaultAutoMigrationThreshold is the default threshold for auto migration switching.
+// If a resource has entries at or below this count, it will be migrated.
+const DefaultAutoMigrationThreshold = 10
+
 const (
 	PlaylistResource  = "playlists.playlist.grafana.app"
 	FolderResource    = "folders.folder.grafana.app"
@@ -19,6 +23,13 @@ var MigratedUnifiedResources = map[string]bool{
 	PlaylistResource:  true, // enabled by default
 	FolderResource:    false,
 	DashboardResource: false,
+}
+
+// AutoMigratedUnifiedResources maps resources that support auto-migration
+// TODO: remove this before Grafana 13 GA: https://github.com/grafana/search-and-storage-team/issues/613
+var AutoMigratedUnifiedResources = map[string]bool{
+	FolderResource:    true,
+	DashboardResource: true,
 }
 
 // read storage configs from ini file. They look like:
@@ -41,31 +52,23 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		// parse dualWriter modes from the section
 		dualWriterMode := section.Key("dualWriterMode").MustInt(0)
 
-		// parse dualWriter periodic data syncer config
-		dualWriterPeriodicDataSyncJobEnabled := section.Key("dualWriterPeriodicDataSyncJobEnabled").MustBool(false)
-
-		// parse dualWriter migration data sync disabled from resource section
-		dualWriterMigrationDataSyncDisabled := section.Key("dualWriterMigrationDataSyncDisabled").MustBool(false)
-
-		// parse dataSyncerRecordsLimit from resource section
-		dataSyncerRecordsLimit := section.Key("dataSyncerRecordsLimit").MustInt(1000)
-
-		// parse dataSyncerInterval from resource section
-		dataSyncerInterval := section.Key("dataSyncerInterval").MustDuration(time.Hour)
-
 		// parse EnableMigration from resource section
 		enableMigration := MigratedUnifiedResources[resourceName]
 		if section.HasKey("enableMigration") {
 			enableMigration = section.Key("enableMigration").MustBool(MigratedUnifiedResources[resourceName])
 		}
 
+		// parse autoMigrationThreshold from resource section
+		autoMigrationThreshold := 0
+		autoMigrate := AutoMigratedUnifiedResources[resourceName]
+		if autoMigrate {
+			autoMigrationThreshold = section.Key("autoMigrationThreshold").MustInt(DefaultAutoMigrationThreshold)
+		}
+
 		storageConfig[resourceName] = UnifiedStorageConfig{
-			DualWriterMode:                       rest.DualWriterMode(dualWriterMode),
-			DualWriterPeriodicDataSyncJobEnabled: dualWriterPeriodicDataSyncJobEnabled,
-			DualWriterMigrationDataSyncDisabled:  dualWriterMigrationDataSyncDisabled,
-			DataSyncerRecordsLimit:               dataSyncerRecordsLimit,
-			DataSyncerInterval:                   dataSyncerInterval,
-			EnableMigration:                      enableMigration,
+			DualWriterMode:         rest.DualWriterMode(dualWriterMode),
+			EnableMigration:        enableMigration,
+			AutoMigrationThreshold: autoMigrationThreshold,
 		}
 	}
 	cfg.UnifiedStorage = storageConfig
@@ -73,13 +76,13 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
 	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
-	if !cfg.DisableDataMigrations && cfg.getUnifiedStorageType() == "unified" {
+	if !cfg.DisableDataMigrations && cfg.UnifiedStorageType() == "unified" {
 		// Helper log to find instances running migrations in the future
 		cfg.Logger.Info("Unified migration configs enforced")
 		cfg.enforceMigrationToUnifiedConfigs()
 	} else {
 		// Helper log to find instances disabling migration
-		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.getUnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
+		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
@@ -104,6 +107,10 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexRebuildInterval = section.Key("index_rebuild_interval").MustDuration(24 * time.Hour)
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
+	cfg.IndexScoringModel = section.Key("index_scoring_model").MustString("")
+	if cfg.IndexScoringModel != "" {
+		cfg.Logger.Info("Index scoring model set", "model", cfg.IndexScoringModel)
+	}
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
@@ -114,8 +121,17 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.OverridesFilePath = section.Key("overrides_path").String()
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
 
+	// garbage collection
+	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)
+	cfg.GarbageCollectionInterval = section.Key("garbage_collection_interval").MustDuration(15 * time.Minute)
+	cfg.GarbageCollectionBatchSize = section.Key("garbage_collection_batch_size").MustInt(100)
+	cfg.GarbageCollectionMaxAge = section.Key("garbage_collection_max_age").MustDuration(24 * time.Hour)
+	cfg.DashboardsGarbageCollectionMaxAge = section.Key("dashboards_garbage_collection_max_age").MustDuration(365 * 24 * time.Hour)
+
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
+	// enable sqlkv backwards compatibility mode with sql/backend
+	cfg.EnableSQLKVCompatibilityMode = section.Key("enable_sqlkv_compatibility_mode").MustBool(true)
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")
@@ -144,17 +160,17 @@ func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
 		}
 		cfg.Logger.Info("Enforcing mode 5 for resource in unified storage", "resource", resource)
 		cfg.UnifiedStorage[resource] = UnifiedStorageConfig{
-			DualWriterMode:                      5,
-			DualWriterMigrationDataSyncDisabled: true,
-			EnableMigration:                     true,
+			DualWriterMode:         5,
+			EnableMigration:        true,
+			AutoMigrationThreshold: resourceCfg.AutoMigrationThreshold,
 		}
 	}
 }
 
-// getUnifiedStorageType returns the configured storage type without creating or mutating keys.
+// UnifiedStorageType returns the configured storage type without creating or mutating keys.
 // Precedence: env > ini > default ("unified").
 // Used to decide unified storage behavior early without side effects.
-func (cfg *Cfg) getUnifiedStorageType() string {
+func (cfg *Cfg) UnifiedStorageType() string {
 	const (
 		grafanaAPIServerSectionName = "grafana-apiserver"
 		storageTypeKeyName          = "storage_type"
@@ -167,4 +183,23 @@ func (cfg *Cfg) getUnifiedStorageType() string {
 		return cfg.Raw.Section(grafanaAPIServerSectionName).Key(storageTypeKeyName).Value()
 	}
 	return defaultStorageType
+}
+
+// UnifiedStorageConfig returns the UnifiedStorageConfig for a resource.
+func (cfg *Cfg) UnifiedStorageConfig(resource string) UnifiedStorageConfig {
+	if cfg.UnifiedStorage == nil {
+		return UnifiedStorageConfig{}
+	}
+	return cfg.UnifiedStorage[resource]
+}
+
+// EnableMode5 enables migration and sets mode 5 for a resource.
+func (cfg *Cfg) EnableMode5(resource string) {
+	if cfg.UnifiedStorage == nil {
+		cfg.UnifiedStorage = make(map[string]UnifiedStorageConfig)
+	}
+	config := cfg.UnifiedStorage[resource]
+	config.DualWriterMode = rest.Mode5
+	config.EnableMigration = true
+	cfg.UnifiedStorage[resource] = config
 }

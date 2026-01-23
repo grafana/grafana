@@ -11,12 +11,22 @@ import (
 	"time"
 
 	"github.com/matttproud/golang_protobuf_extensions/pbutil"
+	"github.com/prometheus/alertmanager/flushlog/flushlogpb"
 	"github.com/prometheus/alertmanager/nflog/nflogpb"
 	"github.com/prometheus/alertmanager/silence/silencepb"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/setting"
 
 	alertingImages "github.com/grafana/alerting/images"
 )
@@ -228,15 +238,13 @@ func (f *FakeOrgStore) FetchOrgIds(_ context.Context) ([]int64, error) {
 	return f.orgs, nil
 }
 
-type NoValidation struct {
-}
+type NoValidation struct{}
 
 func (n NoValidation) Validate(_ models.NotificationSettings) error {
 	return nil
 }
 
-type RejectingValidation struct {
-}
+type RejectingValidation struct{}
 
 func (n RejectingValidation) Validate(s models.NotificationSettings) error {
 	return ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: s.Receiver}}
@@ -365,6 +373,51 @@ func createNotificationLog(groupKey string, receiverName string, sentAt, expires
 	}
 }
 
+// https://github.com/grafana/prometheus-alertmanager/blob/main/flushlog/flushlog.go#L136-L136
+type flushLogState map[uint64]*flushlogpb.MeshFlushLog
+
+func (s flushLogState) MarshalBinary() ([]byte, error) {
+	var buf bytes.Buffer
+
+	for _, e := range s {
+		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
+}
+
+func createFlushLog(groupFingerprint uint64, ts, expiresAt time.Time) *flushlogpb.MeshFlushLog {
+	return &flushlogpb.MeshFlushLog{
+		FlushLog: &flushlogpb.FlushLog{
+			GroupFingerprint: groupFingerprint,
+			Timestamp:        ts,
+		},
+		ExpiresAt: expiresAt,
+	}
+}
+
+// decodeFlushLogState copied from decodeState in prometheus-alertmanager/flushlog/flushlog.go
+func decodeFlushLogState(r io.Reader) (flushLogState, error) {
+	st := flushLogState{}
+	for {
+		var e flushlogpb.MeshFlushLog
+		_, err := pbutil.ReadDelimited(r, &e)
+		if err == nil {
+			if e.FlushLog == nil || e.FlushLog.GroupFingerprint == 0 || e.FlushLog.Timestamp.IsZero() {
+				return nil, errInvalidState
+			}
+			st[e.FlushLog.GroupFingerprint] = &e
+			continue
+		}
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		return nil, err
+	}
+	return st, nil
+}
+
 type call struct {
 	Method string
 	Args   []interface{}
@@ -405,4 +458,109 @@ func (f *fakeAlertRuleNotificationStore) ListNotificationSettings(ctx context.Co
 
 	// Default values when no function hook is provided
 	return nil, nil
+}
+
+type TestMultiOrgAlertmanagerOptions struct {
+	orgs           []int64
+	configs        map[int64]*models.AlertConfiguration
+	disabledOrgs   map[int64]struct{}
+	featureToggles featuremgmt.FeatureToggles
+	waitReady      bool
+}
+
+type TestMultiOrgAlertmanagerOption func(*TestMultiOrgAlertmanagerOptions)
+
+func WithOrgs(orgs []int64) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.orgs = orgs
+	}
+}
+
+func WithConfigs(configs map[int64]*models.AlertConfiguration) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.configs = configs
+	}
+}
+
+func WithDisabledOrgs(disabledOrgs map[int64]struct{}) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.disabledOrgs = disabledOrgs
+	}
+}
+
+func WithFeatureToggles(ft featuremgmt.FeatureToggles) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.featureToggles = ft
+	}
+}
+
+func WithWaitReady() TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.waitReady = true
+	}
+}
+
+func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerOption) *MultiOrgAlertmanager {
+	t.Helper()
+
+	options := TestMultiOrgAlertmanagerOptions{
+		orgs:           []int64{1},
+		configs:        make(map[int64]*models.AlertConfiguration),
+		disabledOrgs:   map[int64]struct{}{},
+		featureToggles: featuremgmt.WithFeatures(),
+		waitReady:      false,
+	}
+	for _, opt := range opts {
+		opt(&options)
+	}
+
+	tmpDir := t.TempDir()
+	orgStore := NewFakeOrgStore(t, options.orgs)
+	cfgStore := NewFakeConfigStore(t, options.configs)
+	kvStore := fakes.NewFakeKVStore(t)
+	registry := prometheus.NewPedanticRegistry()
+	m := metrics.NewNGAlert(registry)
+	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
+	decryptFn := secretsService.GetDecryptedValue
+
+	cfg := &setting.Cfg{
+		DataPath: tmpDir,
+		UnifiedAlerting: setting.UnifiedAlertingSettings{
+			AlertmanagerConfigPollInterval: 3 * time.Minute,
+			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
+			DisabledOrgs:                   options.disabledOrgs,
+		},
+	}
+
+	moa, err := NewMultiOrgAlertmanager(
+		cfg,
+		cfgStore,
+		orgStore,
+		kvStore,
+		fakes.NewFakeProvisioningStore(),
+		decryptFn,
+		m.GetMultiOrgAlertmanagerMetrics(),
+		nil,
+		fakes.NewFakeReceiverPermissionsService(),
+		log.New("testlogger"),
+		secretsService,
+		options.featureToggles,
+		nil,
+	)
+	require.NoError(t, err)
+	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
+
+	if options.waitReady {
+		require.Eventually(t, func() bool {
+			for _, org := range options.orgs {
+				_, err := moa.AlertmanagerFor(org)
+				if err != nil {
+					return false
+				}
+			}
+			return true
+		}, 10*time.Second, 100*time.Millisecond)
+	}
+
+	return moa
 }

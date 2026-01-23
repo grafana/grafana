@@ -23,6 +23,12 @@ type Stars struct {
 	Spec StarsSpec `json:"spec" yaml:"spec"`
 }
 
+func NewStars() *Stars {
+	return &Stars{
+		Spec: *NewStarsSpec(),
+	}
+}
+
 func (o *Stars) GetSpec() any {
 	return o.Spec
 }

@@ -4,7 +4,7 @@ import { DataFrame, DataTransformerID, standardTransformersRegistry, Transformer
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Box, Button, Grid, Stack, Text } from '@grafana/ui';
+import { Box, Button, Stack, Text } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { SqlExpressionCard } from '../../../dashboard/components/TransformationsEditor/SqlExpressionCard';
@@ -25,9 +25,6 @@ const TRANSFORMATION_IDS = [
   DataTransformerID.extractFields,
   DataTransformerID.filterByValue,
 ];
-
-const GRID_COLUMNS_WITH_SQL = 5;
-const GRID_COLUMNS_WITHOUT_SQL = 4;
 
 export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPicker: () => void }) {
   return (
@@ -94,13 +91,25 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
   };
 
   const showSqlCard = hasGoToQueries && config.featureToggles.sqlExpressions;
-  const gridColumns = showSqlCard ? GRID_COLUMNS_WITH_SQL : GRID_COLUMNS_WITHOUT_SQL;
 
   return (
-    <Box alignItems="center" padding={4}>
-      <Stack direction="column" alignItems="center" gap={4}>
+    <Box padding={2}>
+      <Stack direction="column" alignItems="start" gap={2}>
+        <Stack direction="column" alignItems="start" gap={1}>
+          <Text element="h3" textAlignment="start">
+            <Trans i18nKey="transformations.empty.add-transformation-header">Add a Transformation</Trans>
+          </Text>
+          <Text element="p" textAlignment="start" color="secondary">
+            <Trans i18nKey="transformations.empty.add-transformation-body">
+              Transformations allow data to be changed in various ways before your visualization is shown.
+              <br />
+              This includes joining data together, renaming fields, making calculations, formatting data for display,
+              and more.
+            </Trans>
+          </Text>
+        </Stack>
         {(hasAddTransformation || hasGoToQueries) && (
-          <Grid columns={gridColumns} gap={1}>
+          <Stack direction="row" gap={1} wrap>
             {showSqlCard && (
               <SqlExpressionCard
                 name={t('dashboard-scene.empty-transformations-message.sql-name', 'Transform with SQL')}
@@ -125,19 +134,17 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                   data={props.data}
                 />
               ))}
-          </Grid>
+          </Stack>
         )}
-        <Stack direction="row" gap={2}>
-          <Button
-            icon="plus"
-            variant="primary"
-            size="md"
-            onClick={handleShowMoreClick}
-            data-testid={selectors.components.Transforms.addTransformationButton}
-          >
-            <Trans i18nKey="dashboard-scene.empty-transformations-message.show-more">Show more</Trans>
-          </Button>
-        </Stack>
+        <Button
+          icon="plus"
+          variant="primary"
+          size="md"
+          onClick={handleShowMoreClick}
+          data-testid={selectors.components.Transforms.addTransformationButton}
+        >
+          <Trans i18nKey="dashboard-scene.empty-transformations-message.show-more">Show more</Trans>
+        </Button>
       </Stack>
     </Box>
   );

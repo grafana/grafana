@@ -32,7 +32,7 @@ function FormWrapper({ children, defaultValues }: { children: ReactNode; default
         url: 'https://github.com/test/repo',
         title: '',
         sync: {
-          target: 'instance',
+          target: 'folder',
           enabled: true,
         },
         branch: 'main',
@@ -102,12 +102,6 @@ describe('BootstrapStep', () => {
     (useModeOptions as jest.Mock).mockReturnValue({
       enabledOptions: [
         {
-          target: 'instance',
-          label: 'Sync all resources with external storage',
-          description: 'Resources will be synced with external storage',
-          subtitle: 'Use this option if you want to sync your entire instance',
-        },
-        {
           target: 'folder',
           label: 'Sync external storage to a new Grafana folder',
           description: 'A new Grafana folder will be created',
@@ -142,8 +136,8 @@ describe('BootstrapStep', () => {
 
     it('should render correct info for GitHub repository type', async () => {
       setup();
-      expect(screen.getAllByText('External storage')).toHaveLength(2);
-      expect(screen.getAllByText('Empty')).toHaveLength(4); // Four elements should show "Empty" (2 external + 2 unmanaged, one per card)
+      expect(screen.getAllByText('External storage')).toHaveLength(1); // Only folder sync is shown by default
+      expect(screen.getAllByText('Empty')).toHaveLength(2); // Two elements should have the role "Empty" (1 external + 1 unmanaged)
     });
 
     it('should render correct info for local file repository type', async () => {
@@ -171,10 +165,12 @@ describe('BootstrapStep', () => {
 
       setup();
 
-      expect(await screen.getAllByText('2 files')).toHaveLength(2);
+      expect(await screen.getAllByText('2 files')).toHaveLength(1); // Only folder sync is shown by default
     });
 
     it('should display resource counts when resources exist', async () => {
+      // Note: Resource counts are only shown for instance sync, but instance sync is not available by default
+      // This test is kept for when instance sync is explicitly enabled via settings
       (useGetResourceStatsQuery as jest.Mock).mockReturnValue({
         data: {
           instance: [
@@ -196,10 +192,29 @@ describe('BootstrapStep', () => {
         shouldSkipSync: false,
       });
 
-      setup();
+      // Mock settings to allow instance sync for this test
+      (useModeOptions as jest.Mock).mockReturnValue({
+        enabledOptions: [
+          {
+            target: 'instance',
+            label: 'Sync all resources with external storage',
+            description: 'Resources will be synced with external storage',
+            subtitle: 'Use this option if you want to sync your entire instance',
+          },
+        ],
+        disabledOptions: [],
+      });
 
-      // Two elements display "7 resources": one in the external storage card and one in unmanaged resources card
-      expect(await screen.findAllByText('7 resources')).toHaveLength(2);
+      setup({
+        settingsData: {
+          allowedTargets: ['instance', 'folder'],
+          allowImageRendering: true,
+          items: [],
+          availableRepositoryTypes: [],
+        },
+      });
+
+      expect(await screen.findByText('7 resources')).toBeInTheDocument();
     });
   });
 
@@ -208,16 +223,30 @@ describe('BootstrapStep', () => {
       setup();
 
       const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', 'instance');
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', 'folder');
+    });
+
+    it('should use useResourceStats hook with settings data', async () => {
+      setup({
+        settingsData: {
+          allowedTargets: ['folder'],
+          allowImageRendering: true,
+          items: [],
+          availableRepositoryTypes: [],
+        },
+      });
+
+      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
+      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', 'folder');
     });
   });
 
   describe('sync target options', () => {
-    it('should display both instance and folder options by default', async () => {
+    it('should display only folder option by default', async () => {
       setup();
 
-      expect(await screen.findByText('Sync all resources with external storage')).toBeInTheDocument();
       expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+      expect(screen.queryByText('Sync all resources with external storage')).not.toBeInTheDocument();
     });
 
     it('should only display instance option when legacy storage exists', async () => {
@@ -242,6 +271,7 @@ describe('BootstrapStep', () => {
 
       setup({
         settingsData: {
+          allowedTargets: ['instance', 'folder'],
           allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],
@@ -264,15 +294,10 @@ describe('BootstrapStep', () => {
   });
 
   describe('title field visibility', () => {
-    it('should show title field only for folder sync target', async () => {
-      const { user } = setup();
+    it('should show title field for folder sync target', async () => {
+      setup();
 
-      // Initially should not show title field (default is instance)
-      expect(screen.queryByRole('textbox', { name: /display name/i })).not.toBeInTheDocument();
-
-      const folderOption = await screen.findByText('Sync external storage to a new Grafana folder');
-      await user.click(folderOption);
-
+      // Default is folder, so title field should be visible
       expect(await screen.findByRole('textbox', { name: /display name/i })).toBeInTheDocument();
     });
   });

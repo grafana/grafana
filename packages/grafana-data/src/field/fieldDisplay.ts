@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash';
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { GrafanaTheme2 } from '../themes/types';
-import { reduceField, ReducerID } from '../transformations/fieldReducer';
+import { isReducerID, reduceField, ReducerID } from '../transformations/fieldReducer';
 import { getFieldMatcher } from '../transformations/matchers';
 import { FieldMatcherID } from '../transformations/matchers/ids';
 import { ScopedVars } from '../types/ScopedVars';
@@ -43,6 +43,7 @@ export interface FieldSparkline {
   x?: Field; // if this does not exist, use the index
   timeRange?: TimeRange; // Optionally force an absolute time
   highlightIndex?: number;
+  highlightLine?: number;
 }
 
 export interface FieldDisplay {
@@ -71,6 +72,76 @@ export interface GetFieldDisplayValuesOptions {
 }
 
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
+
+interface SparklineHighlightPoint {
+  type: 'point';
+  xIdx: number;
+}
+
+interface SparklineHighlightLine {
+  type: 'line';
+  y: number;
+}
+
+export function getSparklineHighlight(
+  sparkline: FieldSparkline,
+  calc: ReducerID
+): SparklineHighlightPoint | SparklineHighlightLine | void {
+  switch (calc) {
+    case ReducerID.last:
+      return { type: 'point', xIdx: sparkline.y.values.length - 1 };
+    case ReducerID.first:
+      return { type: 'point', xIdx: 0 };
+    case ReducerID.lastNotNull: {
+      for (let k = sparkline.y.values.length - 1; k >= 0; k--) {
+        const v = sparkline.y.values[k];
+        if (v !== null && v !== undefined && !Number.isNaN(v)) {
+          return { type: 'point', xIdx: k };
+        }
+      }
+      return;
+    }
+    case ReducerID.firstNotNull: {
+      for (let k = 0; k < sparkline.y.values.length; k++) {
+        const v = sparkline.y.values[k];
+        if (v !== null && v !== undefined && !Number.isNaN(v)) {
+          return { type: 'point', xIdx: k };
+        }
+      }
+      return;
+    }
+    case ReducerID.min: {
+      let minIdx = -1;
+      let prevMin = Infinity;
+      for (let k = 0; k < sparkline.y.values.length; k++) {
+        const v = sparkline.y.values[k];
+        if (v !== null && v !== undefined && !Number.isNaN(v) && v < prevMin) {
+          prevMin = v;
+          minIdx = k;
+        }
+      }
+      return minIdx >= 0 ? { type: 'point', xIdx: minIdx } : undefined;
+    }
+    case ReducerID.max: {
+      let maxIdx = -1;
+      let prevMax = -Infinity;
+      for (let k = 0; k < sparkline.y.values.length; k++) {
+        const v = sparkline.y.values[k];
+        if (v !== null && v !== undefined && !Number.isNaN(v) && v > prevMax) {
+          prevMax = v;
+          maxIdx = k;
+        }
+      }
+      return maxIdx >= 0 ? { type: 'point', xIdx: maxIdx } : undefined;
+    }
+    case ReducerID.mean:
+      return { type: 'line', y: reduceField({ field: sparkline.y, reducers: [ReducerID.mean] }).mean };
+    case ReducerID.median:
+      return { type: 'line', y: reduceField({ field: sparkline.y, reducers: [ReducerID.median] }).median };
+    default:
+      return;
+  }
+}
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
   const { replaceVariables, reduceOptions, timeZone, theme } = options;
@@ -190,62 +261,16 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               y: dataFrame.fields[i],
               x: timeField,
             };
-            let highlightIdx: number | undefined = (() => {
-              switch (calc) {
-                case ReducerID.last:
-                  return sparkline.y.values.length - 1;
-                case ReducerID.first:
-                  return 0;
-                // TODO: #112977 enable more reducers for highlight index
-                // case ReducerID.lastNotNull: {
-                //   for (let k = sparkline.y.values.length - 1; k >= 0; k--) {
-                //     const v = sparkline.y.values[k];
-                //     if (v !== null && v !== undefined && !Number.isNaN(v)) {
-                //       return k;
-                //     }
-                //   }
-                //   return;
-                // }
-                // case ReducerID.firstNotNull: {
-                //   for (let k = 0; k < sparkline.y.values.length; k++) {
-                //     const v = sparkline.y.values[k];
-                //     if (v !== null && v !== undefined && !Number.isNaN(v)) {
-                //       return k;
-                //     }
-                //   }
-                //   return;
-                // }
-                // case ReducerID.min: {
-                //   let minIdx = -1;
-                //   let prevMin = Infinity;
-                //   for (let k = 0; k < sparkline.y.values.length; k++) {
-                //     const v = sparkline.y.values[k];
-                //     if (v !== null && v !== undefined && !Number.isNaN(v) && v < prevMin) {
-                //       prevMin = v;
-                //       minIdx = k;
-                //     }
-                //   }
-                //   return minIdx >= 0 ? minIdx : undefined;
-                // }
-                // case ReducerID.max: {
-                //   let maxIdx = -1;
-                //   let prevMax = -Infinity;
-                //   for (let k = 0; k < sparkline.y.values.length; k++) {
-                //     const v = sparkline.y.values[k];
-                //     if (v !== null && v !== undefined && !Number.isNaN(v) && v > prevMax) {
-                //       prevMax = v;
-                //       maxIdx = k;
-                //     }
-                //   }
-                //   return maxIdx >= 0 ? maxIdx : undefined;
-                // }
-                default:
-                  return;
+            if (isReducerID(calc)) {
+              const sparklineHighlight = getSparklineHighlight(sparkline, calc);
+              switch (sparklineHighlight?.type) {
+                case 'point':
+                  sparkline.highlightIndex = sparklineHighlight.xIdx;
+                  break;
+                case 'line':
+                  sparkline.highlightLine = sparklineHighlight.y;
+                  break;
               }
-            })();
-
-            if (typeof highlightIdx === 'number') {
-              sparkline.highlightIndex = highlightIdx;
             }
           }
 

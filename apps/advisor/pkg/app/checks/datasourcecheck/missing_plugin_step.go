@@ -15,7 +15,7 @@ import (
 
 type missingPluginStep struct {
 	PluginStore    pluginstore.Store
-	PluginRepo     repo.Service
+	PluginRepo     checks.PluginInfoGetter
 	GrafanaVersion string
 }
 

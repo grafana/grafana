@@ -132,6 +132,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
               type: profilesDataSourceSettings.type,
               uid: profilesDataSourceSettings.uid,
             },
+            includeExemplars: false,
           },
         ],
       };

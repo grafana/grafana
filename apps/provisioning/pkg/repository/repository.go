@@ -6,7 +6,6 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -18,11 +17,6 @@ import (
 type Repository interface {
 	// Config returns the saved Kubernetes object.
 	Config() *provisioning.Repository
-
-	// Validate ensures the resource _looks_ correct.
-	// It should be called before trying to upsert a resource into the Kubernetes API server.
-	// This is not an indication that the connection information works, just that they are reasonably configured (see also Test).
-	Validate() field.ErrorList
 
 	// Test checks if the connection information actually works.
 	Test(ctx context.Context) (*provisioning.TestResults, error)

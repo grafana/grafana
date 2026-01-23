@@ -1,3 +1,10 @@
+---
+title: Alerting Squad Guidelines
+description: Alerting-specific patterns and conventions for Grafana
+globs:
+  - 'public/app/features/alerting/**'
+---
+
 # Alerting Squad - Claude Code Configuration
 
 This file provides context for Claude Code when working on the Grafana Alerting codebase. It contains alerting-specific patterns and references to Grafana's coding standards.

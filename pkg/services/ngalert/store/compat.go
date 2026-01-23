@@ -15,22 +15,23 @@ type compactQuery struct {
 	DatasourceUID string `json:"datasourceUid"`
 }
 
-func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, error) {
-	return convertAlertRuleToModel(ar, l, false)
+// AlertRuleConvertOptions controls which fields to parse during conversion from alertRule to models.AlertRule.
+// By default all fields are included. Set Exclude* to true to skip parsing expensive fields.
+type AlertRuleConvertOptions struct {
+	ExcludeAlertQueries         bool // Only parse datasource UIDs from queries
+	ExcludeNotificationSettings bool
+	ExcludeMetadata             bool
 }
 
-// alertRuleToModelsAlertRuleCompact transforms an alertRule to a models.AlertRule
-// ignoring alert queries (except for data source UIDs), notification settings, and metadata.
-func alertRuleToModelsAlertRuleCompact(ar alertRule, l log.Logger) (models.AlertRule, error) {
-	return convertAlertRuleToModel(ar, l, true)
+func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, error) {
+	return convertAlertRuleToModel(ar, l, AlertRuleConvertOptions{})
 }
 
 // convertAlertRuleToModel creates a models.AlertRule from an alertRule.
-// When 'compact' is set to 'true', it skips parsing the alert queries (except for the data source UID), notification
-// settings, and metadata, thus reducing the number of JSON serializations needed.
-func convertAlertRuleToModel(ar alertRule, l log.Logger, compact bool) (models.AlertRule, error) {
+// opts.Exclude* fields control which expensive fields to skip parsing, reducing JSON serializations.
+func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOptions) (models.AlertRule, error) {
 	var data []models.AlertQuery
-	if compact {
+	if opts.ExcludeAlertQueries {
 		var cqs []compactQuery
 		if err := json.Unmarshal([]byte(ar.Data), &cqs); err != nil {
 			return models.AlertRule{}, fmt.Errorf("failed to parse data: %w", err)
@@ -118,7 +119,7 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, compact bool) (models.A
 		}
 	}
 
-	if !compact && ar.NotificationSettings != "" {
+	if !opts.ExcludeNotificationSettings && ar.NotificationSettings != "" {
 		ns, err := parseNotificationSettings(ar.NotificationSettings)
 		if err != nil {
 			return models.AlertRule{}, fmt.Errorf("failed to parse notification settings: %w", err)
@@ -126,7 +127,7 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, compact bool) (models.A
 		result.NotificationSettings = ns
 	}
 
-	if !compact && ar.Metadata != "" {
+	if !opts.ExcludeMetadata && ar.Metadata != "" {
 		err = json.Unmarshal([]byte(ar.Metadata), &result.Metadata)
 		if err != nil {
 			return models.AlertRule{}, fmt.Errorf("failed to metadata: %w", err)

@@ -83,6 +83,18 @@ func TestTeamSearchBuilder(t *testing.T) {
 	})
 }
 
+func TestTeamBindingSearchBuilder(t *testing.T) {
+	info, err := GetTeamBindingBuilder()
+	require.NoError(t, err)
+	doSnapshotTests(t, info.Builder, "team_binding", &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "iam.grafana.app",
+		Resource:  "teambindings",
+	}, []string{
+		"with-team-and-user",
+	})
+}
+
 func TestDashboardDocumentBuilder(t *testing.T) {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",

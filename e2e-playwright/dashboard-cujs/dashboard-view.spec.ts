@@ -165,9 +165,8 @@ test.describe(
 
         await refreshBtn.click();
 
-        await page.waitForLoadState('networkidle');
-
-        expect(await panelContent.textContent()).not.toBe(panelContents);
+        // Wait for the panel content to change (not just for network to complete)
+        await expect(panelContent).not.toHaveText(panelContents!, { timeout: 10000 });
       });
 
       await test.step('6.Turn off refresh', async () => {

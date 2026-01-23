@@ -26,7 +26,7 @@
         "no_data_state": "NoData",
         "exec_err_state": "Alerting",
         "notification_settings": {
-          "receiver": "grafana-default-email",
+          "receiver": "empty",
           "mute_time_intervals": [
             "test-interval",
             "persisted-interval"

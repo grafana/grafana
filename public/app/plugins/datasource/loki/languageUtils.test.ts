@@ -56,40 +56,67 @@ describe('unescapeLabelValueInExactSelector', () => {
 describe('getLabelTypeFromFrame', () => {
   const frameWithTypes = toDataFrame({
     fields: [
-      { name: 'Time', type: FieldType.time, values: [0] },
+      { name: 'Time', type: FieldType.time, values: [0, 1] },
       {
         name: 'Line',
         type: FieldType.string,
-        values: ['line1'],
+        values: ['line1', 'line2'],
       },
-      { name: 'labelTypes', type: FieldType.other, values: [{ indexed: 'I', parsed: 'P', structured: 'S' }] },
+      {
+        name: 'labelTypes',
+        type: FieldType.other,
+        values: [
+          { indexed: 'I', parsed: 'P', structured: 'S' },
+          {
+            /* Empty, the second value has no label types */
+          },
+        ],
+      },
     ],
   });
   const frameWithoutTypes = toDataFrame({
     fields: [
-      { name: 'Time', type: FieldType.time, values: [0] },
+      { name: 'Time', type: FieldType.time, values: [0, 1] },
       {
         name: 'Line',
         type: FieldType.string,
-        values: ['line1'],
+        values: ['line1', 'line2'],
       },
       { name: 'labels', type: FieldType.other, values: [{ job: 'test' }] },
     ],
   });
-  it('returns structuredMetadata', () => {
+  it('returns structuredMetadata if given correct index', () => {
     expect(getLabelTypeFromFrame('structured', frameWithTypes, 0)).toBe(LabelType.StructuredMetadata);
+  });
+  it('returns null if given index to value without label', () => {
+    expect(getLabelTypeFromFrame('structured', frameWithTypes, 1)).toBe(null);
+  });
+  it('returns structuredMetadata if index arg is null, searches through all labels to find a match', () => {
+    expect(getLabelTypeFromFrame('structured', frameWithTypes, null)).toBe(LabelType.StructuredMetadata);
   });
   it('returns indexed', () => {
     expect(getLabelTypeFromFrame('indexed', frameWithTypes, 0)).toBe(LabelType.Indexed);
   });
+  it('returns indexed if null', () => {
+    expect(getLabelTypeFromFrame('indexed', frameWithTypes, null)).toBe(LabelType.Indexed);
+  });
   it('returns parsed', () => {
     expect(getLabelTypeFromFrame('parsed', frameWithTypes, 0)).toBe(LabelType.Parsed);
+  });
+  it('returns parsed if null', () => {
+    expect(getLabelTypeFromFrame('parsed', frameWithTypes, null)).toBe(LabelType.Parsed);
   });
   it('returns null for unknown field', () => {
     expect(getLabelTypeFromFrame('unknown', frameWithTypes, 0)).toBe(null);
   });
-  it('returns null for frame without types', () => {
+  it('returns null for unknown field and unknown index', () => {
+    expect(getLabelTypeFromFrame('unknown', frameWithTypes, null)).toBe(null);
+  });
+  it('returns null for frame value without types', () => {
     expect(getLabelTypeFromFrame('job', frameWithoutTypes, 0)).toBe(null);
+  });
+  it('returns null for frame without types', () => {
+    expect(getLabelTypeFromFrame('job', frameWithoutTypes, null)).toBe(null);
   });
 });
 

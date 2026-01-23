@@ -13,6 +13,7 @@ import {
   canDeleteEntity,
   canEditEntity,
   getAnnotation,
+  isProvisionedResource,
   shouldUseK8sApi,
 } from 'app/features/alerting/unified/utils/k8s/utils';
 
@@ -31,12 +32,14 @@ interface ContactPointHeaderProps {
 }
 
 export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeaderProps) => {
-  const { name, id, provisioned, policies = [] } = contactPoint;
+  const { name, id, provenance, policies = [] } = contactPoint;
   const styles = useStyles2(getStyles);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const { selectedAlertmanager } = useAlertmanager();
 
   const usingK8sApi = shouldUseK8sApi(selectedAlertmanager!);
+
+  const isProvisioned = isProvisionedResource(provenance);
 
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
   const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
@@ -70,14 +73,14 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   /** Does the current user have permissions to edit the contact point? */
   const hasAbilityToEdit = usingK8sApi ? canEditEntity(contactPoint) : editAllowed;
   /** Can the contact point actually be edited via the UI? */
-  const contactPointIsEditable = !provisioned;
+  const contactPointIsEditable = !isProvisioned;
   /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be edited? */
   const canEdit = editSupported && hasAbilityToEdit && contactPointIsEditable;
 
   /** Does the current user have permissions to delete the contact point? */
   const hasAbilityToDelete = usingK8sApi ? canDeleteEntity(contactPoint) : deleteAllowed;
   /** Can the contact point actually be deleted, regardless of permissions? i.e. ensuring it isn't provisioned and isn't referenced elsewhere */
-  const contactPointIsDeleteable = !provisioned && !numberOfPoliciesPreventingDeletion && !numberOfRules;
+  const contactPointIsDeleteable = !isProvisioned && !numberOfPoliciesPreventingDeletion && !numberOfRules;
   /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be deleted? */
   const canBeDeleted = deleteSupported && hasAbilityToDelete && contactPointIsDeleteable;
 
@@ -130,7 +133,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
 
     const reasonsDeleteIsDisabled = [
       !hasAbilityToDelete ? cannotDeleteNoPermissions : '',
-      provisioned ? cannotDeleteProvisioned : '',
+      isProvisioned ? cannotDeleteProvisioned : '',
       numberOfPoliciesPreventingDeletion > 0 ? cannotDeletePolicies : '',
       numberOfRules ? cannotDeleteRules : '',
     ].filter(Boolean);
@@ -209,15 +212,13 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
             {referencedByRulesText}
           </TextLink>
         )}
-        {provisioned && (
-          <ProvisioningBadge tooltip provenance={getAnnotation(contactPoint, K8sAnnotations.Provenance)} />
-        )}
+        {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}
         {!isReferencedByAnything && <UnusedContactPointBadge />}
         <Spacer />
         <LinkButton
           tooltipPlacement="top"
           tooltip={
-            provisioned
+            isProvisioned
               ? t(
                   'alerting.contact-point-header.tooltip-provisioned-contact-points',
                   'Provisioned contact points cannot be edited in the UI'

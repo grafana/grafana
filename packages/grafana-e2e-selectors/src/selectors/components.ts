@@ -64,6 +64,9 @@ export const versionedComponents = {
     dockToggle: {
       '12.4.0': 'data-testid sidebar-dock-toggle',
     },
+    newPanelButton: {
+      '12.4.0': 'data-testid sidebar add new panel',
+    },
   },
   EditPaneHeader: {
     deleteButton: {
@@ -78,6 +81,9 @@ export const versionedComponents = {
     duplicate: {
       '12.1.0': 'data-testid EditPaneHeader duplicate',
     },
+  },
+  LayoutContainer: {
+    '12.4.0': (identifier: string) => `data-testid Layout container ${identifier}`,
   },
   TimePicker: {
     openButton: {
@@ -533,6 +539,11 @@ export const versionedComponents = {
       Tooltip: {
         Wrapper: {
           '12.3.0': 'data-testid viz-tooltip-wrapper',
+        },
+      },
+      Gauge: {
+        Container: {
+          '12.4.0': 'data-testid gauge container',
         },
       },
     },
@@ -1287,6 +1298,9 @@ export const versionedComponents = {
   VisualizationPreview: {
     card: {
       [MIN_GRAFANA_VERSION]: (name: string) => `data-testid suggestion-${name}`,
+    },
+    confirm: {
+      '12.4.0': (name: string) => `data-testid suggestion-${name} confirm button`,
     },
   },
   ColorSwatch: {

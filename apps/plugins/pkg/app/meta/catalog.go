@@ -20,7 +20,6 @@ const (
 type CatalogProvider struct {
 	httpClient       *http.Client
 	grafanaComAPIURL string
-	log              logging.Logger
 	ttl              time.Duration
 }
 
@@ -40,7 +39,6 @@ func NewCatalogProviderWithTTL(grafanaComAPIURL string, ttl time.Duration) *Cata
 			Timeout: 10 * time.Second,
 		},
 		grafanaComAPIURL: grafanaComAPIURL,
-		log:              logging.DefaultLogger,
 		ttl:              ttl,
 	}
 }
@@ -68,11 +66,12 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, pluginID, version string)
 	}
 	defer func() {
 		if err = resp.Body.Close(); err != nil {
-			p.log.Warn("Failed to close response body", "error", err)
+			logging.FromContext(ctx).Warn("CatalogProvider: Failed to close response body", "error", err)
 		}
 	}()
 
 	if resp.StatusCode == http.StatusNotFound {
+		logging.FromContext(ctx).Warn("CatalogProvider: Plugin metadata not found", "pluginID", pluginID, "version", version, "url", u.String())
 		return nil, ErrMetaNotFound
 	}
 

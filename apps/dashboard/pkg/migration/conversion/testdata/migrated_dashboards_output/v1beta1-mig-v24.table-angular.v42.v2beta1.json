@@ -449,7 +449,29 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "colors": [
+                          "red",
+                          "yellow",
+                          "green"
+                        ],
+                        "pattern": "/.*/",
+                        "thresholds": [
+                          "10",
+                          "20"
+                        ],
+                        "unit": "short"
+                      }
+                    ],
+                    "table": "table2"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

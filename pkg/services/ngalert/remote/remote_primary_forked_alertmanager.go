@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -171,6 +172,10 @@ func (fam *RemotePrimaryForkedAlertmanager) GetReceivers(ctx context.Context) ([
 
 func (fam *RemotePrimaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
 	return fam.remote.TestReceivers(ctx, c)
+}
+
+func (fam *RemotePrimaryForkedAlertmanager) TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error) {
+	return fam.remote.TestIntegration(ctx, receiverName, integrationConfig, alert)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
