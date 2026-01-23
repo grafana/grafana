@@ -925,6 +925,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardValidatorApp",
+			Description:  "Enables dashboard validator app to run compatibility checks between a dashboard and data source",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardTemplates",
 			Description:  "Enables a flow to get started with a new dashboard from a template",
 			Stage:        FeatureStagePublicPreview,
@@ -1717,6 +1725,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesAuthzTeamLBACRuleApi",
+			Description:  "Registers AuthZ TeamLBACRule /apis endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesAuthzRoleBindingsApi",
 			Description:  "Registers AuthZ Role Bindings /apis endpoint",
 			Stage:        FeatureStageExperimental,
@@ -2232,6 +2248,22 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaOSSBigTent,
+			Expression:   "false",
+		},
+		{
+			Name:         "queryEditorNext",
+			Description:  "Enables next generation query editor experience",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDataProSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesTeamBindings",
+			Description:  "Enables search for team bindings in the app platform API",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
 			Expression:   "false",
 		},
 	}

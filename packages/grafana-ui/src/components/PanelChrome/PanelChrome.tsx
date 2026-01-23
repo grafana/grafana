@@ -248,10 +248,15 @@ export function PanelChrome({
 
   const onContentPointerDown = React.useCallback(
     (evt: React.PointerEvent) => {
-      // When selected, ignore clicks inside buttons, links, canvas and svg elments
-      // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
-      if (isSelected && evt.target instanceof Element && evt.target.closest('button,a,canvas,svg')) {
-        // Stop propagation otherwise row config editor will get selected
+      // Always ignore interactive controls so their clicks don't select the panel.
+      // This prevents legend item clicks from selecting the panel and opening the edit sidebar.
+      if (evt.target instanceof Element && evt.target.closest('button,a')) {
+        evt.stopPropagation();
+        return;
+      }
+
+      // When selected, ignore clicks inside canvas/svg to avoid selecting row config editor.
+      if (isSelected && evt.target instanceof Element && evt.target.closest('canvas,svg')) {
         evt.stopPropagation();
         return;
       }

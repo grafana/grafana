@@ -1643,6 +1643,11 @@
       },
       "yaml-error": "Kan YAML-bestand niet parseren: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "De status van je systeem controleren",
       "monitor-status-system-tooltip": "Waarschuwingsinzichten bieden kant-en-klare dashboards om je waarschuwingsgegevens te controleren.",
@@ -3730,6 +3735,7 @@
       "non-folder-item": "Niet-map {{itemKind}} {{itemUID}}",
       "root-title": "Dashboards",
       "search-placeholder": "Mappen doorzoeken",
+      "shared-with-me": "",
       "unknown-error": "Onbekende fout"
     },
     "manage-folder-nav": {
@@ -3833,6 +3839,7 @@
       "label-method": "Methode",
       "label-payload": "Laadvermogen",
       "label-query-parameters": "Query-parameters",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Test-API",
         "title-test-api": "Test-API"
@@ -4548,6 +4555,14 @@
     "actions": {
       "open-settings": "Instellingen"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Widget 'Paneel toevoegen' sluiten",
       "tooltip-close-widget": "Widget sluiten"
@@ -4930,12 +4945,14 @@
       "add-visualization-body": "Selecteer een gegevensbron en zoek en visualiseer je gegevens met grafieken, statistieken en tabellen of maak lijsten, prijsverlagingen en andere widgets.",
       "add-visualization-button": "Visualisatie toevoegen",
       "add-visualization-header": "Begin je nieuwe dashboard door een visualisatie toe te voegen",
+      "description": "",
       "import-a-dashboard-body": "Importeer dashboards uit bestanden of <1>grafana.com</1>.",
       "import-a-dashboard-header": "Dashboard importeren",
       "import-dashboard-button": "Dashboard importeren",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5442,6 +5459,10 @@
       "loading-configuration": "Configuratie laden"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -11847,10 +11868,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12039,6 +12057,8 @@
       "error-delete-all-repositories": "Kan niet alle repositories verwijderen",
       "subtitle": "Je geconfigureerde repositories bekijken en beheren",
       "success-all-repositories-deleted": "Alle geconfigureerde repositories zijn verwijderd",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Aan de slag",
       "tab-getting-started-title": "Aan de slag",
       "tab-repositories": "Repositories",
@@ -12102,6 +12122,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12122,7 +12145,6 @@
       "jobs": "Taken"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Instellingen",
       "source-code": "Broncode"
     },
@@ -12302,6 +12324,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Voltooien",
@@ -12314,15 +12341,30 @@
         "dismiss": "Blijf werken",
         "title": "Repository-instellingen verwijderen?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Kies wat je wilt synchroniseren",
+      "step-configure-repo": "",
       "step-connect": "Verbinden",
       "step-finish": "Kies aanvullende instellingen",
+      "step-github-app": "",
       "step-synchronize": "Synchroniseren met externe opslag",
       "sync-description": "Bronnen synchroniseren met externe opslag. Na deze eenmalige stap worden alle toekomstige updates automatisch opgeslagen in de repository en opnieuw ingericht in de instantie.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Kies wat je wilt synchroniseren",
+      "title-configure-repo": "",
       "title-connect": "Verbinden met externe opslag",
       "title-finish": "Kies aanvullende instellingen",
+      "title-github-app": "",
       "title-synchronize": "Synchroniseren met externe opslag"
     },
     "wizard-content": {
@@ -12540,6 +12582,11 @@
       "query-inspector": "Querycontrole",
       "query-tab-help-button-title-open-data-source-help": "Hulp bij gegevensbron openen",
       "title-data-source-help": "Hulp bij gegevensbron"
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {

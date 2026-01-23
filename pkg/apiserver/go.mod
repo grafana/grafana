@@ -5,7 +5,7 @@ go 1.25.6
 require (
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/authlib/types v0.0.0-20260119104241-f33edcf42077
-	github.com/grafana/grafana-app-sdk/logging v0.48.7
+	github.com/grafana/grafana-app-sdk/logging v0.49.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/propagators/jaeger v1.39.0

@@ -1643,6 +1643,11 @@
       },
       "yaml-error": "Die YAML-Datei konnte nicht geparst werden: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Überwachen Sie den Status Ihres Systems",
       "monitor-status-system-tooltip": "Alerting Insights bietet vorgefertigte Dashboards zur Überwachung Ihrer Alerting-Daten.",
@@ -3730,6 +3735,7 @@
       "non-folder-item": "{{itemKind}} {{itemUID}} nicht im Ordner enthalten",
       "root-title": "Dashboards",
       "search-placeholder": "Ordner suchen",
+      "shared-with-me": "",
       "unknown-error": "Unbekannter Fehler"
     },
     "manage-folder-nav": {
@@ -3833,6 +3839,7 @@
       "label-method": "Methode",
       "label-payload": "Payload",
       "label-query-parameters": "Abfrageparameter",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Test-API",
         "title-test-api": "Test-API"
@@ -4548,6 +4555,14 @@
     "actions": {
       "open-settings": "Einstellungen"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Widget „Panel hinzufügen“ schließen",
       "tooltip-close-widget": "Widget schließen"
@@ -4930,12 +4945,14 @@
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
+      "description": "",
       "import-a-dashboard-body": "Importieren Sie Dashboards aus Dateien oder von <2>grafana.com</2>.",
       "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5442,6 +5459,10 @@
       "loading-configuration": "Konfiguration wird geladen"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -11847,10 +11868,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12039,6 +12057,8 @@
       "error-delete-all-repositories": "Es konnten nicht alle Repositorys gelöscht werden",
       "subtitle": "Sehen und verwalten Sie Ihre konfigurierten Repositorys",
       "success-all-repositories-deleted": "Alle konfigurierten Repositorys gelöscht",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Erste Schritte",
       "tab-getting-started-title": "Erste Schritte",
       "tab-repositories": "Repositorys",
@@ -12102,6 +12122,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12122,7 +12145,6 @@
       "jobs": "Aufträge"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Einstellungen",
       "source-code": "Quellcode"
     },
@@ -12302,6 +12324,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Fertigstellen",
@@ -12314,15 +12341,30 @@
         "dismiss": "Arbeit fortsetzen",
         "title": "Repository-Einrichtung verwerfen?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Wählen Sie aus, was synchronisiert wird",
+      "step-configure-repo": "",
       "step-connect": "Verbinden",
       "step-finish": "Zusätzliche Einstellungen auswählen",
+      "step-github-app": "",
       "step-synchronize": "Mit externem Speicher synchronisieren",
       "sync-description": "Synchronisieren Sie Ressourcen mit externem Speicher. Nach diesem einmaligen Schritt werden alle zukünftigen Updates automatisch im Repository gespeichert und wieder in der Instanz bereitgestellt.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Wählen Sie aus, was synchronisiert wird",
+      "title-configure-repo": "",
       "title-connect": "Mit externem Speicher verbinden",
       "title-finish": "Zusätzliche Einstellungen auswählen",
+      "title-github-app": "",
       "title-synchronize": "Mit externem Speicher synchronisieren"
     },
     "wizard-content": {
@@ -12540,6 +12582,11 @@
       "query-inspector": "Abfrage-Inspektor",
       "query-tab-help-button-title-open-data-source-help": "Datenquellen-Hilfe öffnen",
       "title-data-source-help": "Datenquellen-Hilfe"
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {

@@ -1643,6 +1643,11 @@
       },
       "yaml-error": "Impossibile analizzare il file YAML: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Monitora lo stato del tuo sistema",
       "monitor-status-system-tooltip": "Gli approfondimenti sugli avvisi forniscono dashboard pre-costruite per monitorare i dati degli avvisi.",
@@ -3730,6 +3735,7 @@
       "non-folder-item": "Non cartella {{itemKind}} {{itemUID}}",
       "root-title": "Dashboard",
       "search-placeholder": "Cerca cartelle",
+      "shared-with-me": "",
       "unknown-error": "Errore sconosciuto"
     },
     "manage-folder-nav": {
@@ -3833,6 +3839,7 @@
       "label-method": "Metodo",
       "label-payload": "Carico utile",
       "label-query-parameters": "Parametri delle query",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "API di test",
         "title-test-api": "API di test"
@@ -4548,6 +4555,14 @@
     "actions": {
       "open-settings": "Impostazioni"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Chiudi il widget \"Aggiungi pannello\"",
       "tooltip-close-widget": "Chiudi widget"
@@ -4930,12 +4945,14 @@
       "add-visualization-body": "Seleziona un'origine dati, quindi esegui query e visualizza i dati con grafici, statistiche e tabelle o crea elenchi, markdown e altri widget.",
       "add-visualization-button": "Aggiungi visualizzazione",
       "add-visualization-header": "Avvia il tuo nuovo dashboard aggiungendo una visualizzazione",
+      "description": "",
       "import-a-dashboard-body": "Importa dashboard da file o <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importa un dashboard",
       "import-dashboard-button": "Importa dashboard",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5442,6 +5459,10 @@
       "loading-configuration": "Caricamento configurazione"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -11847,10 +11868,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12039,6 +12057,8 @@
       "error-delete-all-repositories": "Impossibile eliminare tutti i repository",
       "subtitle": "Visualizza e gestisci i repository configurati",
       "success-all-repositories-deleted": "Tutti i repository configurati sono stati eliminati",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Come iniziare",
       "tab-getting-started-title": "Come iniziare",
       "tab-repositories": "Repository",
@@ -12102,6 +12122,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12122,7 +12145,6 @@
       "jobs": "Attività"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Impostazioni",
       "source-code": "Codice sorgente"
     },
@@ -12302,6 +12324,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Fine",
@@ -12314,15 +12341,30 @@
         "dismiss": "Continua a lavorare",
         "title": "Annullare la configurazione del repository?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Scegli cosa sincronizzare",
+      "step-configure-repo": "",
       "step-connect": "Connetti",
       "step-finish": "Scegli impostazioni aggiuntive",
+      "step-github-app": "",
       "step-synchronize": "Sincronizza con la memoria esterna",
       "sync-description": "Sincronizza le risorse con la memoria esterna. Dopo questo passaggio una tantum, tutti gli aggiornamenti futuri verranno salvati automaticamente nel repository e ripristinati nell'istanza.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Scegli cosa sincronizzare",
+      "title-configure-repo": "",
       "title-connect": "Connetti a una memoria esterna",
       "title-finish": "Scegli impostazioni aggiuntive",
+      "title-github-app": "",
       "title-synchronize": "Sincronizza con la memoria esterna"
     },
     "wizard-content": {
@@ -12540,6 +12582,11 @@
       "query-inspector": "Ispettore query",
       "query-tab-help-button-title-open-data-source-help": "Apri la guida dell'origine dei dati",
       "title-data-source-help": "Guida dell'origine dei dati"
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {

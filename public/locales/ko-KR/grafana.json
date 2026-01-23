@@ -1638,6 +1638,11 @@
       },
       "yaml-error": "YAML 파일 파싱에 실패: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "시스템 상태 모니터링",
       "monitor-status-system-tooltip": "경고 인사이트는 경고 데이터를 모니터링할 수 있도록 사전 구축된 대시보드를 제공합니다.",
@@ -3714,6 +3719,7 @@
       "non-folder-item": "비폴더 {{itemKind}} {{itemUID}}",
       "root-title": "대시보드",
       "search-placeholder": "폴더 검색",
+      "shared-with-me": "",
       "unknown-error": "알 수 없는 오류"
     },
     "manage-folder-nav": {
@@ -3814,6 +3820,7 @@
       "label-method": "방법",
       "label-payload": "페이로드",
       "label-query-parameters": "쿼리 파라미터",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "테스트 API",
         "title-test-api": "테스트 API"
@@ -4529,6 +4536,14 @@
     "actions": {
       "open-settings": "설정"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "'패널 추가' 위젯 닫기",
       "tooltip-close-widget": "위젯 닫기"
@@ -4911,12 +4926,14 @@
       "add-visualization-body": "데이터 소스를 선택한 다음 차트, 통계, 표를 사용하여 데이터를 쿼리하고 시각화하거나 목록, 마크다운 및 기타 위젯을 생성합니다.",
       "add-visualization-button": "시각화 추가",
       "add-visualization-header": "시각화 추가하여 새 대시보드 시작하기",
+      "description": "",
       "import-a-dashboard-body": "파일 또는 <1>grafana.com</1>에서 대시보드 가져오기",
       "import-a-dashboard-header": "대시보드 가져오기",
       "import-dashboard-button": "대시보드 가져오기",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5422,6 +5439,10 @@
       "loading-configuration": "구성 로딩 중"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -11797,10 +11818,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -11987,6 +12005,8 @@
       "error-delete-all-repositories": "모든 리포지토리 삭제 실패",
       "subtitle": "구성된 리포지토리 보기 및 관리",
       "success-all-repositories-deleted": "구성된 모든 리포지토리가 삭제되었습니다",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "시작하기",
       "tab-getting-started-title": "시작하기",
       "tab-repositories": "리포지토리",
@@ -12050,6 +12070,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12070,7 +12093,6 @@
       "jobs": "작업"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "설정",
       "source-code": "소스 코드"
     },
@@ -12250,6 +12272,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "완료",
@@ -12262,15 +12289,30 @@
         "dismiss": "계속 작업하기",
         "title": "리포지토리 설정을 취소하시겠어요?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "동기화할 항목 선택",
+      "step-configure-repo": "",
       "step-connect": "연결",
       "step-finish": "추가 설정 선택",
+      "step-github-app": "",
       "step-synchronize": "외부 스토리지와 동기화",
       "sync-description": "외부 스토리지와 리소스를 동기화합니다. 이 일회성 단계 후에는 향후 모든 업데이트가 자동으로 리포지토리에 저장되고 인스턴스에 다시 프로비저닝됩니다.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "동기화할 항목 선택",
+      "title-configure-repo": "",
       "title-connect": "외부 스토리지에 연결",
       "title-finish": "추가 설정 선택",
+      "title-github-app": "",
       "title-synchronize": "외부 스토리지와 동기화"
     },
     "wizard-content": {
@@ -12487,6 +12529,11 @@
       "query-inspector": "쿼리 검사기",
       "query-tab-help-button-title-open-data-source-help": "데이터 소스 도움말 열기",
       "title-data-source-help": "데이터 소스 도움말"
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {

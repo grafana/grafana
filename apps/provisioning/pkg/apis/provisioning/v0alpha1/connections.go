@@ -36,7 +36,7 @@ type ConnectionSecure struct {
 }
 
 func (v ConnectionSecure) IsZero() bool {
-	return v.PrivateKey.IsZero() && v.Token.IsZero()
+	return v.PrivateKey.IsZero() && v.Token.IsZero() && v.ClientSecret.IsZero()
 }
 
 type GitHubConnectionConfig struct {
@@ -100,6 +100,18 @@ const (
 type ConnectionStatus struct {
 	// The generation of the spec last time reconciliation ran
 	ObservedGeneration int64 `json:"observedGeneration"`
+
+	// FieldErrors are errors that occurred during validation of the connection spec.
+	// These errors are intended to help users identify and fix issues in the spec.
+	// +listType=atomic
+	FieldErrors []ErrorDetails `json:"fieldErrors,omitempty"`
+
+	// Conditions represent the latest available observations of the connection's state.
+	// +listType=map
+	// +listMapKey=type
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 
 	// Connection state
 	State ConnectionState `json:"state"`
