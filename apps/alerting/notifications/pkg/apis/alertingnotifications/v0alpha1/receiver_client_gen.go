@@ -84,27 +84,6 @@ func (c *ReceiverClient) Delete(ctx context.Context, identifier resource.Identif
 	return c.client.Delete(ctx, identifier, opts)
 }
 
-type GetReceiverIntegrationTestRequest struct {
-	Headers http.Header
-}
-
-func (c *ReceiverClient) GetReceiverIntegrationTest(ctx context.Context, identifier resource.Identifier, request GetReceiverIntegrationTestRequest) (*GetReceiverIntegrationTest, error) {
-	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
-		Path:    "test",
-		Verb:    "GET",
-		Headers: request.Headers,
-	})
-	if err != nil {
-		return nil, err
-	}
-	cast := GetReceiverIntegrationTest{}
-	err = json.Unmarshal(resp, &cast)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetReceiverIntegrationTest: %w", err)
-	}
-	return &cast, nil
-}
-
 type CreateReceiverIntegrationTestRequest struct {
 	Body    CreateReceiverIntegrationTestRequestBody
 	Headers http.Header

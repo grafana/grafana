@@ -18,13 +18,6 @@ receiverv0alpha1: receiverKind & {
 	]
 	routes: {
 		"test": {
-			// TODO  remove once fix is released
-			"GET": {
-				name: "getReceiverIntegrationTest"
-				response: {
-					status: "ok"
-				}
-			}
 			"POST": {
 				name: "createReceiverIntegrationTest"
 				request: {
