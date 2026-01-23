@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"google.golang.org/grpc"
@@ -196,6 +197,7 @@ type Zanzana struct {
 	cfg *setting.Cfg
 
 	logger   log.Logger
+	tracer   tracing.Tracer
 	handle   grpcserver.Provider
 	features featuremgmt.FeatureToggles
 	reg      prometheus.Registerer
@@ -221,10 +223,10 @@ func (z *Zanzana) start(ctx context.Context) error {
 
 	var authenticatorInterceptor interceptors.Authenticator
 	if z.cfg.ZanzanaServer.AllowInsecure && z.cfg.Env == setting.Dev {
-		z.logger.Info("Allowing insecure connections to OpenFGA HTTP server")
+		z.logger.Info("Allowing insecure connections to zanzana server")
 		authenticatorInterceptor = noopAuthenticator{}
 	} else {
-		z.logger.Info("Requiring secure connections to OpenFGA HTTP server")
+		z.logger.Info("Requiring secure connections to zanzana server")
 		authenticator := authnlib.NewAccessTokenAuthenticator(
 			authnlib.NewAccessTokenVerifier(
 				authnlib.VerifierConfig{AllowedAudiences: []string{AuthzServiceAudience}},
@@ -260,6 +262,11 @@ func (z *Zanzana) start(ctx context.Context) error {
 	healthServer := zServer.NewHealthServer(zanzanaServer)
 	healthv1pb.RegisterHealthServer(grpcServer, healthServer)
 
+	if z.cfg.ZanzanaServer.OpenFGAHttpAddr != "" {
+		// Register OpenFGA service server to pass to the HTTP server
+		openfgav1.RegisterOpenFGAServiceServer(grpcServer, zanzanaServer.GetOpenFGAServer())
+	}
+
 	if _, err := grpcserver.ProvideReflectionService(z.cfg, z.handle); err != nil {
 		return fmt.Errorf("failed to register reflection for zanzana: %w", err)
 	}
@@ -268,19 +275,10 @@ func (z *Zanzana) start(ctx context.Context) error {
 }
 
 func (z *Zanzana) running(ctx context.Context) error {
-	if z.cfg.Env == setting.Dev && z.cfg.ZanzanaServer.OpenFGAHttpAddr != "" {
+	if z.cfg.ZanzanaServer.OpenFGAHttpAddr != "" {
 		go func() {
-			srv, err := zServer.NewOpenFGAHttpServer(z.cfg.ZanzanaServer, z.handle)
-			if err != nil {
-				z.logger.Error("failed to create OpenFGA HTTP server", "error", err)
-			} else {
-				z.logger.Info("Starting OpenFGA HTTP server", "address", z.cfg.ZanzanaServer.OpenFGAHttpAddr)
-				if z.cfg.ZanzanaServer.AllowInsecure {
-					z.logger.Warn("Allowing unauthenticated connections!")
-				}
-				if err := srv.ListenAndServe(); err != nil {
-					z.logger.Error("failed to start OpenFGA HTTP server", "error", err)
-				}
+			if err := z.runHTTPServer(); err != nil {
+				z.logger.Error("failed to run OpenFGA HTTP server", "error", err)
 			}
 		}()
 	}
@@ -293,6 +291,31 @@ func (z *Zanzana) stopping(err error) error {
 	if err != nil && !errors.Is(err, context.Canceled) {
 		z.logger.Error("Stopping zanzana due to unexpected error", "err", err)
 	}
+	return nil
+}
+
+func (z *Zanzana) runHTTPServer() error {
+	if z.cfg.Env != setting.Dev && z.cfg.ZanzanaServer.AllowInsecure {
+		return fmt.Errorf("allow_insecure is only supported in dev mode")
+	}
+
+	z.logger.Info("Initializing OpenFGA HTTP server", "address", z.cfg.ZanzanaServer.OpenFGAHttpAddr)
+
+	httpSrv, err := zServer.NewOpenFGAHttpServer(z.cfg.ZanzanaServer, z.handle)
+	if err != nil {
+		z.logger.Error("failed to create OpenFGA HTTP server", "error", err)
+		return err
+	} else {
+		z.logger.Info("Starting OpenFGA HTTP server", "address", z.cfg.ZanzanaServer.OpenFGAHttpAddr)
+		if z.cfg.ZanzanaServer.AllowInsecure {
+			z.logger.Warn("Allowing unauthenticated connections!")
+		}
+		if err := httpSrv.ListenAndServe(); err != nil {
+			z.logger.Error("failed to start OpenFGA HTTP server", "error", err)
+			return err
+		}
+	}
+
 	return nil
 }
 

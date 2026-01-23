@@ -107,6 +107,10 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, logger log.Logger, trace
 	return s, nil
 }
 
+func (s *Server) GetOpenFGAServer() openfgav1.OpenFGAServiceServer {
+	return s.openFGAServer
+}
+
 func (s *Server) IsHealthy(ctx context.Context) (bool, error) {
 	_, err := s.openFGAClient.ListStores(ctx, &openfgav1.ListStoresRequest{
 		PageSize: wrapperspb.Int32(1),
