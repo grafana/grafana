@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -510,7 +511,10 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	// Explicitly set max repositories to 10 to test the limit enforcement
+	helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningMaxRepositories = 10
+	})
 	ctx := context.Background()
 
 	originalName := "original-repo"
