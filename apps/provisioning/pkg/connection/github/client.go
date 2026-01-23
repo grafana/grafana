@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/go-github/v70/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // API errors that we need to convey after parsing real GH errors (or faking them).
@@ -18,6 +19,8 @@ var (
 	ErrAuthentication = apierrors.NewUnauthorized("authentication failed")
 	//lint:ignore ST1005 this is not punctuation
 	ErrServiceUnavailable = apierrors.NewServiceUnavailable("github is unavailable")
+	//lint:ignore ST1005 this is not punctuation
+	ErrNotFound = apierrors.NewNotFound(schema.GroupResource{Resource: "github"}, "resource not found")
 )
 
 //go:generate mockery --name Client --structname MockClient --inpackage --filename client_mock.go --with-expecter
@@ -81,6 +84,8 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 			switch ghErr.Response.StatusCode {
 			case http.StatusUnauthorized, http.StatusForbidden:
 				return App{}, ErrAuthentication
+			case http.StatusNotFound:
+				return App{}, ErrNotFound
 			case http.StatusServiceUnavailable:
 				return App{}, ErrServiceUnavailable
 			}
@@ -109,6 +114,8 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 			switch ghErr.Response.StatusCode {
 			case http.StatusUnauthorized, http.StatusForbidden:
 				return AppInstallation{}, ErrAuthentication
+			case http.StatusNotFound:
+				return AppInstallation{}, ErrNotFound
 			case http.StatusServiceUnavailable:
 				return AppInstallation{}, ErrServiceUnavailable
 			}

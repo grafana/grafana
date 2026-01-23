@@ -340,6 +340,15 @@ func TestClassifyConnectionError(t *testing.T) {
 			expectedReason: provisioning.ReasonAuthenticationFailed,
 		},
 		{
+			name: "not found (404)",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusNotFound,
+				Errors:  []provisioning.ErrorDetails{{Detail: "app not found"}},
+			},
+			expectedReason: provisioning.ReasonInvalidSpec,
+		},
+		{
 			name: "internal server error (500)",
 			testResults: &provisioning.TestResults{
 				Success: false,

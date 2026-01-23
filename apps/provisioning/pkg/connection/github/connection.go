@@ -73,6 +73,22 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 					},
 				},
 			}, nil
+		case errors.Is(err, ErrNotFound):
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
+				},
+				Code:    http.StatusNotFound,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "appID").String(),
+						Detail: "app not found",
+					},
+				},
+			}, nil
 		case errors.Is(err, ErrServiceUnavailable):
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
@@ -144,6 +160,22 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 						Type:   metav1.CauseTypeFieldValueInvalid,
 						Field:  field.NewPath("spec", "installationID").String(),
 						Detail: ErrAuthentication.Error(),
+					},
+				},
+			}, nil
+		case errors.Is(err, ErrNotFound):
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
+				},
+				Code:    http.StatusNotFound,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "installationID").String(),
+						Detail: "installation not found",
 					},
 				},
 			}, nil
