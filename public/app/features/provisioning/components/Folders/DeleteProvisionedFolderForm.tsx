@@ -6,7 +6,6 @@ import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
-import { Folder } from 'app/api/clients/folder/v1beta1';
 import { Job, RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
@@ -25,7 +24,6 @@ interface FormProps extends DeleteProvisionedFolderFormProps {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
   canPushToConfiguredBranch: boolean;
-  folder?: Folder;
 }
 
 interface DeleteProvisionedFolderFormProps {
