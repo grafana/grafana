@@ -66,13 +66,12 @@ export default function CreateNewButton({
     renderPreBuiltDashboardAction = testDataSources.length > 0;
   }
 
-  const onCreateFolder = async (folderName: string, teamOwnerRef?: OwnerReference) => {
+  const onCreateFolder = async (folderName: string, teamOwnerRefs?: OwnerReference[]) => {
     try {
       const folder = await newFolder({
         title: folderName,
         parentUid: parentFolder?.uid,
-        createAsTeamFolder: Boolean(teamOwnerRef),
-        teamUid: teamOwnerRef?.uid,
+        teamOwnerReferences: teamOwnerRefs,
       });
 
       const depth = parentFolder ? (parentFolder.parents?.length || 0) + 1 : 0;
