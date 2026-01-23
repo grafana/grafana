@@ -223,4 +223,3 @@ servers = ["test1", "test2"]
 String to interpolate: '${servers:text}'
 Interpolation result: "test1 + test2"
 ```
-
