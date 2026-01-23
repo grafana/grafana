@@ -1,6 +1,7 @@
 import { FieldType, VisualizationSuggestionScore, VisualizationSuggestionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { LegendDisplayMode } from '@grafana/ui';
 
 import { Options, FieldConfig, SeriesMapping } from './panelcfg.gen';
 import { prepConfig } from './scatter';
@@ -26,6 +27,16 @@ export const xychartSuggestionsSupplier: VisualizationSuggestionsSupplier<Option
       options: {},
       fieldConfig,
       score: ds.hasFieldType(FieldType.time) ? VisualizationSuggestionScore.OK : VisualizationSuggestionScore.Good,
+      cardOptions: {
+        previewModifier: (s) => {
+          s.options!.legend = s.options?.legend ?? {
+            showLegend: false,
+            displayMode: LegendDisplayMode.Hidden,
+            calcs: [],
+            placement: 'bottom',
+          };
+        },
+      },
     },
   ];
 };
