@@ -232,11 +232,6 @@ func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace strin
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
 
 	for _, parentFolder := range folderInfoList.Items {
-		if parentFolder.Detached {
-			a.logger.Debug("Skipping detached parent folder", "folderName", parentFolder.Name)
-			continue
-		}
-
 		if parentFolder.Name == folderUID {
 			continue
 		}
