@@ -671,7 +671,7 @@ func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	// - The repo is not healthy
 	// - The token will expire before the next resync interval
 	// - The linked connection is healthy (which means it is able to generate valid tokens)
-	expirationBeforeNextResync := time.UnixMilli(obj.Status.Token.Expiration).Before(time.Now().Add(rc.resyncInterval))
+	expirationBeforeNextResync := shouldRefreshBeforeExpiration(time.UnixMilli(obj.Status.Token.Expiration), rc.resyncInterval)
 	return !healthStatus.Healthy &&
 		expirationBeforeNextResync &&
 		c.Status.Health.Healthy

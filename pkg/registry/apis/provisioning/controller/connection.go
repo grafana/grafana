@@ -287,8 +287,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 }
 
 func (cc *ConnectionController) shouldRefreshToken(expiration time.Time) bool {
-	// If the expiration is before the next resync, we should refresh the token.
-	return expiration.Before(time.Now().Add(cc.resyncInterval))
+	return shouldRefreshBeforeExpiration(expiration, cc.resyncInterval)
 }
 
 // generateConnectionToken regenerates the connection token if the connection supports it.
