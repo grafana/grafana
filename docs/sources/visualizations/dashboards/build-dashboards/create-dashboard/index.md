@@ -76,11 +76,11 @@ To create a dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
-1. Under **Add**, click or drag the panel icon onto the dashboard.
+1. Under **Add** in edit pane, click or drag a panel onto the dashboard.
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-add-panel-v12.4.png" max-width="750px" alt="New dashboard" >}}
 
-1. Click **Configure**.
+1. On the new panel, click **Configure**.
 
       The **Edit panel** view opens with the default data source for your instance preselected.
 
@@ -100,7 +100,6 @@ To create a dashboard, follow these steps:
    [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
    {{< /admonition >}}
 
-1. Click **Refresh** to query the data source.
 1. In the visualization list, select a visualization type.
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-select-visualization-v12.png" max-width="350px" alt="Visualization selector" >}}
@@ -109,6 +108,7 @@ To create a dashboard, follow these steps:
 
    For more information about configuring individual visualizations, refer to [Visualizations options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/).
 
+1. Click **Refresh** to query the data source.
 1. Under **Panel options**, enter a title and description for the panel or have Grafana create them using [generative AI features](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
 1. Refer to the following documentation for ways you can adjust panel settings.
 
