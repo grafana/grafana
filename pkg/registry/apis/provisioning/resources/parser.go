@@ -135,7 +135,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	if err := IsPathSupported(info.Path); err != nil {
-		return nil, err
+		return nil, NewResourceValidationError(err)
 	}
 
 	var gvk *schema.GroupVersionKind
@@ -144,7 +144,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		logger.Debug("failed to find GVK of the input data, trying fallback loader", "error", err)
 		parsed.Obj, gvk, parsed.Classic, err = ReadClassicResource(ctx, info)
 		if err != nil || gvk == nil {
-			return nil, apierrors.NewBadRequest("unable to read file as a resource")
+			return nil, NewResourceValidationError(err)
 		}
 	}
 
@@ -172,7 +172,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	// Validate the namespace
 	if obj.GetNamespace() != "" && obj.GetNamespace() != r.repo.Namespace {
-		return nil, apierrors.NewBadRequest("the file namespace does not match target namespace")
+		return nil, NewResourceValidationError(fmt.Errorf("the file namespace does not match target namespace"))
 	}
 	obj.SetNamespace(r.repo.Namespace)
 
@@ -213,7 +213,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	// TODO: catch the not found gvk error to return bad request
 	parsed.Client, parsed.GVR, err = r.clients.ForKind(ctx, parsed.GVK)
 	if err != nil {
-		return nil, fmt.Errorf("get client for kind: %w", err)
+		return nil, NewResourceValidationError(fmt.Errorf("get client for kind: %w", err))
 	}
 
 	return parsed, nil

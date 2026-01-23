@@ -798,6 +798,12 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		assert.Equal(t, initial.Generation, initial.Status.ObservedGeneration, "observed generation should match")
 		// When healthy, fieldErrors should be empty
 		assert.Empty(t, initial.Status.FieldErrors, "fieldErrors should be empty when connection is healthy")
+		// Verify Ready condition is set
+		assert.NotEmpty(t, initial.Status.Conditions, "conditions should be set")
+		readyCondition := findCondition(initial.Status.Conditions, provisioning.ConditionTypeReady)
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
+		assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
 	})
 
 	t.Run("health check updates when spec changes", func(t *testing.T) {
@@ -882,6 +888,12 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		assert.True(t, final.Status.Health.Healthy, "connection should remain healthy")
 		// When healthy after spec change, fieldErrors should be empty
 		assert.Empty(t, final.Status.FieldErrors, "fieldErrors should be empty when connection is healthy after spec change")
+		// Verify Ready condition is still set correctly
+		assert.NotEmpty(t, final.Status.Conditions, "conditions should be set")
+		readyCondition := findCondition(final.Status.Conditions, provisioning.ConditionTypeReady)
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
+		assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
 	})
 }
 
@@ -978,6 +990,12 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		assert.Equal(t, provisioning.ConnectionStateDisconnected, conn.Status.State, "connection should be disconnected")
 		assert.Equal(t, conn.Generation, conn.Status.ObservedGeneration, "connection should be reconciled")
 		assert.Greater(t, conn.Status.Health.Checked, int64(0), "health check timestamp should be set")
+		// Verify Ready condition reflects unhealthy state
+		assert.NotEmpty(t, conn.Status.Conditions, "conditions should be set")
+		readyCondition := findCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False for unhealthy connection")
+		assert.Equal(t, provisioning.ReasonInvalidSpec, readyCondition.Reason, "Ready condition should have InvalidConfiguration reason for invalid installation ID")
 
 		// Verify fieldErrors are populated with validation errors - be strict and explicit
 		require.Len(t, conn.Status.FieldErrors, 1, "fieldErrors should contain exactly one error for invalid installation ID")
@@ -987,7 +1005,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		// Verify all fields explicitly
 		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, installationIDError.Type, "Type must be FieldValueInvalid")
 		assert.Equal(t, "spec.installationID", installationIDError.Field, "Field must be spec.installationID")
-		assert.Equal(t, "invalid installation ID: 999999999", installationIDError.Detail, "Detail must match expected error message")
+		assert.Equal(t, "installation not found", installationIDError.Detail, "Detail must match expected error message")
 		assert.Empty(t, installationIDError.Origin, "Origin should be empty")
 
 		t.Logf("Verified installationID fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
@@ -1066,6 +1084,12 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		assert.Equal(t, provisioning.ConnectionStateDisconnected, conn.Status.State, "connection should be disconnected")
 		assert.Equal(t, conn.Generation, conn.Status.ObservedGeneration, "connection should be reconciled")
 		assert.Greater(t, conn.Status.Health.Checked, int64(0), "health check timestamp should be set")
+		// Verify Ready condition reflects unhealthy state
+		assert.NotEmpty(t, conn.Status.Conditions, "conditions should be set")
+		readyCondition := findCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False for unhealthy connection")
+		assert.Equal(t, provisioning.ReasonInvalidSpec, readyCondition.Reason, "Ready condition should have InvalidConfiguration reason for app ID mismatch")
 
 		// Verify fieldErrors are populated with validation errors - be strict and explicit
 		require.Len(t, conn.Status.FieldErrors, 1, "fieldErrors should contain exactly one error for app ID mismatch")
@@ -1219,6 +1243,12 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 		assert.True(t, connHealthy.Status.Health.Healthy, "connection should be healthy")
 		assert.Equal(t, provisioning.ConnectionStateConnected, connHealthy.Status.State, "connection should be connected")
 		assert.Empty(t, connHealthy.Status.FieldErrors, "fieldErrors should be cleared when connection becomes healthy")
+		// Verify Ready condition is now True
+		assert.NotEmpty(t, connHealthy.Status.Conditions, "conditions should be set")
+		readyCondition := findCondition(connHealthy.Status.Conditions, provisioning.ConditionTypeReady)
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True when connection becomes healthy")
+		assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
 	})
 }
 
@@ -1553,4 +1583,97 @@ func verifyToken(t *testing.T, appID, publicKey, token string) (bool, error) {
 	}
 
 	return claims.VerifyIssuer(appID, true), nil
+}
+func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	namespace := "default"
+
+	// Create typed client from REST config
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	t.Run("ServiceUnavailable reason when GitHub API returns 503", func(t *testing.T) {
+		// Create a connection
+		connUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-service-unavailable",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "789012",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		// Set up mock to return 503 Service Unavailable
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					// Return 503 Service Unavailable
+					w.WriteHeader(http.StatusServiceUnavailable)
+					_, _ = w.Write(ghmock.MustMarshal(github.ErrorResponse{
+						Response: &http.Response{
+							StatusCode: http.StatusServiceUnavailable,
+						},
+						Message: "Service temporarily unavailable",
+					}))
+				}),
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		connName := createdUnstructured.GetName()
+
+		t.Cleanup(func() {
+			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+		})
+
+		// Wait for reconciliation - connection should become unhealthy with ServiceUnavailable reason
+		require.Eventually(t, func() bool {
+			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return conn.Status.ObservedGeneration == conn.Generation &&
+				conn.Status.Health.Checked > 0 &&
+				!conn.Status.Health.Healthy
+		}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
+
+		// Verify the connection has ServiceUnavailable reason
+		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
+		assert.Equal(t, provisioning.ConnectionStateDisconnected, conn.Status.State, "connection should be disconnected")
+
+		// Verify Ready condition has ServiceUnavailable reason
+		assert.NotEmpty(t, conn.Status.Conditions, "conditions should be set")
+		readyCondition := findCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		require.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False")
+		assert.Equal(t, provisioning.ReasonServiceUnavailable, readyCondition.Reason, "Ready condition should have ServiceUnavailable reason for 503 errors")
+		// Verify message contains the actual error returned by the GitHub client
+		assert.Contains(t, readyCondition.Message, "github is unavailable", "condition message should contain the actual error text")
+	})
 }

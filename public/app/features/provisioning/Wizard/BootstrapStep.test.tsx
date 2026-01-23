@@ -211,6 +211,7 @@ describe('BootstrapStep', () => {
           allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],
+          maxRepositories: 10,
         },
       });
 
@@ -233,6 +234,7 @@ describe('BootstrapStep', () => {
           allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],
+          maxRepositories: 10,
         },
       });
 
@@ -275,6 +277,7 @@ describe('BootstrapStep', () => {
           allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],
+          maxRepositories: 10,
         },
       });
 

@@ -56,8 +56,8 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 
 require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.48.7
-	github.com/grafana/grafana-app-sdk/logging v0.48.7
+	github.com/grafana/grafana-app-sdk v0.49.0
+	github.com/grafana/grafana-app-sdk/logging v0.49.0
 	github.com/grafana/grafana/apps/folder v0.0.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/prometheus/client_golang v1.23.2
