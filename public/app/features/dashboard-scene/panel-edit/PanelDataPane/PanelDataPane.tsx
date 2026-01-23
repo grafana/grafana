@@ -95,9 +95,9 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 }
 
 export function shouldShowAlertingTab(pluginId: string) {
-  const { unifiedAlertingEnabled = false } = getConfig();
+  const { unifiedAlertingEnabled = false, unifiedAlertingUIEnabled } = getConfig();
   const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
-  const isAlertingAvailable = unifiedAlertingEnabled && hasRuleReadPermissions;
+  const isAlertingAvailable = unifiedAlertingEnabled && unifiedAlertingUIEnabled !== false && hasRuleReadPermissions;
   if (!isAlertingAvailable) {
     return false;
   }

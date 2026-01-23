@@ -126,7 +126,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   // Create alert states data layer if unified alerting is enabled
   let alertStatesLayer: AlertStatesDataLayer | undefined;
-  if (config.unifiedAlertingEnabled) {
+  if (config.unifiedAlertingEnabled && config.unifiedAlertingUIEnabled !== false) {
     alertStatesLayer = new AlertStatesDataLayer({
       key: 'alert-states',
       name: 'Alert States',

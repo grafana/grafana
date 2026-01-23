@@ -330,7 +330,7 @@ export function createDashboardSceneFromDashboardModel(
     });
   }
 
-  let shouldUseAlertStatesLayer = config.unifiedAlertingEnabled;
+  let shouldUseAlertStatesLayer = config.unifiedAlertingEnabled && config.unifiedAlertingUIEnabled !== false;
   if (!shouldUseAlertStatesLayer) {
     if (oldModel.panels.find((panel) => Boolean(panel.alert))) {
       shouldUseAlertStatesLayer = true;

@@ -19,6 +19,7 @@ export const ServerStats = () => {
 
   const hasAccessToDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesRead);
   const hasAccessToAdminUsers = contextSrv.hasPermission(AccessControlAction.UsersRead);
+  const alertingUIEnabled = config.unifiedAlertingEnabled && config.unifiedAlertingUIEnabled !== false;
 
   useEffect(() => {
     if (contextSrv.hasPermission(AccessControlAction.ActionServerStatsRead)) {
@@ -77,15 +78,17 @@ export const ServerStats = () => {
                 )
               }
             />
-            <ServerStatsCard
-              isLoading={isLoading}
-              content={[{ name: 'Alerts', value: stats?.alerts }]}
-              footer={
-                <LinkButton href={'/alerting/list'} variant={'secondary'}>
-                  <Trans i18nKey="admin.server-settings.alerts-button">Manage alerts</Trans>
-                </LinkButton>
-              }
-            />
+            {alertingUIEnabled && (
+              <ServerStatsCard
+                isLoading={isLoading}
+                content={[{ name: 'Alerts', value: stats?.alerts }]}
+                footer={
+                  <LinkButton href={'/alerting/list'} variant={'secondary'}>
+                    <Trans i18nKey="admin.server-settings.alerts-button">Manage alerts</Trans>
+                  </LinkButton>
+                }
+              />
+            )}
           </Stack>
           <ServerStatsCard
             isLoading={isLoading}

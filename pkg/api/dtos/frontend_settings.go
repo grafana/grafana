@@ -273,6 +273,7 @@ type FrontendSettingsDTO struct {
 	Reporting               FrontendSettingsReportingDTO       `json:"reporting"`
 	Analytics               FrontendSettingsAnalyticsDTO       `json:"analytics"`
 	UnifiedAlertingEnabled  bool                               `json:"unifiedAlertingEnabled"`
+	UnifiedAlertingUIEnabled bool                              `json:"unifiedAlertingUIEnabled"`
 	UnifiedAlerting         FrontendSettingsUnifiedAlertingDTO `json:"unifiedAlerting"`
 	Oauth                   map[string]any                     `json:"oauth"`
 	SamlEnabled             bool                               `json:"samlEnabled"`

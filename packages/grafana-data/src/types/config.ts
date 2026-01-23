@@ -280,6 +280,7 @@ export interface GrafanaConfig {
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer: boolean;
   unifiedAlertingEnabled: boolean;
+  unifiedAlertingUIEnabled: boolean;
   unifiedAlerting: UnifiedAlertingConfig;
   feedbackLinksEnabled: boolean;
   supportBundlesEnabled: boolean;

@@ -53,7 +53,7 @@ export const PanelEditorTabs = memo(({ panel, dashboard, tabs, onChangeTab }: Pa
     return null;
   }
 
-  const alertingEnabled = config.unifiedAlertingEnabled;
+  const alertingEnabled = config.unifiedAlertingEnabled && config.unifiedAlertingUIEnabled !== false;
 
   return (
     <div className={styles.wrapper}>

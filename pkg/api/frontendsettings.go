@@ -379,6 +379,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	frontendSettings.UnifiedAlerting.RecordingRulesEnabled = hs.Cfg.UnifiedAlerting.RecordingRules.Enabled
 	frontendSettings.UnifiedAlerting.DefaultRecordingRulesTargetDatasourceUID = hs.Cfg.UnifiedAlerting.RecordingRules.DefaultDatasourceUID
+	frontendSettings.UnifiedAlertingUIEnabled = hs.Cfg.UnifiedAlerting.UIEnabled
 
 	if hs.Cfg.UnifiedAlerting.Enabled != nil {
 		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled

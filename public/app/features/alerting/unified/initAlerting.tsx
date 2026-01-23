@@ -14,7 +14,7 @@ const AlertRulesToolbarButton = lazy(
 
 export function initAlerting() {
   const grafanaRulesPermissions = getRulesPermissions(GRAFANA_RULES_SOURCE_NAME);
-  const alertingEnabled = config.unifiedAlertingEnabled;
+  const alertingEnabled = config.unifiedAlertingEnabled && config.unifiedAlertingUIEnabled !== false;
 
   if (contextSrv.hasPermission(grafanaRulesPermissions.read)) {
     addCustomRightAction({

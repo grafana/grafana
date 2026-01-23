@@ -30,6 +30,7 @@ const isDevEnv = config.buildInfo.env === 'development';
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
+  const alertingUIEnabled = config.unifiedAlertingEnabled && config.unifiedAlertingUIEnabled !== false;
   const routes: Array<RouteDescriptor | undefined | false> = [
     // Based on the Grafana configuration standalone plugin pages can even override and extend existing core pages, or they can register new routes under existing ones.
     // In order to make it possible we need to register them first due to how `<Switch>` is evaluating routes. (This will be unnecessary once/when we upgrade to React Router v6 and start using `<Routes>` instead.)
@@ -498,7 +499,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/dashboards/f/:uid/:slug/alerting',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.AlertingRuleRead]),
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/browse-dashboards/BrowseFolderAlertingPage')
+        alertingUIEnabled
+          ? () =>
+              import(
+                /* webpackChunkName: "FolderAlerting"*/ 'app/features/browse-dashboards/BrowseFolderAlertingPage'
+              )
+          : () => import(/* webpackChunkName: "AlertingDisabled" */ 'app/features/alerting/unified/AlertingNotEnabled')
       ),
     },
     {

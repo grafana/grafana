@@ -55,7 +55,8 @@ export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: Fol
   if (
     !isProvisioned &&
     contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
-    config.unifiedAlertingEnabled
+    config.unifiedAlertingEnabled &&
+    config.unifiedAlertingUIEnabled !== false
   ) {
     model.children!.push({
       active: false,

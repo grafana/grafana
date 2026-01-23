@@ -56,9 +56,9 @@ export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin
 });
 
 export function shouldShowAlertingTab(plugin: PanelPlugin) {
-  const { unifiedAlertingEnabled = false } = getConfig();
+  const { unifiedAlertingEnabled = false, unifiedAlertingUIEnabled } = getConfig();
   const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
-  const isAlertingAvailable = unifiedAlertingEnabled && hasRuleReadPermissions;
+  const isAlertingAvailable = unifiedAlertingEnabled && unifiedAlertingUIEnabled !== false && hasRuleReadPermissions;
   if (!isAlertingAvailable) {
     return false;
   }

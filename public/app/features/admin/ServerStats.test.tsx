@@ -5,6 +5,9 @@ import config from 'app/core/config';
 import { ServerStats } from './ServerStats';
 import { ServerStat } from './state/apis';
 
+const originalUnifiedAlertingEnabled = config.unifiedAlertingEnabled;
+const originalUnifiedAlertingUIEnabled = config.unifiedAlertingUIEnabled;
+
 const stats: ServerStat = {
   activeAdmins: 1,
   activeEditors: 0,
@@ -36,6 +39,16 @@ jest.mock('../../core/services/context_srv', () => ({
 }));
 
 describe('ServerStats', () => {
+  beforeEach(() => {
+    config.unifiedAlertingEnabled = true;
+    config.unifiedAlertingUIEnabled = true;
+  });
+
+  afterEach(() => {
+    config.unifiedAlertingEnabled = originalUnifiedAlertingEnabled;
+    config.unifiedAlertingUIEnabled = originalUnifiedAlertingUIEnabled;
+  });
+
   it('Should render page with stats', async () => {
     render(<ServerStats />);
     expect(await screen.findByRole('heading', { name: /instance statistics/i })).toBeInTheDocument();

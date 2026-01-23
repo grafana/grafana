@@ -350,5 +350,6 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
 function importAlertingComponent(loader: () => any): GrafanaRouteComponent {
   const featureDisabledPageLoader = () =>
     import(/* webpackChunkName: "AlertingDisabled" */ 'app/features/alerting/unified/AlertingNotEnabled');
-  return SafeDynamicImport(config.unifiedAlertingEnabled ? loader : featureDisabledPageLoader);
+  const alertingUIEnabled = config.unifiedAlertingEnabled && config.unifiedAlertingUIEnabled !== false;
+  return SafeDynamicImport(alertingUIEnabled ? loader : featureDisabledPageLoader);
 }

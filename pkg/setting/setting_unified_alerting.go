@@ -112,6 +112,7 @@ type UnifiedAlertingSettings struct {
 	ExecuteAlerts                   bool
 	DefaultConfiguration            string
 	Enabled                         *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
+	UIEnabled                       bool
 	DisabledOrgs                    map[int64]struct{}
 	// BaseInterval interval of time the scheduler updates the rules and evaluates rules.
 	// Only for internal use and not user configuration.
@@ -262,6 +263,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if err != nil {
 		return fmt.Errorf("failed to read unified alerting enabled setting: %w", err)
 	}
+	uaCfg.UIEnabled = ua.Key("ui_enabled").MustBool(true)
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})
 	orgsStr := valueAsString(ua, "disabled_orgs", "")

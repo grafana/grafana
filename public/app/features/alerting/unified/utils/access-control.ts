@@ -143,10 +143,11 @@ export function getRulesAccess() {
 }
 
 export function getCreateAlertInMenuAvailability() {
-  const { unifiedAlertingEnabled } = getConfig();
+  const { unifiedAlertingEnabled, unifiedAlertingUIEnabled } = getConfig();
   const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
   const hasRuleUpdatePermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).update);
-  const isAlertingAvailableForRead = unifiedAlertingEnabled && hasRuleReadPermissions;
+  const isAlertingAvailableForRead =
+    unifiedAlertingEnabled && unifiedAlertingUIEnabled !== false && hasRuleReadPermissions;
 
   return isAlertingAvailableForRead && hasRuleUpdatePermissions;
 }

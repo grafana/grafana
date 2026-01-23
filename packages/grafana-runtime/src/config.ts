@@ -189,6 +189,7 @@ export class GrafanaBootConfig {
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled = false;
+  unifiedAlertingUIEnabled = true;
   unifiedAlerting: UnifiedAlertingConfig = {
     minInterval: '',
     stateHistory: {

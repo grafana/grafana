@@ -10,6 +10,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     unifiedAlertingEnabled: true,
+    unifiedAlertingUIEnabled: true,
   },
 }));
 
@@ -41,6 +42,7 @@ describe('buildNavModel', () => {
     jest.clearAllMocks();
     (contextSrv.hasPermission as jest.Mock).mockReturnValue(true);
     config.unifiedAlertingEnabled = true;
+    config.unifiedAlertingUIEnabled = true;
   });
 
   describe('Alerts tab visibility', () => {
@@ -76,6 +78,15 @@ describe('buildNavModel', () => {
 
     it('should hide Alerts tab when unified alerting is disabled', () => {
       config.unifiedAlertingEnabled = false;
+
+      const navModel = buildNavModel(mockFolder);
+      const alertingTab = navModel.children?.find((child) => child.id === getAlertingTabID(mockFolder.uid));
+
+      expect(alertingTab).toBeUndefined();
+    });
+
+    it('should hide Alerts tab when alerting UI is disabled', () => {
+      config.unifiedAlertingUIEnabled = false;
 
       const navModel = buildNavModel(mockFolder);
       const alertingTab = navModel.children?.find((child) => child.id === getAlertingTabID(mockFolder.uid));
