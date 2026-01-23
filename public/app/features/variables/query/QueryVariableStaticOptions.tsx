@@ -2,11 +2,13 @@ import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { QueryVariable, VariableValueOption } from '@grafana/scenes';
 import { Field, Stack, Switch } from '@grafana/ui';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableMultiPropStaticOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/VariableMultiPropStaticOptionsForm';
 import { VariableSelectField } from 'app/features/dashboard-scene/settings/variables/components/VariableSelectField';
+import { VariableStaticOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/VariableStaticOptionsForm';
 import { getPropertiesFromOptions } from 'app/features/dashboard-scene/settings/variables/components/VariableValuesPreview';
 
 export type StaticOptionsType = QueryVariable['state']['staticOptions'];
@@ -28,11 +30,12 @@ const SORT_OPTIONS = [
 
 export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProps) {
   const { staticOptions, onStaticOptionsChange, staticOptionsOrder, onStaticOptionsOrderChange, options } = props;
-  const [areStaticOptionsEnabled, setAreStaticOptionsEnabled] = useState(!!staticOptions?.length);
   const value = SORT_OPTIONS.find((o) => o.value === staticOptionsOrder) ?? SORT_OPTIONS[0];
+  const [areStaticOptionsEnabled, setAreStaticOptionsEnabled] = useState(!!staticOptions?.length);
+  const displayMultiPropsEditor = areStaticOptionsEnabled && config.featureToggles.multiPropsVariables;
   const properties = useMemo(
-    () => (areStaticOptionsEnabled ? getPropertiesFromOptions(options) : []),
-    [areStaticOptionsEnabled, options]
+    () => (displayMultiPropsEditor ? getPropertiesFromOptions(options) : []),
+    [options, displayMultiPropsEditor]
   );
 
   return (
@@ -68,13 +71,16 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
                 }}
               />
 
-              {areStaticOptionsEnabled && (
+              {displayMultiPropsEditor && (
                 <VariableMultiPropStaticOptionsForm
                   options={staticOptions ?? []}
                   properties={properties}
                   onChange={onStaticOptionsChange}
                   allowEmptyValue
                 />
+              )}
+              {!displayMultiPropsEditor && areStaticOptionsEnabled && (
+                <VariableStaticOptionsForm options={staticOptions ?? []} onChange={onStaticOptionsChange} />
               )}
             </Stack>
           </>
