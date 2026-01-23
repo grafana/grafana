@@ -20,6 +20,7 @@ import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
+import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
@@ -38,6 +39,7 @@ const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 
 const RuleListV1 = () => {
+  const { navId, pageNav } = useAlertRulesNav();
   const dispatch = useDispatch();
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
   const [expandAll, setExpandAll] = useState(false);
@@ -119,7 +121,8 @@ const RuleListV1 = () => {
     // We don't want to show the Loading... indicator for the whole page.
     // We show separate indicators for Grafana-managed and Cloud rules
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={navId}
+      pageNav={pageNav}
       isLoading={false}
       renderTitle={(title) => <RuleListPageTitle title={title} />}
       actions={<RuleListActionButtons hasAlertRulesCreated={hasAlertRulesCreated} />}

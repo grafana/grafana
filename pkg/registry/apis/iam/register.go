@@ -135,6 +135,7 @@ func RegisterAPIService(
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
 		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService), unified, features),
+		tracing:    tracing,
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, features, cfg)
 
@@ -471,7 +472,17 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		storage[userResource.StoragePath()] = dw
 	}
 
-	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
+	legacyTeamBindingSearchClient := user.NewLegacyUserTeamSearchClient(b.store, b.tracing)
+
+	teamBindingSearchClient := resource.NewSearchClient(
+		dualwrite.NewSearchAdapter(b.dual),
+		iamv0.TeamBindingResourceInfo.GroupResource(),
+		b.unified,
+		legacyTeamBindingSearchClient,
+		b.features,
+	)
+
+	storage[userResource.StoragePath("teams")] = user.NewTeamMemberREST(teamBindingSearchClient, b.tracing, b.features)
 
 	return nil
 }

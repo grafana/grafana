@@ -1653,6 +1653,11 @@
       },
       "yaml-error": "Nepodařilo se analyzovat soubor YAML: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Sledujte stav svého systému",
       "monitor-status-system-tooltip": "Postřehy o upozorňování poskytují předem připravené nástěnky pro sledování dat upozorňování.",
@@ -4588,6 +4593,14 @@
     "actions": {
       "open-settings": "Nastavení"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Zavřít widget „Přidat panel“",
       "tooltip-close-widget": "Zavřít widget"
@@ -4970,12 +4983,14 @@
       "add-visualization-body": "Vyberte zdroj dat a poté se dotazujte a vizualizujte data pomocí grafů, statistik a tabulek nebo vytvářejte seznamy, přehledy a další widgety.",
       "add-visualization-button": "Přidat vizualizaci",
       "add-visualization-header": "Začněte novou nástěnku přidáním vizualizace",
+      "description": "",
       "import-a-dashboard-body": "Importujte nástěnky ze souborů nebo z <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importovat nástěnku",
       "import-dashboard-button": "Importovat nástěnku",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5484,6 +5499,10 @@
       "loading-configuration": "Načítání konfigurace"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -11949,10 +11968,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12145,6 +12161,8 @@
       "error-delete-all-repositories": "Nepodařilo se odstranit všechna úložiště",
       "subtitle": "Zobrazujte a spravujte nakonfigurovaná úložiště",
       "success-all-repositories-deleted": "Všechna nakonfigurovaná úložiště byla odstraněna",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Začínáme",
       "tab-getting-started-title": "Začínáme",
       "tab-repositories": "Úložiště",
@@ -12208,6 +12226,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12228,7 +12249,6 @@
       "jobs": "Práce"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Nastavení",
       "source-code": "Zdrojový kód"
     },
@@ -12408,6 +12428,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Dokončit",
@@ -12420,15 +12445,30 @@
         "dismiss": "Pokračovat v práci",
         "title": "Zahodit nastavení úložiště?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Vyberte, co chcete synchronizovat",
+      "step-configure-repo": "",
       "step-connect": "Připojit",
       "step-finish": "Vybrat další nastavení",
+      "step-github-app": "",
       "step-synchronize": "Synchronizovat s externím úložištěm",
       "sync-description": "Synchronizujte zdroje s externím úložištěm. Po tomto jednorázovém kroku budou všechny budoucí aktualizace automaticky uloženy do úložiště a zajištěny zpět do instance.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Vyberte, co chcete synchronizovat",
+      "title-configure-repo": "",
       "title-connect": "Připojit k externímu úložišti",
       "title-finish": "Vybrat další nastavení",
+      "title-github-app": "",
       "title-synchronize": "Synchronizovat s externím úložištěm"
     },
     "wizard-content": {
@@ -12648,6 +12688,11 @@
       "query-inspector": "Inspektor dotazů",
       "query-tab-help-button-title-open-data-source-help": "Otevřít nápovědu pro zdroj dat",
       "title-data-source-help": "Nápověda pro zdroj dat"
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {
