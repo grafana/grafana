@@ -16,26 +16,23 @@ type QuotaLimits struct {
 	MaxResources int64
 
 	// MaxRepositories is the maximum number of repositories allowed per namespace.
-	// Default is 10, 0 defaults to 10 (HACK), -1 = unlimited (HACK), > 0 = use value
+	// Default is 10 (set in pkg/setting), 0 = unlimited, > 0 = use value
 	MaxRepositories int64
 }
 
 // NewHackyQuota creates a QuotaLimits struct with HACK logic for repository limits.
 // HACK: This function handles the conversion of config values to internal representation:
-// - If maxRepositories is 0, default to 10 (for now).
-// - Validator: -1 = unlimited (HACK), > 0 = use value
-// - This is a workaround to handle default values and unlimited representation.
+// - Config defaults to 10 in pkg/setting. If user explicitly sets it to 0, that means unlimited.
+// - Validator: 0 = unlimited, > 0 = use value
+// - This is a workaround to handle default values. The default of 10 is set in pkg/setting.
 // This HACK should be removed once we can coordinate changes across repositories.
 func NewHackyQuota(maxResourcesPerRepository, maxRepositories int64) QuotaLimits {
-	maxRepos := maxRepositories
-	// HACK: Default to 10 if maxRepositories is 0 (for now).
-	// This handles the case where the value is not explicitly set or set to 0.
-	if maxRepos == 0 {
-		maxRepos = 10 // Default to 10 repositories (HACK)
-	}
+	// HACK: If maxRepositories is 0, it means unlimited (user explicitly set to 0).
+	// The default of 10 is handled in pkg/setting when reading the config.
+	// We pass 0 through as-is, and the validator treats 0 as unlimited.
 	return QuotaLimits{
 		MaxResources:    maxResourcesPerRepository,
-		MaxRepositories: maxRepos,
+		MaxRepositories: maxRepositories,
 	}
 }
 

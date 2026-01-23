@@ -113,12 +113,10 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	// Check repository limit (-1 = unlimited (HACK), > 0 = use value)
-	// HACK: The HACK logic for converting 0 -> 10 default and 0 -> -1 unlimited is handled
-	// during QuotaLimits construction in register.go. Here we just use the value directly.
+	// Check repository limit (0 = unlimited, > 0 = use value)
 	maxRepos := v.limits.MaxRepositories
-	// HACK: Early return if unlimited (-1) to avoid unnecessary counting.
-	if maxRepos == -1 {
+	// Early return if unlimited (0) to avoid unnecessary counting.
+	if maxRepos == 0 {
 		return nil
 	}
 

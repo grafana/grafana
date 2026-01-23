@@ -283,9 +283,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			// Set quota limits for tests that expect a different limit
 			switch tt.name {
 			case "allows unlimited repositories when maxRepositories is 0":
-				// HACK: Use -1 to indicate unlimited (0 would default to 10).
-				// This is a workaround to distinguish between unset (0) and unlimited (-1).
-				quotaLimits = quotas.QuotaLimits{MaxRepositories: -1}
+				// 0 means unlimited
+				quotaLimits = quotas.QuotaLimits{MaxRepositories: 0}
 			case "enforces custom maxRepositories limit":
 				quotaLimits = quotas.QuotaLimits{MaxRepositories: 5}
 			}
