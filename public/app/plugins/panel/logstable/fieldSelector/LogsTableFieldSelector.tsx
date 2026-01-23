@@ -86,8 +86,8 @@ export const LogsTableFieldSelector = ({
   }, [setSidebarWidthWrapper]);
 
   const expand = useCallback(() => {
+    // @todo not expanding back to prior width
     const width = getFieldSelectorWidth(SETTING_KEY_ROOT, DEFAULT_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH);
-    console.log('expand', width);
     setSidebarWidthWrapper(width < 2 * MIN_SIDEBAR_WIDTH ? DEFAULT_SIDEBAR_WIDTH : width);
     reportInteraction(`${SETTING_KEY_ROOT}.field_selector_expand_clicked`, {
       mode: 'table',
