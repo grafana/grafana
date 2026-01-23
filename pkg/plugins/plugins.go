@@ -98,6 +98,10 @@ type JSONData struct {
 	Backend      bool         `json:"backend"`
 	Routes       []*Route     `json:"routes"`
 
+	// The apiserver group that enables access to this plugin
+	// Currently this is filled in automatically
+	APIGroup string `json:"apiGroup,omitempty"`
+
 	// AccessControl settings
 	Roles      []RoleRegistration `json:"roles,omitempty"`
 	ActionSets []ActionSet        `json:"actionSets,omitempty"`
@@ -193,6 +197,18 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		if plugin.Type == TypeApp && include.Role == identity.RoleViewer && include.Action == "" {
 			include.Action = ActionAppAccess
 		}
+	}
+
+	// Validate apiGroup settings -- currently this requires fixed values for datasource plugins
+	if plugin.Type == TypeDataSource {
+		standardAPIGroup := fmt.Sprintf("%s.datasource.grafana.app", plugin.ID)
+		if plugin.APIGroup != "" && plugin.APIGroup != standardAPIGroup {
+			return plugin, fmt.Errorf("plugin %s: apiGroup for datasource plugins must be either empty or set to %s", plugin.ID, standardAPIGroup)
+		}
+
+		plugin.APIGroup = standardAPIGroup
+	} else if plugin.APIGroup != "" {
+		return plugin, fmt.Errorf("plugin %s: apiGroup can only be set for datasource plugins", plugin.ID)
 	}
 
 	return plugin, nil

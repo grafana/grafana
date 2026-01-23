@@ -145,6 +145,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 				ID:       "grafana-pyroscope-datasource",
 				AliasIDs: []string{"phlare"}, // Hardcoded from the parser
 				Type:     TypeDataSource,
+				APIGroup: "grafana-pyroscope-datasource.datasource.grafana.app",
 
 				Extensions: Extensions{
 					AddedLinks:      []AddedLink{},
@@ -420,6 +421,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Name:      "Languages Datasource",
 				Type:      TypeDataSource,
 				Languages: []string{"en-US", "pt-BR"},
+				APIGroup:  "myorg-languages-datasource.datasource.grafana.app",
 
 				Extensions: Extensions{
 					AddedLinks:        []AddedLink{},
