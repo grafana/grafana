@@ -5165,6 +5165,9 @@
         "deleted": "deleted"
       }
     },
+    "kiosk": {
+      "footerPoweredBy": "Powered by"
+    },
     "layout": {
       "cancel": "Cancel",
       "common": {

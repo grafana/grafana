@@ -27,7 +27,7 @@ import { getDashboardScenePageStateManager } from './DashboardScenePageStateMana
 import { shouldHideDashboardKioskFooter } from './utils';
 
 export interface Props
-  extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> { }
+  extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> {}
 
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
