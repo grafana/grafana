@@ -47,6 +47,7 @@ import { useGrafanaContactPoints } from '../contact-points/useContactPoints';
 import { useAlertGroupsModal } from './Modals';
 import { normalizeMatchers } from '../../utils/matchers';
 import { RoutingTreeFilter } from './components/RoutingTreeFilter';
+import { TIMING_OPTIONS_DEFAULTS } from './timingOptions';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -89,6 +90,7 @@ export const PoliciesList = () => {
         <Stack direction="row" gap={1}>
           {createPoliciesSupported && (
             <Button
+              data-testid="create-policy-button"
               icon="plus"
               aria-label={'add policy'}
               variant="primary"
@@ -100,6 +102,7 @@ export const PoliciesList = () => {
           )}
           {exportPoliciesSupported && (
             <Button
+              data-testid="export-all-policy-button"
               icon="download-alt"
               variant="secondary"
               aria-label={'export all'}
@@ -194,9 +197,9 @@ export const RoutingTree = ({ route, receivers }: RoutingTreeProps) => {
               muteTimings={route.mute_time_intervals ?? []}
               activeTimings={route.active_time_intervals ?? []}
               timingOptions={{
-                group_wait: route.group_wait,
-                group_interval: route.group_interval,
-                repeat_interval: route.repeat_interval,
+                group_wait: route.group_wait ?? TIMING_OPTIONS_DEFAULTS.group_wait,
+                group_interval: route.group_interval ?? TIMING_OPTIONS_DEFAULTS.group_interval,
+                repeat_interval: route.repeat_interval ?? TIMING_OPTIONS_DEFAULTS.repeat_interval,
               }}
               alertManagerSourceName={selectedAlertmanager ?? ''}
               receivers={receivers ?? []}
@@ -335,7 +338,7 @@ export const RoutingTreeHeader = ({ route, onDelete }: RoutingTreeHeaderProps) =
         </LinkButton>
         {menuActions.length > 0 && (
           <Dropdown overlay={<Menu>{menuActions}</Menu>}>
-            <MoreButton aria-label={`More actions for routing tree "${route.name ?? ''}"`} />
+            <MoreButton data-testid="more-actions" aria-label={`More actions for routing tree "${route.name ?? ''}"`} />
           </Dropdown>
         )}
       </Stack>
@@ -344,7 +347,11 @@ export const RoutingTreeHeader = ({ route, onDelete }: RoutingTreeHeaderProps) =
   );
 };
 
-function countPolicies(route: Route): number {
+interface hasRoutes {
+  routes?: hasRoutes[];
+}
+
+export function countPolicies(route: hasRoutes): number {
   let count = 0;
   if (route.routes) {
     count += route.routes.length;
