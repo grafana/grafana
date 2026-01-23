@@ -197,6 +197,7 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&HistoricJobList{},
 		&Connection{},
 		&ConnectionList{},
+		&ExternalRepositoryList{},
 	)
 	return nil
 }

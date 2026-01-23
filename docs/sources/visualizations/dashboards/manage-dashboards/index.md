@@ -124,6 +124,8 @@ For more information about dashboard permissions, refer to [Dashboard permission
 ## Restore deleted dashboards
 
 {{% admonition type="caution" %}}
+Restoring deleted dashboards is currently in private preview. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
+
 The feature is only available in Grafana Cloud.  
 {{% /admonition %}}
 

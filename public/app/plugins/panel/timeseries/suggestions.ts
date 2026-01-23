@@ -10,15 +10,9 @@ import {
   VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  GraphDrawStyle,
-  GraphFieldConfig,
-  GraphGradientMode,
-  LegendDisplayMode,
-  LineInterpolation,
-  StackingMode,
-} from '@grafana/schema';
+import { GraphDrawStyle, GraphFieldConfig, GraphGradientMode, LineInterpolation, StackingMode } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
 import { Options } from './panelcfg.gen';
 
@@ -29,14 +23,6 @@ const withDefaults = (
   suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
 ): VisualizationSuggestion<Options, GraphFieldConfig> =>
   defaultsDeep(suggestion, {
-    options: {
-      legend: {
-        calcs: [],
-        displayMode: LegendDisplayMode.Hidden,
-        placement: 'right',
-        showLegend: false,
-      },
-    },
     fieldConfig: {
       defaults: {
         custom: {},
@@ -46,6 +32,7 @@ const withDefaults = (
     cardOptions: {
       previewModifier: (s) => {
         s.options!.disableKeyboardEvents = true;
+        s.options!.legend = SUGGESTIONS_LEGEND_OPTIONS;
         if (s.fieldConfig?.defaults.custom?.drawStyle !== GraphDrawStyle.Bars) {
           s.fieldConfig!.defaults.custom!.lineWidth = Math.max(s.fieldConfig!.defaults.custom!.lineWidth ?? 1, 2);
         }

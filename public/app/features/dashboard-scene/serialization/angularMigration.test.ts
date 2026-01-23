@@ -1,8 +1,21 @@
-import { PanelTypeChangedHandler } from '@grafana/data';
+import { FieldConfigSource, PanelTypeChangedHandler } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { getV2AngularMigrationHandler, getAngularPanelMigrationHandler } from './angularMigration';
+
+/**
+ * Test type for mutable panel model used in migration handler tests.
+ * Allows arbitrary properties to be added during migration.
+ */
+interface TestPanelModel {
+  id: number;
+  type: string;
+  options: Record<string, unknown>;
+  fieldConfig: FieldConfigSource;
+  targets?: Array<{ refId: string; [key: string]: unknown }>;
+  [key: string]: unknown;
+}
 
 describe('getAngularPanelMigrationHandler', () => {
   describe('Given an old angular panel', () => {
@@ -43,9 +56,11 @@ describe('getAngularPanelMigrationHandler', () => {
         type: 'dashlist',
       });
 
-      const mutatedModel: any = {
+      const mutatedModel: TestPanelModel = {
+        id: 1,
         type: 'dashlist',
         options: {},
+        fieldConfig: { defaults: {}, overrides: [] },
       };
 
       getAngularPanelMigrationHandler(oldModel)(mutatedModel, reactPlugin);
@@ -80,7 +95,7 @@ describe('getV2AngularMigrationHandler', () => {
         },
       };
 
-      const mutatedModel = {
+      const mutatedModel: TestPanelModel = {
         id: 1,
         type: 'stat',
         options: {},
@@ -88,6 +103,11 @@ describe('getV2AngularMigrationHandler', () => {
       };
 
       getV2AngularMigrationHandler(migrationData)(mutatedModel, reactPlugin);
+
+      // Verify originalOptions were spread onto the panel (for plugins using setMigrationHandler)
+      expect(mutatedModel['format']).toBe('short');
+      expect(mutatedModel['valueName']).toBe('avg');
+      expect(mutatedModel['orientation']).toBe('horizontal');
 
       // Verify handler received correct arguments
       expect(receivedPrevPluginId).toBe('singlestat');
@@ -123,7 +143,7 @@ describe('getV2AngularMigrationHandler', () => {
         },
       };
 
-      const mutatedModel = {
+      const mutatedModel: TestPanelModel = {
         id: 1,
         type: 'timeseries',
         options: {},
@@ -131,6 +151,10 @@ describe('getV2AngularMigrationHandler', () => {
       };
 
       getV2AngularMigrationHandler(migrationData)(mutatedModel, reactPlugin);
+
+      // Verify originalOptions were spread onto the panel (for plugins using setMigrationHandler)
+      expect(mutatedModel['bars']).toBe(true);
+      expect(mutatedModel['lines']).toBe(false);
 
       // Verify handler received correct arguments
       expect(receivedPrevPluginId).toBe('graph');
@@ -163,7 +187,7 @@ describe('getV2AngularMigrationHandler', () => {
         },
       };
 
-      const mutatedModel = {
+      const mutatedModel: TestPanelModel = {
         id: 1,
         type: 'new-panel',
         options: {},
@@ -171,6 +195,9 @@ describe('getV2AngularMigrationHandler', () => {
       };
 
       getV2AngularMigrationHandler(migrationData)(mutatedModel, reactPlugin);
+
+      // Verify originalOptions were spread onto the panel (for plugins using setMigrationHandler)
+      expect(mutatedModel['oldOption']).toBe('old');
 
       // Verify handler received correct arguments (options wrapper, not angular)
       expect(receivedPrevPluginId).toBe('some-react-panel');
@@ -220,6 +247,120 @@ describe('getV2AngularMigrationHandler', () => {
       );
 
       warnSpy.mockRestore();
+    });
+  });
+
+  describe('Given v2 migration data for text panel with Angular-style properties', () => {
+    it('Should spread originalOptions onto panel for migration handlers using setMigrationHandler', () => {
+      // Text panel uses setMigrationHandler, not onPanelTypeChanged
+      // The migration handler expects content/mode to be directly on the panel object
+      const reactPlugin = getPanelPlugin({ id: 'text' });
+
+      // This simulates a text panel with Angular-style properties at root level
+      // The backend sets autoMigrateFrom="text" when it detects these properties
+      const migrationData = {
+        autoMigrateFrom: 'text',
+        originalOptions: {
+          content: 'Hello World',
+          mode: 'markdown',
+        },
+      };
+
+      const mutatedModel: TestPanelModel = {
+        id: 1,
+        type: 'text',
+        options: {},
+        fieldConfig: { defaults: {}, overrides: [] },
+      };
+
+      getV2AngularMigrationHandler(migrationData)(mutatedModel, reactPlugin);
+
+      // Verify originalOptions were spread onto the panel
+      // This allows textPanelMigrationHandler to see content/mode via panel.hasOwnProperty()
+      expect(mutatedModel['content']).toBe('Hello World');
+      expect(mutatedModel['mode']).toBe('markdown');
+    });
+
+    it('Should not overwrite existing panel properties when spreading originalOptions', () => {
+      const reactPlugin = getPanelPlugin({ id: 'text' });
+
+      const migrationData = {
+        autoMigrateFrom: 'text',
+        originalOptions: {
+          content: 'Old content',
+          mode: 'markdown',
+          id: 999, // Should not overwrite existing id
+        },
+      };
+
+      const mutatedModel: TestPanelModel = {
+        id: 1,
+        type: 'text',
+        options: { existingOption: true },
+        fieldConfig: { defaults: {}, overrides: [] },
+      };
+
+      getV2AngularMigrationHandler(migrationData)(mutatedModel, reactPlugin);
+
+      // defaults() only sets properties that don't already exist
+      expect(mutatedModel['content']).toBe('Old content');
+      expect(mutatedModel['mode']).toBe('markdown');
+      expect(mutatedModel.id).toBe(1); // Should keep original id
+      expect(mutatedModel.options).toEqual({ existingOption: true }); // Should keep existing options
+    });
+
+    it('Should work with empty originalOptions', () => {
+      const reactPlugin = getPanelPlugin({ id: 'text' });
+
+      const migrationData = {
+        autoMigrateFrom: 'text',
+        originalOptions: {},
+      };
+
+      const mutatedModel: TestPanelModel = {
+        id: 1,
+        type: 'text',
+        options: {},
+        fieldConfig: { defaults: {}, overrides: [] },
+      };
+
+      // Should not throw
+      expect(() => {
+        getV2AngularMigrationHandler(migrationData)(mutatedModel, reactPlugin);
+      }).not.toThrow();
+    });
+
+    it('Should spread originalOptions AND call onPanelTypeChanged if plugin has both', () => {
+      let handlerCalled = false;
+      const onPanelTypeChanged: PanelTypeChangedHandler = (panel, prevPluginId, prevOptions) => {
+        handlerCalled = true;
+        // Verify originalOptions were already spread onto panel before handler is called
+        expect((panel as TestPanelModel)['customProp']).toBe('custom value');
+        return { migrated: true };
+      };
+
+      const reactPlugin = getPanelPlugin({ id: 'custom-panel' }).setPanelChangeHandler(onPanelTypeChanged);
+
+      const migrationData = {
+        autoMigrateFrom: 'custom-panel',
+        originalOptions: {
+          customProp: 'custom value',
+        },
+      };
+
+      const mutatedModel: TestPanelModel = {
+        id: 1,
+        type: 'custom-panel',
+        options: {},
+        fieldConfig: { defaults: {}, overrides: [] },
+      };
+
+      getV2AngularMigrationHandler(migrationData)(mutatedModel, reactPlugin);
+
+      // Verify both behaviors occurred
+      expect(mutatedModel['customProp']).toBe('custom value'); // originalOptions spread
+      expect(handlerCalled).toBe(true); // onPanelTypeChanged called
+      expect(mutatedModel.options).toEqual({ migrated: true }); // handler result applied
     });
   });
 });

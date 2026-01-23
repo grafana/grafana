@@ -240,6 +240,15 @@ export const TooltipPlugin2 = ({
 
     // in some ways this is similar to ClickOutsideWrapper.tsx
     const downEventOutside = (e: Event) => {
+      if (e instanceof KeyboardEvent) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          dismiss();
+        }
+        return;
+      }
+
       // this tooltip is Portaled, but actions inside it create forms in Modals
       const isModalOrPortaled = '[role="dialog"], #grafana-portal-container';
 

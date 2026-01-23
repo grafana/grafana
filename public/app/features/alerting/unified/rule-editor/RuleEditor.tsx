@@ -7,6 +7,7 @@ import { AlertWarning } from '../AlertWarning';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
+import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
 import { useRulesAccess } from '../utils/accessControlHooks';
 import * as ruleId from '../utils/rule-id';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
@@ -91,9 +92,11 @@ function NewRuleEditor() {
     ? t('alerting.editor.edit-recording-rule', 'Edit recording rule')
     : t('alerting.editor.edit-alert-rule', 'Edit alert rule');
 
+  const navId = getAlertRulesNavId();
+
   return (
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={navId}
       pageNav={{
         id: 'alert-rule-add',
         text: isExisting ? editText : newText,

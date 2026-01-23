@@ -46,14 +46,23 @@ func (defaultGrafanaPolicyRuleEvaluator) EvaluatePolicyRule(attrs authorizer.Att
 		}
 	}
 
+	// Logging the response object allows us to get the resource name for create requests.
+	level := auditinternal.LevelMetadata
+	if attrs.GetVerb() == utils.VerbCreate {
+		level = auditinternal.LevelRequestResponse
+	}
+
 	return audit.RequestAuditConfig{
-		Level: auditinternal.LevelMetadata,
+		Level: level,
+
+		// Only log on StageResponseComplete, to avoid noisy logs.
 		OmitStages: []auditinternal.Stage{
-			// Only log on StageResponseComplete
 			auditinternal.StageRequestReceived,
 			auditinternal.StageResponseStarted,
 			auditinternal.StagePanic,
 		},
-		OmitManagedFields: false, // Setting it to true causes extra copying/unmarshalling.
+
+		// Setting it to true causes extra copying/unmarshalling.
+		OmitManagedFields: false,
 	}
 }

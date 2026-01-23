@@ -9,6 +9,7 @@ import {
   SceneDataTransformer,
   sceneGraph,
   SceneGridItemStateLike,
+  SceneGridLayout,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
@@ -16,7 +17,7 @@ import {
   sceneUtils,
   VizPanel,
 } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema/';
+import { LibraryPanel } from '@grafana/schema';
 import { Alert, Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
@@ -167,6 +168,12 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       }
 
       panel.parent.setState(newState);
+
+      // Force the grid layout to re-render with the new positions
+      const layout = sceneGraph.getLayout(panel);
+      if (layout instanceof SceneGridLayout) {
+        layout.forceRender();
+      }
 
       //Report relevant updates
       reportPanelInspectInteraction(InspectTab.JSON, 'apply', {

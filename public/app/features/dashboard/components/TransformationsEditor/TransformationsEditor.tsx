@@ -256,7 +256,8 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
         onShowPicker={() => {
           this.setState({ showPicker: true });
         }}
-      ></EmptyTransformationsMessage>
+        data={this.state.data.series}
+      />
     );
   };
 

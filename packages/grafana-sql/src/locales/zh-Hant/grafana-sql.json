@@ -69,6 +69,12 @@
         "placeholder-select-format": "選擇格式",
         "run-query": "執行查詢"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "",
+          "valueField": ""
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "按下 CTRL/CMD + Return 執行查詢",
         "tooltip-collapse": "收合編輯器",

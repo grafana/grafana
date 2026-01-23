@@ -2,54 +2,84 @@ package log
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/infra/log"
+	"log/slog"
+	"sync"
 )
 
+// loggerFactory is a function that creates a Logger given a name.
+// It can be set by calling SetLoggerFactory to use a custom logger implementation.
+var loggerFactory func(name string) Logger
+
+// SetLoggerFactory sets the factory function used to create loggers.
+// This should be called during initialization to register a custom logger implementation.
+// If not set, a default slog-based logger will be used.
+func SetLoggerFactory(factory func(name string) Logger) {
+	loggerFactory = factory
+}
+
+var slogLogManager = &slogLoggerManager{
+	cache: sync.Map{},
+}
+
 func New(name string) Logger {
-	return &grafanaInfraLogWrapper{
-		l: log.New(name),
+	if loggerFactory != nil {
+		return loggerFactory(name)
 	}
+	// add a caching layer since slog doesn't perform any caching itself
+	return slogLogManager.getOrCreate(name)
 }
 
-type grafanaInfraLogWrapper struct {
-	l *log.ConcreteLogger
+type slogLoggerManager struct {
+	cache sync.Map
 }
 
-func (d *grafanaInfraLogWrapper) New(ctx ...any) Logger {
+func (m *slogLoggerManager) getOrCreate(name string) Logger {
+	if cached, ok := m.cache.Load(name); ok {
+		return cached.(*slogLogger)
+	}
+
+	logger := &slogLogger{
+		logger: slog.Default().With("logger", name),
+		name:   name,
+	}
+	actual, _ := m.cache.LoadOrStore(name, logger)
+	return actual.(*slogLogger)
+}
+
+type slogLogger struct {
+	logger *slog.Logger
+	name   string
+}
+
+func (l *slogLogger) New(ctx ...any) Logger {
 	if len(ctx) == 0 {
-		return &grafanaInfraLogWrapper{
-			l: d.l.New(),
+		return &slogLogger{
+			logger: l.logger,
+			name:   l.name,
 		}
 	}
-
-	return &grafanaInfraLogWrapper{
-		l: d.l.New(ctx...),
+	return &slogLogger{
+		logger: l.logger.With(ctx...),
+		name:   l.name,
 	}
 }
 
-func (d *grafanaInfraLogWrapper) Debug(msg string, ctx ...any) {
-	d.l.Debug(msg, ctx...)
+func (l *slogLogger) Debug(msg string, ctx ...any) {
+	l.logger.Debug(msg, ctx...)
 }
 
-func (d *grafanaInfraLogWrapper) Info(msg string, ctx ...any) {
-	d.l.Info(msg, ctx...)
+func (l *slogLogger) Info(msg string, ctx ...any) {
+	l.logger.Info(msg, ctx...)
 }
 
-func (d *grafanaInfraLogWrapper) Warn(msg string, ctx ...any) {
-	d.l.Warn(msg, ctx...)
+func (l *slogLogger) Warn(msg string, ctx ...any) {
+	l.logger.Warn(msg, ctx...)
 }
 
-func (d *grafanaInfraLogWrapper) Error(msg string, ctx ...any) {
-	d.l.Error(msg, ctx...)
+func (l *slogLogger) Error(msg string, ctx ...any) {
+	l.logger.Error(msg, ctx...)
 }
 
-func (d *grafanaInfraLogWrapper) FromContext(ctx context.Context) Logger {
-	concreteInfraLogger, ok := d.l.FromContext(ctx).(*log.ConcreteLogger)
-	if !ok {
-		return d.New()
-	}
-	return &grafanaInfraLogWrapper{
-		l: concreteInfraLogger,
-	}
+func (l *slogLogger) FromContext(_ context.Context) Logger {
+	return l
 }

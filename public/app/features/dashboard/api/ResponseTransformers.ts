@@ -609,17 +609,25 @@ export function buildPanelKind(p: Panel): PanelKind {
 
   // Build options with Angular migration data if needed (matches backend behavior)
   // autoMigrateFrom is set during v0->v1 migration when Angular panels are converted
-  const { autoMigrateFrom } = p;
+  let { autoMigrateFrom } = p;
   let options = p.options ?? {};
+  const originalOptions = extractAngularOptions(p);
 
-  // When autoMigrateFrom is present, compose __angularMigration with only Angular-specific options
-  // This filters out known Panel schema properties, passing only the Angular options to migration handlers
+  // When autoMigrateFrom is present OR when there are Angular-specific properties at root level,
+  // compose __angularMigration with only Angular-specific options.
+  // This filters out known Panel schema properties, passing only the Angular options to migration handlers.
+  // The second condition handles panels like "text" that have Angular-style properties (content, mode)
+  // but don't have autoMigrateFrom set because they don't need a type conversion.
+  if (!autoMigrateFrom && Object.keys(originalOptions).length > 0) {
+    autoMigrateFrom = p.type;
+  }
+
   if (autoMigrateFrom) {
     options = {
       ...options,
       __angularMigration: {
         autoMigrateFrom,
-        originalOptions: extractAngularOptions(p),
+        originalOptions,
       },
     };
   }

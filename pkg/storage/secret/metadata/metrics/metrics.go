@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -185,6 +186,8 @@ func DecryptResultLabel(err error) string {
 		return "error_not_found"
 	} else if errors.Is(err, contracts.ErrDecryptNotAuthorized) {
 		return "error_unauthorized"
+	} else if errors.Is(err, context.Canceled) {
+		return "error_context_canceled"
 	}
 
 	return "error_generic_failure"

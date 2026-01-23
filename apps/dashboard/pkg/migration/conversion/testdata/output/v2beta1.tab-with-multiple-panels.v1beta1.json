@@ -48,12 +48,16 @@
           "x": 0,
           "y": 0
         },
-        "id": -1,
+        "id": 6,
         "panels": [],
         "title": "Tab1",
         "type": "row"
       },
       {
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "PD8C576611E62080A"
+        },
         "fieldConfig": {
           "defaults": {
             "color": {

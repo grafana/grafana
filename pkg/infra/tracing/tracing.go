@@ -209,7 +209,7 @@ func (ots *TracingService) initSampler() (tracesdk.Sampler, error) {
 	case "rateLimiting":
 		return newRateLimiter(ots.cfg.SamplerParam), nil
 	case "remote":
-		return jaegerremote.New("grafana",
+		return jaegerremote.New(ots.cfg.ServiceName,
 			jaegerremote.WithSamplingServerURL(ots.cfg.SamplerRemoteURL),
 			jaegerremote.WithInitialSampler(tracesdk.TraceIDRatioBased(ots.cfg.SamplerParam)),
 		), nil

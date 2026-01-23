@@ -84,7 +84,11 @@ func TestAlertRuleToModelsAlertRuleCompact(t *testing.T) {
 			Metadata:             `{"editor_settings":{"simplified_query_and_expressions_section":true}}`,
 		}
 
-		compactResult, err := alertRuleToModelsAlertRuleCompact(rule, &logtest.Fake{})
+		compactResult, err := convertAlertRuleToModel(rule, &logtest.Fake{}, AlertRuleConvertOptions{
+			ExcludeAlertQueries:         true,
+			ExcludeNotificationSettings: true,
+			ExcludeMetadata:             true,
+		})
 		require.NoError(t, err)
 
 		// Should have datasource UIDs.
@@ -141,6 +145,82 @@ func TestAlertRuleToModelsAlertRuleCompact(t *testing.T) {
 
 		// Should have metadata (metadata is parsed from JSON to struct).
 		require.NotEqual(t, ngmodels.AlertRuleMetadata{}, fullResult.Metadata)
+	})
+
+	t.Run("compact mode with notification settings included for filtering", func(t *testing.T) {
+		rule := alertRule{
+			ID:                   1,
+			OrgID:                1,
+			UID:                  "test-uid",
+			Title:                "Test Rule",
+			Condition:            "A",
+			Data:                 `[{"datasourceUid":"ds1","refId":"A","queryType":"test","model":{"expr":"up"}}]`,
+			IntervalSeconds:      60,
+			Version:              1,
+			NamespaceUID:         "ns-uid",
+			RuleGroup:            "test-group",
+			NoDataState:          "NoData",
+			ExecErrState:         "Error",
+			NotificationSettings: `[{"receiver":"test-receiver"}]`,
+			Metadata:             `{"editor_settings":{"simplified_query_and_expressions_section":true}}`,
+		}
+
+		result, err := convertAlertRuleToModel(rule, &logtest.Fake{}, AlertRuleConvertOptions{
+			ExcludeAlertQueries:         true,
+			ExcludeNotificationSettings: false,
+			ExcludeMetadata:             true,
+		})
+		require.NoError(t, err)
+
+		// Should have compact query data (only datasource UIDs).
+		require.Len(t, result.Data, 1)
+		require.Equal(t, "ds1", result.Data[0].DatasourceUID)
+		require.Empty(t, result.Data[0].RefID)
+
+		// Should have notification settings for filtering.
+		require.Len(t, result.NotificationSettings, 1)
+		require.Equal(t, "test-receiver", result.NotificationSettings[0].Receiver)
+
+		// Should not have metadata.
+		require.Equal(t, ngmodels.AlertRuleMetadata{}, result.Metadata)
+	})
+
+	t.Run("compact mode with metadata included for filtering", func(t *testing.T) {
+		rule := alertRule{
+			ID:                   1,
+			OrgID:                1,
+			UID:                  "test-uid",
+			Title:                "Test Rule",
+			Condition:            "A",
+			Data:                 `[{"datasourceUid":"ds1","refId":"A","queryType":"test","model":{"expr":"up"}}]`,
+			IntervalSeconds:      60,
+			Version:              1,
+			NamespaceUID:         "ns-uid",
+			RuleGroup:            "test-group",
+			NoDataState:          "NoData",
+			ExecErrState:         "Error",
+			NotificationSettings: `[{"receiver":"test-receiver"}]`,
+			Metadata:             `{"prometheus_style_rule":{"original_rule_definition":"alert: TestAlert\n  expr: rate(metric[5m]) > 1"}}`,
+		}
+
+		result, err := convertAlertRuleToModel(rule, &logtest.Fake{}, AlertRuleConvertOptions{
+			ExcludeAlertQueries:         true,
+			ExcludeNotificationSettings: true,
+			ExcludeMetadata:             false,
+		})
+		require.NoError(t, err)
+
+		// Should have compact query data (only datasource UIDs).
+		require.Len(t, result.Data, 1)
+		require.Equal(t, "ds1", result.Data[0].DatasourceUID)
+		require.Empty(t, result.Data[0].RefID)
+
+		// Should not have notification settings.
+		require.Empty(t, result.NotificationSettings)
+
+		// Should have metadata for filtering.
+		require.NotEqual(t, ngmodels.AlertRuleMetadata{}, result.Metadata)
+		require.True(t, result.HasPrometheusRuleDefinition())
 	})
 }
 

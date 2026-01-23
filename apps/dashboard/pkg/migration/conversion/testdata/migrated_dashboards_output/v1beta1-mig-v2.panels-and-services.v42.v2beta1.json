@@ -189,7 +189,20 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table",
+                  "originalOptions": {
+                    "grid": {
+                      "max": 100,
+                      "min": 0
+                    },
+                    "legend": true,
+                    "y2_format": "bytes",
+                    "y_format": "short"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

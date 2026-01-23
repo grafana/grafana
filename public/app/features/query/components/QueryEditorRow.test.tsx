@@ -461,8 +461,7 @@ describe('QueryEditorRow', () => {
       render(<QueryEditorRow {...props(testData)} app={CoreApp.UnifiedAlerting} />);
 
       await waitFor(() => {
-        expect(screen.queryByText('Save query')).not.toBeInTheDocument();
-        expect(screen.queryByText('Replace with saved query')).not.toBeInTheDocument();
+        expect(screen.queryByText('Saved queries')).not.toBeInTheDocument();
       });
     });
 

@@ -58,6 +58,14 @@
             "version": "9.0.0-pre",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "dashlist",
+                  "originalOptions": {
+                    "tags": [
+                      "panel-tests"
+                    ]
+                  }
+                },
                 "maxItems": 1000,
                 "query": "",
                 "showHeadings": false,
@@ -97,6 +105,15 @@
             "version": "9.0.0-pre",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "dashlist",
+                  "originalOptions": {
+                    "tags": [
+                      "gdev",
+                      "demo"
+                    ]
+                  }
+                },
                 "maxItems": 1000,
                 "query": "",
                 "showHeadings": false,
@@ -137,6 +154,15 @@
             "version": "9.0.0-pre",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "dashlist",
+                  "originalOptions": {
+                    "tags": [
+                      "templating",
+                      "gdev"
+                    ]
+                  }
+                },
                 "maxItems": 1000,
                 "query": "",
                 "showHeadings": false,
@@ -177,6 +203,15 @@
             "version": "9.0.0-pre",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "dashlist",
+                  "originalOptions": {
+                    "tags": [
+                      "gdev",
+                      "datasource-test"
+                    ]
+                  }
+                },
                 "maxItems": 1000,
                 "query": "",
                 "showHeadings": false,
@@ -217,6 +252,12 @@
             "version": "9.0.0-pre",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "dashlist",
+                  "originalOptions": {
+                    "tags": []
+                  }
+                },
                 "maxItems": 100,
                 "query": "",
                 "showHeadings": true,
@@ -254,6 +295,15 @@
             "version": "9.0.0-pre",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "dashlist",
+                  "originalOptions": {
+                    "tags": [
+                      "gdev",
+                      "demo"
+                    ]
+                  }
+                },
                 "maxItems": 1000,
                 "query": "",
                 "showHeadings": false,

@@ -1,9 +1,5 @@
 package config
 
-import (
-	"github.com/grafana/grafana/pkg/setting"
-)
-
 // PluginManagementCfg is the configuration for the plugin management system.
 // It includes settings which are used to configure different components of plugin management.
 type PluginManagementCfg struct {
@@ -11,7 +7,7 @@ type PluginManagementCfg struct {
 
 	PluginsPath string
 
-	PluginSettings       setting.PluginSettings
+	PluginSettings       PluginSettings
 	PluginsAllowUnsigned []string
 	DisablePlugins       []string
 	ForwardHostEnvVars   []string
@@ -35,8 +31,11 @@ type Features struct {
 	TempoAlertingEnabled bool
 }
 
+// PluginSettings maps plugin id to map of key/value settings.
+type PluginSettings map[string]map[string]string
+
 // NewPluginManagementCfg returns a new PluginManagementCfg.
-func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
+func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings PluginSettings, pluginsAllowUnsigned []string,
 	pluginsCDNURLTemplate string, appURL string, features Features,
 	grafanaComAPIURL string, disablePlugins []string, forwardHostEnvVars []string, grafanaComAPIToken string,
 ) *PluginManagementCfg {

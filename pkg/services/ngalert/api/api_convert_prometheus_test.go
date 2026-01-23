@@ -75,6 +75,46 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		require.Contains(t, string(response.Body()), "Missing datasource UID header")
 	})
 
+	t.Run("without datasource UID header but with config default should succeed", func(t *testing.T) {
+		srv, _, ruleStore := createConvertPrometheusSrv(t)
+		// Set the config default
+		srv.cfg.PrometheusConversion.DefaultDatasourceUID = existingDSUID
+
+		rc := createRequestCtx()
+		rc.Req.Header.Set(datasourceUIDHeader, "")
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify that the config default datasource was used
+		assertRulesUseDatasource(t, ruleStore, existingDSUID, 2)
+	})
+
+	t.Run("header should take precedence over config default", func(t *testing.T) {
+		srv, dsCache, ruleStore := createConvertPrometheusSrv(t)
+		// Add another datasource
+		anotherDS := &datasources.DataSource{
+			UID:  "another-ds",
+			Type: datasources.DS_PROMETHEUS,
+		}
+		dsCache.DataSources = append(dsCache.DataSources, anotherDS)
+
+		// Set the config default to one DS
+		srv.cfg.PrometheusConversion.DefaultDatasourceUID = "another-ds"
+
+		// But use the header to specify a different one
+		rc := createRequestCtx()
+		rc.Req.Header.Set(datasourceUIDHeader, existingDSUID)
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify that the header datasource was used, not the config default
+		assertRulesUseDatasource(t, ruleStore, existingDSUID, 2)
+	})
+
 	t.Run("with invalid datasource should return error", func(t *testing.T) {
 		srv, _, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
@@ -1390,7 +1430,7 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 
 		t.Run("with disable provenance header should still be able to delete rules", func(t *testing.T) {
 			provenanceStore := fakes.NewFakeProvisioningStore()
-			srv, ruleStore, fldr, rule := initGroup("", groupName, withProvenanceStore(provenanceStore))
+			srv, ruleStore, fldr, rule := initGroup("prometheus definition", groupName, withProvenanceStore(provenanceStore))
 
 			// Mark the rule as provisioned with API provenance
 			err := provenanceStore.SetProvenance(context.Background(), rule, 1, models.ProvenanceConvertedPrometheus)
@@ -1410,6 +1450,37 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 			require.Error(t, err)
 			require.Nil(t, remaining)
 		})
+	})
+
+	t.Run("should not delete non-imported rule groups", func(t *testing.T) {
+		folderService := foldertest.NewFakeService()
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withFolderService(folderService))
+		rc := createRequestCtx()
+
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+		rule := models.RuleGen.
+			With(models.RuleGen.WithNamespaceUID(fldr.UID)).
+			With(models.RuleGen.WithOrgID(1)).
+			With(models.RuleGen.WithGroupName(groupName)).
+			GenerateRef()
+		ruleStore.PutRule(context.Background(), rule)
+
+		// Attempt to delete via convert endpoint should return 404
+		response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, fldr.Title, groupName)
+		require.Equal(t, http.StatusNotFound, response.Status())
+
+		// Verify the rule is still present
+		remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			UID:   rule.UID,
+			OrgID: rule.OrgID,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, remaining)
 	})
 }
 
@@ -1727,6 +1798,26 @@ func createRequestCtx() *contextmodel.ReqContext {
 			Resp: web.NewResponseWriter("GET", httptest.NewRecorder()),
 		},
 		SignedInUser: &user.SignedInUser{OrgID: 1},
+	}
+}
+
+// assertRulesUseDatasource retrieves all alert rules from the store and verifies they use the expected datasource
+func assertRulesUseDatasource(t *testing.T, ruleStore *fakes.RuleStore, expectedDatasourceUID string, expectedRuleCount int) {
+	t.Helper()
+
+	rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+		OrgID: 1,
+	})
+	require.NoError(t, err)
+	require.Len(t, rules, expectedRuleCount)
+
+	for _, rule := range rules {
+		if rule.Record == nil {
+			require.NotEmpty(t, rule.Data)
+			require.Equal(t, expectedDatasourceUID, rule.Data[0].DatasourceUID, rule.Title, expectedDatasourceUID)
+		} else {
+			require.Equal(t, expectedDatasourceUID, rule.Record.TargetDatasourceUID)
+		}
 	}
 }
 

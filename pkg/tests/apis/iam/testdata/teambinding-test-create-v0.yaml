@@ -1,7 +1,7 @@
 apiVersion: iam.grafana.app/v0alpha1
 kind: TeamBinding
 metadata:
-  name: test-team-binding-1
+  generateName: test-team-binding-
 spec:
   subject:
     name: ""

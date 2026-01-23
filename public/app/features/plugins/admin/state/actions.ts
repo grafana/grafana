@@ -3,7 +3,6 @@ import { from, forkJoin, timeout, lastValueFrom, catchError, of } from 'rxjs';
 
 import { PanelPlugin, PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
-import { Settings } from 'app/core/config';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { StoreState, ThunkResult } from 'app/types/store';
 
@@ -301,7 +300,7 @@ export const loadPanelPlugin = (id: string): ThunkResult<Promise<PanelPlugin>> =
 function updatePanels() {
   return getBackendSrv()
     .get('/api/frontend/settings')
-    .then((settings: Settings) => {
+    .then((settings) => {
       config.panels = settings.panels;
     });
 }

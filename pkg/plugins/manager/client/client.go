@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 const (
@@ -124,7 +123,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 				res.Headers = map[string][]string{}
 			}
 
-			proxyutil.SetProxyResponseHeaders(res.Headers)
+			SetCSPHeader(res.Headers)
 			ensureContentTypeHeader(res)
 		}
 
@@ -279,6 +278,10 @@ func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionR
 	}
 
 	return plugin.ValidateAdmission(ctx, req)
+}
+
+func SetCSPHeader(header http.Header) {
+	header.Set("Content-Security-Policy", "sandbox")
 }
 
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned
