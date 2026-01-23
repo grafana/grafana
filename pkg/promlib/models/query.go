@@ -40,7 +40,14 @@ func (f *PromQueryFormat) UnmarshalJSON(data []byte) error {
 	// Try to unmarshal as string first (the expected type)
 	var s string
 	if err := json.Unmarshal(data, &s); err == nil {
-		*f = PromQueryFormat(s)
+		// Validate that the string is one of the valid enum values
+		switch s {
+		case string(PromQueryFormatTimeSeries), string(PromQueryFormatTable), string(PromQueryFormatHeatmap):
+			*f = PromQueryFormat(s)
+		default:
+			// Invalid string value, fall back to default
+			*f = PromQueryFormatTimeSeries
+		}
 		return nil
 	}
 

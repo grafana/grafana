@@ -2,6 +2,7 @@ package models_test
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"testing"
 	"time"
@@ -1103,6 +1104,74 @@ func TestParseNumericFormatError(t *testing.T) {
 		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
 		require.NotNil(t, res)
+	})
+}
+
+func TestPromQueryFormatUnmarshalJSON(t *testing.T) {
+	t.Run("valid string format values", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			json     string
+			expected models.PromQueryFormat
+		}{
+			{
+				name:     "time_series format",
+				json:     `{"format": "time_series"}`,
+				expected: models.PromQueryFormatTimeSeries,
+			},
+			{
+				name:     "table format",
+				json:     `{"format": "table"}`,
+				expected: models.PromQueryFormatTable,
+			},
+			{
+				name:     "heatmap format",
+				json:     `{"format": "heatmap"}`,
+				expected: models.PromQueryFormatHeatmap,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				var props models.PrometheusQueryProperties
+				err := json.Unmarshal([]byte(tt.json), &props)
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, props.Format)
+			})
+		}
+	})
+
+	t.Run("invalid string format values default to time_series", func(t *testing.T) {
+		tests := []struct {
+			name string
+			json string
+		}{
+			{
+				name: "unknown format string",
+				json: `{"format": "invalid_format"}`,
+			},
+			{
+				name: "empty string",
+				json: `{"format": ""}`,
+			},
+			{
+				name: "random string",
+				json: `{"format": "foobar"}`,
+			},
+			{
+				name: "typo in format",
+				json: `{"format": "time_serie"}`,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				var props models.PrometheusQueryProperties
+				err := json.Unmarshal([]byte(tt.json), &props)
+				require.NoError(t, err)
+				require.Equal(t, models.PromQueryFormatTimeSeries, props.Format, "invalid format should default to time_series")
+			})
+		}
 	})
 }
 
