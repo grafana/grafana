@@ -557,17 +557,29 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public createLibraryPanel(panelToReplace: VizPanel, libPanel: LibraryPanel) {
-    const body = panelToReplace.clone({
-      $behaviors: [new LibraryPanelBehavior({ uid: libPanel.uid, name: libPanel.name })],
-    });
+    const behavior = new LibraryPanelBehavior({ uid: libPanel.uid, name: libPanel.name });
 
-    const gridItem = panelToReplace.parent;
+    const parent = panelToReplace.parent;
 
-    if (!(gridItem instanceof DashboardGridItem)) {
-      throw new Error("Trying to replace a panel that doesn't have a parent grid item");
+    if (parent instanceof DashboardGridItem) {
+      const body = panelToReplace.clone({
+        $behaviors: [behavior],
+      });
+      parent.setState({ body });
+      return;
     }
 
-    gridItem.setState({ body });
+    if (parent instanceof AutoGridItem) {
+      // Auto grid only supports creating library panels from the source panel (AutoGridItem.state.body).
+      const body = parent.state.body.clone({
+        $behaviors: [behavior],
+      });
+      parent.setState({ body });
+      parent.handleEditChange();
+      return;
+    }
+
+    throw new Error("Trying to replace a panel that doesn't have a parent layout item");
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
@@ -635,14 +647,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    const gridItem = panel.parent;
+    const parent = panel.parent;
 
-    if (!(gridItem instanceof DashboardGridItem)) {
-      console.error('Trying to unlink a lib panel in a layout that is not DashboardGridItem');
+    if (parent instanceof DashboardGridItem) {
+      parent.state.body.setState({ $behaviors: undefined });
       return;
     }
 
-    gridItem.state.body.setState({ $behaviors: undefined });
+    if (parent instanceof AutoGridItem) {
+      parent.state.body.setState({ $behaviors: undefined });
+      parent.handleEditChange();
+      return;
+    }
+
+    console.error('Trying to unlink a lib panel in a layout that is not DashboardGridItem or AutoGridItem');
   }
 
   public showModal(modal: SceneObject) {
