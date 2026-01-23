@@ -157,6 +157,7 @@ An internal identifier that can be ignored for most use cases. Use the `name` fi
 A value that changes whenever any part of the resource changes, including metadata or status.
 
 Use this field for:
+
 - Change detection
 - Optimistic concurrency control
 
@@ -174,11 +175,12 @@ The time the object was created, formatted as an RFC 3339 UTC timestamp (for exa
 A map of key-value pairs.
 
 Common annotations include:
+
 - `grafana.app/createdBy` / `grafana.app/updatedBy`: Identifies who created or last updated the resource.
-Format: `<user-type>:<uid>` (for example, user:u000000839)
+  Format: `<user-type>:<uid>` (for example, user:u000000839)
 - `grafana.app/folder`: If the resource supports folders, contains the folder UID the object belongs to.
 - `grafana.app/updatedTimestamp`: Timestamp of the last update, formatted as RFC 3339 UTC
-(for example, `2026-01-23T05:17:31Z`).
+  (for example, `2026-01-23T05:17:31Z`).
 
 #### Labels
 
