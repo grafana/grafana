@@ -1,6 +1,6 @@
 import { createListenerMiddleware, configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
-import { Middleware } from 'redux';
+import { Middleware, ReducersMapObject } from 'redux';
 
 import { allMiddleware as allApiClientMiddleware } from '@grafana/api-clients/rtkq';
 import { legacyAPI } from 'app/api/clients/legacy';
@@ -15,7 +15,7 @@ import { alertingApi } from '../features/alerting/unified/api/alertingApi';
 
 import { setStore } from './store';
 
-export function addRootReducer(reducers: any) {
+export function addRootReducer(reducers: ReducersMapObject) {
   // this is ok now because we add reducers before configureStore is called
   // in the future if we want to add reducers during runtime
   // we'll have to solve this in a more dynamic way
