@@ -80,13 +80,13 @@ const organizeFields = async (
     return Promise.resolve(null);
   }
 
+  const displayedFields = options.displayedFields ?? [timeFieldName, bodyFieldName];
+
   let indexByName: Record<string, number> = {};
   let includeByName: Record<string, boolean> = {};
-  if (options.displayedFields) {
-    for (const [idx, field] of options.displayedFields.entries()) {
-      indexByName[field] = idx;
-      includeByName[field] = true;
-    }
+  for (const [idx, field] of displayedFields.entries()) {
+    indexByName[field] = idx;
+    includeByName[field] = true;
   }
 
   const organizedFrame = await lastValueFrom(

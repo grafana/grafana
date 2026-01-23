@@ -153,7 +153,7 @@ export const LogsTable = ({
     <div className={styles.wrapper}>
       <LogsTableFields
         width={options.fieldSelectorWidth}
-        displayedFields={options.displayedFields}
+        displayedFields={options.displayedFields ?? [timeFieldName, bodyFieldName]}
         height={height}
         logsFrame={logsFrame}
         timeFieldName={timeFieldName}

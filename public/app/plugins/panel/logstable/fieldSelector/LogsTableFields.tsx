@@ -15,7 +15,7 @@ interface Props {
   width: number | undefined;
   height: number;
   dataFrame: DataFrame;
-  displayedFields: string[] | undefined;
+  displayedFields: string[];
   onDisplayedFieldsChange: (displayedFields: string[]) => void;
   onSidebarWidthChange: (width: number) => void;
   logsFrame: LogsFrame;
