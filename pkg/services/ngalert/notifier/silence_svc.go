@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"encoding/json"
 
 	"golang.org/x/exp/maps"
 
@@ -10,16 +11,24 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 )
+
+// LimitsProvider provides access to alertmanager limits for validation.
+type LimitsProvider interface {
+	// GetLimits retrieves the current limits. Returns nil limits (not an error) if limits are not configured.
+	GetLimits(ctx context.Context) (*client.TenantLimits, error)
+}
 
 // SilenceService is the authenticated service for managing alertmanager silences.
 type SilenceService struct {
-	authz     SilenceAccessControlService
-	xact      transactionManager
-	log       log.Logger
-	store     SilenceStore
-	ruleStore RuleStore
-	ruleAuthz RuleAccessControlService
+	authz          SilenceAccessControlService
+	xact           transactionManager
+	log            log.Logger
+	store          SilenceStore
+	ruleStore      RuleStore
+	ruleAuthz      RuleAccessControlService
+	limitsProvider LimitsProvider
 }
 
 type RuleAccessControlService interface {
@@ -56,14 +65,16 @@ func NewSilenceService(
 	store SilenceStore,
 	ruleStore RuleStore,
 	ruleAuthz RuleAccessControlService,
+	limitsProvider LimitsProvider,
 ) *SilenceService {
 	return &SilenceService{
-		authz:     authz,
-		xact:      xact,
-		log:       log,
-		store:     store,
-		ruleStore: ruleStore,
-		ruleAuthz: ruleAuthz,
+		authz:          authz,
+		xact:           xact,
+		log:            log,
+		store:          store,
+		ruleStore:      ruleStore,
+		ruleAuthz:      ruleAuthz,
+		limitsProvider: limitsProvider,
 	}
 }
 
@@ -100,6 +111,11 @@ func (s *SilenceService) CreateSilence(ctx context.Context, user identity.Reques
 		return "", err
 	}
 
+	// Validate limits before creating
+	if err := s.validateSilenceLimits(ctx, user.GetOrgID(), ps, true); err != nil {
+		return "", err
+	}
+
 	silenceId, err := s.store.CreateSilence(ctx, user.GetOrgID(), ps)
 	if err != nil {
 		return "", err
@@ -122,6 +138,11 @@ func (s *SilenceService) UpdateSilence(ctx context.Context, user identity.Reques
 	}
 
 	if err := validateSilenceUpdate(existing, ps); err != nil {
+		return "", err
+	}
+
+	// Validate size limits before updating (count validation not needed for updates)
+	if err := s.validateSilenceLimits(ctx, user.GetOrgID(), ps, false); err != nil {
 		return "", err
 	}
 
@@ -253,4 +274,58 @@ func validateSilenceUpdate(existing *models.Silence, new models.Silence) error {
 	}
 
 	return nil
+}
+
+// validateSilenceLimits checks if creating or updating a silence would exceed configured limits.
+// orgID is the organization ID to fetch silences for count validation.
+// silence is the new or updated silence.
+// checkCount indicates whether to validate the silence count limit (should be true for create, false for update).
+// Returns nil if limits are not configured, provider returns an error (fail-open), or the silence is within limits.
+func (s *SilenceService) validateSilenceLimits(ctx context.Context, orgID int64, silence models.Silence, checkCount bool) error {
+	if s.limitsProvider == nil {
+		return nil
+	}
+
+	limits, err := s.limitsProvider.GetLimits(ctx)
+	if err != nil {
+		s.log.Warn("Failed to fetch limits, skipping limit validation", "error", err)
+		return nil
+	}
+	if limits == nil || limits.Silences == nil {
+		return nil
+	}
+
+	// Check silence count limit (0 means unlimited)
+	if checkCount && limits.Silences.MaxSilencesCount > 0 {
+		silences, err := s.store.ListSilences(ctx, orgID, nil)
+		if err != nil {
+			s.log.Warn("Failed to list silences for limit validation, skipping count validation", "error", err)
+		} else if len(silences) >= limits.Silences.MaxSilencesCount {
+			return WithPublicError(ErrSilenceLimitExceeded.Errorf(""))
+		}
+	}
+
+	// Check silence size limit (0 means unlimited)
+	if limits.Silences.MaxSilenceSizeBytes > 0 {
+		silenceSize, err := calculateSilenceSize(silence)
+		if err != nil {
+			s.log.Warn("Failed to calculate silence size, skipping size validation", "error", err)
+			return nil
+		}
+		if silenceSize > limits.Silences.MaxSilenceSizeBytes {
+			return WithPublicError(ErrSilenceSizeExceeded.Errorf(""))
+		}
+	}
+
+	return nil
+}
+
+// calculateSilenceSize returns the approximate size of a silence in bytes.
+// This uses JSON marshaling to estimate size, which matches how grafana-alertmanager calculates it.
+func calculateSilenceSize(silence models.Silence) (int, error) {
+	data, err := json.Marshal(silence)
+	if err != nil {
+		return 0, err
+	}
+	return len(data), nil
 }
