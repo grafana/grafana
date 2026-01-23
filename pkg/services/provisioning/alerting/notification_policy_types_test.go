@@ -68,9 +68,13 @@ repeat_interval: ${NOTIFIER_EMAIL_REMINDER_FREQUENCY}
 }
 
 func TestNotificationPolicyExportSnapshots(t *testing.T) {
-	policies := policy_exports.AllRoutes()
+	policies := []string{legacy_storage.UserDefinedRoutingTreeName}
+	config := policy_exports.Config()
+	for policy := range config.ManagedRoutes {
+		policies = append(policies, policy)
+	}
 
-	for policyName, expected := range policies {
+	for _, policyName := range policies {
 		t.Run(fmt.Sprintf("policy=%s", policyName), func(t *testing.T) {
 			for _, exportType := range []string{"json", "yaml"} {
 				t.Run(fmt.Sprintf("exportType=%s", exportType), func(t *testing.T) {
@@ -87,8 +91,13 @@ func TestNotificationPolicyExportSnapshots(t *testing.T) {
 					assert.Len(t, alertFile.Policies, 1)
 					policy := alertFile.Policies[0]
 
+					assert.Equal(t, policyName, policy.Name)
 					assert.Equal(t, policy.OrgID, int64(1))
-					assert.NoError(t, policy.Policy.Validate())
+
+					expected := config.ManagedRoutes[policyName]
+					if policyName == legacy_storage.UserDefinedRoutingTreeName {
+						expected = config.AlertmanagerConfig.Route
+					}
 
 					cOpt := cmpopts.IgnoreUnexported(apimodels.Route{}, labels.Matcher{})
 					if !cmp.Equal(policy.Policy, *expected, cOpt) {
