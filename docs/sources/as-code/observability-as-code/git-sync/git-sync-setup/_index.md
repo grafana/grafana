@@ -33,9 +33,10 @@ Git Sync is under continuous development. [Report any issues](https://grafana.co
 
 To set up Git Sync and synchronize your Grafana dashboards and folders with a GitHub repository, follow these steps:
 
-1. [Before you begin](#before-you-begin): Get acquainted with the requirements and known limitations
-- [Enable feature toggles in Grafana](#enable-required-feature-toggles) (first time setup)
-- [Create a GitHub access token](#create-a-github-access-token)
+1. [Before you begin](#before-you-begin): 
+  - Get acquainted with the requirements and known limitations
+  - Enable feature toggles in Grafana (first time setup)
+  - Create a GitHub access token
 1. Set up Git Sync [using the UI](#set-up-git-sync-using-grafana-ui) or [as code](./set-up-code.md)
 1. After setup, [verify your dashboards](#verify-your-dashboards-in-grafana)
 1. Optionally, you can also [extend Git Sync with webhooks and image rendering](#extend-git-sync-for-real-time-notification-and-image-rendering)
@@ -57,30 +58,33 @@ Before you begin, ensure you have the following:
 - A GitHub repository to store your dashboards in
 - Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs
 
-See also:
+Get acquainted with the following topics:
 
 - [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/intro-git-sync#known-limitations) 
 - [Supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/intro-git-sync#supported-resources) 
 
 ### Enable required feature toggles
 
-To activate Git Sync in Grafana, you need to enable the `provisioning` feature toggle. For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
+To activate Git Sync in Grafana set the `provisioning` and `kubernetesDashboards` feature toggles to `true`. For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
 
-To enable the required feature toggle:
+To enable the required feature toggles in Grafana Cloud, open a support ticket.
 
-1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. For file location based on operating system, refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
-1. Locate or add a `[feature_toggles]` section. Add this value:
+To enable the required feature toggles in Grafana OSS/Enterprise: 
+
+1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. 
+1. Add this value:
 
    ```ini
    [feature_toggles]
    provisioning = true
+   kubernetesDashboards = true ; use k8s from browser
    ```
 
 1. Save the changes to the file and restart Grafana.
 
 ### Create a GitHub access token
 
-If you chose to authenticate with a GitHub Personal Access Token, create one with specific repository permissions. This token needs to be added to your Git Sync configuration to enable read and write permissions between Grafana and GitHub repository.
+If you chose to authenticate with a GitHub Personal Access Token, create one with the repository permissions described below, and add it to your Git Sync configuration to enable read and write permissions between Grafana and GitHub repository.
 
 To create a GitHub access token:
 
@@ -92,8 +96,6 @@ To create a GitHub access token:
   - **Webhooks**: Read and write permission
 1. Select any additional options and then press **Generate token**.
 1. Copy the access token. Leave the browser window available with the token until you've completed configuration.
-
-GitHub Apps aren't currently supported.
 
 ## Set up Git Sync using the UI
 
