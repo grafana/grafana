@@ -74,7 +74,7 @@ function useScopeTreeActions(searchQuery: string, parentId?: string | null) {
   }, [filterNode, searchQuery, parentId]);
 
   return useMemo(
-    () => mapScopesNodesTreeToActions(nodes, tree!, selectedScopes, selectScope),
+    () => mapScopesNodesTreeToActions(nodes ?? {}, tree!, selectedScopes ?? [], selectScope),
     [nodes, tree, selectedScopes, selectScope]
   );
 }
@@ -89,11 +89,11 @@ function useScopesRow(onApply: () => void) {
 
   // Check if we have a different selection than what is already applied. Used to show the apply button.
   const isDirty =
-    appliedScopes
+    (appliedScopes ?? [])
       .map((t) => t.scopeId)
       .sort()
       .join('') !==
-    selectedScopes
+    (selectedScopes ?? [])
       .map((s) => s.scopeId)
       .sort()
       .join('');
@@ -117,12 +117,12 @@ function useScopesRow(onApply: () => void) {
 
   return {
     scopesRow:
-      isDirty || selectedScopes?.length ? (
+      isDirty || (selectedScopes ?? []).length ? (
         <ScopesRow
-          nodes={nodes}
-          scopes={scopes}
+          nodes={nodes ?? {}}
+          scopes={scopes ?? {}}
           deselectScope={deselectScope}
-          selectedScopes={selectedScopes}
+          selectedScopes={selectedScopes ?? []}
           apply={finalApply}
           isDirty={isDirty}
         />

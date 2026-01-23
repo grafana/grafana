@@ -13,19 +13,23 @@ import { SCOPES_PRIORITY } from '../values';
 export function useScopeServicesState() {
   const services = useScopesServices();
   // Call hook unconditionally to follow React Hooks rules
+  const defaultState: ScopesSelectorServiceState = {
+    loading: false,
+    loadingNodeName: undefined,
+    opened: false,
+    nodes: {},
+    scopes: {},
+    selectedScopes: [],
+    appliedScopes: [],
+    tree: {
+      scopeNodeId: '',
+      expanded: false,
+      query: '',
+    },
+  };
   const selectorServiceState: ScopesSelectorServiceState | undefined = useObservable(
     services?.scopesSelectorService.stateObservable ?? new Observable(),
-    services?.scopesSelectorService.state ?? {
-      nodes: {},
-      scopes: {},
-      selectedScopes: [],
-      appliedScopes: [],
-      tree: {
-        scopeNodeId: '',
-        expanded: false,
-        query: '',
-      },
-    }
+    services?.scopesSelectorService.state ?? defaultState
   );
 
   if (!services) {
@@ -59,7 +63,15 @@ export function useScopeServicesState() {
     searchAllNodes,
     apply,
     deselectScope,
-    ...selectorServiceState,
+    nodes: selectorServiceState?.nodes ?? {},
+    scopes: selectorServiceState?.scopes ?? {},
+    selectedScopes: selectorServiceState?.selectedScopes ?? [],
+    appliedScopes: selectorServiceState?.appliedScopes ?? [],
+    tree: selectorServiceState?.tree ?? {
+      scopeNodeId: '',
+      expanded: false,
+      query: '',
+    },
   };
 }
 
