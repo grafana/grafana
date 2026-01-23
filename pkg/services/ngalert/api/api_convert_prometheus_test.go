@@ -1770,6 +1770,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		&provisioning.NopTransactionManager{},
 		60,
 		10,
+		true,
 		100,
 		log.New("test"),
 		&provisioning.NotificationSettingsValidatorProviderFake{},
@@ -1778,6 +1779,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 
 	cfg := &setting.UnifiedAlertingSettings{
 		DefaultRuleEvaluationInterval: 1 * time.Minute,
+		GrafanaManagedAlertsEnabled:   true,
 		RecordingRules: setting.RecordingRuleSettings{
 			Enabled: true,
 		},

@@ -19,7 +19,12 @@ import { GrafanaPromRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
-import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
+import {
+  getInstancesPermissions,
+  getNotificationsPermissions,
+  getRulesPermissions,
+  isGrafanaManagedAlertsCreationEnabled,
+} from '../utils/access-control';
 import { getGroupOriginName, groupIdentifier } from '../utils/groupIdentifier';
 import { isAdmin } from '../utils/misc';
 import {
@@ -170,9 +175,11 @@ export const useFolderBulkActionAbility = (action: FolderBulkAction): Ability =>
  * This one will check for alerting abilities that don't apply to any particular alert source or alert rule
  */
 export const useAlertingAbilities = (): Abilities<AlertingAction> => {
+  const grafanaManagedAlertsEnabled = isGrafanaManagedAlertsCreationEnabled();
+
   return {
     // internal (Grafana managed)
-    [AlertingAction.CreateAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleCreate),
+    [AlertingAction.CreateAlertRule]: toAbility(grafanaManagedAlertsEnabled, AccessControlAction.AlertingRuleCreate),
     [AlertingAction.ViewAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleRead),
     [AlertingAction.UpdateAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleUpdate),
     [AlertingAction.DeleteAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleDelete),
@@ -278,6 +285,7 @@ export function useAllRulerRuleAbilities(
   groupIdentifier: RuleGroupIdentifierV2
 ): Abilities<AlertRuleAction> {
   const rulesSourceName = getGroupOriginName(groupIdentifier);
+  const grafanaManagedAlertsEnabled = isGrafanaManagedAlertsCreationEnabled();
 
   const { isEditable, isRemovable, isRulerAvailable = false, loading } = useIsRuleEditable(rulesSourceName, rule);
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
@@ -299,7 +307,8 @@ export function useAllRulerRuleAbilities(
     const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
 
     // Creating duplicates of plugin-provided rules does not seem to make a lot of sense
-    const duplicateSupported = isPluginProvided ? NotSupported : MaybeSupported;
+    const creationEnabled = grafanaManagedAlertsEnabled || rulesSourceName !== 'grafana';
+    const duplicateSupported = isPluginProvided || !creationEnabled ? NotSupported : MaybeSupported;
 
     const rulesPermissions = getRulesPermissions(rulesSourceName);
 
@@ -320,7 +329,7 @@ export function useAllRulerRuleAbilities(
     };
 
     return abilities;
-  }, [rule, loading, isRulerAvailable, rulesSourceName, isEditable, isRemovable, canSilence, exportAllowed]);
+  }, [rule, loading, isRulerAvailable, rulesSourceName, grafanaManagedAlertsEnabled, isEditable, isRemovable, canSilence, exportAllowed]);
 
   return abilities;
 }
@@ -333,6 +342,7 @@ export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefi
   // For GrafanaPromRuleDTO, we use useIsGrafanaPromRuleEditable instead
   const { isEditable, isRemovable, loading } = useIsGrafanaPromRuleEditable(rule); // duplicate
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
+  const grafanaManagedAlertsEnabled = isGrafanaManagedAlertsCreationEnabled();
 
   const silenceSupported = useGrafanaRulesSilenceSupport();
   const canSilenceInFolder = useCanSilenceInFolder(rule?.folderUid);
@@ -355,7 +365,7 @@ export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefi
     const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
 
     // Creating duplicates of plugin-provided rules does not seem to make a lot of sense
-    const duplicateSupported = isPluginProvided ? NotSupported : MaybeSupported;
+    const duplicateSupported = isPluginProvided || !grafanaManagedAlertsEnabled ? NotSupported : MaybeSupported;
 
     const rulesPermissions = getRulesPermissions('grafana');
 
@@ -376,7 +386,7 @@ export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefi
     };
 
     return abilities;
-  }, [rule, loading, isEditable, isRemovable, canSilenceInFolder, exportAllowed, silenceSupported]);
+  }, [rule, loading, grafanaManagedAlertsEnabled, isEditable, isRemovable, canSilenceInFolder, exportAllowed, silenceSupported]);
 
   return abilities;
 }

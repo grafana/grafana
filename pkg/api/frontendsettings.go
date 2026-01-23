@@ -342,7 +342,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		},
 
 		UnifiedAlerting: dtos.FrontendSettingsUnifiedAlertingDTO{
-			MinInterval: hs.Cfg.UnifiedAlerting.MinInterval.String(),
+			MinInterval:                 hs.Cfg.UnifiedAlerting.MinInterval.String(),
+			GrafanaManagedAlertsEnabled: hs.Cfg.UnifiedAlerting.GrafanaManagedAlertsEnabled,
 		},
 
 		Oauth:                   hs.getEnabledOAuthProviders(),

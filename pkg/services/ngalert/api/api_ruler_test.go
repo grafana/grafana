@@ -1001,7 +1001,8 @@ func createService(store *fakes.RuleStore, _userService *usertest.FakeUserServic
 		provenanceStore: fakes.NewFakeProvisioningStore(),
 		log:             log.New("test"),
 		cfg: &setting.UnifiedAlertingSettings{
-			BaseInterval: 10 * time.Second,
+			BaseInterval:                10 * time.Second,
+			GrafanaManagedAlertsEnabled: true,
 		},
 		authz:              accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 		amConfigStore:      &fakeAMRefresher{},

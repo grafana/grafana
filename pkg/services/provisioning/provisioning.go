@@ -311,6 +311,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.SQLStore,
 		int64(ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ps.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
+		ps.Cfg.UnifiedAlerting.GrafanaManagedAlertsEnabled,
 		ps.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
 		ps.log,
 		notifier.NewCachedNotificationSettingsValidationService(ps.alertingStore),

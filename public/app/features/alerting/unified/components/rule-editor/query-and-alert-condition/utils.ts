@@ -5,13 +5,16 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useHasRulerV2 } from '../../../hooks/useHasRuler';
 import { RuleFormType } from '../../../types/rule-form';
+import { isGrafanaManagedAlertsCreationEnabled } from '../../../utils/access-control';
 
 export const onlyOneDSInQueries = (queries: AlertQuery[]) => {
   return queries.filter((q) => q.datasourceUid !== ExpressionDatasourceUID).length === 1;
 };
 
 function getAvailableRuleTypes() {
-  const canCreateGrafanaRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate);
+  const grafanaManagedAlertsEnabled = isGrafanaManagedAlertsCreationEnabled();
+  const canCreateGrafanaRules =
+    grafanaManagedAlertsEnabled && contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate);
   const canCreateCloudRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
   const defaultRuleType = canCreateGrafanaRules ? RuleFormType.grafana : RuleFormType.cloudAlerting;
 

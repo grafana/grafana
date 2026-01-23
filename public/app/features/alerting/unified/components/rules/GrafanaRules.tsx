@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -56,9 +57,23 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
-  const hasGrafanaAlerts = namespaces.length > 0;
+  const hasGrafanaAlerts = useMemo(() => {
+    if (namespaces.length > 0) {
+      return true;
+    }
+    const promHasRules =
+      prom.result?.some((namespace) => namespace.groups?.some((group) => (group.rules ?? []).length > 0)) ?? false;
+    const rulerHasRules = Object.values(ruler.result ?? {}).some((groups) =>
+      groups?.some((group) => (group.rules ?? []).length > 0)
+    );
+    return promHasRules || rulerHasRules;
+  }, [namespaces.length, prom.result, ruler.result]);
   const { canCreateGrafanaRules } = useRulesAccess();
   const grafanaRecordingRulesEnabled = config.unifiedAlerting.recordingRulesEnabled && canCreateGrafanaRules;
+
+  if (!loading && !hasGrafanaAlerts) {
+    return null;
+  }
 
   return (
     <section className={styles.wrapper}>
@@ -123,7 +138,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
           viewMode={wantsListView ? 'list' : 'grouped'}
         />
       ))}
-      {hasResult && namespacesFormat?.length === 0 && (
+      {hasResult && namespacesFormat?.length === 0 && hasGrafanaAlerts && (
         <p>
           <Trans i18nKey="alerting.grafana-rules.no-rules-found">No rules found.</Trans>
         </p>

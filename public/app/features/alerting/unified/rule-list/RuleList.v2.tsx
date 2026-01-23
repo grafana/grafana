@@ -54,7 +54,8 @@ export function RuleListActions() {
   // Align import UI permission with convert endpoint requirements: rule create + provisioning set status
   const canImportRulesToGMA =
     config.featureToggles.alertingMigrationUI &&
-    contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
+    createGrafanaRuleSupported &&
+    createGrafanaRuleAllowed &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
@@ -63,11 +64,13 @@ export function RuleListActions() {
     () => (
       <Menu>
         <Menu.Group>
-          <Menu.Item
-            label={t('alerting.rule-list.new-rule-for-export', 'New alert rule for export')}
-            icon="file-export"
-            url="/alerting/export-new-rule"
-          />
+          {canCreateGrafanaRules && (
+            <Menu.Item
+              label={t('alerting.rule-list.new-rule-for-export', 'New alert rule for export')}
+              icon="file-export"
+              url="/alerting/export-new-rule"
+            />
+          )}
           {canExportRules && (
             <Menu.Item
               label={t('alerting.rule-list.export-all-grafana-rules', 'Export all Grafana rules')}
