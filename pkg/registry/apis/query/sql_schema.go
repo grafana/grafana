@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/expr"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
@@ -15,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	service "github.com/grafana/grafana/pkg/services/query"
@@ -43,7 +42,7 @@ func newSQLSchemasREST(builder *QueryAPIBuilder) *sqlSchemaREST {
 
 func (r *sqlSchemaREST) New() runtime.Object {
 	// This is added as the "ResponseType" regardless what ProducesObject() says :)
-	return &query.SQLSchemas{}
+	return &query.SQLSchemasWrapper{}
 }
 
 func (r *sqlSchemaREST) Destroy() {}
@@ -141,13 +140,13 @@ func (r *sqlSchemaREST) Connect(connectCtx context.Context, name string, _ runti
 			return
 		}
 
-		responder.Object(200, &query.SQLSchemas{
+		responder.Object(200, &query.SQLSchemasWrapper{
 			SQLSchemas: qdr,
 		})
 	}), nil
 }
 
-func handlePreparedSQLSchema(ctx context.Context, pq *preparedQuery) (expr.SQLSchemas, error) {
+func handlePreparedSQLSchema(ctx context.Context, pq *preparedQuery) (query.SQLSchemas, error) {
 	resp, err := service.GetSQLSchemas(ctx, pq.logger, pq.cache, pq.exprSvc, pq.mReq, pq.builder, pq.headers)
 	pq.reportMetrics()
 	return resp, err
@@ -160,7 +159,7 @@ func handleSQLSchemaQuery(
 	httpreq *http.Request,
 	responder responderWrapper,
 	connectLogger log.Logger,
-) (expr.SQLSchemas, error) {
+) (query.SQLSchemas, error) {
 	pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
 	if err != nil {
 		responder.Error(err)
