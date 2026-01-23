@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -153,12 +152,7 @@ func TestIntegrationServer(t *testing.T) {
 func setupOpenFGAServer(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	t.Helper()
 
-	store, err := store.NewEmbeddedStore(cfg, testDB, log.NewNopLogger())
-	require.NoError(t, err)
-	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
-	require.NoError(t, err)
-
-	srv, err := NewServer(cfg.ZanzanaServer, openfga, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
+	srv, err := NewEmbeddedZanzanaServer(cfg, testDB, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
 	require.NoError(t, err)
 
 	return srv

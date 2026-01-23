@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -14,11 +15,13 @@ import (
 
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -54,18 +57,48 @@ type storeInfo struct {
 	ModelID string
 }
 
-func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
+func NewEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
+	store, err := zStore.NewEmbeddedStore(cfg, db, logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start zanzana: %w", err)
+	}
+
+	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start zanzana: %w", err)
+	}
+
+	return newServer(cfg, openfga, logger, tracer, reg)
+}
+
+func NewZanzanaServer(cfg *setting.Cfg, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
+	store, err := zStore.NewStore(cfg, logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initilize zanana store: %w", err)
+	}
+
+	openfgaServer, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start zanzana: %w", err)
+	}
+
+	return newServer(cfg, openfgaServer, logger, tracer, reg)
+}
+
+func newServer(cfg *setting.Cfg, openfga OpenFGAServer, logger log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
+
+	zanzanaCfg := cfg.ZanzanaServer
 
 	s := &Server{
 		openFGAServer: openfga,
 		openFGAClient: openFGAClient,
 		storesMU:      &sync.Mutex{},
 		stores:        make(map[string]storeInfo),
-		cfg:           cfg,
-		cache:         localcache.New(cfg.CacheSettings.CheckQueryCacheTTL, cacheCleanInterval),
+		cfg:           zanzanaCfg,
+		cache:         localcache.New(zanzanaCfg.CacheSettings.CheckQueryCacheTTL, cacheCleanInterval),
 		logger:        logger,
 		tracer:        tracer,
 		metrics:       newZanzanaServerMetrics(reg),

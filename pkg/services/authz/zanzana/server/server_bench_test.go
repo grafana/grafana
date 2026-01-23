@@ -345,7 +345,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, openFGAStore)
 	require.NoError(b, err)
 
-	srv, err := NewServer(cfg.ZanzanaServer, openfga, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
+	srv, err := NewZanzanaServer(cfg.ZanzanaServer, openfga, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
 	require.NoError(b, err)
 
 	// Generate test data

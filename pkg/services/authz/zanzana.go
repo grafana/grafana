@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"google.golang.org/grpc"
@@ -29,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	zServer "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
-	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -38,7 +36,7 @@ import (
 
 // ProvideZanzanaClient used to register ZanzanaClient.
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
-func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Client, error) {
+func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Server, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Client, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		return zClient.NewNoopClient(), nil
@@ -56,22 +54,6 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, fea
 		return NewRemoteZanzanaClient(zanzanaConfig, reg)
 
 	case setting.ZanzanaModeEmbedded:
-		logger := log.New("zanzana.server")
-		store, err := zStore.NewEmbeddedStore(cfg, db, logger)
-		if err != nil {
-			return nil, fmt.Errorf("failed to start zanzana: %w", err)
-		}
-
-		openfga, err := zServer.NewOpenFGAServer(cfg.ZanzanaServer, store)
-		if err != nil {
-			return nil, fmt.Errorf("failed to start zanzana: %w", err)
-		}
-
-		srv, err := zServer.NewServer(cfg.ZanzanaServer, openfga, logger, tracer, reg)
-		if err != nil {
-			return nil, fmt.Errorf("failed to start zanzana: %w", err)
-		}
-
 		channel := &inprocgrpc.Channel{}
 		// Put * as a namespace so we can properly authorize request with in-proc mode
 		channel.WithServerUnaryInterceptor(grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
@@ -86,9 +68,8 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, fea
 			return ctx, nil
 		}))
 
-		// openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
-		authzv1.RegisterAuthzServiceServer(channel, srv)
-		authzextv1.RegisterAuthzExtentionServiceServer(channel, srv)
+		authzv1.RegisterAuthzServiceServer(channel, zanzanaServer)
+		authzextv1.RegisterAuthzExtentionServiceServer(channel, zanzanaServer)
 
 		client, err := zClient.New(channel, reg)
 		if err != nil {
@@ -101,40 +82,14 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, fea
 	}
 }
 
+// ProvideEmbeddedZanzanaServer creates and registers embedded ZanzanaServer.
 func ProvideEmbeddedZanzanaServer(cfg *setting.Cfg, db db.DB, tracer tracing.Tracer, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Server, error) {
 	logger := log.New("zanzana.server")
-	store, err := zStore.NewEmbeddedStore(cfg, db, logger)
+
+	srv, err := zServer.NewEmbeddedZanzanaServer(cfg, db, logger, tracer, reg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start zanzana: %w", err)
 	}
-
-	openfga, err := zServer.NewOpenFGAServer(cfg.ZanzanaServer, store)
-	if err != nil {
-		return nil, fmt.Errorf("failed to start zanzana: %w", err)
-	}
-
-	srv, err := zServer.NewServer(cfg.ZanzanaServer, openfga, logger, tracer, reg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to start zanzana: %w", err)
-	}
-
-	channel := &inprocgrpc.Channel{}
-	// Put * as a namespace so we can properly authorize request with in-proc mode
-	channel.WithServerUnaryInterceptor(grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
-		ctx = types.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
-			Rest: authnlib.AccessTokenClaims{
-				Namespace: "*",
-				Permissions: []string{
-					zanzana.TokenPermissionUpdate,
-				},
-			},
-		}))
-		return ctx, nil
-	}))
-
-	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
-	authzv1.RegisterAuthzServiceServer(channel, srv)
-	authzextv1.RegisterAuthzExtentionServiceServer(channel, srv)
 
 	return srv, nil
 }
@@ -259,17 +214,7 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return err
 	}
 
-	store, err := zStore.NewStore(z.cfg, z.logger)
-	if err != nil {
-		return fmt.Errorf("failed to initilize zanana store: %w", err)
-	}
-
-	openfgaServer, err := zServer.NewOpenFGAServer(z.cfg.ZanzanaServer, store)
-	if err != nil {
-		return fmt.Errorf("failed to start zanzana: %w", err)
-	}
-
-	zanzanaServer, err := zServer.NewServer(z.cfg.ZanzanaServer, openfgaServer, z.logger, tracer, z.reg)
+	zanzanaServer, err := zServer.NewZanzanaServer(z.cfg, z.logger, tracer, z.reg)
 	if err != nil {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
@@ -308,7 +253,6 @@ func (z *Zanzana) start(ctx context.Context) error {
 	}
 
 	grpcServer := z.handle.GetServer()
-	openfgav1.RegisterOpenFGAServiceServer(grpcServer, openfgaServer)
 	authzv1.RegisterAuthzServiceServer(grpcServer, zanzanaServer)
 	authzextv1.RegisterAuthzExtentionServiceServer(grpcServer, zanzanaServer)
 
