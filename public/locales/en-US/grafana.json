@@ -12692,10 +12692,10 @@
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
-      "duration-selected": "Choose refresh time interval with current interval {{durationAriaLabel}} selected"
+      "duration-selected": "{{durationAriaLabel}} - interval selected"
     },
     "auto-option": {
-      "aria-label": "",
+      "aria-label": "Auto",
       "label": ""
     },
     "live-option": {

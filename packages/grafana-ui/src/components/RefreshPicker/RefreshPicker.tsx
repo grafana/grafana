@@ -48,7 +48,7 @@ export class RefreshPicker extends PureComponent<Props> {
   static autoOption = {
     label: 'Auto',
     value: 'auto',
-    ariaLabel: 'Select refresh from the query range',
+    ariaLabel: 'Turn on auto refresh',
   };
 
   static isLive = (refreshInterval?: string): boolean => refreshInterval === RefreshPicker.liveOption.value;
@@ -94,13 +94,17 @@ export class RefreshPicker extends PureComponent<Props> {
     const durationAriaLabel = selectedValue.ariaLabel;
     const ariaLabelDurationSelectedMessage = t(
       'refresh-picker.aria-label.duration-selected',
-      'Choose refresh time interval with current interval {{durationAriaLabel}} selected',
-      { durationAriaLabel }
+      '{{durationAriaLabel}} - interval selected',
+      {
+        durationAriaLabel,
+      }
     );
+
     const ariaLabelChooseIntervalMessage = t(
       'refresh-picker.aria-label.choose-interval',
       'Auto refresh turned off. Choose refresh time interval'
     );
+
     const ariaLabel = selectedValue.value === '' ? ariaLabelChooseIntervalMessage : ariaLabelDurationSelectedMessage;
 
     const tooltipIntervalSelected = t('refresh-picker.tooltip.interval-selected', 'Set auto refresh interval');
