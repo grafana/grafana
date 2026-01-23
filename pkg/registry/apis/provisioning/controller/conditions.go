@@ -63,7 +63,7 @@ func buildReadyConditionFromHealth(healthStatus provisioning.HealthStatus) metav
 	return metav1.Condition{
 		Type:    provisioning.ConditionTypeReady,
 		Status:  metav1.ConditionFalse,
-		Reason:  provisioning.ReasonInvalidConfiguration,
+		Reason:  provisioning.ReasonInvalidSpec,
 		Message: message,
 	}
 }

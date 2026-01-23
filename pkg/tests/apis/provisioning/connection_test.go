@@ -995,7 +995,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		readyCondition := findCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
 		assert.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False for unhealthy connection")
-		assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCondition.Reason, "Ready condition should have AuthenticationFailed reason for authentication failures")
+		assert.Equal(t, provisioning.ReasonInvalidSpec, readyCondition.Reason, "Ready condition should have InvalidConfiguration reason for invalid installation ID")
 
 		// Verify fieldErrors are populated with validation errors - be strict and explicit
 		require.Len(t, conn.Status.FieldErrors, 1, "fieldErrors should contain exactly one error for invalid installation ID")
@@ -1089,7 +1089,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		readyCondition := findCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
 		assert.NotNil(t, readyCondition, "Ready condition should exist")
 		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False for unhealthy connection")
-		assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCondition.Reason, "Ready condition should have AuthenticationFailed reason for authentication failures")
+		assert.Equal(t, provisioning.ReasonInvalidSpec, readyCondition.Reason, "Ready condition should have InvalidConfiguration reason for app ID mismatch")
 
 		// Verify fieldErrors are populated with validation errors - be strict and explicit
 		require.Len(t, conn.Status.FieldErrors, 1, "fieldErrors should contain exactly one error for app ID mismatch")

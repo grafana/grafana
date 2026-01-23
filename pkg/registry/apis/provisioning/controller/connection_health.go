@@ -118,7 +118,7 @@ func classifyConnectionError(testResults *provisioning.TestResults) string {
 		return provisioning.ReasonServiceUnavailable
 	default:
 		// All other errors (422, 500, etc.) are spec/configuration issues
-		return provisioning.ReasonInvalidConfiguration
+		return provisioning.ReasonInvalidSpec
 	}
 }
 
