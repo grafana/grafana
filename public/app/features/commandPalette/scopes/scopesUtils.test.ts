@@ -1,5 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { setIn } from 'immutable';
+import { useObservable } from 'react-use';
 import { Observable, of } from 'rxjs';
 
 import { Scope, ScopeNode } from '@grafana/data';
@@ -14,6 +15,14 @@ import { mapScopeNodeToAction, mapScopesNodesTreeToActions, useScopeServicesStat
 jest.mock('../../scopes/ScopesContextProvider', () => ({
   useScopesServices: jest.fn(),
 }));
+
+jest.mock('react-use', () => {
+  const actual = jest.requireActual('react-use');
+  return {
+    ...actual,
+    useObservable: jest.fn(),
+  };
+});
 
 const scopeNode: ScopeNode = {
   metadata: { name: 'scope1' },
@@ -236,6 +245,11 @@ describe('useScopeServicesState', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset useObservable to use actual implementation by default
+    (useObservable as jest.Mock).mockImplementation((...args) => {
+      const actual = jest.requireActual('react-use');
+      return actual.useObservable(...args);
+    });
   });
 
   it('should return defaults when services are not available', () => {
@@ -375,5 +389,112 @@ describe('useScopeServicesState', () => {
     expect(result.current.selectedScopes).not.toBeUndefined();
     expect(result.current.appliedScopes).not.toBeUndefined();
     expect(result.current.tree).not.toBeUndefined();
+  });
+
+  it('should use new Observable when stateObservable is undefined', () => {
+    (useScopesServices as jest.Mock).mockReturnValue({
+      scopesSelectorService: {
+        ...mockScopesSelectorService,
+        stateObservable: undefined,
+        state: mockScopesSelectorService.state,
+      },
+    });
+
+    const { result } = renderHook(() => useScopeServicesState());
+
+    // Should use defaultState when stateObservable is undefined
+    expect(result.current.nodes).toEqual({});
+    expect(result.current.scopes).toEqual({});
+    expect(result.current.selectedScopes).toEqual([]);
+    expect(result.current.appliedScopes).toEqual([]);
+  });
+
+  it('should use defaultState when state is undefined', () => {
+    (useScopesServices as jest.Mock).mockReturnValue({
+      scopesSelectorService: {
+        ...mockScopesSelectorService,
+        stateObservable: new Observable(),
+        state: undefined,
+      },
+    });
+
+    const { result } = renderHook(() => useScopeServicesState());
+
+    // Should use defaultState when state is undefined
+    expect(result.current.nodes).toEqual({});
+    expect(result.current.scopes).toEqual({});
+    expect(result.current.selectedScopes).toEqual([]);
+    expect(result.current.appliedScopes).toEqual([]);
+    expect(result.current.tree).toEqual({
+      scopeNodeId: '',
+      expanded: false,
+      query: '',
+    });
+  });
+
+  it('should use defaultState when both stateObservable and state are undefined', () => {
+    (useScopesServices as jest.Mock).mockReturnValue({
+      scopesSelectorService: {
+        ...mockScopesSelectorService,
+        stateObservable: undefined,
+        state: undefined,
+      },
+    });
+
+    const { result } = renderHook(() => useScopeServicesState());
+
+    // Should use defaultState when both are undefined
+    expect(result.current.nodes).toEqual({});
+    expect(result.current.scopes).toEqual({});
+    expect(result.current.selectedScopes).toEqual([]);
+    expect(result.current.appliedScopes).toEqual([]);
+    expect(result.current.tree).toEqual({
+      scopeNodeId: '',
+      expanded: false,
+      query: '',
+    });
+  });
+
+  it('should return all service methods when services are available', () => {
+    (useScopesServices as jest.Mock).mockReturnValue({
+      scopesSelectorService: mockScopesSelectorService,
+    });
+
+    const { result } = renderHook(() => useScopeServicesState());
+
+    expect(result.current.filterNode).toBe(mockFilterNode);
+    expect(result.current.selectScope).toBe(mockSelectScope);
+    expect(result.current.resetSelection).toBe(mockResetSelection);
+    expect(result.current.searchAllNodes).toBe(mockSearchAllNodes);
+    expect(result.current.getScopeNodes).toBe(mockGetScopeNodes);
+    expect(result.current.apply).toBe(mockApply);
+    expect(result.current.deselectScope).toBe(mockDeselectScope);
+  });
+
+  it('should use defaultState when useObservable returns undefined', () => {
+    (useObservable as jest.Mock).mockReturnValue(undefined);
+    (useScopesServices as jest.Mock).mockReturnValue({
+      scopesSelectorService: {
+        ...mockScopesSelectorService,
+        stateObservable: of(mockScopesSelectorService.state),
+        state: mockScopesSelectorService.state,
+      },
+    });
+
+    const { result } = renderHook(() => useScopeServicesState());
+
+    // Should fall back to defaultState when useObservable returns undefined
+    expect(result.current.nodes).toEqual({});
+    expect(result.current.scopes).toEqual({});
+    expect(result.current.selectedScopes).toEqual([]);
+    expect(result.current.appliedScopes).toEqual([]);
+    expect(result.current.tree).toEqual({
+      scopeNodeId: '',
+      expanded: false,
+      query: '',
+    });
+    // But should still have service methods
+    expect(result.current.filterNode).toBe(mockFilterNode);
+    expect(result.current.selectScope).toBe(mockSelectScope);
   });
 });
