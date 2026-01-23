@@ -797,8 +797,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 				b.tracer,
 				10,
-				b.maxResourcesPerRepository,
 			)
+			// HACK: Set maxResourcesPerRepository after construction to avoid changing NewSyncWorker signature.
+			// See SetMaxResourcesPerRepository for details.
+			syncWorker.SetMaxResourcesPerRepository(b.maxResourcesPerRepository)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(

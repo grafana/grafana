@@ -45,7 +45,7 @@ func TestSyncWorker_IsSupported(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			worker := NewSyncWorker(nil, nil, nil, nil, metrics, tracing.NewNoopTracerService(), 10, 0)
+			worker := NewSyncWorker(nil, nil, nil, nil, metrics, tracing.NewNoopTracerService(), 10)
 			result := worker.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.expected, result)
 		})
@@ -62,7 +62,7 @@ func TestSyncWorker_ProcessNotReaderWriter(t *testing.T) {
 			Title: "test-repo",
 		},
 	})
-	worker := NewSyncWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService(), 10, 0)
+	worker := NewSyncWorker(nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), tracing.NewNoopTracerService(), 10)
 	err := worker.Process(context.Background(), repo, provisioning.Job{}, jobs.NewMockJobProgressRecorder(t))
 	require.EqualError(t, err, "sync job submitted for repository that does not support read-write")
 }
@@ -199,8 +199,8 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
 				tracing.NewNoopTracerService(),
 				10,
-				tt.maxResourcesPerRepository,
 			)
+			worker.SetMaxResourcesPerRepository(tt.maxResourcesPerRepository)
 
 			// Create test job
 			job := provisioning.Job{
@@ -704,7 +704,6 @@ func TestSyncWorker_Process(t *testing.T) {
 				jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
 				tracing.NewNoopTracerService(),
 				10,
-				0, // maxResourcesPerRepository: 0 = unlimited
 			)
 
 			// Create test job
