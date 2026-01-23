@@ -64,22 +64,24 @@ For further details refer to [key concepts](https://grafana.com/docs/grafana/<GR
 
 ### Enable required feature toggles
 
-To activate Git Sync in Grafana set the `provisioning` and `kubernetesDashboards` feature toggles to `true`. For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
+To activate Git Sync in Grafana you need to set the `provisioning` and `kubernetesDashboards` feature toggles to `true`. To enable them:
 
-To enable the required feature toggles in Grafana Cloud, open a support ticket.
+- In Grafana Cloud, open a support ticket.
 
-To enable the required feature toggles in Grafana OSS/Enterprise: 
+- In Grafana OSS/Enterprise: 
 
-1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. 
-1. Add this value:
+  1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. 
+  1. Add this value:
 
-   ```ini
-   [feature_toggles]
-   provisioning = true
-   kubernetesDashboards = true ; use k8s from browser
-   ```
+     ```ini
+     [feature_toggles]
+     provisioning = true
+     kubernetesDashboards = true ; use k8s from browser
+     ```
 
-1. Save the changes to the file and restart Grafana.
+  1. Save the changes to the file and restart Grafana.
+
+For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
 
 ### Create a GitHub access token
 
