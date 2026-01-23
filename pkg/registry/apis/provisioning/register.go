@@ -226,7 +226,7 @@ func (b *APIBuilder) SetMaxResourcesPerRepository(maxResourcesPerRepository int6
 // HACK: This is a workaround to avoid changing NewAPIBuilder signature which would require
 // changes in the enterprise repository. This should be moved to NewAPIBuilder parameters
 // once we can coordinate the change across repositories.
-// The value is stored here and then passed to the validator via SetRepositoryLimits.
+// The value is stored here and then passed to the validator via SetQuotaLimits.
 func (b *APIBuilder) SetMaxRepositories(maxRepositories int64) {
 	b.maxRepositories = maxRepositories
 }
