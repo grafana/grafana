@@ -1147,3 +1147,13 @@ func requestHelper(
 
 	return result, resp.Response.StatusCode, nil
 }
+
+// findCondition finds a condition by type in the conditions list
+func findCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
+	for i := range conditions {
+		if conditions[i].Type == conditionType {
+			return &conditions[i]
+		}
+	}
+	return nil
+}
