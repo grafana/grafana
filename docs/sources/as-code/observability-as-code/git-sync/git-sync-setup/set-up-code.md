@@ -21,6 +21,16 @@ aliases:
 
 # Set up Git Sync as code
 
+{{< admonition type="caution" >}}
+
+Git Sync is available in [private preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions. Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
+
+You can sign up to the private preview using the [Git Sync early access form](https://forms.gle/WKkR3EVMcbqsNnkD9).
+
+Git Sync is under continuous development. [Report any issues](https://grafana.com/help/) you encounter to help us improve Git Sync.
+
+{{< /admonition >}}
+
 You can also configure Git Sync using `grafanactl`. Since Git Sync configuration is managed as code using Custom Resource Definitions (CRDs), you can create a Repository CRD in a YAML file and use `grafanactl` to push it to Grafana. This approach enables automated, GitOps-style workflows for managing Git Sync configuration instead of using the Grafana UI.
 
 To set up Git Sync with `grafanactl`, follow these steps:
