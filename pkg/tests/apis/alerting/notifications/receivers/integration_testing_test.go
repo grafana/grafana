@@ -48,7 +48,11 @@ func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
 		Spec: v0alpha1.ReceiverSpec{
 			Title: "test-receiver-1",
 			Integrations: []v0alpha1.ReceiverIntegration{
-				createIntegration(t, "webhook"),
+				func() v0alpha1.ReceiverIntegration {
+					i := createIntegration(t, "webhook")
+					i.Settings["url"] = "http://localhost:8080"
+					return i
+				}(),
 			},
 		},
 	}, resource.CreateOptions{})

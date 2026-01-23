@@ -38,6 +38,8 @@ type Connection interface {
 //
 //go:generate mockery --name TokenConnection --structname MockTokenConnection --inpackage --filename connection_token_mock.go --with-expecter
 type TokenConnection interface {
+	// TokenCreationTime returns when the underlying token has been created.
+	TokenCreationTime(ctx context.Context) (time.Time, error)
 	// TokenExpiration returns the underlying token expiration.
 	TokenExpiration(ctx context.Context) (time.Time, error)
 	// GenerateConnectionToken generates a connection-level token.
