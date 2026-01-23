@@ -7,7 +7,7 @@ import { prepConfig } from './scatter';
 import { prepSeries } from './utils';
 
 export const xychartSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, FieldConfig> = (ds) => {
-  if (!ds.rawFrames) {
+  if (!ds.rawFrames || ds.rawFrames.length === 0) {
     return;
   }
 
