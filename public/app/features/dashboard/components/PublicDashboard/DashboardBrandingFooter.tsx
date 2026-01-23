@@ -12,6 +12,7 @@ import { useGetPublicDashboardConfig } from './usePublicDashboardConfig';
 
 const selectors = e2eSelectors.pages.PublicDashboard;
 const DEFAULT_GRAFANA_LOGO_TOKEN = 'grafana-logo';
+const DEFAULT_KIOSK_FOOTER_LINK_URL = 'https://grafana.com/?src=grafananet&cnt=kiosk-dashboard';
 
 export enum DashboardBrandingFooterVariant {
   Public = 'public',
@@ -89,11 +90,14 @@ export const DashboardBrandingFooter = function ({
     });
   }, [paddingX, theme, useMinHeight]);
 
-  if (hide || conf.footerHide) {
+  const isKioskVariant = variant === DashboardBrandingFooterVariant.Kiosk;
+
+  // Only the Public variant should be impacted by `[white_labeling.public_dashboards]` settings like `footer_hide`.
+  if (hide || (!isKioskVariant && conf.footerHide)) {
     return null;
   }
 
-  const href = textUtil.sanitizeUrl(linkUrl ?? conf.footerLink);
+  const href = textUtil.sanitizeUrl(linkUrl ?? (isKioskVariant ? DEFAULT_KIOSK_FOOTER_LINK_URL : conf.footerLink));
   const defaultText =
     variant === DashboardBrandingFooterVariant.Kiosk
       ? i18n.t('dashboard.kiosk.footerPoweredBy', 'Powered by')

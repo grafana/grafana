@@ -22,6 +22,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types/dashboard';
 
+import { setPublicDashboardConfigFn } from '../../dashboard/components/PublicDashboard/usePublicDashboardConfig';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';
 
@@ -155,6 +156,13 @@ setDashboardLoaderSrv({
 
 describe('DashboardScenePage', () => {
   beforeEach(() => {
+    setPublicDashboardConfigFn({
+      footerHide: false,
+      footerText: 'Powered by',
+      footerLogo: 'grafana-logo',
+      footerLink: 'https://grafana.com/?src=grafananet&cnt=public-dashboards',
+      headerLogoHide: false,
+    });
     locationService.push('/d/my-dash-uid');
     getDashboardScenePageStateManager().clearDashboardCache();
     loadDashboardMock.mockClear();
@@ -180,6 +188,22 @@ describe('DashboardScenePage', () => {
   });
 
   it('shows Powered by footer in kiosk mode', async () => {
+    setup({ routeProps: { queryParams: { kiosk: true } } });
+
+    await waitForDashboardToRender();
+
+    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
+  });
+
+  it('shows kiosk Powered by footer even when public dashboard footerHide is enabled', async () => {
+    setPublicDashboardConfigFn({
+      footerHide: true,
+      footerText: 'Powered by',
+      footerLogo: 'grafana-logo',
+      footerLink: 'https://grafana.com/?src=grafananet&cnt=public-dashboards',
+      headerLogoHide: false,
+    });
+
     setup({ routeProps: { queryParams: { kiosk: true } } });
 
     await waitForDashboardToRender();
