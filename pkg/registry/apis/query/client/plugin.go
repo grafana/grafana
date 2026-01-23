@@ -8,12 +8,11 @@ import (
 	"sync"
 	"time"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type pluginClient struct {
@@ -213,9 +213,9 @@ func (d *pluginRegistry) updatePlugins() error {
 			ts = dsp.Info.Build.Time
 		}
 
-		group, ok := plugins.GetAPIGroup(dsp.JSONData)
-		if !ok {
-			continue
+		group, err := plugins.GetDatasourceGroupNameFromPluginID(dsp.ID)
+		if err != nil {
+			return err
 		}
 		gv := schema.GroupVersion{Group: group, Version: "v0alpha1"} // default version
 		apis[dsp.ID] = gv

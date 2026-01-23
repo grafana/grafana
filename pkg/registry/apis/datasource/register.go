@@ -96,11 +96,7 @@ func RegisterAPIService(
 			return nil, fmt.Errorf("plugin client is not a PluginClient: %T", pluginClient)
 		}
 
-		groupName, ok := plugins.GetAPIGroup(pluginJSON)
-		if !ok {
-			return nil, fmt.Errorf("could not get API group for plugin %s", pluginJSON.ID)
-		}
-
+		groupName := pluginJSON.ID + ".datasource.grafana.app"
 		builder, err = NewDataSourceAPIBuilder(
 			groupName,
 			pluginJSON,
