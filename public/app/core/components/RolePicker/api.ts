@@ -1,11 +1,11 @@
 /**
  * @deprecated These functions are legacy API calls. For new code, use the RTK Query API from:
  * `app/api/clients/roles` which provides:
- * - useFetchTeamRolesQuery
- * - useUpdateTeamRolesMutation
- * - useFetchUserRolesQuery
- * - useUpdateUserRolesMutation
- * - useFetchRoleOptionsQuery
+ * - useListTeamRolesQuery
+ * - useSetTeamRolesMutation
+ * - useListUserRolesQuery
+ * - useSetUserRolesMutation
+ * - useListRolesQuery
  */
 
 import { getBackendSrv } from '@grafana/runtime';

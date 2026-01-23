@@ -2,7 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
 import { OrgRole } from '@grafana/data';
-import { useFetchUserRolesQuery, useUpdateUserRolesMutation } from 'app/api/clients/roles';
+import { useListUserRolesQuery, useSetUserRolesMutation } from 'app/api/clients/roles';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role } from 'app/types/accessControl';
 
@@ -61,11 +61,11 @@ export const UserRolePicker = ({
   // - In non-apply mode: always fetch to get fresh data after mutations
   const shouldFetch = apply ? !roles && !Boolean(pendingRoles?.length) && hasPermission : hasPermission;
 
-  const { data: fetchedRoles, isLoading: isFetching } = useFetchUserRolesQuery(
-    shouldFetch ? { userId, orgId } : skipToken
+  const { data: fetchedRoles, isLoading: isFetching } = useListUserRolesQuery(
+    shouldFetch ? { userId, includeHidden: true, includeMapped: true, targetOrgId: orgId } : skipToken
   );
 
-  const [updateUserRoles, { isLoading: isUpdating }] = useUpdateUserRolesMutation();
+  const [updateUserRoles, { isLoading: isUpdating }] = useSetUserRolesMutation();
 
   const appliedRoles =
     useMemo(() => {
@@ -80,7 +80,15 @@ export const UserRolePicker = ({
   const onRolesChange = async (newRoles: Role[]) => {
     if (!apply) {
       try {
-        await updateUserRoles({ userId, roles: newRoles, orgId }).unwrap();
+        const filteredRoles = newRoles.filter((role) => !role.mapped);
+        const roleUids = filteredRoles.map((role) => role.uid);
+        await updateUserRoles({
+          userId,
+          targetOrgId: orgId,
+          setUserRolesCommand: {
+            roleUids,
+          },
+        }).unwrap();
       } catch (error) {
         console.error('Error updating user roles', error);
       }

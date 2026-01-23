@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
-import { useFetchTeamRolesQuery, useUpdateTeamRolesMutation } from 'app/api/clients/roles';
+import { useListTeamRolesQuery, useSetTeamRolesMutation } from 'app/api/clients/roles';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role } from 'app/types/accessControl';
 
@@ -34,6 +34,7 @@ export interface Props {
 
 export const TeamRolePicker = ({
   teamId,
+  orgId,
   roleOptions,
   disabled,
   roles,
@@ -50,9 +51,11 @@ export const TeamRolePicker = ({
   // In apply mode, only skip fetch if we have pendingRoles
   const shouldFetch = apply ? !Boolean(pendingRoles?.length) && hasPermission : hasPermission;
 
-  const { data: fetchedRoles, isLoading: isFetching } = useFetchTeamRolesQuery(shouldFetch ? { teamId } : skipToken);
+  const { data: fetchedRoles, isLoading: isFetching } = useListTeamRolesQuery(
+    shouldFetch ? { teamId, targetOrgId: orgId } : skipToken
+  );
 
-  const [updateTeamRoles, { isLoading: isUpdating }] = useUpdateTeamRolesMutation();
+  const [updateTeamRoles, { isLoading: isUpdating }] = useSetTeamRolesMutation();
 
   const appliedRoles =
     useMemo(() => {
@@ -67,7 +70,14 @@ export const TeamRolePicker = ({
   const onRolesChange = async (newRoles: Role[]) => {
     if (!apply) {
       try {
-        await updateTeamRoles({ teamId, roles: newRoles }).unwrap();
+        const roleUids = newRoles.map((role) => role.uid);
+        await updateTeamRoles({
+          teamId,
+          targetOrgId: orgId,
+          setTeamRolesCommand: {
+            roleUids,
+          },
+        }).unwrap();
       } catch (error) {
         console.error('Error updating team roles', error);
       }
