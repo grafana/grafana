@@ -1,4 +1,17 @@
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import {
+  Spec as DashboardV2Spec,
+  defaultSpec,
+  defaultPanelSpec,
+  defaultDataQueryKind,
+  defaultPanelQuerySpec,
+  defaultVizConfigKind,
+  defaultQueryGroupSpec,
+  defaultQueryVariableSpec,
+  defaultDatasourceVariableSpec,
+  defaultAdhocVariableSpec,
+  defaultGroupByVariableSpec,
+  defaultAnnotationQuerySpec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 import { isVariableRef, replaceDatasourcesInDashboard, DatasourceMappings } from './importDatasourceReplacer';
 
@@ -15,28 +28,7 @@ describe('isVariableRef', () => {
 });
 
 describe('replaceDatasourcesInDashboard', () => {
-  const baseDashboard: DashboardV2Spec = {
-    title: 'Test Dashboard',
-    annotations: [],
-    variables: [],
-    elements: {},
-    layout: { kind: 'GridLayout', spec: { items: [] } },
-    cursorSync: 'Off',
-    liveNow: false,
-    editable: true,
-    preload: false,
-    links: [],
-    tags: [],
-    timeSettings: {
-      timezone: 'utc',
-      from: 'now-6h',
-      to: 'now',
-      autoRefresh: '',
-      autoRefreshIntervals: [],
-      hideTimepicker: false,
-      fiscalYearStartMonth: 0,
-    },
-  };
+  const baseDashboard = defaultSpec();
 
   const mappings: DatasourceMappings = {
     loki: { uid: 'new-loki-uid', type: 'loki', name: 'New Loki' },
@@ -46,37 +38,26 @@ describe('replaceDatasourcesInDashboard', () => {
   const createPanelWithQuery = (group: string, datasourceName: string) => ({
     kind: 'Panel' as const,
     spec: {
-      id: 1,
-      title: 'Test Panel',
-      description: '',
-      links: [],
-      vizConfig: {
-        kind: 'VizConfig' as const,
-        group: 'timeseries',
-        version: 'v0',
-        spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
-      },
+      ...defaultPanelSpec(),
+      vizConfig: { ...defaultVizConfigKind(), kind: 'VizConfig' as const },
       data: {
         kind: 'QueryGroup' as const,
         spec: {
+          ...defaultQueryGroupSpec(),
           queries: [
             {
               kind: 'PanelQuery' as const,
               spec: {
-                refId: 'A',
-                hidden: false,
+                ...defaultPanelQuerySpec(),
                 query: {
+                  ...defaultDataQueryKind(),
                   kind: 'DataQuery' as const,
                   group,
-                  version: 'v0',
                   datasource: { name: datasourceName },
-                  spec: {},
                 },
               },
             },
           ],
-          queryOptions: {},
-          transformations: [],
         },
       },
     },
@@ -137,17 +118,9 @@ describe('replaceDatasourcesInDashboard', () => {
     const createAnnotation = (group: string, datasourceName: string) => ({
       kind: 'AnnotationQuery' as const,
       spec: {
+        ...defaultAnnotationQuerySpec(),
         name: 'Test Annotation',
-        enable: true,
-        hide: false,
-        iconColor: 'red',
-        query: {
-          kind: 'DataQuery' as const,
-          group,
-          version: 'v0',
-          datasource: { name: datasourceName },
-          spec: {},
-        },
+        query: { ...defaultDataQueryKind(), kind: 'DataQuery' as const, group, datasource: { name: datasourceName } },
       },
     });
 
@@ -170,24 +143,9 @@ describe('replaceDatasourcesInDashboard', () => {
     const createQueryVariable = (group: string, datasourceName: string) => ({
       kind: 'QueryVariable' as const,
       spec: {
+        ...defaultQueryVariableSpec(),
         name: 'test_var',
-        current: { text: 'All', value: '$__all' },
-        options: [{ text: 'All', value: '$__all' }],
-        hide: 'dontHide' as const,
-        skipUrlSync: false,
-        multi: false,
-        includeAll: true,
-        allowCustomValue: false,
-        refresh: 'onDashboardLoad' as const,
-        regex: '',
-        sort: 'disabled' as const,
-        query: {
-          kind: 'DataQuery' as const,
-          group,
-          version: 'v0',
-          datasource: { name: datasourceName },
-          spec: {},
-        },
+        query: { ...defaultDataQueryKind(), kind: 'DataQuery' as const, group, datasource: { name: datasourceName } },
       },
     });
 
@@ -217,25 +175,18 @@ describe('replaceDatasourcesInDashboard', () => {
       const variable = getQueryVariable(result);
 
       expect(variable?.spec.query?.datasource?.name).toBe('${ds}');
-      expect(variable?.spec.options).toEqual([{ text: 'All', value: '$__all' }]);
+      expect(variable?.spec.options).toEqual([]);
     });
   });
 
-  describe('datasource varia', () => {
+  describe('datasource variable', () => {
     const createDatasourceVariable = (pluginId: string, currentValue: string, currentText: string) => ({
       kind: 'DatasourceVariable' as const,
       spec: {
+        ...defaultDatasourceVariableSpec(),
         name: 'ds',
         pluginId,
         current: { text: currentText, value: currentValue },
-        options: [],
-        hide: 'dontHide' as const,
-        skipUrlSync: false,
-        multi: false,
-        includeAll: false,
-        allowCustomValue: false,
-        refresh: 'onDashboardLoad' as const,
-        regex: '',
       },
     });
 
@@ -254,66 +205,39 @@ describe('replaceDatasourcesInDashboard', () => {
     });
   });
 
-  describe('AdhocVariable', () => {
-    const createAdhocVariable = (group: string, datasourceName: string) => ({
-      kind: 'AdhocVariable' as const,
-      group,
-      datasource: { name: datasourceName },
-      spec: {
-        name: 'Filters',
-        hide: 'dontHide' as const,
-        skipUrlSync: false,
-        allowCustomValue: true,
-        defaultKeys: [],
-        filters: [],
-        baseFilters: [],
-      },
-    });
-
-    it.each([
-      { inputDs: 'old-loki-uid', expectedDs: 'new-loki-uid', desc: 'replaces hardcoded datasource' },
-      { inputDs: '${ds}', expectedDs: '${ds}', desc: 'preserves variable reference' },
-    ])('$desc', ({ inputDs, expectedDs }) => {
-      const dashboard: DashboardV2Spec = {
-        ...baseDashboard,
-        variables: [createAdhocVariable('loki', inputDs)],
-      };
-
-      const result = replaceDatasourcesInDashboard(dashboard, mappings);
-      const variable = getAdhocVariable(result);
-
-      expect(variable).toBeDefined();
-      expect(variable?.datasource?.name).toBe(expectedDs);
-    });
-  });
-
-  describe('GroupBy variable', () => {
-    const createGroupByVariable = (group: string, datasourceName: string) => ({
-      kind: 'GroupByVariable' as const,
-      group,
-      datasource: { name: datasourceName },
-      spec: {
-        name: 'groupby',
-        hide: 'dontHide' as const,
-        skipUrlSync: false,
-        allowCustomValue: false,
-        multi: false,
-        options: [],
-        current: { text: '', value: '' },
-      },
-    });
-
+  describe.each([
+    {
+      variableType: 'AdhocVariable',
+      createVariable: (group: string, datasourceName: string) => ({
+        kind: 'AdhocVariable' as const,
+        group,
+        datasource: { name: datasourceName },
+        spec: { ...defaultAdhocVariableSpec(), name: 'Filters' },
+      }),
+      getVariable: getAdhocVariable,
+    },
+    {
+      variableType: 'GroupByVariable',
+      createVariable: (group: string, datasourceName: string) => ({
+        kind: 'GroupByVariable' as const,
+        group,
+        datasource: { name: datasourceName },
+        spec: { ...defaultGroupByVariableSpec(), name: 'groupby' },
+      }),
+      getVariable: getGroupByVariable,
+    },
+  ])('$variableType', ({ createVariable, getVariable }) => {
     it.each([
       { inputDs: 'old-prom-uid', expectedDs: 'new-prom-uid', desc: 'replaces hardcoded datasource' },
       { inputDs: '${ds}', expectedDs: '${ds}', desc: 'preserves variable reference' },
     ])('$desc', ({ inputDs, expectedDs }) => {
       const dashboard: DashboardV2Spec = {
         ...baseDashboard,
-        variables: [createGroupByVariable('prometheus', inputDs)],
+        variables: [createVariable('prometheus', inputDs)],
       };
 
       const result = replaceDatasourcesInDashboard(dashboard, mappings);
-      const variable = getGroupByVariable(result);
+      const variable = getVariable(result);
 
       expect(variable).toBeDefined();
       expect(variable?.datasource?.name).toBe(expectedDs);

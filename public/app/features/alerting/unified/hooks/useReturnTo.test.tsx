@@ -12,9 +12,12 @@ describe('useReturnTo', () => {
   });
 
   it('should return the fallback value when `returnTo` is not present in the query string', () => {
+    //Adding this due to React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7.
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
     const { result } = renderHook(() => useReturnTo('/fallback'), { wrapper: MemoryRouter });
 
     expect(result.current.returnTo).toBe('/fallback');
+    jest.spyOn(console, 'warn').mockRestore();
   });
 
   it('should return the sanitized `returnTo` value when it is present in the query string and is a valid URL within the Grafana app', () => {
