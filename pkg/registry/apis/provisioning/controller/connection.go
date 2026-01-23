@@ -50,7 +50,8 @@ type ConnectionController struct {
 	healthChecker     ConnectionHealthCheckerInterface
 	connectionFactory connection.Factory
 
-	queue workqueue.TypedRateLimitingInterface[*connectionQueueItem]
+	queue          workqueue.TypedRateLimitingInterface[*connectionQueueItem]
+	resyncInterval time.Duration
 }
 
 // NewConnectionController creates a new ConnectionController.
@@ -60,6 +61,7 @@ func NewConnectionController(
 	statusPatcher ConnectionStatusPatcher,
 	healthChecker *ConnectionHealthChecker,
 	connectionFactory connection.Factory,
+	resyncInterval time.Duration,
 ) (*ConnectionController, error) {
 	cc := &ConnectionController{
 		client:     provisioningClient,
@@ -75,6 +77,7 @@ func NewConnectionController(
 		healthChecker:     healthChecker,
 		connectionFactory: connectionFactory,
 		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
+		resyncInterval:    resyncInterval,
 	}
 
 	_, err := connInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -217,20 +220,20 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	tokenConn, ok := c.(connection.TokenConnection)
 	if ok {
-		expiration, err := tokenConn.TokenExpiration(ctx)
+		refresh, err := cc.shouldRefreshToken(ctx, tokenConn)
 		if err != nil {
-			logger.Error("failed to check if token expired", "error", err)
+			logger.Error("failed to check if token needs to be refreshed", "error", err)
 			return err
 		}
-
-		if cc.shouldRefreshToken(expiration) {
+		if refresh {
 			logger.Info("regenerating connection token")
 
 			token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
 			if err != nil {
-				// Log error but continue - health check will surface the issue
 				logger.Error("failed to generate connection token", "error", err)
-			} else if len(tokenOps) > 0 {
+				return err
+			}
+			if len(tokenOps) > 0 {
 				patchOperations = append(patchOperations, tokenOps...)
 			}
 			// Substituting generated token for healthcheck
@@ -283,12 +286,22 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	return nil
 }
 
-func (cc *ConnectionController) shouldRefreshToken(expiration time.Time) bool {
-	const (
-		maxTokenAge = time.Minute * 5
-	)
+func (cc *ConnectionController) shouldRefreshToken(ctx context.Context, c connection.TokenConnection) (bool, error) {
+	issuingTime, err := c.TokenCreationTime(ctx)
+	if err != nil {
+		return false, err
+	}
+	// If the token has been recently created, we should not refresh it.
+	if tokenRecentlyCreated(issuingTime) {
+		return false, nil
+	}
 
-	return expiration.Before(time.Now().Add(maxTokenAge))
+	expiration, err := c.TokenExpiration(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return shouldRefreshBeforeExpiration(expiration, cc.resyncInterval), nil
 }
 
 // generateConnectionToken regenerates the connection token if the connection supports it.
