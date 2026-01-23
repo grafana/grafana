@@ -807,7 +807,8 @@
       "label-integration": "Integratie",
       "label-notification-settings": "Instellingen van meldingen",
       "label-section": "Optionele instellingen voor {{name}}",
-      "test": "Testen"
+      "test": "Testen",
+      "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
       "of": "VAN",
@@ -1642,6 +1643,11 @@
       },
       "yaml-error": "Kan YAML-bestand niet parseren: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "De status van je systeem controleren",
       "monitor-status-system-tooltip": "Waarschuwingsinzichten bieden kant-en-klare dashboards om je waarschuwingsgegevens te controleren.",
@@ -2137,8 +2143,8 @@
         "suffix": "Vernieuw de pagina en probeer het opnieuw.",
         "title": "Kan meldingsbeleid niet toevoegen of bijwerken"
       },
-      "n-more-policies_one": "",
-      "n-more-policies_other": ""
+      "n-more-policies_one": "{{count}} aanvullend beleid",
+      "n-more-policies_other": "{{count}} aanvullend beleid"
     },
     "policy": {
       "label-new-child-policy": "Nieuw onderliggend beleid",
@@ -2176,11 +2182,16 @@
     "provisioning": {
       "badge-tooltip-provenance": "Deze bron is geprovisioneerd via {{provenance}} en kan niet worden bewerkt via de gebruikersinterface",
       "badge-tooltip-standard": "Deze bron is geprovisioneerd en kan niet worden bewerkt via de gebruikersinterface",
+      "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "Deze {{resource}} is ingericht, dat betekent dat het is gemaakt door configuratie. Neem contact op met je serverbeheerder om deze {{resource}} bij te werken.",
+      "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "Deze {{resource}} kan niet worden bewerkt via de gebruikersinterface"
     },
     "provisioning-badge": {
       "badge": {
+        "text-converted-prometheus": "",
         "text-provisioned": "Provisioned"
       }
     },
@@ -2673,11 +2684,13 @@
     "rules-group": {
       "deleting": "Verwijderen",
       "text-federated": "Federatief",
-      "text-provisioned": "Provisioned"
+      "text-provisioned": "Provisioned",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-aria-label": "",
       "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
@@ -3722,6 +3735,7 @@
       "non-folder-item": "Niet-map {{itemKind}} {{itemUID}}",
       "root-title": "Dashboards",
       "search-placeholder": "Mappen doorzoeken",
+      "shared-with-me": "",
       "unknown-error": "Onbekende fout"
     },
     "manage-folder-nav": {
@@ -3764,7 +3778,6 @@
       "title": ""
     },
     "restore": {
-      "success": "",
       "all-failed_one": "",
       "all-failed_other": "",
       "failed-count_one": "",
@@ -3826,6 +3839,7 @@
       "label-method": "Methode",
       "label-payload": "Laadvermogen",
       "label-query-parameters": "Query-parameters",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Test-API",
         "title-test-api": "Test-API"
@@ -4541,6 +4555,14 @@
     "actions": {
       "open-settings": "Instellingen"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Widget 'Paneel toevoegen' sluiten",
       "tooltip-close-widget": "Widget sluiten"
@@ -4923,12 +4945,14 @@
       "add-visualization-body": "Selecteer een gegevensbron en zoek en visualiseer je gegevens met grafieken, statistieken en tabellen of maak lijsten, prijsverlagingen en andere widgets.",
       "add-visualization-button": "Visualisatie toevoegen",
       "add-visualization-header": "Begin je nieuwe dashboard door een visualisatie toe te voegen",
+      "description": "",
       "import-a-dashboard-body": "Importeer dashboards uit bestanden of <1>grafana.com</1>.",
       "import-a-dashboard-header": "Dashboard importeren",
       "import-dashboard-button": "Dashboard importeren",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5338,6 +5362,7 @@
       },
       "header-hidden-tooltip": "Koptekst van de rij is alleen zichtbaar in bewerkingsmodus",
       "name": "Rijen",
+      "new-row-title": "",
       "row": {
         "collapse": "Rij samenvouwen",
         "expand": "Rij uitvouwen",
@@ -5434,6 +5459,10 @@
       "loading-configuration": "Configuratie laden"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -5443,11 +5472,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5587,14 +5612,6 @@
           "arrow": "Delen",
           "title": "Delen",
           "tooltip": "Link kopiëren"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "Negeren",
-            "text": "Je hebt niet-opgeslagen wijzigingen in dit dashboard. Je moet ze opslaan voordat je ze kunt delen.",
-            "title": "Wijzigingen in dashboard opslaan?",
-            "yesText": "Opslaan"
-          }
         },
         "unlink-library-panel": "Bibliotheekpaneel ontkoppelen"
       },
@@ -6380,12 +6397,15 @@
     },
     "resource-export": {
       "label": {
+        "advanced-options": "",
         "classic": "Klassiek",
         "json": "JSON",
         "v1-resource": "V1-bron",
         "v2-resource": "V2-bron",
         "yaml": "YAML"
-      }
+      },
+      "share-externally": "",
+      "share-externally-tooltip": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Weet je zeker dat je het dashboard naar versie {{version}} wilt herstellen? Alle niet opgeslagen wijzigingen zullen verloren gaan.",
@@ -6456,8 +6476,8 @@
       "loading-connected-dashboards": "Verbonden dashboards laden...",
       "placeholder-search-affected-dashboards": "Zoeken naar getroffen dashboards",
       "update-all": "Alles bijwerken",
-      "affected-dashboards_one": "Deze update is van invloed op <1>{{count}} dashboards.</1> Dit heeft invloed op de volgende dashboards die het paneel gebruiken:",
-      "affected-dashboards_other": "Deze update is van invloed op <1>{{count}} dashboards.</1> Dit heeft invloed op de volgende dashboards die het paneel gebruiken:"
+      "affected-dashboards_one": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Fout bij opslaan van dashboard",
@@ -6492,6 +6512,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Menu delen in-/uitschakelen"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -6980,6 +7006,7 @@
         "drone-datasource": "Drone-gegevensbron",
         "git-lab-integration-and-datasource": "GitLab-integratie en -gegevensbron",
         "honeycomb-integration-and-datasource": "Honeycomb-integratie en -gegevensbron",
+        "ibmdb2-datasource": "",
         "jira-integration-and-datasource": "Jira-integratie en -gegevensbron",
         "logic-monitor-devices-datasource": "LogicMonitor Devices-gegevensbron",
         "mongo-db-integration-and-data-source": "MongoDB-integratie en -gegevensbron",
@@ -7838,7 +7865,6 @@
       "export-externally-label": "Exporteer het dashboard om het in een andere instantie te gebruiken",
       "export-format": "Formaat",
       "export-mode": "Model",
-      "export-remove-ds-refs": "Implementatiegegevens verwijderen",
       "info-text": "Kopieer of download een JSON-bestand met de JSON van je dashboard",
       "title": "Dashboard exporteren"
     },
@@ -7985,6 +8011,7 @@
     "name-neutral": "Neutraal",
     "name-show-threshold-labels": "Drempellabels weergeven",
     "name-show-threshold-markers": "Drempelmarkeringen weergeven",
+    "neutral": "",
     "placeholder-neutral": "automatisch",
     "suggestions": {
       "arc": "",
@@ -9554,8 +9581,8 @@
     "query-inspector": {
       "query-inspector": "Querycontrole",
       "text-loading-query-inspector": "Querycontrole wordt geladen...",
-      "count-frames_one": "{{count}} frames, ",
-      "count-frames_other": "{{count}} frames, ",
+      "count-frames_one": "",
+      "count-frames_other": "",
       "count-rows_one": "{{count}} rijen",
       "count-rows_other": "{{count}} rijen"
     }
@@ -9814,8 +9841,8 @@
       "loading-connected-dashboards": "Verbonden dashboards laden...",
       "placeholder-search-affected-dashboards": "Zoeken naar getroffen dashboards",
       "update-all": "Alles bijwerken",
-      "num-affected_one": "Deze update is van invloed op <1>{{count}} dashboards.</1>",
-      "num-affected_other": "Deze update is van invloed op <1>{{count}} dashboards.</1>"
+      "num-affected_one": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -11841,10 +11868,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12033,6 +12057,8 @@
       "error-delete-all-repositories": "Kan niet alle repositories verwijderen",
       "subtitle": "Je geconfigureerde repositories bekijken en beheren",
       "success-all-repositories-deleted": "Alle geconfigureerde repositories zijn verwijderd",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Aan de slag",
       "tab-getting-started-title": "Aan de slag",
       "tab-repositories": "Repositories",
@@ -12096,6 +12122,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12116,7 +12145,6 @@
       "jobs": "Taken"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Instellingen",
       "source-code": "Broncode"
     },
@@ -12296,6 +12324,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Voltooien",
@@ -12308,15 +12341,30 @@
         "dismiss": "Blijf werken",
         "title": "Repository-instellingen verwijderen?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Kies wat je wilt synchroniseren",
+      "step-configure-repo": "",
       "step-connect": "Verbinden",
       "step-finish": "Kies aanvullende instellingen",
+      "step-github-app": "",
       "step-synchronize": "Synchroniseren met externe opslag",
       "sync-description": "Bronnen synchroniseren met externe opslag. Na deze eenmalige stap worden alle toekomstige updates automatisch opgeslagen in de repository en opnieuw ingericht in de instantie.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Kies wat je wilt synchroniseren",
+      "title-configure-repo": "",
       "title-connect": "Verbinden met externe opslag",
       "title-finish": "Kies aanvullende instellingen",
+      "title-github-app": "",
       "title-synchronize": "Synchroniseren met externe opslag"
     },
     "wizard-content": {
@@ -12536,15 +12584,32 @@
       "title-data-source-help": "Hulp bij gegevensbron"
     }
   },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
+    }
+  },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "Queryrij samenvouwen",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "Hulp bij gegevensbron weergeven",
       "drag-and-drop": "Versleep om opnieuw te rangschikken",
       "duplicate-query": "Query dupliceren",
       "expand-row": "Queryrij uitvouwen",
       "hide-response": "Antwoord verbergen",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "Query verwijderen",
+      "selected-datasource-label": "",
       "show-response": "Antwoord weergeven"
     },
     "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
@@ -12566,6 +12631,11 @@
       "endpoint-marker-glow": "",
       "endpoint-marker-none": "",
       "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
       "segment-count": "",
       "segment-spacing": "",
       "shape": "",
@@ -12579,6 +12649,7 @@
       "text-mode-value": "",
       "text-mode-value-and-name": "",
       "threshold-labels": "",
+      "threshold-labels-description": "",
       "threshold-markers": ""
     }
   },
@@ -12595,10 +12666,10 @@
       "restore-button": "Herstellen",
       "restore-loading": "Bezig met herstellen ...",
       "title": "Dashboards herstellen",
-      "folder-picker-text_one": "",
-      "folder-picker-text_other": "",
-      "text_one": "",
-      "text_other": ""
+      "folder-picker-text_one": "Kies een map waarin je dashboards worden hersteld.",
+      "folder-picker-text_other": "Kies een map waarin je dashboards worden hersteld.",
+      "text_one": "Met deze actie worden {{numberOfDashboards}} dashboards hersteld.",
+      "text_other": "Met deze actie worden {{numberOfDashboards}} dashboards hersteld."
     }
   },
   "recentlyDeleted": {
@@ -12736,14 +12807,6 @@
       "starred": "Favorieten",
       "view-as-folders": "Weergeven als mappen",
       "view-as-list": "Weergeven als lijst"
-    },
-    "bluge-searcher": {
-      "opts": {
-        "label": {
-          "alphabetically-az": "Alfabetisch (A-Z)",
-          "alphabetically-za": "Alfabetisch (Z-A)"
-        }
-      }
     },
     "dashboard-actions": {
       "import": "Importeren",
@@ -13342,8 +13405,8 @@
       "label-never": "Nooit"
     },
     "status-history-panel": {
-      "too-many-points_one": "Te veel punten om goed te visualiseren. <1></1>Werk de query bij om minder punten te retourneren. <3></3>({{count}} punten ontvangen)",
-      "too-many-points_other": "Te veel punten om goed te visualiseren. <1></1>Werk de query bij om minder punten te retourneren. <3></3>({{count}} punten ontvangen)"
+      "too-many-points_one": "",
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {

@@ -2,7 +2,6 @@ package sql
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"hash/fnv"
 	"net"
@@ -59,12 +58,11 @@ type service struct {
 	subservicesWatcher *services.FailureWatcher
 	hasSubservices     bool
 
-	backend   resource.StorageBackend
-	cfg       *setting.Cfg
-	features  featuremgmt.FeatureToggles
-	db        infraDB.DB
-	stopCh    chan struct{}
-	stoppedCh chan error
+	backend       resource.StorageBackend
+	serverStopper resource.ResourceServerStopper
+	cfg           *setting.Cfg
+	features      featuremgmt.FeatureToggles
+	db            infraDB.DB
 
 	handler grpcserver.Provider
 
@@ -114,8 +112,6 @@ func ProvideUnifiedStorageGrpcService(
 		backend:            backend,
 		cfg:                cfg,
 		features:           features,
-		stopCh:             make(chan struct{}),
-		stoppedCh:          make(chan error, 1),
 		authenticator:      authn,
 		tracing:            tracer,
 		db:                 db,
@@ -296,6 +292,7 @@ func (s *service) starting(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	s.serverStopper = server
 	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, interceptors.AuthenticatorFunc(s.authenticator), s.tracing, prometheus.DefaultRegisterer)
 	if err != nil {
 		return err
@@ -337,15 +334,6 @@ func (s *service) starting(ctx context.Context) error {
 		s.log.Info("resource server is ACTIVE in the ring")
 	}
 
-	// start the gRPC server
-	go func() {
-		err := s.handler.Run(ctx)
-		if err != nil {
-			s.stoppedCh <- err
-		} else {
-			s.stoppedCh <- nil
-		}
-	}()
 	return nil
 }
 
@@ -355,17 +343,39 @@ func (s *service) GetAddress() string {
 }
 
 func (s *service) running(ctx context.Context) error {
+	serverErrCh := make(chan error, 1)
+	go func() {
+		serverErrCh <- s.handler.Run(ctx)
+	}()
+
 	select {
-	case err := <-s.stoppedCh:
-		if err != nil && !errors.Is(err, context.Canceled) {
+	case err := <-serverErrCh:
+		if err != nil {
 			return err
 		}
+		return nil
 	case err := <-s.subservicesWatcher.Chan():
 		return fmt.Errorf("subservice failure: %w", err)
 	case <-ctx.Done():
-		close(s.stopCh)
+		s.log.Info("Stopping resource server")
+		if s.serverStopper != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := s.serverStopper.Stop(ctx); err != nil {
+				s.log.Warn("Failed to stop resource server", "error", err)
+			} else {
+				s.log.Info("Resource server stopped")
+			}
+		}
+
+		// Now wait for the gRPC server to complete graceful shutdown.
+		s.log.Info("Waiting for gRPC server to complete graceful shutdown")
+		err := <-serverErrCh
+		if err != nil {
+			return err
+		}
+		return nil
 	}
-	return nil
 }
 
 func (s *service) stopping(_ error) error {

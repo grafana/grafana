@@ -1,0 +1,16 @@
+{
+    "metadata": {
+        "name": "with-team-and-user",
+        "namespace": "default"
+    },
+    "spec": {
+        "subject": {
+            "name": "user.one"
+        },
+        "teamRef": {
+            "name": "team.one"
+        },
+        "permission": "Viewer",
+        "external": true
+    }
+}
