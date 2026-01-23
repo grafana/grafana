@@ -40,10 +40,9 @@ type SyncWorker struct {
 
 	tracer tracing.Tracer
 
-	maxSyncWorkers            int
-	maxResourcesPerRepository int64 // 0 = unlimited
-	quotaLimits               quotas.QuotaLimits
-	quotaLimitsSet            bool // tracks if quotaLimits was explicitly set
+	maxSyncWorkers int
+	quotaLimits    quotas.QuotaLimits
+	quotaLimitsSet bool // tracks if quotaLimits was explicitly set
 }
 
 func NewSyncWorker(
@@ -60,19 +59,10 @@ func NewSyncWorker(
 		repositoryResources:       repositoryResources,
 		patchStatus:               patchStatus,
 		syncer:                    syncer,
-		metrics:                   metrics,
-		tracer:                    tracer,
-		maxSyncWorkers:            maxSyncWorkers,
-		maxResourcesPerRepository: 0, // default to unlimited
+		metrics:        metrics,
+		tracer:         tracer,
+		maxSyncWorkers: maxSyncWorkers,
 	}
-}
-
-// SetMaxResourcesPerRepository sets the maximum resources per repository limit.
-// HACK: This is a workaround to avoid changing NewSyncWorker signature which would require
-// changes in the enterprise repository. This should be moved to NewSyncWorker parameters
-// once we can coordinate the change across repositories.
-func (r *SyncWorker) SetMaxResourcesPerRepository(maxResourcesPerRepository int64) {
-	r.maxResourcesPerRepository = maxResourcesPerRepository
 }
 
 // SetQuotaLimits sets the quota limits (including repository limits).
@@ -242,13 +232,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	//    the natural place to evaluate quotas against those stats.
 	// 3. This ensures quota conditions reflect the actual resource state after reconciliation,
 	//    not just what the controller thinks should exist.
-	// Use quotaLimits if set, otherwise fall back to maxResourcesPerRepository for backward compatibility
-	quotaLimitsToUse := r.quotaLimits
-	if !r.quotaLimitsSet {
-		// Fall back to maxResourcesPerRepository if quotaLimits wasn't explicitly set
-		quotaLimitsToUse.MaxResources = r.maxResourcesPerRepository
-	}
-	quotaCondition := quotaLimitsToUse.EvaluateCondition(repoStats)
+	quotaCondition := r.quotaLimits.EvaluateCondition(repoStats)
 	if quotaConditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition); quotaConditionOps != nil {
 		patchOperations = append(patchOperations, quotaConditionOps...)
 	}
