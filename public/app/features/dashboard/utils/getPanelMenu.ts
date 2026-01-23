@@ -238,32 +238,6 @@ export function getPanelMenu(
         text: t('panel.header-menu.copy', `Copy`),
         onClick: onCopyPanel,
       });
-
-      // Styles submenu
-      if (panel.type === 'timeseries') {
-        subMenu.push({
-          type: 'submenu',
-          text: t('panel.header-menu.styles', `Styles`),
-          iconClassName: 'palette',
-          subMenu: stylesSubMenu,
-        });
-
-        const stylesSubMenu: PanelMenuItem[] = [];
-
-        stylesSubMenu.push({
-          text: t('panel.header-menu.copy-styles', `Copy styles`),
-          iconClassName: 'copy',
-          onClick: onCopyPanelStyles,
-        });
-
-        if (hasPanelStylesToPaste('timeseries')) {
-          stylesSubMenu.push({
-            text: t('panel.header-menu.paste-styles', `Paste styles`),
-            iconClassName: 'clipboard-alt',
-            onClick: onPastePanelStyles,
-          });
-        }
-      }
     }
   }
 
