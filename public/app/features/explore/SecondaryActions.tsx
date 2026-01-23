@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { Components, selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -45,8 +46,9 @@ export function SecondaryActions({
   const styles = getStyles(theme);
   const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
   const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
-  // TODO: contextSrv.isSignedIn is not needed but added to make the frontend retrocompatible, remove it after backend reaches rrcs.
-  const canReadQueries = contextSrv.isSignedIn || contextSrv.hasPermission(AccessControlAction.QueriesRead);
+  const canReadQueries = config.featureToggles.savedQueriesRBAC
+    ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
+    : contextSrv.isSignedIn;
 
   return (
     <div className={styles.containerMargin}>
