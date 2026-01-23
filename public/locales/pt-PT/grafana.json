@@ -1643,6 +1643,11 @@
       },
       "yaml-error": "Falha ao analisar o ficheiro YAML: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Monitorizar o estado do seu sistema",
       "monitor-status-system-tooltip": "As informações de alerta fornecem painéis pré-construídos para monitorizar os seus dados de alerta.",
@@ -11863,10 +11868,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12055,6 +12057,8 @@
       "error-delete-all-repositories": "Não foi possível eliminar todos os repositórios",
       "subtitle": "Ver e gerir os seus repositórios configurados",
       "success-all-repositories-deleted": "Todos os repositórios configurados eliminados",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Introdução",
       "tab-getting-started-title": "Introdução",
       "tab-repositories": "Repositórios",
@@ -12118,6 +12122,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12138,7 +12145,6 @@
       "jobs": "Trabalhos"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Definições",
       "source-code": "Código-fonte"
     },
@@ -12318,6 +12324,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Concluir",
@@ -12330,15 +12341,30 @@
         "dismiss": "Continuar a trabalhar",
         "title": "Rejeitar a configuração do repositório?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Escolha o que sincronizar",
+      "step-configure-repo": "",
       "step-connect": "Conectar ",
       "step-finish": "Escolha as definições adicionais",
+      "step-github-app": "",
       "step-synchronize": "Sincronizar com armazenamento externo",
       "sync-description": "Sincronize recursos com um armazenamento externo. Após este passo único, todas as atualizações futuras serão guardadas automaticamente no repositório e aprovisionadas novamente para a instância.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Escolha o que sincronizar",
+      "title-configure-repo": "",
       "title-connect": "Ligar a um armazenamento externo",
       "title-finish": "Escolha as definições adicionais",
+      "title-github-app": "",
       "title-synchronize": "Sincronizar com armazenamento externo"
     },
     "wizard-content": {
@@ -12556,6 +12582,11 @@
       "query-inspector": "Inspetor de consultas",
       "query-tab-help-button-title-open-data-source-help": "Abrir a ajuda da origem de dados",
       "title-data-source-help": "Ajuda da origem de dados"
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {
