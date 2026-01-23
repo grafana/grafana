@@ -8,6 +8,7 @@ import { DataSourceLogo } from 'app/features/datasources/components/picker/DataS
 import { useDatasource } from 'app/features/datasources/hooks';
 
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
+import { useQueryRunnerContext } from '../QueryEditorContext';
 
 // TODO: will remove this once we have the correct icons in constants.ts
 const CardIcon = ({ type, size = 16 }: { type: string | undefined; size: number }) => {
@@ -23,15 +24,14 @@ const CardIcon = ({ type, size = 16 }: { type: string | undefined; size: number 
   }
 };
 
-const Header = ({ editorType }: { editorType: QueryEditorType }) => {
-  const styles = useStyles2(getStyles, editorType);
+const Header = ({ editorType, className }: { editorType: QueryEditorType; className: string }) => {
   const typeText =
     editorType === 'expression'
       ? t('query-editor-next.sidebar.expression', 'Expression')
       : t('query-editor-next.sidebar.query', 'Query');
 
   return (
-    <div className={styles.cardHeader}>
+    <div className={className}>
       <CardIcon type={editorType} size={16} />
       <Text weight="light" variant="body">
         {typeText}
@@ -48,29 +48,37 @@ interface SidebarCardProps {
 
 export const SidebarCard = ({ query }: SidebarCardProps) => {
   const editorType = getEditorType(query.datasource?.type);
-  const styles = useStyles2(getStyles, editorType);
   const queryDsSettings = useDatasource(query.datasource);
+  const { data } = useQueryRunnerContext();
+
+  // Extract error for this specific query
+  const queryError =
+    data?.error && data.error.refId === query.refId ? data.error : data?.errors?.find((e) => e.refId === query.refId);
+
+  const hasError = Boolean(queryError);
+  const styles = useStyles2(getStyles, editorType, hasError);
 
   return (
     <div className={styles.card} key={query.refId}>
-      <Header editorType={editorType} />
+      <Header editorType={editorType} className={styles.cardHeader} />
       <div className={styles.cardContent}>
         <DataSourceLogo dataSource={queryDsSettings} />
         <Text weight="light" variant="body" color="secondary">
           {query.refId}
         </Text>
+        {hasError && <Icon name="exclamation-triangle" className={styles.errorIcon} />}
       </div>
     </div>
   );
 };
 
-function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType) {
+function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: boolean) {
   return {
     card: css({
       display: 'flex',
       flexDirection: 'column',
       background: theme.colors.background.secondary,
-      border: `1px solid ${theme.colors.border.weak}`,
+      border: `1px solid ${hasError ? theme.colors.error.border : theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
     }),
     cardHeader: css({
@@ -91,6 +99,10 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType) {
       alignItems: 'center',
       gap: theme.spacing(1),
       padding: theme.spacing(1),
+    }),
+    errorIcon: css({
+      marginLeft: 'auto',
+      color: theme.colors.error.text,
     }),
   };
 }

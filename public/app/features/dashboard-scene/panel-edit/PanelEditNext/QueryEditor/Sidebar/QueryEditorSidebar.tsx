@@ -26,9 +26,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   const styles = useStyles2(getStyles);
   const isMini = sidebarSize === SidebarSize.Mini;
 
-  const { queries, data } = useQueryRunnerContext();
-
-  console.log({ queries, data });
+  const { queries } = useQueryRunnerContext();
 
   const toggleSize = () => {
     setSidebarSize(isMini ? SidebarSize.Full : SidebarSize.Mini);
