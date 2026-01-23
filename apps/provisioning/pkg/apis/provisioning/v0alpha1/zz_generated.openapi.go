@@ -2336,7 +2336,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 					"maxRepositories": {
 						SchemaProps: spec.SchemaProps{
 							Description: "MaxRepositories is the maximum number of repositories allowed per namespace (0 = unlimited)",
-							Default:     0,
+							Default:     10,
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
