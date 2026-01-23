@@ -5,7 +5,7 @@
 ### Features and enhancements
 
 - **Alerting:** Update alerting dependency [#114259](https://github.com/grafana/grafana/pull/114259), [@moustafab](https://github.com/moustafab)
-- **Alerting:** Add `ui_enabled` setting to hide the alerting UI.
+- **Alerting:** Add `ui_enabled` setting to hide the alerting UI [#116735](https://github.com/grafana/grafana/pull/116735), [@sandy2008](https://github.com/sandy2008)
 - **Azure:** Improved column handling in logs query builder [#114841](https://github.com/grafana/grafana/pull/114841), [@aangelisc](https://github.com/aangelisc)
 - **Azure:** Include aggregate columns in logs builder [#114835](https://github.com/grafana/grafana/pull/114835), [@aangelisc](https://github.com/aangelisc)
 - **Dependencies:** Bump Go to v1.25.5 [#114751](https://github.com/grafana/grafana/pull/114751), [@macabu](https://github.com/macabu)
