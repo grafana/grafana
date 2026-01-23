@@ -1,8 +1,6 @@
-import { useAsync } from 'react-use';
-
 import { PluginMeta } from '@grafana/data';
-import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
+import { useGetPluginSettingsQuery } from '../api/pluginsApi';
 import { PluginID } from '../components/PluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
 
@@ -14,21 +12,21 @@ interface PluginBridgeHookResponse {
 }
 
 export function usePluginBridge(plugin: PluginID): PluginBridgeHookResponse {
-  const { loading, error, value } = useAsync(() => getPluginSettings(plugin, { showErrorAlert: false }));
+  const { data, isLoading, error } = useGetPluginSettingsQuery(plugin);
 
-  if (loading) {
+  if (isLoading) {
     return { loading: true };
   }
 
   if (error) {
-    return { loading, error };
+    return { loading: isLoading, error: error instanceof Error ? error : new Error(String(error)) };
   }
 
-  if (value) {
-    return { loading, installed: value.enabled ?? false, settings: value };
+  if (data) {
+    return { loading: isLoading, installed: data.enabled ?? false, settings: data };
   }
 
-  return { loading, installed: false };
+  return { loading: isLoading, installed: false };
 }
 
 type FallbackPlugin = SupportedPlugin.OnCall | SupportedPlugin.Incident;

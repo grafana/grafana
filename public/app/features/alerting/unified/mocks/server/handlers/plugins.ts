@@ -40,6 +40,10 @@ export const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
   setAppPluginMetas(appPluginMetas);
 
   return http.get<{ pluginId: string }>(`/api/plugins/:pluginId/settings`, ({ params: { pluginId } }) => {
+    // Handle empty plugin ID (used when no plugin origin) - return 404 silently
+    if (!pluginId || pluginId === '') {
+      return HttpResponse.json(PLUGIN_NOT_FOUND_RESPONSE, { status: 404 });
+    }
     const matchingPlugin = pluginsArray.find((plugin) => plugin.id === pluginId);
     return matchingPlugin
       ? HttpResponse.json<PluginMeta>(matchingPlugin)
