@@ -65,7 +65,7 @@ func TestBuildReadyConditionFromHealth(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			condition := buildReadyConditionFromHealth(tt.healthStatus)
+			condition := buildReadyConditionWithReason(tt.healthStatus, provisioning.ReasonInvalidSpec)
 
 			assert.Equal(t, provisioning.ConditionTypeReady, condition.Type)
 			assert.Equal(t, tt.expectedStatus, condition.Status)
