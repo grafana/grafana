@@ -79,10 +79,8 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (queryV0.SQLSc
 		}
 
 		schemas[dsNode.RefID()] = queryV0.SchemaInfo{
-			Columns: columns,
-			SampleRows: queryV0.SampleRows{
-				Values: sampleRows,
-			},
+			Columns:    columns,
+			SampleRows: queryV0.NewSampleRows(sampleRows),
 		}
 	}
 

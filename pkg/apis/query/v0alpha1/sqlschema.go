@@ -21,37 +21,43 @@ type BasicColumn struct {
 // SchemaInfo provides information and some sample data for data that could be an input
 // to a SQL expression.
 type SchemaInfo struct {
+	// +listType=atomic
 	Columns    []BasicColumn `json:"columns"`
 	SampleRows SampleRows    `json:"sampleRows"`
 	Error      string        `json:"error,omitempty"`
 }
 
 type SampleRows struct {
-	Values [][]any
+	// +listType=atomic
+	values [][]any
+}
+
+func NewSampleRows(values [][]any) SampleRows {
+	return SampleRows{values: values}
+}
+
+func (u *SampleRows) Values() [][]any {
+	return u.values
 }
 
 func (u *SampleRows) MarshalJSON() ([]byte, error) {
-	return json.Marshal(u.Values)
+	return json.Marshal(u.values)
 }
 
 func (u *SampleRows) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, &u.Values)
+	return json.Unmarshal(data, &u.values)
 }
 
 // Produce an API definition that represents [][]any
 func (u SampleRows) OpenAPIDefinition() openapi.OpenAPIDefinition {
 	return openapi.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type:                 []string{"object"},
-				AdditionalProperties: &spec.SchemaOrBool{Allows: true},
-			},
-			VendorExtensible: spec.VendorExtensible{
-				Extensions: map[string]any{
-					"x-kubernetes-preserve-unknown-fields": true,
+		Schema: *spec.ArrayProperty(spec.ArrayProperty( // Array of Array
+			&spec.Schema{
+				SchemaProps: spec.SchemaProps{ // no specific type for inner any
+					AdditionalProperties: &spec.SchemaOrBool{Allows: true},
 				},
 			},
-		},
+		)),
 	}
 }
 
@@ -63,14 +69,13 @@ func (u SampleRows) OpenAPIDefinition() openapi.OpenAPIDefinition {
 // generated types.
 type SQLSchemas map[string]SchemaInfo
 
-// DeepCopy returns a deep copy of the schema.
+// DeepCopy returns a deep copy of the SampleRows.
 func (in *SampleRows) DeepCopy() *SampleRows {
 	if in == nil {
 		return nil
 	}
-	return &SampleRows{
-		Values: deepCopySampleRows2D(in.Values),
-	}
+	out := NewSampleRows(deepCopySampleRows2D(in.Values()))
+	return &out
 }
 
 // Deep-copy [][]any preserving nil vs empty slices and cloning elements.
@@ -108,7 +113,7 @@ func deepCopyRV(rv reflect.Value) reflect.Value {
 	}
 
 	switch rv.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		if rv.IsNil() {
 			return rv
 		}
@@ -151,9 +156,8 @@ func deepCopyRV(rv reflect.Value) reflect.Value {
 		return newSlice
 
 	case reflect.Array:
-		n := rv.Len()
 		newArr := reflect.New(rv.Type()).Elem()
-		for i := 0; i < n; i++ {
+		for i := range rv.Len() {
 			newArr.Index(i).Set(deepCopyRV(rv.Index(i)))
 		}
 		return newArr
