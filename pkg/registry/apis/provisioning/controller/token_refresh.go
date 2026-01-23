@@ -4,6 +4,10 @@ import "time"
 
 const tokenRefreshBufferSeconds = 10
 
+func tokenRecentlyCreated(issuingTime time.Time) bool {
+	return issuingTime.After(time.Now().Add(-tokenRefreshBufferSeconds * time.Second))
+}
+
 // shouldRefreshBeforeExpiration determines if a token should be refreshed based on its expiration time
 // and the controller's resync interval.
 //

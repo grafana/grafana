@@ -7,6 +7,31 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_tokenRecentlyCreated(t *testing.T) {
+	tests := []struct {
+		name        string
+		issuingDate time.Time
+		want        bool
+	}{
+		{
+			name:        "old issuing date",
+			issuingDate: time.Now().Add(-9 * time.Minute),
+			want:        false,
+		},
+		{
+			name:        "recently created issuing date",
+			issuingDate: time.Now().Add(tokenRefreshBufferSeconds*time.Second + 1*time.Second),
+			want:        true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tokenRecentlyCreated(tt.issuingDate)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func Test_shouldRefreshBeforeExpiration(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -41,7 +66,7 @@ func Test_shouldRefreshBeforeExpiration(t *testing.T) {
 		{
 			name:           "should not refresh when expiration is just after buffer boundary",
 			resyncInterval: 5 * time.Minute,
-			expiration:     time.Now().Add((2 * 5 * time.Minute) + (10 * time.Second) + (1 * time.Second)),
+			expiration:     time.Now().Add((2 * 5 * time.Minute) + (tokenRefreshBufferSeconds * time.Second) + (1 * time.Second)),
 			want:           false, // Just after the threshold
 		},
 		{
@@ -64,34 +89,4 @@ func Test_shouldRefreshBeforeExpiration(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
-}
-
-func Test_shouldRefreshBeforeExpiration_bufferCalculation(t *testing.T) {
-	// Test that the buffer is correctly calculated as 2 * resyncInterval + 10 seconds
-
-	t.Run("5 minute interval results in 10m10s buffer", func(t *testing.T) {
-		resyncInterval := 5 * time.Minute
-		expectedBuffer := (2 * resyncInterval) + (tokenRefreshBufferSeconds * time.Second)
-
-		// Token expiring just before the buffer should trigger refresh
-		expiration := time.Now().Add(expectedBuffer - time.Second)
-		assert.True(t, shouldRefreshBeforeExpiration(expiration, resyncInterval))
-
-		// Token expiring just after the buffer should not trigger refresh
-		expiration = time.Now().Add(expectedBuffer + time.Second)
-		assert.False(t, shouldRefreshBeforeExpiration(expiration, resyncInterval))
-	})
-
-	t.Run("1 minute interval results in 2m10s buffer", func(t *testing.T) {
-		resyncInterval := 1 * time.Minute
-		expectedBuffer := (2 * resyncInterval) + (tokenRefreshBufferSeconds * time.Second)
-
-		// Token expiring just before the buffer should trigger refresh
-		expiration := time.Now().Add(expectedBuffer - time.Second)
-		assert.True(t, shouldRefreshBeforeExpiration(expiration, resyncInterval))
-
-		// Token expiring just after the buffer should not trigger refresh
-		expiration = time.Now().Add(expectedBuffer + time.Second)
-		assert.False(t, shouldRefreshBeforeExpiration(expiration, resyncInterval))
-	})
 }

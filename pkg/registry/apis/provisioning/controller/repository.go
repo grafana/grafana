@@ -668,12 +668,17 @@ func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	c *provisioning.Connection,
 ) bool {
 	// We should generate a token from the connection when
+	// - The token has not been recently created
 	// - The repo is not healthy
 	// - The token will expire before the next resync interval
 	// - The linked connection is healthy (which means it is able to generate valid tokens)
-	expirationBeforeNextResync := shouldRefreshBeforeExpiration(time.UnixMilli(obj.Status.Token.Expiration), rc.resyncInterval)
-	return !healthStatus.Healthy &&
-		expirationBeforeNextResync &&
+	recentlyCreated := tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated))
+	shouldRefresh := shouldRefreshBeforeExpiration(
+		time.UnixMilli(obj.Status.Token.Expiration), rc.resyncInterval,
+	)
+	return !recentlyCreated &&
+		!healthStatus.Healthy &&
+		shouldRefresh &&
 		c.Status.Health.Healthy
 }
 
