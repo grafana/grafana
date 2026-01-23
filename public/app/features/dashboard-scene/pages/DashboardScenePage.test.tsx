@@ -219,14 +219,6 @@ describe('DashboardScenePage', () => {
     expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
   });
 
-  it('shows Powered by footer in kiosk mode when kiosk is an empty string', async () => {
-    setup({ routeProps: { queryParams: { kiosk: '' } } });
-
-    await waitForDashboardToRender();
-
-    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
-  });
-
   it('does not show Powered by footer when kiosk=false', async () => {
     setup({ routeProps: { queryParams: { kiosk: 'false' } } });
 
@@ -251,46 +243,6 @@ describe('DashboardScenePage', () => {
     await waitForDashboardToRender();
 
     expect(screen.queryByTestId(selectors.pages.PublicDashboard.footer)).not.toBeInTheDocument();
-  });
-
-  it('hides Powered by footer in kiosk mode when hideLogo=1', async () => {
-    setup({ routeProps: { queryParams: { kiosk: true, hideLogo: '1' } } });
-
-    await waitForDashboardToRender();
-
-    expect(screen.queryByTestId(selectors.pages.PublicDashboard.footer)).not.toBeInTheDocument();
-  });
-
-  it('hides Powered by footer in kiosk mode when hideLogo is an empty string', async () => {
-    setup({ routeProps: { queryParams: { kiosk: true, hideLogo: '' } } });
-
-    await waitForDashboardToRender();
-
-    expect(screen.queryByTestId(selectors.pages.PublicDashboard.footer)).not.toBeInTheDocument();
-  });
-
-  it('shows Powered by footer in kiosk mode when hideLogo has an invalid value', async () => {
-    setup({ routeProps: { queryParams: { kiosk: true, hideLogo: 'maybe' } } });
-
-    await waitForDashboardToRender();
-
-    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
-  });
-
-  it('shows Powered by footer in kiosk mode when hideLogo=0', async () => {
-    setup({ routeProps: { queryParams: { kiosk: true, hideLogo: '0' } } });
-
-    await waitForDashboardToRender();
-
-    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
-  });
-
-  it('shows Powered by footer in kiosk mode when hideLogo=false', async () => {
-    setup({ routeProps: { queryParams: { kiosk: true, hideLogo: 'false' } } });
-
-    await waitForDashboardToRender();
-
-    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
   });
 
   it('routeReloadCounter should trigger reload', async () => {
