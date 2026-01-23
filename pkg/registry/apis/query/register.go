@@ -51,7 +51,7 @@ type QueryAPIBuilder struct {
 	converter              *expr.ResultConverter
 	queryTypes             *query.QueryTypeDefinitionList
 	legacyDatasourceLookup service.LegacyDataSourceLookup
-	connections            DataSourceConnectionProvider
+	connections            query.DataSourceConnectionProvider
 }
 
 func NewQueryAPIBuilder(
@@ -62,7 +62,7 @@ func NewQueryAPIBuilder(
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
-	connections DataSourceConnectionProvider,
+	connections query.DataSourceConnectionProvider,
 	concurrentQueryLimit int,
 ) (*QueryAPIBuilder, error) {
 	// Include well typed query definitions
@@ -158,7 +158,6 @@ func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&query.DataSourceApiServer{},
 		&query.DataSourceApiServerList{},
-		&query.DataSourceConnection{},
 		&query.DataSourceConnectionList{},
 		&query.QueryDataRequest{},
 		&query.QueryDataResponse{},
@@ -182,15 +181,6 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 	gv := query.SchemeGroupVersion
 
 	storage := map[string]rest.Storage{}
-
-	// Get a list of all datasource instances
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
-		// Eventually this would be backed either by search or reconciler pattern
-		storage[query.ConnectionResourceInfo.StoragePath()] = &connectionAccess{
-			connections: b.connections,
-		}
-	}
 
 	plugins := newPluginsStorage(b.registry)
 	storage[plugins.resourceInfo.StoragePath()] = plugins
