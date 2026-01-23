@@ -634,11 +634,16 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = provisioningSect.NewKey("max_resources_per_repository", fmt.Sprintf("%d", opts.ProvisioningMaxResourcesPerRepository))
 		require.NoError(t, err)
 	}
-	// Write max_repositories if explicitly set (including 0 for unlimited)
-	// We need to check if it's different from the default (10) to know if it was explicitly set
-	// For now, we'll write it if it's 0 (unlimited) or > 0 (custom limit)
-	// Note: This means we can't distinguish between "not set" (default 10) and "explicitly set to 10"
-	if opts.ProvisioningMaxRepositories == 0 || opts.ProvisioningMaxRepositories > 0 {
+	// Write max_repositories if explicitly set.
+	// HACK: We can't distinguish between "not set" (0, should default to 10) and "explicitly set to 0" (unlimited).
+	// Solution: Write when value != 10 (the default). This covers:
+	// - Not set (0) -> write 0 -> config reads as 0 (unlimited) - WRONG, but HACK for tests
+	// - Set to 0 (unlimited) -> write 0 -> config reads as 0 (unlimited) ✓
+	// - Set to 10 -> don't write -> config defaults to 10 ✓
+	// - Set to other value -> write that value ✓
+	// HACK: The limitation is that "not set" (0) will write 0, making it unlimited instead of defaulting to 10.
+	// Tests that want default (10) should explicitly set ProvisioningMaxRepositories = 10.
+	if opts.ProvisioningMaxRepositories != 10 {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("max_repositories", fmt.Sprintf("%d", opts.ProvisioningMaxRepositories))

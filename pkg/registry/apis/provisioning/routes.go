@@ -164,24 +164,19 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return the effective maxRepositories value for display:
-	// - Default (10) when not configured -> return 10
-	// - Unlimited (0 in config) -> return 0
-	// - Configured value -> return that value
-	// Note: The validator uses -1 internally (HACK) for unlimited, but we return 0 in the API
-	maxReposForDisplay := b.maxRepositories
-	// b.maxRepositories is already the correct value:
-	// - 10 if default (from MustInt64(10))
-	// - 0 if user set unlimited
-	// - >0 if user set a limit
-	// So we can return it directly
-
+	// Return the effective maxRepositories value for display.
+	// b.maxRepositories stores the config value:
+	// - 10 if default (from MustInt64(10) when key doesn't exist)
+	// - 0 if user explicitly set unlimited in config
+	// - >0 if user set a custom limit
+	// This matches what verify.go uses (after converting 0 -> -1 internally as HACK).
+	// We return the actual config value, not the internal -1 HACK value.
 	settings := provisioning.RepositoryViewList{
 		Items:                    make([]provisioning.RepositoryView, len(all)),
 		AllowedTargets:           b.allowedTargets,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
 		AllowImageRendering:      b.allowImageRendering,
-		MaxRepositories:          maxReposForDisplay,
+		MaxRepositories:          b.maxRepositories,
 	}
 
 	for i, val := range all {
