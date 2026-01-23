@@ -7,8 +7,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { evaluateBooleanFlag } from '@grafana/runtime/internal';
-import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
+import { LinkButton, FilterInput, useStyles2, Text, Stack, Box, Divider } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
+import { OwnerReference, TeamOwnerReferences } from 'app/core/components/OwnerReferences/OwnerReference';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 import { useDispatch } from 'app/types/store';
@@ -166,6 +167,35 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     );
   };
 
+  const ownerReferencesElements = (() => {
+    const teamOwnerReferences =
+      folderDTO && 'ownerReferences' in folderDTO && folderDTO.ownerReferences?.filter((ref) => ref.kind === 'Team');
+
+    if (!teamOwnerReferences || teamOwnerReferences.length === 0) {
+      return null;
+    }
+
+    const text = teamOwnerReferences.length === 1 ? 'Owned by team:' : 'Owned by:';
+
+    return (
+      <>
+        <Text>{text}</Text>
+        <TeamOwnerReferences ownerReferences={teamOwnerReferences} />
+      </>
+    );
+  })();
+
+  // const ownerReferencesElements = teamOwnerReferences.length > 0 && (
+  //   <Box>
+  //     {teamOwnerReferences.map((ref) => (
+  //       <Stack key={ref.uid} direction="row">
+  //         <Text>Owned by team:</Text>
+  //         <TeamOwnerReference ownerReference={ref} />
+  //       </Stack>
+  //     ))}
+  //   </Box>
+  // );
+
   return (
     <Page
       navId="dashboards/browse"
@@ -173,7 +203,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
       onEditTitle={showEditTitle ? onEditTitle : undefined}
       renderTitle={renderTitle}
       actions={
-        <>
+        <Stack alignItems="center">
+          {ownerReferencesElements}
           {config.featureToggles.restoreDashboards && hasAdminRights && (
             <LinkButton
               variant="secondary"
@@ -193,7 +224,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
               isReadOnlyRepo={isReadOnlyRepo}
             />
           )}
-        </>
+        </Stack>
       }
     >
       <Page.Contents className={styles.pageContents}>
