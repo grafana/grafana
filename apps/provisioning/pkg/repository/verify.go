@@ -21,7 +21,7 @@ var ErrRepositoryParentFolderConflict = fmt.Errorf("repository path conflicts wi
 
 type VerifyAgainstExistingRepositoriesValidator struct {
 	lister          RepositoryLister
-	maxRepositories int64 // 0 = use default (10), -1 = unlimited, > 0 = use value
+	maxRepositories int64 // 0 = use default (10), -1 = unlimited (HACK), > 0 = use value
 }
 
 func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Validator {
@@ -101,12 +101,14 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	// Check repository limit (default 10, -1 = unlimited, 0 = use default)
+	// Check repository limit (default 10, -1 = unlimited (HACK), 0 = use default)
 	maxRepos := v.maxRepositories
 	if maxRepos == 0 {
 		maxRepos = 10 // default limit when not explicitly set
 	}
-	// Early return if unlimited to avoid unnecessary counting
+	// HACK: Early return if unlimited (-1) to avoid unnecessary counting.
+	// Using -1 for unlimited is a workaround since 0 is used for default and we need to distinguish
+	// between "not set" (0 -> default to 10) and "unlimited" (-1).
 	if maxRepos == -1 {
 		return nil
 	}

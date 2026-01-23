@@ -282,7 +282,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			if validator, ok := validatorRaw.(*VerifyAgainstExistingRepositoriesValidator); ok {
 				switch tt.name {
 				case "allows unlimited repositories when maxRepositories is 0":
-					// Use -1 to indicate unlimited (0 would default to 10)
+					// HACK: Use -1 to indicate unlimited (0 would default to 10).
+					// This is a workaround to distinguish between unset (0) and unlimited (-1).
 					validator.SetMaxRepositories(-1)
 				case "enforces custom maxRepositories limit":
 					validator.SetMaxRepositories(5)

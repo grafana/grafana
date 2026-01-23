@@ -645,12 +645,14 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// HACK: Set maxRepositories after construction to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature.
 	// See SetMaxRepositories for details.
 	// Config defaults to 10. If user explicitly sets it to 0, that means unlimited (pass -1).
-	// Validator: 0 = default (10), -1 = unlimited, > 0 = use value
+	// Validator: 0 = default (10), -1 = unlimited (HACK), > 0 = use value
 	if existingReposValidator, ok := existingReposValidatorRaw.(*repository.VerifyAgainstExistingRepositoriesValidator); ok {
 		maxRepos := b.maxRepositories
-		// Config value 0 means user explicitly set unlimited (since default is 10)
+		// HACK: Config value 0 means user explicitly set unlimited (since default is 10).
+		// We use -1 to indicate unlimited because 0 is already used for "not set" -> default to 10.
+		// This is a workaround to distinguish between unset (0) and unlimited (-1).
 		if maxRepos == 0 {
-			maxRepos = -1 // Pass -1 to validator to indicate unlimited
+			maxRepos = -1 // Pass -1 to validator to indicate unlimited (HACK)
 		}
 		existingReposValidator.SetMaxRepositories(maxRepos)
 	}
