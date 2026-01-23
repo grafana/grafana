@@ -90,7 +90,6 @@ function setup(
         }
       : null,
     isInstanceManaged: false,
-    canPushToConfiguredBranch: true,
   });
 
   mockUseBulkActionJob.mockReturnValue({
