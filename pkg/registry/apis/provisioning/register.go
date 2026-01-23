@@ -645,8 +645,13 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// Repository mutator and validator
 	b.repoValidator = repository.NewValidator(b.minSyncInterval, b.allowImageRendering, b.repoFactory)
 	// HACK: Construct QuotaLimits with repository limit conversion logic using NewHackyQuota.
-	// See NewHackyQuota for details on the HACK logic.
-	b.quotaLimits = quotas.NewHackyQuota(b.maxResourcesPerRepository, b.maxRepositories)
+	// Config value 0 means unlimited (user explicitly set to 0), convert to -1 for NewHackyQuota.
+	// NewHackyQuota converts: -1 → 0 (unlimited), 0 → 10 (default), N → N
+	maxReposForQuota := b.maxRepositories
+	if maxReposForQuota == 0 {
+		maxReposForQuota = -1 // Convert config 0 (unlimited) to -1 for NewHackyQuota
+	}
+	b.quotaLimits = quotas.NewHackyQuota(b.maxResourcesPerRepository, maxReposForQuota)
 
 	// HACK: Use NewVerifyAgainstExistingRepositoriesValidatorWithQuotas to pass QuotaLimits directly.
 	// This avoids the need for SetQuotaLimits and moves the HACK logic to construction.
