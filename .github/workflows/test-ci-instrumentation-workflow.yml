@@ -67,9 +67,6 @@ jobs:
           GOCACHE_DIR: /tmp/gocache
           GOCACHE_MODPROXY_NOCACHE: true
           GOCACHE_ENABLE_TRACING: true
-          GOCACHE_TRACING_TRACE_FILE: trace-modcache.log
-          GOCACHE_TRACING_OTEL_COLLECTOR: "otlp-gateway-ops-eu-south-0.grafana-ops.net"
-          #          OTEL_COLLECTOR_ADDRESS: localhost:4319
           RUN_ID: ${{ github.run_id }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
           JOB_NAME: ${{ github.job }}
@@ -88,12 +85,9 @@ jobs:
           OTEL_EXPORTER_OTLP_HEADERS: "Authorization=Basic ${{ env.OTEL_EXPORTER_OTLP_API_KEY }}"
           OTEL_RESOURCE_ATTRIBUTES: team=grafanabackend,env=cd
           OTEL_EXPORTER_OTLP_HEADERS_API_KEY: "${{ env.OTEL_EXPORTER_OTLP_API_KEY}}"
-          GOCACHE_TRACING_OTEL_COLLECTOR: "otlp-gateway-ops-eu-south-0.grafana-ops.net"
           GOCACHE_LOCAL_ONLY: true
           GOCACHE_DIR: /tmp/gocache
           GOCACHE_ENABLE_TRACING: true
-          GOCACHE_TRACING_TRACE_FILE: trace-gocache.log
-          TOOLEXEC_TRACING_TRACE_FILE: trace-toolexec.log
 
           RUN_ID: ${{ github.run_id }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
