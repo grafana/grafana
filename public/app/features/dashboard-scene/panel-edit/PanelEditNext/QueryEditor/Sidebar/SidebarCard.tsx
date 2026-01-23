@@ -24,18 +24,22 @@ const CardIcon = ({ type, size = 16 }: { type: string | undefined; size: number 
   }
 };
 
-const Header = ({ editorType, className }: { editorType: QueryEditorType; className: string }) => {
+const Header = ({ editorType, hasError }: { editorType: QueryEditorType; hasError: boolean }) => {
+  const styles = useStyles2(getStyles, editorType, hasError);
   const typeText =
     editorType === 'expression'
       ? t('query-editor-next.sidebar.expression', 'Expression')
       : t('query-editor-next.sidebar.query', 'Query');
 
   return (
-    <div className={className}>
-      <CardIcon type={editorType} size={16} />
-      <Text weight="light" variant="body">
-        {typeText}
-      </Text>
+    <div className={styles.cardHeader}>
+      <div>
+        <CardIcon type={editorType} size={16} />
+        <Text weight="light" variant="body">
+          {typeText}
+        </Text>
+      </div>
+      <Icon name="circle-mono" className={styles.errorIcon} />
     </div>
   );
 };
@@ -59,13 +63,12 @@ export const SidebarCard = ({ query }: SidebarCardProps) => {
 
   return (
     <div className={styles.card} key={query.refId}>
-      <Header editorType={editorType} className={styles.cardHeader} />
+      <Header editorType={editorType} hasError={hasError} />
       <div className={styles.cardContent}>
         <DataSourceLogo dataSource={queryDsSettings} />
         <Text weight="light" variant="body" color="secondary">
           {query.refId}
         </Text>
-        {hasError && <Icon name="exclamation-triangle" className={styles.errorIcon} />}
       </div>
     </div>
   );
@@ -77,13 +80,14 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: 
       display: 'flex',
       flexDirection: 'column',
       background: theme.colors.background.secondary,
-      border: `1px solid ${hasError ? theme.colors.error.border : theme.colors.border.weak}`,
+      border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
     }),
     cardHeader: css({
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'space-between',
       gap: theme.spacing(1),
       padding: theme.spacing(1),
       background: theme.colors.background.primary,
@@ -100,8 +104,10 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: 
       padding: theme.spacing(1),
     }),
     errorIcon: css({
-      marginLeft: 'auto',
-      color: theme.colors.error.text,
+      color: hasError ? theme.colors.error.text : theme.colors.success.text,
+      width: '6px',
+      height: '6px',
+      marginRight: theme.spacing(0.5),
     }),
   };
 }
