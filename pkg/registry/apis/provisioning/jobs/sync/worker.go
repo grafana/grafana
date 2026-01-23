@@ -54,13 +54,13 @@ func NewSyncWorker(
 	maxSyncWorkers int,
 ) *SyncWorker {
 	return &SyncWorker{
-		clients:                   clients,
-		repositoryResources:       repositoryResources,
-		patchStatus:               patchStatus,
-		syncer:                    syncer,
-		metrics:        metrics,
-		tracer:         tracer,
-		maxSyncWorkers: maxSyncWorkers,
+		clients:             clients,
+		repositoryResources: repositoryResources,
+		patchStatus:         patchStatus,
+		syncer:              syncer,
+		metrics:             metrics,
+		tracer:              tracer,
+		maxSyncWorkers:      maxSyncWorkers,
 	}
 }
 
