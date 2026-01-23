@@ -13,10 +13,10 @@ const baseURL = `/apis/userstorage.grafana.app/v0alpha1/namespaces/${config.name
 // Cache value: Promise<UserStorageSpec | null> | UserStorageSpec | null
 const storageCache = new Map<string, Promise<UserStorageSpec | null> | UserStorageSpec | null>();
 
-// Lock map to serialize setItem operations per resourceName
+// Lock map to serialize operations per resourceName
 // Cache key: resourceName
 // Cache value: Promise that resolves when the lock is available
-const setItemLocks = new Map<string, Promise<void>>();
+const operationLocks = new Map<string, Promise<void>>();
 
 /**
  * Clears the global storage cache. Used for testing purposes.
@@ -24,7 +24,7 @@ const setItemLocks = new Map<string, Promise<void>>();
  */
 export function clearStorageCache() {
   storageCache.clear();
-  setItemLocks.clear();
+  operationLocks.clear();
 }
 
 interface RequestOptions extends BackendSrvRequest {
@@ -70,6 +70,36 @@ export class UserStorage implements UserStorageType {
     this.userUID = config.bootData.user.uid === '' ? config.bootData.user.id.toString() : config.bootData.user.uid;
     this.resourceName = `${service}:${this.userUID}`;
     this.canUseUserStorage = config.bootData.user.isSignedIn;
+  }
+
+  /**
+   * Acquires a lock for this resourceName to serialize operations.
+   * Returns a function to release the lock when done.
+   */
+  private async acquireLock(): Promise<() => void> {
+    // Wait for any existing lock
+    let lockPromise = operationLocks.get(this.resourceName);
+    if (lockPromise) {
+      await lockPromise;
+    }
+
+    // Create a new lock promise that will be resolved when this operation completes
+    let resolveLock: (() => void) | undefined;
+    const newLockPromise = new Promise<void>((resolve) => {
+      resolveLock = resolve;
+    });
+    operationLocks.set(this.resourceName, newLockPromise);
+
+    // Return a function to release the lock
+    return () => {
+      if (resolveLock) {
+        resolveLock();
+      }
+      // Remove lock if it's still the current one (in case another operation started)
+      if (operationLocks.get(this.resourceName) === newLockPromise) {
+        operationLocks.delete(this.resourceName);
+      }
+    };
   }
 
   private async init(): Promise<unknown> {
@@ -156,14 +186,25 @@ export class UserStorage implements UserStorageType {
       // Fallback to localStorage
       return store.get(`${this.resourceName}:${key}`) ?? null;
     }
-    // Ensure storage is initialized
-    await this.init();
-    const storageSpec = storageCache.get(this.resourceName);
-    if (!storageSpec || storageSpec instanceof Promise) {
-      // Storage doesn't exist or still loading, fallback to localStorage
-      return store.get(`${this.resourceName}:${key}`) ?? null;
+
+    // Acquire lock to serialize operations
+    const releaseLock = await this.acquireLock();
+    try {
+      // Ensure storage is initialized
+      await this.init();
+      const storageSpec = storageCache.get(this.resourceName);
+      if (!storageSpec) {
+        // Storage doesn't exist or still loading, fallback to localStorage
+        return store.get(`${this.resourceName}:${key}`) ?? null;
+      }
+      if (storageSpec instanceof Promise) {
+        const result = await storageSpec;
+        return result?.data[key] ?? null;
+      }
+      return storageSpec.data[key];
+    } finally {
+      releaseLock();
     }
-    return storageSpec.data[key];
   }
 
   async setItem(key: string, value: string): Promise<void> {
@@ -173,19 +214,8 @@ export class UserStorage implements UserStorageType {
       return;
     }
 
-    // Acquire lock for this resourceName to serialize setItem operations
-    let lockPromise = setItemLocks.get(this.resourceName);
-    if (lockPromise) {
-      await lockPromise;
-    }
-
-    // Create a new lock promise that will be resolved when this operation completes
-    let resolveLock: (() => void) | undefined;
-    const newLockPromise = new Promise<void>((resolve) => {
-      resolveLock = resolve;
-    });
-    setItemLocks.set(this.resourceName, newLockPromise);
-
+    // Acquire lock to serialize operations
+    const releaseLock = await this.acquireLock();
     try {
       const newData = { data: { [key]: value } };
       // Ensure storage is initialized
@@ -196,8 +226,11 @@ export class UserStorage implements UserStorageType {
         return;
       }
 
-      const storageSpec = storageCache.get(this.resourceName);
-      if (!storageSpec || storageSpec instanceof Promise) {
+      let storageSpec = storageCache.get(this.resourceName);
+      if (storageSpec instanceof Promise) {
+        storageSpec = await storageSpec;
+      }
+      if (!storageSpec) {
         // No user storage found, create a new one
         const createResult = await apiRequest<UserStorageSpec>({
           url: `/`,
@@ -245,14 +278,7 @@ export class UserStorage implements UserStorageType {
       // Update global cache with the modified storage (using cloned object)
       storageCache.set(this.resourceName, updatedSpec);
     } finally {
-      // Release the lock
-      if (resolveLock) {
-        resolveLock();
-      }
-      // Remove lock if it's still the current one (in case another operation started)
-      if (setItemLocks.get(this.resourceName) === newLockPromise) {
-        setItemLocks.delete(this.resourceName);
-      }
+      releaseLock();
     }
   }
 }

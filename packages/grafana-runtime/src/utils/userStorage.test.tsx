@@ -153,6 +153,83 @@ describe('userStorage', () => {
         })
       );
     });
+
+    it('handles storageSpec as Promise by awaiting it before creating storage', async () => {
+      // This test verifies that setItem correctly awaits a Promise in storageSpec
+      // Scenario: init() completes and sets null in cache, then setItem should create storage
+      request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
+      request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
+
+      const storage = usePluginUserStorage();
+
+      // First, trigger init which will cache null (404)
+      await storage.getItem('some-key');
+
+      // Now setItem should see null in cache and create new storage
+      await storage.setItem('key', 'value');
+
+      // Should have made GET (init) and POST (create) requests
+      expect(request).toHaveBeenCalledTimes(2);
+      expect(request).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
+          method: 'GET',
+        })
+      );
+      expect(request).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/',
+          method: 'POST',
+        })
+      );
+
+      // Verify the value was stored
+      const value = await storage.getItem('key');
+      expect(value).toBe('value');
+    });
+
+    it('handles storageSpec as Promise by awaiting it before updating storage', async () => {
+      // This test verifies that setItem correctly awaits a Promise in storageSpec
+      // Scenario: init() completes with data, then setItem should update it
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { spec: { data: { key: 'old-value' } } },
+        } as FetchResponse)
+      );
+      request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
+
+      const storage = usePluginUserStorage();
+
+      // First, trigger init which will cache the data
+      await storage.getItem('key');
+
+      // Now setItem should see the data in cache and update it
+      await storage.setItem('key', 'new-value');
+
+      // Should have made GET (init) and PATCH (update) requests
+      expect(request).toHaveBeenCalledTimes(2);
+      expect(request).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
+          method: 'GET',
+        })
+      );
+      expect(request).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
+          method: 'PATCH',
+        })
+      );
+
+      // Verify the value was updated
+      const value = await storage.getItem('key');
+      expect(value).toBe('new-value');
+    });
   });
 
   describe('Cache behavior', () => {
@@ -241,7 +318,10 @@ describe('userStorage', () => {
       const promise1 = storage1.getItem('key');
       const promise2 = storage2.getItem('key');
 
-      // Should only make one network request
+      // Wait a bit to allow both operations to start (first acquires lock, second waits)
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Should only make one network request (second call will reuse the promise from cache)
       expect(request).toHaveBeenCalledTimes(1);
 
       // Resolve the request
@@ -249,8 +329,10 @@ describe('userStorage', () => {
 
       const [value1, value2] = await Promise.all([promise1, promise2]);
 
+      // Verify both got the same value and only one request was made
       expect(value1).toBe('value');
       expect(value2).toBe('value');
+      expect(request).toHaveBeenCalledTimes(1);
     });
 
     it('serializes concurrent setItem operations to prevent race conditions', async () => {
