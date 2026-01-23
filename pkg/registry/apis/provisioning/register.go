@@ -313,8 +313,10 @@ func RegisterAPIService(
 	// HACK: Set quota limits after construction to avoid changing NewAPIBuilder signature.
 	// See SetQuotas for details.
 	// Config defaults to 10 in pkg/setting. If user sets 0, that means unlimited.
-	// NewHackyQuota passes through values as-is (0 = unlimited, N = N).
-	builder.SetQuotas(quotas.NewHackyQuota(cfg.ProvisioningMaxResourcesPerRepository, cfg.ProvisioningMaxRepositories))
+	builder.SetQuotas(quotas.QuotaLimits{
+		MaxResources:    cfg.ProvisioningMaxResourcesPerRepository,
+		MaxRepositories: cfg.ProvisioningMaxRepositories,
+	})
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }

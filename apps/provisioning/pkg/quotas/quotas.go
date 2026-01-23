@@ -21,26 +21,6 @@ type QuotaLimits struct {
 	MaxRepositories int64
 }
 
-// NewHackyQuota creates a QuotaLimits struct with HACK logic for repository limits.
-// HACK: This function handles the conversion of config values to internal representation:
-// - 0 → 10 (default, when config value is 0 but config defaults to 10)
-// - N (where N > 0) → N (use value as-is)
-// - Validator: 0 = unlimited, > 0 = use value
-// This is a workaround to handle default values.
-// This HACK should be removed once we can coordinate changes across repositories.
-func NewHackyQuota(maxResourcesPerRepository, maxRepositories int64) QuotaLimits {
-	maxRepos := maxRepositories
-	// HACK: Config defaults to 10 in pkg/setting. If the value is 0, it means user explicitly set unlimited.
-	// However, if the value is 0 and it's the default (not explicitly set), we need to convert to 10.
-	// Since we can't distinguish, we treat 0 as unlimited (user explicitly set to 0).
-	// The default of 10 is handled in pkg/setting when reading the config.
-	// For now, we pass through 0 as-is (unlimited) and N as-is.
-	// The validator will handle 0 as unlimited.
-	return QuotaLimits{
-		MaxResources:    maxResourcesPerRepository,
-		MaxRepositories: maxRepos,
-	}
-}
 
 // EvaluateCondition creates a Quota condition based on current stats and limits.
 // Returns True if all quotas pass (or no limits configured), False if any quota is reached/exceeded.
