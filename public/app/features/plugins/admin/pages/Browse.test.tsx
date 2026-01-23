@@ -13,7 +13,10 @@ import BrowsePage from './Browse';
 
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
-  const mockedRuntime = { ...original };
+  const mockedRuntime = {
+    ...original,
+    useAppPluginInstalled: jest.fn().mockReturnValue({ loading: false, value: false, error: undefined }),
+  };
 
   mockedRuntime.config.buildInfo.version = 'v8.1.0';
 

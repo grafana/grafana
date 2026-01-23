@@ -1485,6 +1485,30 @@ export type ConnectionSpec = {
   /** The connection URL */
   url?: string;
 };
+export type Condition = {
+  /** lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable. */
+  lastTransitionTime: Time;
+  /** message is a human readable message indicating details about the transition. This may be an empty string. */
+  message: string;
+  /** observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance. */
+  observedGeneration?: number;
+  /** reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty. */
+  reason: string;
+  /** status of the condition, one of True, False, Unknown. */
+  status: string;
+  /** type of condition in CamelCase or in foo.example.com/CamelCase. */
+  type: string;
+};
+export type ErrorDetails = {
+  /** Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable. */
+  detail?: string;
+  /** Field is the path to the field or JSON pointer that caused the error. This helps users and tools identify exactly where to correct the problem. This field is optional and may be empty if not applicable. */
+  field?: string;
+  /** Origin indicates where the error originated in validation, or the name of the external service that reported the error. This can be useful for tooling or debugging, and may reference a specific rule, function, or service. This field is optional and may be empty. */
+  origin?: string;
+  /** Type is a machine-readable description of the cause of the error. This is intended for programmatic handling and matches Kubernetes' CauseType values. */
+  type: string;
+};
 export type HealthStatus = {
   /** When the health was checked last time */
   checked?: number;
@@ -1500,6 +1524,10 @@ export type HealthStatus = {
   message?: string[];
 };
 export type ConnectionStatus = {
+  /** Conditions represent the latest available observations of the connection's state. */
+  conditions?: Condition[];
+  /** FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec. */
+  fieldErrors?: ErrorDetails[];
   /** The connection health status */
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
@@ -1858,6 +1886,10 @@ export type SyncStatus = {
      - `"working"` The job is running */
   state: 'error' | 'pending' | 'success' | 'warning' | 'working';
 };
+export type TokenStatus = {
+  expiration?: number;
+  lastUpdated?: number;
+};
 export type WebhookStatus = {
   id?: number;
   lastEvent?: number;
@@ -1865,8 +1897,12 @@ export type WebhookStatus = {
   url?: string;
 };
 export type RepositoryStatus = {
+  /** Conditions represent the latest available observations of the repository's state. */
+  conditions?: Condition[];
   /** Error information during repository deletion (if any) */
   deleteError?: string;
+  /** FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec. */
+  fieldErrors?: ErrorDetails[];
   /** This will get updated with the current health status (and updated periodically) */
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
@@ -1875,6 +1911,8 @@ export type RepositoryStatus = {
   stats?: ResourceCount[];
   /** Sync information with the last sync information */
   sync: SyncStatus;
+  /** Token will get updated with current token information */
+  token?: TokenStatus;
   /** Webhook Information (if applicable) */
   webhook: WebhookStatus;
 };
@@ -1990,11 +2028,6 @@ export type ResourceList = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
-};
-export type ErrorDetails = {
-  detail?: string;
-  field?: string;
-  type: string;
 };
 export type TestResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */

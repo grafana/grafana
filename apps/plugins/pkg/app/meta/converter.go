@@ -306,9 +306,12 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 				v0Route.ReqAction = &route.ReqAction
 			}
 			if len(route.Headers) > 0 {
-				headers := make([]string, 0, len(route.Headers))
+				headers := make([]pluginsv0alpha1.MetaV0alpha1RouteHeaders, 0, len(route.Headers))
 				for _, header := range route.Headers {
-					headers = append(headers, header.Name+": "+header.Content)
+					headers = append(headers, pluginsv0alpha1.MetaV0alpha1RouteHeaders{
+						Name:    header.Name,
+						Content: header.Content,
+					})
 				}
 				v0Route.Headers = headers
 			}

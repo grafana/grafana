@@ -456,21 +456,12 @@ func (w *sqlWriteCloser) Close() error {
 }
 
 func (k *sqlKV) Delete(ctx context.Context, section string, key string) error {
-	res, err := dbutil.Exec(ctx, k.db, sqlKVDelete, sqlKVDeleteRequest{
+	_, err := dbutil.Exec(ctx, k.db, sqlKVDelete, sqlKVDeleteRequest{
 		SQLTemplate:     sqltemplate.New(k.dialect),
 		sqlKVSectionKey: sqlKVSectionKey{sqlKVSection{section}, key},
 	})
 	if err != nil {
 		return fmt.Errorf("failed to delete key: %w", err)
-	}
-
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to validate delete: %w", err)
-	}
-
-	if rows == 0 {
-		return ErrNotFound
 	}
 
 	return nil
