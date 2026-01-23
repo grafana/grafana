@@ -202,20 +202,18 @@ Use a _custom_ variable for a value that does not change, such as a number or a 
 For example, if you have server names or region names that never change, then you might want to create them as custom variables rather than query variables. Because they do not change, you might use them in [chained variables](#chained-variables) rather than other query variables. That would reduce the number of queries Grafana must send when chained variables are updated.
 
 1. [Enter general options](#enter-general-options).
-1. Under the **Custom options** section of the page, in the **Values separated by comma** field, enter the values for this variable in a comma-separated list.
-
-   You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.
+1. Under the **Custom options** section of the page, select one of the following:
+   - **CSV** - Enter a flat list of values for the variable in a comma-separated list. You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.
+   - **JSON** - Provide a JSON array of objects where each object can have any number of properties that can be referenced.
 
 1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
    - **Multi-value** - Enables multiple values to be selected at the same time.
+   - **Allow custom values** - Enables users to add custom values to the list. Only applies to CSV custom values.
    - **Include All option** - Enables an option to include all variables.
 
-1. In the **Preview of values** section, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
+1. In the **Preview of values** section, Grafana displays a list of the current variable values. If you've entered a JSON array, the preview is a table that includes all the value properties. Review them to ensure they match what you expect.
 1. Click **Save dashboard**.
 1. Click **Back to dashboard** and **Exit edit**.
-
-Stuff for multi-prop
-Custom variable custom values: When you save options using JSON, the editor disables allowCustomValue (custom input for that variable). The editor enforces this behavior to keep variable behavior predictable. 
 
 ## Add a text box variable
 
