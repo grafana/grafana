@@ -33,9 +33,10 @@ func NewHackyQuota(maxResourcesPerRepository, maxRepositories int64) QuotaLimits
 	maxRepos := maxRepositories
 	// HACK: Convert values according to the mapping:
 	// -1 → 0 (unlimited), 0 → 10 (default), N → N (use as-is)
-	if maxRepos == -1 {
+	switch maxRepos {
+	case -1:
 		maxRepos = 0 // Convert -1 to 0 (unlimited)
-	} else if maxRepos == 0 {
+	case 0:
 		maxRepos = 10 // Convert 0 to 10 (default)
 	}
 	// N > 0 is passed through as-is

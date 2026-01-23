@@ -135,13 +135,13 @@ func TestCalculateTotalResources(t *testing.T) {
 
 func TestNewHackyQuota(t *testing.T) {
 	tests := []struct {
-		name                     string
+		name                      string
 		maxResourcesPerRepository int64
 		maxRepositories           int64
-		want                     QuotaLimits
+		want                      QuotaLimits
 	}{
 		{
-			name:                     "default values",
+			name:                      "default values",
 			maxResourcesPerRepository: 100,
 			maxRepositories:           10,
 			want: QuotaLimits{
@@ -150,7 +150,7 @@ func TestNewHackyQuota(t *testing.T) {
 			},
 		},
 		{
-			name:                     "zero repositories defaults to 10 (HACK)",
+			name:                      "zero repositories defaults to 10 (HACK)",
 			maxResourcesPerRepository: 50,
 			maxRepositories:           0, // Config value 0 defaults to 10
 			want: QuotaLimits{
@@ -159,7 +159,7 @@ func TestNewHackyQuota(t *testing.T) {
 			},
 		},
 		{
-			name:                     "negative one repositories means unlimited (HACK)",
+			name:                      "negative one repositories means unlimited (HACK)",
 			maxResourcesPerRepository: 50,
 			maxRepositories:           -1, // Config value -1 means unlimited
 			want: QuotaLimits{
@@ -168,7 +168,7 @@ func TestNewHackyQuota(t *testing.T) {
 			},
 		},
 		{
-			name:                     "custom repository limit",
+			name:                      "custom repository limit",
 			maxResourcesPerRepository: 200,
 			maxRepositories:           5,
 			want: QuotaLimits{
@@ -177,7 +177,7 @@ func TestNewHackyQuota(t *testing.T) {
 			},
 		},
 		{
-			name:                     "zero repositories defaults to 10, unlimited resources",
+			name:                      "zero repositories defaults to 10, unlimited resources",
 			maxResourcesPerRepository: 0,
 			maxRepositories:           0,
 			want: QuotaLimits{
