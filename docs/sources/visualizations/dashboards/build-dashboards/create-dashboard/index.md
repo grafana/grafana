@@ -76,16 +76,15 @@ To create a dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
-1. Click **+ Add visualization**.
-1. In the dialog box that opens, do one of the following:
+1. Under **Add**, click or drag the panel icon onto the dashboard.
+
+1. Click **Configure**.
+
+      The **Edit panel** view opens with the default data source for your instance preselected.
+
+1. If you want to change the panel data source, in the **Queries** tab, click the **Data source** drop-down list and do one of the following:
    - Select one of your existing data sources.
-   - Select one of the Grafana [built-in special data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources).
-   - Click **Configure a new data source** to set up a new one (Admins only).
-
-   {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
-
-   The **Edit panel** view opens with your data source selected.
-   You can change the panel data source later using the drop-down in the **Query** tab of the panel editor if needed.
+   - Click **Open advanced data source picker** to select one of the Grafana [built-in special data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources) or to configure a new data source (Admins only).
 
    For more information about data sources, refer to [Data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) for specific guidelines.
 
