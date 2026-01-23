@@ -150,12 +150,12 @@ func TestNewHackyQuota(t *testing.T) {
 			},
 		},
 		{
-			name:                     "unlimited repositories (0 -> -1 HACK)",
+			name:                     "zero repositories defaults to 10 (HACK)",
 			maxResourcesPerRepository: 50,
-			maxRepositories:           0, // Config value 0 means unlimited
+			maxRepositories:           0, // Config value 0 defaults to 10
 			want: QuotaLimits{
 				MaxResources:    50,
-				MaxRepositories: -1, // HACK: Converted to -1 for unlimited
+				MaxRepositories: 10, // HACK: Defaulted to 10
 			},
 		},
 		{
@@ -168,12 +168,12 @@ func TestNewHackyQuota(t *testing.T) {
 			},
 		},
 		{
-			name:                     "unlimited resources and repositories",
+			name:                     "zero repositories defaults to 10, unlimited resources",
 			maxResourcesPerRepository: 0,
 			maxRepositories:           0,
 			want: QuotaLimits{
 				MaxResources:    0,
-				MaxRepositories: -1, // HACK: Converted to -1 for unlimited
+				MaxRepositories: 10, // HACK: Defaulted to 10
 			},
 		},
 	}
