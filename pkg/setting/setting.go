@@ -147,7 +147,7 @@ type Cfg struct {
 	ProvisioningLokiPassword              string
 	ProvisioningLokiTenantID              string
 	ProvisioningMaxResourcesPerRepository int64 // 0 = unlimited
-	ProvisioningMaxRepositories           int64 // default 10, 0 = unlimited
+	ProvisioningMaxRepositories           int64 // default 10, 0 in config = unlimited (converted to -1 internally)
 	DataPath                              string
 	LogsPath                              string
 	PluginsPath                           string
