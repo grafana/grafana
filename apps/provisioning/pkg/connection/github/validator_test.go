@@ -67,7 +67,7 @@ func TestValidate(t *testing.T) {
 			errorContains: []string{"privateKey"},
 		},
 		{
-			name: "missing token",
+			name: "valid connection without token (controller will generate)",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-conn",
@@ -85,8 +85,7 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: true,
-			errorContains: []string{"token"},
+			expectedError: false,
 		},
 		{
 			name: "forbidden client secret",

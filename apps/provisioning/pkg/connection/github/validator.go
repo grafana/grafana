@@ -37,9 +37,6 @@ func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 	if conn.Secure.PrivateKey.IsZero() {
 		list = append(list, field.Required(field.NewPath("secure", "privateKey"), "privateKey must be specified for GitHub connection"))
 	}
-	if conn.Secure.Token.IsZero() {
-		list = append(list, field.Required(field.NewPath("secure", "token"), "token must be specified for GitHub connection"))
-	}
 	if !conn.Secure.ClientSecret.IsZero() {
 		list = append(list, field.Forbidden(field.NewPath("secure", "clientSecret"), "clientSecret is forbidden in GitHub connection"))
 	}
