@@ -20,20 +20,20 @@ var ErrRepositoryDuplicatePath = fmt.Errorf("duplicate repository path")
 var ErrRepositoryParentFolderConflict = fmt.Errorf("repository path conflicts with existing repository")
 
 type VerifyAgainstExistingRepositoriesValidator struct {
-	lister          RepositoryLister
-	maxRepositories int64 // 0 = use default (10), -1 = unlimited (HACK), > 0 = use value
+	lister RepositoryLister
+	limits RepositoryLimits
 }
 
 func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Validator {
 	return &VerifyAgainstExistingRepositoriesValidator{lister: lister}
 }
 
-// SetMaxRepositories sets the maximum number of repositories per namespace limit.
+// SetRepositoryLimits sets the repository limits.
 // HACK: This is a workaround to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature which would require
 // changes in the enterprise repository. This should be moved to NewVerifyAgainstExistingRepositoriesValidator parameters
 // once we can coordinate the change across repositories.
-func (v *VerifyAgainstExistingRepositoriesValidator) SetMaxRepositories(maxRepositories int64) {
-	v.maxRepositories = maxRepositories
+func (v *VerifyAgainstExistingRepositoriesValidator) SetRepositoryLimits(limits RepositoryLimits) {
+	v.limits = limits
 }
 
 // VerifyAgainstExistingRepositoriesValidator verifies repository configurations for conflicts within a namespace.
@@ -102,7 +102,7 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 	}
 
 	// Check repository limit (default 10, -1 = unlimited (HACK), 0 = use default)
-	maxRepos := v.maxRepositories
+	maxRepos := v.limits.MaxRepositories
 	if maxRepos == 0 {
 		maxRepos = 10 // default limit when not explicitly set
 	}

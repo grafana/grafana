@@ -278,15 +278,15 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			store := &verifyTestStorage{repositories: tt.existingRepos}
 			lister := NewStorageLister(store)
 			validatorRaw := NewVerifyAgainstExistingRepositoriesValidator(lister)
-			// Set maxRepositories for tests that expect a different limit (default is 10, set to -1 to disable)
+			// Set repository limits for tests that expect a different limit (default is 10, set to -1 to disable)
 			if validator, ok := validatorRaw.(*VerifyAgainstExistingRepositoriesValidator); ok {
 				switch tt.name {
 				case "allows unlimited repositories when maxRepositories is 0":
 					// HACK: Use -1 to indicate unlimited (0 would default to 10).
 					// This is a workaround to distinguish between unset (0) and unlimited (-1).
-					validator.SetMaxRepositories(-1)
+					validator.SetRepositoryLimits(RepositoryLimits{MaxRepositories: -1})
 				case "enforces custom maxRepositories limit":
-					validator.SetMaxRepositories(5)
+					validator.SetRepositoryLimits(RepositoryLimits{MaxRepositories: 5})
 				}
 			}
 			errList := validatorRaw.Validate(context.Background(), tt.cfg)

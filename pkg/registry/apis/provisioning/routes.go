@@ -164,12 +164,24 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Return the effective maxRepositories value for display:
+	// - Default (10) when not configured -> return 10
+	// - Unlimited (0 in config) -> return 0
+	// - Configured value -> return that value
+	// Note: The validator uses -1 internally (HACK) for unlimited, but we return 0 in the API
+	maxReposForDisplay := b.maxRepositories
+	// b.maxRepositories is already the correct value:
+	// - 10 if default (from MustInt64(10))
+	// - 0 if user set unlimited
+	// - >0 if user set a limit
+	// So we can return it directly
+
 	settings := provisioning.RepositoryViewList{
 		Items:                    make([]provisioning.RepositoryView, len(all)),
 		AllowedTargets:           b.allowedTargets,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
 		AllowImageRendering:      b.allowImageRendering,
-		MaxRepositories:          b.maxRepositories,
+		MaxRepositories:          maxReposForDisplay,
 	}
 
 	for i, val := range all {

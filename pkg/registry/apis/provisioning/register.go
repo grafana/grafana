@@ -225,6 +225,7 @@ func (b *APIBuilder) SetMaxResourcesPerRepository(maxResourcesPerRepository int6
 // HACK: This is a workaround to avoid changing NewAPIBuilder signature which would require
 // changes in the enterprise repository. This should be moved to NewAPIBuilder parameters
 // once we can coordinate the change across repositories.
+// The value is stored here and then passed to the validator via SetRepositoryLimits.
 func (b *APIBuilder) SetMaxRepositories(maxRepositories int64) {
 	b.maxRepositories = maxRepositories
 }
@@ -642,8 +643,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// Repository mutator and validator
 	b.repoValidator = repository.NewValidator(b.minSyncInterval, b.allowImageRendering, b.repoFactory)
 	existingReposValidatorRaw := repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister)
-	// HACK: Set maxRepositories after construction to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature.
-	// See SetMaxRepositories for details.
+	// HACK: Set repository limits after construction to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature.
+	// See SetRepositoryLimits for details.
 	// Config defaults to 10. If user explicitly sets it to 0, that means unlimited (pass -1).
 	// Validator: 0 = default (10), -1 = unlimited (HACK), > 0 = use value
 	if existingReposValidator, ok := existingReposValidatorRaw.(*repository.VerifyAgainstExistingRepositoriesValidator); ok {
@@ -654,7 +655,9 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		if maxRepos == 0 {
 			maxRepos = -1 // Pass -1 to validator to indicate unlimited (HACK)
 		}
-		existingReposValidator.SetMaxRepositories(maxRepos)
+		existingReposValidator.SetRepositoryLimits(repository.RepositoryLimits{
+			MaxRepositories: maxRepos,
+		})
 	}
 	repoAdmissionValidator := repository.NewAdmissionValidator(b.allowedTargets, b.repoValidator, existingReposValidatorRaw)
 	b.admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(b.repoFactory))

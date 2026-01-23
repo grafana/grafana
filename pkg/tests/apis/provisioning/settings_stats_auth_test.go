@@ -9,6 +9,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -51,7 +52,7 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
 	})
 
-	t.Run("settings endpoint returns MaxRepositories field", func(t *testing.T) {
+	t.Run("settings endpoint returns MaxRepositories field with default value", func(t *testing.T) {
 		settings := &provisioning.RepositoryViewList{}
 		result := helper.AdminREST.Get().
 			Namespace("default").
@@ -61,10 +62,49 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 		require.NoError(t, result.Error(), "should be able to GET settings")
 		err := result.Into(settings)
 		require.NoError(t, err, "should be able to unmarshal settings response")
-		// MaxRepositories should be present (default is 0 = unlimited)
 		require.NotNil(t, settings, "settings should not be nil")
-		// The field should exist and default to 0 (unlimited) when not configured
-		require.Equal(t, int64(0), settings.MaxRepositories, "MaxRepositories should default to 0 (unlimited)")
+		// Default should be 10 when not configured
+		require.Equal(t, int64(10), settings.MaxRepositories, "MaxRepositories should default to 10")
+	})
+
+	t.Run("settings endpoint returns 0 when unlimited is configured", func(t *testing.T) {
+		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+			opts.ProvisioningMaxRepositories = 0 // 0 means unlimited
+		})
+		ctx := context.Background()
+
+		settings := &provisioning.RepositoryViewList{}
+		result := helper.AdminREST.Get().
+			Namespace("default").
+			Resource("settings").
+			Do(ctx)
+
+		require.NoError(t, result.Error(), "should be able to GET settings")
+		err := result.Into(settings)
+		require.NoError(t, err, "should be able to unmarshal settings response")
+		require.NotNil(t, settings, "settings should not be nil")
+		// Should return 0 when unlimited is configured
+		require.Equal(t, int64(0), settings.MaxRepositories, "MaxRepositories should be 0 when unlimited")
+	})
+
+	t.Run("settings endpoint returns configured value", func(t *testing.T) {
+		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+			opts.ProvisioningMaxRepositories = 1000
+		})
+		ctx := context.Background()
+
+		settings := &provisioning.RepositoryViewList{}
+		result := helper.AdminREST.Get().
+			Namespace("default").
+			Resource("settings").
+			Do(ctx)
+
+		require.NoError(t, result.Error(), "should be able to GET settings")
+		err := result.Into(settings)
+		require.NoError(t, err, "should be able to unmarshal settings response")
+		require.NotNil(t, settings, "settings should not be nil")
+		// Should return the configured value
+		require.Equal(t, int64(1000), settings.MaxRepositories, "MaxRepositories should be 1000 when configured")
 	})
 }
 
