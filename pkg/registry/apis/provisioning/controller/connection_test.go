@@ -198,6 +198,11 @@ func TestConnectionController_process(t *testing.T) {
 								InstallationID: "456",
 							},
 						},
+						Secure: provisioning.ConnectionSecure{
+							Token: common.InlineSecureValue{
+								Name: "existing-token",
+							},
+						},
 					},
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
@@ -260,6 +265,11 @@ func TestConnectionController_process(t *testing.T) {
 						InstallationID: "456",
 					},
 				},
+				Secure: provisioning.ConnectionSecure{
+					Token: common.InlineSecureValue{
+						Name: "existing-token",
+					},
+				},
 			},
 			expectError: false,
 		},
@@ -282,6 +292,11 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Spec: provisioning.ConnectionSpec{
 							Type: provisioning.GithubConnectionType,
+						},
+						Secure: provisioning.ConnectionSecure{
+							Token: common.InlineSecureValue{
+								Name: "existing-token",
+							},
 						},
 					},
 				}
@@ -345,6 +360,11 @@ func TestConnectionController_process(t *testing.T) {
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 				},
+				Secure: provisioning.ConnectionSecure{
+					Token: common.InlineSecureValue{
+						Name: "existing-token",
+					},
+				},
 			},
 			expectError: false,
 		},
@@ -367,6 +387,11 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Spec: provisioning.ConnectionSpec{
 							Type: provisioning.GithubConnectionType,
+						},
+						Secure: provisioning.ConnectionSecure{
+							Token: common.InlineSecureValue{
+								Name: "existing-token",
+							},
 						},
 					},
 				}
@@ -432,6 +457,11 @@ func TestConnectionController_process(t *testing.T) {
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 				},
+				Secure: provisioning.ConnectionSecure{
+					Token: common.InlineSecureValue{
+						Name: "existing-token",
+					},
+				},
 			},
 			expectError: false,
 		},
@@ -454,6 +484,11 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Spec: provisioning.ConnectionSpec{
 							Type: provisioning.GithubConnectionType,
+						},
+						Secure: provisioning.ConnectionSecure{
+							Token: common.InlineSecureValue{
+								Name: "existing-token",
+							},
 						},
 					},
 				}
@@ -519,6 +554,11 @@ func TestConnectionController_process(t *testing.T) {
 				},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
+				},
+				Secure: provisioning.ConnectionSecure{
+					Token: common.InlineSecureValue{
+						Name: "existing-token",
+					},
 				},
 			},
 			expectError: false,
@@ -695,7 +735,7 @@ func TestConnectionController_process(t *testing.T) {
 			errorContains: "failed to build connection",
 		},
 		{
-			name: "token creation check error",
+			name: "missing token triggers initial token generation",
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
@@ -714,6 +754,9 @@ func TestConnectionController_process(t *testing.T) {
 						Spec: provisioning.ConnectionSpec{
 							Type: provisioning.GithubConnectionType,
 						},
+						Secure: provisioning.ConnectionSecure{
+							// No token - IsZero() will return true
+						},
 					},
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
@@ -727,9 +770,17 @@ func TestConnectionController_process(t *testing.T) {
 
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
-				mockTokenConnection.EXPECT().TokenCreationTime(mock.Anything).Return(time.Time{}, errors.New("failed to check token expiration"))
+				// Token is missing, so controller should generate it without checking TokenCreationTime
+				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).Return(common.RawSecureValue("new-token"), nil)
+				// Health check should be performed after token generation
+				mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).Return(
+					&provisioning.TestResults{Success: true}, provisioning.HealthStatus{Healthy: true}, []map[string]interface{}{}, nil,
+				)
 
-				return mockLister, mockHealthChecker, nil, mockFactory
+				mockPatcher := NewMockConnectionStatusPatcher(t)
+				mockPatcher.EXPECT().Patch(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+				return mockLister, mockHealthChecker, mockPatcher, mockFactory
 			},
 			conn: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{
@@ -747,8 +798,11 @@ func TestConnectionController_process(t *testing.T) {
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 				},
+				Secure: provisioning.ConnectionSecure{
+					// No token
+				},
 			},
-			expectError: true,
+			expectError: false,
 		},
 		{
 			name: "token expiration check error",
@@ -770,6 +824,11 @@ func TestConnectionController_process(t *testing.T) {
 						Spec: provisioning.ConnectionSpec{
 							Type: provisioning.GithubConnectionType,
 						},
+						Secure: provisioning.ConnectionSecure{
+							Token: common.InlineSecureValue{
+								Name: "existing-token",
+							},
+						},
 					},
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
@@ -784,6 +843,7 @@ func TestConnectionController_process(t *testing.T) {
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
 				mockTokenConnection.EXPECT().TokenCreationTime(mock.Anything).Return(time.Now().Add(-15*time.Second), nil)
+				// TokenExpiration returns error (e.g., token is corrupted and can't be parsed)
 				mockTokenConnection.EXPECT().TokenExpiration(mock.Anything).Return(time.Time{}, errors.New("failed to check token expiration"))
 
 				return mockLister, mockHealthChecker, nil, mockFactory
@@ -803,6 +863,11 @@ func TestConnectionController_process(t *testing.T) {
 				},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
+				},
+				Secure: provisioning.ConnectionSecure{
+					Token: common.InlineSecureValue{
+						Name: "existing-token",
+					},
 				},
 			},
 			expectError: true,
@@ -826,6 +891,11 @@ func TestConnectionController_process(t *testing.T) {
 						},
 						Spec: provisioning.ConnectionSpec{
 							Type: provisioning.GithubConnectionType,
+						},
+						Secure: provisioning.ConnectionSecure{
+							Token: common.InlineSecureValue{
+								Name: "existing-token",
+							},
 						},
 					},
 				}
@@ -880,6 +950,11 @@ func TestConnectionController_process(t *testing.T) {
 				},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
+				},
+				Secure: provisioning.ConnectionSecure{
+					Token: common.InlineSecureValue{
+						Name: "existing-token",
+					},
 				},
 			},
 			expectError: false,

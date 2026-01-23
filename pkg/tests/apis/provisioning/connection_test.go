@@ -56,26 +56,12 @@ exECgYBFAGKYTIeGAvhIvD5TphLpbCyeVLBIq5hRyrdRY+6Iwqdr5PGvLPKwin5+
 u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
 -----END RSA PRIVATE KEY-----`
 
-//nolint:gosec // Test RSA public key (generated for testing purposes only)
-const testPublicKeyPem = `-----BEGIN PUBLIC KEY-----
-MIIBITANBgkqhkiG9w0BAQEFAAOCAQ4AMIIBCQKCAQBn1MuM5hIfH6d3TNStI1of
-Wv/gcjQ4joi9cFijEwVLuPYkF1nDKkSbaMGFUWiOTaB/H9fxmd/V2u04NlBY3av6
-m5T/sHfVSiEWAEUblh3cA34HVCmDcqyyVty5HLGJJlSs2C7W2x7yUc9ImzyDBsyj
-pKOXuojJ9wN9a17D2cYU5WkXjoDC4BHid61jn9WBTtPZXSgOdirwahNzxZQSIP7D
-A9T8yiZwIWPp5YesgsAPyQLCFPgMs77xz/CEUnEYQ35zI/k/mQrwKdQ/ZP8xLwQo
-hUID0BIxE7G5quL069RuuCZWZkoFoPiZbp7HSryz1+19jD3rFT7eHGUYvAyCnXmX
-AgMBAAE=
------END PUBLIC KEY-----`
-
 func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
-
-	decryptService := helper.GetEnv().DecryptService
-	require.NotNil(t, decryptService, "decrypt service not wired properly")
 
 	t.Run("should perform CRUDL requests on connection", func(t *testing.T) {
 		connection := &unstructured.Unstructured{Object: map[string]any{
@@ -116,22 +102,6 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 		assert.Equal(t, "454545", githubInfo["installationID"], "installationID should be equal")
 		require.Contains(t, output.Object, "secure", "object should contain secure")
 		assert.Contains(t, output.Object["secure"], "privateKey", "secure should contain PrivateKey")
-
-		// Verifying token
-		assert.Contains(t, output.Object["secure"], "token", "token should be created")
-		secretName, found, err := unstructured.NestedString(output.Object, "secure", "token", "name")
-		require.NoError(t, err, "error getting secret name")
-		require.True(t, found, "secret name should exist: %v", output.Object)
-		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", output.GetNamespace(), secretName)
-		require.NoError(t, err, "decryption error")
-		require.Len(t, decrypted, 1)
-
-		val := decrypted[secretName].Value()
-		require.NotNil(t, val)
-		k := val.DangerouslyExposeAndConsumeValue()
-		valid, err := verifyToken(t, "123456", testPublicKeyPem, k)
-		require.NoError(t, err, "error verifying token: %s", k)
-		require.True(t, valid, "token should be valid: %s", k)
 
 		// LIST
 		list, err := helper.Connections.Resource.List(ctx, metav1.ListOptions{})
@@ -493,11 +463,26 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		appSlug := "appSlug"
 		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
 		connectionFactory.Client = ghmock.NewMockedHTTPClient(
-			ghmock.WithRequestMatch(
-				ghmock.GetApp, github.App{
-					ID:   &appID,
-					Slug: &appSlug,
-				},
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(github.App{
+						ID:   &appID,
+						Slug: &appSlug,
+					}))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.PostAppInstallationsAccessTokensByInstallationId,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					installation := github.InstallationToken{
+						Token:     github.Ptr("someToken"),
+						ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour * 2)},
+					}
+					_, _ = w.Write(ghmock.MustMarshal(installation))
+				}),
 			),
 		)
 		helper.SetGithubConnectionFactory(connectionFactory)
@@ -544,10 +529,12 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				return false
 			}
 			// Connection should be unhealthy with error message about app ID mismatch
-			return !conn.Status.Health.Healthy &&
+			return !conn.Secure.Token.IsZero() &&
+				conn.Generation == conn.Status.ObservedGeneration &&
+				!conn.Status.Health.Healthy &&
 				conn.Status.Health.Checked > 0 &&
 				len(conn.Status.Health.Message) > 0
-		}, 10*time.Second, 500*time.Millisecond, "connection should be marked unhealthy")
+		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
 
 		// Verify the error message contains information about app ID mismatch
 		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
@@ -562,7 +549,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				break
 			}
 		}
-		assert.True(t, hasMismatchError, "error message should mention appID mismatch")
+		assert.True(t, hasMismatchError, "error message should mention appID mismatch", conn.Status.Health.Message)
 		// Verify fieldErrors are populated when connection is unhealthy
 		if len(conn.Status.FieldErrors) > 0 {
 			// Check that fieldErrors contain relevant error details
@@ -727,6 +714,88 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
 		require.Error(t, err, "failed to create resource")
 		assert.Contains(t, err.Error(), "privateKey is forbidden in Gitlab connection")
+	})
+}
+
+func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	namespace := "default"
+
+	// Create typed client from REST config
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	decryptService := helper.GetEnv().DecryptService
+	require.NotNil(t, decryptService, "decrypt service not wired properly")
+
+	t.Run("token gets created", func(t *testing.T) {
+		// Create a connection using unstructured (like other connection tests)
+		connUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-health",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "12345",
+					"installationID": "67890",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		connName := createdUnstructured.GetName()
+
+		t.Cleanup(func() {
+			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+		})
+
+		// Wait for initial reconciliation - controller should update status
+		require.Eventually(t, func() bool {
+			updated, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return updated.Status.ObservedGeneration == updated.Generation &&
+				updated.Status.Health.Checked > 0 &&
+				updated.Status.State == provisioning.ConnectionStateConnected &&
+				updated.Status.Health.Healthy
+		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled")
+
+		// Verify initial health check was set
+		initial, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, initial)
+		require.False(t, initial.Secure.Token.IsZero())
+
+		// Verifying token
+		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", initial.Namespace, initial.Secure.Token.Name)
+		require.NoError(t, err, "decryption error")
+		require.Len(t, decrypted, 1)
+
+		val := decrypted[initial.Secure.Token.Name].Value()
+		require.NotNil(t, val)
+		k := val.DangerouslyExposeAndConsumeValue()
+		valid, err := verifyToken(t, "12345", k)
+		require.NoError(t, err, "error verifying token: %s", k)
+		require.True(t, valid, "token should be valid: %s", k)
 	})
 }
 
@@ -943,11 +1012,15 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		appSlug := "appSlug"
 		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
 		connectionFactory.Client = ghmock.NewMockedHTTPClient(
-			ghmock.WithRequestMatch(
-				ghmock.GetApp, github.App{
-					ID:   &appID,
-					Slug: &appSlug,
-				},
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(github.App{
+						ID:   &appID,
+						Slug: &appSlug,
+					}))
+				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetAppInstallationsByInstallationId,
@@ -1045,16 +1118,24 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		var installationID int64 = 789012
 		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
 		connectionFactory.Client = ghmock.NewMockedHTTPClient(
-			ghmock.WithRequestMatch(
-				ghmock.GetApp, github.App{
-					ID:   &appID,
-					Slug: &appSlug,
-				},
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(github.App{
+						ID:   &appID,
+						Slug: &appSlug,
+					}))
+				}),
 			),
-			ghmock.WithRequestMatch(
-				ghmock.GetAppInstallationsByInstallationId, github.Installation{
-					ID: &installationID,
-				},
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetAppInstallationsByInstallationId,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(github.Installation{
+						ID: &installationID,
+					}))
+				}),
 			),
 		)
 		helper.SetGithubConnectionFactory(connectionFactory)
@@ -1561,17 +1642,17 @@ func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) 
 	})
 }
 
-func verifyToken(t *testing.T, appID, publicKey, token string) (bool, error) {
+func verifyToken(t *testing.T, appID, token string) (bool, error) {
 	t.Helper()
 
 	// Parse the private key
-	key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(publicKey))
+	key, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(testPrivateKeyPEM))
 	if err != nil {
 		return false, err
 	}
 
 	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
-		return key, nil
+		return &key.PublicKey, nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
 	if err != nil {
 		return false, err
