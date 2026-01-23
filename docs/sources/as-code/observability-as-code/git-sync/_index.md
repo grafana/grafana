@@ -40,37 +40,51 @@ Git Sync is under continuous development. [Report any issues](https://grafana.co
 
 {{< /admonition >}}
 
-Git Sync in Grafana lets you manage your dashboards as code as JSON files stored in GitHub. You and your team can version control, collaborate, and automate deployments efficiently.
+Git Sync in Grafana lets you synchronize your resources so you can store your dashboards as JSON files stored in GitHub and manage them as code. You and your team can version control, collaborate, and automate deployments efficiently.
 
 ## How it works
 
-{{< admonition type="caution" >}}
+Git Sync allows you to connect external resources with your Grafana instance. Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise.
 
-Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise.
+All synchronized resources live under the `provisioned` folder. You can continue to have unprovisioned resources outside that folder.
 
-{{< /admonition >}}
+Git Sync is bidirectional, and you can modify provisioned resources both from the Grafana UI or from the synced GitHub repository. Changes will be reflected in both places. 
 
-Git Sync is bidirectional and works both with changes done directly in GitHub as well as in the Grafana UI.
+Refer to [key concepts](key-concepts.md) for further details. 
 
-- When you provision resources with Git Sync you can modify them from within the Grafana UI or within the GitHub repository. Changes made in either the repository or the Grafana UI are bidirectional.
-- Any changes made in the provisioned files stored in the GitHub repository are reflected in the Grafana database. By default, Grafana polls GitHub every 60 seconds. The Grafana UI reads from the database and updates the UI to reflect these changes.
+### Make changes in the Grafana UI
 
-### Provisioning folder
-
-Git Sync creates a folder for all the synchronized resources to live under. You can continue to have unprovisioned resources outside that folder.
-
-### Make changes in Grafana
-
-Whenever you modify a dashboard directly from the UI, Grafana can commit changes to Git upon saving. You can configure settings to either enforce PR approvals before merging in your repository, or allow direct commits.
-
-Grafana periodically polls GitHub at a regular internal to synchronize any changes. The default polling interval is 60 seconds, and you can change this setting in the Grafana UI.
-
-- If you enable the [webhooks feature](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering), repository notifications appear almost immediately.
-- Without webhooks, Grafana polls for changes at the specified interval.
+Whenever you modify a dashboard directly from the UI, you can also commit those changes to Git upon saving. You can configure settings to either enforce PR approvals before merging in your repository, or allow direct commits.
 
 ### Make changes in your GitHub repositories
 
-With Git Sync, you can make changes to the files in the provisioned folder in GitHub and see them in Grafana. Automated workflows ensure those changes are automatically represented in the Grafana database by updating Git. The Grafana UI reads the database and updates the UI to reflect these changes.
+Your Grafana instance polls the provisioned GitHub resources to synchronize. If you made any changes, they will be updated in the Grafana database as well. The Grafana UI reads from the database and updates the UI to reflect these changes.
+
+- Without webhooks, Grafana polls for changes at the specified interval. The default polling interval is 60 seconds, and you can change this setting in the Grafana UI.
+- If you enable the [webhooks feature](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering), repository notifications appear almost immediately.
+
+## Supported resources
+
+Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet.
+
+If you're using Git Sync in Grafana OSS or Grafana Enterprise, some supported resources might be in an incompatible data format. If this happens, syncing will be blocked. Compatibility issues will be fixed with an upcoming migration tool.
+
+### Resource states
+
+A resource can be:
+
+| Is the resource? | **Compatible**                                                             | **Incompatible**                                                                                |
+| ---------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Supported**    | The resource can be managed with Git Sync.                                 | The resource is supported but has compatibility issues. It **cannot** be managed with Git Sync. |
+| **Unsupported**  | The resource is **not** supported and **cannot** be managed with Git Sync. | Not applicable.                                                                                 |
+
+### Grafana instance Git Sync states
+
+Your Grafana instance can be in one of the following Git Sync states:
+
+- **Unprovisioned**: None of the instance's resources are being managed by Git Sync.
+- **Partially provisioned**: Some of the resources are controlled by Git Sync.
+- **Fully provisioned**: All supported resource types are managed by Git Sync. Unsupported resources are **not managed**.
 
 ## Known limitations
 
@@ -107,29 +121,6 @@ Refer to [Requirements](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/obser
 ### Performance considerations
 
 When Git Sync is enabled, the database load might increase, especially if your Grafana instance has many folders and nested folders. Evaluate the performance impact, if any, in a non-production environment.
-
-## Supported resources
-
-Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet.
-
-If you're using Git Sync in Grafana OSS or Grafana Enterprise, some supported resources might be in an incompatible data format. If this happens, syncing will be blocked. Compatibility issues will be fixed with an upcoming migration tool.
-
-### Resource states
-
-A resource can be:
-
-| Is the resource? | **Compatible**                                                             | **Incompatible**                                                                                |
-| ---------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| **Supported**    | The resource can be managed with Git Sync.                                 | The resource is supported but has compatibility issues. It **cannot** be managed with Git Sync. |
-| **Unsupported**  | The resource is **not** supported and **cannot** be managed with Git Sync. | Not applicable.                                                                                 |
-
-### Grafana instance Git Sync states
-
-Your Grafana instance can be in one of the following Git Sync states:
-
-- **Unprovisioned**: None of the instance's resources are being managed by Git Sync.
-- **Partially provisioned**: Some of the resources are controlled by Git Sync.
-- **Fully provisioned**: All supported resource types are managed by Git Sync. Note that unsupported resources are not managed.
 
 ## Common use cases
 

@@ -31,7 +31,7 @@ You can sign up to the private preview using the [Git Sync early access form](ht
 
 {{< /admonition >}}
 
-## Understand the relationship between key Git Sync components
+## Key Git Sync components
 
 Before you start using Git Sync, understand how the key Git Sync components relate:
 
