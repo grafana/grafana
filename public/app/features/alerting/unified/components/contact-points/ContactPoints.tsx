@@ -22,6 +22,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
+import { useContactPointsNav } from '../../navigation/useContactPointsNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { isExtraConfig } from '../../utils/alertmanager/extraConfigs';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -282,8 +283,10 @@ const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE
 };
 
 function ContactPointsPage() {
+  const { navId, pageNav } = useContactPointsNav();
+
   return (
-    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
+    <AlertmanagerPageWrapper navId={navId} pageNav={pageNav} accessType="notification">
       <ContactPointsPageContents />
     </AlertmanagerPageWrapper>
   );
