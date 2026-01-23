@@ -164,11 +164,6 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return the effective maxRepositories value for display.
-	// quotaLimits.MaxRepositories stores the converted value:
-	// - 10 if not set (default, converted from 0 by NewHackyQuota)
-	// - 0 if user explicitly set unlimited in config (converted from -1 by NewHackyQuota)
-	// - >0 if user set a custom limit
 	settings := provisioning.RepositoryViewList{
 		Items:                    make([]provisioning.RepositoryView, len(all)),
 		AllowedTargets:           b.allowedTargets,
