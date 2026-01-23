@@ -156,7 +156,6 @@ func NewAPIBuilder(
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
-	maxResourcesPerRepository int64,
 	registry prometheus.Registerer,
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 	useExclusivelyAccessCheckerForAuthz bool,
@@ -182,7 +181,6 @@ func NewAPIBuilder(
 	b := &APIBuilder{
 		onlyApiServer:                       onlyApiServer,
 		minSyncInterval:                     minSyncInterval,
-		maxResourcesPerRepository:           maxResourcesPerRepository,
 		tracer:                              tracer,
 		usageStats:                          usageStats,
 		features:                            features,
@@ -212,6 +210,14 @@ func NewAPIBuilder(
 	}
 
 	return b
+}
+
+// SetMaxResourcesPerRepository sets the maximum resources per repository limit.
+// HACK: This is a workaround to avoid changing NewAPIBuilder signature which would require
+// changes in the enterprise repository. This should be moved to NewAPIBuilder parameters
+// once we can coordinate the change across repositories.
+func (b *APIBuilder) SetMaxResourcesPerRepository(maxResourcesPerRepository int64) {
+	b.maxResourcesPerRepository = maxResourcesPerRepository
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -298,11 +304,13 @@ func RegisterAPIService(
 		nil, // will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
-		cfg.ProvisioningMaxResourcesPerRepository,
 		reg,
 		nil,
 		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
 	)
+	// HACK: Set maxResourcesPerRepository after construction to avoid changing NewAPIBuilder signature.
+	// See SetMaxResourcesPerRepository for details.
+	builder.SetMaxResourcesPerRepository(cfg.ProvisioningMaxResourcesPerRepository)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
