@@ -5,9 +5,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // TestGetPermissionKind tests the permission kind mapping logic
@@ -197,4 +202,62 @@ func TestResourcePermissionKindConstants(t *testing.T) {
 			assert.Equal(t, tt.expected, string(tt.kind))
 		})
 	}
+}
+
+// TestDashboardInheritsParentFolderPermissions demonstrates that a dashboard inherits permissions from its parent folder
+func TestDashboardInheritsParentFolderPermissions(t *testing.T) {
+	folderPermission := &iamv0.ResourcePermission{
+		Spec: iamv0.ResourcePermissionSpec{
+			Permissions: []iamv0.ResourcePermissionspecPermission{
+				{
+					Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole,
+					Name: "Editor",
+					Verb: "edit",
+				},
+				{
+					Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole,
+					Name: "Viewer",
+					Verb: "view",
+				},
+			},
+		},
+	}
+
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(false).Maybe()
+
+	api := &api{
+		cfg:    &setting.Cfg{},
+		logger: log.New("test"),
+		service: &Service{
+			options: Options{
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
+				APIGroup:          dashboardv1.APIGroup,
+				PermissionsToActions: map[string][]string{
+					"View": {"dashboards:read"},
+					"Edit": {"dashboards:read", "dashboards:write"},
+				},
+			},
+			actions: []string{"dashboards:read", "dashboards:write"},
+			license: license,
+		},
+	}
+
+	inheritedPerms, err := api.convertK8sResourcePermissionToDTO(folderPermission, "stack-123-org-1", true)
+
+	require.NoError(t, err)
+	require.Len(t, inheritedPerms, 2, "should have 2 inherited permissions (Editor and Viewer)")
+
+	editorPerm := inheritedPerms[0]
+	assert.Equal(t, "Editor", editorPerm.BuiltInRole, "should inherit Editor role from parent folder")
+	assert.True(t, editorPerm.IsInherited, "Editor permission should be marked as inherited from parent folder")
+	assert.Contains(t, editorPerm.Actions, "dashboards:read")
+	assert.Contains(t, editorPerm.Actions, "dashboards:write")
+
+	viewerPerm := inheritedPerms[1]
+	assert.Equal(t, "Viewer", viewerPerm.BuiltInRole, "should inherit Viewer role from parent folder")
+	assert.True(t, viewerPerm.IsInherited, "Viewer permission should be marked as inherited from parent folder")
+	assert.Contains(t, viewerPerm.Actions, "dashboards:read")
+	assert.NotContains(t, viewerPerm.Actions, "dashboards:write", "Viewer permission should not include write")
 }
