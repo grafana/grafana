@@ -22,6 +22,7 @@ export interface PanelState {
 
 export interface QueryEditorActions {
   updateQueries: (queries: DataQuery[]) => void;
+  updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   addQuery: (query?: Partial<DataQuery>) => void;
   deleteQuery: (index: number) => void;
   duplicateQuery: (index: number) => void;

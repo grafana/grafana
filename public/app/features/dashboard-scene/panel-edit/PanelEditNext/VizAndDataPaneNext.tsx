@@ -101,6 +101,8 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       gridArea: 'sidebar',
       overflow: 'visible',
       position: 'relative',
+      boxSizing: 'border-box',
+      paddingBottom: theme.spacing(2),
       ...(sidebarSize === SidebarSize.Mini && {
         paddingLeft: theme.spacing(2),
       }),
@@ -118,6 +120,8 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     dataPane: css({
       gridArea: 'data-pane',
       overflow: 'hidden',
+      boxSizing: 'border-box',
+      paddingBottom: theme.spacing(2),
     }),
     controlsWrapper: css({
       gridArea: 'controls',

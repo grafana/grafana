@@ -1,6 +1,7 @@
 import { ReactNode, useMemo } from 'react';
 
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
@@ -41,16 +42,14 @@ export function QueryEditorContextWrapper({
     [queryRunnerState?.queries, queryRunnerState?.data]
   );
 
-  const panelState = useMemo(
-    () => ({
-      panel,
-    }),
-    [panel]
-  );
+  const panelState = useMemo(() => ({ panel }), [panel]);
 
   const actions = useMemo(
     () => ({
       updateQueries: dataPane.updateQueries,
+      updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => {
+        dataPane.updateSelectedQuery(updatedQuery, originalRefId);
+      },
       addQuery: dataPane.addQuery,
       deleteQuery: dataPane.deleteQuery,
       duplicateQuery: dataPane.duplicateQuery,

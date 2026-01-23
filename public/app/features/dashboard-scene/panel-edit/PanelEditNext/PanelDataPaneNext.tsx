@@ -90,6 +90,22 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
   };
 
+  public updateSelectedQuery = (updatedQuery: DataQuery, originalRefId: string) => {
+    const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
+    if (!queryRunner) {
+      return;
+    }
+
+    const queries = [...queryRunner.state.queries];
+    const targetIndex = queries.findIndex((query) => query.refId === originalRefId);
+    if (targetIndex < 0) {
+      return;
+    }
+
+    queries[targetIndex] = updatedQuery;
+    queryRunner.setState({ queries });
+  };
+
   public addQuery = (query?: Partial<DataQuery>) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (!queryRunner) {
