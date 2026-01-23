@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -208,6 +209,10 @@ export const ContactPointsPageContents = () => {
 
   const showContactPointsTab = canViewContactPoints || canCreateContactPoints;
 
+  // When V2 navigation is enabled, Templates has its own dedicated tab in the navigation,
+  // so we don't show local tabs here - just show the contact points content directly
+  const useV2Nav = config.featureToggles.alertingNavigationV2;
+
   // Depending on permissions, user may not have access to all tabs,
   // but we can default to picking the first one that they definitely _do_ have access to
   const defaultTab = [
@@ -224,6 +229,17 @@ export const ContactPointsPageContents = () => {
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
 
+  // V2 Navigation: No local tabs, just show contact points content
+  if (useV2Nav) {
+    return (
+      <>
+        <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager!} />
+        <ContactPointsTab />
+      </>
+    );
+  }
+
+  // Legacy Navigation: Show local tabs for Contact Points and Templates
   return (
     <>
       <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager!} />

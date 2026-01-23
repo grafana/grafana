@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
@@ -24,6 +25,10 @@ enum ActiveTab {
 
 const NotificationPoliciesTabs = () => {
   const styles = useStyles2(getStyles);
+
+  // When V2 navigation is enabled, Time Intervals has its own dedicated tab in the navigation,
+  // so we don't show local tabs here - just show the notification policies content directly
+  const useV2Nav = config.featureToggles.alertingNavigationV2;
 
   // Alertmanager logic and data hooks
   const { selectedAlertmanager = '' } = useAlertmanager();
@@ -48,6 +53,18 @@ const NotificationPoliciesTabs = () => {
 
   const numberOfMuteTimings = muteTimings.length;
 
+  // V2 Navigation: No local tabs, just show notification policies content
+  if (useV2Nav) {
+    return (
+      <>
+        <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
+        <InhibitionRulesAlert alertmanagerSourceName={selectedAlertmanager} />
+        <NotificationPoliciesList />
+      </>
+    );
+  }
+
+  // Legacy Navigation: Show local tabs for Notification Policies and Time Intervals
   return (
     <>
       <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
