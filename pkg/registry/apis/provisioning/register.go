@@ -754,7 +754,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// Informer with resync interval used for health check and reconciliation
-			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
+			informerFactoryResyncInterval := 60 * time.Second
+			sharedInformerFactory := informers.NewSharedInformerFactory(c, informerFactoryResyncInterval)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 			connInformer := sharedInformerFactory.Provisioning().V0alpha1().Connections()
@@ -871,6 +872,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.registry,
 				b.tracer,
 				10,
+				informerFactoryResyncInterval,
 			)
 			if err != nil {
 				return err
@@ -888,6 +890,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				connStatusPatcher,
 				connHealthChecker,
 				b.connectionFactory,
+				informerFactoryResyncInterval,
 			)
 			if err != nil {
 				return err

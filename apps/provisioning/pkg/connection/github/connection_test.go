@@ -415,6 +415,93 @@ func TestConnection_Test(t *testing.T) {
 	}
 }
 
+func TestConnection_TokenCreationTime(t *testing.T) {
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	// Generate a valid token using the existing function (expires in 10 minutes)
+	validToken, err := github.GenerateJWTToken("123", common.RawSecureValue(privateKeyBase64))
+	require.NoError(t, err)
+
+	iss, _, err := getIssuingAndExpirationTimeFromToken(validToken)
+	require.NoError(t, err)
+	require.False(t, iss.IsZero())
+
+	tests := []struct {
+		name          string
+		secrets       github.ConnectionSecrets
+		expectedError string
+		expectTime    time.Time
+	}{
+		{
+			name: "return correct issuing time",
+			secrets: github.ConnectionSecrets{
+				Token:      validToken,
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+			},
+			expectTime: iss,
+		},
+		{
+			name: "invalid token format returns error",
+			secrets: github.ConnectionSecrets{
+				Token:      common.RawSecureValue("not-a-valid-jwt-token"),
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+			},
+			expectedError: "failed to parse token",
+		},
+		{
+			name: "invalid private key returns error",
+			secrets: github.ConnectionSecrets{
+				Token:      validToken,
+				PrivateKey: common.RawSecureValue("not-base64"),
+			},
+			expectedError: "failed to decode base64 private key",
+		},
+		{
+			name: "empty token returns error",
+			secrets: github.ConnectionSecrets{
+				Token:      common.RawSecureValue(""),
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+			},
+			expectedError: "failed to parse token",
+		},
+		{
+			name: "malformed private key PEM returns error",
+			secrets: github.ConnectionSecrets{
+				Token:      validToken,
+				PrivateKey: common.RawSecureValue(base64.StdEncoding.EncodeToString([]byte("not-a-valid-pem"))),
+			},
+			expectedError: "failed to parse private key",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockFactory := github.NewMockGithubFactory(t)
+			connection := &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			}
+
+			conn := github.NewConnection(connection, mockFactory, tt.secrets)
+			iss, err := conn.TokenCreationTime(context.Background())
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectTime, iss)
+			}
+		})
+	}
+}
+
 func TestConnection_TokenExpiration(t *testing.T) {
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
@@ -422,7 +509,7 @@ func TestConnection_TokenExpiration(t *testing.T) {
 	validToken, err := github.GenerateJWTToken("123", common.RawSecureValue(privateKeyBase64))
 	require.NoError(t, err)
 
-	exp, err := getExpirationFromToken(validToken)
+	_, exp, err := getIssuingAndExpirationTimeFromToken(validToken)
 	require.NoError(t, err)
 	require.False(t, exp.IsZero())
 
@@ -999,17 +1086,17 @@ func TestConnection_ListRepositories(t *testing.T) {
 	})
 }
 
-func getExpirationFromToken(token common.RawSecureValue) (time.Time, error) {
+func getIssuingAndExpirationTimeFromToken(token common.RawSecureValue) (time.Time, time.Time, error) {
 	parser := jwt.NewParser(jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
 	parsedToken, _, err := parser.ParseUnverified(string(token), &jwt.RegisteredClaims{})
 	if err != nil {
-		return time.Time{}, fmt.Errorf("failed to parse token: %w", err)
+		return time.Time{}, time.Time{}, fmt.Errorf("failed to parse token: %w", err)
 	}
 
 	claims, ok := parsedToken.Claims.(*jwt.RegisteredClaims)
 	if !ok {
-		return time.Time{}, fmt.Errorf("unexpected token claims")
+		return time.Time{}, time.Time{}, fmt.Errorf("unexpected token claims")
 	}
 
-	return claims.ExpiresAt.Time, nil
+	return claims.IssuedAt.Time, claims.ExpiresAt.Time, nil
 }

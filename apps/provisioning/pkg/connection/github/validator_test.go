@@ -1,9 +1,10 @@
-package github
+package github_test
 
 import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -190,7 +191,7 @@ func TestValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			list := Validate(context.Background(), tt.obj)
+			list := github.Validate(context.Background(), tt.obj)
 			if tt.expectedError {
 				assert.NotEmpty(t, list)
 				if len(tt.errorContains) > 0 {
