@@ -12,7 +12,7 @@ comments: |
   To build this Markdown, do the following:
 
   $ cd /docs (from the root of the repository)
-  $ make sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md
+  $ make sources/panels-visualizations/query-transform-data/transform-data/index.md
   $ make docs
 
   Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
@@ -20,20 +20,19 @@ comments: |
   Refer to ./docs/README.md "Content guidelines" for more information about editing and building these docs.
 
 aliases:
-  - ../../../panels/transform-data/ # /docs/grafana/next/panels/transform-data/
-  - ../../../panels/transform-data/about-transformation/ # /docs/grafana/next/panels/transform-data/about-transformation/
-  - ../../../panels/transform-data/add-transformation-to-data/ # /docs/grafana/next/panels/transform-data/add-transformation-to-data/
-  - ../../../panels/transform-data/apply-transformation-to-data/ # /docs/grafana/next/panels/transform-data/apply-transformation-to-data/
-  - ../../../panels/transform-data/debug-transformation/ # /docs/grafana/next/panels/transform-data/debug-transformation/
-  - ../../../panels/transform-data/delete-transformation/ # /docs/grafana/next/panels/transform-data/delete-transformation/
-  - ../../../panels/transform-data/transformation-functions/ # /docs/grafana/next/panels/transform-data/transformation-functions/
-  - ../../../panels/transformations/ # /docs/grafana/next/panels/transformations/
-  - ../../../panels/transformations/apply-transformations/ # /docs/grafana/next/panels/transformations/apply-transformations/
-  - ../../../panels/transformations/config-from-query/ # /docs/grafana/next/panels/transformations/config-from-query/
-  - ../../../panels/transformations/rows-to-fields/ # /docs/grafana/next/panels/transformations/rows-to-fields/
-  - ../../../panels/transformations/types-options/ # /docs/grafana/next/panels/transformations/types-options/
-  - ../../../panels/reference-transformation-functions/ # /docs/grafana/next/panels/reference-transformation-functions/
-  - ../../../panels-visualizations/query-transform-data/transform-data/ # /docs/grafana/next/panels-visualizations/query-transform-data/transform-data/
+  - ../../panels/reference-transformation-functions/
+  - ../../panels/transform-data/
+  - ../../panels/transform-data/about-transformation/
+  - ../../panels/transform-data/add-transformation-to-data/
+  - ../../panels/transform-data/apply-transformation-to-data/
+  - ../../panels/transform-data/debug-transformation/
+  - ../../panels/transform-data/delete-transformation/
+  - ../../panels/transform-data/transformation-functions/
+  - ../../panels/transformations/
+  - ../../panels/transformations/apply-transformations/
+  - ../../panels/transformations/config-from-query/
+  - ../../panels/transformations/rows-to-fields/
+  - ../../panels/transformations/types-options/
 labels:
   products:
     - cloud
@@ -88,8 +87,6 @@ Transformations are a powerful way to manipulate data returned by a query before
 - Join time series/SQL-like data
 - Perform mathematical operations across queries
 - Use the output of one transformation as the input to another transformation
-
-{{< docs/learning-journeys title="Transform data in a Grafana Cloud dashboard" url="https://grafana.com/docs/learning-journeys/data-transformation/" >}}
 
 For users that rely on multiple views of the same dataset, transformations offer an efficient method of creating and maintaining numerous dashboards.
 
@@ -453,11 +450,11 @@ This transformation is very useful if your data source does not natively filter 
 
 The available conditions for all fields are:
 
+- **Regex** - Match a regex expression.
 - **Is Null** - Match if the value is null.
 - **Is Not Null** - Match if the value is not null.
 - **Equal** - Match if the value is equal to the specified value.
-- **Not Equal** - Match if the value is not equal to the specified value.
-- **Regex** - Match a regex expression.
+- **Different** - Match if the value is different than the specified value.
 
 The available conditions for string fields are:
 
@@ -470,11 +467,7 @@ The available conditions for number fields are:
 - **Lower** - Match if the value is lower than the specified value.
 - **Greater or equal** - Match if the value is greater or equal.
 - **Lower or equal** - Match if the value is lower or equal.
-- **In between** - Match a range between a specified minimum and maximum, min and max included.
-
-The available conditions for time fields are:
-
-- **In between** - Match a range between a specified minimum and maximum. The min and max values will pre-populate with variables to filter by selected time.
+- **Range** - Match a range between a specified minimum and maximum, min and max included.
 
 Consider the following dataset:
 
@@ -642,7 +635,7 @@ This transformation goes in two steps. First you specify one or multiple fields 
 | 2020-07-07 10:31:22 | **_server 3_** | 55              | OK            |
 | 2020-07-07 09:30:57 | **_server 3_** | 62              | Rebooting     |
 
-All rows with the same value of Server ID are grouped together. Optionally, you can add a count of how may values fall in the selected group.
+All rows with the same value of Server ID are grouped together.
 
 After choosing which field you want to group your data by, you can add various calculations on the other fields, and apply the calculation to each group of rows. For instance, we could want to calculate the average CPU temperature for each of those servers. So we can add the _mean_ calculation applied on the CPU Temperature field to get the following:
 
@@ -651,14 +644,6 @@ After choosing which field you want to group your data by, you can add various c
 | server 1  | 82                     |
 | server 2  | 88.6                   |
 | server 3  | 59.6                   |
-
-If you had added the count stat to the group by transformation, there would be an extra column showing that the count of each server from above was 3.
-
-| Server ID | CPU Temperature (mean) | Server ID (count) |
-| --------- | ---------------------- | ----------------- |
-| server 1  | 82                     | 3                 |
-| server 2  | 88.6                   | 3                 |
-| server 3  | 59.6                   | 3                 |
 
 And we can add more than one calculation. For instance:
 
@@ -1146,7 +1131,6 @@ Use this transformation to provide the flexibility to rename, reorder, or hide f
 
 Grafana displays a list of fields returned by the query, allowing you to perform the following actions:
 
-- **Set field order mode** - If the mode is **Manual**, you can change the field order by hovering the cursor over a field and dragging the field to its new position. If it's **Auto**, use the **OFF**, **ASC**, and **DESC** options to order by any labels on the field or by the field name. For any field that is sorted **ASC** or **DESC**, you can drag the option to set the priority of the sorting.
 - **Change field order** - Hover over a field, and when your cursor turns into a hand, drag the field to its new position.
 - **Hide or show a field** - Use the eye icon next to the field name to toggle the visibility of a specific field.
 - **Rename fields** - Type a new name in the "Rename <field>" box to customize field names.
@@ -1470,7 +1454,7 @@ For each generated **Trend** field value, a calculation function can be selected
 ### Transpose
 
 Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
-If you have multiple types, it will default to string type. You can select how empty cells should be represented.
+If you have multiple types it will default to string type.
 
 **Before Transformation:**
 
@@ -1488,18 +1472,18 @@ If you have multiple types, it will default to string type. You can select how e
 
 {{< figure src="/media/docs/grafana/transformations/screenshot-grafana-11-2-transpose-transformation.png" class="docs-image--no-shadow" max-width= "1100px" alt="Before and after transpose transformation" >}}
 
-### Trendline
+### Regression analysis
 
 Use this transformation to create a new data frame containing values predicted by a statistical model. This is useful for finding a trend in chaotic data. It works by fitting a mathematical function to the data, using either linear or polynomial regression. The data frame can then be used in a visualization to display a trendline.
 
 There are two different models:
 
-- **Linear** - Fits a linear function to the data.
+- **Linear regression** - Fits a linear function to the data.
   {{< figure src="/static/img/docs/transformations/linear-regression.png" class="docs-image--no-shadow" max-width= "1100px" alt="A time series visualization with a straight line representing the linear function" >}}
-- **Polynomial** - Fits a polynomial function to the data.
+- **Polynomial regression** - Fits a polynomial function to the data.
   {{< figure src="/static/img/docs/transformations/polynomial-regression.png" class="docs-image--no-shadow" max-width= "1100px" alt="A time series visualization with a curved line representing the polynomial function" >}}
 
-> **Note:** This transformation was previously called regression analysis.
+> **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `regressionTransformation` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
 [Table panel]: ref:table-panel
 [Calculation types]: ref:calculation-types
