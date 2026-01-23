@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "Deprecated",
       "delete": "Delete",
       "duplicate": "Duplicate",
       "label-integration": "Integration",
       "label-notification-settings": "Notification settings",
       "label-section": "Optional {{name}} settings",
       "test": "Test",
+      "tooltip-deprecated": "This integration is deprecated and will be removed in a future release.",
       "tooltip-legacy-version": "This is a legacy integration (version: {{version}}). It cannot be modified."
     },
     "classic-condition-viewer": {
@@ -1643,6 +1645,11 @@
       },
       "yaml-error": "Failed to parse YAML file: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "This Alertmanager has inhibition rules configured. Some alerts may be suppressed when matching alerts are firing.",
+      "learn-more": "Learn more about inhibition rules",
+      "title": "Inhibition rules are in effect"
+    },
     "insights": {
       "monitor-status-of-system": "Monitor the status of your system",
       "monitor-status-system-tooltip": "Alerting insights provides pre-built dashboards to monitor your alerting data.",
@@ -1928,6 +1935,10 @@
     "namespace-and-group-filter": {
       "select-group": "Select group",
       "select-namespace": "Select namespace"
+    },
+    "navigation": {
+      "alert-rules": "Alert rules",
+      "recently-deleted": "Recently deleted"
     },
     "need-help-info": {
       "need-help": "Need help?"
@@ -9812,7 +9823,7 @@
     "loading-panel-text": "Loading library panel",
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
       "button-cancel": "Cancel",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
@@ -11863,10 +11874,7 @@
       "delete-title": "Delete connection",
       "error-loading": "Failed to load connections",
       "no-connections": "No connections configured",
-      "no-connections-message": "Add a connection to authenticate with external providers",
       "no-results": "No results matching your query",
-      "page-subtitle": "View and manage your app connections",
-      "page-title": "Connections",
       "search-placeholder": "Search connections",
       "status-connected": "Connected",
       "status-disconnected": "Disconnected",
@@ -12055,6 +12063,8 @@
       "error-delete-all-repositories": "Failed to delete all repositories",
       "subtitle": "View and manage your configured repositories",
       "success-all-repositories-deleted": "All configured repositories deleted",
+      "tab-connections": "Connections",
+      "tab-connections-title": "List of connections",
       "tab-getting-started": "Getting started",
       "tab-getting-started-title": "Getting started",
       "tab-repositories": "Repositories",
@@ -12118,6 +12128,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": "Repository was saved but no name was returned"
+        },
         "title": {
           "repository-connection-failed": "Repository connection failed",
           "repository-request-failed": "Repository request failed"
@@ -12138,7 +12151,6 @@
       "jobs": "Jobs"
     },
     "repository-actions": {
-      "connections": "Connections",
       "settings": "Settings",
       "source-code": "Source code"
     },
@@ -12576,6 +12588,11 @@
       "query-inspector": "Query inspector",
       "query-tab-help-button-title-open-data-source-help": "Open data source help",
       "title-data-source-help": "Data source help"
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": "Open Query Library"
     }
   },
   "query-operation": {

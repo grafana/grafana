@@ -46,6 +46,7 @@ func (t *Tester) Test(ctx context.Context, repo Repository) (*provisioning.TestR
 					Type:   metav1.CauseType(err.Type),
 					Field:  err.Field,
 					Detail: err.Detail,
+					Origin: err.Origin,
 				}
 			}
 			return rsp, nil
