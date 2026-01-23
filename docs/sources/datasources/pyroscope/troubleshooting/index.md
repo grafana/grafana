@@ -12,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Troubleshoot
+menuTitle: Troubleshooting
 title: Troubleshoot Pyroscope data source issues
 weight: 500
 refs:
@@ -413,12 +413,12 @@ To capture detailed error information for troubleshooting:
 
 ## Get additional help
 
-If you've tried the solutions above and still encounter issues:
+If you've tried the solutions in this guide and still encounter issues:
 
 1. Check the [Grafana community forums](https://community.grafana.com/) for similar issues.
 1. Review the [Pyroscope GitHub issues](https://github.com/grafana/pyroscope/issues) for known bugs.
 1. Consult the [Pyroscope documentation](https://grafana.com/docs/pyroscope/latest/) for additional guidance.
-1. Contact Grafana Support if you're an Enterprise, Cloud Pro, or Cloud Contracted user.
+1. Contact [Grafana Support](https://grafana.com/contact/) if you're an Enterprise, Cloud Pro, or Cloud Contracted user.
 1. When reporting issues, include:
    - Grafana version
    - Pyroscope version (if self-managed)
