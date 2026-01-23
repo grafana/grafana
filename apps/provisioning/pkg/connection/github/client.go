@@ -10,12 +10,17 @@ import (
 
 	"github.com/google/go-github/v70/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // API errors that we need to convey after parsing real GH errors (or faking them).
 var (
 	//lint:ignore ST1005 this is not punctuation
+	ErrAuthentication = apierrors.NewUnauthorized("authentication failed")
+	//lint:ignore ST1005 this is not punctuation
 	ErrServiceUnavailable = apierrors.NewServiceUnavailable("github is unavailable")
+	//lint:ignore ST1005 this is not punctuation
+	ErrNotFound = apierrors.NewNotFound(schema.GroupResource{Resource: "github"}, "resource not found")
 )
 
 //go:generate mockery --name Client --structname MockClient --inpackage --filename client_mock.go --with-expecter
@@ -75,8 +80,15 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 	app, _, err := r.gh.Apps.Get(ctx, "")
 	if err != nil {
 		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return App{}, ErrServiceUnavailable
+		if errors.As(err, &ghErr) && ghErr.Response != nil {
+			switch ghErr.Response.StatusCode {
+			case http.StatusUnauthorized, http.StatusForbidden:
+				return App{}, ErrAuthentication
+			case http.StatusNotFound:
+				return App{}, ErrNotFound
+			case http.StatusServiceUnavailable:
+				return App{}, ErrServiceUnavailable
+			}
 		}
 		return App{}, err
 	}
@@ -98,8 +110,15 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 	installation, _, err := r.gh.Apps.GetInstallation(ctx, int64(id))
 	if err != nil {
 		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return AppInstallation{}, ErrServiceUnavailable
+		if errors.As(err, &ghErr) && ghErr.Response != nil {
+			switch ghErr.Response.StatusCode {
+			case http.StatusUnauthorized, http.StatusForbidden:
+				return AppInstallation{}, ErrAuthentication
+			case http.StatusNotFound:
+				return AppInstallation{}, ErrNotFound
+			case http.StatusServiceUnavailable:
+				return AppInstallation{}, ErrServiceUnavailable
+			}
 		}
 		return AppInstallation{}, err
 	}
