@@ -274,7 +274,7 @@ func (z *Zanzana) running(ctx context.Context) error {
 			if err != nil {
 				z.logger.Error("failed to create OpenFGA HTTP server", "error", err)
 			} else {
-				z.logger.Info("Starting OpenFGA HTTP server")
+				z.logger.Info("Starting OpenFGA HTTP server", "address", z.cfg.ZanzanaServer.OpenFGAHttpAddr)
 				if z.cfg.ZanzanaServer.AllowInsecure {
 					z.logger.Warn("Allowing unauthenticated connections!")
 				}
