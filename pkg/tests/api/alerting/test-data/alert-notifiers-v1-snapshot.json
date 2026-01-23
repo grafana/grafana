@@ -3,7 +3,7 @@
     "type": "LINE",
     "name": "LINE",
     "heading": "LINE notify settings",
-    "description": "Send notifications to LINE notify",
+    "description": "Send notifications to LINE notify. This integration is deprecated and will be removed in a future release.",
     "info": "",
     "options": [
       {

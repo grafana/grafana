@@ -1643,6 +1643,11 @@
       },
       "yaml-error": "Nem sikerült feldolgozni a YAML-fájlt: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "A rendszer állapotának figyelése",
       "monitor-status-system-tooltip": "A riasztási adatok előre elkészített irányítópultokat biztosítanak a riasztási adatok figyeléséhez.",
@@ -4550,6 +4555,14 @@
     "actions": {
       "open-settings": "Beállítások"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "„Panel hozzáadása” widget bezárása",
       "tooltip-close-widget": "Widget bezárása"
@@ -4932,12 +4945,14 @@
       "add-visualization-body": "Válasszon ki egy adatforrást, majd kérdezze le és jelenítse meg az adatait diagramokkal, statisztikákkal és táblázatokkal, vagy hozzon létre listákat, Markdown-elemeket és egyéb widgeteket.",
       "add-visualization-button": "Vizualizáció hozzáadása",
       "add-visualization-header": "Indítsa el az új irányítópultot vizualizáció hozzáadásával",
+      "description": "",
       "import-a-dashboard-body": "Irányítópultok importálása fájlokból vagy a <2>grafana.com</2> webhelyről.",
       "import-a-dashboard-header": "Irányítópult importálása",
       "import-dashboard-button": "Irányítópult importálása",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5444,6 +5459,10 @@
       "loading-configuration": "Konfiguráció betöltése"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -11849,10 +11868,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12041,6 +12057,8 @@
       "error-delete-all-repositories": "Az összes adattár törlése nem sikerült",
       "subtitle": "Konfigurált adattárak megtekintése és kezelése",
       "success-all-repositories-deleted": "Az összes konfigurált adattár törölve",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Kezdés",
       "tab-getting-started-title": "Kezdés",
       "tab-repositories": "Adattárak",
@@ -12104,6 +12122,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12124,7 +12145,6 @@
       "jobs": "Feladatok"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Beállítások",
       "source-code": "Forráskód"
     },
@@ -12304,6 +12324,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Befejezés",
@@ -12316,15 +12341,30 @@
         "dismiss": "Munkavégzés folytatása",
         "title": "Elveti az adattár beállítását?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Válassza ki, mit szeretne szinkronizálni",
+      "step-configure-repo": "",
       "step-connect": "Kapcsolódás",
       "step-finish": "Válassza ki a további beállításokat",
+      "step-github-app": "",
       "step-synchronize": "Szinkronizálás külső tárolóval",
       "sync-description": "Erőforrások szinkronizálása külső tárolóval. Ezután az egyszeri lépés után az összes jövőbeli frissítés automatikusan mentve lesz az adattárba, és vissza lesz építve a példányba.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Válassza ki, mit szeretne szinkronizálni",
+      "title-configure-repo": "",
       "title-connect": "Csatlakozás külső tárolóhoz",
       "title-finish": "Válassza ki a további beállításokat",
+      "title-github-app": "",
       "title-synchronize": "Szinkronizálás külső tárolóval"
     },
     "wizard-content": {
@@ -12542,6 +12582,11 @@
       "query-inspector": "Lekérdezés-ellenőrző",
       "query-tab-help-button-title-open-data-source-help": "Adatforrás súgójának megnyitása",
       "title-data-source-help": "Adatforrás súgója"
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {

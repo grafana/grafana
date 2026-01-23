@@ -1289,6 +1289,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardValidatorApp",
+        "resourceVersion": "1768995060416",
+        "creationTimestamp": "2026-01-21T11:31:00Z"
+      },
+      "spec": {
+        "description": "Enables dashboard validator app to run compatibility checks between a dashboard and data source",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashgpt",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2023-08-30T20:22:05Z"
@@ -3661,6 +3674,23 @@
         "description": "Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryEditorNext",
+        "resourceVersion": "1768869177305",
+        "creationTimestamp": "2026-01-13T18:26:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-20 00:32:57.305391 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables next generation query editor experience",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
         "expression": "false"
       }
     },

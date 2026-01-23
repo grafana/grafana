@@ -25,7 +25,7 @@ exports[`new receiver should be able to test and save a receiver 1`] = `
             "type": "email",
           },
         ],
-        "name": "test",
+        "name": "",
       },
     ],
   },
