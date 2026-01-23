@@ -1,5 +1,4 @@
-import {api} from './baseAPI';
-
+import { api } from './baseAPI';
 export const addTagTypes = ['API Discovery', 'Receiver', 'RoutingTree', 'TemplateGroup', 'TimeInterval'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
