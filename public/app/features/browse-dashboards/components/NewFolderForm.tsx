@@ -3,15 +3,16 @@ import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Input, Field, Stack, Checkbox, Text, Space, Icon, Tooltip } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Box, Button, Checkbox, Field, Icon, Input, Space, Stack, Text, Tooltip } from '@grafana/ui';
 import { OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { FolderDTO } from 'app/types/folders';
 
-import { TeamSelector } from '../../../core/components/OwnerReferences/ManageOwnerReferences';
+import { OwnerReferenceSelector } from '../../../core/components/OwnerReferences/OwnerReferenceSelector';
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 
 interface Props {
-  onConfirm: (folderName: string, teamOwnerRef?: OwnerReference) => void;
+  onConfirm: (folderName: string, teamOwnerRefs?: OwnerReference[]) => void;
   onCancel: () => void;
   parentFolder?: FolderDTO;
 }
@@ -23,6 +24,7 @@ interface FormModel {
 const initialFormModel: FormModel = { folderName: '' };
 
 export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
+  const showFolderOwnerSelector = config.featureToggles.teamFolders;
   const {
     handleSubmit,
     register,
@@ -50,50 +52,61 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
   return (
     <form
       name="addFolder"
-      onSubmit={handleSubmit((form) => onConfirm(form.folderName, createTeamFolder ? selectedTeam : undefined))}
+      onSubmit={handleSubmit((form) =>
+        onConfirm(form.folderName, createTeamFolder && selectedTeam ? [selectedTeam] : [])
+      )}
       data-testid={selectors.pages.BrowseDashboards.NewFolderForm.form}
     >
-      <Field
-        label={fieldNameLabel}
-        invalid={!!errors.folderName}
-        error={errors.folderName && errors.folderName.message}
-      >
-        <Input
-          data-testid={selectors.pages.BrowseDashboards.NewFolderForm.nameInput}
-          id="folder-name-input"
-          defaultValue={initialFormModel.folderName}
-          {...register('folderName', {
-            required: translatedFolderNameRequiredPhrase,
-            validate: async (v) => await validateFolderName(v, parentFolder?.uid),
-          })}
-        />
-      </Field>
-      <Space v={2} />
-      <Stack gap={1}>
-        <Checkbox
-          value={createTeamFolder}
-          label={t('browse-dashboards.action.new-folder-as-team-folder-checkbox', 'Create as a team folder')}
-          onChange={handleTeamFolderToggle}
-        />
-        <Tooltip
-          content={t(
-            'browse-dashboards.action.new-folder-as-team-folder-checkbox-tooltip',
-            'Team Folders are folders that inherit default sharing and permission settings, making it easier to collaborate.'
-          )}
-          placement="top"
+      <Stack gap={1} direction="column">
+        <Field
+          label={fieldNameLabel}
+          invalid={!!errors.folderName}
+          error={errors.folderName && errors.folderName.message}
+          noMargin
         >
-          <Icon name="question-circle" />
-        </Tooltip>
+          <Input
+            data-testid={selectors.pages.BrowseDashboards.NewFolderForm.nameInput}
+            id="folder-name-input"
+            defaultValue={initialFormModel.folderName}
+            {...register('folderName', {
+              required: translatedFolderNameRequiredPhrase,
+              validate: async (v) => await validateFolderName(v, parentFolder?.uid),
+            })}
+          />
+        </Field>
+        {showFolderOwnerSelector && (
+          <>
+            <Box>
+              <Checkbox
+                value={createTeamFolder}
+                label={t(
+                  'browse-dashboards.action.new-folder-owner-selector-checkbox',
+                  'Assign an owner to the folder'
+                )}
+                onChange={handleTeamFolderToggle}
+              />
+              <Tooltip
+                content={t(
+                  'browse-dashboards.action.new-folder-as-team-folder-checkbox-tooltip',
+                  'Assign an owner to the folder. Team folders are folders that inherit default sharing and permission settings, making it easier to collaborate.'
+                )}
+                placement="top"
+              >
+                <Icon name="question-circle" />
+              </Tooltip>
+            </Box>
+
+            {createTeamFolder && (
+              <Stack gap={1} direction="column">
+                <Text element="p">
+                  <Trans i18nKey="browse-dashboards.action.new-folder-as-team-folder-label">Team:</Trans>
+                </Text>
+                <OwnerReferenceSelector onChange={handleTeamSelectorChange} />
+              </Stack>
+            )}
+          </>
+        )}
       </Stack>
-      {createTeamFolder && (
-        <>
-          <Space v={2} />
-          <Text element="p">
-            <Trans i18nKey="browse-dashboards.action.new-folder-as-team-folder-label">Team:</Trans>
-          </Text>
-          <TeamSelector onChange={handleTeamSelectorChange} />
-        </>
-      )}
       <Space v={2} />
       <Stack>
         <Button variant="secondary" fill="outline" onClick={onCancel}>
