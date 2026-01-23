@@ -1005,7 +1005,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		// Verify all fields explicitly
 		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, installationIDError.Type, "Type must be FieldValueInvalid")
 		assert.Equal(t, "spec.installationID", installationIDError.Field, "Field must be spec.installationID")
-		assert.Equal(t, "invalid installation ID: 999999999", installationIDError.Detail, "Detail must match expected error message")
+		assert.Equal(t, "installation not found", installationIDError.Detail, "Detail must match expected error message")
 		assert.Empty(t, installationIDError.Origin, "Origin should be empty")
 
 		t.Logf("Verified installationID fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
