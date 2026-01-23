@@ -17,18 +17,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Configuration
-const WORKSPACE_ROOT = path.resolve(__dirname, '..');
-const DIRECTORIES_TO_SCAN = [
-  'public',
-  'packages/grafana-alerting',
-  'packages/grafana-flamegraph',
-  'packages/grafana-011y-ds-frontend',
-  'packages/grafana-prometheus',
-  'packages/grafana-sql',
-  'packages/grafana-ui',
-  'packages/grafana-runtime',
-  'packages/grafana-data',
-];
+// Go up three levels from packages/grafana-e2e-selectors/src to workspace root
+const WORKSPACE_ROOT = path.resolve(__dirname, '../../..');
+const DIRECTORIES_TO_SCAN = ['public', 'packages'];
 
 const EXTENSIONS = ['.tsx', '.ts', '.jsx', '.js'];
 const IGNORED_DIRS = ['node_modules', 'dist', 'build', '.git', 'coverage'];
@@ -124,11 +115,11 @@ function analyzeFile(filePath) {
       // Check if it's a variable that likely references a selector (and file imports selectors)
       const isSelectorVariable =
         hasSelectorImport &&
-        (trimmed.includes('Selector') || 
-         trimmed.includes('selector') || 
-         trimmed.includes('e2eSelectors') ||
-         trimmed.includes('testIds') ||
-         trimmed.includes('TestIds'));
+        (trimmed.includes('Selector') ||
+          trimmed.includes('selector') ||
+          trimmed.includes('e2eSelectors') ||
+          trimmed.includes('testIds') ||
+          trimmed.includes('TestIds'));
 
       if (isDirectSelectorUsage || isSelectorVariable) {
         stats.testIdsWithSelectors++;
