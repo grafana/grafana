@@ -15,7 +15,7 @@ const CardIcon = ({ type, size = 16 }: { type: string | undefined; size: number 
     case 'query':
       return <Icon name="database" />;
     case 'expression':
-      return <Icon name="code" />;
+      return <Icon name="code-branch" />;
     case 'transformation':
       return <Icon name="gf-interpolation-linear" />;
     default:
@@ -56,7 +56,9 @@ export const SidebarCard = ({ query }: SidebarCardProps) => {
       <Header editorType={editorType} />
       <div className={styles.cardContent}>
         <DataSourceLogo dataSource={queryDsSettings} />
-        <Text color="secondary">{query.refId}</Text>
+        <Text weight="light" variant="body" color="secondary">
+          {query.refId}
+        </Text>
       </div>
     </div>
   );
@@ -69,6 +71,7 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType) {
       flexDirection: 'column',
       background: theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
     }),
     cardHeader: css({
       display: 'flex',
@@ -78,6 +81,8 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType) {
       padding: theme.spacing(1),
       background: theme.colors.background.primary,
       color: QUERY_EDITOR_TYPE_CONFIG[editorType].color,
+      borderTopRightRadius: theme.shape.radius.default,
+      borderTopLeftRadius: theme.shape.radius.default,
     }),
     cardContent: css({
       display: 'flex',
