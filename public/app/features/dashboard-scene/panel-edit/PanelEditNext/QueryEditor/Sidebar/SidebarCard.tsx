@@ -51,9 +51,8 @@ export const SidebarCard = ({ query }: SidebarCardProps) => {
   const queryDsSettings = useDatasource(query.datasource);
   const { data } = useQueryRunnerContext();
 
-  // Extract error for this specific query
-  const queryError =
-    data?.error && data.error.refId === query.refId ? data.error : data?.errors?.find((e) => e.refId === query.refId);
+  // Extract error for this specific query by matching refId
+  const queryError = data?.errors?.find((e) => e.refId === query.refId);
 
   const hasError = Boolean(queryError);
   const styles = useStyles2(getStyles, editorType, hasError);
