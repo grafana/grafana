@@ -37,7 +37,6 @@ import (
 	_ "github.com/spf13/cobra" // used by the standalone apiserver cli
 	_ "github.com/spyzhov/ajson"
 	_ "github.com/stretchr/testify/require"
-	_ "github.com/testcontainers/testcontainers-go"
 	_ "gocloud.dev/secrets/awskms"
 	_ "gocloud.dev/secrets/azurekeyvault"
 	_ "gocloud.dev/secrets/gcpkms"
