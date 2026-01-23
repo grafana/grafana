@@ -214,7 +214,7 @@ export function getNavSubTitle(navId: string | undefined) {
         'Interactive, publically available, point-in-time representations of dashboards and panels'
       );
     case 'dashboards/public':
-      t('nav.shared-dashboard.subtitle', "Manage your organization's externally shared dashboards");
+      return t('nav.shared-dashboard.subtitle', "Manage your organization's externally shared dashboards");
     case 'dashboards/library-panels':
       return t('nav.library-panels.subtitle', 'Reusable panels that can be added to multiple dashboards');
     case 'dashboards/recently-deleted':
