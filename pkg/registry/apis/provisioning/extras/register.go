@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/bitbucket"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
@@ -41,6 +42,7 @@ func ProvideProvisioningOSSRepositoryExtras(
 			ghFactory,
 			webhooksBuilder,
 		),
+		bitbucket.Extra(decrypter),
 	}
 }
 
