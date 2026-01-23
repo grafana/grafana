@@ -42,7 +42,6 @@ type SyncWorker struct {
 
 	maxSyncWorkers int
 	quotaLimits    quotas.QuotaLimits
-	quotaLimitsSet bool // tracks if quotaLimits was explicitly set
 }
 
 func NewSyncWorker(
@@ -71,7 +70,6 @@ func NewSyncWorker(
 // once we can coordinate the change across repositories.
 func (r *SyncWorker) SetQuotaLimits(limits quotas.QuotaLimits) {
 	r.quotaLimits = limits
-	r.quotaLimitsSet = true
 }
 
 func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
