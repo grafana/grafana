@@ -29,35 +29,18 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, fmt.Errorf("invalid config type")
 	}
 
-	// Configure managed kinds
-	managedKinds := []simple.AppManagedKind{
-		{
-			Kind: pluginsv0alpha1.MetaKind(),
-		},
+	metaKind := simple.AppManagedKind{
+		Kind: pluginsv0alpha1.MetaKind(),
+	}
+	pluginKind := simple.AppManagedKind{
+		Kind: pluginsv0alpha1.PluginKind(),
 	}
 
-	// Conditionally add child plugin reconciler
 	if specificConfig.EnableChildReconciler {
-		// Create a client generator and registrar for plugin installation
 		clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig())
 		registrar := install.NewInstallRegistrar(clientGenerator)
+		pluginKind.Reconciler = install.NewChildPluginReconciler(specificConfig.MetaProviderManager, registrar)
 
-		// Create the plugin reconciler
-		pluginReconciler := install.NewChildPluginReconciler(specificConfig.MetaProviderManager, registrar)
-
-		managedKinds = append([]simple.AppManagedKind{
-			{
-				Kind:       pluginsv0alpha1.PluginKind(),
-				Reconciler: pluginReconciler,
-			},
-		}, managedKinds...)
-	} else {
-		// Add Plugin kind without reconciler
-		managedKinds = append([]simple.AppManagedKind{
-			{
-				Kind: pluginsv0alpha1.PluginKind(),
-			},
-		}, managedKinds...)
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -70,7 +53,7 @@ func New(cfg app.Config) (app.App, error) {
 				},
 			},
 		},
-		ManagedKinds: managedKinds,
+		ManagedKinds: []simple.AppManagedKind{metaKind, pluginKind},
 	}
 
 	a, err := simple.NewApp(simpleConfig)

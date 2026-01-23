@@ -114,16 +114,10 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 	// Convert each Plugin to Meta
 	metaItems := make([]pluginsv0alpha1.Meta, 0, len(plugins.Items))
 	for _, plugin := range plugins.Items {
-		// Use parent ID if set, otherwise use the plugin's own ID
-		pluginIDForMeta := plugin.Spec.Id
-		if plugin.Spec.ParentId != nil && *plugin.Spec.ParentId != "" {
-			pluginIDForMeta = *plugin.Spec.ParentId
-		}
-
-		result, err := s.metaManager.GetMeta(ctx, pluginIDForMeta, plugin.Spec.Version)
+		result, err := s.metaManager.GetMeta(ctx, s.getPluginID(ctx, &plugin), plugin.Spec.Version)
 		if err != nil {
 			// Log error but continue with other plugins
-			logging.FromContext(ctx).Warn("Failed to fetch metadata for plugin", "pluginId", plugin.Spec.Id, "parentId", pluginIDForMeta, "version", plugin.Spec.Version, "error", err)
+			logging.FromContext(ctx).Warn("Failed to fetch metadata for plugin", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
 			continue
 		}
 
@@ -172,13 +166,7 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 		return nil, err
 	}
 
-	// Use parent ID if set, otherwise use the plugin's own ID
-	pluginIDForMeta := plugin.Spec.Id
-	if plugin.Spec.ParentId != nil && *plugin.Spec.ParentId != "" {
-		pluginIDForMeta = *plugin.Spec.ParentId
-	}
-
-	result, err := s.metaManager.GetMeta(ctx, pluginIDForMeta, plugin.Spec.Version)
+	result, err := s.metaManager.GetMeta(ctx, s.getPluginID(ctx, plugin), plugin.Spec.Version)
 	if err != nil {
 		if errors.Is(err, meta.ErrMetaNotFound) {
 			gr := schema.GroupResource{
@@ -188,7 +176,7 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 			return nil, apierrors.NewNotFound(gr, plugin.Spec.Id)
 		}
 
-		logging.FromContext(ctx).Error("Failed to fetch plugin metadata", "pluginId", plugin.Spec.Id, "parentId", pluginIDForMeta, "version", plugin.Spec.Version, "error", err)
+		logging.FromContext(ctx).Error("Failed to fetch plugin metadata", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
 		return nil, apierrors.NewInternalError(fmt.Errorf("failed to fetch plugin metadata: %w", err))
 	}
 
@@ -206,4 +194,12 @@ func (s *MetaStorage) Get(ctx context.Context, name string, options *metav1.GetO
 	})
 
 	return pluginMeta, nil
+}
+
+func (s *MetaStorage) getPluginID(ctx context.Context, plugin *pluginsv0alpha1.Plugin) string {
+	if plugin.Spec.ParentId != nil && *plugin.Spec.ParentId != "" {
+		logging.FromContext(ctx).Debug("Fetching parent meta for plugin", "pluginId", plugin.Spec.Id)
+		return *plugin.Spec.ParentId
+	}
+	return plugin.Spec.Id
 }
