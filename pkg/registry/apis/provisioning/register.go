@@ -91,9 +91,10 @@ type APIBuilder struct {
 	onlyApiServer                       bool
 	useExclusivelyAccessCheckerForAuthz bool
 
-	allowedTargets      []provisioning.SyncTargetType
-	allowImageRendering bool
-	minSyncInterval     time.Duration
+	allowedTargets            []provisioning.SyncTargetType
+	allowImageRendering       bool
+	minSyncInterval           time.Duration
+	maxResourcesPerRepository int64
 
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
@@ -155,6 +156,7 @@ func NewAPIBuilder(
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
+	maxResourcesPerRepository int64,
 	registry prometheus.Registerer,
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 	useExclusivelyAccessCheckerForAuthz bool,
@@ -180,6 +182,7 @@ func NewAPIBuilder(
 	b := &APIBuilder{
 		onlyApiServer:                       onlyApiServer,
 		minSyncInterval:                     minSyncInterval,
+		maxResourcesPerRepository:           maxResourcesPerRepository,
 		tracer:                              tracer,
 		usageStats:                          usageStats,
 		features:                            features,
@@ -295,6 +298,7 @@ func RegisterAPIService(
 		nil, // will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
+		cfg.ProvisioningMaxResourcesPerRepository,
 		reg,
 		nil,
 		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
@@ -785,6 +789,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 				b.tracer,
 				10,
+				b.maxResourcesPerRepository,
 			)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)

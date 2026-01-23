@@ -138,18 +138,19 @@ type Cfg struct {
 	// Grafana API Server
 	DisableControllers bool
 	// Provisioning config
-	ProvisioningAllowedTargets      []string
-	ProvisioningAllowImageRendering bool
-	ProvisioningMinSyncInterval     time.Duration
-	ProvisioningRepositoryTypes     []string
-	ProvisioningLokiURL             string
-	ProvisioningLokiUser            string
-	ProvisioningLokiPassword        string
-	ProvisioningLokiTenantID        string
-	DataPath                        string
-	LogsPath                        string
-	PluginsPath                     string
-	EnterpriseLicensePath           string
+	ProvisioningAllowedTargets            []string
+	ProvisioningAllowImageRendering       bool
+	ProvisioningMinSyncInterval           time.Duration
+	ProvisioningRepositoryTypes           []string
+	ProvisioningLokiURL                   string
+	ProvisioningLokiUser                  string
+	ProvisioningLokiPassword              string
+	ProvisioningLokiTenantID              string
+	ProvisioningMaxResourcesPerRepository int64 // 0 = unlimited
+	DataPath                              string
+	LogsPath                              string
+	PluginsPath                           string
+	EnterpriseLicensePath                 string
 
 	// Classic Provisioning settings
 	ClassicProvisioningDashboardsServerLockMaxIntervalSeconds int64
@@ -2179,6 +2180,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
+	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

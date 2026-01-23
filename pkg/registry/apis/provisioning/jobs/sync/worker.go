@@ -9,6 +9,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
@@ -38,7 +39,8 @@ type SyncWorker struct {
 
 	tracer tracing.Tracer
 
-	maxSyncWorkers int
+	maxSyncWorkers            int
+	maxResourcesPerRepository int64 // 0 = unlimited
 }
 
 func NewSyncWorker(
@@ -49,15 +51,17 @@ func NewSyncWorker(
 	metrics jobs.JobMetrics,
 	tracer tracing.Tracer,
 	maxSyncWorkers int,
+	maxResourcesPerRepository int64,
 ) *SyncWorker {
 	return &SyncWorker{
-		clients:             clients,
-		repositoryResources: repositoryResources,
-		patchStatus:         patchStatus,
-		syncer:              syncer,
-		metrics:             metrics,
-		tracer:              tracer,
-		maxSyncWorkers:      maxSyncWorkers,
+		clients:                   clients,
+		repositoryResources:       repositoryResources,
+		patchStatus:               patchStatus,
+		syncer:                    syncer,
+		metrics:                   metrics,
+		tracer:                    tracer,
+		maxSyncWorkers:            maxSyncWorkers,
+		maxResourcesPerRepository: maxResourcesPerRepository,
 	}
 }
 
@@ -191,6 +195,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 
 	// Only add stats patch if stats are not nil
 	stats, err := repositoryResources.Stats(finalCtx)
+	var repoStats []provisioning.ResourceCount
 	switch {
 	case err != nil:
 		logger.Error("unable to read stats", "error", err)
@@ -199,14 +204,24 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		logger.Error("stats are nil")
 		finalSpan.SetAttributes(attribute.Bool("stats.nil", true))
 	case len(stats.Managed) == 1:
+		repoStats = stats.Managed[0].Stats
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/stats",
-			"value": stats.Managed[0].Stats,
+			"value": repoStats,
 		})
 	default:
 		logger.Warn("unexpected number of managed stats", "count", len(stats.Managed))
 		finalSpan.SetAttributes(attribute.Int("stats.unexpected_count", len(stats.Managed)))
+	}
+
+	// Update Quota condition based on stats and configured limits
+	quotaLimits := controller.QuotaLimits{
+		MaxResources: r.maxResourcesPerRepository,
+	}
+	quotaCondition := controller.BuildQuotaCondition(repoStats, quotaLimits)
+	if quotaConditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition); quotaConditionOps != nil {
+		patchOperations = append(patchOperations, quotaConditionOps...)
 	}
 
 	// Only patch the specific fields we want to update, not the entire status
