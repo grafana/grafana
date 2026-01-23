@@ -3,39 +3,11 @@ import { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
-import lokiIconSvg from 'app/plugins/datasource/loki/img/loki_icon.svg';
-import mimirLogoSvg from 'app/plugins/datasource/prometheus/img/mimir_logo.svg';
-import prometheusLogoSvg from 'app/plugins/datasource/prometheus/img/prometheus_logo.svg';
+import { Button, Text, useStyles2 } from '@grafana/ui';
 
-import { useQueryRunnerContext } from './QueryEditorContext';
+import { useQueryRunnerContext } from '../QueryEditorContext';
 
-const DataSourceIcon = ({ application, size = 16 }: { application: string | undefined; size: number }) => {
-  switch (application) {
-    case 'prometheus':
-      return <img width={size} height={size} src={prometheusLogoSvg} alt="Prometheus" />;
-    case 'mimir':
-      return <img width={size} height={size} src={mimirLogoSvg} alt="Mimir" />;
-    case 'loki':
-      return <img width={size} height={size} src={lokiIconSvg} alt="Loki" />;
-    case 'grafana':
-    default:
-      return <Icon name="grafana" />;
-  }
-};
-
-const CardIcon = ({ type, size = 16 }: { type: string | undefined; size: number }) => {
-  switch (type) {
-    case 'query':
-      return <Icon name="database" />;
-    case 'expression':
-      return <Icon name="code-branch" />;
-    case 'transformation':
-      return <Icon name="gf-interpolation-linear" />;
-    default:
-      return null;
-  }
-};
+import { SidebarCard } from './SidebarCard';
 
 export enum SidebarSize {
   Mini = 'mini',
@@ -77,18 +49,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
       </div>
       <div className={styles.body}>
         {queries.map((query) => (
-          <div className={styles.card} key={query.refId}>
-            <div className={styles.cardHeader}>
-              <CardIcon type={'query'} size={16} />
-              <Text weight="light" variant="body">
-                {t('query-editor-next.sidebar.query', 'Query')}
-              </Text>
-            </div>
-            <div className={styles.cardContent}>
-              <DataSourceIcon application={query.datasource?.type} size={16} />
-              <Text color="secondary">{query.refId}</Text>
-            </div>
-          </div>
+          <SidebarCard key={query.refId} query={query} />
         ))}
       </div>
     </div>
