@@ -4428,6 +4428,11 @@
       "count": 4
     }
   },
+  "public/app/store/configureStore.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
   "public/app/store/store.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
