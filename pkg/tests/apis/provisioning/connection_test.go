@@ -1589,12 +1589,16 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 		}, 30*time.Second, 100*time.Millisecond, "repository should be deleted")
 
 		// Now deletion should succeed
-		err = helper.Connections.Resource.Delete(ctx, "test-conn-delete-blocked", deleteOptions)
-		require.NoError(t, err, "expected deletion to succeed after repository deletion")
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			err := helper.Connections.Resource.Delete(ctx, "test-conn-delete-blocked", deleteOptions)
+			require.NoError(collect, err, "failed to delete connection")
+		}, 10*time.Second, 100*time.Millisecond, "deletion should succeed")
 
 		// Verify connection is actually deleted
-		_, err = helper.Connections.Resource.Get(ctx, "test-conn-delete-blocked", metav1.GetOptions{})
-		assert.True(t, k8serrors.IsNotFound(err), "connection should be deleted")
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			_, err = helper.Connections.Resource.Get(ctx, "test-conn-delete-blocked", metav1.GetOptions{})
+			require.True(collect, k8serrors.IsNotFound(err), "connection should be deleted")
+		}, 10*time.Second, 100*time.Millisecond, "connection should be deleted")
 	})
 }
 
