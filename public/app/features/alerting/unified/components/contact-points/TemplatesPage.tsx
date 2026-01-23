@@ -1,4 +1,4 @@
-import { Trans, t } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
