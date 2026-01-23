@@ -37,7 +37,7 @@ func TestBuildReadyConditionFromHealth(t *testing.T) {
 				Message: []string{"connection failed"},
 			},
 			expectedStatus: metav1.ConditionFalse,
-			expectedReason: provisioning.ReasonInvalidSpec,
+			expectedReason: provisioning.ReasonInvalidConfiguration,
 			expectedMsg:    "connection failed",
 		},
 		{
@@ -47,7 +47,7 @@ func TestBuildReadyConditionFromHealth(t *testing.T) {
 				Checked: time.Now().UnixMilli(),
 			},
 			expectedStatus: metav1.ConditionFalse,
-			expectedReason: provisioning.ReasonInvalidSpec,
+			expectedReason: provisioning.ReasonInvalidConfiguration,
 			expectedMsg:    "Resource is unavailable",
 		},
 		{
@@ -58,7 +58,7 @@ func TestBuildReadyConditionFromHealth(t *testing.T) {
 				Message: []string{"first error", "second error"},
 			},
 			expectedStatus: metav1.ConditionFalse,
-			expectedReason: provisioning.ReasonInvalidSpec,
+			expectedReason: provisioning.ReasonInvalidConfiguration,
 			expectedMsg:    "first error",
 		},
 	}
@@ -106,7 +106,7 @@ func TestBuildConditionPatchOpsFromExisting(t *testing.T) {
 				{
 					Type:               provisioning.ConditionTypeReady,
 					Status:             metav1.ConditionFalse,
-					Reason:             provisioning.ReasonInvalidSpec,
+					Reason:             provisioning.ReasonInvalidConfiguration,
 					Message:            "Resource is unavailable",
 					ObservedGeneration: 1,
 					LastTransitionTime: fixedTime,

@@ -42,7 +42,7 @@ func buildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, g
 }
 
 // buildReadyConditionFromHealth creates a Ready condition based on health status.
-// Uses a default reason (InvalidSpec) for unhealthy resources.
+// Uses a default reason (InvalidConfiguration) for unhealthy resources.
 // For more specific error classification, use buildReadyConditionWithReason.
 func buildReadyConditionFromHealth(healthStatus provisioning.HealthStatus) metav1.Condition {
 	if healthStatus.Healthy {
@@ -63,7 +63,7 @@ func buildReadyConditionFromHealth(healthStatus provisioning.HealthStatus) metav
 	return metav1.Condition{
 		Type:    provisioning.ConditionTypeReady,
 		Status:  metav1.ConditionFalse,
-		Reason:  provisioning.ReasonInvalidSpec,
+		Reason:  provisioning.ReasonInvalidConfiguration,
 		Message: message,
 	}
 }
