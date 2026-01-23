@@ -32,7 +32,7 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 						OperationProps: spec3.OperationProps{
 							Tags:        []string{"Connections"},
 							OperationId: "listDataSourceConnections",
-							Description: "List data source connections",
+							Description: "List data source connections across all types",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{
