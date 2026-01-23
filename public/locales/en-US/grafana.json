@@ -12590,6 +12590,13 @@
       "title-data-source-help": "Data source help"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "Query/Transform detail view goes here",
+    "sidebar": {
+      "placeholder": "Sidebar content placeholder",
+      "toggle-size": "Toggle sidebar size"
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": "Open Query Library"
