@@ -78,6 +78,8 @@ To create a dashboard, follow these steps:
 1. Click **New** and select **New Dashboard**.
 1. Under **Add**, click or drag the panel icon onto the dashboard.
 
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-add-panel-v12.4.png" max-width="750px" alt="New dashboard" >}}
+
 1. Click **Configure**.
 
       The **Edit panel** view opens with the default data source for your instance preselected.
