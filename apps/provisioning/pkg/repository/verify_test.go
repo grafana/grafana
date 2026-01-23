@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 )
 
 // verifyTestStorage implements StorageLister for verify tests
@@ -278,15 +279,15 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			store := &verifyTestStorage{repositories: tt.existingRepos}
 			lister := NewStorageLister(store)
 			validatorRaw := NewVerifyAgainstExistingRepositoriesValidator(lister)
-			// Set repository limits for tests that expect a different limit (default is 10, set to -1 to disable)
+			// Set quota limits for tests that expect a different limit (default is 10, set to -1 to disable)
 			if validator, ok := validatorRaw.(*VerifyAgainstExistingRepositoriesValidator); ok {
 				switch tt.name {
 				case "allows unlimited repositories when maxRepositories is 0":
 					// HACK: Use -1 to indicate unlimited (0 would default to 10).
 					// This is a workaround to distinguish between unset (0) and unlimited (-1).
-					validator.SetRepositoryLimits(RepositoryLimits{MaxRepositories: -1})
+					validator.SetQuotaLimits(quotas.QuotaLimits{MaxRepositories: -1})
 				case "enforces custom maxRepositories limit":
-					validator.SetRepositoryLimits(RepositoryLimits{MaxRepositories: 5})
+					validator.SetQuotaLimits(quotas.QuotaLimits{MaxRepositories: 5})
 				}
 			}
 			errList := validatorRaw.Validate(context.Background(), tt.cfg)

@@ -10,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -21,18 +22,18 @@ var ErrRepositoryParentFolderConflict = fmt.Errorf("repository path conflicts wi
 
 type VerifyAgainstExistingRepositoriesValidator struct {
 	lister RepositoryLister
-	limits RepositoryLimits
+	limits quotas.QuotaLimits
 }
 
 func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Validator {
 	return &VerifyAgainstExistingRepositoriesValidator{lister: lister}
 }
 
-// SetRepositoryLimits sets the repository limits.
+// SetQuotaLimits sets the quota limits (including repository limits).
 // HACK: This is a workaround to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature which would require
 // changes in the enterprise repository. This should be moved to NewVerifyAgainstExistingRepositoriesValidator parameters
 // once we can coordinate the change across repositories.
-func (v *VerifyAgainstExistingRepositoriesValidator) SetRepositoryLimits(limits RepositoryLimits) {
+func (v *VerifyAgainstExistingRepositoriesValidator) SetQuotaLimits(limits quotas.QuotaLimits) {
 	v.limits = limits
 }
 

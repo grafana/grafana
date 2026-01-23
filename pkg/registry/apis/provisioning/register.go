@@ -31,6 +31,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
@@ -643,8 +644,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// Repository mutator and validator
 	b.repoValidator = repository.NewValidator(b.minSyncInterval, b.allowImageRendering, b.repoFactory)
 	existingReposValidatorRaw := repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister)
-	// HACK: Set repository limits after construction to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature.
-	// See SetRepositoryLimits for details.
+	// HACK: Set quota limits after construction to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature.
+	// See SetQuotaLimits for details.
 	// Config defaults to 10. If user explicitly sets it to 0, that means unlimited (pass -1).
 	// Validator: 0 = default (10), -1 = unlimited (HACK), > 0 = use value
 	if existingReposValidator, ok := existingReposValidatorRaw.(*repository.VerifyAgainstExistingRepositoriesValidator); ok {
@@ -655,7 +656,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		if maxRepos == 0 {
 			maxRepos = -1 // Pass -1 to validator to indicate unlimited (HACK)
 		}
-		existingReposValidator.SetRepositoryLimits(repository.RepositoryLimits{
+		existingReposValidator.SetQuotaLimits(quotas.QuotaLimits{
 			MaxRepositories: maxRepos,
 		})
 	}
