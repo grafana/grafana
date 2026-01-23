@@ -185,9 +185,14 @@ To edit a dashboard, follow these steps:
 1. Click **Edit**.
 1. Click the part of the dashboard you want to update to open the edit pane, or click the **Dashboard options** icon to open it.
 
-   If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
+    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
-1. Update the dashboard as needed.
+1. Do one of the following:
+
+   - Update an existing dashboard element
+   - Click the **Add new element** icon in the sidebar.
+
+1. Change the dashboard as needed.
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
