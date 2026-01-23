@@ -224,13 +224,3 @@ String to interpolate: '${servers:text}'
 Interpolation result: "test1 + test2"
 ```
 
-## Multi-property variables
-
-Use the variable in your queries and panels: ${yourVar} for the base value, ${yourVar.someProperty} for any other property.
-Verify nested property names using the preview or the autocomplete.
-
-```bash
-servers = [ "value": "1", "text": "Development", "aws": "dev",  "azure": "development", "google": "googledev" ]
-String to interpolate: '${servers}'
-Interpolation result: "dev + development + googledev"
-```
