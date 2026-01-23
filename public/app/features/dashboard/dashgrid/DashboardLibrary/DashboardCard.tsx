@@ -25,11 +25,12 @@ interface Props {
   dashboard: PluginDashboard | GnetDashboard;
   details?: Details;
   onClick: () => void;
-  onClose: () => void;
+  onClose?: () => void;
   isLogo?: boolean; // Indicates if imageUrl is a small logo vs full screenshot
   showDatasourceProvidedBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
   kind: 'template_dashboard' | 'suggested_dashboard';
+  useAssistantHelp?: boolean;
 }
 
 function DashboardCardComponent({
@@ -43,6 +44,7 @@ function DashboardCardComponent({
   showDatasourceProvidedBadge,
   dimThumbnail,
   kind,
+  useAssistantHelp,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -54,10 +56,9 @@ function DashboardCardComponent({
         origin: 'dashboard-library/use-dashboard',
         mode: 'dashboarding',
         prompt: `Create a dashboard using the dashboard template ${title}`,
-        // context: [dashboardContext],
         autoSend: true,
       });
-      onClose();
+      onClose?.();
     }
   };
 
@@ -108,7 +109,7 @@ function DashboardCardComponent({
             <Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>
           )}
         </Button>
-        {assistantAvailable && (
+        {assistantAvailable && useAssistantHelp && (
           <Button variant="secondary" fill="outline" onClick={onUseAssistantClick} icon="ai-sparkle">
             <Trans i18nKey="dashboard-library.card.use-with-assistant-button">Use with Assistant</Trans>
           </Button>
