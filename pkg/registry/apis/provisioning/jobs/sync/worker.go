@@ -66,6 +66,22 @@ func NewSyncWorker(
 	}
 }
 
+// NewSyncWorkerWithoutQuotaLimit creates a SyncWorker with unlimited quota (maxResourcesPerRepository = 0).
+// HACK: This is a workaround for enterprise code that hasn't been updated to pass maxResourcesPerRepository.
+// Enterprise code should be updated to use NewSyncWorker with the maxResourcesPerRepository parameter.
+// This function should be removed once enterprise code is updated.
+func NewSyncWorkerWithoutQuotaLimit(
+	clients resources.ClientFactory,
+	repositoryResources resources.RepositoryResourcesFactory,
+	patchStatus RepositoryPatchFn,
+	syncer Syncer,
+	metrics jobs.JobMetrics,
+	tracer tracing.Tracer,
+	maxSyncWorkers int,
+) *SyncWorker {
+	return NewSyncWorker(clients, repositoryResources, patchStatus, syncer, metrics, tracer, maxSyncWorkers, 0)
+}
+
 func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
 	return job.Spec.Action == provisioning.JobActionPull
 }
