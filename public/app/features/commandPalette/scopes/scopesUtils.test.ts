@@ -1,11 +1,19 @@
+import { renderHook } from '@testing-library/react';
 import { setIn } from 'immutable';
+import { Observable, of } from 'rxjs';
 
-import { ScopeNode } from '@grafana/data';
+import { Scope, ScopeNode } from '@grafana/data';
 
+import { useScopesServices } from '../../scopes/ScopesContextProvider';
+import { ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
 import { NodesMap, SelectedScope, TreeNode } from '../../scopes/selector/types';
 import { SCOPES_PRIORITY } from '../values';
 
-import { mapScopeNodeToAction, mapScopesNodesTreeToActions } from './scopesUtils';
+import { mapScopeNodeToAction, mapScopesNodesTreeToActions, useScopeServicesState } from './scopesUtils';
+
+jest.mock('../../scopes/ScopesContextProvider', () => ({
+  useScopesServices: jest.fn(),
+}));
 
 const scopeNode: ScopeNode = {
   metadata: { name: 'scope1' },
@@ -189,5 +197,183 @@ describe('mapScopesNodesTreeToActions', () => {
     // Only the parent action
     expect(actions).toHaveLength(1);
     expect(actions[0].id).toBe('scopes');
+  });
+});
+
+describe('useScopeServicesState', () => {
+  const mockFilterNode = jest.fn();
+  const mockSelectScope = jest.fn();
+  const mockResetSelection = jest.fn();
+  const mockSearchAllNodes = jest.fn();
+  const mockGetScopeNodes = jest.fn();
+  const mockApply = jest.fn();
+  const mockDeselectScope = jest.fn();
+
+  const mockScopesSelectorService = {
+    filterNode: mockFilterNode,
+    selectScope: mockSelectScope,
+    resetSelection: mockResetSelection,
+    searchAllNodes: mockSearchAllNodes,
+    getScopeNodes: mockGetScopeNodes,
+    apply: mockApply,
+    deselectScope: mockDeselectScope,
+    state: {
+      loading: false,
+      loadingNodeName: undefined,
+      opened: false,
+      nodes: {},
+      scopes: {},
+      selectedScopes: [],
+      appliedScopes: [],
+      tree: {
+        scopeNodeId: '',
+        expanded: false,
+        query: '',
+      },
+    } as ScopesSelectorServiceState,
+    stateObservable: new Observable(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return defaults when services are not available', () => {
+    (useScopesServices as jest.Mock).mockReturnValue(null);
+
+    const { result } = renderHook(() => useScopeServicesState());
+
+    expect(result.current.nodes).toEqual({});
+    expect(result.current.scopes).toEqual({});
+    expect(result.current.selectedScopes).toEqual([]);
+    expect(result.current.appliedScopes).toEqual([]);
+    expect(result.current.tree).toEqual({
+      scopeNodeId: '',
+      expanded: false,
+      query: '',
+    });
+    expect(result.current.filterNode).toBeDefined();
+    expect(result.current.selectScope).toBeDefined();
+    expect(result.current.resetSelection).toBeDefined();
+    expect(result.current.searchAllNodes).toBeDefined();
+    expect(result.current.getScopeNodes).toBeDefined();
+    expect(result.current.apply).toBeDefined();
+    expect(result.current.deselectScope).toBeDefined();
+  });
+
+  it('should return defaults when services are undefined', () => {
+    (useScopesServices as jest.Mock).mockReturnValue(undefined);
+
+    const { result } = renderHook(() => useScopeServicesState());
+
+    expect(result.current.nodes).toEqual({});
+    expect(result.current.scopes).toEqual({});
+    expect(result.current.selectedScopes).toEqual([]);
+    expect(result.current.appliedScopes).toEqual([]);
+    expect(result.current.tree).toEqual({
+      scopeNodeId: '',
+      expanded: false,
+      query: '',
+    });
+  });
+
+  it('should return state values when services are available', () => {
+    const mockNode: ScopeNode = {
+      metadata: { name: 'testNode' },
+      spec: {
+        title: 'Test Node',
+        nodeType: 'leaf',
+        linkId: 'test-link',
+      },
+    };
+
+    const mockScope: Scope = {
+      metadata: { name: 'testScope' },
+      spec: {
+        title: 'Test Scope',
+        filters: [],
+      },
+    };
+
+    const mockState: ScopesSelectorServiceState = {
+      loading: false,
+      loadingNodeName: undefined,
+      opened: false,
+      nodes: { testNode: mockNode },
+      scopes: { testScope: mockScope },
+      selectedScopes: [{ scopeId: 'test' }],
+      appliedScopes: [{ scopeId: 'applied' }],
+      tree: {
+        scopeNodeId: 'root',
+        expanded: true,
+        query: 'test',
+      },
+    };
+
+    (useScopesServices as jest.Mock).mockReturnValue({
+      scopesSelectorService: {
+        ...mockScopesSelectorService,
+        state: mockState,
+        stateObservable: of(mockState),
+      },
+    });
+
+    const { result } = renderHook(() => useScopeServicesState());
+
+    expect(result.current.nodes).toEqual(mockState.nodes);
+    expect(result.current.scopes).toEqual(mockState.scopes);
+    expect(result.current.selectedScopes).toEqual(mockState.selectedScopes);
+    expect(result.current.appliedScopes).toEqual(mockState.appliedScopes);
+    expect(result.current.tree).toEqual(mockState.tree);
+    expect(result.current.filterNode).toBe(mockFilterNode);
+    expect(result.current.selectScope).toBe(mockSelectScope);
+  });
+
+  it('should return defaults when stateObservable returns undefined', () => {
+    (useScopesServices as jest.Mock).mockReturnValue({
+      scopesSelectorService: {
+        ...mockScopesSelectorService,
+        stateObservable: of(undefined),
+        state: undefined,
+      },
+    });
+
+    const { result } = renderHook(() => useScopeServicesState());
+
+    expect(result.current.nodes).toEqual({});
+    expect(result.current.scopes).toEqual({});
+    expect(result.current.selectedScopes).toEqual([]);
+    expect(result.current.appliedScopes).toEqual([]);
+    expect(result.current.tree).toEqual({
+      scopeNodeId: '',
+      expanded: false,
+      query: '',
+    });
+  });
+
+  it('should always return defined values, never undefined', () => {
+    (useScopesServices as jest.Mock).mockReturnValue({
+      scopesSelectorService: {
+        ...mockScopesSelectorService,
+        stateObservable: new Observable((subscriber) => {
+          subscriber.next(undefined);
+        }),
+        state: undefined,
+      },
+    });
+
+    const { result } = renderHook(() => useScopeServicesState());
+
+    // Ensure all values are defined (not undefined)
+    expect(result.current.nodes).toBeDefined();
+    expect(result.current.scopes).toBeDefined();
+    expect(result.current.selectedScopes).toBeDefined();
+    expect(result.current.appliedScopes).toBeDefined();
+    expect(result.current.tree).toBeDefined();
+    expect(result.current.nodes).not.toBeUndefined();
+    expect(result.current.scopes).not.toBeUndefined();
+    expect(result.current.selectedScopes).not.toBeUndefined();
+    expect(result.current.appliedScopes).not.toBeUndefined();
+    expect(result.current.tree).not.toBeUndefined();
   });
 });
