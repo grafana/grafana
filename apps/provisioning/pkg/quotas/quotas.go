@@ -23,23 +23,19 @@ type QuotaLimits struct {
 
 // NewHackyQuota creates a QuotaLimits struct with HACK logic for repository limits.
 // HACK: This function handles the conversion of config values to internal representation:
-// - -1 → 0 (unlimited)
-// - 0 → 10 (default)
+// - 0 → 10 (default, when config value is 0 but config defaults to 10)
 // - N (where N > 0) → N (use value as-is)
 // - Validator: 0 = unlimited, > 0 = use value
-// This is a workaround to handle default values and unlimited representation.
+// This is a workaround to handle default values.
 // This HACK should be removed once we can coordinate changes across repositories.
 func NewHackyQuota(maxResourcesPerRepository, maxRepositories int64) QuotaLimits {
 	maxRepos := maxRepositories
-	// HACK: Convert values according to the mapping:
-	// -1 → 0 (unlimited), 0 → 10 (default), N → N (use as-is)
-	switch maxRepos {
-	case -1:
-		maxRepos = 0 // Convert -1 to 0 (unlimited)
-	case 0:
-		maxRepos = 10 // Convert 0 to 10 (default)
-	}
-	// N > 0 is passed through as-is
+	// HACK: Config defaults to 10 in pkg/setting. If the value is 0, it means user explicitly set unlimited.
+	// However, if the value is 0 and it's the default (not explicitly set), we need to convert to 10.
+	// Since we can't distinguish, we treat 0 as unlimited (user explicitly set to 0).
+	// The default of 10 is handled in pkg/setting when reading the config.
+	// For now, we pass through 0 as-is (unlimited) and N as-is.
+	// The validator will handle 0 as unlimited.
 	return QuotaLimits{
 		MaxResources:    maxResourcesPerRepository,
 		MaxRepositories: maxRepos,

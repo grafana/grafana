@@ -26,7 +26,11 @@ type VerifyAgainstExistingRepositoriesValidator struct {
 }
 
 func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Validator {
-	return &VerifyAgainstExistingRepositoriesValidator{lister: lister}
+	// Default to 10 repositories for backward compatibility when using the old constructor
+	return &VerifyAgainstExistingRepositoriesValidator{
+		lister: lister,
+		limits: quotas.QuotaLimits{MaxRepositories: 10},
+	}
 }
 
 // NewVerifyAgainstExistingRepositoriesValidatorWithQuotas creates a validator with quota limits.
@@ -40,13 +44,6 @@ func NewVerifyAgainstExistingRepositoriesValidatorWithQuotas(lister RepositoryLi
 	}
 }
 
-// SetQuotaLimits sets the quota limits (including repository limits).
-// HACK: This is a workaround to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature which would require
-// changes in the enterprise repository. This should be moved to NewVerifyAgainstExistingRepositoriesValidator parameters
-// once we can coordinate the change across repositories.
-func (v *VerifyAgainstExistingRepositoriesValidator) SetQuotaLimits(limits quotas.QuotaLimits) {
-	v.limits = limits
-}
 
 // VerifyAgainstExistingRepositoriesValidator verifies repository configurations for conflicts within a namespace.
 //
