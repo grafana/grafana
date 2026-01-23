@@ -191,3 +191,29 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 
 	return updatedObj, nil
 }
+
+// NoopAuthorizer is a no-op implementation of ResourceStorageAuthorizer.
+// Use this when authorization is handled at the API level and no additional
+// storage-level authorization is needed.
+// This will be used if a service wants to tackle Cluster-scoped resources.
+type NoopAuthorizer struct{}
+
+func (b *NoopAuthorizer) BeforeCreate(ctx context.Context, obj runtime.Object) error {
+	return nil
+}
+
+func (b *NoopAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+	return nil
+}
+
+func (b *NoopAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Object) error {
+	return nil
+}
+
+func (b *NoopAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
+	return nil
+}
+
+func (b *NoopAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
+	return list, nil
+}

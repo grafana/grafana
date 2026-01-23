@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -110,22 +111,50 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 				RESTUpdateStrategy: gs.UpdateStrategy,
 			}
 		}
-		gs.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
-		gs.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
-		return gs
+
+		// Respect the strategy's namespace scope setting
+		// The SDK sets this correctly based on the Kind's scope
+		isNamespaced := gs.CreateStrategy != nil && gs.CreateStrategy.NamespaceScoped()
+		if isNamespaced {
+			gs.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
+			gs.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
+			return gs
+		}
+
+		// For cluster-scoped resources, we need to wrap the storage with an identity wrapper.
+		// This switches the identity to service identity for backend operations, which allows
+		// the storage layer's namespace checks to pass. Authorization is handled at the API
+		// level by the custom authorizer provided by the AppInstaller.
+		gs.KeyFunc = grafanaregistry.ClusterKeyFunc(gr)
+		gs.KeyRootFunc = grafanaregistry.ClusterKeyRootFunc(gr)
+
+		// Wrap with identity switcher - the genericregistry.Store implements K8sStorage
+		return storewrapper.New(gs, &storewrapper.NoopAuthorizer{})
 	}
 
 	// if the storage is a status store, we need to extract the underlying generic registry store
 	if statusStore, ok := storage.(*appsdkapiserver.StatusREST); ok {
-		statusStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
-		statusStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
+		isNamespaced := statusStore.Store.CreateStrategy != nil && statusStore.Store.CreateStrategy.NamespaceScoped()
+		if isNamespaced {
+			statusStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
+			statusStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
+		} else {
+			statusStore.Store.KeyFunc = grafanaregistry.ClusterKeyFunc(gr)
+			statusStore.Store.KeyRootFunc = grafanaregistry.ClusterKeyRootFunc(gr)
+		}
 		return statusStore
 	}
 
 	// if the storage is a subresource store, we need to extract the underlying generic registry store
 	if subresourceStore, ok := storage.(*appsdkapiserver.SubresourceREST); ok {
-		subresourceStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
-		subresourceStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
+		isNamespaced := subresourceStore.Store.CreateStrategy != nil && subresourceStore.Store.CreateStrategy.NamespaceScoped()
+		if isNamespaced {
+			subresourceStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
+			subresourceStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
+		} else {
+			subresourceStore.Store.KeyFunc = grafanaregistry.ClusterKeyFunc(gr)
+			subresourceStore.Store.KeyRootFunc = grafanaregistry.ClusterKeyRootFunc(gr)
+		}
 		return subresourceStore
 	}
 

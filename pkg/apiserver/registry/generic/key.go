@@ -106,6 +106,18 @@ func KeyRootFunc(gr schema.GroupResource) func(ctx context.Context) string {
 	}
 }
 
+// ClusterKeyRootFunc is used for cluster-scoped resources.
+// It does not include namespace in the key.
+func ClusterKeyRootFunc(gr schema.GroupResource) func(ctx context.Context) string {
+	return func(ctx context.Context) string {
+		key := &Key{
+			Group:    gr.Group,
+			Resource: gr.Resource,
+		}
+		return key.String()
+	}
+}
+
 // NamespaceKeyFunc is the default function for constructing storage paths to
 // a resource relative to the given prefix enforcing namespace rules. If the
 // context does not contain a namespace, it errors.
@@ -126,6 +138,25 @@ func NamespaceKeyFunc(gr schema.GroupResource) func(ctx context.Context, name st
 			Resource:  gr.Resource,
 			Namespace: ns,
 			Name:      name,
+		}
+		return key.String(), nil
+	}
+}
+
+// ClusterKeyFunc is the function for constructing storage paths
+// to a cluster scoped resource (no namespace required)
+func ClusterKeyFunc(gr schema.GroupResource) func(ctx context.Context, name string) (string, error) {
+	return func(ctx context.Context, name string) (string, error) {
+		if len(name) == 0 {
+			return "", apierrors.NewBadRequest("Name parameter required.")
+		}
+		if msgs := path.IsValidPathSegmentName(name); len(msgs) != 0 {
+			return "", apierrors.NewBadRequest(fmt.Sprintf("Name parameter invalid: %q: %s", name, strings.Join(msgs, ";")))
+		}
+		key := &Key{
+			Group:    gr.Group,
+			Resource: gr.Resource,
+			Name:     name,
 		}
 		return key.String(), nil
 	}
