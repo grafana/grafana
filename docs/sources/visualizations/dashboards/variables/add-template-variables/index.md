@@ -535,7 +535,7 @@ Then you can use `${varName.someProperty}` syntax to reference any property in y
 
 You can even deeply nest properties and still access them using familiar variable syntax. In the following example, each user has an address property with all the elements of an address nested within it:
 
-{{< figure src="src="/media/docs/grafana/dashboards/screenshot-multipropvar-nested-v12.4.png" max-width="650px" alt="Nested variable configuration" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-multipropvar-nested-v12.4.png" max-width="650px" alt="Nested variable configuration" >}}
 
 ### Multi-property query variables
 
