@@ -1936,6 +1936,10 @@
       "select-group": "Select group",
       "select-namespace": "Select namespace"
     },
+    "navigation": {
+      "alert-rules": "Alert rules",
+      "recently-deleted": "Recently deleted"
+    },
     "need-help-info": {
       "need-help": "Need help?"
     },
@@ -9819,7 +9823,7 @@
     "loading-panel-text": "Loading library panel",
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
       "button-cancel": "Cancel",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",

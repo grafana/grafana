@@ -7,9 +7,9 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// buildConditionPatchOpsFromExisting creates condition patch operations for Repository or Connection resources.
+// BuildConditionPatchOpsFromExisting creates condition patch operations for Repository or Connection resources.
 // Returns nil if the condition hasn't changed to avoid unnecessary patches.
-func buildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, generation int64, newCondition metav1.Condition) []map[string]interface{} {
+func BuildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, generation int64, newCondition metav1.Condition) []map[string]interface{} {
 	// Check if condition already exists and is unchanged
 	existingCondition := meta.FindStatusCondition(existingConditions, newCondition.Type)
 	if existingCondition != nil &&
