@@ -20,7 +20,7 @@ type QueryResponseSQLSchemas struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// SchemaInfo for each requested query by refID
-	Query SQLSchemas `json:"query"`
+	SQLSchemas SQLSchemas `json:"sqlSchemas"`
 }
 
 type SQLSchemas = map[string]SchemaInfo

@@ -462,7 +462,7 @@ func schema_pkg_apis_query_v0alpha1_QueryResponseSQLSchemas(ref common.Reference
 							Format:      "",
 						},
 					},
-					"query": {
+					"sqlSchemas": {
 						SchemaProps: spec.SchemaProps{
 							Description: "SchemaInfo for each requested query by refID",
 							Type:        []string{"object"},
@@ -478,7 +478,7 @@ func schema_pkg_apis_query_v0alpha1_QueryResponseSQLSchemas(ref common.Reference
 						},
 					},
 				},
-				Required: []string{"query"},
+				Required: []string{"sqlSchemas"},
 			},
 		},
 		Dependencies: []string{

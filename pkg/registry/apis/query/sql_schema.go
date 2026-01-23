@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
@@ -46,11 +47,15 @@ func (b *QueryAPIBuilder) GetSQLSchemas(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ") // pretty print
-	if err := encoder.Encode(&query.QueryResponseSQLSchemas{
-		Query: qdr,
-	}); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	err = encoder.Encode(&query.QueryResponseSQLSchemas{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: query.SchemeGroupVersion.String(),
+			Kind:       "QueryResponseSQLSchemas",
+		},
+		SQLSchemas: qdr,
+	})
+	if err != nil {
+		errhttp.Write(ctx, err, w)
 	}
 }
 

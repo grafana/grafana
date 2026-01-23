@@ -223,8 +223,8 @@ func (in *QueryDataResponse) DeepCopyObject() runtime.Object {
 func (in *QueryResponseSQLSchemas) DeepCopyInto(out *QueryResponseSQLSchemas) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	if in.Query != nil {
-		in, out := &in.Query, &out.Query
+	if in.SQLSchemas != nil {
+		in, out := &in.SQLSchemas, &out.SQLSchemas
 		*out = make(map[string]SchemaInfo, len(*in))
 		for key, val := range *in {
 			(*out)[key] = *val.DeepCopy()
