@@ -850,6 +850,7 @@ func TestConnectionController_process(t *testing.T) {
 
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.Anything).Return(true)
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnWithToken, nil)
+				mockTokenConnection.EXPECT().TokenCreationTime(mock.Anything).Return(time.Now().Add(-15*time.Second), nil)
 				// Token expires in 2 minutes - should trigger regeneration attempt (within 5-minute window)
 				mockTokenConnection.EXPECT().TokenExpiration(mock.Anything).Return(time.Now().Add(2*time.Minute), nil)
 				mockTokenConnection.EXPECT().GenerateConnectionToken(mock.Anything).
