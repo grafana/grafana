@@ -28,37 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// ResourceValidationError represents an error that occurred while validating a resource.
-type ResourceValidationError struct {
-	Err error
-}
-
-// Error implements the error interface
-func (e *ResourceValidationError) Error() string {
-	message := "resource validation failed"
-	if e.Err != nil {
-		return e.Err.Error()
-	}
-	return message
-}
-
-// Unwrap implements error unwrapping to support errors.Is and errors.As
-func (e *ResourceValidationError) Unwrap() error {
-	return e.Err
-}
-
-// NewResourceValidationError creates a new ResourceError for validation failures.
-// This error will be translated to a BadRequest error by the API layer.
-func NewResourceValidationError(err error) *ResourceValidationError {
-	message := "resource validation failed"
-	if err != nil {
-		message = fmt.Sprintf("%s: %v", message, err)
-	}
-	return &ResourceValidationError{
-		Err: apierrors.NewBadRequest(message),
-	}
-}
-
 // ParserFactory is a factory for creating parsers for a given repository
 //
 //go:generate mockery --name ParserFactory --structname MockParserFactory --inpackage --filename parser_factory_mock.go --with-expecter
