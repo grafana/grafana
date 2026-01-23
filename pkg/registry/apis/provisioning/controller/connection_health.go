@@ -112,18 +112,18 @@ func classifyConnectionError(testResults *provisioning.TestResults) string {
 	// Map HTTP status codes to condition reasons
 	switch testResults.Code {
 	case 422: // Unprocessable Entity - spec validation failed
-		return provisioning.ReasonInvalidConfiguration
+		return provisioning.ReasonInvalidSpec
 	case 400, 401, 403: // Client errors - authentication/authorization issues
 		return provisioning.ReasonAuthenticationFailed
 	case 500, 502: // Server errors - usually secret/build issues
-		return provisioning.ReasonInvalidConfiguration
+		return provisioning.ReasonInvalidSpec
 	case 503, 504: // Service unavailable, gateway timeout
 		return provisioning.ReasonServiceUnavailable
 	case 429: // Too many requests - rate limited
 		return provisioning.ReasonRateLimited
 	default:
 		// Unknown error - default to configuration error to prompt investigation
-		return provisioning.ReasonInvalidConfiguration
+		return provisioning.ReasonInvalidSpec
 	}
 }
 

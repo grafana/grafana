@@ -310,7 +310,7 @@ func TestClassifyConnectionError(t *testing.T) {
 				Code:    http.StatusUnprocessableEntity,
 				Errors:  []provisioning.ErrorDetails{{Detail: "missing required field"}},
 			},
-			expectedReason: provisioning.ReasonInvalidConfiguration,
+			expectedReason: provisioning.ReasonInvalidSpec,
 		},
 		{
 			name: "bad request (400)",
@@ -346,7 +346,7 @@ func TestClassifyConnectionError(t *testing.T) {
 				Code:    http.StatusInternalServerError,
 				Errors:  []provisioning.ErrorDetails{{Detail: "secret decryption failed"}},
 			},
-			expectedReason: provisioning.ReasonInvalidConfiguration,
+			expectedReason: provisioning.ReasonInvalidSpec,
 		},
 		{
 			name: "bad gateway (502)",
@@ -355,7 +355,7 @@ func TestClassifyConnectionError(t *testing.T) {
 				Code:    http.StatusBadGateway,
 				Errors:  []provisioning.ErrorDetails{{Detail: "token generation failed"}},
 			},
-			expectedReason: provisioning.ReasonInvalidConfiguration,
+			expectedReason: provisioning.ReasonInvalidSpec,
 		},
 		{
 			name: "service unavailable (503)",
@@ -391,7 +391,7 @@ func TestClassifyConnectionError(t *testing.T) {
 				Code:    999,
 				Errors:  []provisioning.ErrorDetails{{Detail: "unknown error"}},
 			},
-			expectedReason: provisioning.ReasonInvalidConfiguration,
+			expectedReason: provisioning.ReasonInvalidSpec,
 		},
 	}
 

@@ -10,13 +10,45 @@ import (
 
 	"github.com/google/go-github/v70/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // API errors that we need to convey after parsing real GH errors (or faking them).
+// These sentinel errors allow callers to distinguish between different error types.
 var (
+	//lint:ignore ST1005 this is not punctuation
+	ErrUnauthorized = apierrors.NewUnauthorized("authentication failed")
+	//lint:ignore ST1005 this is not punctuation
+	ErrForbidden = &apierrors.StatusError{ErrStatus: metav1.Status{Code: http.StatusForbidden, Message: "access forbidden", Reason: metav1.StatusReasonForbidden}}
+	//lint:ignore ST1005 this is not punctuation
+	ErrRateLimited = apierrors.NewTooManyRequests("rate limited", 0)
 	//lint:ignore ST1005 this is not punctuation
 	ErrServiceUnavailable = apierrors.NewServiceUnavailable("github is unavailable")
 )
+
+// extractHTTPError extracts HTTP status code from GitHub API errors and returns appropriate sentinel errors.
+// Returns a sentinel error for known status codes, or the original error otherwise.
+func extractHTTPError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	var ghErr *github.ErrorResponse
+	if errors.As(err, &ghErr) && ghErr.Response != nil {
+		switch ghErr.Response.StatusCode {
+		case http.StatusUnauthorized:
+			return ErrUnauthorized
+		case http.StatusForbidden:
+			return ErrForbidden
+		case http.StatusTooManyRequests:
+			return ErrRateLimited
+		case http.StatusServiceUnavailable:
+			return ErrServiceUnavailable
+		}
+	}
+
+	return err
+}
 
 //go:generate mockery --name Client --structname MockClient --inpackage --filename client_mock.go --with-expecter
 type Client interface {
@@ -74,11 +106,7 @@ func NewClient(client *github.Client) Client {
 func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 	app, _, err := r.gh.Apps.Get(ctx, "")
 	if err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return App{}, ErrServiceUnavailable
-		}
-		return App{}, err
+		return App{}, extractHTTPError(err)
 	}
 
 	return App{
@@ -97,11 +125,7 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 
 	installation, _, err := r.gh.Apps.GetInstallation(ctx, int64(id))
 	if err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return AppInstallation{}, ErrServiceUnavailable
-		}
-		return AppInstallation{}, err
+		return AppInstallation{}, extractHTTPError(err)
 	}
 
 	return AppInstallation{
@@ -125,11 +149,7 @@ func (r *githubClient) ListInstallationRepositories(ctx context.Context, install
 	// Create an installation access token
 	installationToken, _, err := r.gh.Apps.CreateInstallationToken(ctx, id, nil)
 	if err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return nil, ErrServiceUnavailable
-		}
-		return nil, fmt.Errorf("create installation token: %w", err)
+		return nil, extractHTTPError(err)
 	}
 
 	// Create a new client with the installation token
@@ -145,11 +165,7 @@ func (r *githubClient) ListInstallationRepositories(ctx context.Context, install
 	for {
 		result, resp, err := tokenClient.Apps.ListRepos(ctx, opts)
 		if err != nil {
-			var ghErr *github.ErrorResponse
-			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-				return nil, ErrServiceUnavailable
-			}
-			return nil, fmt.Errorf("list repositories: %w", err)
+			return nil, extractHTTPError(err)
 		}
 
 		for _, repo := range result.Repositories {
@@ -191,11 +207,7 @@ func (r *githubClient) CreateInstallationAccessToken(ctx context.Context, instal
 
 	token, _, err := r.gh.Apps.CreateInstallationToken(ctx, int64(id), opts)
 	if err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return InstallationToken{}, ErrServiceUnavailable
-		}
-		return InstallationToken{}, err
+		return InstallationToken{}, extractHTTPError(err)
 	}
 
 	return InstallationToken{

@@ -21,10 +21,10 @@ const (
 	// ReasonAvailable indicates the resource is available and ready for use.
 	ReasonAvailable = "Available"
 
-	// ReasonInvalidConfiguration indicates the resource has a configuration issue
+	// ReasonInvalidSpec indicates the resource has a configuration issue
 	// with the spec format or structure (validation errors, invalid fields, secret errors).
 	// Automation should NOT automatically retry - wait for user to fix configuration.
-	ReasonInvalidConfiguration = "InvalidConfiguration"
+	ReasonInvalidSpec = "InvalidSpec"
 
 	// ReasonAuthenticationFailed indicates authentication or authorization failed
 	// (invalid credentials, wrong app ID, expired token, insufficient permissions).

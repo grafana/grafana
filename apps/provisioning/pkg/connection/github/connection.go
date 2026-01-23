@@ -55,35 +55,40 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 
 	app, err := ghClient.GetApp(ctx)
 	if err != nil {
-		if errors.Is(err, ErrServiceUnavailable) {
-			return &provisioning.TestResults{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: provisioning.APIVERSION,
-					Kind:       "TestResults",
-				},
-				Code:    http.StatusServiceUnavailable,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{
-					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "token").String(),
-						Detail: ErrServiceUnavailable.Error(),
-					},
-				},
-			}, nil
+		// Map sentinel errors to HTTP status codes
+		statusCode := http.StatusBadRequest
+		errorDetail := "invalid token"
+
+		switch {
+		case errors.Is(err, ErrUnauthorized):
+			statusCode = http.StatusUnauthorized
+			errorDetail = err.Error()
+		case errors.Is(err, ErrForbidden):
+			statusCode = http.StatusForbidden
+			errorDetail = err.Error()
+		case errors.Is(err, ErrRateLimited):
+			statusCode = http.StatusTooManyRequests
+			errorDetail = err.Error()
+		case errors.Is(err, ErrServiceUnavailable):
+			statusCode = http.StatusServiceUnavailable
+			errorDetail = err.Error()
+		default:
+			// Unknown error - keep default BadRequest
+			errorDetail = "invalid token"
 		}
+
 		return &provisioning.TestResults{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: provisioning.APIVERSION,
 				Kind:       "TestResults",
 			},
-			Code:    http.StatusBadRequest,
+			Code:    statusCode,
 			Success: false,
 			Errors: []provisioning.ErrorDetails{
 				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  field.NewPath("spec", "token").String(),
-					Detail: "invalid token",
+					Detail: errorDetail,
 				},
 			},
 		}, nil
@@ -109,35 +114,40 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 
 	_, err = ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
 	if err != nil {
-		if errors.Is(err, ErrServiceUnavailable) {
-			return &provisioning.TestResults{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: provisioning.APIVERSION,
-					Kind:       "TestResults",
-				},
-				Code:    http.StatusServiceUnavailable,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{
-					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "token").String(),
-						Detail: ErrServiceUnavailable.Error(),
-					},
-				},
-			}, nil
+		// Map sentinel errors to HTTP status codes
+		statusCode := http.StatusBadRequest
+		errorDetail := fmt.Sprintf("invalid installation ID: %s", c.obj.Spec.GitHub.InstallationID)
+
+		switch {
+		case errors.Is(err, ErrUnauthorized):
+			statusCode = http.StatusUnauthorized
+			errorDetail = err.Error()
+		case errors.Is(err, ErrForbidden):
+			statusCode = http.StatusForbidden
+			errorDetail = err.Error()
+		case errors.Is(err, ErrRateLimited):
+			statusCode = http.StatusTooManyRequests
+			errorDetail = err.Error()
+		case errors.Is(err, ErrServiceUnavailable):
+			statusCode = http.StatusServiceUnavailable
+			errorDetail = err.Error()
+		default:
+			// Unknown error - keep default message with installation ID
+			errorDetail = fmt.Sprintf("invalid installation ID: %s", c.obj.Spec.GitHub.InstallationID)
 		}
+
 		return &provisioning.TestResults{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: provisioning.APIVERSION,
 				Kind:       "TestResults",
 			},
-			Code:    http.StatusBadRequest,
+			Code:    statusCode,
 			Success: false,
 			Errors: []provisioning.ErrorDetails{
 				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  field.NewPath("spec", "installationID").String(),
-					Detail: fmt.Sprintf("invalid installation ID: %s", c.obj.Spec.GitHub.InstallationID),
+					Detail: errorDetail,
 				},
 			},
 		}, nil

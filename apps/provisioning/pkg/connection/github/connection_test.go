@@ -357,7 +357,7 @@ func TestConnection_Test(t *testing.T) {
 			expectedErrors: []provisioning.ErrorDetails{
 				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.token",
+					Field:  "spec.installationID",
 					Detail: github.ErrServiceUnavailable.Error(),
 				},
 			},
@@ -386,6 +386,84 @@ func TestConnection_Test(t *testing.T) {
 					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  "spec.installationID",
 					Detail: "invalid installation ID: 456",
+				},
+			},
+		},
+		{
+			name: "failure - GetApp returns unauthorized (401)",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{}, github.ErrUnauthorized)
+			},
+			expectedCode:  http.StatusUnauthorized,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.token",
+					Detail: github.ErrUnauthorized.Error(),
+				},
+			},
+		},
+		{
+			name: "failure - GetApp returns forbidden (403)",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{}, github.ErrForbidden)
+			},
+			expectedCode:  http.StatusForbidden,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.token",
+					Detail: github.ErrForbidden.Error(),
+				},
+			},
+		},
+		{
+			name: "failure - GetApp returns rate limited (429)",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
+				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{}, github.ErrRateLimited)
+			},
+			expectedCode:  http.StatusTooManyRequests,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.token",
+					Detail: github.ErrRateLimited.Error(),
 				},
 			},
 		},
