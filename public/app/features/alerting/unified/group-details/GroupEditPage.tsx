@@ -35,6 +35,7 @@ import { isLoading, useAsync } from '../hooks/useAsync';
 import { useFolder } from '../hooks/useFolder';
 import { useRuleGroupConsistencyCheck } from '../hooks/usePrometheusConsistencyCheck';
 import { useReturnTo } from '../hooks/useReturnTo';
+import { getAlertRulesNavId } from '../navigation/useAlertRulesNav';
 import { SwapOperation } from '../reducers/ruler/ruleGroups';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
 import { ruleGroupIdentifierV2toV1 } from '../utils/groupIdentifier';
@@ -99,7 +100,7 @@ function GroupEditPage() {
 
   if (!!dsFeatures && !dsFeatures.rulerConfig) {
     return (
-      <AlertingPageWrapper pageNav={pageNav} navId="alert-list" isLoading={isLoadingGroup}>
+      <AlertingPageWrapper pageNav={pageNav} navId={getAlertRulesNavId()} isLoading={isLoadingGroup}>
         <Alert title={t('alerting.group-edit.group-not-editable', 'Selected group cannot be edited')}>
           <Trans i18nKey="alerting.group-edit.group-not-editable-description">
             This group belongs to a data source that does not support editing.
@@ -124,7 +125,7 @@ function GroupEditPage() {
         };
 
   return (
-    <AlertingPageWrapper pageNav={pageNav} navId="alert-list" isLoading={isLoadingGroup}>
+    <AlertingPageWrapper pageNav={pageNav} navId={getAlertRulesNavId()} isLoading={isLoadingGroup}>
       <>
         {Boolean(dsFeaturesError) && (
           <Alert
