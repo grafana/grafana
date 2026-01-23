@@ -628,6 +628,12 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = provisioningSect.NewKey("repository_types", strings.Join(opts.ProvisioningRepositoryTypes, "|"))
 		require.NoError(t, err)
 	}
+	if opts.ProvisioningMaxResourcesPerRepository > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("max_resources_per_repository", fmt.Sprintf("%d", opts.ProvisioningMaxResourcesPerRepository))
+		require.NoError(t, err)
+	}
 	if opts.EnableSCIM {
 		scimSection, err := getOrCreateSection("auth.scim")
 		require.NoError(t, err)
@@ -738,6 +744,7 @@ type GrafanaOpts struct {
 	PermittedProvisioningPaths            string
 	ProvisioningAllowedTargets            []string
 	ProvisioningRepositoryTypes           []string
+	ProvisioningMaxResourcesPerRepository int64
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string
 	EnableRecordingRules                  bool
