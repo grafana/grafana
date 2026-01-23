@@ -136,6 +136,9 @@ To create a dashboard, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**.
 
+{{< /shared >}}
+{{< /docs/list >}}
+
 ## Dashboard edit
 
 Now that you've created a basic dashboard, you can augment it with more options.
