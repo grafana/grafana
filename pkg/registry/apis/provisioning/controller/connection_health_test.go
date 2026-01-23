@@ -319,7 +319,7 @@ func TestClassifyConnectionError(t *testing.T) {
 				Code:    http.StatusBadRequest,
 				Errors:  []provisioning.ErrorDetails{{Detail: "invalid appID"}},
 			},
-			expectedReason: provisioning.ReasonAuthenticationFailed,
+			expectedReason: provisioning.ReasonInvalidConfiguration,
 		},
 		{
 			name: "unauthorized (401)",
@@ -373,7 +373,7 @@ func TestClassifyConnectionError(t *testing.T) {
 				Code:    http.StatusGatewayTimeout,
 				Errors:  []provisioning.ErrorDetails{{Detail: "connection timeout"}},
 			},
-			expectedReason: provisioning.ReasonServiceUnavailable,
+			expectedReason: provisioning.ReasonInvalidConfiguration,
 		},
 		{
 			name: "too many requests (429)",
@@ -382,7 +382,7 @@ func TestClassifyConnectionError(t *testing.T) {
 				Code:    http.StatusTooManyRequests,
 				Errors:  []provisioning.ErrorDetails{{Detail: "rate limit exceeded"}},
 			},
-			expectedReason: provisioning.ReasonRateLimited,
+			expectedReason: provisioning.ReasonInvalidConfiguration,
 		},
 		{
 			name: "unknown error code defaults to invalid configuration",
@@ -452,7 +452,7 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 			},
 			testResults: &provisioning.TestResults{
 				Success: false,
-				Code:    http.StatusBadRequest,
+				Code:    http.StatusUnauthorized,
 				Errors: []provisioning.ErrorDetails{
 					{Detail: "invalid credentials"},
 				},

@@ -103,26 +103,21 @@ func (hc *ConnectionHealthChecker) hasHealthStatusChanged(old, new provisioning.
 }
 
 // classifyConnectionError determines the appropriate Ready condition reason based on test results.
-// Returns one of: Available, InvalidConfiguration, AuthenticationFailed, ServiceUnavailable, or RateLimited.
+// Returns one of: Available, InvalidSpec, AuthenticationFailed, or ServiceUnavailable.
 func classifyConnectionError(testResults *provisioning.TestResults) string {
 	if testResults.Success {
 		return provisioning.ReasonAvailable
 	}
 
 	// Map HTTP status codes to condition reasons
+	// We only map status codes that connections actually return
 	switch testResults.Code {
-	case 422: // Unprocessable Entity - spec validation failed
-		return provisioning.ReasonInvalidConfiguration
-	case 400, 401, 403: // Client errors - authentication/authorization issues
+	case 401, 403: // Authentication/authorization failed
 		return provisioning.ReasonAuthenticationFailed
-	case 500, 502: // Server errors - usually secret/build issues
-		return provisioning.ReasonInvalidConfiguration
-	case 503, 504: // Service unavailable, gateway timeout
+	case 503: // Service unavailable
 		return provisioning.ReasonServiceUnavailable
-	case 429: // Too many requests - rate limited
-		return provisioning.ReasonRateLimited
 	default:
-		// Unknown error - default to configuration error to prompt investigation
+		// All other errors (422, 500, etc.) are spec/configuration issues
 		return provisioning.ReasonInvalidConfiguration
 	}
 }
