@@ -119,10 +119,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Receiver'],
       }),
-      getReceiverTest: build.query<GetReceiverTestApiResponse, GetReceiverTestApiArg>({
-        query: (queryArg) => ({ url: `/receivers/${queryArg.name}/test` }),
-        providesTags: ['Receiver'],
-      }),
       createReceiverTest: build.mutation<CreateReceiverTestApiResponse, CreateReceiverTestApiArg>({
         query: (queryArg) => ({ url: `/receivers/${queryArg.name}/test`, method: 'POST' }),
         invalidatesTags: ['Receiver'],
@@ -633,11 +629,6 @@ export type UpdateReceiverApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
-};
-export type GetReceiverTestApiResponse = /** status 200 OK */ GetReceiverIntegrationTest;
-export type GetReceiverTestApiArg = {
-  /** name of the ResourceCallOptions */
-  name: string;
 };
 export type CreateReceiverTestApiResponse = /** status 200 OK */ CreateReceiverIntegrationTest;
 export type CreateReceiverTestApiArg = {
@@ -1346,13 +1337,6 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
-export type GetReceiverIntegrationTest = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion: string;
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind: string;
-  status: string;
-};
 export type CreateReceiverIntegrationTest = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion: string;
@@ -1472,8 +1456,6 @@ export const {
   useReplaceReceiverMutation,
   useDeleteReceiverMutation,
   useUpdateReceiverMutation,
-  useGetReceiverTestQuery,
-  useLazyGetReceiverTestQuery,
   useCreateReceiverTestMutation,
   useListRoutingTreeQuery,
   useLazyListRoutingTreeQuery,

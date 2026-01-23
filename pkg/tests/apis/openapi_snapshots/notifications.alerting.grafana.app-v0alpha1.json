@@ -786,31 +786,6 @@
       ]
     },
     "/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/receivers/{name}/test": {
-      "get": {
-        "tags": [
-          "Receiver"
-        ],
-        "description": "connect GET requests to test of Receiver",
-        "operationId": "getReceiverTest",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetReceiverIntegrationTest"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "notifications.alerting.grafana.app",
-          "version": "v0alpha1",
-          "kind": "ResourceCallOptions"
-        }
-      },
       "post": {
         "tags": [
           "Receiver"
@@ -3156,27 +3131,6 @@
               "success",
               "failure"
             ]
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetReceiverIntegrationTest": {
-        "type": "object",
-        "required": [
-          "status",
-          "apiVersion",
-          "kind"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
           }
         }
       },
