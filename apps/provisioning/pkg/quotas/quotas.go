@@ -17,7 +17,6 @@ type QuotaLimits struct {
 
 	// MaxRepositories is the maximum number of repositories allowed per namespace.
 	// 0 = unlimited, > 0 = use value
-	// HACK: NewHackyQuota converts -1 → 0 (unlimited), 0 → 10 (default), N → N
 	MaxRepositories int64
 }
 
