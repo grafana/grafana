@@ -8,6 +8,7 @@
 package v0alpha1
 
 import (
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -194,6 +195,13 @@ func (in *ConnectionStatus) DeepCopyInto(out *ConnectionStatus) {
 		in, out := &in.FieldErrors, &out.FieldErrors
 		*out = make([]ErrorDetails, len(*in))
 		copy(*out, *in)
+	}
+	if in.Conditions != nil {
+		in, out := &in.Conditions, &out.Conditions
+		*out = make([]v1.Condition, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 	in.Health.DeepCopyInto(&out.Health)
 	return
@@ -1015,6 +1023,13 @@ func (in *RepositoryStatus) DeepCopyInto(out *RepositoryStatus) {
 		in, out := &in.FieldErrors, &out.FieldErrors
 		*out = make([]ErrorDetails, len(*in))
 		copy(*out, *in)
+	}
+	if in.Conditions != nil {
+		in, out := &in.Conditions, &out.Conditions
+		*out = make([]v1.Condition, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
 	}
 	in.Health.DeepCopyInto(&out.Health)
 	in.Sync.DeepCopyInto(&out.Sync)
