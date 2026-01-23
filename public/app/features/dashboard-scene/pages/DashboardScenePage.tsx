@@ -27,7 +27,7 @@ import { getDashboardScenePageStateManager } from './DashboardScenePageStateMana
 import { shouldHideDashboardKioskFooter } from './utils';
 
 export interface Props
-  extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> {}
+  extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> { }
 
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
@@ -38,32 +38,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, isLoading, loadError } = stateManager.useState();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
-  const routeReloadCounter = (() => {
-    const state = location.state;
-    if (state && typeof state === 'object') {
-      const value = Reflect.get(state, 'routeReloadCounter');
-      return typeof value === 'number' ? value : undefined;
-    }
-
-    return undefined;
-  })();
-
-  const dashboardRoute = (() => {
-    switch (route.routeName) {
-      case DashboardRoutes.Home:
-      case DashboardRoutes.New:
-      case DashboardRoutes.Template:
-      case DashboardRoutes.Normal:
-      case DashboardRoutes.Provisioning:
-      case DashboardRoutes.Scripted:
-      case DashboardRoutes.Public:
-      case DashboardRoutes.Embedded:
-      case DashboardRoutes.Report:
-        return route.routeName;
-      default:
-        return DashboardRoutes.Normal;
-    }
-  })();
+  const routeReloadCounter = (location.state as any)?.routeReloadCounter;
   const prevParams = useRef<Params<string>>(params);
 
   useEffect(() => {
@@ -74,7 +49,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
         uid: (route.routeName === DashboardRoutes.Provisioning ? path : uid) ?? '',
         type,
         slug,
-        route: dashboardRoute,
+        route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
       });
     }
