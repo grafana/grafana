@@ -24,47 +24,25 @@ func ReadExportResponse(routeName string, exportType string) ([]byte, error) {
 	return Responses.ReadFile(routeNameToFilename(routeName, exportType))
 }
 
-var AllRoutes = func() map[string]*definitions.Route {
-	return map[string]*definitions.Route{
-		"empty":            Empty(),
-		"override-inherit": OverrideInherit(),
-		"matcher-variety":  MatcherVariety(),
-		"special-cases":    SpecialCases(),
-		"deeply-nested":    DeeplyNested(),
-		"user-defined":     Legacy(),
-	}
-}
-
 var Config = func() *definitions.PostableUserConfig {
 	return &definitions.PostableUserConfig{
 		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
 			Config: definitions.Config{
 				Route: Legacy(),
-				// Add time interval references to help tests avoid validation errors.
-				TimeIntervals: []prometheus.TimeInterval{
-					{Name: "interval"},
-					{Name: "active"},
-					{Name: "Some interval"},
-					{Name: "A provisioned interval"},
-					{Name: "Some interval override"},
-					{Name: "A provisioned interval override"},
-				},
 			},
-			// Add receiver references to help tests avoid validation errors.
-			Receivers: []*definition.PostableApiReceiver{
-				{Receiver: prometheus.Receiver{Name: "default-receiver"}},
-				{Receiver: prometheus.Receiver{Name: "lotsa-emails"}},
-				{Receiver: prometheus.Receiver{Name: "lotsa-emails-override"}},
-				{Receiver: prometheus.Receiver{Name: "slack-multi-channel"}},
-				{Receiver: prometheus.Receiver{Name: "provisioned-contact-point"}},
-				{Receiver: prometheus.Receiver{Name: "nested-receiver"}},
-			},
+		},
+		ManagedRoutes: map[string]*definition.Route{
+			"empty":            Empty(),
+			"override-inherit": OverrideInherit(),
+			"matcher-variety":  MatcherVariety(),
+			"special-cases":    SpecialCases(),
+			"deeply-nested":    DeeplyNested(),
 		},
 	}
 }
 
 var Legacy = func() *definitions.Route {
-	r := &definitions.Route{
+	return &definitions.Route{
 		Receiver:       "default-receiver",
 		GroupByStr:     []string{"g1", "g2"},
 		GroupWait:      util.Pointer(model.Duration(time.Duration(30) * time.Second)),
@@ -89,20 +67,16 @@ var Legacy = func() *definitions.Route {
 			RepeatInterval:      util.Pointer(model.Duration(time.Duration(5) * time.Minute)),
 		}},
 	}
-	_ = r.Validate()
-	return r
 }
 
 var Empty = func() *definitions.Route {
-	r := &definitions.Route{
+	return &definitions.Route{
 		Receiver: "default-receiver",
 	}
-	_ = r.Validate()
-	return r
 }
 
 var OverrideInherit = func() *definitions.Route {
-	r := &definitions.Route{
+	return &definitions.Route{
 		Receiver:       "provisioned-contact-point",
 		GroupByStr:     []string{"alertname"},
 		GroupWait:      util.Pointer(model.Duration(time.Duration(1) * time.Second)),
@@ -167,12 +141,10 @@ var OverrideInherit = func() *definitions.Route {
 			},
 		},
 	}
-	_ = r.Validate()
-	return r
 }
 
 var MatcherVariety = func() *definitions.Route {
-	r := &definitions.Route{
+	return &definitions.Route{
 		Receiver:       "lotsa-emails",
 		GroupByStr:     []string{"alertname"},
 		GroupWait:      util.Pointer(model.Duration(time.Duration(2) * time.Second)),
@@ -201,12 +173,10 @@ var MatcherVariety = func() *definitions.Route {
 			},
 		},
 	}
-	_ = r.Validate()
-	return r
 }
 
 var SpecialCases = func() *definitions.Route {
-	r := &definitions.Route{
+	return &definitions.Route{
 		Receiver:   "default-receiver",
 		GroupByStr: []string{"..."}, // No Grouping.
 		Routes: []*definitions.Route{
@@ -228,12 +198,10 @@ var SpecialCases = func() *definitions.Route {
 			},
 		},
 	}
-	_ = r.Validate()
-	return r
 }
 
 var DeeplyNested = func() *definitions.Route {
-	r := &definitions.Route{
+	return &definitions.Route{
 		Receiver:       "slack-multi-channel",
 		GroupByStr:     []string{"alertname"},
 		GroupWait:      util.Pointer(model.Duration(time.Duration(3) * time.Second)),
@@ -265,6 +233,4 @@ var DeeplyNested = func() *definitions.Route {
 			},
 		},
 	}
-	_ = r.Validate()
-	return r
 }

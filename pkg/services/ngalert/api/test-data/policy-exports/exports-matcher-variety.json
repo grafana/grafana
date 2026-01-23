@@ -3,6 +3,7 @@
  "policies": [
   {
    "orgId": 1,
+   "name": "matcher-variety",
    "receiver": "lotsa-emails",
    "group_by": [
     "alertname"

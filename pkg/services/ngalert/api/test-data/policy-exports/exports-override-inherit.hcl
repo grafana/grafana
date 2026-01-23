@@ -1,4 +1,5 @@
 resource "grafana_notification_policy" "notification_policy_1" {
+  name          = "override-inherit"
   contact_point = "provisioned-contact-point"
   group_by      = ["alertname"]
 

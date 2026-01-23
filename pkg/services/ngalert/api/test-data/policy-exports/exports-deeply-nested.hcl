@@ -1,4 +1,5 @@
 resource "grafana_notification_policy" "notification_policy_1" {
+  name          = "deeply-nested"
   contact_point = "slack-multi-channel"
   group_by      = ["alertname"]
 

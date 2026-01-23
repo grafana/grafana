@@ -3,6 +3,7 @@
  "policies": [
   {
    "orgId": 1,
+   "name": "special-cases",
    "receiver": "default-receiver",
    "group_by": [
     "..."
