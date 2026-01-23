@@ -74,7 +74,7 @@ function useScopeTreeActions(searchQuery: string, parentId?: string | null) {
   }, [filterNode, searchQuery, parentId]);
 
   return useMemo(
-    () => mapScopesNodesTreeToActions(nodes ?? {}, tree!, selectedScopes ?? [], selectScope),
+    () => mapScopesNodesTreeToActions(nodes ?? {}, tree, selectedScopes ?? [], selectScope),
     [nodes, tree, selectedScopes, selectScope]
   );
 }
