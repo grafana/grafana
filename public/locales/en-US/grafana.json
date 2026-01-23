@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "Deprecated",
       "delete": "Delete",
       "duplicate": "Duplicate",
       "label-integration": "Integration",
       "label-notification-settings": "Notification settings",
       "label-section": "Optional {{name}} settings",
       "test": "Test",
+      "tooltip-deprecated": "This integration is deprecated and will be removed in a future release.",
       "tooltip-legacy-version": "This is a legacy integration (version: {{version}}). It cannot be modified."
     },
     "classic-condition-viewer": {
@@ -1643,6 +1645,11 @@
       },
       "yaml-error": "Failed to parse YAML file: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "This Alertmanager has inhibition rules configured. Some alerts may be suppressed when matching alerts are firing.",
+      "learn-more": "Learn more about inhibition rules",
+      "title": "Inhibition rules are in effect"
+    },
     "insights": {
       "monitor-status-of-system": "Monitor the status of your system",
       "monitor-status-system-tooltip": "Alerting insights provides pre-built dashboards to monitor your alerting data.",
@@ -1928,6 +1935,10 @@
     "namespace-and-group-filter": {
       "select-group": "Select group",
       "select-namespace": "Select namespace"
+    },
+    "navigation": {
+      "alert-rules": "Alert rules",
+      "recently-deleted": "Recently deleted"
     },
     "need-help-info": {
       "need-help": "Need help?"
@@ -9820,7 +9831,7 @@
     "loading-panel-text": "Loading library panel",
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
       "button-cancel": "Cancel",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
@@ -11871,10 +11882,7 @@
       "delete-title": "Delete connection",
       "error-loading": "Failed to load connections",
       "no-connections": "No connections configured",
-      "no-connections-message": "Add a connection to authenticate with external providers",
       "no-results": "No results matching your query",
-      "page-subtitle": "View and manage your app connections",
-      "page-title": "Connections",
       "search-placeholder": "Search connections",
       "status-connected": "Connected",
       "status-disconnected": "Disconnected",
@@ -12063,6 +12071,8 @@
       "error-delete-all-repositories": "Failed to delete all repositories",
       "subtitle": "View and manage your configured repositories",
       "success-all-repositories-deleted": "All configured repositories deleted",
+      "tab-connections": "Connections",
+      "tab-connections-title": "List of connections",
       "tab-getting-started": "Getting started",
       "tab-getting-started-title": "Getting started",
       "tab-repositories": "Repositories",
@@ -12126,6 +12136,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": "Repository was saved but no name was returned"
+        },
         "title": {
           "repository-connection-failed": "Repository connection failed",
           "repository-request-failed": "Repository request failed"
@@ -12146,7 +12159,6 @@
       "jobs": "Jobs"
     },
     "repository-actions": {
-      "connections": "Connections",
       "settings": "Settings",
       "source-code": "Source code"
     },
@@ -12326,6 +12338,11 @@
       "alert-point-permissions": "Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer roles are preserved with their standard access levels.",
       "alert-point-unsupported": "Alerts and library panels are not supported in provisioned folders.",
       "alert-title": "Important: Review Git Sync limitations before proceeding",
+      "auth-type-github-app-description": "Use a GitHub App for enhanced security and team collaboration. Recommended for production environments.",
+      "auth-type-github-app-label": "Connect with GitHub App",
+      "auth-type-pat-description": "Use a personal access token to authenticate with GitHub. Suitable for individual use and testing.",
+      "auth-type-pat-label": "Connect with Personal Access Token",
+      "auth-type-subtitle": "Both methods provide secure access to your GitHub repositories. Choose the one that best fits your workflow and security requirements.",
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
       "button-next": "Finish",
@@ -12338,15 +12355,30 @@
         "dismiss": "Keep working",
         "title": "Discard repository setup?"
       },
+      "github-app-creation-default-error": "Failed to create connection",
+      "github-app-creation-failed": "Failed to create GitHub App connection",
+      "github-app-error-loading": "Failed to load connections",
+      "github-app-error-required": "Connection is required",
+      "github-app-mode-existing": "Choose an existing app",
+      "github-app-mode-label": "GitHub App configuration",
+      "github-app-mode-new": "Connect to a new app",
+      "github-app-no-connections": "No GitHub connections found",
+      "github-app-no-connections-message": "You don't have any existing GitHub app connections. Please select \"Connect to a new app\" to create one.",
+      "step-auth-type": "Choose connection type",
       "step-bootstrap": "Choose what to synchronize",
+      "step-configure-repo": "Configure repository",
       "step-connect": "Connect",
       "step-finish": "Choose additional settings",
+      "step-github-app": "Connect",
       "step-synchronize": "Synchronize with external storage",
       "sync-description": "Sync resources with external storage. After this one-time step, all future updates will be automatically saved to the repository and provisioned back into the instance.",
       "sync-option-migrate-resources": "Migrate existing resources",
+      "title-auth-type": "Choose connection type",
       "title-bootstrap": "Choose what to synchronize",
+      "title-configure-repo": "Configure repository",
       "title-connect": "Connect to external storage",
       "title-finish": "Choose additional settings",
+      "title-github-app": "Connect to GitHub",
       "title-synchronize": "Synchronize with external storage"
     },
     "wizard-content": {
@@ -12564,6 +12596,11 @@
       "query-inspector": "Query inspector",
       "query-tab-help-button-title-open-data-source-help": "Open data source help",
       "title-data-source-help": "Data source help"
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": "Open Query Library"
     }
   },
   "query-operation": {

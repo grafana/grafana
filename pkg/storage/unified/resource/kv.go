@@ -237,16 +237,7 @@ func (k *badgerKV) Delete(ctx context.Context, section string, key string) error
 
 	key = section + "/" + key
 
-	// Check if key exists before deleting
-	_, err := txn.Get([]byte(key))
-	if err != nil {
-		if errors.Is(err, badger.ErrKeyNotFound) {
-			return ErrNotFound
-		}
-		return err
-	}
-
-	err = txn.Delete([]byte(key))
+	err := txn.Delete([]byte(key))
 	if err != nil {
 		return err
 	}

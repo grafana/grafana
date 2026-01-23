@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useLayoutEffect } from 'react';
-import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -57,7 +56,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
-  const isNewEmptyDashboard = !dashboard.state.uid;
+  const isEditingNewDashboard = isEditing && !dashboard.state.uid;
 
   /**
    * Adds star button and left side actions to app chrome breadcrumb area
@@ -75,16 +74,16 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     }
   }, [isEditing, editPane]);
 
-  useEffectOnce(() => {
-    if (isNewEmptyDashboard) {
+  useEffect(() => {
+    if (isEditingNewDashboard) {
       editPane.openPane('add');
     }
-  });
+  }, [isEditingNewDashboard, editPane]);
 
   const { selectionContext, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
 
   const sidebarContext = useSidebar({
-    hasOpenPane: Boolean(openPane) || isNewEmptyDashboard,
+    hasOpenPane: Boolean(openPane) || isEditingNewDashboard,
     contentMargin: 1,
     position: 'right',
     persistanceKey: 'dashboard',

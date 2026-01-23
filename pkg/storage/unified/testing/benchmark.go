@@ -53,7 +53,7 @@ func initializeBackend(ctx context.Context, backend resource.StorageBackend, opt
 			group := fmt.Sprintf("group-%d", g)
 			for r := 0; r < opts.NumResourceTypes; r++ {
 				resourceType := fmt.Sprintf("resource-%d", r)
-				_, err := writeEvent(ctx, backend, "init", resourcepb.WatchEvent_ADDED,
+				_, err := WriteEvent(ctx, backend, "init", resourcepb.WatchEvent_ADDED,
 					WithNamespace(namespace),
 					WithGroup(group),
 					WithResource(resourceType),
@@ -104,7 +104,7 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 				name := fmt.Sprintf("item-%d", uniqueID)
 
 				writeStart := time.Now()
-				_, err := writeEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
+				_, err := WriteEvent(ctx, backend, name, resourcepb.WatchEvent_ADDED,
 					WithNamespace(namespace),
 					WithGroup(group),
 					WithResource(resourceType),
