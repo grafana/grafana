@@ -82,7 +82,7 @@ To create a dashboard, follow these steps:
 
 1. On the new panel, click **Configure**.
 
-      The **Edit panel** view opens with the default data source for your instance preselected.
+   The **Edit panel** view opens with the default data source for your instance preselected.
 
 1. If you want to change the panel data source, in the **Queries** tab, click the **Data source** drop-down list and do one of the following:
    - Select one of your existing data sources.
@@ -187,10 +187,9 @@ To edit a dashboard, follow these steps:
 1. Click **Edit**.
 1. Click the part of the dashboard you want to update to open the edit pane, or click the **Dashboard options** icon to open it.
 
-    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
+   If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
 
 1. Do one of the following:
-
    - Update an existing dashboard element
    - Click the **Add new element** icon in the sidebar.
 

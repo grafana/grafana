@@ -57,11 +57,11 @@ To create your first dashboard using the built-in `-- Grafana --` data source:
 
 1. On the new panel, click **Configure**.
 
-      The **Edit panel** view opens with the default data source for your instance preselected.
+   The **Edit panel** view opens with the default data source for your instance preselected.
 
 1. In the **Queries** tab, click the **Data source** drop-down list, enter `-- Grafana --`, and select that data source.
 
-    This configures your [query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#add-a-query) and generates the Random Walk dashboard.
+   This configures your [query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#add-a-query) and generates the Random Walk dashboard.
 
 1. In the panel edit pane, select the **Time series** visualization.
 1. Click **Refresh** to query the data source.
