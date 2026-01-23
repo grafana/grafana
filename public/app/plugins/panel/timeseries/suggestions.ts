@@ -82,6 +82,11 @@ export const timeseriesSuggestionsSupplier: VisualizationSuggestionsSupplier<Opt
     return;
   }
 
+  // don't suggest timeseries for instant queries
+  if (dataSummary.isInstant) {
+    return;
+  }
+
   const score: VisualizationSuggestionScore =
     dataSummary.hasDataFrameType(DataFrameType.TimeSeriesLong) ||
     dataSummary.hasDataFrameType(DataFrameType.TimeSeriesWide) ||
