@@ -209,9 +209,9 @@ func TestJobProgressRecorderWarningWithErrors(t *testing.T) {
 	// Complete the job
 	finalStatus := recorder.Complete(ctx, nil)
 
-	// When there are errors, the state should be Warning (not Error unless too many)
-	// and warnings should still be included
-	assert.Equal(t, provisioning.JobStateWarning, finalStatus.State)
+	// When there are errors, the state should be Error (any errors = error state)
+	// Warnings should still be included in the response
+	assert.Equal(t, provisioning.JobStateError, finalStatus.State)
 	assert.Equal(t, "completed with errors", finalStatus.Message)
 	assert.Len(t, finalStatus.Errors, 1)
 	assert.Contains(t, finalStatus.Errors[0], "failed to process")
