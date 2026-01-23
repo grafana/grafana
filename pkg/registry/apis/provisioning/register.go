@@ -91,9 +91,10 @@ type APIBuilder struct {
 	onlyApiServer                       bool
 	useExclusivelyAccessCheckerForAuthz bool
 
-	allowedTargets      []provisioning.SyncTargetType
-	allowImageRendering bool
-	minSyncInterval     time.Duration
+	allowedTargets            []provisioning.SyncTargetType
+	allowImageRendering       bool
+	minSyncInterval           time.Duration
+	maxResourcesPerRepository int64
 
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
@@ -211,6 +212,14 @@ func NewAPIBuilder(
 	return b
 }
 
+// SetMaxResourcesPerRepository sets the maximum resources per repository limit.
+// HACK: This is a workaround to avoid changing NewAPIBuilder signature which would require
+// changes in the enterprise repository. This should be moved to NewAPIBuilder parameters
+// once we can coordinate the change across repositories.
+func (b *APIBuilder) SetMaxResourcesPerRepository(maxResourcesPerRepository int64) {
+	b.maxResourcesPerRepository = maxResourcesPerRepository
+}
+
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
 func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 	// If LokiURL is defined, use Loki
@@ -299,6 +308,9 @@ func RegisterAPIService(
 		nil,
 		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
 	)
+	// HACK: Set maxResourcesPerRepository after construction to avoid changing NewAPIBuilder signature.
+	// See SetMaxResourcesPerRepository for details.
+	builder.SetMaxResourcesPerRepository(cfg.ProvisioningMaxResourcesPerRepository)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -787,6 +799,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.tracer,
 				10,
 			)
+			// HACK: Set maxResourcesPerRepository after construction to avoid changing NewSyncWorker signature.
+			// See SetMaxResourcesPerRepository for details.
+			syncWorker.SetMaxResourcesPerRepository(b.maxResourcesPerRepository)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
