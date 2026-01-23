@@ -8,15 +8,14 @@ type TeamLBACRuleSpec struct {
 	DatasourceUid string `json:"datasource_uid"`
 	// Data source type that this TeamLBAC Rule applies to
 	DatasourceType string `json:"datasource_type"`
-	// Team UID that this TeamLBAC Rule applies to
-	TeamUid string `json:"team_uid"`
-	// Filters for the TeamLBAC Rule
-	Filters []string `json:"filters"`
+	// Map of team UIDs to their filter lists
+	// Each team can have multiple filters
+	TeamFilters map[string][]string `json:"team_filters"`
 }
 
 // NewTeamLBACRuleSpec creates a new TeamLBACRuleSpec object.
 func NewTeamLBACRuleSpec() *TeamLBACRuleSpec {
 	return &TeamLBACRuleSpec{
-		Filters: []string{},
+		TeamFilters: map[string][]string{},
 	}
 }
