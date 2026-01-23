@@ -12,6 +12,7 @@ interface PluginOriginBadgeProps {
 }
 
 export function PluginOriginBadge({ pluginId, size = 'md' }: PluginOriginBadgeProps) {
+  // disable the error alert, in case the user has uninstalled the plugin
   const { value: pluginMeta, loading } = useAsync(() => getPluginSettings(pluginId, { showErrorAlert: false }));
 
   if (loading) {
