@@ -1,7 +1,5 @@
 import { HttpResponse, http } from 'msw';
 
-import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
-
 interface TestRequestBody {
   integration?: {
     uid?: string;
@@ -19,8 +17,8 @@ interface TestRequestBody {
 
 const testReceiverK8sHandler = () =>
   http.post<{ namespace: string; name: string }, TestRequestBody>(
-    `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers/:name/test`,
-    async ({ request, params }) => {
+    '/apis/alertingnotifications.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+    async ({ request }) => {
       const body = await request.json();
 
       // Validate request structure
