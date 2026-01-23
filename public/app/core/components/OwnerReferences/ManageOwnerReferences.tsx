@@ -1,6 +1,7 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { useState } from 'react';
 
+import { reportInteraction } from '@grafana/runtime';
 import { Box, Button, Combobox, ComboboxOption, Divider, Stack, Text } from '@grafana/ui';
 import { OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { useListTeamQuery, API_GROUP, API_VERSION } from 'app/api/clients/iam/v0alpha1';
@@ -43,8 +44,16 @@ export const ManageOwnerReferences = ({
   const ownerReferences = useGetOwnerReferences({ resource, resourceId });
   const [trigger, result] = useAddOwnerReference({ resource, resourceId });
 
-  const addOwnerReference = (ownerReference: OwnerReference) => {
-    trigger(ownerReference);
+  const handleAddNewReference = () => {
+    setAddingNewReference(true);
+    reportInteraction('grafana_manage_dashboards_add_new_owner_clicked');
+  };
+
+  const handleSaveNewReference = () => {
+    if (pendingReference) {
+      trigger(pendingReference);
+      reportInteraction('grafana_manage_dashboards_save_new_owner_clicked'); // TODO: add payload with number of teams?
+    }
   };
 
   return (
@@ -67,19 +76,14 @@ export const ManageOwnerReferences = ({
             <TeamSelector
               onChange={(ownerReference) => {
                 setPendingReference(ownerReference);
+                // TODO: requires error handling if user doesn't choose a team
               }}
             />
-            <Button
-              onClick={() => {
-                addOwnerReference(pendingReference);
-              }}
-            >
-              Save
-            </Button>
+            <Button onClick={handleSaveNewReference}>Save</Button>
             <Divider />
           </Box>
         )}
-        <Button onClick={() => setAddingNewReference(true)}>Add new owner reference</Button>
+        <Button onClick={handleAddNewReference}>Add new owner reference</Button>
       </Box>
     </Stack>
   );
