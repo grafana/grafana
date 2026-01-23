@@ -167,19 +167,18 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	dtoCmd.HomeDashboardID = dashboardID
 
 	patchCmd := pref.PatchPreferenceCommand{
-		UserID:            userID,
-		OrgID:             orgID,
-		TeamID:            teamId,
-		Theme:             dtoCmd.Theme,
-		Timezone:          dtoCmd.Timezone,
-		WeekStart:         dtoCmd.WeekStart,
-		HomeDashboardID:   dtoCmd.HomeDashboardID, // nolint:staticcheck
-		HomeDashboardUID:  dtoCmd.HomeDashboardUID,
-		Language:          dtoCmd.Language,
-		RegionalFormat:    dtoCmd.RegionalFormat,
-		QueryHistory:      dtoCmd.QueryHistory,
-		CookiePreferences: dtoCmd.Cookies,
-		Navbar:            dtoCmd.Navbar,
+		UserID:           userID,
+		OrgID:            orgID,
+		TeamID:           teamId,
+		Theme:            dtoCmd.Theme,
+		Timezone:         dtoCmd.Timezone,
+		WeekStart:        dtoCmd.WeekStart,
+		HomeDashboardID:  dtoCmd.HomeDashboardID, // nolint:staticcheck
+		HomeDashboardUID: dtoCmd.HomeDashboardUID,
+		Language:         dtoCmd.Language,
+		RegionalFormat:   dtoCmd.RegionalFormat,
+		QueryHistory:     dtoCmd.QueryHistory,
+		Navbar:           dtoCmd.Navbar,
 	}
 
 	if err := hs.preferenceService.Patch(ctx, &patchCmd); err != nil {

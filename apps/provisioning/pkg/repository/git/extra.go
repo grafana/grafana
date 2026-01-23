@@ -7,6 +7,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 type extra struct {
@@ -46,4 +47,8 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
 	return Mutate(ctx, obj)
+}
+
+func (e *extra) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	return Validate(ctx, obj)
 }

@@ -14,6 +14,10 @@ import {
   SceneGridItemLike,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
+
+import { DashboardInteractions } from '../utils/interactions';
+import { getDefaultVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
@@ -101,6 +105,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       document.body.removeEventListener('pointerup', this._onRowDragPointerUp, true);
       this._clearTabActivationTimer();
       this._clearDragPreview();
+      this._cleanupDragState();
     };
   }
 
@@ -139,6 +144,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     const sourceTabKey = this._findParentTabKey(gridItem);
     this.setState({ draggingGridItem: gridItem.getRef(), sourceTabKey });
+  }
+
+  public startDraggingNewPanel(): void {
+    document.body.addEventListener('pointermove', this._onNewPanelPointerMove, true);
+    document.body.addEventListener('pointerup', this._dropNewPanel, true);
   }
 
   private _stopDraggingSync(evt: PointerEvent) {
@@ -285,6 +295,55 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       this._finalizeRowDrag();
     }
     // If not detached, stopRowDrag from hello-pangea/dnd will handle cleanup
+  };
+
+  private _cleanupDragState() {
+    document.body.removeEventListener('pointermove', this._onNewPanelPointerMove, true);
+    document.body.removeEventListener('pointerup', this._dropNewPanel, true);
+    this._lastDropTarget = null;
+  }
+
+  private _dropNewPanel = (evt: PointerEvent): void => {
+    const lastDropTarget = this._lastDropTarget;
+    const elementsUnderPoint = document.elementsFromPoint(evt.clientX, evt.clientY);
+
+    // if the cursor is in the sidebar, don't add panel
+    const isInSidebar = elementsUnderPoint.some((el) => el.getAttribute('id') === 'sidebar-container');
+
+    if (isInSidebar) {
+      this._cleanupDragState();
+      return;
+    }
+
+    const panel = getDefaultVizPanel();
+
+    if (lastDropTarget) {
+      this._addPanelToLayout(lastDropTarget, panel);
+    } else {
+      // if no lastDropTarget and not in Sidebar, treat the dashboard itself as the drop target
+      this._getDashboard().addPanel(panel);
+    }
+
+    this._cleanupDragState();
+
+    DashboardInteractions.trackAddPanelClick(
+      'sidebar',
+      lastDropTarget ? getLayoutType(lastDropTarget) : 'dashboard',
+      'drop'
+    );
+  };
+
+  private _addPanelToLayout = (dropTarget: DashboardDropTarget, panel: VizPanel) => {
+    const dropTargetRowOrTab = sceneGraph.findObject(
+      dropTarget,
+      (currentSceneObject) => currentSceneObject instanceof RowItem || currentSceneObject instanceof TabItem
+    );
+    if (dropTargetRowOrTab instanceof RowItem || dropTargetRowOrTab instanceof TabItem) {
+      dropTargetRowOrTab.getLayout().addPanel(panel);
+    } else {
+      // if no root row or layout element, add the item into the dashboard directly
+      this._getDashboard().addPanel(panel);
+    }
   };
 
   /**
@@ -570,6 +629,23 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
     return undefined;
   }
+
+  private _onNewPanelPointerMove = (evt: PointerEvent): void => {
+    const dropTarget = this._getDropTargetUnderMouse(evt) ?? this._sourceDropTarget;
+
+    if (!dropTarget) {
+      return;
+    }
+
+    if (dropTarget !== this._lastDropTarget) {
+      this._lastDropTarget?.setIsDropTarget?.(false);
+      this._lastDropTarget = dropTarget;
+
+      if (dropTarget !== this._sourceDropTarget) {
+        dropTarget.setIsDropTarget?.(true);
+      }
+    }
+  };
 
   private _onPointerMove(evt: PointerEvent) {
     // Store cursor position early so it's available for immediate preview on tab switch

@@ -37,7 +37,7 @@ test.describe(
       const gaugeElements = dashboardPage.getByGrafanaSelector(
         selectors.components.Panels.Visualization.Gauge.Container
       );
-      await expect(gaugeElements).toHaveCount(32);
+      await expect(gaugeElements).toHaveCount(33); // the multi-link panel will not render the container, so it's 34 minus 1.
 
       // check that no panel errors exist
       const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
@@ -51,6 +51,33 @@ test.describe(
       });
 
       await expect(page.locator('.uplot')).toHaveCount(5);
+    });
+
+    test('data links', async ({ gotoDashboardPage, selectors, page }) => {
+      const singleLinkPanel = await gotoDashboardPage({
+        uid: NEW_GAUGES_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: '38' }),
+      });
+
+      await expect(
+        singleLinkPanel.getByGrafanaSelector(selectors.components.DataLinksContextMenu.singleLink)
+      ).toBeVisible();
+
+      const multiLinkPanel = await gotoDashboardPage({
+        uid: NEW_GAUGES_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: '39' }),
+      });
+
+      await expect(
+        multiLinkPanel.getByGrafanaSelector(selectors.components.Panels.Panel.title('Multiple links'))
+      ).toBeVisible();
+      await expect(
+        multiLinkPanel.getByGrafanaSelector(selectors.components.Menu.MenuComponent('Context'))
+      ).not.toBeVisible();
+      await page.locator('[aria-label="Gauge"]').click();
+      await expect(
+        multiLinkPanel.getByGrafanaSelector(selectors.components.Menu.MenuComponent('Context'))
+      ).toBeVisible();
     });
 
     test('"no data"', async ({ gotoDashboardPage, selectors }) => {

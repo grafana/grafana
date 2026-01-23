@@ -184,10 +184,10 @@ func TestDeleteWorker_ProcessDeleteFilesSuccess(t *testing.T) {
 	mockRepo.On("Delete", mock.Anything, "test/path2", "main", "Delete test/path2").Return(nil)
 
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "test/path1" && result.Action == repository.FileActionDeleted && result.Error == nil
+		return result.Path() == "test/path1" && result.Action() == repository.FileActionDeleted && result.Error() == nil
 	})).Return()
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "test/path2" && result.Action == repository.FileActionDeleted && result.Error == nil
+		return result.Path() == "test/path2" && result.Action() == repository.FileActionDeleted && result.Error() == nil
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
@@ -224,7 +224,7 @@ func TestDeleteWorker_ProcessDeleteFilesWithError(t *testing.T) {
 	mockRepo.On("Delete", mock.Anything, "test/path1", "main", "Delete test/path1").Return(deleteError)
 
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "test/path1" && result.Action == repository.FileActionDeleted && errors.Is(result.Error, deleteError)
+		return result.Path() == "test/path1" && result.Action() == repository.FileActionDeleted && errors.Is(result.Error(), deleteError)
 	})).Return()
 	mockProgress.On("TooManyErrors").Return(errors.New("too many errors"))
 
@@ -263,7 +263,7 @@ func TestDeleteWorker_ProcessWithSyncWorker(t *testing.T) {
 	mockRepo.On("Delete", mock.Anything, "test/path", "", "Delete test/path").Return(nil)
 
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "test/path" && result.Action == repository.FileActionDeleted && result.Error == nil
+		return result.Path() == "test/path" && result.Action() == repository.FileActionDeleted && result.Error() == nil
 	})).Return()
 
 	mockProgress.On("ResetResults").Return()
@@ -371,7 +371,7 @@ func TestDeleteWorker_deleteFiles(t *testing.T) {
 					mockRepo.On("Delete", mock.Anything, path, "main", "Delete "+path).Return(tt.deleteResults[i]).Once()
 					mockProgress.On("SetMessage", mock.Anything, "Deleting "+path).Return().Once()
 					mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-						return result.Path == path && result.Action == repository.FileActionDeleted
+						return result.Path() == path && result.Action() == repository.FileActionDeleted
 					})).Return().Once()
 
 					if tt.tooManyErrors != nil && i == 0 {
@@ -469,13 +469,13 @@ func TestDeleteWorker_ProcessWithResourceRefs(t *testing.T) {
 
 	// Mock progress records
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "test/path1" && result.Action == repository.FileActionDeleted && result.Error == nil
+		return result.Path() == "test/path1" && result.Action() == repository.FileActionDeleted && result.Error() == nil
 	})).Return()
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "dashboards/test-dashboard.json" && result.Action == repository.FileActionDeleted && result.Error == nil
+		return result.Path() == "dashboards/test-dashboard.json" && result.Action() == repository.FileActionDeleted && result.Error() == nil
 	})).Return()
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "folders/test-folder.json" && result.Action == repository.FileActionDeleted && result.Error == nil
+		return result.Path() == "folders/test-folder.json" && result.Action() == repository.FileActionDeleted && result.Error() == nil
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
@@ -534,7 +534,7 @@ func TestDeleteWorker_ProcessResourceRefsOnly(t *testing.T) {
 	mockRepo.On("Delete", mock.Anything, "dashboards/test-dashboard.json", "main", "Delete dashboards/test-dashboard.json").Return(nil)
 
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "dashboards/test-dashboard.json" && result.Action == repository.FileActionDeleted && result.Error == nil
+		return result.Path() == "dashboards/test-dashboard.json" && result.Action() == repository.FileActionDeleted && result.Error() == nil
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
@@ -587,10 +587,10 @@ func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
 
 	// Expect error to be recorded, not thrown
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Name == "nonexistent-dashboard" &&
-			result.Group == "dashboard.grafana.app" &&
-			result.Action == repository.FileActionDeleted &&
-			result.Error != nil
+		return result.Name() == "nonexistent-dashboard" &&
+			result.Group() == "dashboard.grafana.app" &&
+			result.Action() == repository.FileActionDeleted &&
+			result.Error() != nil
 	})).Return()
 	mockProgress.On("TooManyErrors").Return(nil)
 
@@ -727,7 +727,7 @@ func TestDeleteWorker_ProcessResourceResolutionTooManyErrors(t *testing.T) {
 
 	// Mock recording error and TooManyErrors returning error
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Name == "nonexistent-dashboard" && result.Error != nil
+		return result.Name() == "nonexistent-dashboard" && result.Error() != nil
 	})).Return()
 	mockProgress.On("TooManyErrors").Return(errors.New("too many errors"))
 
@@ -810,7 +810,7 @@ func TestDeleteWorker_ProcessMixedResourcesWithPartialFailure(t *testing.T) {
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
 	// Record the error for the failed resource
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Name == "nonexistent-dashboard" && result.Error != nil
+		return result.Name() == "nonexistent-dashboard" && result.Error() != nil
 	})).Return()
 
 	// Allow continuing after error
@@ -822,10 +822,10 @@ func TestDeleteWorker_ProcessMixedResourcesWithPartialFailure(t *testing.T) {
 
 	// Record successful deletions
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "dashboards/valid-dashboard.json" && result.Error == nil
+		return result.Path() == "dashboards/valid-dashboard.json" && result.Error() == nil
 	})).Return()
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "folders/valid-folder.json" && result.Error == nil
+		return result.Path() == "folders/valid-folder.json" && result.Error() == nil
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
@@ -910,20 +910,20 @@ func TestDeleteWorker_ProcessWithPathDeduplication(t *testing.T) {
 	mockProgress.On("SetMessage", mock.Anything, "Deleting dashboards/test-dashboard.json").Return()
 	mockRepo.On("Delete", mock.Anything, "dashboards/test-dashboard.json", "main", "Delete dashboards/test-dashboard.json").Return(nil)
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "dashboards/test-dashboard.json" && result.Action == repository.FileActionDeleted && result.Error == nil
+		return result.Path() == "dashboards/test-dashboard.json" && result.Action() == repository.FileActionDeleted && result.Error() == nil
 	})).Return()
 	mockProgress.On("TooManyErrors").Return(nil)
 
 	mockProgress.On("SetMessage", mock.Anything, "Deleting folders/test-folder/").Return()
 	mockRepo.On("Delete", mock.Anything, "folders/test-folder/", "main", "Delete folders/test-folder/").Return(nil)
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "folders/test-folder/" && result.Action == repository.FileActionDeleted && result.Error == nil
+		return result.Path() == "folders/test-folder/" && result.Action() == repository.FileActionDeleted && result.Error() == nil
 	})).Return()
 
 	mockProgress.On("SetMessage", mock.Anything, "Deleting dashboards/unique-dashboard.json").Return()
 	mockRepo.On("Delete", mock.Anything, "dashboards/unique-dashboard.json", "main", "Delete dashboards/unique-dashboard.json").Return(nil)
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "dashboards/unique-dashboard.json" && result.Action == repository.FileActionDeleted && result.Error == nil
+		return result.Path() == "dashboards/unique-dashboard.json" && result.Action() == repository.FileActionDeleted && result.Error() == nil
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
