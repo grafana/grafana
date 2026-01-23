@@ -68,10 +68,6 @@ func MainApp() *cli.App {
 		if cmd != nil {
 			app.Commands = append(app.Commands, cmd)
 		}
-		sandbox := f.GetSandboxCommand()
-		if sandbox != nil {
-			app.Commands = append(app.Commands, sandbox)
-		}
 	}
 
 	return app
