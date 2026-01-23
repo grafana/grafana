@@ -201,7 +201,7 @@ For example, if you have server names or region names that never change, then yo
 1. [Enter general options](#enter-general-options).
 1. Under the **Custom options** section of the page, select one of the following:
    - **CSV** - Enter a flat list of values for the variable in a comma-separated list. You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.
-   - **JSON** - Provide a JSON array of objects where each object can have any number of properties that can be referenced.
+   - **JSON** - Provide a JSON array of objects where each object can have any number of properties that can be referenced. For more information refer, to [Configure multi-property variables](#configure-multi-property-variables).
 
 1. (Optional) Configure the settings in the [Selection Options](#configure-variable-selection-options) section:
    - **Multi-value** - Enables multiple values to be selected at the same time.
