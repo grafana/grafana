@@ -2,7 +2,9 @@ package github
 
 import (
 	"context"
+	"encoding/base64"
 
+	"github.com/golang-jwt/jwt/v4"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -37,11 +39,23 @@ func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 	if conn.Secure.PrivateKey.IsZero() {
 		list = append(list, field.Required(field.NewPath("secure", "privateKey"), "privateKey must be specified for GitHub connection"))
 	}
-	if conn.Secure.Token.IsZero() {
-		list = append(list, field.Required(field.NewPath("secure", "token"), "token must be specified for GitHub connection"))
-	}
 	if !conn.Secure.ClientSecret.IsZero() {
 		list = append(list, field.Forbidden(field.NewPath("secure", "clientSecret"), "clientSecret is forbidden in GitHub connection"))
+	}
+
+	// Validate private key content if new is provided
+	if !conn.Secure.PrivateKey.Create.IsZero() {
+		// Decode base64-encoded private key
+		privateKeyPEM, err := base64.StdEncoding.DecodeString(string(conn.Secure.PrivateKey.Create))
+		if err != nil {
+			list = append(list, field.Invalid(field.NewPath("secure", "privateKey"), "[REDACTED]", "privateKey must be base64 encoded"))
+		} else {
+			// Parse the private key
+			_, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyPEM)
+			if err != nil {
+				list = append(list, field.Invalid(field.NewPath("secure", "privateKey"), "[REDACTED]", "privateKey must be a valid RSA private key"))
+			}
+		}
 	}
 
 	// Validate GitHub configuration fields
