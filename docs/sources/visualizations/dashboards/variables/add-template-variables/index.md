@@ -518,7 +518,8 @@ This applies to the following variable types:
 
 To create a custom variable with multiple properties, define a JSON array, like this:
 
-```[
+```json
+[
      { "value": "1", "text": "Development", "aws": "dev",  "azure": "development", "google": "googledev" },
      { "value" : "2", "text"  : "Staging",  "aws" : "stag", "azure" : "staging", "google": "googlestag" },
      { "value"  : "3", "text"   : "Production",  "aws" : "prod", "azure" : "production", "google": "googleprod" }
