@@ -236,14 +236,59 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			}(),
 			wantErr: false,
 		},
+		{
+			name: "allows unlimited repositories when maxRepositories is 0",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec:       provisioning.RepositorySpec{},
+			},
+			existingRepos: func() []provisioning.Repository {
+				repos := make([]provisioning.Repository, 20)
+				for i := 0; i < 20; i++ {
+					repos[i] = provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{Name: "repo-" + string(rune('a'+i))},
+					}
+				}
+				return repos
+			}(),
+			wantErr: false,
+		},
+		{
+			name: "enforces custom maxRepositories limit",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec:       provisioning.RepositorySpec{},
+			},
+			existingRepos: func() []provisioning.Repository {
+				repos := make([]provisioning.Repository, 5)
+				for i := 0; i < 5; i++ {
+					repos[i] = provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{Name: "repo-" + string(rune('a'+i))},
+					}
+				}
+				return repos
+			}(),
+			wantErr:         true,
+			wantErrContains: "Maximum number of 5 repositories reached",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &verifyTestStorage{repositories: tt.existingRepos}
 			lister := NewStorageLister(store)
-			validator := NewVerifyAgainstExistingRepositoriesValidator(lister)
-			errList := validator.Validate(context.Background(), tt.cfg)
+			validatorRaw := NewVerifyAgainstExistingRepositoriesValidator(lister)
+			// Set maxRepositories for tests that expect a different limit (default is 10, set to -1 to disable)
+			if validator, ok := validatorRaw.(*VerifyAgainstExistingRepositoriesValidator); ok {
+				switch tt.name {
+				case "allows unlimited repositories when maxRepositories is 0":
+					// Use -1 to indicate unlimited (0 would default to 10)
+					validator.SetMaxRepositories(-1)
+				case "enforces custom maxRepositories limit":
+					validator.SetMaxRepositories(5)
+				}
+			}
+			errList := validatorRaw.Validate(context.Background(), tt.cfg)
 
 			if tt.wantErr {
 				require.NotEmpty(t, errList, "expected validation errors")

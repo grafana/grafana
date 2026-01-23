@@ -95,6 +95,7 @@ type APIBuilder struct {
 	allowImageRendering       bool
 	minSyncInterval           time.Duration
 	maxResourcesPerRepository int64
+	maxRepositories           int64
 
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
@@ -220,6 +221,14 @@ func (b *APIBuilder) SetMaxResourcesPerRepository(maxResourcesPerRepository int6
 	b.maxResourcesPerRepository = maxResourcesPerRepository
 }
 
+// SetMaxRepositories sets the maximum number of repositories per namespace limit.
+// HACK: This is a workaround to avoid changing NewAPIBuilder signature which would require
+// changes in the enterprise repository. This should be moved to NewAPIBuilder parameters
+// once we can coordinate the change across repositories.
+func (b *APIBuilder) SetMaxRepositories(maxRepositories int64) {
+	b.maxRepositories = maxRepositories
+}
+
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
 func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 	// If LokiURL is defined, use Loki
@@ -311,6 +320,9 @@ func RegisterAPIService(
 	// HACK: Set maxResourcesPerRepository after construction to avoid changing NewAPIBuilder signature.
 	// See SetMaxResourcesPerRepository for details.
 	builder.SetMaxResourcesPerRepository(cfg.ProvisioningMaxResourcesPerRepository)
+	// HACK: Set maxRepositories after construction to avoid changing NewAPIBuilder signature.
+	// See SetMaxRepositories for details.
+	builder.SetMaxRepositories(cfg.ProvisioningMaxRepositories)
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -629,8 +641,20 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	// Repository mutator and validator
 	b.repoValidator = repository.NewValidator(b.minSyncInterval, b.allowImageRendering, b.repoFactory)
-	existingReposValidator := repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister)
-	repoAdmissionValidator := repository.NewAdmissionValidator(b.allowedTargets, b.repoValidator, existingReposValidator)
+	existingReposValidatorRaw := repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister)
+	// HACK: Set maxRepositories after construction to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature.
+	// See SetMaxRepositories for details.
+	// Config defaults to 10. If user explicitly sets it to 0, that means unlimited (pass -1).
+	// Validator: 0 = default (10), -1 = unlimited, > 0 = use value
+	if existingReposValidator, ok := existingReposValidatorRaw.(*repository.VerifyAgainstExistingRepositoriesValidator); ok {
+		maxRepos := b.maxRepositories
+		// Config value 0 means user explicitly set unlimited (since default is 10)
+		if maxRepos == 0 {
+			maxRepos = -1 // Pass -1 to validator to indicate unlimited
+		}
+		existingReposValidator.SetMaxRepositories(maxRepos)
+	}
+	repoAdmissionValidator := repository.NewAdmissionValidator(b.allowedTargets, b.repoValidator, existingReposValidatorRaw)
 	b.admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(b.repoFactory))
 	b.admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), repoAdmissionValidator)
 	// Connection mutator and validator
@@ -684,7 +708,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector(b)
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	testTester := repository.NewTester(b.repoValidator, existingReposValidator)
+	testTester := repository.NewTester(b.repoValidator, existingReposValidatorRaw)
 
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.

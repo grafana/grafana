@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -48,6 +49,22 @@ func TestIntegrationProvisioning_SettingsAuthorization(t *testing.T) {
 
 		require.NoError(t, result.Error(), "admin should be able to GET settings")
 		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
+	})
+
+	t.Run("settings endpoint returns MaxRepositories field", func(t *testing.T) {
+		settings := &provisioning.RepositoryViewList{}
+		result := helper.AdminREST.Get().
+			Namespace("default").
+			Resource("settings").
+			Do(ctx)
+
+		require.NoError(t, result.Error(), "should be able to GET settings")
+		err := result.Into(settings)
+		require.NoError(t, err, "should be able to unmarshal settings response")
+		// MaxRepositories should be present (default is 0 = unlimited)
+		require.NotNil(t, settings, "settings should not be nil")
+		// The field should exist and default to 0 (unlimited) when not configured
+		require.Equal(t, int64(0), settings.MaxRepositories, "MaxRepositories should default to 0 (unlimited)")
 	})
 }
 

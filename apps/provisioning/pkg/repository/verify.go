@@ -20,11 +20,20 @@ var ErrRepositoryDuplicatePath = fmt.Errorf("duplicate repository path")
 var ErrRepositoryParentFolderConflict = fmt.Errorf("repository path conflicts with existing repository")
 
 type VerifyAgainstExistingRepositoriesValidator struct {
-	lister RepositoryLister
+	lister          RepositoryLister
+	maxRepositories int64 // 0 = use default (10), -1 = unlimited, > 0 = use value
 }
 
 func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Validator {
 	return &VerifyAgainstExistingRepositoriesValidator{lister: lister}
+}
+
+// SetMaxRepositories sets the maximum number of repositories per namespace limit.
+// HACK: This is a workaround to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature which would require
+// changes in the enterprise repository. This should be moved to NewVerifyAgainstExistingRepositoriesValidator parameters
+// once we can coordinate the change across repositories.
+func (v *VerifyAgainstExistingRepositoriesValidator) SetMaxRepositories(maxRepositories int64) {
+	v.maxRepositories = maxRepositories
 }
 
 // VerifyAgainstExistingRepositoriesValidator verifies repository configurations for conflicts within a namespace.
@@ -33,7 +42,7 @@ func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Vali
 // - You can only create an instance sync repository if no other repositories exist in the namespace.
 // - You cannot create a folder sync repository if an instance repository already exists in the namespace.
 // - Git repositories must not have duplicate or overlapping paths with existing repositories.
-// - The total number of repositories in a single namespace cannot exceed 10.
+// - The total number of repositories in a single namespace cannot exceed the configured limit (default 10, 0 = unlimited).
 func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
 	if err != nil {
@@ -100,10 +109,16 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	if count >= 10 {
-		return field.ErrorList{field.Forbidden(field.NewPath("spec"),
-			"Maximum number of 10 repositories reached")}
+	// Check repository limit (default 10, -1 = unlimited, 0 = use default)
+	maxRepos := v.maxRepositories
+	if maxRepos == 0 {
+		maxRepos = 10 // default limit when not explicitly set
 	}
+	if maxRepos > 0 && count >= int(maxRepos) {
+		return field.ErrorList{field.Forbidden(field.NewPath("spec"),
+			fmt.Sprintf("Maximum number of %d repositories reached", maxRepos))}
+	}
+	// maxRepos == -1 means unlimited, so no check needed
 
 	return nil
 }
