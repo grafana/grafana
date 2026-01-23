@@ -269,10 +269,7 @@ describe('userStorage', () => {
       const storage2 = usePluginUserStorage();
 
       // Call setItem concurrently on different keys
-      await Promise.all([
-        storage1.setItem('key1', 'value1'),
-        storage2.setItem('key2', 'value2'),
-      ]);
+      await Promise.all([storage1.setItem('key1', 'value1'), storage2.setItem('key2', 'value2')]);
 
       // Both operations should complete successfully
       // Verify both values are in cache
@@ -301,10 +298,7 @@ describe('userStorage', () => {
       const storage2 = usePluginUserStorage();
 
       // Call setItem concurrently on the same key
-      await Promise.all([
-        storage1.setItem('key1', 'value1'),
-        storage2.setItem('key1', 'value2'),
-      ]);
+      await Promise.all([storage1.setItem('key1', 'value1'), storage2.setItem('key1', 'value2')]);
 
       // Both operations should complete (last one wins)
       const finalValue = await storage1.getItem('key1');

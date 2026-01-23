@@ -258,7 +258,7 @@ export class UserStorage implements UserStorageType {
 }
 
 // This is a type alias to avoid breaking changes
-export interface PluginUserStorage extends UserStorageType { }
+export interface PluginUserStorage extends UserStorageType {}
 
 /**
  * A hook for interacting with the backend user storage (or local storage if not enabled).
