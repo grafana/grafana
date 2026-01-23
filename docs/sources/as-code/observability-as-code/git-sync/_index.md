@@ -44,13 +44,17 @@ Git Sync in Grafana lets you synchronize your resources so you can store your da
 
 ## How it works
 
-Git Sync allows you to connect external resources with your Grafana instance. Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise.
+Git Sync allows you to connect external resources with your Grafana instance. After setup, all synchronized resources live under the `provisioned` folder. You can continue to have unprovisioned resources outside that folder.
 
-All synchronized resources live under the `provisioned` folder. You can continue to have unprovisioned resources outside that folder.
-
-Git Sync is bidirectional, and you can modify provisioned resources both from the Grafana UI or from the synced GitHub repository. Changes will be reflected in both places. 
+Git Sync is bidirectional. You can modify provisioned resources both from the Grafana UI or from the synced GitHub repository, and changes will be reflected in both places. 
 
 Refer to [key concepts](key-concepts.md) for further details. 
+
+{{< admonition type="caution" >}}
+
+Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise.
+
+{{< /admonition >}}
 
 ### Make changes in the Grafana UI
 
@@ -58,7 +62,7 @@ Whenever you modify a dashboard directly from the UI, you can also commit those 
 
 ### Make changes in your GitHub repositories
 
-Your Grafana instance polls the provisioned GitHub resources to synchronize. If you made any changes, they will be updated in the Grafana database as well. The Grafana UI reads from the database and updates the UI to reflect these changes.
+Your Grafana instance polls the provisioned GitHub resources to synchronize. If you made any changes in GitHub, they will be updated in the Grafana database as well. The Grafana UI reads from the database and updates the UI to reflect these changes.
 
 - Without webhooks, Grafana polls for changes at the specified interval. The default polling interval is 60 seconds, and you can change this setting in the Grafana UI.
 - If you enable the [webhooks feature](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering), repository notifications appear almost immediately.

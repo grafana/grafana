@@ -67,9 +67,24 @@ A repository resource is a Grafana configuration object that defines:
 
 Each repository resource creates bidirectional synchronization between a Grafana instance and a specific location in Git.
 
-## How does repository sync behave?
+## Flexible configuration for your repositories
 
-With Git Sync you configure a repository resource to sync with your Grafana instance:
+Git Sync repositories support different combinations of repository URL, branch, and path:
+
+- Different Git repositories: Each environment or team can use its own repository.
+  - Instance A: `repository: your-org/grafana-prod`.
+  - Instance B: `repository: your-org/grafana-dev`.
+- Different branches: Use separate branches within the same repository.
+  - Instance A: `repository: your-org/grafana-manifests, branch: main`.
+  - Instance B: `repository: your-org/grafana-manifests, branch: develop`.
+- Different paths: Use different directory paths within the same repository.
+  - Instance A: `repository: your-org/grafana-manifests, branch: main, path: production/`.
+  - Instance B: `repository: your-org/grafana-manifests, branch: main, path: development/`.
+- Any combination: Mix and match based on your workflow requirements.
+
+## How does Git Sync behave?
+
+Git Sync is bidirectional, and syncs a repository resource with your Grafana instance. You can modify provisioned resources both from the Grafana UI or from the synced GitHub repository, and changes will be reflected in both places:
 
 1. Grafana monitors the specified Git location (repository, branch, and path).
 2. Grafana creates a folder in Dashboards (typically named after the repository).
@@ -82,7 +97,7 @@ You can find the provisioned dashboards organized in folders under **Dashboards*
 
 ## Example: Relationship between repository, branch, and path
 
-Here's a concrete example showing how the three parameters work together:
+Here's an example showing how the three concepts work together:
 
 **Configuration:**
 
@@ -104,10 +119,10 @@ your-org/grafana-manifests/
 ├── team-data/
 │   └── grafana/
 │       └── pipeline-stats.json    ← Not synced (different path)
-└── other-files.txt                 ← Not synced (outside path)
+└── other-files.txt                ← Not synced (outside path)
 ```
 
-**In Grafana Dashboards view:**
+**In the Grafana Dashboards view:**
 
 ```
 Dashboards
@@ -117,24 +132,11 @@ Dashboards
     └── Disk I/O Dashboard
 ```
 
-**Key points:**
+**Key takeaways:**
 
 - Grafana only synchronizes files within the specified path (`team-platform/grafana/`).
 - Grafana ignores files in other paths or at the repository root.
 - The folder name in Grafana comes from the repository name.
 - Dashboard titles come from the JSON file content, not the filename.
 
-## Repository configuration flexibility
 
-Git Sync repositories support different combinations of repository URL, branch, and path:
-
-- Different Git repositories: Each environment or team can use its own repository.
-  - Instance A: `repository: your-org/grafana-prod`.
-  - Instance B: `repository: your-org/grafana-dev`.
-- Different branches: Use separate branches within the same repository.
-  - Instance A: `repository: your-org/grafana-manifests, branch: main`.
-  - Instance B: `repository: your-org/grafana-manifests, branch: develop`.
-- Different paths: Use different directory paths within the same repository.
-  - Instance A: `repository: your-org/grafana-manifests, branch: main, path: production/`.
-  - Instance B: `repository: your-org/grafana-manifests, branch: main, path: development/`.
-- Any combination: Mix and match based on your workflow requirements.
