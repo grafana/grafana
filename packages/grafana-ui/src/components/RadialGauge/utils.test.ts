@@ -156,13 +156,16 @@ describe('RadialGauge utils', () => {
       expect(withGlow.radius).toBeLessThan(withoutGlow.radius); // glow reduces available space
     });
 
-    it('should adjust radius for rounded bars when endAngle < 180', () => {
+    it('should adjust radius and centerY for rounded bars when endAngle < 180', () => {
       const sharpBars = calc({});
-      const roundedBars = calc({ roundedBars: true });
-      const roundedGauge = calc({ roundedBars: true, shape: 'gauge' });
+      const roundedCircle = calc({ roundedBars: true, shape: 'circle' });
+      const roundedArc = calc({ roundedBars: true, shape: 'gauge' });
 
-      expect(roundedBars.radius).toEqual(sharpBars.radius);
-      expect(roundedGauge.radius).toBeLessThan(sharpBars.radius);
+      expect(roundedCircle.radius).toEqual(sharpBars.radius);
+      expect(roundedArc.radius).toBeLessThan(sharpBars.radius);
+
+      expect(roundedCircle.centerY).toEqual(sharpBars.centerY);
+      expect(roundedArc.centerY).not.toEqual(sharpBars.centerY);
     });
 
     it('should handle threshold bars', () => {
