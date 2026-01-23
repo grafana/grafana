@@ -60,7 +60,7 @@ func (r *sqlSchemaREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *sqlSchemaREST) ProducesObject(verb string) interface{} {
-	return &query.SQLSchemas{}
+	return &query.SQLSchemasWrapper{}
 }
 
 func (r *sqlSchemaREST) ConnectMethods() []string {

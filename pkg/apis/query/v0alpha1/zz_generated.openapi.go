@@ -60,9 +60,10 @@ func schema_pkg_apis_query_v0alpha1_BasicColumn(ref common.ReferenceCallback) co
 					},
 					"dataFrameFieldType": {
 						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int32",
+							Description: "The DataFrameFieldType is the Grafana Plugin SDK data.FieldType that best represents this column we need to somehow expose this as a string value because the JSONMarshaler will write it as a string",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int32",
 						},
 					},
 				},
@@ -549,9 +550,27 @@ func schema_pkg_apis_query_v0alpha1_SQLSchemasWrapper(ref common.ReferenceCallba
 							Format:      "",
 						},
 					},
+					"sqlSchemas": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Backend wrapper (external dependency) The keys represent ???",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.SchemaInfo"),
+									},
+								},
+							},
+						},
+					},
 				},
+				Required: []string{"sqlSchemas"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.SchemaInfo"},
 	}
 }
 

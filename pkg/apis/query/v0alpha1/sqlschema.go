@@ -4,17 +4,31 @@ import (
 	"encoding/json"
 	"reflect"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	openapi "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type SQLSchemasWrapper struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// Backend wrapper (external dependency)
+	// The keys represent ???
+	SQLSchemas `json:"sqlSchemas"`
+}
+
 // BasicColumn represents the column type for data that is input to a SQL expression.
 type BasicColumn struct {
-	Name               string         `json:"name"`
-	MySQLType          string         `json:"mysqlType"`
-	Nullable           bool           `json:"nullable"`
+	Name      string `json:"name"`
+	MySQLType string `json:"mysqlType"`
+	Nullable  bool   `json:"nullable"`
+
+	// The DataFrameFieldType is the Grafana Plugin SDK data.FieldType that best represents this column
+	// TODO: the OpenAPI thinks this is an integer, but data.FieldType is a uint8 alias.
+	// we need to somehow expose this as a string value because the JSONMarshaler will write it as a string
 	DataFrameFieldType data.FieldType `json:"dataFrameFieldType"`
 }
 
@@ -57,7 +71,7 @@ func (u SampleRows) OpenAPIDefinition() openapi.OpenAPIDefinition {
 					AdditionalProperties: &spec.SchemaOrBool{Allows: true},
 				},
 			},
-		)),
+		)).WithDescription("[][]any"), // frontend says number | string | boolean | object
 	}
 }
 

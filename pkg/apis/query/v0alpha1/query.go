@@ -34,7 +34,7 @@ type SQLSchemasWrapper struct {
 
 	// Backend wrapper (external dependency)
 	// The keys represent ???
-	SQLSchemas `json:"sqlSchemas,inline"`
+	SQLSchemas `json:"sqlSchemas"`
 }
 
 // GetResponseCode return the right status code for the response by checking the responses.
