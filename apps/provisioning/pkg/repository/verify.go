@@ -44,7 +44,6 @@ func NewVerifyAgainstExistingRepositoriesValidatorWithQuotas(lister RepositoryLi
 	}
 }
 
-
 // VerifyAgainstExistingRepositoriesValidator verifies repository configurations for conflicts within a namespace.
 //
 // This validator enforces the following rules:

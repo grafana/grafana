@@ -131,4 +131,3 @@ func TestCalculateTotalResources(t *testing.T) {
 		})
 	}
 }
-

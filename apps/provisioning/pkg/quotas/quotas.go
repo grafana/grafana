@@ -20,7 +20,6 @@ type QuotaLimits struct {
 	MaxRepositories int64
 }
 
-
 // EvaluateCondition creates a Quota condition based on current stats and limits.
 // Returns True if all quotas pass (or no limits configured), False if any quota is reached/exceeded.
 func (q QuotaLimits) EvaluateCondition(stats []provisioning.ResourceCount) metav1.Condition {
