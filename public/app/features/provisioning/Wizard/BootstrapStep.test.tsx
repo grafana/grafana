@@ -233,6 +233,7 @@ describe('BootstrapStep', () => {
           allowImageRendering: true,
           items: [],
           availableRepositoryTypes: [],
+          maxRepositories: 10,
         },
       });
 
