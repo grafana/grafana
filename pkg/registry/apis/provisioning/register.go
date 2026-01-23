@@ -92,12 +92,10 @@ type APIBuilder struct {
 	onlyApiServer                       bool
 	useExclusivelyAccessCheckerForAuthz bool
 
-	allowedTargets            []provisioning.SyncTargetType
-	allowImageRendering       bool
-	minSyncInterval           time.Duration
-	maxResourcesPerRepository int64
-	maxRepositories           int64
-	quotaLimits               quotas.QuotaLimits
+	allowedTargets      []provisioning.SyncTargetType
+	allowImageRendering bool
+	minSyncInterval     time.Duration
+	quotaLimits         quotas.QuotaLimits
 
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
@@ -215,21 +213,13 @@ func NewAPIBuilder(
 	return b
 }
 
-// SetMaxResourcesPerRepository sets the maximum resources per repository limit.
+// SetQuotas sets the quota limits (including repository and resource limits).
 // HACK: This is a workaround to avoid changing NewAPIBuilder signature which would require
 // changes in the enterprise repository. This should be moved to NewAPIBuilder parameters
 // once we can coordinate the change across repositories.
-func (b *APIBuilder) SetMaxResourcesPerRepository(maxResourcesPerRepository int64) {
-	b.maxResourcesPerRepository = maxResourcesPerRepository
-}
-
-// SetMaxRepositories sets the maximum number of repositories per namespace limit.
-// HACK: This is a workaround to avoid changing NewAPIBuilder signature which would require
-// changes in the enterprise repository. This should be moved to NewAPIBuilder parameters
-// once we can coordinate the change across repositories.
-// The value is stored here and then passed to the validator via SetQuotaLimits.
-func (b *APIBuilder) SetMaxRepositories(maxRepositories int64) {
-	b.maxRepositories = maxRepositories
+// The limits are stored here and then passed to validators and workers via quotaLimits.
+func (b *APIBuilder) SetQuotas(limits quotas.QuotaLimits) {
+	b.quotaLimits = limits
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -320,12 +310,14 @@ func RegisterAPIService(
 		nil,
 		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
 	)
-	// HACK: Set maxResourcesPerRepository after construction to avoid changing NewAPIBuilder signature.
-	// See SetMaxResourcesPerRepository for details.
-	builder.SetMaxResourcesPerRepository(cfg.ProvisioningMaxResourcesPerRepository)
-	// HACK: Set maxRepositories after construction to avoid changing NewAPIBuilder signature.
-	// See SetMaxRepositories for details.
-	builder.SetMaxRepositories(cfg.ProvisioningMaxRepositories)
+	// HACK: Set quota limits after construction to avoid changing NewAPIBuilder signature.
+	// See SetQuotas for details.
+	// Convert config values: 0 (unlimited) → -1 for NewHackyQuota conversion
+	maxReposForQuota := cfg.ProvisioningMaxRepositories
+	if maxReposForQuota == 0 {
+		maxReposForQuota = -1 // Convert config 0 (unlimited) to -1 for NewHackyQuota
+	}
+	builder.SetQuotas(quotas.NewHackyQuota(cfg.ProvisioningMaxResourcesPerRepository, maxReposForQuota))
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -644,14 +636,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	// Repository mutator and validator
 	b.repoValidator = repository.NewValidator(b.minSyncInterval, b.allowImageRendering, b.repoFactory)
-	// HACK: Construct QuotaLimits with repository limit conversion logic using NewHackyQuota.
-	// Config value 0 means unlimited (user explicitly set to 0), convert to -1 for NewHackyQuota.
-	// NewHackyQuota converts: -1 → 0 (unlimited), 0 → 10 (default), N → N
-	maxReposForQuota := b.maxRepositories
-	if maxReposForQuota == 0 {
-		maxReposForQuota = -1 // Convert config 0 (unlimited) to -1 for NewHackyQuota
-	}
-	b.quotaLimits = quotas.NewHackyQuota(b.maxResourcesPerRepository, maxReposForQuota)
+	// quotaLimits is set via SetQuotas HACK method, use it directly
 
 	// HACK: Use NewVerifyAgainstExistingRepositoriesValidatorWithQuotas to pass QuotaLimits directly.
 	// This avoids the need for SetQuotaLimits and moves the HACK logic to construction.
