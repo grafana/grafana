@@ -1,7 +1,4 @@
-import { UseQueryResult } from '@reduxjs/toolkit/query/react';
 import { renderHook, waitFor } from '@testing-library/react';
-
-import { PluginMeta } from '@grafana/data';
 
 import { useGetPluginSettingsQuery } from '../api/pluginsApi';
 import { pluginMeta } from '../testSetup/plugins';
@@ -13,7 +10,7 @@ jest.mock('../api/pluginsApi');
 
 const mockedUseGetPluginSettingsQuery = jest.mocked(useGetPluginSettingsQuery);
 
-type PluginQueryResult = Partial<UseQueryResult<PluginMeta, unknown>>;
+type PluginQueryResult = ReturnType<typeof useGetPluginSettingsQuery>;
 
 describe('useIrmPlugin', () => {
   beforeEach(() => {
@@ -23,16 +20,27 @@ describe('useIrmPlugin', () => {
   it('should return IRM plugin ID when IRM plugin is installed', async () => {
     mockedUseGetPluginSettingsQuery.mockImplementation((pluginId) => {
       if (pluginId === SupportedPlugin.Irm) {
-        return { data: pluginMeta[SupportedPlugin.Irm], isLoading: false, error: undefined } as PluginQueryResult;
+        return {
+          data: pluginMeta[SupportedPlugin.Irm],
+          isLoading: false,
+          error: undefined,
+          refetch: jest.fn(),
+        } as PluginQueryResult;
       }
       if (pluginId === SupportedPlugin.OnCall) {
         return {
           data: { ...pluginMeta[SupportedPlugin.OnCall], enabled: false },
           isLoading: false,
           error: undefined,
+          refetch: jest.fn(),
         } as PluginQueryResult;
       }
-      return { data: undefined, isLoading: false, error: new Error('Plugin not found') } as PluginQueryResult;
+      return {
+        data: undefined,
+        isLoading: false,
+        error: new Error('Plugin not found'),
+        refetch: jest.fn(),
+      } as PluginQueryResult;
     });
 
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
@@ -49,9 +57,19 @@ describe('useIrmPlugin', () => {
   it('should return OnCall plugin ID when IRM plugin is not installed', async () => {
     mockedUseGetPluginSettingsQuery.mockImplementation((pluginId) => {
       if (pluginId === SupportedPlugin.OnCall) {
-        return { data: pluginMeta[SupportedPlugin.OnCall], isLoading: false, error: undefined } as PluginQueryResult;
+        return {
+          data: pluginMeta[SupportedPlugin.OnCall],
+          isLoading: false,
+          error: undefined,
+          refetch: jest.fn(),
+        } as PluginQueryResult;
       }
-      return { data: undefined, isLoading: false, error: new Error('Plugin not found') } as PluginQueryResult;
+      return {
+        data: undefined,
+        isLoading: false,
+        error: new Error('Plugin not found'),
+        refetch: jest.fn(),
+      } as PluginQueryResult;
     });
 
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
@@ -68,9 +86,19 @@ describe('useIrmPlugin', () => {
   it('should return Incident plugin ID when IRM plugin is not installed', async () => {
     mockedUseGetPluginSettingsQuery.mockImplementation((pluginId) => {
       if (pluginId === SupportedPlugin.Incident) {
-        return { data: pluginMeta[SupportedPlugin.Incident], isLoading: false, error: undefined } as PluginQueryResult;
+        return {
+          data: pluginMeta[SupportedPlugin.Incident],
+          isLoading: false,
+          error: undefined,
+          refetch: jest.fn(),
+        } as PluginQueryResult;
       }
-      return { data: undefined, isLoading: false, error: new Error('Plugin not found') } as PluginQueryResult;
+      return {
+        data: undefined,
+        isLoading: false,
+        error: new Error('Plugin not found'),
+        refetch: jest.fn(),
+      } as PluginQueryResult;
     });
 
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.Incident));
@@ -89,6 +117,7 @@ describe('useIrmPlugin', () => {
       data: undefined,
       isLoading: true,
       error: undefined,
+      refetch: jest.fn(),
     } as PluginQueryResult);
 
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
@@ -102,6 +131,7 @@ describe('useIrmPlugin', () => {
       data: undefined,
       isLoading: false,
       error: new Error('Plugin not found'),
+      refetch: jest.fn(),
     } as PluginQueryResult);
 
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
@@ -117,12 +147,27 @@ describe('useIrmPlugin', () => {
   it('should return IRM plugin ID when both IRM and OnCall are installed', async () => {
     mockedUseGetPluginSettingsQuery.mockImplementation((pluginId) => {
       if (pluginId === SupportedPlugin.Irm) {
-        return { data: pluginMeta[SupportedPlugin.Irm], isLoading: false, error: undefined } as PluginQueryResult;
+        return {
+          data: pluginMeta[SupportedPlugin.Irm],
+          isLoading: false,
+          error: undefined,
+          refetch: jest.fn(),
+        } as PluginQueryResult;
       }
       if (pluginId === SupportedPlugin.OnCall) {
-        return { data: pluginMeta[SupportedPlugin.OnCall], isLoading: false, error: undefined } as PluginQueryResult;
+        return {
+          data: pluginMeta[SupportedPlugin.OnCall],
+          isLoading: false,
+          error: undefined,
+          refetch: jest.fn(),
+        } as PluginQueryResult;
       }
-      return { data: undefined, isLoading: false, error: new Error('Plugin not found') } as PluginQueryResult;
+      return {
+        data: undefined,
+        isLoading: false,
+        error: new Error('Plugin not found'),
+        refetch: jest.fn(),
+      } as PluginQueryResult;
     });
 
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.OnCall));
@@ -139,12 +184,27 @@ describe('useIrmPlugin', () => {
   it('should return IRM plugin ID when both IRM and Incident are installed', async () => {
     mockedUseGetPluginSettingsQuery.mockImplementation((pluginId) => {
       if (pluginId === SupportedPlugin.Irm) {
-        return { data: pluginMeta[SupportedPlugin.Irm], isLoading: false, error: undefined } as PluginQueryResult;
+        return {
+          data: pluginMeta[SupportedPlugin.Irm],
+          isLoading: false,
+          error: undefined,
+          refetch: jest.fn(),
+        } as PluginQueryResult;
       }
       if (pluginId === SupportedPlugin.Incident) {
-        return { data: pluginMeta[SupportedPlugin.Incident], isLoading: false, error: undefined } as PluginQueryResult;
+        return {
+          data: pluginMeta[SupportedPlugin.Incident],
+          isLoading: false,
+          error: undefined,
+          refetch: jest.fn(),
+        } as PluginQueryResult;
       }
-      return { data: undefined, isLoading: false, error: new Error('Plugin not found') } as PluginQueryResult;
+      return {
+        data: undefined,
+        isLoading: false,
+        error: new Error('Plugin not found'),
+        refetch: jest.fn(),
+      } as PluginQueryResult;
     });
 
     const { result } = renderHook(() => useIrmPlugin(SupportedPlugin.Incident));
