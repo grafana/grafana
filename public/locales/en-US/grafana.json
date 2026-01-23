@@ -5819,8 +5819,8 @@
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
       "no-preview": "No preview available",
-      "use-dashboard-button": "Use dashboard",
-      "use-template-button": "Use template"
+      "use-template-button": "Use template",
+      "use-with-assistant-button": "Use with Grafana Assistant"
     },
     "community-empty-title": "No community dashboards found",
     "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",

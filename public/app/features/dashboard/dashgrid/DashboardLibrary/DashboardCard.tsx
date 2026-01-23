@@ -106,12 +106,12 @@ function DashboardCardComponent({
           {kind === 'template_dashboard' ? (
             <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>
           ) : (
-            <Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>
+            <Trans i18nKey="dashboard-library.card.use-with-assistant-button">Use with Grafana Assistant</Trans>
           )}
         </Button>
         {assistantAvailable && useAssistantHelp && (
           <Button variant="secondary" fill="outline" onClick={onUseAssistantClick} icon="ai-sparkle">
-            <Trans i18nKey="dashboard-library.card.use-with-assistant-button">Use with Assistant</Trans>
+            <Trans i18nKey="dashboard-library.card.use-with-assistant-button">Use with Grafana Assistant</Trans>
           </Button>
         )}
         {details && (
