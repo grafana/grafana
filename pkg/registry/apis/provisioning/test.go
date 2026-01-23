@@ -27,7 +27,7 @@ type StatusPatcherProvider interface {
 }
 
 type HealthCheckerProvider interface {
-	GetHealthChecker() *controller.HealthChecker
+	GetHealthChecker() *controller.RepositoryHealthChecker
 }
 
 type ConnectorDependencies interface {

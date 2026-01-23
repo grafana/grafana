@@ -22,7 +22,7 @@
     "buffer": "6.0.3",
     "events": "3.3.0",
     "i18next": "^25.0.0",
-    "lodash": "4.17.23",
+    "lodash": "^4.17.23",
     "lru-cache": "11.2.2",
     "monaco-editor": "0.34.1",
     "prismjs": "1.30.0",

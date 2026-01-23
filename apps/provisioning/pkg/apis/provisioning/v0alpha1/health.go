@@ -9,6 +9,21 @@ const (
 	HealthFailureHealth HealthFailureType = "health"
 )
 
+// Condition types for Repository and Connection resources
+const (
+	// ConditionTypeReady indicates that the resource is ready for use.
+	// For repositories and connections, this reflects whether the health check is passing.
+	ConditionTypeReady = "Ready"
+)
+
+// Condition reasons for the Ready condition
+const (
+	// ReasonAvailable indicates the resource is available and ready for use.
+	ReasonAvailable = "Available"
+	// ReasonUnavailable indicates the resource is unavailable and not ready.
+	ReasonUnavailable = "Unavailable"
+)
+
 type HealthStatus struct {
 	// When not healthy, requests will not be executed
 	Healthy bool `json:"healthy"`
