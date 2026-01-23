@@ -56,7 +56,6 @@ export const LogsTable = ({
   const logsFrame: LogsFrame | null = useMemo(() => parseLogsFrame(rawTableFrame), [rawTableFrame]);
   const timeFieldName = logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME;
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
-
   const permalinkedLogId = getLogsTablePanelState()?.logs?.id ?? undefined;
   const initialRowIndex = permalinkedLogId
     ? logsFrame?.idField?.values?.findIndex((id) => id === permalinkedLogId)
@@ -152,7 +151,8 @@ export const LogsTable = ({
   return (
     <div className={styles.wrapper}>
       <LogsTableFields
-        width={options.fieldSelectorWidth}
+        tableWidth={width}
+        sidebarWidth={options.fieldSelectorWidth}
         displayedFields={options.displayedFields ?? [timeFieldName, bodyFieldName]}
         height={height}
         logsFrame={logsFrame}

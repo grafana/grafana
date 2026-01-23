@@ -436,13 +436,17 @@ function getSuggestedFields(logs: LogListModel[], displayedFields: string[], def
   return suggestedFields;
 }
 
-export function getFieldSelectorWidth(logOptionsStorageKey?: string): number {
+export function getFieldSelectorWidth(
+  logOptionsStorageKey?: string,
+  defaultWidth = DEFAULT_WIDTH,
+  minWidth = MIN_WIDTH
+): number {
   const width =
     (logOptionsStorageKey
-      ? parseInt(store.get(`${logOptionsStorageKey}.fieldSelector.width`) ?? DEFAULT_WIDTH, 10)
+      ? parseInt(store.get(`${logOptionsStorageKey}.fieldSelector.width`) ?? defaultWidth, 10)
       : undefined) ?? DEFAULT_WIDTH;
 
-  return width < MIN_WIDTH ? MIN_WIDTH : width;
+  return width < minWidth ? minWidth : width;
 }
 
 export function getFieldSelectorState(logOptionsStorageKey?: string): boolean | undefined {

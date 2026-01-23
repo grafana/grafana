@@ -12,7 +12,8 @@ import { LogsTableFieldSelector } from './LogsTableFieldSelector';
 import { buildColumnsWithMeta } from './buildColumnsWithMeta';
 
 interface Props {
-  width: number | undefined;
+  sidebarWidth: number | undefined;
+  tableWidth: number;
   height: number;
   dataFrame: DataFrame;
   displayedFields: string[];
@@ -24,7 +25,8 @@ interface Props {
 }
 
 export function LogsTableFields({
-  width,
+  tableWidth,
+  sidebarWidth = DEFAULT_SIDEBAR_WIDTH,
   height,
   dataFrame,
   displayedFields,
@@ -34,8 +36,11 @@ export function LogsTableFields({
   logsFrame,
   onSidebarWidthChange,
 }: Props) {
-  const sidebarWidth = width ?? DEFAULT_SIDEBAR_WIDTH;
   const styles = useStyles2(getStyles, sidebarWidth, height);
+  const [containerElement, setContainerRefState] = useState<HTMLDivElement | null>(null);
+  const containerRef = useCallback((node: HTMLDivElement) => {
+    setContainerRefState(node);
+  }, []);
 
   const defaultDisplayedFields = useMemo(() => [timeFieldName, bodyFieldName], [timeFieldName, bodyFieldName]);
   const [columnsWithMeta, setColumnsWithMeta] = useState<FieldNameMetaStore | null>(null);
@@ -70,28 +75,32 @@ export function LogsTableFields({
     return null;
   }
 
-  console.log('render::LogsTableFields', width);
+  console.log('render::LogsTableFields', sidebarWidth, containerRef);
 
   return (
-    <div className={styles.sidebarWrapper}>
-      <LogsTableFieldSelector
-        clear={() => {
-          onDisplayedFieldsChange(defaultDisplayedFields);
-          // @todo can we reset user column widths on fields reset?
-        }}
-        columnsWithMeta={columnsWithMeta}
-        dataFrames={[dataFrame]}
-        reorder={onDisplayedFieldsChange}
-        setSidebarWidth={onSidebarWidthChange}
-        sidebarWidth={sidebarWidth}
-        toggle={(key: string) => {
-          if (displayedFields.includes(key)) {
-            onDisplayedFieldsChange(displayedFields.filter((f) => f !== key));
-          } else {
-            onDisplayedFieldsChange([...displayedFields, key]);
-          }
-        }}
-      />
+    <div ref={containerRef} className={styles.sidebarWrapper}>
+      {containerElement && (
+        <LogsTableFieldSelector
+          maxWidth={tableWidth * 0.8}
+          clear={() => {
+            onDisplayedFieldsChange(defaultDisplayedFields);
+            // @todo can we reset user column widths on fields reset?
+          }}
+          columnsWithMeta={columnsWithMeta}
+          dataFrames={[dataFrame]}
+          reorder={onDisplayedFieldsChange}
+          setSidebarWidth={onSidebarWidthChange}
+          sidebarWidth={sidebarWidth}
+          sidebarHeight={height}
+          toggle={(key: string) => {
+            if (displayedFields.includes(key)) {
+              onDisplayedFieldsChange(displayedFields.filter((f) => f !== key));
+            } else {
+              onDisplayedFieldsChange([...displayedFields, key]);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/LogDetail
 
 import { FieldWithStats } from './FieldSelector';
 
+// Copy pasta from /app/features/logs/components/fieldSelector/FieldSelector.tsx (removed LogListModel dep)
 export function getSuggestedFields(displayedFields: string[], defaultFields: string[] = []) {
   const suggestedFields: FieldWithStats[] = defaultFields.map((field) => ({
     name: field,

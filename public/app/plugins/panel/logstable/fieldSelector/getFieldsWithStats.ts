@@ -3,6 +3,8 @@ import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { FieldWithStats } from './FieldSelector';
 
+// Copy pasta from /app/features/logs/components/fieldSelector/FieldSelector.tsx (no changes)
+// @todo centralize
 export function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
   const cardinality = new Map<string, number>();
   let totalLines = 0;
