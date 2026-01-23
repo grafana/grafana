@@ -500,7 +500,7 @@ In order to have custom regular expression, globs, or Lucene syntax in the **Cus
 
 ## Configure multi-property variables
 
-If you have a multi-source dashboard that uses multiple variables for the same logical concept&mdash;for example, an environment identified as “dev” vs “development”&mdash;, you can set up a multi-property variable to let you reference all those values. Instead of creating and keeping multiple variables for the same logical concept in sync, you can map all of those identifiers to one variable and then reference any property you need in panels and queries.
+If you have a multi-source dashboard that uses multiple variables for the same logical concept&mdash;for example, an environment identified as `dev` vs `development`&mdash;, you can set up a multi-property variable to let you reference all those values. Instead of creating and keeping multiple variables for the same logical concept in sync, you can map all of those identifiers to one variable and then reference any property you need in panels and queries.
 
 To do so, configure a JSON array in which each object can have any number of properties.
 Then, you can reference any of the properties in as you use those variables.
