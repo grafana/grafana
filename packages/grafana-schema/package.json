@@ -29,6 +29,15 @@
       "types": "./dist/esm/raw/composable/*/panelcfg/x/*panelcfg_types.gen.d.ts",
       "default": "./dist/esm/raw/composable/*/panelcfg/x/*panelcfg_types.gen.js"
     },
+    "./raw/dashboard": {
+      "@grafana-app/source": "./src/raw/dashboard/x/dashboard_types.gen.ts",
+      "types": "./dist/esm/raw/dashboard/x/dashboard_types.gen.d.ts",
+      "default": "./dist/esm/raw/dashboard/x/dashboard_types.gen.js"
+    },
+    "./raw/preferences": {
+      "@grafana-app/source": "./src/raw/composable/*/panelcfg/x/*panelcfg_types.gen.ts",
+      "types": "./dist/esm/raw/preferences/x/preferences_types.gen.d.ts"
+    },
     "./dist/esm/raw/composable/annotationslist/panelcfg/x/AnnotationsListPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/annotationslist/panelcfg/x/annotationslistpanelcfg_types.gen.ts",
       "types": "./dist/esm/raw/composable/annotationslist/panelcfg/x/annotationslistpanelcfg_types.gen.d.ts",
