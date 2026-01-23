@@ -101,6 +101,16 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
+	// Check repository limit (default 10, -1 = unlimited, 0 = use default)
+	maxRepos := v.maxRepositories
+	if maxRepos == 0 {
+		maxRepos = 10 // default limit when not explicitly set
+	}
+	// Early return if unlimited to avoid unnecessary counting
+	if maxRepos == -1 {
+		return nil
+	}
+
 	// Count repositories excluding the current one being created/updated
 	count := 0
 	for _, v := range all {
@@ -109,16 +119,10 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	// Check repository limit (default 10, -1 = unlimited, 0 = use default)
-	maxRepos := v.maxRepositories
-	if maxRepos == 0 {
-		maxRepos = 10 // default limit when not explicitly set
-	}
-	if maxRepos > 0 && count >= int(maxRepos) {
+	if count >= int(maxRepos) {
 		return field.ErrorList{field.Forbidden(field.NewPath("spec"),
 			fmt.Sprintf("Maximum number of %d repositories reached", maxRepos))}
 	}
-	// maxRepos == -1 means unlimited, so no check needed
 
 	return nil
 }
