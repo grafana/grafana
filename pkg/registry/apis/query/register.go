@@ -134,8 +134,6 @@ func RegisterAPIService(
 			return authorizer.DecisionAllow, "", nil
 		})
 
-	reg := client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService)
-
 	builder, err := NewQueryAPIBuilder(
 		features,
 		client.NewSingleTenantInstanceProvider(cfg, features, pluginClient, pCtxProvider, accessControl),
@@ -144,7 +142,7 @@ func RegisterAPIService(
 		registerer,
 		tracer,
 		legacyDatasourceLookup,
-		&connectionsProvider{dsService: dataSourcesService, registry: reg},
+		dataSourcesService, // duplicate?
 		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 	)
 	apiregistration.RegisterAPI(builder)

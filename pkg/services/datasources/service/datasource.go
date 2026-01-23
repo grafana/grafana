@@ -11,11 +11,14 @@ import (
 	"sync"
 	"time"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
-
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -38,6 +41,10 @@ const (
 	maxDatasourceUrlLen  = 255
 )
 
+var (
+	_ queryV0.DataSourceConnectionProvider = (*Service)(nil)
+)
+
 type Service struct {
 	SQLStore                  Store
 	SecretsStore              kvstore.SecretsKVStore
@@ -55,7 +62,6 @@ type Service struct {
 
 	ptc proxyTransportCache
 }
-
 type proxyTransportCache struct {
 	cache map[int64]cachedRoundTripper
 	sync.Mutex
@@ -207,6 +213,70 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 		query.AliasIDs = p.AliasIDs
 	}
 	return s.SQLStore.GetDataSourcesByType(ctx, query)
+}
+
+// ListConnections implements v0alpha1.DataSourceConnectionProvider.
+func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceConnectionQuery) (*queryV0.DataSourceConnectionList, error) {
+	ns, err := authlib.ParseNamespace(query.Namespace)
+	if err != nil {
+		return nil, err
+	}
+	result := &queryV0.DataSourceConnectionList{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: queryV0.SchemeGroupVersion.String(),
+			Kind:       "DataSourceConnectionList",
+		},
+		Items: []queryV0.DataSourceConnection{},
+	}
+
+	if query.Name != "" {
+		dss, err := s.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+			OrgID: ns.OrgID,
+			UID:   query.Name,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if dss != nil {
+			v, err := s.asConnection(dss)
+			if err != nil {
+				return nil, err
+			}
+			result.Items = append(result.Items, *v)
+		}
+		return result, nil
+	}
+
+	// Do a full query
+	dss, err := s.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
+		OrgID:           ns.OrgID,
+		DataSourceLimit: 10000,
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, ds := range dss {
+		if query.Plugin != "" && ds.Type != query.Plugin {
+			continue
+		}
+		v, err := s.asConnection(ds)
+		if err != nil {
+			return nil, err
+		}
+		result.Items = append(result.Items, *v)
+	}
+	return result, nil
+}
+
+func (s *Service) asConnection(ds *datasources.DataSource) (v *queryV0.DataSourceConnection, err error) {
+	g, _ := plugins.GetDatasourceGroupNameFromPluginID(ds.Type)
+	return &queryV0.DataSourceConnection{
+		Title:      ds.Name,
+		APIGroup:   g,
+		APIVersion: "v0alpha1", // TODO, get this from the plugin
+		Name:       ds.UID,
+		Plugin:     ds.Type,
+	}, nil
 }
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
