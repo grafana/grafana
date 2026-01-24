@@ -30,7 +30,8 @@ type IndexViewData struct {
 
 	Config *setting.Cfg // TODO: remove and get from request config?
 
-	AppTitle string // TODO: remove and get from request config?
+	AppTitle  string // TODO: remove and get from request config?
+	AppSubUrl string // TODO: remove and get from request config?
 
 	Settings FSFrontendSettings
 
@@ -94,7 +95,8 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	fsSettings := requestConfig.FSFrontendSettings
 
 	data := IndexViewData{
-		AppTitle:                   "Grafana", // TODO: remove and get from request config?
+		AppTitle:                   "Grafana",
+		AppSubUrl:                  p.config.AppSubURL,
 		IsDevelopmentEnv:           p.config.Env == setting.Dev,
 		Assets:                     p.assets,
 		DefaultUser:                dtos.CurrentUser{},
@@ -114,7 +116,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 
 		cookiePath := "/"
 		if p.config.AppSubURL != "" {
-			cookiePath = p.config.AppSubURL
+			cookiePath = data.AppSubUrl
 		}
 		http.SetCookie(writer, &http.Cookie{
 			Name:     "login_error",
