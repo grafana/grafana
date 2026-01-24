@@ -276,7 +276,21 @@ func TestReconcileConnectionToken(t *testing.T) {
 		assert.Equal(t, metav1.ConditionFalse, result.Condition.Status)
 		assert.Equal(t, provisioning.ReasonTokenGenerationFailed, result.Condition.Reason)
 		assert.Contains(t, result.Condition.Message, "Failed to generate connection token")
-		assert.Empty(t, result.PatchOperations)
+
+		// Should include all patch operations (condition, state, fieldErrors)
+		assert.NotEmpty(t, result.PatchOperations)
+		assert.GreaterOrEqual(t, len(result.PatchOperations), 3) // condition, state, fieldErrors
+
+		// Verify state patch
+		var hasStatePatch bool
+		for _, patch := range result.PatchOperations {
+			if patch["path"] == "/status/state" {
+				hasStatePatch = true
+				assert.Equal(t, provisioning.ConnectionStateDisconnected, patch["value"])
+			}
+		}
+		assert.True(t, hasStatePatch, "Should include state patch to disconnected")
+
 		assert.Empty(t, result.Token)
 	})
 

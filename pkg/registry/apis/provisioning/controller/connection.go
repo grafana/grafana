@@ -231,32 +231,10 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(tokenResult.Token)}
 	}
 
-	// If token reconciliation says don't continue, skip health check
+	// If token reconciliation says don't continue, apply patches and return
 	if !tokenResult.ShouldContinue {
 		logger.Warn("skipping health check due to token issues")
 
-		// Apply token condition if provided
-		if tokenResult.Condition != nil {
-			if conditionPatchOps := BuildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.Generation, *tokenResult.Condition); conditionPatchOps != nil {
-				patchOperations = append(patchOperations, conditionPatchOps...)
-			}
-		}
-
-		// Set state to disconnected
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/state",
-			"value": provisioning.ConnectionStateDisconnected,
-		})
-
-		// Clear fieldErrors
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/fieldErrors",
-			"value": []provisioning.ErrorDetails{},
-		})
-
-		// Apply patches and return
 		if len(patchOperations) > 0 {
 			if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
 				return fmt.Errorf("failed to update connection status: %w", err)

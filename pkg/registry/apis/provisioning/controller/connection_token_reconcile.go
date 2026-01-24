@@ -30,6 +30,8 @@ type TokenReconcileResult struct {
 
 // ReconcileConnectionToken handles token generation and refresh for a connection.
 // It determines if the connection is ready to proceed with health checks based on token state.
+// When the token is expired and generation fails, it builds all necessary patch operations
+// to mark the connection as disconnected.
 //
 // Returns:
 //   - TokenReconcileResult with continuation flag, patch operations, and condition
@@ -77,11 +79,35 @@ func ReconcileConnectionToken(
 		// Generation failed - check if existing token is expired
 		if tokenExpired {
 			// Can't proceed with expired token and failed generation
+			// Build all patch operations to mark connection as disconnected
 			condition := buildReadyCondition(false, provisioning.ReasonTokenGenerationFailed,
 				fmt.Sprintf("Failed to generate connection token: %v", err))
+
+			var patchOps []map[string]interface{}
+
+			// Add condition patch
+			if conditionPatchOps := BuildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.Generation, condition); conditionPatchOps != nil {
+				patchOps = append(patchOps, conditionPatchOps...)
+			}
+
+			// Set state to disconnected
+			patchOps = append(patchOps, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/state",
+				"value": provisioning.ConnectionStateDisconnected,
+			})
+
+			// Clear fieldErrors
+			patchOps = append(patchOps, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/fieldErrors",
+				"value": []provisioning.ErrorDetails{},
+			})
+
 			return TokenReconcileResult{
-				ShouldContinue: false,
-				Condition:      &condition,
+				ShouldContinue:  false,
+				PatchOperations: patchOps,
+				Condition:       &condition,
 			}
 		}
 
