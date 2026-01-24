@@ -113,7 +113,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   // `locationSearchToObject()` parses `?kiosk` as `true` (boolean param). Some clients can emit `?kiosk=`, which parses as ''.
   const showKioskFooter = queryParams.kiosk === '1' || queryParams.kiosk === true || queryParams.kiosk === '';
-  const hideKioskFooter = shouldHideDashboardKioskFooter(queryParams.hideLogo);
+  const hideFooter = shouldHideDashboardKioskFooter(queryParams.hideLogo);
 
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
@@ -125,7 +125,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
         variant={DashboardBrandingFooterVariant.Kiosk}
         paddingX={2}
         useMinHeight={true}
-        hide={!showKioskFooter || hideKioskFooter}
+        hide={!showKioskFooter || hideFooter}
       />
     </UrlSyncContextProvider>
   );

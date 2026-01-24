@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import i18n from 'i18next';
-import { useMemo } from 'react';
 
 import { GrafanaTheme2, textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -21,43 +20,39 @@ export enum DashboardBrandingFooterVariant {
 
 export interface DashboardBrandingFooterProps {
   /**
-   * Predefined variants for common use cases.
-   * - `Public`: uses public dashboard configuration defaults.
-   * - `Kiosk`: uses Grafana defaults to avoid inheriting public dashboard branding overrides.
+   * Variant presets:
+   * - `Public`: uses public dashboard config defaults.
+   * - `Kiosk`: uses Grafana defaults (doesn't inherit public dashboard branding overrides).
    */
   variant?: DashboardBrandingFooterVariant;
 
   /**
-   * Applies horizontal padding to the footer container.
-   * Useful when rendering the footer in layouts that don't already have page padding (e.g. kiosk mode).
+   * Horizontal padding for layouts without page padding (for example kiosk mode).
    */
   paddingX?: number;
   /**
-   * When true, avoids clipping in containers with `overflow: hidden` by not relying on a fixed height.
+   * Use a min height instead of fixed height to avoid clipping in `overflow: hidden` containers.
    */
   useMinHeight?: boolean;
   /**
-   * Overrides the CTA link URL.
-   * Useful when reusing the footer outside public dashboards.
+   * Override the CTA link URL.
    */
   linkUrl?: string;
 
   /**
-   * Overrides the footer text. When omitted, uses the configured public dashboard footer text.
+   * Override the footer text.
    */
   text?: React.ReactNode;
 
   /**
-   * Overrides the footer logo URL.
-   *
-   * - Use `'grafana-logo'` to render the default Grafana text logo (light/dark chosen based on theme).
-   * - Use an empty string to hide the logo.
-   * - When omitted, uses the configured public dashboard footer logo.
+   * Override the logo URL.
+   * - Use `'grafana-logo'` for the default Grafana text logo (light/dark via theme).
+   * - Use `''` to hide the logo.
    */
   logo?: string;
 
   /**
-   * Hides the footer regardless of config.
+   * Hide the footer (regardless of config).
    */
   hide?: boolean;
 }
@@ -71,28 +66,13 @@ export const DashboardBrandingFooter = function ({
   logo,
   hide,
 }: DashboardBrandingFooterProps) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2((theme) => getStyles(theme, { paddingX, useMinHeight }));
   const theme = useTheme2();
   const conf = useGetPublicDashboardConfig();
 
-  const footerVariantClassName = useMemo(() => {
-    return cx({
-      [css({
-        boxSizing: 'border-box',
-        paddingLeft: theme.spacing(paddingX ?? 0),
-        paddingRight: theme.spacing(paddingX ?? 0),
-      })]: paddingX !== undefined,
-      [css({
-        height: 'auto',
-        minHeight: '30px',
-        alignItems: 'center',
-      })]: Boolean(useMinHeight),
-    });
-  }, [paddingX, theme, useMinHeight]);
-
   const isKioskVariant = variant === DashboardBrandingFooterVariant.Kiosk;
 
-  // Only the Public variant should be impacted by `[white_labeling.public_dashboards]` settings like `footer_hide`.
+  // `conf.footerHide` only applies to the Public variant.
   if (hide || (!isKioskVariant && conf.footerHide)) {
     return null;
   }
@@ -104,16 +84,12 @@ export const DashboardBrandingFooter = function ({
       : undefined;
   const defaultLogo = variant === DashboardBrandingFooterVariant.Kiosk ? DEFAULT_GRAFANA_LOGO_TOKEN : undefined;
 
-  const footerText =
-    text !== undefined ? (
-      <span className={styles.text}>{text}</span>
-    ) : defaultText !== undefined ? (
-      <span className={styles.text}>{defaultText}</span>
-    ) : (
-      conf.footerText
-    );
+  // `conf.footerText` is already styled by `useGetPublicDashboardConfig()`. Avoid double-wrapping styles.
+  const resolvedText = text !== undefined ? text : defaultText;
+  const footerText = resolvedText !== undefined ? <span className={styles.text}>{resolvedText}</span> : conf.footerText;
 
-  const footerLogo = logo !== undefined ? logo : defaultLogo !== undefined ? defaultLogo : conf.footerLogo;
+  // `logo=""` intentionally hides the logo, so we check `!== undefined` (not `??`).
+  const footerLogo = logo !== undefined ? logo : (defaultLogo ?? conf.footerLogo);
   const resolvedLogo =
     footerLogo === DEFAULT_GRAFANA_LOGO_TOKEN
       ? theme.isDark
@@ -123,7 +99,14 @@ export const DashboardBrandingFooter = function ({
   const logoSrc = resolvedLogo ? textUtil.sanitizeUrl(resolvedLogo) : '';
 
   return (
-    <div className={cx(styles.footer, footerVariantClassName)} data-testid={selectors.footer}>
+    <div
+      className={cx(
+        styles.footer,
+        paddingX !== undefined && styles.footerPaddingX,
+        useMinHeight && styles.footerMinHeight
+      )}
+      data-testid={selectors.footer}
+    >
       <a className={styles.link} href={href} target="_blank" rel="noreferrer noopener">
         {footerText} {logoSrc ? <img className={styles.logoImg} alt="" src={logoSrc} /> : null}
       </a>
@@ -131,27 +114,39 @@ export const DashboardBrandingFooter = function ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  footer: css({
-    display: 'flex',
-    justifyContent: 'end',
-    height: '30px',
-    backgroundColor: theme.colors.background.canvas,
-    position: 'sticky',
-    bottom: 0,
-    zIndex: theme.zIndex.navbarFixed,
-    padding: theme.spacing(0.5, 0),
-  }),
-  link: css({
-    display: 'flex',
-    alignItems: 'center',
-  }),
-  logoImg: css({
-    height: '16px',
-    marginLeft: theme.spacing(0.5),
-  }),
-  text: css({
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.body.fontSize,
-  }),
-});
+const getStyles = (theme: GrafanaTheme2, opts: { paddingX?: number; useMinHeight?: boolean }) => {
+  return {
+    footer: css({
+      display: 'flex',
+      justifyContent: 'end',
+      height: '30px',
+      backgroundColor: theme.colors.background.canvas,
+      position: 'sticky',
+      bottom: 0,
+      zIndex: theme.zIndex.navbarFixed,
+      padding: theme.spacing(0.5, 0),
+    }),
+    footerPaddingX: css({
+      boxSizing: 'border-box',
+      paddingLeft: theme.spacing(opts.paddingX ?? 0),
+      paddingRight: theme.spacing(opts.paddingX ?? 0),
+    }),
+    footerMinHeight: css({
+      height: 'auto',
+      minHeight: '30px',
+      alignItems: 'center',
+    }),
+    link: css({
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    logoImg: css({
+      height: '16px',
+      marginLeft: theme.spacing(0.5),
+    }),
+    text: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.body.fontSize,
+    }),
+  };
+};
