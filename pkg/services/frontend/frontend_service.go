@@ -160,7 +160,7 @@ func (s *frontendService) addMiddlewares(m *web.Mux) {
 	m.UseMiddleware(loggermiddleware.Middleware())
 
 	// Must run before CSP middleware since CSP reads config from context
-	m.UseMiddleware(RequestConfigMiddleware(s.baseRequestConfig))
+	m.UseMiddleware(RequestConfigMiddleware(s.baseRequestConfig, s.settingsService))
 
 	m.UseMiddleware(CSPMiddleware())
 
