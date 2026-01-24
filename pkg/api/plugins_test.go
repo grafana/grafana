@@ -821,6 +821,7 @@ func Test_PluginsSettings(t *testing.T) {
 				},
 				SecureJsonFields: map[string]bool{},
 				LoadingStrategy:  plugins.LoadingStrategyScript,
+				JsonData:         map[string]any{},
 			},
 		},
 		{
