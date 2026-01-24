@@ -476,17 +476,22 @@ describe('DashboardScenePage', () => {
 
   describe('UnifiedDashboardScenePageStateManager', () => {
     it('should reset active manager when unmounting', async () => {
-      // This test is missing setup for v2 api so it erroring
-      jest.spyOn(console, 'error').mockImplementation(() => {});
-
       const manager = getDashboardScenePageStateManager();
       manager.setActiveManager('v2');
 
-      const { unmount } = setup();
+      // This test is only validating manager cleanup on unmount.
+      // Prevent the component from triggering a real v2 dashboard load (which requires extra setup).
+      const loadDashboardSpy = jest.spyOn(manager, 'loadDashboard').mockResolvedValue(undefined);
 
-      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
-      unmount();
-      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+      try {
+        const { unmount } = setup();
+
+        expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+        unmount();
+        expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+      } finally {
+        loadDashboardSpy.mockRestore();
+      }
     });
   });
 });
