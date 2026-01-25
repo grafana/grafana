@@ -149,7 +149,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 			res := StatesToStream(rule, states, nil, l, false, nil)
 
 			entry := requireSingleEntry(t, res)
-			require.Len(t, entry.InstanceLabels, 4) // 3 original labels + monitor_name
+			require.Len(t, entry.InstanceLabels, 5) // 3 original labels + monitor_name + _gc_query
 		})
 
 		t.Run("serializes values when regular", func(t *testing.T) {

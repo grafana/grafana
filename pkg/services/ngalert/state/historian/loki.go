@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
+	"maps"
 	"math"
 	"regexp"
 	"sort"
@@ -14,6 +16,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/trace"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -26,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/template"
 )
 
 const (
@@ -42,8 +46,10 @@ const (
 	errAnnotationName = "Error"
 )
 
+const gcMonitorYamlAnnotation = "_gc_monitor_yaml"
+
 var annotationsToDelete = map[string]struct{}{
-	"_gc_monitor_yaml": {},
+	gcMonitorYamlAnnotation: {},
 }
 
 const (
@@ -331,6 +337,22 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			}
 		}
 
+		labelMap := make(map[string]string, len(sanitizedLabels))
+		maps.Copy(labelMap, sanitizedLabels)
+
+		gcQuery := extractGCQuery(state.Annotations[gcMonitorYamlAnnotation], logger)
+		sanitizedLabels[models.GCQueryLabel] = gcQuery
+
+		parsedSummary := expandSummaryTemplate(
+			state.Annotations[models.GCIssueHeaderAnnotation],
+			state.Annotations[models.GCTemplateLanguageAnnotation],
+			rule,
+			state,
+			labelMap,
+			gcQuery,
+			logger,
+		)
+
 		entry := LokiEntry{
 			SchemaVersion:             1,
 			Previous:                  state.PreviousFormatted(),
@@ -349,6 +371,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			EvaluationDurationSeconds: state.EvaluationDuration.Seconds(),
 			ThresholdInputValue:       thresholdInputValue,
 			SilenceIds:                silenceIds,
+			Summary:                   parsedSummary,
 		}
 
 		jsn, err := json.Marshal(entry)
@@ -368,6 +391,102 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		Stream: labels,
 		Values: samples,
 	}
+}
+
+// gcMonitorQueryOutput is the normalized output format for queries.
+type gcMonitorQueryOutput struct {
+	DataType      string `json:"data_type"`
+	Expression    string `json:"expression"`
+	InstantRollup string `json:"instant_rollup"`
+}
+
+// gcMonitorQueryRaw represents the raw query from the _gc_monitor_yaml annotation.
+// Supports both logs and metrics formats.
+type gcMonitorQueryRaw struct {
+	Expression string `yaml:"expression"`
+
+	// gcql format fields
+	DataType      string `yaml:"dataType"`
+	InstantRollup string `yaml:"instantRollup"`
+
+	// metrics format fields
+	DatasourceType string `yaml:"datasourceType"`
+	Rollup         struct {
+		Function string `yaml:"function"`
+		Time     string `yaml:"time"`
+	} `yaml:"rollup"`
+}
+
+type gcMonitorYaml struct {
+	Model struct {
+		Queries []gcMonitorQueryRaw `yaml:"queries"`
+	} `yaml:"model"`
+}
+
+// extractGCQuery parses the _gc_monitor_yaml annotation and extracts model.queries[0] as a JSON string.
+// Supports two YAML formats:
+//
+// gcql format:
+//
+//	model:
+//	  queries:
+//	  - dataType: logs
+//	    name: threshold_input_query
+//	    expression: '* | stats by (cluster) count() count_all_result'
+//	    instantRollup: 5 minutes
+//
+// metrics format:
+//
+//	model:
+//	  queries:
+//	  - name: threshold_input_query
+//	    expression: avg(groundcover_node_rt_disk_space_used_percent{cluster="omerk-Cluster"}) by (cluster)
+//	    datasourceType: prometheus
+//	    queryType: instant
+//	    rollup:
+//	      function: avg
+//	      time: 5m
+func extractGCQuery(yamlContent string, logger log.Logger) string {
+	if yamlContent == "" {
+		return ""
+	}
+
+	cleanYaml := html.UnescapeString(yamlContent)
+
+	var parsed gcMonitorYaml
+	if err := yaml.Unmarshal([]byte(cleanYaml), &parsed); err != nil {
+		logger.Debug("Failed to parse _gc_monitor_yaml annotation", "error", err)
+		return ""
+	}
+
+	if len(parsed.Model.Queries) == 0 {
+		logger.Debug("No queries found in _gc_monitor_yaml annotation")
+		return ""
+	}
+
+	raw := parsed.Model.Queries[0]
+
+	output := gcMonitorQueryOutput{
+		Expression: raw.Expression,
+	}
+
+	if raw.DataType != "" {
+		output.DataType = raw.DataType
+		output.InstantRollup = raw.InstantRollup
+	} else if raw.DatasourceType == "prometheus" {
+		output.DataType = "metrics"
+		if raw.Rollup.Function != "" && raw.Rollup.Time != "" {
+			output.InstantRollup = fmt.Sprintf("%s(%s)", raw.Rollup.Function, raw.Rollup.Time)
+		}
+	}
+
+	queryJSON, err := json.Marshal(output)
+	if err != nil {
+		logger.Debug("Failed to marshal query to JSON", "error", err)
+		return ""
+	}
+
+	return string(queryJSON)
 }
 
 func calculateFingerprint(labels data.Labels) string {
@@ -412,6 +531,7 @@ type LokiEntry struct {
 	EvaluationDurationSeconds float64           `json:"evaluationDurationSeconds"`
 	ThresholdInputValue       float64           `json:"thresholdInputValue"`
 	SilenceIds                []string          `json:"silenceIds"`
+	Summary                   string            `json:"summary"`
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {
@@ -620,4 +740,44 @@ func cleanAnnotations(annotations map[string]string, annotationsToDelete map[str
 		}
 	}
 	return filtered
+}
+
+func expandSummaryTemplate(
+	summaryTemplate string,
+	templateLanguage string,
+	rule history_model.RuleMeta,
+	st state.StateTransition,
+	labels map[string]string,
+	query string,
+	logger log.Logger,
+) string {
+	if summaryTemplate == "" {
+		return ""
+	}
+
+	var parsed string
+	var err error
+
+	if templateLanguage == models.GCTemplateLanguageJinja2 {
+		summaryCtx := template.SummaryContext{
+			MonitorName: rule.Title,
+			Severity:    labels[models.GCSeverityLabel],
+			Labels:      labels,
+			Value:       st.State.Values[models.GCThresholdInputQueryKey],
+			Threshold:   st.State.Values[models.GCThreshold1Key],
+			State:       st.Formatted(),
+			Query:       query,
+			Creator:     st.Annotations[models.GCCreatorAnnotation],
+		}
+		parsed, err = template.ExpandJinja2Summary(summaryTemplate, summaryCtx)
+	} else {
+		parsed, err = template.ExpandLegacySummary(summaryTemplate, template.LegacySummaryContext{Labels: labels})
+	}
+
+	if err != nil {
+		logger.Warn("Failed to expand issue summary template", "error", err, "template", summaryTemplate)
+		return summaryTemplate
+	}
+
+	return parsed
 }
