@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/apiserver/pkg/registry/generic"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -82,10 +81,6 @@ func TestNewRegistryStore_KeyFuncSelection(t *testing.T) {
 			// set up what we expect
 			gv := tt.resourceInfo.GroupVersion()
 			gv.Version = runtime.APIVersionInternal
-			strategy := NewStrategy(scheme, gv)
-			if tt.resourceInfo.IsClusterScoped() {
-				strategy = strategy.WithClusterScope()
-			}
 			var keyFunc func(ctx context.Context, name string) (string, error)
 			if tt.resourceInfo.IsClusterScoped() {
 				keyFunc = ClusterScopedKeyFunc(tt.resourceInfo.GroupResource())
@@ -131,12 +126,6 @@ func TestNewRegistryStore_KeyFuncSelection(t *testing.T) {
 	}
 }
 
-type mockRESTOptionsGetter struct{}
-
-func (m *mockRESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, example runtime.Object) (generic.RESTOptions, error) {
-	return generic.RESTOptions{}, nil
-}
-
 type mockObject struct {
 	metav1.TypeMeta
 	metav1.ObjectMeta
@@ -145,7 +134,7 @@ type mockObject struct {
 func (m *mockObject) DeepCopyObject() runtime.Object {
 	return &mockObject{
 		TypeMeta:   m.TypeMeta,
-		ObjectMeta: *m.ObjectMeta.DeepCopy(),
+		ObjectMeta: *m.DeepCopy(),
 	}
 }
 
@@ -158,7 +147,7 @@ type mockObjectList struct {
 func (m *mockObjectList) DeepCopyObject() runtime.Object {
 	out := &mockObjectList{
 		TypeMeta: m.TypeMeta,
-		ListMeta: *m.ListMeta.DeepCopy(),
+		ListMeta: *m.DeepCopy(),
 	}
 	if m.Items != nil {
 		out.Items = make([]mockObject, len(m.Items))
