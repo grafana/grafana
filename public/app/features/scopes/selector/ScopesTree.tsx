@@ -10,6 +10,7 @@ import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
 import { NodesMap, SelectedScope, TreeNode } from './types';
+import { useScopeActions } from './useScopeActions';
 import { useScopesHighlighting } from './useScopesHighlighting';
 
 export interface ScopesTreeProps {
@@ -18,16 +19,9 @@ export interface ScopesTreeProps {
   selectedScopes: SelectedScope[];
   scopeNodes: NodesMap;
 
-  filterNode: (scopeNodeId: string, query: string) => void;
-
-  selectScope: (scopeNodeId: string) => void;
-  deselectScope: (scopeNodeId: string) => void;
-
   // Recent scopes are only shown at the root node
   recentScopes?: Scope[][];
   onRecentScopesSelect?: (scopeIds: string[], parentNodeId?: string, scopeNodeId?: string) => void;
-
-  toggleExpandedNode: (scopeNodeId: string) => void;
 }
 
 export function ScopesTree({
@@ -36,12 +30,9 @@ export function ScopesTree({
   selectedScopes,
   recentScopes,
   onRecentScopesSelect,
-  filterNode,
   scopeNodes,
-  selectScope,
-  deselectScope,
-  toggleExpandedNode,
 }: ScopesTreeProps) {
+  const { selectScope, deselectScope, toggleExpandedNode } = useScopeActions();
   const styles = useStyles2(getStyles);
 
   // Used for a11y reference
@@ -95,7 +86,6 @@ export function ScopesTree({
       <ScopesTreeSearch
         anyChildExpanded={anyChildExpanded}
         searchArea={searchArea}
-        filterNode={filterNode}
         treeNode={tree}
         aria-controls={`${selectedNodesToShowId} ${childrenArrayId}`}
         aria-activedescendant={ariaActiveDescendant}
@@ -118,12 +108,8 @@ export function ScopesTree({
             anyChildExpanded={anyChildExpanded}
             lastExpandedNode={lastExpandedNode}
             loadingNodeName={loadingNodeName}
-            filterNode={filterNode}
             selectedScopes={selectedScopes}
             scopeNodes={scopeNodes}
-            selectScope={selectScope}
-            deselectScope={deselectScope}
-            toggleExpandedNode={toggleExpandedNode}
             maxHeight={`${Math.min(5, selectedNodesToShow.length) * 30}px`}
             highlightedId={highlightedId}
             id={selectedNodesToShowId}
@@ -141,12 +127,8 @@ export function ScopesTree({
             anyChildExpanded={anyChildExpanded}
             lastExpandedNode={lastExpandedNode}
             loadingNodeName={loadingNodeName}
-            filterNode={filterNode}
             selectedScopes={selectedScopes}
             scopeNodes={scopeNodes}
-            selectScope={selectScope}
-            toggleExpandedNode={toggleExpandedNode}
-            deselectScope={deselectScope}
             maxHeight={'100%'}
             highlightedId={highlightedId}
             id={childrenArrayId}

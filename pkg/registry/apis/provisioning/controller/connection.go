@@ -220,13 +220,14 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	tokenConn, ok := c.(connection.TokenConnection)
 	if ok {
-		refresh, err := cc.shouldRefreshToken(ctx, tokenConn)
+		refresh, err := cc.shouldGenerateToken(ctx, conn, tokenConn)
 		if err != nil {
-			logger.Error("failed to check if token needs to be refreshed", "error", err)
+			logger.Error("failed to check if token needs to be generated", "error", err)
 			return err
 		}
+
 		if refresh {
-			logger.Info("regenerating connection token")
+			logger.Info("generating connection token")
 
 			token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
 			if err != nil {
@@ -286,7 +287,16 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	return nil
 }
 
-func (cc *ConnectionController) shouldRefreshToken(ctx context.Context, c connection.TokenConnection) (bool, error) {
+func (cc *ConnectionController) shouldGenerateToken(
+	ctx context.Context,
+	obj *provisioning.Connection,
+	c connection.TokenConnection,
+) (bool, error) {
+	// In case token is not there, we should always generate it.
+	if obj.Secure.Token.IsZero() {
+		return true, nil
+	}
+
 	issuingTime, err := c.TokenCreationTime(ctx)
 	if err != nil {
 		return false, err

@@ -5171,6 +5171,9 @@
         "deleted": "deleted"
       }
     },
+    "kiosk": {
+      "footerPoweredBy": "Powered by"
+    },
     "layout": {
       "cancel": "Cancel",
       "common": {
@@ -12590,6 +12593,13 @@
       "title-data-source-help": "Data source help"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "Query/Transform detail view goes here",
+    "sidebar": {
+      "placeholder": "Sidebar content placeholder",
+      "toggle-size": "Toggle sidebar size"
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": "Open Query Library"
@@ -14965,6 +14975,9 @@
       "label-both": "Both",
       "label-lines": "Lines",
       "label-points": "Points"
+    },
+    "suggestions": {
+      "scatter-plot": "Scatter plot"
     }
   }
 }

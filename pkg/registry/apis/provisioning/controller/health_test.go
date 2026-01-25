@@ -708,7 +708,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 					assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason)
 				} else {
 					assert.Equal(t, metav1.ConditionFalse, readyCondition.Status)
-					assert.Equal(t, provisioning.ReasonUnavailable, readyCondition.Reason)
+					assert.Equal(t, provisioning.ReasonInvalidSpec, readyCondition.Reason)
 				}
 			} else {
 				assert.Empty(t, patchOps, "expected no patch operations to be returned")

@@ -2251,6 +2251,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "queryEditorNext",
+			Description:  "Enables next generation query editor experience",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDataProSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesTeamBindings",
 			Description:  "Enables search for team bindings in the app platform API",
 			Stage:        FeatureStageExperimental,

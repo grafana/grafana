@@ -14,6 +14,10 @@ type QuotaLimits struct {
 	// MaxResources is the maximum number of resources allowed per repository.
 	// A value of 0 means unlimited.
 	MaxResources int64
+
+	// MaxRepositories is the maximum number of repositories allowed per namespace.
+	// 0 = unlimited, > 0 = use value
+	MaxRepositories int64
 }
 
 // EvaluateCondition creates a Quota condition based on current stats and limits.

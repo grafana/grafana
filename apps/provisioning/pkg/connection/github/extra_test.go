@@ -244,7 +244,7 @@ func TestExtra_Mutate(t *testing.T) {
 		validateResult func(t *testing.T, obj runtime.Object)
 	}{
 		{
-			name: "should successfully mutate GitHub connection",
+			name: "should successfully mutate GitHub connection without generating token",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
@@ -264,7 +264,7 @@ func TestExtra_Mutate(t *testing.T) {
 			validateResult: func(t *testing.T, obj runtime.Object) {
 				conn := obj.(*provisioning.Connection)
 				assert.Equal(t, "https://github.com/settings/installations/456", conn.Spec.URL)
-				assert.False(t, conn.Secure.Token.Create.IsZero(), "JWT token should be generated")
+				assert.True(t, conn.Secure.Token.Create.IsZero(), "Token should not be generated in mutator")
 			},
 		},
 		{
@@ -316,33 +316,6 @@ func TestExtra_Mutate(t *testing.T) {
 			},
 		},
 		{
-			name: "should generate JWT token with new private key",
-			obj: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue(privateKeyBase64),
-					},
-				},
-			},
-			wantErr: false,
-			validateResult: func(t *testing.T, obj runtime.Object) {
-				conn := obj.(*provisioning.Connection)
-				assert.Equal(t, "https://github.com/settings/installations/456", conn.Spec.URL)
-				assert.False(t, conn.Secure.Token.Create.IsZero(), "JWT token should be generated")
-				// Verify token is a valid JWT (starts with "eyJ")
-				tokenStr := conn.Secure.Token.Create.DangerouslyExposeAndConsumeValue()
-				assert.True(t, len(tokenStr) > 0, "Token should not be empty")
-			},
-		},
-		{
 			name: "should preserve token when no new key provided",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
@@ -368,50 +341,6 @@ func TestExtra_Mutate(t *testing.T) {
 				assert.Equal(t, "https://github.com/settings/installations/456", conn.Spec.URL)
 				// Token should remain unchanged
 				assert.Equal(t, "existing-token", conn.Secure.Token.Create.DangerouslyExposeAndConsumeValue())
-			},
-		},
-		{
-			name: "should fail with invalid base64 private key",
-			obj: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue("invalid-base64"),
-					},
-				},
-			},
-			wantErr: true,
-			validateError: func(t *testing.T, err error) {
-				assert.Contains(t, err.Error(), "failed to generate JWT token")
-			},
-		},
-		{
-			name: "should fail with invalid RSA private key",
-			obj: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-				Secure: provisioning.ConnectionSecure{
-					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue(base64.StdEncoding.EncodeToString([]byte("invalid-rsa-key"))),
-					},
-				},
-			},
-			wantErr: true,
-			validateError: func(t *testing.T, err error) {
-				assert.Contains(t, err.Error(), "failed to generate JWT token")
 			},
 		},
 	}

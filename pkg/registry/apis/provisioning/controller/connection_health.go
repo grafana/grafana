@@ -102,6 +102,26 @@ func (hc *ConnectionHealthChecker) hasHealthStatusChanged(old, new provisioning.
 	return false
 }
 
+// classifyConnectionError determines the appropriate Ready condition reason based on test results.
+// Returns one of: Available, InvalidSpec, AuthenticationFailed, or ServiceUnavailable.
+func classifyConnectionError(testResults *provisioning.TestResults) string {
+	if testResults.Success {
+		return provisioning.ReasonAvailable
+	}
+
+	// Map HTTP status codes to condition reasons
+	// We only map status codes that connections actually return
+	switch testResults.Code {
+	case 401, 403: // Authentication/authorization failed
+		return provisioning.ReasonAuthenticationFailed
+	case 503: // Service unavailable
+		return provisioning.ReasonServiceUnavailable
+	default:
+		// All other errors (404, 422, 500, etc.) are spec/configuration issues
+		return provisioning.ReasonInvalidSpec
+	}
+}
+
 // RefreshHealthWithPatchOps performs a health check on an existing connection
 // and returns the test results, health status, and patch operations to apply.
 // This method does NOT apply the patch itself, allowing the caller to batch
@@ -124,8 +144,9 @@ func (hc *ConnectionHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 		})
 	}
 
-	// Update Ready condition based on health status
-	readyCondition := buildReadyConditionFromHealth(newHealthStatus)
+	// Update Ready condition based on health status with error classification
+	reason := classifyConnectionError(testResults)
+	readyCondition := buildReadyConditionWithReason(newHealthStatus, reason)
 	if conditionPatchOps := BuildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.GetGeneration(), readyCondition); conditionPatchOps != nil {
 		patchOps = append(patchOps, conditionPatchOps...)
 	}

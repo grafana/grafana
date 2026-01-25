@@ -10,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -21,10 +22,26 @@ var ErrRepositoryParentFolderConflict = fmt.Errorf("repository path conflicts wi
 
 type VerifyAgainstExistingRepositoriesValidator struct {
 	lister RepositoryLister
+	limits quotas.QuotaLimits
 }
 
 func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Validator {
-	return &VerifyAgainstExistingRepositoriesValidator{lister: lister}
+	// Default to 10 repositories for backward compatibility when using the old constructor
+	return &VerifyAgainstExistingRepositoriesValidator{
+		lister: lister,
+		limits: quotas.QuotaLimits{MaxRepositories: 10},
+	}
+}
+
+// NewVerifyAgainstExistingRepositoriesValidatorWithQuotas creates a validator with quota limits.
+// HACK: This is a workaround to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature which would require
+// changes in the enterprise repository. This should be merged into NewVerifyAgainstExistingRepositoriesValidator parameters
+// once we can coordinate the change across repositories.
+func NewVerifyAgainstExistingRepositoriesValidatorWithQuotas(lister RepositoryLister, limits quotas.QuotaLimits) Validator {
+	return &VerifyAgainstExistingRepositoriesValidator{
+		lister: lister,
+		limits: limits,
+	}
 }
 
 // VerifyAgainstExistingRepositoriesValidator verifies repository configurations for conflicts within a namespace.
@@ -33,7 +50,7 @@ func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Vali
 // - You can only create an instance sync repository if no other repositories exist in the namespace.
 // - You cannot create a folder sync repository if an instance repository already exists in the namespace.
 // - Git repositories must not have duplicate or overlapping paths with existing repositories.
-// - The total number of repositories in a single namespace cannot exceed 10.
+// - The total number of repositories in a single namespace cannot exceed the configured limit (default 10, 0 = unlimited).
 func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
 	if err != nil {
@@ -92,6 +109,13 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
+	// Check repository limit (0 = unlimited, > 0 = use value)
+	maxRepos := v.limits.MaxRepositories
+	// Early return if unlimited (0) to avoid unnecessary counting.
+	if maxRepos == 0 {
+		return nil
+	}
+
 	// Count repositories excluding the current one being created/updated
 	count := 0
 	for _, v := range all {
@@ -100,9 +124,9 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	if count >= 10 {
+	if count >= int(maxRepos) {
 		return field.ErrorList{field.Forbidden(field.NewPath("spec"),
-			"Maximum number of 10 repositories reached")}
+			fmt.Sprintf("Maximum number of %d repositories reached", maxRepos))}
 	}
 
 	return nil
