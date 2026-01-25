@@ -5171,6 +5171,9 @@
         "deleted": "raderad"
       }
     },
+    "kiosk": {
+      "footerPoweredBy": ""
+    },
     "layout": {
       "cancel": "",
       "common": {

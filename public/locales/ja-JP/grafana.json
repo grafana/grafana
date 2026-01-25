@@ -5152,6 +5152,9 @@
         "deleted": "削除済み"
       }
     },
+    "kiosk": {
+      "footerPoweredBy": ""
+    },
     "layout": {
       "cancel": "",
       "common": {

@@ -5171,6 +5171,9 @@
         "deleted": "verwijderd"
       }
     },
+    "kiosk": {
+      "footerPoweredBy": ""
+    },
     "layout": {
       "cancel": "",
       "common": {
