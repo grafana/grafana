@@ -5171,6 +5171,9 @@
         "deleted": "törölve"
       }
     },
+    "kiosk": {
+      "footerPoweredBy": ""
+    },
     "layout": {
       "cancel": "",
       "common": {

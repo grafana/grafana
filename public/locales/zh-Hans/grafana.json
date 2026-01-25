@@ -5152,6 +5152,9 @@
         "deleted": "已删除"
       }
     },
+    "kiosk": {
+      "footerPoweredBy": ""
+    },
     "layout": {
       "cancel": "",
       "common": {

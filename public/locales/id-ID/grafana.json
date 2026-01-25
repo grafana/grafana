@@ -5152,6 +5152,9 @@
         "deleted": "dihapus"
       }
     },
+    "kiosk": {
+      "footerPoweredBy": ""
+    },
     "layout": {
       "cancel": "",
       "common": {

@@ -5209,6 +5209,9 @@
         "deleted": "usunięto"
       }
     },
+    "kiosk": {
+      "footerPoweredBy": ""
+    },
     "layout": {
       "cancel": "",
       "common": {
