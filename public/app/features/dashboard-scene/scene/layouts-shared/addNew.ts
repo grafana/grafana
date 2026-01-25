@@ -2,6 +2,7 @@ import { config } from '@grafana/runtime';
 import { SceneGridRow } from '@grafana/scenes';
 
 import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
+import { isDashboardNewLayoutsEnabled } from '../../utils/utils';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
@@ -36,7 +37,7 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
   /**
    * If new layouts feature is disabled we add old school rows to the custom grid layout
    */
-  if (!config.featureToggles.dashboardNewLayouts) {
+  if (!isDashboardNewLayoutsEnabled()) {
     if (layout instanceof DefaultGridLayoutManager) {
       return layout.addNewRow();
     } else {

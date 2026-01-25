@@ -8,7 +8,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel, isDashboardNewLayoutsEnabled } from '../utils/utils';
 
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior } from './PanelMenuBehavior';
@@ -107,8 +107,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     const dashboard = getDashboardSceneFor(this);
     const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
     const isScriptedDashboard = dashboard.state.meta.fromScript === true;
-    const shouldSkipRepeatMigration =
-      config.featureToggles.dashboardNewLayouts && !isPublicDashboard && !isScriptedDashboard;
+    const shouldSkipRepeatMigration = isDashboardNewLayoutsEnabled() && !isPublicDashboard && !isScriptedDashboard;
 
     // Migrate repeat options to layout element (only for legacy dashboards, or public/scripted dashboards)
     if (!shouldSkipRepeatMigration && libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {

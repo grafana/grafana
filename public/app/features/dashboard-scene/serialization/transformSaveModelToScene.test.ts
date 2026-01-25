@@ -816,9 +816,11 @@ describe('transformSaveModelToScene', () => {
   describe('Convert to new rows', () => {
     beforeEach(() => {
       // set feature flag to true
+      config.featureToggles.dashboardScene = true;
       config.featureToggles.dashboardNewLayouts = true;
     });
     afterEach(() => {
+      config.featureToggles.dashboardScene = false;
       config.featureToggles.dashboardNewLayouts = false;
     });
 

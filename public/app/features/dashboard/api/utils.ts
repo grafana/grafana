@@ -3,6 +3,7 @@ import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
 import { Resource } from 'app/features/apiserver/types';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard-scene/utils/utils';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -20,7 +21,7 @@ export function isV0V1StoredVersion(version: string | undefined): boolean {
 export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
   const isDashboardSceneEnabled = config.featureToggles.dashboardScene;
   const isKubernetesDashboardsEnabled = config.featureToggles.kubernetesDashboards;
-  const isDashboardNewLayoutsEnabled = config.featureToggles.dashboardNewLayouts;
+  const isDashboardNewLayoutsEnabledValue = isDashboardNewLayoutsEnabled();
 
   const forcingOldDashboardArch = locationService.getSearch().get('scenes') === 'false';
 
@@ -38,7 +39,7 @@ export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
     if (responseFormat === 'v1') {
       return 'v1';
     }
-    if (responseFormat === 'v2' || isDashboardNewLayoutsEnabled) {
+    if (responseFormat === 'v2' || isDashboardNewLayoutsEnabledValue) {
       return 'v2';
     }
     return 'unified';

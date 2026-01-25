@@ -259,7 +259,8 @@ const reportDashboardInteraction = (
   interactionPrefix = 'dashboards'
 ) => {
   const meta = isScenesContextSet ? { scenesView: true } : {};
-  const isDynamicDashboard = config.featureToggles?.dashboardNewLayouts ?? false;
+  const isDynamicDashboard =
+    (config.featureToggles?.dashboardScene && config.featureToggles?.dashboardNewLayouts) ?? false;
 
   if (properties) {
     reportInteraction(`${interactionPrefix}_${name}`, { ...properties, ...meta, isDynamicDashboard });

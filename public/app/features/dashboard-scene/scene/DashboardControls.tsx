@@ -23,7 +23,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
-import { getDashboardSceneFor } from '../utils/utils';
+import { getDashboardSceneFor, isDashboardNewLayoutsEnabled } from '../utils/utils';
 
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
@@ -189,7 +189,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
                 <refreshPicker.Component model={refreshPicker} />
               </div>
             )}
-            {config.featureToggles.dashboardNewLayouts && (
+            {isDashboardNewLayoutsEnabled() && (
               <div className={styles.fixedControlsNewLayout}>
                 <DashboardControlActions dashboard={dashboard} />
               </div>
@@ -223,7 +223,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
-        {config.featureToggles.dashboardNewLayouts && (
+        {isDashboardNewLayoutsEnabled() && (
           <div className={styles.fixedControls}>
             <DashboardControlActions dashboard={dashboard} />
           </div>

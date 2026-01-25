@@ -279,8 +279,12 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   return null;
 }
 
+export function isDashboardNewLayoutsEnabled(): boolean {
+  return config.featureToggles.dashboardScene && config.featureToggles.dashboardNewLayouts;
+}
+
 export function getDefaultPluginId(): string {
-  return config.featureToggles.dashboardNewLayouts || config.featureToggles.newVizSuggestions
+  return isDashboardNewLayoutsEnabled() || config.featureToggles.newVizSuggestions
     ? UNCONFIGURED_PANEL_PLUGIN_ID
     : 'timeseries';
 }

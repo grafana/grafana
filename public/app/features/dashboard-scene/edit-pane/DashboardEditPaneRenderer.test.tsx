@@ -45,6 +45,7 @@ export function buildTestScene() {
 }
 
 describe('DashboardEditPaneRenderer', () => {
+  config.featureToggles.dashboardScene = true;
   config.featureToggles.dashboardNewLayouts = true;
 
   it('Should render sidebar', async () => {

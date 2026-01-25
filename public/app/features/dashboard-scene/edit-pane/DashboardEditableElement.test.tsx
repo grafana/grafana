@@ -112,6 +112,7 @@ function setup(overrides?: Partial<DashboardSceneState>) {
   // Clear any data layers
   dashboard.setState({ $data: undefined });
 
+  config.featureToggles.dashboardScene = true;
   config.featureToggles.dashboardNewLayouts = true;
   activateFullSceneTree(dashboard);
 

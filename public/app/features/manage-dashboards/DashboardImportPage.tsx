@@ -31,6 +31,7 @@ import { dispatch } from 'app/store/store';
 import { StoreState } from 'app/types/store';
 
 import { cleanUpAction } from '../../core/actions/cleanUp';
+import { isDashboardNewLayoutsEnabled } from '../dashboard-scene/utils/utils';
 import { ImportDashboardOverviewV2 } from '../dashboard-scene/v2schema/ImportDashboardOverviewV2';
 
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
@@ -120,7 +121,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
 
     const dashboard = JSON.parse(formData.dashboardJson);
 
-    if ((dashboard.spec?.elements || dashboard.elements) && !config.featureToggles.dashboardNewLayouts) {
+    if ((dashboard.spec?.elements || dashboard.elements) && !isDashboardNewLayoutsEnabled()) {
       return appEvents.emit(AppEvents.alertError, [
         'Import failed',
         'Dashboard using new layout cannot be imported because the feature is not enabled',

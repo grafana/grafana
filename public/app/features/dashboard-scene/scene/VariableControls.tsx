@@ -14,13 +14,15 @@ import {
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { isDashboardNewLayoutsEnabled } from '../utils/utils';
+
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
   const { isEditing } = dashboard.useState();
-  const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+  const isEditingNewLayouts = isEditing && isDashboardNewLayoutsEnabled();
 
   // Get visible variables for drilldown layout
   const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
@@ -53,7 +55,7 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
           />
         ))}
 
-      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
+      {isDashboardNewLayoutsEnabled() ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
   );
 }

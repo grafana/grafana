@@ -34,7 +34,7 @@ import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
 import { DashboardInteractions } from '../utils/interactions';
 import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
-import { isLibraryPanel } from '../utils/utils';
+import { isLibraryPanel, isDashboardNewLayoutsEnabled } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
@@ -48,7 +48,7 @@ interface Props {
 }
 
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
-  const hasNewToolbar = config.featureToggles.dashboardNewLayouts;
+  const hasNewToolbar = isDashboardNewLayoutsEnabled();
 
   return hasNewToolbar ? (
     <AppChromeUpdate
