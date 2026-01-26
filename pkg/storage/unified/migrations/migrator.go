@@ -103,7 +103,7 @@ func newUnifiedMigrator(
 	}
 }
 
-type migratorFunc = func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*legacy.BlobStoreInfo, error)
+type migratorFunc = func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
 
 func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error) {
 	info, err := authlib.ParseNamespace(opts.Namespace)
@@ -137,19 +137,14 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 	}
 
 	// Execute migrations
-	blobStore := legacy.BlobStoreInfo{}
 	m.log.Info("start migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	for _, fn := range migratorFuncs {
-		blobs, err := fn(ctx, info.OrgID, opts, stream)
+		err := fn(ctx, info.OrgID, opts, stream)
 		if err != nil {
 			m.log.Error("error migrating legacy resources", "error", err, "namespace", opts.Namespace)
 			return nil, err
 		}
-		if blobs != nil {
-			blobStore.Count += blobs.Count
-			blobStore.Size += blobs.Size
-		}
 	}
-	m.log.Info("finished migrating legacy resources", "blobStore", blobStore)
+	m.log.Info("finished migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	return stream.CloseAndRecv()
 }

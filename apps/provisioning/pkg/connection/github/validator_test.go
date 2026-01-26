@@ -1,9 +1,11 @@
-package github
+package github_test
 
 import (
 	"context"
+	"encoding/base64"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -13,6 +15,9 @@ import (
 )
 
 func TestValidate(t *testing.T) {
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	invalidBase64 := base64.StdEncoding.EncodeToString([]byte("somePrivateKey"))
+
 	tests := []struct {
 		name          string
 		obj           runtime.Object
@@ -66,7 +71,7 @@ func TestValidate(t *testing.T) {
 			errorContains: []string{"privateKey"},
 		},
 		{
-			name: "missing token",
+			name: "private key invalid base64",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-conn",
@@ -80,12 +85,55 @@ func TestValidate(t *testing.T) {
 				},
 				Secure: provisioning.ConnectionSecure{
 					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-key"),
+						Create: "invalid",
 					},
 				},
 			},
 			expectedError: true,
-			errorContains: []string{"token"},
+			errorContains: []string{"privateKey"},
+		},
+		{
+			name: "privateKey invalid RSA private key",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-conn",
+				},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.NewSecretValue(invalidBase64),
+					},
+				},
+			},
+			expectedError: true,
+			errorContains: []string{"privateKey"},
+		},
+		{
+			name: "valid connection without token (controller will generate)",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-conn",
+				},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.NewSecretValue(privateKeyBase64),
+					},
+				},
+			},
+			expectedError: false,
 		},
 		{
 			name: "forbidden client secret",
@@ -178,7 +226,7 @@ func TestValidate(t *testing.T) {
 				},
 				Secure: provisioning.ConnectionSecure{
 					PrivateKey: common.InlineSecureValue{
-						Create: common.NewSecretValue("test-key"),
+						Create: common.NewSecretValue(privateKeyBase64),
 					},
 					Token: common.InlineSecureValue{
 						Create: common.NewSecretValue("test-token"),
@@ -190,7 +238,7 @@ func TestValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			list := Validate(context.Background(), tt.obj)
+			list := github.Validate(context.Background(), tt.obj)
 			if tt.expectedError {
 				assert.NotEmpty(t, list)
 				if len(tt.errorContains) > 0 {

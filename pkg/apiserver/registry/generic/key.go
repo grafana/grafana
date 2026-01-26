@@ -143,9 +143,9 @@ func NamespaceKeyFunc(gr schema.GroupResource) func(ctx context.Context, name st
 	}
 }
 
-// ClusterKeyFunc is the function for constructing storage paths
-// to a cluster scoped resource (no namespace required)
-func ClusterKeyFunc(gr schema.GroupResource) func(ctx context.Context, name string) (string, error) {
+// ClusterScopedKeyFunc is the default function for constructing storage paths to
+// cluster-scoped resources. It does not require a namespace, but does require a name.
+func ClusterScopedKeyFunc(gr schema.GroupResource) func(ctx context.Context, name string) (string, error) {
 	return func(ctx context.Context, name string) (string, error) {
 		if len(name) == 0 {
 			return "", apierrors.NewBadRequest("Name parameter required.")

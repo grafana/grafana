@@ -2702,15 +2702,15 @@
     {
       "metadata": {
         "name": "localeFormatPreference",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1769012601213",
         "creationTimestamp": "2025-03-31T13:59:07Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-01-21 16:23:21.21319 +0000 UTC"
         }
       },
       "spec": {
         "description": "Specifies the locale so the correct format for numbers and dates can be shown",
-        "stage": "preview",
+        "stage": "deprecated",
         "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "false"
       }
@@ -3674,6 +3674,23 @@
         "description": "Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryEditorNext",
+        "resourceVersion": "1768869177305",
+        "creationTimestamp": "2026-01-13T18:26:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-20 00:32:57.305391 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables next generation query editor experience",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
         "expression": "false"
       }
     },

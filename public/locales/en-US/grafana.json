@@ -1936,6 +1936,10 @@
       "select-group": "Select group",
       "select-namespace": "Select namespace"
     },
+    "navigation": {
+      "alert-rules": "Alert rules",
+      "recently-deleted": "Recently deleted"
+    },
     "need-help-info": {
       "need-help": "Need help?"
     },
@@ -3638,7 +3642,10 @@
       "move-modal-title": "Move",
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
+      "new-folder-as-team-folder-checkbox-tooltip": "Team folders are folders owned by your team. Use them to keep your team’s content in one place—making it easier to find, organize, and manage access",
+      "new-folder-as-team-folder-label": "Team:",
       "new-folder-name-required-phrase": "Folder name is required.",
+      "new-folder-owner-selector-checkbox": "Assign an owner to the folder",
       "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
       "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
@@ -5166,6 +5173,9 @@
       "title": {
         "deleted": "deleted"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": "Powered by"
     },
     "layout": {
       "cancel": "Cancel",
@@ -9819,7 +9829,7 @@
     "loading-panel-text": "Loading library panel",
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
       "button-cancel": "Cancel",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
@@ -12586,6 +12596,13 @@
       "title-data-source-help": "Data source help"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "Query/Transform detail view goes here",
+    "sidebar": {
+      "placeholder": "Sidebar content placeholder",
+      "toggle-size": "Toggle sidebar size"
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": "Open Query Library"
@@ -13350,6 +13367,7 @@
       "label-standard": "Standard"
     },
     "suggestions": {
+      "stat": "Stat",
       "stat-color-background": "Stat - color background",
       "stat-discrete-values": "Stat - discrete values",
       "stat-discrete-values-color-background": "Stat - discrete values - color background",
@@ -14960,6 +14978,9 @@
       "label-both": "Both",
       "label-lines": "Lines",
       "label-points": "Points"
+    },
+    "suggestions": {
+      "scatter-plot": "Scatter plot"
     }
   }
 }

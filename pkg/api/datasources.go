@@ -847,7 +847,7 @@ func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *data
 		Headers:       map[string]string{},
 	}
 
-	err = hs.DataSourceRequestValidator.Validate(ds, c.Req)
+	err = hs.DataSourceRequestValidator.Validate(ds.URL, ds.JsonData, c.Req)
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}

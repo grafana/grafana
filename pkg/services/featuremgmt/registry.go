@@ -1559,7 +1559,7 @@ var (
 		{
 			Name:        "localeFormatPreference",
 			Description: "Specifies the locale so the correct format for numbers and dates can be shown",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageDeprecated, // not continuing the work for now, will be removed
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 		},
@@ -2248,6 +2248,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaOSSBigTent,
+			Expression:   "false",
+		},
+		{
+			Name:         "queryEditorNext",
+			Description:  "Enables next generation query editor experience",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDataProSquad,
 			Expression:   "false",
 		},
 		{

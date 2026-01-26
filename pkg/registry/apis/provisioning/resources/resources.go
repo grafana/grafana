@@ -27,19 +27,6 @@ var (
 	ErrMissingName         = field.Required(field.NewPath("name", "metadata", "name"), "missing name in resource")
 )
 
-// NewResourceOwnershipConflictError creates a BadRequest error for when a resource
-// is owned by a different repository or manager and cannot be modified
-func NewResourceOwnershipConflictError(resourceName string, currentManager utils.ManagerProperties, requestingManager utils.ManagerProperties) error {
-	message := fmt.Sprintf("resource '%s' is managed by %s '%s' and cannot be modified by %s '%s'",
-		resourceName,
-		currentManager.Kind,
-		currentManager.Identity,
-		requestingManager.Kind,
-		requestingManager.Identity)
-
-	return apierrors.NewBadRequest(message)
-}
-
 type WriteOptions struct {
 	Path string
 	Ref  string

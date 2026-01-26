@@ -799,12 +799,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "삭제",
       "duplicate": "복제",
       "label-integration": "통합",
       "label-notification-settings": "알림 설정",
       "label-section": "{{name}} 설정(선택 사항)",
       "test": "테스트",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -1927,6 +1929,10 @@
     "namespace-and-group-filter": {
       "select-group": "그룹 선택",
       "select-namespace": "네임스페이스 선택"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "도움이 필요하세요?"
@@ -5145,6 +5151,9 @@
       "title": {
         "deleted": "삭제됨"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -12531,6 +12540,13 @@
       "title-data-source-help": "데이터 소스 도움말"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": ""
@@ -13292,6 +13308,7 @@
       "label-standard": "표준"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14901,6 +14918,9 @@
       "label-both": "둘 다",
       "label-lines": "선",
       "label-points": "포인트"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }
