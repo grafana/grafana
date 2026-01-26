@@ -240,7 +240,7 @@ func TestReconcileConnectionToken(t *testing.T) {
 		assert.Empty(t, patchOps)
 	})
 
-	t.Run("token generation fails, token expired - should return error", func(t *testing.T) {
+	t.Run("token generation fails, token expired - should return error with health status", func(t *testing.T) {
 		conn := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "test-conn",
@@ -265,7 +265,19 @@ func TestReconcileConnectionToken(t *testing.T) {
 		// Should return error when token is expired
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "token expired")
-		assert.Empty(t, patchOps)
+
+		// Should include health status patch
+		assert.NotEmpty(t, patchOps)
+		require.Len(t, patchOps, 1)
+		assert.Equal(t, "replace", patchOps[0]["op"])
+		assert.Equal(t, "/status/health", patchOps[0]["path"])
+
+		// Verify health status indicates failure
+		healthStatus, ok := patchOps[0]["value"].(provisioning.HealthStatus)
+		require.True(t, ok)
+		assert.False(t, healthStatus.Healthy)
+		assert.Equal(t, provisioning.HealthFailureHealth, healthStatus.Error)
+		assert.Contains(t, healthStatus.Message[0], "Failed to generate connection token")
 	})
 
 	t.Run("error checking token, spec unchanged - should return no error", func(t *testing.T) {

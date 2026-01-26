@@ -56,7 +56,23 @@ func ReconcileConnectionToken(
 	token, err := tokenConn.GenerateConnectionToken(ctx)
 	if err != nil {
 		if isTokenExpired {
-			return nil, fmt.Errorf("token expired: %w", err)
+			// Token is expired and generation failed - update health status to show failure
+			logger.Error("failed to generate connection token with expired token", "error", err)
+
+			healthStatus := provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{fmt.Sprintf("Failed to generate connection token: %v", err)},
+			}
+
+			patchOps = append(patchOps, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/health",
+				"value": healthStatus,
+			})
+
+			return patchOps, fmt.Errorf("token expired: %w", err)
 		}
 
 		logger.Error("failed to refresh token ahead of time but will try again later", "error", err)

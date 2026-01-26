@@ -219,23 +219,51 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	// Handle token generation/refresh
 	connectionOps, tokenGenerationError := ReconcileConnectionToken(ctx, conn, c, cc.resyncInterval)
-	if tokenGenerationError != nil {
-		return fmt.Errorf("reconcile connection token: %w", tokenGenerationError)
-	}
 	patchOperations = append(patchOperations, connectionOps...)
 
-	// Handle health check
-	testResults, healthStatus, healthPatchOps, err := cc.healthChecker.RefreshHealthWithPatchOps(ctx, conn)
-	if err != nil {
-		logger.Error("failed to get updated health status", "error", err)
-		return fmt.Errorf("update health status: %w", err)
-	}
-	patchOperations = append(patchOperations, healthPatchOps...)
+	var healthStatus provisioning.HealthStatus
+	var fieldErrors []provisioning.ErrorDetails
 
-	// Update fieldErrors from test results - ensure fieldErrors are cleared when there are no errors
-	fieldErrors := testResults.Errors
-	if fieldErrors == nil {
+	if tokenGenerationError != nil {
+		// Token generation failed - skip health check and use error for status
+		logger.Warn("skipping health check due to token generation failure", "error", tokenGenerationError)
+
+		// Clear fieldErrors since this is a token issue, not a spec issue
 		fieldErrors = []provisioning.ErrorDetails{}
+	} else {
+		// Handle health check
+		testResults, healthStatusResult, healthPatchOps, err := cc.healthChecker.RefreshHealthWithPatchOps(ctx, conn)
+		if err != nil {
+			// Health check failed - create unhealthy status but don't block reconciliation
+			// This ensures observedGeneration gets updated
+			logger.Error("failed to perform health check, marking as unhealthy", "error", err)
+
+			healthStatus = provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{fmt.Sprintf("Health check failed: %v", err)},
+			}
+
+			// Add health status patch
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/health",
+				"value": healthStatus,
+			})
+
+			// Clear fieldErrors since this is a health check failure, not a spec issue
+			fieldErrors = []provisioning.ErrorDetails{}
+		} else {
+			healthStatus = healthStatusResult
+			patchOperations = append(patchOperations, healthPatchOps...)
+
+			// Update fieldErrors from test results - ensure fieldErrors are cleared when there are no errors
+			fieldErrors = testResults.Errors
+			if fieldErrors == nil {
+				fieldErrors = []provisioning.ErrorDetails{}
+			}
+		}
 	}
 
 	patchOperations = append(patchOperations, map[string]interface{}{
