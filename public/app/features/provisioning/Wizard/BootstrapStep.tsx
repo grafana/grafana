@@ -37,7 +37,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const repositoryType = watch('repository.type');
   const { enabledOptions, disabledOptions } = useModeOptions(repoName, settingsData);
   const { target } = enabledOptions?.[0];
-  const { resourceCountString, fileCountString, isLoading } = useResourceStats(repoName, selectedTarget);
+  const { resourceCountString, fileCountString, isLoading, filesReady } = useResourceStats(repoName, selectedTarget);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     setValue('repository.sync.target', target);
   }, [target, setValue]);
 
-  if (isLoading) {
+  if (isLoading || !filesReady) {
     return (
       <Box padding={4}>
         <LoadingPlaceholder
