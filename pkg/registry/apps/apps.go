@@ -55,7 +55,6 @@ func ProvideAppInstallers(
 		playlistAppInstaller,
 		pluginsAppInstaller,
 		exampleAppInstaller,
-		dashvalidatorAppInstaller,
 	}
 	if featureClient.Boolean(context.Background(), featuremgmt.FlagKubernetesUnifiedStorageQuotas, false, openfeature.TransactionContext(context.Background())) {
 		installers = append(installers, quotasAppInstaller)
@@ -95,6 +94,11 @@ func ProvideAppInstallers(
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagLiveAPIServer) {
 		installers = append(installers, liveAppInstaller)
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features.IsEnabledGlobally(featuremgmt.FlagDashboardValidatorApp) {
+		installers = append(installers, dashvalidatorAppInstaller)
 	}
 	return installers
 }
