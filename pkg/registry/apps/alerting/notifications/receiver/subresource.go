@@ -20,7 +20,6 @@ const newReceiverNamePlaceholder = "-"
 
 type testingService interface {
 	PatchIntegrationAndTest(ctx context.Context, user identity.Requester, alert notifier.Alert, receiverUID string, integration models.Integration, requiredSecrets []string) (notifier.IntegrationTestResult, error)
-	TestByIntegrationUID(ctx context.Context, user identity.Requester, alert notifier.Alert, receiverUID string, integrationUID string) (notifier.IntegrationTestResult, error)
 	TestNewReceiverIntegration(ctx context.Context, user identity.Requester, alert notifier.Alert, integration models.Integration) (notifier.IntegrationTestResult, error)
 }
 
@@ -84,52 +83,28 @@ func (p *RequestHandler) TestReceiver(ctx context.Context, user identity.Request
 		return notifier.IntegrationTestResult{}, models.ErrReceiverTestingInvalidIntegration(err.Error())
 	}
 	alert := notifier.Alert(body.Alert)
-	if body.IntegrationRef != nil {
-		return p.testingSvc.TestByIntegrationUID(ctx, user, alert, receiverUID, body.IntegrationRef.Uid)
+	integration, secure, err := convertReceiverIntegrationToIntegration("", v0alpha1.ReceiverIntegration(body.Integration))
+	if err != nil {
+		return notifier.IntegrationTestResult{}, err
 	}
-	if body.Integration != nil {
-		integration, secure, err := convertReceiverIntegrationToIntegration("", v0alpha1.ReceiverIntegration(*body.Integration))
-		if err != nil {
-			return notifier.IntegrationTestResult{}, err
-		}
-		if receiverUID == "" {
-			return p.testingSvc.TestNewReceiverIntegration(ctx, user, alert, integration)
-		}
-		return p.testingSvc.PatchIntegrationAndTest(ctx, user, alert, receiverUID, integration, secure)
+	if receiverUID == "" {
+		return p.testingSvc.TestNewReceiverIntegration(ctx, user, alert, integration)
 	}
-	return notifier.IntegrationTestResult{}, models.ErrReceiverTestingInvalidIntegration("integrationRef or integration must be set")
+	return p.testingSvc.PatchIntegrationAndTest(ctx, user, alert, receiverUID, integration, secure)
 }
 
 func validateCreateReceiverIntegrationTestRequestBody(receiverUID string, body v0alpha1.CreateReceiverIntegrationTestRequestBody) error {
-	// for either new or existing integrations only one of Integration and IntegrationRef must be set
-	if body.Integration != nil && body.IntegrationRef != nil {
-		return errors.New("integrationRef and integration cannot be set at the same time")
-	}
-	if body.Integration == nil && body.IntegrationRef == nil {
-		return errors.New("integrationRef or integration must be set")
-	}
 	// validate new receiver
 	if receiverUID == "" {
-		if body.IntegrationRef != nil {
-			return errors.New("only full integration configuration must be provided for testing a new receiver")
-		}
-		if body.Integration == nil {
-			return errors.New("integration settings must be specified when testing a new receiver")
-		}
 		if body.Integration.Uid != nil {
 			return errors.New("integration UID must be empty when testing a new receiver")
 		}
 		if len(body.Integration.SecureFields) > 0 {
 			return errors.New("integration must not have secure fields when testing a new receiver")
 		}
-
 		return nil
 	}
-	// validating existing receiver
-	if body.IntegrationRef != nil && body.IntegrationRef.Uid == "" {
-		return errors.New("integrationRef UID must be set")
-	}
-	if body.Integration != nil && (body.Integration.Uid == nil || *body.Integration.Uid == "") && len(body.Integration.SecureFields) > 0 {
+	if (body.Integration.Uid == nil || *body.Integration.Uid == "") && len(body.Integration.SecureFields) > 0 {
 		return errors.New("integration must have a UID to be tested with patched secure settings")
 	}
 	return nil

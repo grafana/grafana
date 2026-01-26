@@ -56,29 +56,6 @@ type Alert struct {
 
 type IntegrationTestResult alertingModels.IntegrationStatus
 
-// TestByIntegrationUID tests a specific integration in a receiver using its integration UID and returns the test result or an error.
-// User must be authorized to test the receiver.
-func (t *ReceiverTestingService) TestByIntegrationUID(ctx context.Context, user identity.Requester, alert Alert, receiverUID string, integrationUID string) (IntegrationTestResult, error) {
-	if receiverUID == "" {
-		return IntegrationTestResult{}, models.ErrReceiverTestingInvalidIntegration("receiver UID is required")
-	}
-	if integrationUID == "" {
-		return IntegrationTestResult{}, models.ErrReceiverTestingInvalidIntegration("integration UID is required")
-	}
-	if err := t.authz.AuthorizeTest(ctx, user, &models.Receiver{UID: receiverUID}); err != nil {
-		return IntegrationTestResult{}, err
-	}
-	r, err := t.receiverSvc.GetReceiver(ctx, receiverUID, false, user)
-	if err != nil {
-		return IntegrationTestResult{}, err
-	}
-	i := r.GetIntegrationByUID(integrationUID)
-	if i == nil {
-		return IntegrationTestResult{}, models.ErrReceiverTestingIntegrationNotFound.Errorf("")
-	}
-	return t.testIntegration(ctx, user, alert, r, *i)
-}
-
 // TestNewReceiverIntegration tests a new integration for a receiver (new or existing) and returns the test result or an error.
 // If receiver UID is provided, the user must be authorized to update and test the receiver.
 // If UID is not provided, the user must be authorized to create new receivers.

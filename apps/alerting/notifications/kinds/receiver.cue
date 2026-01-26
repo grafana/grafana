@@ -42,10 +42,7 @@ receiverv0alpha1: receiverKind & {
 }
 
 CreateReceiverTestRequestBody: {
-		integration?: v0alpha1.#Integration
-		integrationRef?: {
-			uid: string
-		}
+		integration: v0alpha1.#Integration
 		alert: #Alert
 }
 

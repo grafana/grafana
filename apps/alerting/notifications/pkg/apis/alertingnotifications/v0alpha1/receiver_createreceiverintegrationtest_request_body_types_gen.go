@@ -32,23 +32,14 @@ func NewCreateReceiverIntegrationTestRequestAlert() *CreateReceiverIntegrationTe
 }
 
 type CreateReceiverIntegrationTestRequestBody struct {
-	Integration    *CreateReceiverIntegrationTestRequestIntegration                `json:"integration,omitempty"`
-	IntegrationRef *CreateReceiverIntegrationTestRequestV0alpha1BodyIntegrationRef `json:"integrationRef,omitempty"`
-	Alert          CreateReceiverIntegrationTestRequestAlert                       `json:"alert"`
+	Integration CreateReceiverIntegrationTestRequestIntegration `json:"integration"`
+	Alert       CreateReceiverIntegrationTestRequestAlert       `json:"alert"`
 }
 
 // NewCreateReceiverIntegrationTestRequestBody creates a new CreateReceiverIntegrationTestRequestBody object.
 func NewCreateReceiverIntegrationTestRequestBody() *CreateReceiverIntegrationTestRequestBody {
 	return &CreateReceiverIntegrationTestRequestBody{
-		Alert: *NewCreateReceiverIntegrationTestRequestAlert(),
+		Integration: *NewCreateReceiverIntegrationTestRequestIntegration(),
+		Alert:       *NewCreateReceiverIntegrationTestRequestAlert(),
 	}
-}
-
-type CreateReceiverIntegrationTestRequestV0alpha1BodyIntegrationRef struct {
-	Uid string `json:"uid"`
-}
-
-// NewCreateReceiverIntegrationTestRequestV0alpha1BodyIntegrationRef creates a new CreateReceiverIntegrationTestRequestV0alpha1BodyIntegrationRef object.
-func NewCreateReceiverIntegrationTestRequestV0alpha1BodyIntegrationRef() *CreateReceiverIntegrationTestRequestV0alpha1BodyIntegrationRef {
-	return &CreateReceiverIntegrationTestRequestV0alpha1BodyIntegrationRef{}
 }

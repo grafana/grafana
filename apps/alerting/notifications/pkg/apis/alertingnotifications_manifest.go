@@ -82,23 +82,9 @@ var appManifestData = app.ManifestData{
 																			Ref: spec.MustCreateRef("#/components/schemas/createReceiverIntegrationTestIntegration"),
 																		},
 																	},
-																	"integrationRef": {
-																		SchemaProps: spec.SchemaProps{
-																			Type: []string{"object"},
-																			Properties: map[string]spec.Schema{
-																				"uid": {
-																					SchemaProps: spec.SchemaProps{
-																						Type: []string{"string"},
-																					},
-																				},
-																			},
-																			Required: []string{
-																				"uid",
-																			},
-																		},
-																	},
 																},
 																Required: []string{
+																	"integration",
 																	"alert",
 																},
 															}},

@@ -240,7 +240,7 @@ func TestIntegrationReceiverAuthorizationTest(t *testing.T) {
 				t.Run(prefix+" test when no receiver name provided", func(t *testing.T) {
 					resp, err := client.CreateReceiverIntegrationTest(ctx, NoReceiverIdentifier, v0alpha1.CreateReceiverIntegrationTestRequest{
 						Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-							Integration: &v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+							Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
 								Type: "webhook",
 								Settings: map[string]interface{}{
 									"url": "http://localhost:8080",
@@ -265,10 +265,8 @@ func TestIntegrationReceiverAuthorizationTest(t *testing.T) {
 					t.Run("and existing integration is tested", func(t *testing.T) {
 						resp, err := client.CreateReceiverIntegrationTest(ctx, existingReceiver.GetStaticMetadata().Identifier(), v0alpha1.CreateReceiverIntegrationTestRequest{
 							Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-								IntegrationRef: &v0alpha1.CreateReceiverIntegrationTestRequestV0alpha1BodyIntegrationRef{
-									Uid: *existingReceiver.Spec.Integrations[0].Uid,
-								},
-								Alert: alert,
+								Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration(existingReceiver.Spec.Integrations[0]),
+								Alert:       alert,
 							},
 						})
 						if tc.canTestExisting {
@@ -281,7 +279,7 @@ func TestIntegrationReceiverAuthorizationTest(t *testing.T) {
 					t.Run("and new integration is tested", func(t *testing.T) {
 						resp, err := client.CreateReceiverIntegrationTest(ctx, existingReceiver.GetStaticMetadata().Identifier(), v0alpha1.CreateReceiverIntegrationTestRequest{
 							Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-								Integration: &v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+								Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
 									Uid:  nil,
 									Type: "webhook",
 									Settings: map[string]interface{}{
@@ -312,7 +310,7 @@ func TestIntegrationReceiverAuthorizationTest(t *testing.T) {
 
 		request := v0alpha1.CreateReceiverIntegrationTestRequest{
 			Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-				Integration: &modifiedIntegration,
+				Integration: modifiedIntegration,
 				Alert:       alert,
 			},
 		}
@@ -420,7 +418,7 @@ func TestIntegrationTesting(t *testing.T) {
 			v0alpha1.CreateReceiverIntegrationTestRequest{
 				Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
 					Alert: alert,
-					Integration: &v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+					Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
 						Type:     integration.Type,
 						Version:  integration.Version,
 						Settings: integration.Settings,
@@ -446,22 +444,6 @@ func TestIntegrationTesting(t *testing.T) {
 	}, resource.CreateOptions{})
 	require.NoError(t, err)
 
-	t.Run("should be able to test an existing receiver by reference", func(t *testing.T) {
-		requests = nil
-		result, err := client.CreateReceiverIntegrationTest(ctx, receiver.GetStaticMetadata().Identifier(), v0alpha1.CreateReceiverIntegrationTestRequest{
-			Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-				Alert: alert,
-				IntegrationRef: &v0alpha1.CreateReceiverIntegrationTestRequestV0alpha1BodyIntegrationRef{
-					Uid: *receiver.Spec.Integrations[0].Uid,
-				},
-			},
-		})
-		require.NoError(t, err)
-		assert.Equal(t, v0alpha1.CreateReceiverIntegrationTestBodyStatusSuccess, result.Status)
-		require.Len(t, requests, 1)
-		assertRequest(t, requests[0], "/", "user", "secret-password")
-	})
-
 	t.Run("should be able to test with changed settings", func(t *testing.T) {
 		receiver, err := client.Get(ctx, receiver.GetStaticMetadata().Identifier())
 		require.NoError(t, err)
@@ -474,7 +456,7 @@ func TestIntegrationTesting(t *testing.T) {
 		result, err := client.CreateReceiverIntegrationTest(ctx, receiver.GetStaticMetadata().Identifier(), v0alpha1.CreateReceiverIntegrationTestRequest{
 			Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
 				Alert:       alert,
-				Integration: &integration,
+				Integration: integration,
 			},
 		})
 		require.NoError(t, err)
@@ -488,7 +470,7 @@ func TestIntegrationTesting(t *testing.T) {
 		result, err := client.CreateReceiverIntegrationTest(ctx, receiver.GetStaticMetadata().Identifier(), v0alpha1.CreateReceiverIntegrationTestRequest{
 			Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
 				Alert: alert,
-				Integration: &v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+				Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
 					Type: "webhook",
 					Settings: map[string]interface{}{
 						"url":      server.URL + "/some-other",
@@ -525,7 +507,7 @@ func TestIntegrationTesting(t *testing.T) {
 			result, err := adminClient.CreateReceiverIntegrationTest(ctx, NoReceiverIdentifier, v0alpha1.CreateReceiverIntegrationTestRequest{
 				Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
 					Alert:       alert,
-					Integration: &integration,
+					Integration: integration,
 				},
 			})
 			assertError(t, errors.IsBadRequest, result, err)
@@ -536,7 +518,7 @@ func TestIntegrationTesting(t *testing.T) {
 			result, err := adminClient.CreateReceiverIntegrationTest(ctx, receiver.GetStaticMetadata().Identifier(), v0alpha1.CreateReceiverIntegrationTestRequest{
 				Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
 					Alert: alert,
-					Integration: &v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+					Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
 						Uid:  utils.Pointer("test-uid"),
 						Type: "webhook",
 						Settings: map[string]interface{}{
@@ -560,7 +542,7 @@ func TestIntegrationTesting(t *testing.T) {
 				v0alpha1.CreateReceiverIntegrationTestRequest{
 					Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
 						Alert: alert,
-						Integration: &v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+						Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
 							Uid:  util.Pointer("test-uid"),
 							Type: "webhook",
 							Settings: map[string]interface{}{
@@ -574,7 +556,7 @@ func TestIntegrationTesting(t *testing.T) {
 		t.Run("an integration that does not belong to receiver", func(t *testing.T) {
 			receiver, err := client.Get(ctx, receiver.GetStaticMetadata().Identifier())
 			require.NoError(t, err)
-			integration := v0alpha1.CreateReceiverIntegrationTestRequestIntegration(receiver.Spec.Integrations[0])
+			receiver1Integration := v0alpha1.CreateReceiverIntegrationTestRequestIntegration(receiver.Spec.Integrations[0])
 
 			receiver2, err := client.Create(ctx, &v0alpha1.Receiver{
 				ObjectMeta: v1.ObjectMeta{
@@ -589,10 +571,8 @@ func TestIntegrationTesting(t *testing.T) {
 
 			result, err := client.CreateReceiverIntegrationTest(ctx, receiver2.GetStaticMetadata().Identifier(), v0alpha1.CreateReceiverIntegrationTestRequest{
 				Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
-					Alert: alert,
-					IntegrationRef: &v0alpha1.CreateReceiverIntegrationTestRequestV0alpha1BodyIntegrationRef{
-						Uid: *integration.Uid,
-					},
+					Alert:       alert,
+					Integration: receiver1Integration,
 				},
 			})
 			assertError(t, errors.IsNotFound, result, err)
