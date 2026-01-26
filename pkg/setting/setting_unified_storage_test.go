@@ -84,6 +84,63 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		assert.Equal(t, 5, cfg.IndexMinCount)
 	})
 
+	t.Run("force mode 5 for mode5-only resources when migration disabled", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		setSectionKey := func(sectionName, key, value string) {
+			section := cfg.Raw.Section(sectionName)
+			_, err := section.NewKey(key, value)
+			assert.NoError(t, err)
+		}
+
+		setSectionKey("unified_storage", "disable_data_migrations", "true")
+		setSectionKey("unified_storage."+PlaylistResource, "dualWriterMode", "1")
+		setSectionKey("unified_storage."+PlaylistResource, "enableMigration", "false")
+
+		cfg.setUnifiedStorageConfig()
+
+		resourceCfg, exists := cfg.UnifiedStorage[PlaylistResource]
+		assert.True(t, exists)
+		assert.Equal(t, UnifiedStorageConfig{
+			DualWriterMode:         rest.Mode5,
+			EnableMigration:        true,
+			AutoMigrationThreshold: 0,
+		}, resourceCfg)
+	})
+
+	t.Run("force mode 5 for mode5-only resources when storage type is legacy", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		setSectionKey := func(sectionName, key, value string) {
+			section := cfg.Raw.Section(sectionName)
+			_, err := section.NewKey(key, value)
+			assert.NoError(t, err)
+		}
+
+		setSectionKey("grafana-apiserver", "storage_type", "legacy")
+		setSectionKey("unified_storage."+PlaylistResource, "dualWriterMode", "1")
+		setSectionKey("unified_storage."+PlaylistResource, "enableMigration", "false")
+
+		cfg.setUnifiedStorageConfig()
+
+		resourceCfg, exists := cfg.UnifiedStorage[PlaylistResource]
+		assert.True(t, exists)
+		assert.Equal(t, UnifiedStorageConfig{
+			DualWriterMode:         rest.Mode5,
+			EnableMigration:        true,
+			AutoMigrationThreshold: 0,
+		}, resourceCfg)
+	})
+
+	t.Run("all mode5-only resources are also migrated resources", func(t *testing.T) {
+		for resource := range Mode5OnlyResources {
+			assert.True(t, MigratedUnifiedResources[resource], resource)
+		}
+	})
 	t.Run("read unified_storage configs with defaults", func(t *testing.T) {
 		cfg := NewCfg()
 		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})

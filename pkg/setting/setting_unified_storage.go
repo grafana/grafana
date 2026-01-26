@@ -25,6 +25,11 @@ var MigratedUnifiedResources = map[string]bool{
 	DashboardResource: false,
 }
 
+// Mode5OnlyResources maps resources that must always run in mode 5.
+var Mode5OnlyResources = map[string]bool{
+	PlaylistResource: true,
+}
+
 // AutoMigratedUnifiedResources maps resources that support auto-migration
 // TODO: remove this before Grafana 13 GA: https://github.com/grafana/search-and-storage-team/issues/613
 var AutoMigratedUnifiedResources = map[string]bool{
@@ -83,6 +88,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	} else {
 		// Helper log to find instances disabling migration
 		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations)
+		cfg.enforceMode5OnlyConfigs()
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
@@ -151,10 +157,15 @@ func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
 		resourceCfg, ok := cfg.UnifiedStorage[resource]
 		if ok {
 			if !resourceCfg.EnableMigration {
-				cfg.Logger.Info("Resource migration disabled", "resource", resource)
-				continue
+				if Mode5OnlyResources[resource] {
+					cfg.Logger.Info("Resource migration cannot be disabled; enforcing unified storage", "resource", resource, "old_config", resourceCfg)
+				} else {
+					cfg.Logger.Info("Resource migration disabled", "resource", resource)
+					continue
+				}
+			} else {
+				cfg.Logger.Info("Overriding unified storage config for migrated resource", "resource", resource, "old_config", resourceCfg)
 			}
-			cfg.Logger.Info("Overriding unified storage config for migrated resource", "resource", resource, "old_config", resourceCfg)
 		} else if !enabledByDefault {
 			continue
 		}
@@ -163,6 +174,22 @@ func (cfg *Cfg) enforceMigrationToUnifiedConfigs() {
 			DualWriterMode:         5,
 			EnableMigration:        true,
 			AutoMigrationThreshold: resourceCfg.AutoMigrationThreshold,
+		}
+	}
+}
+
+// enforceMode5OnlyConfigs forces mode 5 for resources that must always run in unified storage,
+// even when migrations are disabled or storage_type is legacy.
+func (cfg *Cfg) enforceMode5OnlyConfigs() {
+	for resource := range Mode5OnlyResources {
+		if cfg.UnifiedStorage == nil {
+			cfg.UnifiedStorage = make(map[string]UnifiedStorageConfig)
+		}
+
+		cfg.UnifiedStorage[resource] = UnifiedStorageConfig{
+			DualWriterMode:         rest.Mode5,
+			EnableMigration:        true,
+			AutoMigrationThreshold: 0,
 		}
 	}
 }
