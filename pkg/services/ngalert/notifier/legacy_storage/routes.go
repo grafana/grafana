@@ -172,7 +172,6 @@ func (rev *ConfigRevision) GetManagedRoutes() ManagedRoutes {
 }
 
 func (rev *ConfigRevision) DeleteManagedRoute(name string) {
-	// Intentionally does not consider if name == UserDefinedRoutingTreeName as it should only be Reset via Update.
 	delete(rev.Config.ManagedRoutes, name)
 }
 

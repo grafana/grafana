@@ -29,6 +29,24 @@ var Config = func() *definitions.PostableUserConfig {
 		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
 			Config: definitions.Config{
 				Route: Legacy(),
+				// Add time interval references to help tests avoid validation errors.
+				TimeIntervals: []prometheus.TimeInterval{
+					{Name: "interval"},
+					{Name: "active"},
+					{Name: "Some interval"},
+					{Name: "A provisioned interval"},
+					{Name: "Some interval override"},
+					{Name: "A provisioned interval override"},
+				},
+			},
+			// Add receiver references to help tests avoid validation errors.
+			Receivers: []*definition.PostableApiReceiver{
+				{Receiver: prometheus.Receiver{Name: "default-receiver"}},
+				{Receiver: prometheus.Receiver{Name: "lotsa-emails"}},
+				{Receiver: prometheus.Receiver{Name: "lotsa-emails-override"}},
+				{Receiver: prometheus.Receiver{Name: "slack-multi-channel"}},
+				{Receiver: prometheus.Receiver{Name: "provisioned-contact-point"}},
+				{Receiver: prometheus.Receiver{Name: "nested-receiver"}},
 			},
 		},
 		ManagedRoutes: map[string]*definition.Route{
