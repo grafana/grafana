@@ -187,9 +187,7 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 		}
 
 		testCache.mtx.Lock()
-		testCache.byId["correct-namespace"] = map[string]encryption.DataKeyCacheEntry{
-			mismatchedEntry.Id: mismatchedEntry,
-		}
+		testCache.byId[namespacedKey{namespace: "correct-namespace", value: mismatchedEntry.Id}] = mismatchedEntry
 		testCache.mtx.Unlock()
 
 		_, exists := testCache.GetById("correct-namespace", mismatchedEntry.Id)
@@ -210,9 +208,7 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 		}
 
 		testCache.mtx.Lock()
-		testCache.byLabel["correct-namespace"] = map[string]encryption.DataKeyCacheEntry{
-			"test-label": mismatchedEntry,
-		}
+		testCache.byLabel[namespacedKey{namespace: "correct-namespace", value: mismatchedEntry.Label}] = mismatchedEntry
 		testCache.mtx.Unlock()
 
 		_, exists := testCache.GetByLabel("correct-namespace", mismatchedEntry.Label)
@@ -392,10 +388,10 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 
 		// Expired entries should not exist
 		ossCache := cache.(*ossDataKeyCache)
-		_, exists = ossCache.byId[namespace][expiredEntry1.Id]
+		_, exists = ossCache.byId[namespacedKey{namespace: namespace, value: expiredEntry1.Id}]
 		assert.False(t, exists, "expired entry should not exist after RemoveExpired")
 
-		_, exists = ossCache.byLabel[namespace][expiredEntry2.Label]
+		_, exists = ossCache.byLabel[namespacedKey{namespace: namespace, value: expiredEntry2.Label}]
 		assert.False(t, exists, "expired entry should not exist after RemoveExpired")
 	})
 
@@ -460,16 +456,16 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 
 		// Expired entries in both namespaces should not exist
 		ossCache := cache.(*ossDataKeyCache)
-		_, exists = ossCache.byId[ns1][ns1ExpiredEntry.Id]
+		_, exists = ossCache.byId[namespacedKey{namespace: ns1, value: ns1ExpiredEntry.Id}]
 		assert.False(t, exists)
 
-		_, exists = ossCache.byId[ns2][ns2ExpiredEntry.Id]
+		_, exists = ossCache.byId[namespacedKey{namespace: ns2, value: ns2ExpiredEntry.Id}]
 		assert.False(t, exists)
 
-		_, exists = ossCache.byLabel[ns1][ns1ExpiredEntry.Label]
+		_, exists = ossCache.byLabel[namespacedKey{namespace: ns1, value: ns1ExpiredEntry.Label}]
 		assert.False(t, exists)
 
-		_, exists = ossCache.byLabel[ns2][ns2ExpiredEntry.Label]
+		_, exists = ossCache.byLabel[namespacedKey{namespace: ns2, value: ns2ExpiredEntry.Label}]
 		assert.False(t, exists)
 	})
 }
