@@ -501,11 +501,6 @@
       "count": 1
     }
   },
-  "packages/grafana-runtime/src/utils/userStorage.tsx": {
-    "no-restricted-syntax": {
-      "count": 12
-    }
-  },
   "packages/grafana-schema/src/veneer/common.types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1

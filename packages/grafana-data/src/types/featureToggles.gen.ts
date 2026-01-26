@@ -996,6 +996,7 @@ export interface FeatureToggles {
   azureMonitorLogsBuilderEditor?: boolean;
   /**
   * Specifies the locale so the correct format for numbers and dates can be shown
+  * @deprecated
   * @default false
   */
   localeFormatPreference?: boolean;
