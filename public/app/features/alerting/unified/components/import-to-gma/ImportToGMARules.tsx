@@ -31,6 +31,7 @@ import {
   isSupportedExternalPrometheusFlavoredRulesSourceType,
   isValidRecordingRulesTarget,
 } from '../../utils/datasource';
+import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
@@ -455,7 +456,7 @@ function DataSourceField() {
             {t('alerting.import-to-gma.datasource.label', 'Data source')}
           </Text>
           <NeedHelpInfo
-            externalLink={'https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/'}
+            externalLink={DOCS_URL_ALERTING_MIGRATION}
             linkText={`Read importing to Grafana alerting`}
             contentText={t(
               'alerting.import-to-gma.datasource.help-info.content',

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -200,7 +201,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 				tracing.NewNoopTracerService(),
 				10,
 			)
-			worker.SetMaxResourcesPerRepository(tt.maxResourcesPerRepository)
+			worker.SetQuotaLimits(quotas.QuotaLimits{MaxResources: tt.maxResourcesPerRepository})
 
 			// Create test job
 			job := provisioning.Job{

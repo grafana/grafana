@@ -45,7 +45,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -149,6 +148,7 @@ func NewAPIService(
 	dbProvider legacysql.LegacyDatabaseProvider,
 	coreRoleStorage CoreRoleStorageBackend,
 	roleApiInstaller RoleApiInstaller,
+	globalRoleApiInstaller GlobalRoleApiInstaller,
 	teamLBACApiInstaller TeamLBACApiInstaller,
 	features featuremgmt.FeatureToggles,
 	zClient zanzana.Client,
@@ -160,8 +160,9 @@ func NewAPIService(
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
 	registerMetrics(reg)
 
-	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	coreRoleAuthorizer := iamauthorizer.NewCoreRoleAuthorizer(accessClient)
+	globalRoleAuthorizer := globalRoleApiInstaller.GetAuthorizer()
+	roleAuthorizer := roleApiInstaller.GetAuthorizer()
 
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
@@ -182,7 +183,7 @@ func NewAPIService(
 		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
 		reg:                        reg,
 		roleApiInstaller:           roleApiInstaller,
-		globalRoleApiInstaller:     ProvideNoopGlobalRoleApiInstaller(), // TODO: add a proper global role installer
+		globalRoleApiInstaller:     globalRoleApiInstaller,
 		teamLBACApiInstaller:       teamLBACApiInstaller,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -198,6 +199,13 @@ func NewAPIService(
 					return coreRoleAuthorizer.Authorize(ctx, a)
 				}
 
+				if a.GetResource() == "globalroles" {
+					if user.GetIdentityType() != types.TypeAccessPolicy {
+						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
+					}
+					return globalRoleAuthorizer.Authorize(ctx, a)
+				}
+
 				// For now only authorize resourcepermissions resource
 				if a.GetResource() == "resourcepermissions" {
 					// Authorization is handled by the backend wrapper
@@ -208,7 +216,7 @@ func NewAPIService(
 					if user.GetIdentityType() != types.TypeAccessPolicy {
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}
-					return resourceAuthorizer.Authorize(ctx, a)
+					return roleAuthorizer.Authorize(ctx, a)
 				}
 
 				return authorizer.DecisionDeny, "access denied", nil

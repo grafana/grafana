@@ -25,8 +25,25 @@ const (
 const (
 	// ReasonAvailable indicates the resource is available and ready for use.
 	ReasonAvailable = "Available"
-	// ReasonUnavailable indicates the resource is unavailable and not ready.
-	ReasonUnavailable = "Unavailable"
+
+	// ReasonInvalidSpec indicates the resource has a configuration issue
+	// with the spec format or structure (validation errors, invalid fields, secret errors).
+	// Automation should NOT automatically retry - wait for user to fix configuration.
+	ReasonInvalidSpec = "InvalidSpec"
+
+	// ReasonAuthenticationFailed indicates authentication or authorization failed
+	// (invalid credentials, wrong app ID, expired token, insufficient permissions).
+	// Automation should NOT automatically retry - wait for user to fix credentials.
+	ReasonAuthenticationFailed = "AuthenticationFailed"
+
+	// ReasonServiceUnavailable indicates an external service issue (API down, network timeout).
+	// Automation CAN retry with standard backoff - the issue is transient and outside user control.
+	ReasonServiceUnavailable = "ServiceUnavailable"
+
+	// ReasonRateLimited indicates the external service is rate limiting requests.
+	// User may need to take action (upgrade plan, reduce load). Automation should retry with
+	// longer backoff and respect Retry-After headers.
+	ReasonRateLimited = "RateLimited"
 )
 
 // Condition reasons for the Quota condition
