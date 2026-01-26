@@ -4,9 +4,9 @@ import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 're
 
 import { config } from '@grafana/runtime';
 
-import { ScopesRow } from '../ScopesRow';
 import { CommandPaletteAction } from '../types';
 
+import { ScopesRow } from './ScopesRow';
 import { useRecentScopesActions } from './recentScopesActions';
 import {
   getScopesParentAction,
@@ -33,22 +33,20 @@ export function useRegisterScopesActions(
   onApply: () => void,
   parentId?: string | null
 ): { scopesRow?: ReactNode } {
-  // Conditional hooks, but this should only change if feature toggles changes so not in runtime.
-  if (!config.featureToggles.scopeFilters) {
-    return { scopesRow: undefined };
-  }
-
+  // Call hooks unconditionally to follow React Hooks rules
   const globalScopeActions = useGlobalScopesSearch(searchQuery, parentId);
   const scopeTreeActions = useScopeTreeActions(searchQuery, parentId);
+  const { scopesRow } = useScopesRow(onApply);
 
   // If we have global search actions we use those. Inside the hook the search should be conditional based on where
   // in the command palette we are.
-  const nodesActions = globalScopeActions || scopeTreeActions;
+  const nodesActions = config.featureToggles.scopeFilters ? globalScopeActions || scopeTreeActions : [];
 
+  // Register actions unconditionally (empty array if feature toggle is off)
   useRegisterActions(nodesActions, [nodesActions]);
 
-  // Returns a component to show what scopes are selected or applied.
-  return useScopesRow(onApply);
+  // Returns a component to show what scopes are selected or applied (undefined if feature toggle is off)
+  return { scopesRow: config.featureToggles.scopeFilters ? scopesRow : undefined };
 }
 
 /**
@@ -76,7 +74,7 @@ function useScopeTreeActions(searchQuery: string, parentId?: string | null) {
   }, [filterNode, searchQuery, parentId]);
 
   return useMemo(
-    () => mapScopesNodesTreeToActions(nodes, tree!, selectedScopes, selectScope),
+    () => mapScopesNodesTreeToActions(nodes, tree, selectedScopes, selectScope),
     [nodes, tree, selectedScopes, selectScope]
   );
 }
@@ -119,7 +117,7 @@ function useScopesRow(onApply: () => void) {
 
   return {
     scopesRow:
-      isDirty || selectedScopes?.length ? (
+      isDirty || selectedScopes.length ? (
         <ScopesRow
           nodes={nodes}
           scopes={scopes}
