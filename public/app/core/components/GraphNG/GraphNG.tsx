@@ -15,7 +15,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { DashboardCursorSync, VizLegendOptions } from '@grafana/schema';
-import { Themeable2, VizLayout } from '@grafana/ui';
+import { Themeable2, VizLayout, VizLayoutLegendProps } from '@grafana/ui';
 import { AxisProps, pluginLog, Renderers, ScaleProps, UPlotChart, UPlotConfigBuilder } from '@grafana/ui/internal';
 
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
@@ -48,7 +48,7 @@ export interface GraphNGProps extends Themeable2 {
   ) => UPlotConfigBuilder;
   propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame | null;
-  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
+  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement<VizLayoutLegendProps> | null;
   replaceVariables: InterpolateFunction;
   dataLinkPostProcessor?: DataLinkPostProcessor;
   cursorSync?: DashboardCursorSync;

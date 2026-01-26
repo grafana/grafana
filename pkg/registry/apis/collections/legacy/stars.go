@@ -170,6 +170,13 @@ func (s *DashboardStarsStorage) write(ctx context.Context, obj *collections.Star
 		return nil, err
 	}
 
+	// Send an error if we try to save a non-dashboard star
+	for _, res := range obj.Spec.Resource {
+		if res.Group != "dashboard.grafana.app" || res.Kind != "Dashboard" {
+			return nil, fmt.Errorf("only dashboard stars are supported until the migration to unified storage is complete")
+		}
+	}
+
 	user, err := s.users.GetByUID(ctx, &user.GetUserByUIDQuery{
 		UID: owner.Identifier,
 	})
@@ -204,10 +211,13 @@ func (s *DashboardStarsStorage) write(ctx context.Context, obj *collections.Star
 			previous[v] = true
 		}
 	}
-	for _, dashboard := range stars {
+	for idx, dashboard := range stars {
 		if previous[dashboard] {
 			delete(previous, dashboard)
 			continue // nothing needed
+		}
+		if idx > 0 {
+			time.Sleep(75 * time.Millisecond) // values are ordered by update time; this keeps the order predictable
 		}
 		err = s.stars.Add(ctx, &star.StarDashboardCommand{
 			UserID:       user.ID,

@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { isFetchError } from '@grafana/runtime';
 
 import { HttpError, isHttpError } from '../guards';
 
@@ -187,6 +188,8 @@ export function getErrorMessage(err: unknown) {
     } else if (err.message) {
       errorMessage = err.message;
     }
+  } else if (isFetchError(err)) {
+    errorMessage = err.data.message;
   }
 
   return errorMessage;

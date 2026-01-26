@@ -2,8 +2,12 @@ package v0alpha1
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type UserClient struct {
@@ -75,6 +79,45 @@ func (c *UserClient) Patch(ctx context.Context, identifier resource.Identifier, 
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
+func (c *UserClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus UserStatus, opts resource.UpdateOptions) (*User, error) {
+	return c.client.Update(ctx, &User{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       UserKind().Kind(),
+			APIVersion: GroupVersion.Identifier(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			ResourceVersion: opts.ResourceVersion,
+			Namespace:       identifier.Namespace,
+			Name:            identifier.Name,
+		},
+		Status: newStatus,
+	}, resource.UpdateOptions{
+		Subresource:     "status",
+		ResourceVersion: opts.ResourceVersion,
+	})
+}
+
 func (c *UserClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
 	return c.client.Delete(ctx, identifier, opts)
+}
+
+type GetTeamsRequest struct {
+	Headers http.Header
+}
+
+func (c *UserClient) GetTeams(ctx context.Context, identifier resource.Identifier, request GetTeamsRequest) (*GetTeams, error) {
+	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
+		Path:    "/teams",
+		Verb:    "GET",
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := GetTeams{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetTeams: %w", err)
+	}
+	return &cast, nil
 }

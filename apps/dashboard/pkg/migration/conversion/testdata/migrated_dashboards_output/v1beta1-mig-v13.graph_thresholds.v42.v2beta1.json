@@ -69,7 +69,20 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "grid": {
+                      "threshold1": 200,
+                      "threshold1Color": "yellow",
+                      "threshold2": 400,
+                      "threshold2Color": "red",
+                      "thresholdLine": true
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -115,7 +128,20 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "grid": {
+                      "threshold1": 100,
+                      "threshold1Color": "green",
+                      "threshold2": 300,
+                      "threshold2Color": "blue",
+                      "thresholdLine": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -161,7 +187,18 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "grid": {
+                      "threshold1": 150,
+                      "threshold1Color": "orange",
+                      "thresholdLine": true
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -207,7 +244,25 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "grid": {
+                      "threshold1": 200,
+                      "threshold1Color": "yellow",
+                      "thresholdLine": false
+                    },
+                    "thresholds": [
+                      {
+                        "color": "purple",
+                        "colorMode": "custom",
+                        "value": 50
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -253,7 +308,12 @@
             "group": "stat",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalOptions": {}
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -362,5 +422,10 @@
     "title": "V13 Graph Thresholds Migration Test",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

@@ -127,7 +127,6 @@ describe('Backend / Frontend single version migration result comparison', () => 
           for (const nestedPanel of panel.panels) {
             const panelPluginToMigrateTo = getPanelPluginToMigrateTo(nestedPanel);
             if (panelPluginToMigrateTo) {
-              // @ts-expect-error - we are using the type from the frontend migration result
               nestedPanel.autoMigrateFrom = nestedPanel.type;
               nestedPanel.type = panelPluginToMigrateTo;
             }

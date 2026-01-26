@@ -204,7 +204,7 @@ func IsNonRetryableError(err error) bool {
 	return false
 }
 
-// HasErrors returns true when Results contains at least one element and all elements are errors
+// IsError returns true when Results contains at least one element and all elements are errors
 func (evalResults Results) IsError() bool {
 	for _, r := range evalResults {
 		if r.State != Error {
@@ -396,7 +396,7 @@ func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheSe
 					return nil, fmt.Errorf("recovery threshold '%s' is only allowed to be the alert condition", q.RefID)
 				}
 				if reader != nil {
-					active := reader.Read()
+					active := reader.Read(ctx.Ctx)
 					logger.FromContext(ctx.Ctx).Debug("Detected hysteresis threshold command. Populating with the results", "items", len(active))
 					err = q.PatchHysteresisExpression(active)
 					if err != nil {

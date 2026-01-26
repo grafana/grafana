@@ -23,6 +23,12 @@ type Snapshot struct {
 	Spec SnapshotSpec `json:"spec" yaml:"spec"`
 }
 
+func NewSnapshot() *Snapshot {
+	return &Snapshot{
+		Spec: *NewSnapshotSpec(),
+	}
+}
+
 func (o *Snapshot) GetSpec() any {
 	return o.Spec
 }

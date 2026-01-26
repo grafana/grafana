@@ -7,10 +7,11 @@ import CloudMonitoringCheatSheet from './components/CloudMonitoringCheatSheet';
 import { ConfigEditor } from './components/ConfigEditor/ConfigEditor';
 import { QueryEditor } from './components/QueryEditor';
 import { CloudMonitoringVariableQueryEditor } from './components/VariableQueryEditor';
+import { QueryType } from './dataquery.gen';
 import CloudMonitoringDatasource from './datasource';
 import pluginJson from './plugin.json';
 import { trackCloudMonitoringDashboardLoaded } from './tracking';
-import { CloudMonitoringQuery, QueryType } from './types/query';
+import { CloudMonitoringQuery } from './types/query';
 
 export const plugin = new DataSourcePlugin<CloudMonitoringDatasource, CloudMonitoringQuery>(CloudMonitoringDatasource)
   .setQueryEditorHelp(CloudMonitoringCheatSheet)

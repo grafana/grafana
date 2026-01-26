@@ -85,7 +85,24 @@
             "group": "stat",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
+                    "colors": [
+                      "#FF0000",
+                      "green",
+                      "orange"
+                    ],
+                    "grid": {
+                      "max": 10,
+                      "min": 1
+                    },
+                    "legend": true,
+                    "thresholds": "10,20,30"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -131,7 +148,28 @@
             "group": "stat",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
+                    "colors": [
+                      "#FF0000",
+                      "green",
+                      "orange"
+                    ],
+                    "gauge": {
+                      "show": true,
+                      "thresholdLabels": false,
+                      "thresholdMarkers": true
+                    },
+                    "grid": {
+                      "max": 10,
+                      "min": 1
+                    },
+                    "thresholds": "10,20,30"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -193,7 +231,47 @@
             "group": "stat",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
+                    "colors": [
+                      "#FF0000",
+                      "green",
+                      "orange"
+                    ],
+                    "grid": {
+                      "max": 10,
+                      "min": 1
+                    },
+                    "legend": true,
+                    "mappingTypes": [
+                      {
+                        "name": "value to text",
+                        "value": 1
+                      }
+                    ],
+                    "thresholds": "10,20,30",
+                    "valueMaps": [
+                      {
+                        "op": "=",
+                        "text": "test",
+                        "value": "20"
+                      },
+                      {
+                        "op": "=",
+                        "text": "test1",
+                        "value": "30"
+                      },
+                      {
+                        "op": "=",
+                        "text": "50",
+                        "value": "40"
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -406,5 +484,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

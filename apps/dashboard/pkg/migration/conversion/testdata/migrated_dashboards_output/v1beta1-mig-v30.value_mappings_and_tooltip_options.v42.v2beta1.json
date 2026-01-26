@@ -289,6 +289,10 @@
             "version": "",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {}
+                },
                 "tooltip": {
                   "mode": "single"
                 }
@@ -546,7 +550,7 @@
             "kind": "RowsLayoutRow",
             "spec": {
               "title": "",
-              "collapse": true,
+              "collapse": false,
               "hideHeader": true,
               "layout": {
                 "kind": "GridLayout",
@@ -705,5 +709,10 @@
     "title": "V30 Value Mappings and Tooltip Options Migration Test Dashboard",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

@@ -5,7 +5,7 @@ import { useEffectOnce } from 'react-use';
 import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Dashboard, DashboardCursorSync, FieldConfigSource, Panel, ThresholdsMode } from '@grafana/schema/src';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types/dashboard';

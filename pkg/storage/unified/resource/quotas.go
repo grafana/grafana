@@ -47,13 +47,14 @@ type Overrides struct {
 /*
 This service loads overrides (currently just quotas) from a YAML file with the following yaml structure:
 
-"123":
+overrides:
 
+	"123":
 	  quotas:
-		grafana.dashboard.app/dashboards:
-		  limit: 1500
-		grafana.folder.app/folders:
-		  limit: 1500
+	    dashboard.grafana.app/dashboards:
+	      limit: 1500
+	    folder.grafana.app/folders:
+	      limit: 1500
 */
 func NewOverridesService(_ context.Context, logger log.Logger, reg prometheus.Registerer, tracer trace.Tracer, opts ReloadOptions) (*OverridesService, error) {
 	// shouldn't be empty since we use file path existence to determine if we should enable the service
@@ -76,12 +77,14 @@ func NewOverridesService(_ context.Context, logger log.Logger, reg prometheus.Re
 		ReloadPeriod: opts.ReloadPeriod,
 		LoadPath:     []string{opts.FilePath},
 		Loader: func(r io.Reader) (interface{}, error) {
-			var tenants map[string]NamespaceOverrides
+			var raw struct {
+				Overrides map[string]NamespaceOverrides `yaml:"overrides"`
+			}
 			decoder := yaml.NewDecoder(r)
-			if err := decoder.Decode(&tenants); err != nil {
+			if err := decoder.Decode(&raw); err != nil {
 				return nil, err
 			}
-			return &Overrides{Namespaces: tenants}, nil
+			return &Overrides{Namespaces: raw.Overrides}, nil
 		},
 	}
 

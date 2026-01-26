@@ -82,10 +82,11 @@
     ]
   },
   "dependencies": {
-    "grafanaDependency": ">=10.4.0",
+    "grafanaDependency": ">=12.0.0",
     "plugins": [],
     "extensions": {
       "exposedComponents": ["grafana-extensionexample1-app/reusable-component/v1", "grafana/add-to-dashboard-form/v1"]
     }
-  }
+  },
+  "languages": ["en-US", "es-ES", "sv-SE"]
 }

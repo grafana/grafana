@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -867,6 +868,27 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(120), rule.IntervalSeconds)
 	})
+
+	t.Run("UpdateRuleGroup should reject when folder is managed by a manager", func(t *testing.T) {
+		service, _, _, ac := initService(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		managedFolderUID := "managed-folder-update-group"
+		fs := foldertest.NewFakeService()
+		fs.AddFolder(&folder.Folder{
+			OrgID:     orgID,
+			UID:       managedFolderUID,
+			Title:     "Managed Folder",
+			ManagedBy: utils.ManagerKindRepo,
+		})
+		service.folderService = fs
+
+		err := service.UpdateRuleGroup(context.Background(), u, managedFolderUID, "some-group", 120)
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		require.ErrorContains(t, err, "cannot store rules in folder managed by Git Sync")
+	})
 }
 
 func TestIntegrationCreateAlertRule(t *testing.T) {
@@ -1166,6 +1188,30 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, models.IsNoGroupRuleGroup(retrievedRule.RuleGroup), "Rule should be considered NoGroup rule")
 	})
+
+	t.Run("should reject creation when folder is managed by a manager", func(t *testing.T) {
+		service, _, _, ac := initService(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		managedFolderUID := "managed-folder"
+		fs := foldertest.NewFakeService()
+		fs.AddFolder(&folder.Folder{
+			OrgID:     orgID,
+			UID:       managedFolderUID,
+			Title:     "Managed Folder",
+			ManagedBy: utils.ManagerKindRepo,
+		})
+		service.folderService = fs
+
+		rule := dummyRule("test-managed-folder", orgID)
+		rule.NamespaceUID = managedFolderUID
+
+		_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		require.ErrorContains(t, err, "cannot store rules in folder managed by Git Sync")
+	})
 }
 
 func TestUpdateAlertRule(t *testing.T) {
@@ -1315,6 +1361,36 @@ func TestUpdateAlertRule(t *testing.T) {
 		require.True(t, models.IsNoGroupRuleGroup(updated.RuleGroup))
 		require.Equal(t, "nogroup-update-new", updated.Title)
 		require.Equal(t, originalInterval, updated.IntervalSeconds)
+	})
+
+	t.Run("should reject update when folder is managed by a manager", func(t *testing.T) {
+		service, ruleStore, provenanceStore, ac := initService(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		managedFolderUID := "managed-folder-update"
+		fs := foldertest.NewFakeService()
+		fs.AddFolder(&folder.Folder{
+			OrgID:     orgID,
+			UID:       managedFolderUID,
+			Title:     "Managed Folder",
+			ManagedBy: utils.ManagerKindRepo,
+		})
+		service.folderService = fs
+
+		// Create an existing rule
+		existingRule := dummyRule("test-managed-folder-update", orgID)
+		existingRule.NamespaceUID = managedFolderUID
+		_, err := ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.InsertRule{{AlertRule: existingRule}})
+		require.NoError(t, err)
+		require.NoError(t, provenanceStore.SetProvenance(context.Background(), &existingRule, orgID, models.ProvenanceNone))
+
+		// Try to update the rule
+		existingRule.Title = "Updated Title"
+		_, err = service.UpdateAlertRule(context.Background(), u, existingRule, models.ProvenanceNone)
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		require.ErrorContains(t, err, "cannot store rules in folder managed by Git Sync")
 	})
 }
 
@@ -2053,6 +2129,33 @@ func TestReplaceGroup(t *testing.T) {
 		err := service.ReplaceRuleGroup(context.Background(), u, groupSeed, models.ProvenanceNone, "")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "cannot move rule out of this group")
+	})
+
+	t.Run("should reject replace when folder is managed by a manager", func(t *testing.T) {
+		service, _, _, ac := initService(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		managedFolderUID := "managed-folder-replace"
+		fs := foldertest.NewFakeService()
+		fs.AddFolder(&folder.Folder{
+			OrgID:     orgID,
+			UID:       managedFolderUID,
+			Title:     "Managed Folder",
+			ManagedBy: utils.ManagerKindRepo,
+		})
+		service.folderService = fs
+
+		group := models.AlertRuleGroup{
+			Title:     "test-group",
+			FolderUID: managedFolderUID,
+			Interval:  60,
+		}
+
+		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone, "")
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		require.ErrorContains(t, err, "cannot store rules in folder managed by Git Sync")
 	})
 }
 

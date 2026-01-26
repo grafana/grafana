@@ -1,0 +1,161 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "bom-in-links-test",
+    "namespace": "org-1",
+    "labels": {
+      "test": "bom-stripping"
+    }
+  },
+  "spec": {
+    "description": "Testing that BOM characters are stripped from URLs during conversion",
+    "editable": true,
+    "links": [
+      {
+        "icon": "external link",
+        "targetBlank": true,
+        "title": "Dashboard link with BOM",
+        "type": "link",
+        "url": "http://example.com?var=${datasource}﻿\u0026other=﻿﻿﻿value"
+      }
+    ],
+    "panels": [
+      {
+        "fieldConfig": {
+          "defaults": {
+            "custom": {},
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "server"
+              },
+              "properties": [
+                {
+                  "id": "links",
+                  "value": [
+                    {
+                      "title": "Override link with BOM",
+                      "url": "http://localhost:3000/d/test?var-datacenter=${__data.fields[datacenter]}﻿\u0026var-server=﻿﻿﻿${__value.raw}"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "links": [
+          {
+            "targetBlank": true,
+            "title": "Panel data link with BOM",
+            "url": "http://example.com/${__data.fields.cluster}﻿﻿﻿\u0026var=﻿value"
+          }
+        ],
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "test-ds"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Panel with BOM in field config override links",
+        "type": "table"
+      },
+      {
+        "fieldConfig": {
+          "defaults": {
+            "links": [
+              {
+                "targetBlank": false,
+                "title": "Field config default link with BOM",
+                "url": "http://example.com?field=﻿${__field.name}﻿\u0026value=${__value.raw}"
+              }
+            ]
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "id": 2,
+        "options": {
+          "dataLinks": [
+            {
+              "targetBlank": true,
+              "title": "Options data link with BOM",
+              "url": "http://example.com?series=﻿${__series.name}﻿\u0026time=﻿﻿${__value.time}"
+            }
+          ],
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          }
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "test-ds"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Panel with BOM in options dataLinks",
+        "type": "timeseries"
+      }
+    ],
+    "schemaVersion": 42,
+    "tags": [
+      "test",
+      "bom"
+    ],
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m"
+      ]
+    },
+    "title": "BOM Stripping Test Dashboard"
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
+}

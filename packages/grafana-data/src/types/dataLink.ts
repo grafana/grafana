@@ -1,5 +1,6 @@
 import { ScopedVars } from './ScopedVars';
 import { ExploreCorrelationHelperData, ExplorePanelsState } from './explore';
+import { LinkTarget } from './linkTarget';
 import { InterpolateFunction } from './panel';
 import { DataQuery } from './query';
 import { TimeRange } from './time';
@@ -87,8 +88,6 @@ export interface InternalDataLink<T extends DataQuery = any> {
   panelsState?: ExplorePanelsState;
   range?: TimeRange;
 }
-
-export type LinkTarget = '_blank' | '_self' | undefined;
 
 /**
  * Processed Link Model. The values are ready to use

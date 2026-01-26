@@ -263,5 +263,10 @@
     "title": "Panel Tests - StateTimeline - multiple frames with nulls",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

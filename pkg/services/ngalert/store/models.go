@@ -88,6 +88,7 @@ func (a alertRuleVersion) EqualSpec(b alertRuleVersion) bool {
 		a.NoDataState == b.NoDataState &&
 		a.ExecErrState == b.ExecErrState &&
 		a.For == b.For &&
+		a.KeepFiringFor == b.KeepFiringFor &&
 		a.Annotations == b.Annotations &&
 		a.Labels == b.Labels &&
 		a.IsPaused == b.IsPaused &&

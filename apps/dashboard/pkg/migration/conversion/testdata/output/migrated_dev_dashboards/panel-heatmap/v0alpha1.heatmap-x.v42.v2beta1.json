@@ -175,8 +175,7 @@
                   "le": 1e-9
                 },
                 "legend": {
-                  "show": true,
-                  "showLegend": true
+                  "show": true
                 },
                 "rowsFrame": {
                   "layout": "auto"
@@ -347,8 +346,7 @@
                   "le": 1e-9
                 },
                 "legend": {
-                  "show": true,
-                  "showLegend": true
+                  "show": true
                 },
                 "rowsFrame": {
                   "layout": "auto"
@@ -420,8 +418,7 @@
                   "le": 1e-9
                 },
                 "legend": {
-                  "show": true,
-                  "showLegend": true
+                  "show": true
                 },
                 "rowsFrame": {
                   "layout": "auto"
@@ -554,5 +551,10 @@
     "title": "Heatmap X axis",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

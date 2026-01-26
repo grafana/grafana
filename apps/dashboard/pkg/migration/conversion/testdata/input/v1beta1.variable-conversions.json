@@ -42,7 +42,7 @@
           "regex": "",
           "skipUrlSync": false,
           "refresh": 1
-        },
+      },
         {
           "name": "query_var",
           "type": "query",
@@ -81,6 +81,7 @@
           "allValue": ".*",
           "multi": true,
           "regex": "/.*9090.*/",
+          "regexApplyTo": "text",
           "skipUrlSync": false,
           "refresh": 2,
           "sort": 1,
@@ -107,7 +108,7 @@
             },
             {
               "selected": false,
-              "text": "staging", 
+              "text": "staging",
               "value": "staging"
             },
             {
@@ -335,7 +336,19 @@
           "allValue": "*",
           "multi": true,
           "regex": "/host[0-9]+/",
+          "regexApplyTo": "value",
           "skipUrlSync": false,
+          "staticOptions": [
+            {
+              "text": "All",
+              "value": "$__all"
+            },
+            {
+              "text": "host1",
+              "value": "host1"
+            }
+          ],
+          "staticOptionsOrder": "before",
           "refresh": 1,
           "sort": 2,
           "tagValuesQuery": "",
@@ -354,4 +367,4 @@
     },
     "links": []
   }
-} 
+}

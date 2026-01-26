@@ -507,6 +507,15 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 							[]byte("publicfolder"), // folder uid
 						},
 					},
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "sharedfolder",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte("privatefolder"), // folder uid
+						},
+					},
 				},
 			},
 		}
@@ -550,6 +559,15 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 							[]byte("privatefolder"), // folder uid
 						},
 					},
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "sharedfolder",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte("privatefolder"), // folder uid
+						},
+					},
 				},
 			},
 		}
@@ -571,6 +589,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		allPermissions := make(map[int64]map[string][]string)
 		permissions := make(map[string][]string)
 		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
+		permissions[dashboards.ActionFoldersRead] = []string{"folders:uid:sharedfolder"}
 		allPermissions[1] = permissions
 		// "Permissions" is where we store the uid of dashboards shared with the user
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
@@ -581,14 +600,147 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		// first call gets all dashboards user has permission for
 		firstCall := mockClient.MockCalls[0]
-		assert.Equal(t, firstCall.Options.Fields[0].Values, []string{"dashboardinroot", "dashboardinprivatefolder", "dashboardinpublicfolder"})
+		assert.Equal(t, firstCall.Options.Fields[0].Values, []string{"dashboardinroot", "dashboardinprivatefolder", "dashboardinpublicfolder", "sharedfolder"})
+		// verify federated field is set to include folders
+		assert.NotNil(t, firstCall.Federated)
+		assert.Equal(t, 1, len(firstCall.Federated))
+		assert.Equal(t, "folder.grafana.app", firstCall.Federated[0].Group)
+		assert.Equal(t, "folders", firstCall.Federated[0].Resource)
 		// second call gets folders associated with the previous dashboards
 		secondCall := mockClient.MockCalls[1]
 		assert.Equal(t, secondCall.Options.Fields[0].Values, []string{"privatefolder", "publicfolder"})
-		// lastly, search ONLY for dashboards user has permission to read that are within folders the user does NOT have
+		// lastly, search ONLY for dashboards and folders user has permission to read that are within folders the user does NOT have
 		// permission to read
 		thirdCall := mockClient.MockCalls[2]
-		assert.Equal(t, thirdCall.Options.Fields[0].Values, []string{"dashboardinprivatefolder"})
+		assert.Equal(t, thirdCall.Options.Fields[0].Values, []string{"dashboardinprivatefolder", "sharedfolder"})
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
+	})
+
+	t.Run("should compute shared dashboards based on requested edit permission", func(t *testing.T) {
+		// dashboardSearchRequest
+		mockResponse1 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "dashboardinprivatefolder",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("privatefolder"), // folder uid
+						},
+					},
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "dashboardinpublicfolder",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("publicfolder"), // folder uid
+						},
+					},
+				},
+			},
+		}
+
+		// folderSearchRequest: only folders the user can EDIT should be returned here
+		mockResponse2 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "publicfolder",
+							Resource: "folder",
+						},
+						Cells: [][]byte{
+							[]byte(""), // root folder uid
+						},
+					},
+				},
+			},
+		}
+
+		// final search should only include items in folders the user cannot edit
+		mockResponse3 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{
+						Name: "folder",
+					},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key: &resourcepb.ResourceKey{
+							Name:     "dashboardinprivatefolder",
+							Resource: "dashboard",
+						},
+						Cells: [][]byte{
+							[]byte("privatefolder"), // folder uid
+						},
+					},
+				},
+			},
+		}
+
+		mockClient := &MockClient{
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3},
+		}
+
+		features := featuremgmt.WithFeatures()
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?folder=sharedwithme&permission=edit", nil)
+		req.Header.Add("content-type", "application/json")
+
+		allPermissions := make(map[int64]map[string][]string)
+		permissions := make(map[string][]string)
+		permissions[dashboards.ActionDashboardsWrite] = []string{"dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
+		// user can view the private folder, but cannot edit it. This should still classify dashboards in it as "shared with me" for edit.
+		permissions[dashboards.ActionFoldersRead] = []string{"folders:uid:privatefolder"}
+		allPermissions[1] = permissions
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
+
+		searchHandler.DoSearch(rr, req)
+
+		assert.Equal(t, 3, mockClient.CallCount)
+
+		firstCall := mockClient.MockCalls[0]
+		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), firstCall.Permission)
+		assert.Equal(t, []string{"dashboardinprivatefolder", "dashboardinpublicfolder"}, firstCall.Options.Fields[0].Values)
+
+		secondCall := mockClient.MockCalls[1]
+		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), secondCall.Permission)
+		assert.Equal(t, []string{"privatefolder", "publicfolder"}, secondCall.Options.Fields[0].Values)
+
+		thirdCall := mockClient.MockCalls[2]
+		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), thirdCall.Permission)
+		assert.Equal(t, []string{"dashboardinprivatefolder"}, thirdCall.Options.Fields[0].Values)
 
 		resp := rr.Result()
 		defer func() {
@@ -818,6 +970,38 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
+		"facet fields with custom limit": {
+			queryString: "facet=tags&facetLimit=500",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tags": {Field: "tags", Limit: 500},
+				},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"facet fields with limit exceeding max": {
+			queryString: "facet=tags&facetLimit=5000",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: dashboardKey},
+				Query:   "",
+				Limit:   50,
+				Offset:  0,
+				Page:    1,
+				Explain: false,
+				Fields:  defaultFields,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tags": {Field: "tags", Limit: 1000},
+				},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
 		"tag filter": {
 			queryString: "tag=tag1&tag=tag2",
 			expected: &resourcepb.ResourceSearchRequest{
@@ -985,7 +1169,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 			queryParams, err := url.ParseQuery(tt.queryString)
 			require.NoError(t, err)
 
-			getDashboardsFunc := func() ([]string, error) {
+			getDashboardsFunc := func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
 				if tt.sharedDashboardsError != nil {
 					return nil, tt.sharedDashboardsError
 				}
@@ -1001,6 +1185,12 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, result)
+
+			// Exclude query fields from the expected search
+			if tt.queryString != "" {
+				result.QueryFields = nil
+			}
+
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -1102,4 +1292,8 @@ func (m *MockClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (
 }
 func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
 	return nil
+}
+
+func (m *MockClient) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
+	return nil, nil
 }

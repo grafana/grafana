@@ -1,6 +1,7 @@
 package accesscontrol
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -447,6 +448,7 @@ const (
 	ActionAlertingNotificationsTemplatesRead   = "alert.notifications.templates:read"
 	ActionAlertingNotificationsTemplatesWrite  = "alert.notifications.templates:write"
 	ActionAlertingNotificationsTemplatesDelete = "alert.notifications.templates:delete"
+	ActionAlertingNotificationsTemplatesTest   = "alert.notifications.templates.test:write"
 
 	// Alerting notifications time interval actions
 	ActionAlertingNotificationsTimeIntervalsRead   = "alert.notifications.time-intervals:read"
@@ -459,8 +461,10 @@ const (
 	ActionAlertingReceiversReadSecrets      = "alert.notifications.receivers.secrets:read"
 	ActionAlertingReceiversCreate           = "alert.notifications.receivers:create"
 	ActionAlertingReceiversUpdate           = "alert.notifications.receivers:write"
+	ActionAlertingReceiversUpdateProtected  = "alert.notifications.receivers.protected:write"
 	ActionAlertingReceiversDelete           = "alert.notifications.receivers:delete"
-	ActionAlertingReceiversTest             = "alert.notifications.receivers:test"
+	ActionAlertingReceiversTest             = "alert.notifications.receivers:test" // This is a deprecated action, use ActionAlertingReceiversTestCreate instead
+	ActionAlertingReceiversTestCreate       = "alert.notifications.receivers.test:create"
 	ActionAlertingReceiversPermissionsRead  = "receivers.permissions:read"
 	ActionAlertingReceiversPermissionsWrite = "receivers.permissions:write"
 
@@ -591,4 +595,19 @@ var OrgsCreateAccessEvaluator = EvalAll(
 type QueryWithOrg struct {
 	OrgId  *int64 `json:"orgId"`
 	Global bool   `json:"global"`
+}
+
+type SeedPermission struct {
+	BuiltInRole string `xorm:"builtin_role"`
+	Action      string `xorm:"action"`
+	Scope       string `xorm:"scope"`
+	Origin      string `xorm:"origin"`
+}
+
+type RoleStore interface {
+	LoadRoles(ctx context.Context) (map[string]*RoleDTO, error)
+	SetRole(ctx context.Context, existingRole *RoleDTO, wantedRole RoleDTO) error
+	SetPermissions(ctx context.Context, existingRole *RoleDTO, wantedRole RoleDTO) error
+	CreateRole(ctx context.Context, role RoleDTO) error
+	DeleteRoles(ctx context.Context, roleUIDs []string) error
 }

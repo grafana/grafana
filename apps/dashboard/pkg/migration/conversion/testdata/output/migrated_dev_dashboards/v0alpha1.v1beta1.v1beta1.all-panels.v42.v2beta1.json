@@ -691,7 +691,42 @@
             "group": "heatmap",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "heatmap",
+                  "originalOptions": {
+                    "cards": {},
+                    "color": {
+                      "cardColor": "#b4ff00",
+                      "colorScale": "sqrt",
+                      "colorScheme": "interpolateOranges",
+                      "exponent": 0.5,
+                      "mode": "spectrum"
+                    },
+                    "dataFormat": "timeseries",
+                    "heatmap": {},
+                    "hideZeroBuckets": false,
+                    "highlightCards": true,
+                    "legend": {
+                      "show": false
+                    },
+                    "reverseYBuckets": false,
+                    "tooltip": {
+                      "show": true,
+                      "showHistogram": false
+                    },
+                    "xAxis": {
+                      "show": true
+                    },
+                    "yAxis": {
+                      "format": "short",
+                      "logBase": 1,
+                      "show": true
+                    },
+                    "yBucketBound": "auto"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1624,5 +1659,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

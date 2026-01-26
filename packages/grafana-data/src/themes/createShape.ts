@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /** @beta */
 export interface ThemeShape {
   /**
@@ -34,9 +36,12 @@ export interface Radii {
 }
 
 /** @internal */
-export interface ThemeShapeInput {
-  borderRadius?: number;
-}
+export const ThemeShapeInputSchema = z.object({
+  borderRadius: z.int().nonnegative().optional(),
+});
+
+/** @internal */
+export type ThemeShapeInput = z.infer<typeof ThemeShapeInputSchema>;
 
 export function createShape(options: ThemeShapeInput): ThemeShape {
   const baseBorderRadius = options.borderRadius ?? 6;

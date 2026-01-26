@@ -17,7 +17,9 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
-var logger = logging.DefaultLogger.With("logger", "dashboard.conversion")
+func getLogger() logging.Logger {
+	return logging.DefaultLogger.With("logger", "dashboard.conversion")
+}
 
 // getErroredSchemaVersionFunc determines the schema version function that errored
 func getErroredSchemaVersionFunc(err error) string {
@@ -83,20 +85,20 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 		// Only track schema versions for v0/v1 dashboards (v2+ info is redundant with API version)
 		switch source := a.(type) {
 		case *dashv0.Dashboard:
-			dashboardUID = string(source.UID)
+			dashboardUID = source.Name
 			if source.Spec.Object != nil {
 				sourceSchemaVersion = schemaversion.GetSchemaVersion(source.Spec.Object)
 			}
 		case *dashv1.Dashboard:
-			dashboardUID = string(source.UID)
+			dashboardUID = source.Name
 			if source.Spec.Object != nil {
 				sourceSchemaVersion = schemaversion.GetSchemaVersion(source.Spec.Object)
 			}
 		case *dashv2alpha1.Dashboard:
-			dashboardUID = string(source.UID)
+			dashboardUID = source.Name
 			// Don't track schema version for v2+ (redundant with API version)
 		case *dashv2beta1.Dashboard:
-			dashboardUID = string(source.UID)
+			dashboardUID = source.Name
 			// Don't track schema version for v2+ (redundant with API version)
 		}
 
@@ -197,9 +199,9 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 			)
 
 			if errorType == "schema_minimum_version_error" {
-				logger.Warn("Dashboard conversion failed", logFields...)
+				getLogger().Warn("Dashboard conversion failed", logFields...)
 			} else {
-				logger.Error("Dashboard conversion failed", logFields...)
+				getLogger().Error("Dashboard conversion failed", logFields...)
 			}
 		} else {
 			// Record success metrics
@@ -235,7 +237,7 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 				)
 			}
 
-			logger.Debug("Dashboard conversion succeeded", successLogFields...)
+			getLogger().Debug("Dashboard conversion succeeded", successLogFields...)
 		}
 
 		return nil

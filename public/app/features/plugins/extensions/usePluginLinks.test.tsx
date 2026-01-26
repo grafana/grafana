@@ -167,6 +167,7 @@ describe('usePluginLinks()', () => {
           title: '2',
           description: '2',
           path: `/a/${pluginId}/2`,
+          openInNewTab: true,
         },
         {
           targets: 'plugins/another-extension/v1',
@@ -181,7 +182,9 @@ describe('usePluginLinks()', () => {
 
     expect(result.current.links.length).toBe(2);
     expect(result.current.links[0].title).toBe('1');
+    expect(result.current.links[0].openInNewTab).toBeUndefined();
     expect(result.current.links[1].title).toBe('2');
+    expect(result.current.links[1].openInNewTab).toBe(true);
   });
 
   it('should dynamically update the extensions registered for a certain extension point', () => {

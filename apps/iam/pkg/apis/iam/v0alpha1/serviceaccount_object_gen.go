@@ -23,6 +23,12 @@ type ServiceAccount struct {
 	Spec ServiceAccountSpec `json:"spec" yaml:"spec"`
 }
 
+func NewServiceAccount() *ServiceAccount {
+	return &ServiceAccount{
+		Spec: *NewServiceAccountSpec(),
+	}
+}
+
 func (o *ServiceAccount) GetSpec() any {
 	return o.Spec
 }

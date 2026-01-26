@@ -864,10 +864,8 @@
                 "effects": {
                   "barGlow": false,
                   "centerGlow": false,
-                  "rounded": false,
-                  "spotlight": false
+                  "gradient": false
                 },
-                "gradient": "none",
                 "orientation": "auto",
                 "reduceOptions": {
                   "calcs": [
@@ -1614,5 +1612,10 @@
     "title": "Panel tests - Old gauge to new",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

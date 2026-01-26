@@ -749,5 +749,10 @@
     "title": "Panel Tests - GraphNG - Time Axis",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

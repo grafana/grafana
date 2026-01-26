@@ -1,4 +1,5 @@
 import {
+  AppEvents,
   getPanelDataSummary,
   PanelData,
   PanelDataSummary,
@@ -7,45 +8,67 @@ import {
   PreferredVisualisationType,
   VisualizationSuggestionScore,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { appEvents } from 'app/core/app_events';
 import { importPanelPlugin, isBuiltInPlugin } from 'app/features/plugins/importPanelPlugin';
 
 import { getAllPanelPluginMeta } from '../state/util';
 
 import { panelsToCheckFirst } from './consts';
 
+interface PluginLoadResult {
+  plugins: PanelPlugin[];
+  hasErrors: boolean;
+}
+
+function getPanelPluginIds(): string[] {
+  return config.featureToggles.externalVizSuggestions
+    ? getAllPanelPluginMeta()
+        .filter((panel) => panel.suggestions)
+        .map((m) => m.id)
+    : panelsToCheckFirst;
+}
+
 /**
  * gather and cache the plugins which provide visualization suggestions so they can be invoked to build suggestions
  */
-let _pluginCache: PanelPlugin[] | null = null;
-async function getPanelsWithSuggestions(): Promise<PanelPlugin[]> {
-  if (!_pluginCache) {
-    _pluginCache = [];
+export async function loadPlugins(pluginIds: string[]): Promise<PluginLoadResult> {
+  // import the plugins in parallel using Promise.allSettled
+  const plugins: PanelPlugin[] = [];
+  let hasErrors = false;
+  const settledPromises = await Promise.allSettled(
+    pluginIds.map(async (pluginId) => {
+      return await importPanelPlugin(pluginId);
+    })
+  );
 
-    // list of plugins to load is determined by the feature flag
-    const pluginIds: string[] = config.featureToggles.externalVizSuggestions
-      ? getAllPanelPluginMeta()
-          .filter((panel) => panel.suggestions)
-          .map((m) => m.id)
-      : panelsToCheckFirst;
+  for (let i = 0; i < settledPromises.length; i++) {
+    const settled = settledPromises[i];
+    if (settled.status === 'fulfilled') {
+      plugins.push(settled.value);
+    } else {
+      const pluginId = pluginIds[i];
+      console.error(`Failed to load ${pluginId} for visualization suggestions:`, settled.reason);
 
-    // import the plugins in parallel using Promise.allSettled
-    const settledPromises = await Promise.allSettled(pluginIds.map((id) => importPanelPlugin(id)));
-    for (let i = 0; i < settledPromises.length; i++) {
-      const settled = settledPromises[i];
-
-      if (settled.status === 'fulfilled') {
-        _pluginCache.push(settled.value);
+      if (isBuiltInPlugin(pluginId)) {
+        hasErrors = true;
+      } else {
+        appEvents.publish({
+          type: AppEvents.alertError.name,
+          payload: [
+            t(
+              'panel.visualization-suggestions.error-loading-suggestions.plugin-failed',
+              'Failed to load panel plugin: {{ pluginId }}.',
+              { pluginId }
+            ),
+          ],
+        });
       }
-      // TODO: do we want to somehow log if there were errors loading some of the plugins?
     }
   }
 
-  if (_pluginCache.length === 0) {
-    throw new Error('No panel plugins with visualization suggestions found');
-  }
-
-  return _pluginCache;
+  return { plugins, hasErrors };
 }
 
 /**
@@ -83,7 +106,7 @@ export function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[
     if (mappedA && dataSummary.hasPreferredVisualisationType(mappedA)) {
       return -1;
     }
-    const mappedB = mapPreferredVisualisationTypeToPlugin(a.pluginId);
+    const mappedB = mapPreferredVisualisationTypeToPlugin(b.pluginId);
     if (mappedB && dataSummary.hasPreferredVisualisationType(mappedB)) {
       return 1;
     }
@@ -93,42 +116,37 @@ export function sortSuggestions(suggestions: PanelPluginVisualizationSuggestion[
   });
 }
 
+export interface SuggestionsResult {
+  suggestions: PanelPluginVisualizationSuggestion[];
+  hasErrors: boolean;
+}
+
 /**
  * given PanelData, return a sorted list of Suggestions from all plugins which support it.
  * @param {PanelData} data queried and transformed data for the panel
- * @returns {PanelPluginVisualizationSuggestion[]} sorted list of suggestions
+ * @returns {SuggestionsResult} sorted list of suggestions and error status
  */
-export async function getAllSuggestions(data?: PanelData): Promise<PanelPluginVisualizationSuggestion[]> {
+export async function getAllSuggestions(data?: PanelData): Promise<SuggestionsResult> {
   const dataSummary = getPanelDataSummary(data?.series);
   const list: PanelPluginVisualizationSuggestion[] = [];
-  const plugins = await getPanelsWithSuggestions();
 
+  const pluginIds: string[] = getPanelPluginIds();
+  const { plugins, hasErrors: pluginLoadErrors } = await loadPlugins(pluginIds);
+
+  let pluginSuggestionsError = false;
   for (const plugin of plugins) {
-    const suggestions = plugin.getSuggestions(dataSummary);
-    if (suggestions) {
-      list.push(...suggestions);
-    }
-  }
-
-  if (dataSummary.fieldCount === 0) {
-    for (const plugin of Object.values(config.panels)) {
-      if (!plugin.skipDataQuery || plugin.hideFromList) {
-        continue;
+    try {
+      const suggestions = plugin.getSuggestions(dataSummary);
+      if (suggestions) {
+        list.push(...suggestions);
       }
-
-      list.push({
-        name: plugin.name,
-        pluginId: plugin.id,
-        description: plugin.info.description,
-        hash: 'plugin-empty-' + plugin.id,
-        cardOptions: {
-          imgSrc: plugin.info.logos.small,
-        },
-      });
+    } catch (e) {
+      console.warn(`error when loading suggestions from plugin "${plugin.meta.id}"`, e);
+      pluginSuggestionsError = true;
     }
   }
 
   sortSuggestions(list, dataSummary);
 
-  return list;
+  return { suggestions: list, hasErrors: pluginLoadErrors || pluginSuggestionsError };
 }

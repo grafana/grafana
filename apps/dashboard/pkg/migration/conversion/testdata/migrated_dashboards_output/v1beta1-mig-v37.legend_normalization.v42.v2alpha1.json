@@ -111,6 +111,10 @@
             "spec": {
               "pluginVersion": "",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {}
+                },
                 "legend": {
                   "displayMode": "list",
                   "showLegend": false
@@ -207,6 +211,10 @@
             "spec": {
               "pluginVersion": "",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {}
+                },
                 "legend": {
                   "displayMode": "list",
                   "showLegend": false
@@ -629,5 +637,10 @@
     "title": "V37 Legend Normalization Test Dashboard",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

@@ -294,6 +294,9 @@ type DashboardProvisioning struct {
 	ExternalID  string `xorm:"external_id"`
 	CheckSum    string
 	Updated     int64
+
+	// note: only used when writing metadata to unified storage resources - not saved in legacy table.
+	AllowUIUpdates bool `xorm:"-"`
 }
 
 type DeleteDashboardCommand struct {
@@ -304,8 +307,15 @@ type DeleteDashboardCommand struct {
 	RemovePermissions      bool
 }
 
+type ProvisioningConfig struct {
+	Name           string
+	OrgID          int64
+	Folder         string
+	AllowUIUpdates bool
+}
+
 type DeleteOrphanedProvisionedDashboardsCommand struct {
-	ReaderNames []string
+	Config []ProvisioningConfig
 }
 
 type DashboardProvisioningSearchResults struct {
@@ -405,6 +415,8 @@ type DashboardSearchProjection struct {
 	FolderTitle string
 	SortMeta    int64
 	Tags        []string
+	ManagedBy   utils.ManagerKind
+	ManagerId   string
 	Deleted     *time.Time
 }
 

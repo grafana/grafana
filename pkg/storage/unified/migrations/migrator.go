@@ -10,8 +10,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 
-	v1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -35,39 +33,26 @@ type streamProvider interface {
 	createStream(ctx context.Context, opts legacy.MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error)
 }
 
-// resourceClientStreamProvider creates streams using resource.ResourceClient
-type resourceClientStreamProvider struct {
-	client resource.ResourceClient
-}
-
-func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts legacy.MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error) {
-	// Build collection settings for resource client
+func buildCollectionSettings(opts legacy.MigrateOptions) resource.BulkSettings {
 	settings := resource.BulkSettings{
 		RebuildCollection: true,
 		SkipValidation:    true,
 	}
 	for _, res := range opts.Resources {
-		switch fmt.Sprintf("%s/%s", res.Group, res.Resource) {
-		case "folder.grafana.app/folders":
-			settings.Collection = append(settings.Collection, &resourcepb.ResourceKey{
-				Namespace: opts.Namespace,
-				Group:     folders.GROUP,
-				Resource:  folders.RESOURCE,
-			})
-		case "dashboard.grafana.app/librarypanels":
-			settings.Collection = append(settings.Collection, &resourcepb.ResourceKey{
-				Namespace: opts.Namespace,
-				Group:     v1beta1.GROUP,
-				Resource:  v1beta1.LIBRARY_PANEL_RESOURCE,
-			})
-		case "dashboard.grafana.app/dashboards":
-			settings.Collection = append(settings.Collection, &resourcepb.ResourceKey{
-				Namespace: opts.Namespace,
-				Group:     v1beta1.GROUP,
-				Resource:  v1beta1.DASHBOARD_RESOURCE,
-			})
+		key := buildResourceKey(res.Group, res.Resource, opts.Namespace)
+		if key != nil {
+			settings.Collection = append(settings.Collection, key)
 		}
 	}
+	return settings
+}
+
+type resourceClientStreamProvider struct {
+	client resource.ResourceClient
+}
+
+func (r *resourceClientStreamProvider) createStream(ctx context.Context, opts legacy.MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error) {
+	settings := buildCollectionSettings(opts)
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
 	return r.client.BulkProcess(ctx)
 }
@@ -78,33 +63,7 @@ type bulkStoreClientStreamProvider struct {
 }
 
 func (b *bulkStoreClientStreamProvider) createStream(ctx context.Context, opts legacy.MigrateOptions) (resourcepb.BulkStore_BulkProcessClient, error) {
-	// Build collection settings for resource client
-	settings := resource.BulkSettings{
-		RebuildCollection: true,
-		SkipValidation:    true,
-	}
-	for _, res := range opts.Resources {
-		switch fmt.Sprintf("%s/%s", res.Group, res.Resource) {
-		case "folder.grafana.app/folders":
-			settings.Collection = append(settings.Collection, &resourcepb.ResourceKey{
-				Namespace: opts.Namespace,
-				Group:     folders.GROUP,
-				Resource:  folders.RESOURCE,
-			})
-		case "dashboard.grafana.app/librarypanels":
-			settings.Collection = append(settings.Collection, &resourcepb.ResourceKey{
-				Namespace: opts.Namespace,
-				Group:     v1beta1.GROUP,
-				Resource:  v1beta1.LIBRARY_PANEL_RESOURCE,
-			})
-		case "dashboard.grafana.app/dashboards":
-			settings.Collection = append(settings.Collection, &resourcepb.ResourceKey{
-				Namespace: opts.Namespace,
-				Group:     v1beta1.GROUP,
-				Resource:  v1beta1.DASHBOARD_RESOURCE,
-			})
-		}
-	}
+	settings := buildCollectionSettings(opts)
 	ctx = metadata.NewOutgoingContext(ctx, settings.ToMD())
 	return b.client.BulkProcess(ctx)
 }
@@ -144,7 +103,7 @@ func newUnifiedMigrator(
 	}
 }
 
-type migratorFunc = func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*legacy.BlobStoreInfo, error)
+type migratorFunc = func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
 
 func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error) {
 	info, err := authlib.ParseNamespace(opts.Namespace)
@@ -170,32 +129,22 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 
 	migratorFuncs := []migratorFunc{}
 	for _, res := range opts.Resources {
-		switch fmt.Sprintf("%s/%s", res.Group, res.Resource) {
-		case "folder.grafana.app/folders":
-			migratorFuncs = append(migratorFuncs, m.MigrateFolders)
-		case "dashboard.grafana.app/librarypanels":
-			migratorFuncs = append(migratorFuncs, m.MigrateLibraryPanels)
-		case "dashboard.grafana.app/dashboards":
-			migratorFuncs = append(migratorFuncs, m.MigrateDashboards)
-		default:
-			return nil, fmt.Errorf("unsupported resource: %s", res)
+		fn := getMigratorFunc(m.MigrationDashboardAccessor, res.Group, res.Resource)
+		if fn == nil {
+			return nil, fmt.Errorf("unsupported resource: %s/%s", res.Group, res.Resource)
 		}
+		migratorFuncs = append(migratorFuncs, fn)
 	}
 
 	// Execute migrations
-	blobStore := legacy.BlobStoreInfo{}
 	m.log.Info("start migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	for _, fn := range migratorFuncs {
-		blobs, err := fn(ctx, info.OrgID, opts, stream)
+		err := fn(ctx, info.OrgID, opts, stream)
 		if err != nil {
 			m.log.Error("error migrating legacy resources", "error", err, "namespace", opts.Namespace)
 			return nil, err
 		}
-		if blobs != nil {
-			blobStore.Count += blobs.Count
-			blobStore.Size += blobs.Size
-		}
 	}
-	m.log.Info("finished migrating legacy resources", "blobStore", blobStore)
+	m.log.Info("finished migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	return stream.CloseAndRecv()
 }

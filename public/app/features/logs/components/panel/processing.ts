@@ -135,7 +135,9 @@ export class LogListModel implements LogRowModel {
   get body(): string {
     if (this._body === undefined) {
       try {
-        const parsed = parse(this.raw);
+        const parsed = parse(this.raw, undefined, {
+          onDuplicateKey: ({ newValue }) => newValue,
+        });
         if (typeof parsed === 'object' && parsed !== null && !(parsed instanceof LosslessNumber)) {
           this._json = true;
         }
@@ -336,7 +338,7 @@ function countNewLines(log: string, limit = Infinity) {
   let count = 0;
   for (let i = 0; i < log.length; ++i) {
     // No need to iterate further
-    if (count > Infinity) {
+    if (count > limit) {
       return count;
     }
     if (log[i] === '\n') {
@@ -364,7 +366,7 @@ export function getNormalizedFieldName(field: string) {
   if (field === LOG_LINE_BODY_FIELD_NAME) {
     return t('logs.log-line-details.log-line-field', 'Log line');
   } else if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME) {
-    return t('logs.log-line-details.log-attributes-field', 'OTel attributes');
+    return t('logs.log-line-details.log-attributes-field', 'Log attributes');
   }
   return field;
 }

@@ -535,5 +535,10 @@
     "title": "BarChart - Panel Tests - Series toggle / bar widths",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

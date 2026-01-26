@@ -142,6 +142,7 @@ export function buildImageUrl(
   let imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
   imageUrl = imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
   imageUrl +=
+    `&hideLogo=true` +
     `&width=${config.rendererDefaultImageWidth}` +
     `&height=${config.rendererDefaultImageHeight}` +
     `&scale=${config.rendererDefaultImageScale}` +

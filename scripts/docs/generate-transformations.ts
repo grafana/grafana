@@ -20,7 +20,7 @@ export const readMeContent = `
   To build this Markdown, do the following:
 
   $ cd /docs (from the root of the repository)
-  $ make sources/panels-visualizations/query-transform-data/transform-data/index.md
+  $ make sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md
   $ make docs
 
   Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
@@ -34,19 +34,20 @@ comments: |
 ${readMeContent}
 
 aliases:
-  - ../../panels/reference-transformation-functions/
-  - ../../panels/transform-data/
-  - ../../panels/transform-data/about-transformation/
-  - ../../panels/transform-data/add-transformation-to-data/
-  - ../../panels/transform-data/apply-transformation-to-data/
-  - ../../panels/transform-data/debug-transformation/
-  - ../../panels/transform-data/delete-transformation/
-  - ../../panels/transform-data/transformation-functions/
-  - ../../panels/transformations/
-  - ../../panels/transformations/apply-transformations/
-  - ../../panels/transformations/config-from-query/
-  - ../../panels/transformations/rows-to-fields/
-  - ../../panels/transformations/types-options/
+  - ../../../panels/transform-data/ # /docs/grafana/next/panels/transform-data/
+  - ../../../panels/transform-data/about-transformation/ # /docs/grafana/next/panels/transform-data/about-transformation/
+  - ../../../panels/transform-data/add-transformation-to-data/ # /docs/grafana/next/panels/transform-data/add-transformation-to-data/
+  - ../../../panels/transform-data/apply-transformation-to-data/ # /docs/grafana/next/panels/transform-data/apply-transformation-to-data/
+  - ../../../panels/transform-data/debug-transformation/ # /docs/grafana/next/panels/transform-data/debug-transformation/
+  - ../../../panels/transform-data/delete-transformation/ # /docs/grafana/next/panels/transform-data/delete-transformation/
+  - ../../../panels/transform-data/transformation-functions/ # /docs/grafana/next/panels/transform-data/transformation-functions/
+  - ../../../panels/transformations/ # /docs/grafana/next/panels/transformations/
+  - ../../../panels/transformations/apply-transformations/ # /docs/grafana/next/panels/transformations/apply-transformations/
+  - ../../../panels/transformations/config-from-query/ # /docs/grafana/next/panels/transformations/config-from-query/
+  - ../../../panels/transformations/rows-to-fields/ # /docs/grafana/next/panels/transformations/rows-to-fields/
+  - ../../../panels/transformations/types-options/ # /docs/grafana/next/panels/transformations/types-options/
+  - ../../../panels/reference-transformation-functions/ # /docs/grafana/next/panels/reference-transformation-functions/
+  - ../../../panels-visualizations/query-transform-data/transform-data/ # /docs/grafana/next/panels-visualizations/query-transform-data/transform-data/
 labels:
   products:
     - cloud

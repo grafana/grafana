@@ -111,6 +111,7 @@
             }
           },
           "regex": "/.*9090.*/",
+          "regexApplyTo": "text",
           "sort": "alphabeticalAsc",
           "definition": "label_values(up, instance)",
           "options": [
@@ -404,16 +405,35 @@
             }
           },
           "regex": "/host[0-9]+/",
+          "regexApplyTo": "value",
           "sort": "alphabeticalDesc",
           "definition": "terms field:@host size:100",
           "options": [],
           "multi": true,
           "includeAll": true,
           "allValue": "*",
-          "allowCustomValue": true
+          "allowCustomValue": true,
+          "staticOptions": [
+            {
+              "selected": false,
+              "text": "All",
+              "value": "$__all"
+            },
+            {
+              "selected": false,
+              "text": "host1",
+              "value": "host1"
+            }
+          ],
+          "staticOptionsOrder": "before"
         }
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

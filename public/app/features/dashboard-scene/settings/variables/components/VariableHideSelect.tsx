@@ -38,6 +38,7 @@ export function VariableHideSelect({ onChange, hide, type }: PropsWithChildren<P
   }
 
   return (
+    // eslint-disable-next-line no-restricted-syntax
     <Field label={t('dashboard-scene.variable-hide-select.label', 'Hide')}>
       <RadioButtonGroup options={HIDE_OPTIONS} onChange={onChange} value={value} />
     </Field>

@@ -1,0 +1,25 @@
+apiVersion: 1
+groups:
+  - name: recording_rules_group_no_target
+    folder: my_folder
+    interval: 1m
+    rules:
+    - uid: recording_rule_without_target
+      title: my_recording_rule_without_target
+      condition: A
+      data:
+      - refId: A
+        queryType: ''
+        relativeTimeRange:
+          from: 600
+          to: 0
+        datasourceUid: prometheus-uid
+        model:
+          expr: rate(http_requests_total[5m])
+          instant: true
+          intervalMs: 1000
+          maxDataPoints: 43200
+          refId: A
+      record:
+        metric: http_requests_rate
+        from: A

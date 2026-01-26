@@ -3,10 +3,12 @@ package query
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"runtime"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	apiruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -62,6 +64,7 @@ func NewQueryAPIBuilder(
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 	connections DataSourceConnectionProvider,
+	concurrentQueryLimit int,
 ) (*QueryAPIBuilder, error) {
 	// Include well typed query definitions
 	var queryTypes *query.QueryTypeDefinitionList
@@ -80,7 +83,7 @@ func NewQueryAPIBuilder(
 	}
 
 	return &QueryAPIBuilder{
-		concurrentQueryLimit: 4,
+		concurrentQueryLimit: concurrentQueryLimit,
 		log:                  log.New("query_apiserver"),
 		instanceProvider:     instanceProvider,
 		authorizer:           ar,
@@ -142,6 +145,7 @@ func RegisterAPIService(
 		tracer,
 		legacyDatasourceLookup,
 		&connectionsProvider{dsService: dataSourcesService, registry: reg},
+		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err
@@ -151,7 +155,7 @@ func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return query.SchemeGroupVersion
 }
 
-func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
+func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&query.DataSourceApiServer{},
 		&query.DataSourceApiServerList{},
@@ -161,11 +165,11 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&query.QueryDataResponse{},
 		&query.QueryTypeDefinition{},
 		&query.QueryTypeDefinitionList{},
-		&query.SQLSchemas{},
+		&query.QueryResponseSQLSchemas{},
 	)
 }
 
-func (b *QueryAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+func (b *QueryAPIBuilder) InstallSchema(scheme *apiruntime.Scheme) error {
 	addKnownTypes(scheme, query.SchemeGroupVersion)
 	metav1.AddToGroupVersion(scheme, query.SchemeGroupVersion)
 	return scheme.SetVersionPriority(query.SchemeGroupVersion)
@@ -201,8 +205,6 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 	// The query endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
 	storage["query"] = newQueryREST(b)
-
-	storage["sqlschemas"] = newSQLSchemasREST(b)
 
 	// Register the expressions query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
@@ -299,6 +301,16 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 	})
 	if err != nil {
 		return oas, nil
+	}
+
+	// Use the same request body for query as sql schemas
+	query, ok := oas.Paths.Paths[root+"namespaces/{namespace}/query"]
+	if !ok || query.Post == nil || query.Post.RequestBody == nil {
+		return nil, fmt.Errorf("could not find query path")
+	}
+	sqlschemas, ok := oas.Paths.Paths[root+"namespaces/{namespace}/sqlschemas"]
+	if ok && sqlschemas.Post != nil {
+		sqlschemas.Post.RequestBody = query.Post.RequestBody
 	}
 
 	return oas, nil

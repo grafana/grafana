@@ -345,7 +345,12 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {}
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -548,7 +553,7 @@
             "kind": "RowsLayoutRow",
             "spec": {
               "title": "",
-              "collapse": true,
+              "collapse": false,
               "hideHeader": true,
               "layout": {
                 "kind": "GridLayout",
@@ -720,5 +725,10 @@
     "title": "V33 Panel Datasource Name to Ref Test",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

@@ -100,11 +100,11 @@ func TestDataEvaluator_Eval(t *testing.T) {
 
 		resultsCount := int(to.Sub(from).Seconds() / interval.Seconds())
 
-		err = evaluator.Eval(context.Background(), from, time.Second, resultsCount, func(idx int, now time.Time, res eval.Results) error {
+		err = evaluator.Eval(context.Background(), from, time.Second, resultsCount, func(idx int, now time.Time, res eval.Results) (bool, error) {
 			r = append(r, results{
 				now, res,
 			})
-			return nil
+			return true, nil
 		})
 		require.NoError(t, err)
 
@@ -164,11 +164,11 @@ func TestDataEvaluator_Eval(t *testing.T) {
 			size := to.Sub(from).Milliseconds() / interval.Milliseconds()
 			r := make([]results, 0, size)
 
-			err = evaluator.Eval(context.Background(), from, interval, int(size), func(idx int, now time.Time, res eval.Results) error {
+			err = evaluator.Eval(context.Background(), from, interval, int(size), func(idx int, now time.Time, res eval.Results) (bool, error) {
 				r = append(r, results{
 					now, res,
 				})
-				return nil
+				return true, nil
 			})
 
 			currentRowIdx := 0
@@ -195,11 +195,11 @@ func TestDataEvaluator_Eval(t *testing.T) {
 			size := int(to.Sub(from).Seconds() / interval.Seconds())
 			r := make([]results, 0, size)
 
-			err = evaluator.Eval(context.Background(), from, interval, size, func(idx int, now time.Time, res eval.Results) error {
+			err = evaluator.Eval(context.Background(), from, interval, size, func(idx int, now time.Time, res eval.Results) (bool, error) {
 				r = append(r, results{
 					now, res,
 				})
-				return nil
+				return true, nil
 			})
 
 			currentRowIdx := 0
@@ -230,11 +230,11 @@ func TestDataEvaluator_Eval(t *testing.T) {
 		t.Run("should be noData until the frame interval", func(t *testing.T) {
 			newFrom := from.Add(-10 * time.Second)
 			r := make([]results, 0, int(to.Sub(newFrom).Seconds()))
-			err = evaluator.Eval(context.Background(), newFrom, time.Second, cap(r), func(idx int, now time.Time, res eval.Results) error {
+			err = evaluator.Eval(context.Background(), newFrom, time.Second, cap(r), func(idx int, now time.Time, res eval.Results) (bool, error) {
 				r = append(r, results{
 					now, res,
 				})
-				return nil
+				return true, nil
 			})
 
 			rowIdx := 0
@@ -258,11 +258,11 @@ func TestDataEvaluator_Eval(t *testing.T) {
 		t.Run("should be the last value after the frame interval", func(t *testing.T) {
 			newTo := to.Add(10 * time.Second)
 			r := make([]results, 0, int(newTo.Sub(from).Seconds()))
-			err = evaluator.Eval(context.Background(), from, time.Second, cap(r), func(idx int, now time.Time, res eval.Results) error {
+			err = evaluator.Eval(context.Background(), from, time.Second, cap(r), func(idx int, now time.Time, res eval.Results) (bool, error) {
 				r = append(r, results{
 					now, res,
 				})
-				return nil
+				return true, nil
 			})
 
 			rowIdx := 0
@@ -282,12 +282,21 @@ func TestDataEvaluator_Eval(t *testing.T) {
 	})
 	t.Run("should stop if callback error", func(t *testing.T) {
 		expectedError := errors.New("error")
-		err = evaluator.Eval(context.Background(), from, time.Second, 6, func(idx int, now time.Time, res eval.Results) error {
+		err = evaluator.Eval(context.Background(), from, time.Second, 6, func(idx int, now time.Time, res eval.Results) (bool, error) {
 			if idx == 5 {
-				return expectedError
+				return false, expectedError
 			}
-			return nil
+			return true, nil
 		})
 		require.ErrorIs(t, err, expectedError)
+	})
+	t.Run("should stop if callback does not want to continue", func(t *testing.T) {
+		evaluated := 0
+		err = evaluator.Eval(context.Background(), from, time.Second, 6, func(idx int, now time.Time, res eval.Results) (bool, error) {
+			evaluated++
+			return evaluated < 2, nil
+		})
+		require.NoError(t, err)
+		require.Equal(t, 2, evaluated)
 	})
 }

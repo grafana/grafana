@@ -1155,5 +1155,10 @@
     "title": "Panel Tests - Bar Chart Tooltips \u0026 Legends",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

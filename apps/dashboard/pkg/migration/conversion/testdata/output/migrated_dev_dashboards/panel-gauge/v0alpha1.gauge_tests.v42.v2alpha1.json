@@ -62,6 +62,12 @@
             "spec": {
               "pluginVersion": "7.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "gauge",
+                  "originalOptions": {
+                    "nullPointMode": "null"
+                  }
+                },
                 "baseColor": "#299c46",
                 "reduceOptions": {
                   "calcs": [
@@ -151,6 +157,12 @@
             "spec": {
               "pluginVersion": "7.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "gauge",
+                  "originalOptions": {
+                    "nullPointMode": "null"
+                  }
+                },
                 "baseColor": "#299c46",
                 "reduceOptions": {
                   "calcs": [
@@ -241,6 +253,12 @@
             "spec": {
               "pluginVersion": "7.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "gauge",
+                  "originalOptions": {
+                    "nullPointMode": "null"
+                  }
+                },
                 "baseColor": "#299c46",
                 "reduceOptions": {
                   "calcs": [
@@ -320,6 +338,12 @@
             "spec": {
               "pluginVersion": "7.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "gauge",
+                  "originalOptions": {
+                    "nullPointMode": "null"
+                  }
+                },
                 "baseColor": "#299c46",
                 "reduceOptions": {
                   "calcs": [
@@ -401,6 +425,12 @@
             "spec": {
               "pluginVersion": "7.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "gauge",
+                  "originalOptions": {
+                    "nullPointMode": "null"
+                  }
+                },
                 "baseColor": "#299c46",
                 "reduceOptions": {
                   "calcs": [
@@ -480,6 +510,12 @@
             "spec": {
               "pluginVersion": "7.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "gauge",
+                  "originalOptions": {
+                    "nullPointMode": "null"
+                  }
+                },
                 "baseColor": "#299c46",
                 "reduceOptions": {
                   "calcs": [
@@ -559,6 +595,12 @@
             "spec": {
               "pluginVersion": "7.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "gauge",
+                  "originalOptions": {
+                    "nullPointMode": "null"
+                  }
+                },
                 "baseColor": "#299c46",
                 "reduceOptions": {
                   "calcs": [
@@ -639,6 +681,12 @@
             "spec": {
               "pluginVersion": "7.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "gauge",
+                  "originalOptions": {
+                    "nullPointMode": "null"
+                  }
+                },
                 "baseColor": "#299c46",
                 "reduceOptions": {
                   "calcs": [
@@ -730,6 +778,12 @@
             "spec": {
               "pluginVersion": "7.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "gauge",
+                  "originalOptions": {
+                    "nullPointMode": "null"
+                  }
+                },
                 "baseColor": "#299c46",
                 "reduceOptions": {
                   "calcs": [
@@ -927,6 +981,12 @@
             "spec": {
               "pluginVersion": "7.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "gauge",
+                  "originalOptions": {
+                    "nullPointMode": "null"
+                  }
+                },
                 "baseColor": "#299c46",
                 "reduceOptions": {
                   "calcs": [
@@ -1006,6 +1066,12 @@
             "spec": {
               "pluginVersion": "7.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "gauge",
+                  "originalOptions": {
+                    "nullPointMode": "null"
+                  }
+                },
                 "baseColor": "#299c46",
                 "reduceOptions": {
                   "calcs": [
@@ -1085,6 +1151,12 @@
             "spec": {
               "pluginVersion": "7.4.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "gauge",
+                  "originalOptions": {
+                    "nullPointMode": "null"
+                  }
+                },
                 "baseColor": "#299c46",
                 "reduceOptions": {
                   "calcs": [
@@ -1429,5 +1501,10 @@
       }
     ]
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

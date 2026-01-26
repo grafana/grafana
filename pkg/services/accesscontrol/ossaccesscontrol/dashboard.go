@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -99,7 +101,7 @@ func ProvideDashboardPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, dashboardService dashboards.DashboardService, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
-	dashboardPermissionsRegistration dashboards.PermissionsRegistrationService,
+	dashboardPermissionsRegistration dashboards.PermissionsRegistrationService, restConfigProvider apiserver.RestConfigProvider,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
 		query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
@@ -117,6 +119,7 @@ func ProvideDashboardPermissions(
 	options := resourcepermissions.Options{
 		Resource:          "dashboards",
 		ResourceAttribute: "uid",
+		APIGroup:          dashboardv1.APIGroup,
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideDashboardPermissions.ResourceValidator")
 			defer span.End()
@@ -166,9 +169,10 @@ func ProvideDashboardPermissions(
 			"Edit":  getDashboardEditActions(features),
 			"Admin": getDashboardAdminActions(features),
 		},
-		ReaderRoleName: "Permission reader",
-		WriterRoleName: "Permission writer",
-		RoleGroup:      "Dashboards",
+		ReaderRoleName:     "Permission reader",
+		WriterRoleName:     "Permission writer",
+		RoleGroup:          "Dashboards",
+		RestConfigProvider: restConfigProvider,
 	}
 
 	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)

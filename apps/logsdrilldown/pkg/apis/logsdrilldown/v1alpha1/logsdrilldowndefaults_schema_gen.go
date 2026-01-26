@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaLogsDrilldownDefaults = resource.NewSimpleSchema("logsdrilldown.grafana.app", "v1alpha1", &LogsDrilldownDefaults{}, &LogsDrilldownDefaultsList{}, resource.WithKind("LogsDrilldownDefaults"),
+	schemaLogsDrilldownDefaults = resource.NewSimpleSchema("logsdrilldown.grafana.app", "v1alpha1", NewLogsDrilldownDefaults(), &LogsDrilldownDefaultsList{}, resource.WithKind("LogsDrilldownDefaults"),
 		resource.WithPlural("logsdrilldowndefaults"), resource.WithScope(resource.NamespacedScope))
 	kindLogsDrilldownDefaults = resource.Kind{
 		Schema: schemaLogsDrilldownDefaults,

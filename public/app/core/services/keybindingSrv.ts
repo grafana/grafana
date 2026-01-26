@@ -236,6 +236,10 @@ export class KeybindingSrv {
         appEvents.publish(new ZoomOutEvent({ scale: 0.5, updateUrl }));
       });
 
+      this.bind('t =', () => {
+        appEvents.publish(new ZoomOutEvent({ scale: 0.5, updateUrl }));
+      });
+
       this.bind('t -', () => {
         appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
       });

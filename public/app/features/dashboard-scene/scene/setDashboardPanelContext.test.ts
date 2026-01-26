@@ -1,9 +1,10 @@
-import { EventBusSrv } from '@grafana/data';
-import { BackendSrv, setBackendSrv } from '@grafana/runtime';
-import { PanelContext } from '@grafana/ui';
+import { AdHocVariableModel, EventBusSrv, GroupByVariableModel, VariableModel } from '@grafana/data';
+import { BackendSrv, config, setBackendSrv } from '@grafana/runtime';
+import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
+import { AdHocFilterItem, PanelContext } from '@grafana/ui';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { findVizPanelByKey } from '../utils/utils';
+import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
 
 import { getAdHocFilterVariableFor, setDashboardPanelContext } from './setDashboardPanelContext';
 
@@ -158,6 +159,163 @@ describe('setDashboardPanelContext', () => {
       // Verify existing filter value updated
       expect(variable.state.filters[1].operator).toBe('!=');
     });
+
+    it('Should use existing adhoc filter when panel has no panel-level datasource because queries have all the same datasources (v2 behavior)', () => {
+      const { scene, context } = buildTestScene({ existingFilterVariable: true, panelDatasourceUndefined: true });
+
+      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+      variable.setState({ filters: [] });
+
+      context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '=' });
+
+      // Should use the existing adhoc filter variable, not create a new one
+      expect(variable.state.filters).toEqual([{ key: 'hello', value: 'world', operator: '=' }]);
+
+      // Verify no new adhoc variables were created
+      const variables = sceneGraph.getVariables(scene);
+      const adhocVars = variables.state.variables.filter((v) => v.state.type === 'adhoc');
+      expect(adhocVars.length).toBe(1);
+    });
+  });
+
+  describe('getFiltersBasedOnGrouping', () => {
+    beforeAll(() => {
+      config.featureToggles.groupByVariable = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.groupByVariable = false;
+    });
+
+    it('should return filters based on grouping', () => {
+      const { scene, context } = buildTestScene({ existingFilterVariable: true, existingGroupByVariable: true });
+
+      const groupBy = sceneGraph.getVariables(scene).state.variables.find((f) => f instanceof GroupByVariable);
+
+      groupBy?.changeValueTo(['container', 'cluster']);
+
+      const filters: AdHocFilterItem[] = [
+        { key: 'container', value: 'container', operator: '=' },
+        { key: 'cluster', value: 'cluster', operator: '=' },
+        { key: 'cpu', value: 'cpu', operator: '=' },
+        { key: 'id', value: 'id', operator: '=' },
+      ];
+
+      const result = context.getFiltersBasedOnGrouping?.(filters);
+      expect(result).toEqual([
+        { key: 'container', value: 'container', operator: '=' },
+        { key: 'cluster', value: 'cluster', operator: '=' },
+      ]);
+    });
+
+    it('should return empty filters if there is no groupBy selection', () => {
+      const { context } = buildTestScene({ existingFilterVariable: true, existingGroupByVariable: true });
+
+      const filters: AdHocFilterItem[] = [
+        { key: 'container', value: 'container', operator: '=' },
+        { key: 'cluster', value: 'cluster', operator: '=' },
+        { key: 'cpu', value: 'cpu', operator: '=' },
+        { key: 'id', value: 'id', operator: '=' },
+      ];
+
+      const result = context.getFiltersBasedOnGrouping?.(filters);
+      expect(result).toEqual([]);
+    });
+
+    it('should return empty filters if there is no groupBy variable', () => {
+      const { context } = buildTestScene({ existingFilterVariable: true, existingGroupByVariable: false });
+
+      const filters: AdHocFilterItem[] = [
+        { key: 'container', value: 'container', operator: '=' },
+        { key: 'cluster', value: 'cluster', operator: '=' },
+        { key: 'cpu', value: 'cpu', operator: '=' },
+        { key: 'id', value: 'id', operator: '=' },
+      ];
+
+      const result = context.getFiltersBasedOnGrouping?.(filters);
+      expect(result).toEqual([]);
+    });
+
+    it('should return empty filters if panel and groupBy ds differs', () => {
+      const { scene, context } = buildTestScene({
+        existingFilterVariable: true,
+        existingGroupByVariable: true,
+        groupByDatasourceUid: 'different-ds',
+      });
+
+      const groupBy = sceneGraph.getVariables(scene).state.variables.find((f) => f instanceof GroupByVariable);
+
+      groupBy?.changeValueTo(['container', 'cluster']);
+
+      const filters: AdHocFilterItem[] = [
+        { key: 'container', value: 'container', operator: '=' },
+        { key: 'cluster', value: 'cluster', operator: '=' },
+        { key: 'cpu', value: 'cpu', operator: '=' },
+        { key: 'id', value: 'id', operator: '=' },
+      ];
+
+      const result = context.getFiltersBasedOnGrouping?.(filters);
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('onAddAdHocFilters', () => {
+    it('should add adhoc filters', () => {
+      const { scene, context } = buildTestScene({
+        existingFilterVariable: true,
+      });
+
+      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+
+      const filters: AdHocFilterItem[] = [
+        { key: 'existing', value: 'val', operator: '=' },
+        { key: 'cluster', value: 'cluster', operator: '=' },
+      ];
+
+      context.onAddAdHocFilters?.(filters);
+      expect(variable.state.filters).toEqual([
+        { key: 'existing', value: 'val', operator: '=' },
+        { key: 'cluster', value: 'cluster', operator: '=' },
+      ]);
+    });
+
+    it('should update and add adhoc filters', () => {
+      const { scene, context } = buildTestScene({
+        existingFilterVariable: true,
+      });
+
+      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+
+      variable.setState({ filters: [{ key: 'existing', value: 'val', operator: '=' }] });
+
+      const filters: AdHocFilterItem[] = [
+        { key: 'existing', value: 'val', operator: '!=' },
+        { key: 'cluster', value: 'cluster', operator: '=' },
+        { key: 'cpu', value: 'cpu', operator: '=' },
+        { key: 'id', value: 'id', operator: '=' },
+      ];
+
+      context.onAddAdHocFilters?.(filters);
+      expect(variable.state.filters).toEqual([
+        { key: 'existing', value: 'val', operator: '!=' },
+        { key: 'cluster', value: 'cluster', operator: '=' },
+        { key: 'cpu', value: 'cpu', operator: '=' },
+        { key: 'id', value: 'id', operator: '=' },
+      ]);
+    });
+
+    it('should not do anything if filters empty', () => {
+      const { scene, context } = buildTestScene({
+        existingFilterVariable: true,
+      });
+
+      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+
+      const filters: AdHocFilterItem[] = [];
+
+      context.onAddAdHocFilters?.(filters);
+      expect(variable.state.filters).toEqual([]);
+    });
   });
 });
 
@@ -169,9 +327,30 @@ interface SceneOptions {
   canDelete?: boolean;
   orgCanEdit?: boolean;
   existingFilterVariable?: boolean;
+  existingGroupByVariable?: boolean;
+  groupByDatasourceUid?: string;
+  panelDatasourceUndefined?: boolean;
 }
 
 function buildTestScene(options: SceneOptions) {
+  const varList: VariableModel[] = [];
+
+  if (options.existingFilterVariable) {
+    varList.push({
+      type: 'adhoc',
+      name: 'Filters',
+      datasource: { uid: 'my-ds-uid' },
+    } as AdHocVariableModel);
+  }
+
+  if (options.existingGroupByVariable) {
+    varList.push({
+      type: 'groupby',
+      name: 'Group By',
+      datasource: { uid: options.groupByDatasourceUid ?? 'my-ds-uid', type: 'prometheus' },
+    } as GroupByVariableModel);
+  }
+
   const scene = transformSaveModelToScene({
     dashboard: {
       title: 'hello',
@@ -203,15 +382,7 @@ function buildTestScene(options: SceneOptions) {
         },
       ],
       templating: {
-        list: options.existingFilterVariable
-          ? [
-              {
-                type: 'adhoc',
-                name: 'Filters',
-                datasource: { uid: 'my-ds-uid' },
-              },
-            ]
-          : [],
+        list: varList,
       },
     },
     meta: {
@@ -232,6 +403,19 @@ function buildTestScene(options: SceneOptions) {
   });
 
   const vizPanel = findVizPanelByKey(scene, 'panel-4')!;
+
+  // Simulate v2 dashboard behavior where non-mixed panels don't have panel-level datasource
+  // but the queries have their own datasources
+  if (options.panelDatasourceUndefined) {
+    const queryRunner = getQueryRunnerFor(vizPanel);
+    if (queryRunner instanceof SceneQueryRunner) {
+      queryRunner.setState({
+        datasource: undefined,
+        queries: [{ refId: 'A', datasource: { uid: 'my-ds-uid', type: 'prometheus' } }],
+      });
+    }
+  }
+
   const context: PanelContext = {
     eventBus: new EventBusSrv(),
     eventsScope: 'global',

@@ -330,14 +330,30 @@ describe('DashboardSceneSerializer', () => {
               {
                 type: 'query',
                 name: 'server',
+                datasource: {
+                  type: 'influxdb',
+                },
               },
               {
                 type: 'query',
                 name: 'host',
+                datasource: {
+                  type: 'elasticsearch',
+                },
               },
               {
                 type: 'textbox',
                 name: 'search',
+              },
+              {
+                name: 'custom_csv',
+                type: 'custom',
+                valuesFormat: 'csv',
+              },
+              {
+                name: 'custom_json',
+                type: 'custom',
+                valuesFormat: 'json',
               },
             ],
           },
@@ -353,8 +369,15 @@ describe('DashboardSceneSerializer', () => {
           panel_type_row_count: 1,
           variable_type_query_count: 2,
           variable_type_textbox_count: 1,
+          variable_type_custom_count: 2,
+          variable_type_custom_csv_count: 1,
+          variable_type_custom_json_count: 1,
           settings_nowdelay: undefined,
           settings_livenow: true,
+          varsWithDataSource: [
+            { type: 'query', datasource: 'influxdb' },
+            { type: 'query', datasource: 'elasticsearch' },
+          ],
         });
       });
     });
@@ -688,16 +711,25 @@ describe('DashboardSceneSerializer', () => {
           schemaVersion: DASHBOARD_SCHEMA_VERSION,
           settings_nowdelay: undefined,
           settings_livenow: true,
-          variable_type_custom_count: 1,
-          variable_type_query_count: 1,
           panel_type_timeseries_count: 6,
+          variable_type_adhoc_count: 1,
+          variable_type_datasource_count: 1,
+          variable_type_custom_count: 3,
+          variable_type_custom_csv_count: 2,
+          variable_type_custom_json_count: 1,
+          variable_type_query_count: 1,
+          varsWithDataSource: [
+            { type: 'query', datasource: 'cloudwatch' },
+            { type: 'adhoc', datasource: 'opensearch' },
+            { type: 'datasource', datasource: 'bigquery' },
+          ],
         });
 
         expect(dashboard.getDynamicDashboardsTrackingInformation()).toEqual({
           panelCount: 6,
           rowCount: 6,
           tabCount: 4,
-          templateVariableCount: 2,
+          templateVariableCount: 6,
           maxNestingLevel: 3,
           dashStructure:
             '[{"kind":"row","children":[{"kind":"row","children":[{"kind":"tab","children":[{"kind":"panel"},{"kind":"panel"},{"kind":"panel"}]},{"kind":"tab","children":[]}]},{"kind":"row","children":[{"kind":"row","children":[{"kind":"panel"}]}]}]},{"kind":"row","children":[{"kind":"row","children":[{"kind":"tab","children":[{"kind":"panel"}]},{"kind":"tab","children":[{"kind":"panel"}]}]}]}]',
@@ -849,6 +881,7 @@ describe('DashboardSceneSerializer', () => {
               query: 'app1',
               skipUrlSync: false,
               allowCustomValue: true,
+              valuesFormat: 'csv',
             },
           },
         ]);
@@ -1392,8 +1425,8 @@ describe('DashboardSceneSerializer', () => {
         serializer.initializeDSReferencesMapping(v1SaveModel as unknown as DashboardV2Spec);
         expect(serializer.getDSReferencesMapping()).toEqual({
           panels: new Map(),
-          variables: new Set(),
-          annotations: new Set(),
+          variables: new Map(),
+          annotations: new Map(),
         });
         expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
       });
@@ -1410,8 +1443,8 @@ describe('DashboardSceneSerializer', () => {
         serializer.initializeDSReferencesMapping(undefined);
         expect(serializer.getDSReferencesMapping()).toEqual({
           panels: expect.any(Map),
-          variables: expect.any(Set),
-          annotations: expect.any(Set),
+          variables: expect.any(Map),
+          annotations: expect.any(Map),
         });
         expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
       });

@@ -3,6 +3,8 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, GroupByVariable, sceneGraph, SceneObject, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
+import { getDatasourceFromQueryRunner } from './utils';
+
 export function verifyDrilldownApplicability(
   sourceObject: SceneObject,
   queriesDataSource: DataSourceRef | undefined,
@@ -26,7 +28,7 @@ export async function getDrilldownApplicability(
     return;
   }
 
-  const datasource = queryRunner.state.datasource;
+  const datasource = getDatasourceFromQueryRunner(queryRunner);
   const queries = queryRunner.state.data?.request?.targets;
 
   const ds = await getDataSourceSrv().get(datasource?.uid);

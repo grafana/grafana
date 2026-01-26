@@ -69,7 +69,29 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "align": "auto",
+                        "thresholds": [
+                          "20",
+                          "30"
+                        ]
+                      },
+                      {
+                        "align": "auto",
+                        "thresholds": [
+                          "200",
+                          "300"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -115,7 +137,22 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "align": "auto",
+                        "thresholds": [
+                          "50",
+                          "75"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -161,7 +198,22 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "thresholds": [
+                          "5",
+                          "10",
+                          "15"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -244,5 +296,10 @@
     "title": "V10 Table Thresholds Test",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

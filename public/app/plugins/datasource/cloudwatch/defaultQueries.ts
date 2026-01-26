@@ -6,9 +6,8 @@ import {
   LogsQueryLanguage,
   MetricEditorMode,
   MetricQueryType,
-  VariableQuery,
-  VariableQueryType,
-} from './types';
+} from './dataquery.gen';
+import { VariableQuery, VariableQueryType } from './types';
 
 export const DEFAULT_METRICS_QUERY: Omit<CloudWatchMetricsQuery, 'refId'> = {
   queryMode: 'Metrics',

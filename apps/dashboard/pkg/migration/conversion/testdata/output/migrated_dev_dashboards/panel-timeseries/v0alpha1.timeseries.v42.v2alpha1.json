@@ -3607,7 +3607,8 @@
                     },
                     "showPoints": "never",
                     "spanNulls": true
-                  }
+                  },
+                  "nullValueMode": "null"
                 },
                 "overrides": [
                   {
@@ -3740,7 +3741,8 @@
                     },
                     "showPoints": "never",
                     "spanNulls": true
-                  }
+                  },
+                  "nullValueMode": "null"
                 },
                 "overrides": [
                   {
@@ -4371,5 +4373,10 @@
     "title": "Panel Tests - Graph NG",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

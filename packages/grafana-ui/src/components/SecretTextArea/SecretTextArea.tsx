@@ -14,6 +14,8 @@ export type Props = React.ComponentProps<typeof TextArea> & {
   isConfigured: boolean;
   /** Called when the user clicks on the "Reset" button in order to clear the secret */
   onReset: () => void;
+  /** If true, the text area will grow to fill available width. */
+  grow?: boolean;
 };
 
 export const CONFIGURED_TEXT = 'configured';
@@ -35,11 +37,11 @@ const getStyles = (theme: GrafanaTheme2) => {
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-secrettextarea--docs
  */
-export const SecretTextArea = ({ isConfigured, onReset, ...props }: Props) => {
+export const SecretTextArea = ({ isConfigured, onReset, grow, ...props }: Props) => {
   const styles = useStyles2(getStyles);
   return (
     <Stack>
-      <Box>
+      <Box grow={grow ? 1 : undefined}>
         {!isConfigured && <TextArea {...props} />}
         {isConfigured && (
           <TextArea

@@ -5,6 +5,9 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
@@ -32,7 +35,7 @@ func testMutate(t *testing.T, srv *Server) {
 	setupMutate(t, srv)
 
 	t.Run("should perform multiple mutate operations", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{
@@ -131,5 +134,87 @@ func testMutate(t *testing.T, srv *Server) {
 		})
 		require.NoError(t, err)
 		require.Len(t, res.Tuples, 0)
+	})
+
+	t.Run("should reject mutate without zanzana:update", func(t *testing.T) {
+		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+			Namespace: "default",
+			Operations: []*v1.MutateOperation{
+				{
+					Operation: &v1.MutateOperation_SetFolderParent{
+						SetFolderParent: &v1.SetFolderParentOperation{
+							Folder:         "new-folder",
+							Parent:         "1",
+							DeleteExisting: false,
+						},
+					},
+				},
+			},
+		})
+		require.Error(t, err)
+		require.Equal(t, codes.PermissionDenied, status.Code(err))
+	})
+}
+
+func TestDeduplicateTupleKeys(t *testing.T) {
+	t.Run("should deduplicate write tuples", func(t *testing.T) {
+		writeTuples := []*openfgav1.TupleKey{
+			{User: "user:1", Relation: "get", Object: "object:1"},
+			{User: "user:1", Relation: "get", Object: "object:2"},
+		}
+		deleteTuples := []*openfgav1.TupleKeyWithoutCondition{
+			{User: "user:1", Relation: "get", Object: "object:1"},
+			{User: "user:2", Relation: "get", Object: "object:2"},
+		}
+
+		deduplicatedWriteTuples, deduplicatedDeleteTuples := deduplicateTupleKeys(writeTuples, deleteTuples)
+		require.Len(t, deduplicatedWriteTuples, 2)
+		require.ElementsMatch(t, deduplicatedWriteTuples, []*openfgav1.TupleKey{
+			{User: "user:1", Relation: "get", Object: "object:1"},
+			{User: "user:1", Relation: "get", Object: "object:2"},
+		})
+
+		require.Len(t, deduplicatedDeleteTuples, 1)
+		require.ElementsMatch(t, deduplicatedDeleteTuples, []*openfgav1.TupleKeyWithoutCondition{
+			{User: "user:2", Relation: "get", Object: "object:2"},
+		})
+	})
+
+	t.Run("should deduplicate write tuples with conditions", func(t *testing.T) {
+		writeTuples := []*openfgav1.TupleKey{
+			{User: "user:1", Relation: "get", Object: "object:1", Condition: &openfgav1.RelationshipCondition{Name: "condition:1", Context: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"field:1": structpb.NewStringValue("value:1"),
+			}}}},
+			{User: "user:1", Relation: "get", Object: "object:2"},
+		}
+		deleteTuples := []*openfgav1.TupleKeyWithoutCondition{
+			{User: "user:1", Relation: "get", Object: "object:1"},
+		}
+
+		deduplicatedWriteTuples, deduplicatedDeleteTuples := deduplicateTupleKeys(writeTuples, deleteTuples)
+		require.Len(t, deduplicatedWriteTuples, 2)
+		require.ElementsMatch(t, deduplicatedWriteTuples, []*openfgav1.TupleKey{
+			{User: "user:1", Relation: "get", Object: "object:1", Condition: &openfgav1.RelationshipCondition{Name: "condition:1", Context: &structpb.Struct{Fields: map[string]*structpb.Value{
+				"field:1": structpb.NewStringValue("value:1"),
+			}}}},
+			{User: "user:1", Relation: "get", Object: "object:2"},
+		})
+
+		require.Len(t, deduplicatedDeleteTuples, 0)
+	})
+
+	t.Run("should do nothing for no duplicates", func(t *testing.T) {
+		writeTuples := []*openfgav1.TupleKey{
+			{User: "user:1", Relation: "get", Object: "object:1"},
+		}
+		deleteTuples := []*openfgav1.TupleKeyWithoutCondition{
+			{User: "user:2", Relation: "get", Object: "object:2"},
+		}
+
+		deduplicatedWriteTuples, deduplicatedDeleteTuples := deduplicateTupleKeys(writeTuples, deleteTuples)
+		require.Len(t, deduplicatedWriteTuples, 1)
+		require.ElementsMatch(t, deduplicatedWriteTuples, writeTuples)
+		require.Len(t, deduplicatedDeleteTuples, 1)
+		require.ElementsMatch(t, deduplicatedDeleteTuples, deleteTuples)
 	})
 }

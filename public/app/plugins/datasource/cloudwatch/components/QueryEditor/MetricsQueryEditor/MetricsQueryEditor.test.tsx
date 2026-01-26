@@ -5,10 +5,11 @@ import { CustomVariableModel, DataSourceInstanceSettings } from '@grafana/data';
 // eslint-disable-next-line no-restricted-imports
 import * as ui from '@grafana/ui';
 
+import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../../../dataquery.gen';
 import { CloudWatchDatasource } from '../../../datasource';
 import { setupMockedTemplateService } from '../../../mocks/CloudWatchDataSource';
 import { initialVariableModelState } from '../../../mocks/CloudWatchVariables';
-import { CloudWatchJsonData, CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from '../../../types';
+import { CloudWatchJsonData } from '../../../types';
 
 import { MetricsQueryEditor, Props } from './MetricsQueryEditor';
 

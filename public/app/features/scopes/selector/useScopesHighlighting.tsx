@@ -62,7 +62,7 @@ export function useScopesHighlighting({
         : undefined;
 
       if (parentNode?.spec.disableMultiSelect && changeScopes && scopeNodes[nodeId]?.spec.linkId) {
-        changeScopes([scopeNodes[nodeId].spec.linkId], parentNode.metadata.name);
+        changeScopes([scopeNodes[nodeId].spec.linkId], undefined, nodeId);
         return;
       }
 

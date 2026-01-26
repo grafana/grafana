@@ -22,7 +22,7 @@ type BaseProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
   fill?: ButtonFill;
-  icon?: IconName | React.ReactElement;
+  icon?: IconName | React.ReactElement<IconElementProps>;
   className?: string;
   fullWidth?: boolean;
   type?: string;
@@ -207,8 +207,13 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 
 LinkButton.displayName = 'LinkButton';
 
+type IconElementProps = {
+  className?: string;
+  size?: IconSize;
+};
+
 interface IconRendererProps {
-  icon?: IconName | React.ReactElement<{ className?: string; size?: IconSize }>;
+  icon?: IconName | React.ReactElement<IconElementProps>;
   size?: IconSize;
   className?: string;
   iconType?: IconType;

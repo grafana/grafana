@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -154,11 +156,11 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 						}
 					}
 				}
-				connectLogger.Debug("responder sending status code", "statusCode", statusCode)
+				connectLogger.Debug("responder sending status code", "statusCode", statusCode, "caller", getCaller(ctx))
 			},
 
 			func(err error) {
-				connectLogger.Error("error caught in handler", "err", err)
+				connectLogger.Error("error caught in handler", "err", err, "caller", getCaller(ctx))
 				span.SetStatus(codes.Error, "query error")
 
 				if err == nil {
@@ -338,8 +340,8 @@ func prepareQuery(
 	}, nil
 }
 
-func handlePreparedQuery(ctx context.Context, pq *preparedQuery) (*backend.QueryDataResponse, error) {
-	resp, err := service.QueryData(ctx, pq.logger, pq.cache, pq.exprSvc, pq.mReq, pq.builder, pq.headers)
+func handlePreparedQuery(ctx context.Context, pq *preparedQuery, concurrentQueryLimit int) (*backend.QueryDataResponse, error) {
+	resp, err := service.QueryData(ctx, pq.logger, pq.cache, pq.exprSvc, pq.mReq, pq.builder, pq.headers, concurrentQueryLimit)
 	pq.reportMetrics()
 	return resp, err
 }
@@ -357,7 +359,7 @@ func handleQuery(
 		responder.Error(err)
 		return nil, err
 	}
-	return handlePreparedQuery(ctx, pq)
+	return handlePreparedQuery(ctx, pq, b.concurrentQueryLimit)
 }
 
 type responderWrapper struct {
@@ -479,4 +481,13 @@ func getValidDataSourceRef(ctx context.Context, ds *v0alpha1.DataSourceRef, id i
 	}
 
 	return ds, nil
+}
+
+func getCaller(ctx context.Context) string {
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return "<auth-missing>"
+	} else {
+		return strings.Join(authInfo.GetExtra()[authn.ServiceIdentityKey], ",")
+	}
 }

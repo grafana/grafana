@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaPlugin = resource.NewSimpleSchema("plugins.grafana.app", "v0alpha1", &Plugin{}, &PluginList{}, resource.WithKind("Plugin"),
+	schemaPlugin = resource.NewSimpleSchema("plugins.grafana.app", "v0alpha1", NewPlugin(), &PluginList{}, resource.WithKind("Plugin"),
 		resource.WithPlural("plugins"), resource.WithScope(resource.NamespacedScope))
 	kindPlugin = resource.Kind{
 		Schema: schemaPlugin,

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
-import { memo, startTransition, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DataFrameType, GrafanaTheme2, store, TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -18,6 +18,7 @@ import { LogLineDetailsLinks } from './LogLineDetailsLinks';
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogLineDetailsTrace } from './LogLineDetailsTrace';
 import { useLogListContext } from './LogListContext';
+import { reportInteractionOnce } from './analytics';
 import { getTempoTraceFromLinks } from './links';
 import { LogListModel } from './processing';
 
@@ -123,6 +124,21 @@ export const LogLineDetailsComponent = memo(
       () => [...fieldsWithLinks.links, ...fieldsWithLinks.linksFromVariableMap],
       [fieldsWithLinks.links, fieldsWithLinks.linksFromVariableMap]
     );
+
+    useEffect(() => {
+      if (noInteractions) {
+        return;
+      }
+      reportInteractionOnce('logs_log_line_details_fields_displayed', {
+        links: allLinks.length,
+        trace: trace !== undefined,
+        fields: fieldsWithoutLinks.length,
+        labels: labelsWithLinks.length,
+        labelGroups: labelGroups.join(', '),
+      });
+      // Once
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
       <>

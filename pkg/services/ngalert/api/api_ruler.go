@@ -412,9 +412,14 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		deletePermanently = true
 	}
 
-	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
+	f, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
+	}
+
+	namespace := ngmodels.NewNamespace(f)
+	if err := namespace.ValidateForRuleStorage(); err != nil {
+		return ErrResp(http.StatusBadRequest, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err), "")
 	}
 
 	if err := srv.checkGroupLimits(ruleGroupConfig); err != nil {
@@ -841,9 +846,13 @@ func (srv RulerSrv) RouteUpdateNamespaceRules(c *contextmodel.ReqContext, body a
 		return ErrResp(http.StatusBadRequest, errors.New("missing request body"), "")
 	}
 
-	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
+	f, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
+	}
+	namespace := ngmodels.NewNamespace(f)
+	if err := namespace.ValidateForRuleStorage(); err != nil {
+		return ErrResp(http.StatusBadRequest, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err), "")
 	}
 
 	ruleGroups, _, err := srv.searchAuthorizedAlertRules(c.Req.Context(), authorizedRuleGroupQuery{

@@ -7,17 +7,19 @@ import {
   ExploreLogsPanelState,
   GrafanaTheme2,
   Labels,
+  LogRowModel,
   LogsSortOrder,
   SelectableValue,
   SplitOpen,
   store,
   TimeRange,
+  AbsoluteTimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDragStyles, InlineField, Select, useStyles2 } from '@grafana/ui';
 import {
-  getSidebarWidth,
+  getFieldSelectorWidth,
   LogsTableFieldSelector,
   MIN_WIDTH,
 } from 'app/features/logs/components/fieldSelector/FieldSelector';
@@ -40,6 +42,10 @@ interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   datasourceType?: string;
+  exploreId?: string;
+  displayedFields?: string[];
+  absoluteRange?: AbsoluteTimeRange;
+  logRows?: LogRowModel[];
 }
 
 type ActiveFieldMeta = {
@@ -273,10 +279,29 @@ export function LogsTableWrap(props: Props) {
     // The panel state is updated when the user interacts with the multi-select sidebar
   }, [currentDataFrame, getColumnsFromProps]);
 
-  const [sidebarWidth, setSidebarWidth] = useState(getSidebarWidth(SETTING_KEY_ROOT));
+  const [sidebarWidth, setSidebarWidth] = useState(getFieldSelectorWidth(SETTING_KEY_ROOT));
   const tableWidth = props.width - sidebarWidth;
 
   const styles = useStyles2(getStyles, height, sidebarWidth);
+
+  const onSortByChange = useCallback(
+    (sortBy: Array<{ displayName: string; desc?: boolean }>) => {
+      // Transform from Table format to URL format - only store the first sort column
+      if (sortBy.length > 0) {
+        // Defer the Redux dispatch to avoid updating ExploreActions during Table's render cycle
+        // Even though this is called from an event handler, the synchronous Redux dispatch
+        // can cause ExploreActions (which subscribes to panes state) to re-render while
+        // Table is still rendering, triggering the React warning
+        setTimeout(() => {
+          updatePanelState({
+            tableSortBy: sortBy[0].displayName,
+            tableSortDir: sortBy[0].desc ? 'desc' : 'asc',
+          });
+        }, 0);
+      }
+    },
+    [updatePanelState]
+  );
 
   if (!columnsWithMeta) {
     return null;
@@ -512,6 +537,13 @@ export function LogsTableWrap(props: Props) {
               dataFrame={currentDataFrame}
               columnsWithMeta={columnsWithMeta}
               height={height}
+              tableSortBy={panelState?.tableSortBy}
+              tableSortDir={panelState?.tableSortDir}
+              onSortByChange={onSortByChange}
+              displayedFields={props.displayedFields}
+              exploreId={props.exploreId}
+              absoluteRange={props.absoluteRange}
+              logRows={props.logRows}
             />
           </div>
         </div>

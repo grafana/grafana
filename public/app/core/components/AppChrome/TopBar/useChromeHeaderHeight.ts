@@ -94,6 +94,5 @@ export function useChromeHeaderHeight() {
  **/
 export function getChromeHeaderLevelHeight() {
   // Waiting with switch to 48 until we have a story for scopes
-  // return config.featureToggles.unifiedNavbars ? 48 : 40;
-  return 40;
+  return config.featureToggles.unifiedNavbars || config.featureToggles.dashboardNewLayouts ? 48 : 40;
 }

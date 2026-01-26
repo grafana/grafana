@@ -12,7 +12,7 @@ import { Button, ButtonVariant } from '../Button/Button';
 export interface Props {
   /** Confirm action callback */
   onConfirm(): void;
-  children: string | ReactElement;
+  children: string | ReactElement<Record<string, unknown>>;
   /** Custom button styles */
   className?: string;
   /** Button size */

@@ -20,12 +20,17 @@ import { setPluginLinksHook } from '@grafana/runtime';
 import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { getFieldSelectorWidth } from '../fieldSelector/FieldSelector';
 import { createLogLine } from '../mocks/logRow';
 
 import { emptyContextData, LogDetailsContext, LogDetailsContextData } from './LogDetailsContext';
 import { LogLineDetails, Props } from './LogLineDetails';
 import { LogListContext, LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
+
+jest.mock('../fieldSelector/FieldSelector');
+
+jest.mocked(getFieldSelectorWidth).mockReturnValue(220);
 
 jest.mock('@grafana/assistant', () => {
   return {
@@ -79,6 +84,7 @@ const setup = (
     },
     timeZone: 'browser',
     showControls: true,
+    showFieldSelector: true,
     ...(propOverrides || {}),
   };
 
@@ -774,5 +780,25 @@ describe('LogLineDetails', () => {
     expect(screen.getByText('label')).toBeInTheDocument();
     expect(screen.getByText('value')).toBeInTheDocument();
     expect(screen.getByText('Open service overview for label')).toBeInTheDocument();
+  });
+
+  describe('Width regressions', () => {
+    test('should consider Fields Selector width when enabled', () => {
+      jest.mocked(getFieldSelectorWidth).mockClear();
+
+      setup({ showFieldSelector: true }, { labels: { key1: 'label1', key2: 'label2' } });
+      expect(screen.getByText('Log line')).toBeInTheDocument();
+      expect(screen.getByText('Fields')).toBeInTheDocument();
+      expect(getFieldSelectorWidth).toHaveBeenCalled();
+    });
+
+    test('should not consider Fields Selector width when disabled', () => {
+      jest.mocked(getFieldSelectorWidth).mockClear();
+
+      setup({ showFieldSelector: false }, { labels: { key1: 'label1', key2: 'label2' } });
+      expect(screen.getByText('Log line')).toBeInTheDocument();
+      expect(screen.getByText('Fields')).toBeInTheDocument();
+      expect(getFieldSelectorWidth).not.toHaveBeenCalled();
+    });
   });
 });

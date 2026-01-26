@@ -18,7 +18,6 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
@@ -26,16 +25,12 @@ import (
 var _ appsdkapiserver.GenericAPIServer = (*serverWrapper)(nil)
 
 type serverWrapper struct {
-	ctx context.Context
-	*genericapiserver.GenericAPIServer
+	ctx               context.Context
+	GenericAPIServer  appsdkapiserver.GenericAPIServer
 	installer         appsdkapiserver.AppInstaller
 	restOptionsGetter generic.RESTOptionsGetter
 	storageOpts       *grafanaapiserveroptions.StorageOptions
-	kvStore           grafanarest.NamespacedKVStore
-	lock              serverLock
-	namespaceMapper   request.NamespaceMapper
 	dualWriteService  dualwrite.Service
-	dualWriterMetrics *grafanarest.DualWriterMetrics
 	builderMetrics    *builder.BuilderMetrics
 	apiResourceConfig *serverstorage.ResourceConfig
 }
@@ -64,16 +59,11 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 				if unifiedStorage, ok := storage.(grafanarest.Storage); ok {
 					log.Debug("Configuring dual writer for storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
 					storage, err = NewDualWriter(
-						s.ctx,
 						gr,
 						s.storageOpts,
 						legacyProvider.GetLegacyStorage(gr.WithVersion(v)),
 						unifiedStorage,
-						s.kvStore,
-						s.lock,
-						s.namespaceMapper,
 						s.dualWriteService,
-						s.dualWriterMetrics,
 						s.builderMetrics,
 					)
 					if err != nil {
@@ -143,8 +133,5 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 }
 
 func (s *serverWrapper) RegisteredWebServices() []*restful.WebService {
-	if s.Handler != nil && s.Handler.GoRestfulContainer != nil {
-		return s.Handler.GoRestfulContainer.RegisteredWebServices()
-	}
-	return nil
+	return s.GenericAPIServer.RegisteredWebServices()
 }

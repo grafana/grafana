@@ -54,7 +54,7 @@ export function DataSourceCard({
         </div>
       </Card.Heading>
       <Card.Figure className={styles.logo}>
-        <img src={ds.meta.info.logos.small} alt={`${ds.meta.name} Logo`} />
+        <img src={ds.meta.info.logos.small || undefined} alt={`${ds.meta.name} Logo`} />
       </Card.Figure>
     </Card>
   );

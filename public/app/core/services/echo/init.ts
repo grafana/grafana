@@ -146,7 +146,17 @@ async function initRudderstackBackend() {
     return;
   }
 
-  const modulePromise = config.featureToggles.rudderstackUpgrade
+  // Logic: if only one of the sdk urls is provided, use respective code
+  // otherwise defer to the feature toggle.
+
+  const hasOldSdkUrl = Boolean(config.rudderstackSdkUrl);
+  const hasNewSdkUrl = Boolean(config.rudderstackV3SdkUrl);
+  const onlyOneSdkUrlSet = hasOldSdkUrl !== hasNewSdkUrl;
+  const useNewRudderstack = onlyOneSdkUrlSet ? hasNewSdkUrl : config.featureToggles.rudderstackUpgrade;
+
+  const sdkUrl = useNewRudderstack ? config.rudderstackV3SdkUrl : config.rudderstackSdkUrl;
+
+  const modulePromise = useNewRudderstack
     ? import('./backends/analytics/RudderstackV3Backend')
     : import('./backends/analytics/RudderstackBackend');
 
@@ -156,7 +166,7 @@ async function initRudderstackBackend() {
       writeKey: config.rudderstackWriteKey,
       dataPlaneUrl: config.rudderstackDataPlaneUrl,
       user: contextSrv.user,
-      sdkUrl: config.rudderstackSdkUrl,
+      sdkUrl,
       configUrl: config.rudderstackConfigUrl,
       integrationsUrl: config.rudderstackIntegrationsUrl,
       buildInfo: config.buildInfo,

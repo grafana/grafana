@@ -23,6 +23,12 @@ type Role struct {
 	Spec RoleSpec `json:"spec" yaml:"spec"`
 }
 
+func NewRole() *Role {
+	return &Role{
+		Spec: *NewRoleSpec(),
+	}
+}
+
 func (o *Role) GetSpec() any {
 	return o.Spec
 }

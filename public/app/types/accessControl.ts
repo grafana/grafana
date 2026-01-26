@@ -143,6 +143,7 @@ export enum AccessControlAction {
   AlertingReceiversCreate = 'alert.notifications.receivers:create',
   AlertingReceiversWrite = 'alert.notifications.receivers:write',
   AlertingReceiversRead = 'alert.notifications.receivers:read',
+  AlertingReceiversUpdateProtected = 'alert.notifications.receivers.protected:write',
 
   // Alerting routes actions
   AlertingRoutesRead = 'alert.notifications.routes:read',
@@ -156,6 +157,7 @@ export enum AccessControlAction {
   AlertingTemplatesRead = 'alert.notifications.templates:read',
   AlertingTemplatesWrite = 'alert.notifications.templates:write',
   AlertingTemplatesDelete = 'alert.notifications.templates:delete',
+  AlertingNotificationsTemplatesTest = 'alert.notifications.templates.test:write',
 
   // Alerting enrichments actions
   AlertingEnrichmentsRead = 'alert.enrichments:read',

@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/audit"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -57,6 +58,13 @@ type APIGroupVersionsProvider interface {
 
 type APIGroupAuthorizer interface {
 	GetAuthorizer() authorizer.Authorizer
+}
+
+// APIGroupAuditor allows different API groups to opt-in and provide their own auditing policy evaluator function.
+// Auditing is only enabled if this is implemented. If no customization is needed, you can use the default evaluator,
+// `pkg/apiserver/auditing.NewDefaultGrafanaPolicyRuleEvaluator()`.
+type APIGroupAuditor interface {
+	GetPolicyRuleEvaluator() audit.PolicyRuleEvaluator
 }
 
 type APIGroupMutation interface {

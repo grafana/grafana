@@ -14,19 +14,19 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	index "github.com/blevesearch/bleve_index_api"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	bolterrors "go.etcd.io/bbolt/errors"
 	"go.uber.org/atomic"
 	"go.uber.org/goleak"
 
 	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -51,7 +51,8 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-	}, tracing.NewNoopTracerService(), nil)
+		ScoringModel:  index.BM25Scoring,
+	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
 
@@ -115,7 +116,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 							Labels: map[string]string{
 								utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
 							},
-							Tags: []string{"aa", "bb"},
+							Tags:            []string{"aa", "bb"},
+							OwnerReferences: []string{"iam.grafana.app/Team/engineering"},
 							Manager: &utils.ManagerProperties{
 								Kind:     utils.ManagerKindRepo,
 								Identity: "repo-1",
@@ -150,6 +152,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 								"region":                           "east",
 								utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
 							},
+							OwnerReferences: []string{"iam.grafana.app/Team/marketing", "iam.grafana.app/User/admin"},
 							Manager: &utils.ManagerProperties{
 								Kind:     utils.ManagerKindRepo,
 								Identity: "repo-1",
@@ -265,6 +268,55 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			rsp.Results.Rows[0].Key.Name,
 			rsp.Results.Rows[1].Key.Name,
 		})
+
+		// search by owner reference
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Operator: "=",
+					Values:   []string{"iam.grafana.app/Team/engineering"},
+				}},
+			},
+			Limit: 100000,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), rsp.TotalHits)
+		require.Equal(t, "aaa", rsp.Results.Rows[0].Key.Name)
+
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Operator: "=",
+					Values:   []string{"iam.grafana.app/Team/marketing"},
+				}},
+			},
+			Limit: 100000,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), rsp.TotalHits)
+		require.Equal(t, "bbb", rsp.Results.Rows[0].Key.Name)
+
+		// search by owner reference - multiple values (OR)
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Operator: "in",
+					Values:   []string{"iam.grafana.app/Team/engineering", "iam.grafana.app/User/admin"},
+				}},
+			},
+			Limit: 100000,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), rsp.TotalHits)
+		names := []string{rsp.Results.Rows[0].Key.Name, rsp.Results.Rows[1].Key.Name}
+		assert.Contains(t, names, "aaa")
+		assert.Contains(t, names, "bbb")
 
 		// can get sprinkles fields and sort by them
 		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
@@ -646,16 +698,16 @@ func (nc *StubAccessClient) Compile(ctx context.Context, id authlib.AuthInfo, re
 	}, authlib.NoopZookie{}, nil
 }
 
+func (nc *StubAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, errors.New("not implemented")
+}
+
 func (nc StubAccessClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	return nil, nil
 }
 
 func (nc StubAccessClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
 	return nil
-}
-
-func (nc StubAccessClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	return nil, nil
 }
 
 func TestSafeInt64ToInt(t *testing.T) {
@@ -774,6 +826,7 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 		IndexCacheTTL: defaultIndexCacheTTL,
 		Logger:        log.NewNopLogger(),
 		BuildVersion:  buildVersion,
+		ScoringModel:  index.BM25Scoring,
 	}
 	for _, opt := range options {
 		opt(&opts)
@@ -782,7 +835,7 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 		opts.Root = t.TempDir()
 	}
 
-	backend, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), metrics)
+	backend, err := NewBleveBackend(opts, metrics)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	t.Cleanup(backend.Stop)
@@ -1558,7 +1611,7 @@ func TestInvalidBuildVersion(t *testing.T) {
 		Root:         t.TempDir(),
 		BuildVersion: "invalid",
 	}
-	_, err := NewBleveBackend(opts, tracing.NewNoopTracerService(), nil)
+	_, err := NewBleveBackend(opts, nil)
 	require.ErrorContains(t, err, "cannot parse build version")
 }
 
@@ -1583,4 +1636,43 @@ func docCount(t *testing.T, idx resource.ResourceIndex) int {
 	cnt, err := idx.DocCount(context.Background(), "", nil)
 	require.NoError(t, err)
 	return int(cnt)
+}
+
+func TestBuildIndexReturnsErrorWhenIndexLocked(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	tmpDir := t.TempDir()
+
+	// First, create a file-based index with one backend and keep it open
+	backend1, reg1 := setupBleveBackend(t, withRootDir(tmpDir))
+	index1, err := backend1.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.NoError(t, err)
+	require.NotNil(t, index1)
+
+	// Verify first index is file-based
+	bleveIdx1, ok := index1.(*bleveIndex)
+	require.True(t, ok)
+	require.Equal(t, indexStorageFile, bleveIdx1.indexStorage)
+	checkOpenIndexes(t, reg1, 0, 1)
+
+	// Now create a second backend using the same directory
+	// This simulates another instance trying to open the same index
+	backend2, _ := setupBleveBackend(t, withRootDir(tmpDir))
+
+	// BuildIndex should detect the file is locked and return an error after timeout
+	now := time.Now()
+	timeout, err := time.ParseDuration(boltTimeout)
+	require.NoError(t, err)
+	index2, err := backend2.BuildIndex(context.Background(), ns, 100 /* file based */, nil, "test", indexTestDocs(ns, 10, 100), nil, false)
+	require.Error(t, err)
+	require.ErrorIs(t, err, bolterrors.ErrTimeout)
+	require.Nil(t, index2)
+	require.GreaterOrEqual(t, time.Since(now).Milliseconds(), timeout.Milliseconds()-500, "BuildIndex should have waited for approximately boltTimeout duration")
+
+	// Clean up: close first backend to release the file lock
+	backend1.Stop()
 }

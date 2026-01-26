@@ -410,6 +410,10 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     let tabs: TabItem[] = [];
 
     if (layout instanceof RowsLayoutManager) {
+      const existingNames = new Set(
+        layout.state.rows.map((row) => row.state.title).filter((title): title is string => !!title)
+      );
+
       for (const row of layout.state.rows) {
         if (row.state.repeatSourceKey) {
           continue;
@@ -420,10 +424,14 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
         // We need to clear the target since we don't want to point the original row anymore (if it was set)
         conditionalRendering?.setTarget(undefined);
 
+        const newTitle =
+          row.state.title || generateUniqueTitle(t('dashboard.tabs-layout.tab.new', 'New tab'), existingNames);
+        existingNames.add(newTitle);
+
         tabs.push(
           new TabItem({
             layout: row.state.layout.clone(),
-            title: row.state.title,
+            title: newTitle,
             conditionalRendering,
             repeatByVariable: row.state.repeatByVariable,
           })

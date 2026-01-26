@@ -39,6 +39,5 @@ export interface MssqlSecureOptions {
 }
 
 export type AzureAuthConfigType = {
-  azureAuthIsSupported: boolean;
   azureAuthSettingsUI: (props: HttpSettingsBaseProps) => JSX.Element;
 };

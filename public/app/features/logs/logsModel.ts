@@ -44,7 +44,7 @@ import { t } from '@grafana/i18n';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
-import { LokiQueryDirection } from 'app/plugins/datasource/loki/types';
+import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 
 import { LogsFrame, parseLogsFrame } from './logsFrame';
 import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
@@ -419,7 +419,7 @@ export function logSeriesToLogsModel(
       }
 
       let logLevel = LogLevel.unknown;
-      const logLevelKey = (logLevelField && logLevelField.values[j]) || (labels?.level ?? labels?.detected_level);
+      const logLevelKey = (logLevelField && logLevelField.values[j]) || (labels?.detected_level ?? labels?.level);
       if (typeof logLevelKey === 'number' || typeof logLevelKey === 'string') {
         logLevel = getLogLevelFromKey(logLevelKey);
       } else {

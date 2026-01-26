@@ -1,6 +1,6 @@
 import { FieldColorModeId, FieldConfigProperty, FieldType, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { AxisPlacement, VisibilityMode } from '@grafana/schema';
+import { AxisPlacement, LegendDisplayMode, VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { StatusHistoryPanel } from './StatusHistoryPanel';
@@ -144,6 +144,12 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
       {
         cardOptions: {
           previewModifier: (s) => {
+            s.options!.legend = {
+              displayMode: LegendDisplayMode.Hidden,
+              placement: 'bottom',
+              calcs: [],
+              showLegend: false,
+            };
             s.options!.colWidth = 0.7;
           },
         },

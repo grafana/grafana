@@ -365,6 +365,35 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
 
+  describe('adhoc variables', () => {
+    it('should convert empty defaultKeys array to undefined', () => {
+      const dashboard = cloneDeep(defaultDashboard);
+      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+      adhocVar.spec.defaultKeys = [];
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+
+      expect(adhocVariable.state.defaultKeys).toBeUndefined();
+    });
+
+    it('should preserve non-empty defaultKeys array', () => {
+      const dashboard = cloneDeep(defaultDashboard);
+
+      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+      expect(adhocVar.spec.defaultKeys.length).toBeGreaterThan(0);
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+
+      expect(adhocVariable.state.defaultKeys).toEqual(adhocVar.spec.defaultKeys);
+    });
+  });
+
   describe('When creating a snapshot dashboard scene', () => {
     it('should initialize a dashboard scene with SnapshotVariables', () => {
       const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = {
@@ -400,6 +429,29 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       expect(intervalSnapshot.state.value).toBe('1m');
       expect(intervalSnapshot.state.text).toBe('1m');
       expect(intervalSnapshot.state.isReadOnly).toBe(true);
+    });
+
+    it('should convert empty defaultKeys array to undefined for adhoc variables', () => {
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = cloneDeep({
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
+          },
+        },
+      });
+
+      const adhocVar = snapshot.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+      adhocVar.spec.defaultKeys = [];
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+
+      expect(adhocVariable.state.defaultKeys).toBeUndefined();
     });
   });
 

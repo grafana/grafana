@@ -3,7 +3,6 @@ package state
 import (
 	"context"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -28,8 +27,8 @@ type takeImageFn func(reason string) *ngModels.Image
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
 type AlertInstanceManager interface {
-	GetAll(orgID int64) []*State
-	GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State
+	GetAll(ctx context.Context, orgID int64) []*State
+	GetStatesForRuleUID(ctx context.Context, orgID int64, alertRuleUID string) []*State
 }
 
 type StatePersister interface {
@@ -184,39 +183,16 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 				continue
 			}
 
-			// nil safety.
-			annotations := ruleForEntry.Annotations
-			if annotations == nil {
-				annotations = make(map[string]string)
+			state := AlertInstanceToState(entry, logger)
+
+			// Use persisted annotations if available, otherwise fall back to rule annotations
+			if len(state.Annotations) == 0 {
+				state.Annotations = ruleForEntry.Annotations
+			}
+			if state.Annotations == nil {
+				state.Annotations = make(map[string]string)
 			}
 
-			lbs := map[string]string(entry.Labels)
-			cacheID := entry.Labels.Fingerprint()
-			var resultFp data.Fingerprint
-			if entry.ResultFingerprint != "" {
-				fp, err := strconv.ParseUint(entry.ResultFingerprint, 16, 64)
-				if err != nil {
-					logger.Error("Failed to parse result fingerprint of alert instance", "error", err, "rule_uid", entry.RuleUID)
-				}
-				resultFp = data.Fingerprint(fp)
-			}
-			state := &State{
-				AlertRuleUID:         entry.RuleUID,
-				OrgID:                entry.RuleOrgID,
-				CacheID:              cacheID,
-				Labels:               lbs,
-				State:                translateInstanceState(entry.CurrentState),
-				StateReason:          entry.CurrentReason,
-				LastEvaluationString: "",
-				StartsAt:             entry.CurrentStateSince,
-				EndsAt:               entry.CurrentStateEnd,
-				FiredAt:              entry.FiredAt,
-				LastEvaluationTime:   entry.LastEvalTime,
-				Annotations:          annotations,
-				ResultFingerprint:    resultFp,
-				ResolvedAt:           entry.ResolvedAt,
-				LastSentAt:           entry.LastSentAt,
-			}
 			st.cache.set(state)
 			statesCount++
 		}
@@ -229,9 +205,7 @@ func (st *Manager) Get(orgID int64, alertRuleUID string, stateId data.Fingerprin
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-// DeleteStateByRuleUID removes the rule instances from cache and instanceStore. A closed channel is returned to be able
-// to gracefully handle the clear state step in scheduler in case we do not need to use the historian to save state
-// history.
+// DeleteStateByRuleUID removes the rule instances from cache and instanceStore.
 func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKeyWithGroup, reason string) []StateTransition {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("Resetting state of the rule")
@@ -289,10 +263,14 @@ func (st *Manager) ForgetStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 // ResetStateByRuleUID removes the rule instances from cache and instanceStore and saves state history. If the state
 // history has to be saved, rule must not be nil.
 func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) []StateTransition {
+	if rule == nil {
+		return nil
+	}
+
 	ruleKey := rule.GetKeyWithGroup()
 	transitions := st.DeleteStateByRuleUID(ctx, ruleKey, reason)
 
-	if rule == nil || st.historian == nil || len(transitions) == 0 {
+	if st.historian == nil || len(transitions) == 0 {
 		return transitions
 	}
 
@@ -483,41 +461,23 @@ func (st *Manager) setNextStateForAll(alertRule *ngModels.AlertRule, result eval
 	return transitions
 }
 
-func (st *Manager) GetAll(orgID int64) []*State {
+func (st *Manager) GetAll(_ context.Context, orgID int64) []*State {
 	allStates := st.cache.getAll(orgID)
 	return allStates
 }
-func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
+
+func (st *Manager) GetStatesForRuleUID(_ context.Context, orgID int64, alertRuleUID string) []*State {
 	return st.cache.getStatesForRuleUID(orgID, alertRuleUID)
 }
 
-func (st *Manager) GetStatusForRuleUID(orgID int64, alertRuleUID string) ngModels.RuleStatus {
-	states := st.GetStatesForRuleUID(orgID, alertRuleUID)
+func (st *Manager) GetStatusForRuleUID(ctx context.Context, orgID int64, alertRuleUID string) ngModels.RuleStatus {
+	states := st.GetStatesForRuleUID(ctx, orgID, alertRuleUID)
 	return StatesToRuleStatus(states)
 }
 
 func (st *Manager) Put(states []*State) {
 	for _, s := range states {
 		st.cache.set(s)
-	}
-}
-
-func translateInstanceState(state ngModels.InstanceStateType) eval.State {
-	switch state {
-	case ngModels.InstanceStateFiring:
-		return eval.Alerting
-	case ngModels.InstanceStateNormal:
-		return eval.Normal
-	case ngModels.InstanceStateError:
-		return eval.Error
-	case ngModels.InstanceStateNoData:
-		return eval.NoData
-	case ngModels.InstanceStatePending:
-		return eval.Pending
-	case ngModels.InstanceStateRecovering:
-		return eval.Recovering
-	default:
-		return eval.Error
 	}
 }
 
@@ -626,9 +586,8 @@ func StatesToRuleStatus(states []*State) ngModels.RuleStatus {
 	for _, state := range states {
 		if state.LastEvaluationTime.After(status.EvaluationTimestamp) {
 			status.EvaluationTimestamp = state.LastEvaluationTime
+			status.EvaluationDuration = state.EvaluationDuration
 		}
-
-		status.EvaluationDuration = state.EvaluationDuration
 
 		switch state.State {
 		case eval.Normal:

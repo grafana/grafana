@@ -143,8 +143,7 @@ function convertToMatcherOperator(type: LabelMatcher['type']): MatcherOperator {
     case '!~':
       return MatcherOperator.notRegex;
     default:
-      const exhaustiveCheck: never = type;
-      throw new Error(`Unknown matcher type: ${exhaustiveCheck}`);
+      throw new Error(`Unknown matcher type: ${type}`);
   }
 }
 

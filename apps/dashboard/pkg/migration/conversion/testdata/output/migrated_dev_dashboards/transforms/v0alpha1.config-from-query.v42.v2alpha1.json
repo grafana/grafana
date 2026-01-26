@@ -1014,5 +1014,10 @@
     "title": "Transforms - Config from query",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

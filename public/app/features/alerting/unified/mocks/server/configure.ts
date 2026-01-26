@@ -175,6 +175,36 @@ export const setTimeIntervalsListEmpty = () => {
   return handler;
 };
 
+interface TimeIntervalConfig {
+  name: string;
+  provenance?: string;
+}
+
+/**
+ * Makes the mock server respond with custom time intervals
+ */
+export const setTimeIntervalsList = (intervals: TimeIntervalConfig[]) => {
+  const listMuteTimingsPath = listNamespacedTimeIntervalHandler().info.path;
+  const handler = http.get(listMuteTimingsPath, () => {
+    const items = intervals.map((interval) => ({
+      metadata: {
+        annotations: {
+          'grafana.com/provenance': interval.provenance ?? 'none',
+        },
+        name: interval.name,
+        uid: `uid-${interval.name}`,
+        namespace: 'default',
+        resourceVersion: 'e0270bfced786660',
+      },
+      spec: { name: interval.name, time_intervals: [] },
+    }));
+    return HttpResponse.json(getK8sResponse('TimeIntervalList', items));
+  });
+
+  server.use(handler);
+  return handler;
+};
+
 export function mimirDataSource() {
   const dataSource = mockDataSource(
     {

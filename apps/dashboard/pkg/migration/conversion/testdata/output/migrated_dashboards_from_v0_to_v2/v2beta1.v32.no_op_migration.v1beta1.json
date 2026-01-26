@@ -33,6 +33,10 @@
     "liveNow": false,
     "panels": [
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 3,
           "w": 6,
@@ -71,6 +75,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 3,
           "w": 6,
@@ -100,7 +108,7 @@
           "x": 0,
           "y": 3
         },
-        "id": -1,
+        "id": 5,
         "title": "Row with nested panels",
         "type": "row"
       },

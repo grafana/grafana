@@ -312,6 +312,23 @@
                       "url": "https://google.com/search?q=grafana"
                     }
                   ],
+                  "actions": [
+                    {
+                      "type": "fetch",
+                      "title": "Get instance health",
+                      "fetch": {
+                        "method": "GET",
+                        "url": "/api/health",
+                        "body": "{}",
+                        "headers": [
+                          [
+                            "Content-Type",
+                            "application/json"
+                          ]
+                        ]
+                      }
+                    }
+                  ],
                   "custom": {
                     "align": "auto",
                     "cellOptions": {
@@ -846,5 +863,10 @@
     "title": "Panel Tests - Table - Sparklines",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

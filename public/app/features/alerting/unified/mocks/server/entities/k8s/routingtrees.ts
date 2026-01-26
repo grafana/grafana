@@ -4,7 +4,8 @@ import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree,
 } from 'app/features/alerting/unified/openapi/routesApi.gen';
-import { K8sAnnotations, PROVENANCE_NONE, ROOT_ROUTE_NAME } from 'app/features/alerting/unified/utils/k8s/constants';
+import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
+import { K8sAnnotations, ROOT_ROUTE_NAME } from 'app/features/alerting/unified/utils/k8s/constants';
 import { AlertManagerCortexConfig, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 
 /**
@@ -66,7 +67,7 @@ export const getUserDefinedRoutingTree: (
       name: ROOT_ROUTE_NAME,
       namespace: 'default',
       annotations: {
-        [K8sAnnotations.Provenance]: PROVENANCE_NONE,
+        [K8sAnnotations.Provenance]: KnownProvenance.None,
       },
       // Resource versions are much shorter than this in reality, but this is an easy way
       // for us to mock the concurrency logic and check if the policies have updated since the last fetch

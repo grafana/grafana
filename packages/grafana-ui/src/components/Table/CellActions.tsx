@@ -1,3 +1,4 @@
+import { isPlainObject } from 'lodash';
 import { useCallback } from 'react';
 import * as React from 'react';
 
@@ -63,7 +64,18 @@ export function CellActions({
             tooltip={t('grafana-ui.table.cell-inspect', 'Inspect value')}
             onClick={() => {
               if (setInspectCell) {
-                setInspectCell({ value: cell.value, mode: previewMode });
+                let mode = TableCellInspectorMode.text;
+                let inspectValue = cell.value;
+                try {
+                  const parsed = typeof inspectValue === 'string' ? JSON.parse(inspectValue) : inspectValue;
+                  if (Array.isArray(parsed) || isPlainObject(parsed)) {
+                    inspectValue = JSON.stringify(parsed, null, 2);
+                    mode = TableCellInspectorMode.code;
+                  }
+                } catch {
+                  // do nothing
+                }
+                setInspectCell({ value: inspectValue, mode });
               }
             }}
             {...commonButtonProps}

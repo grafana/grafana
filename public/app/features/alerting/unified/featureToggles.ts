@@ -26,3 +26,8 @@ export const shouldUseBackendFilters = () => config.featureToggles.alertingUIUse
 
 export const shouldUseFullyCompatibleBackendFilters = () =>
   config.featureToggles.alertingUIUseFullyCompatBackendFilters ?? false;
+
+/**
+ * Saved searches feature - allows users to save and apply search queries on the Alert Rules page.
+ */
+export const shouldUseSavedSearches = () => config.featureToggles.alertingSavedSearches ?? false;

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
@@ -12,7 +14,6 @@ import (
 	foldersKind "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	"github.com/grafana/grafana/pkg/services/authz"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var appManifestData = app.ManifestData{
@@ -78,7 +79,7 @@ func New(cfg app.Config) (app.App, error) {
 	folderReconciler, err := reconcilers.NewFolderReconciler(reconcilers.ReconcilerConfig{
 		ZanzanaCfg: appSpecificConfig.ZanzanaClientCfg,
 		Metrics:    metrics,
-	})
+	}, appSpecificConfig.MetricsRegisterer)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create FolderReconciler: %w", err)
 	}

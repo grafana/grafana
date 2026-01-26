@@ -327,8 +327,17 @@ export enum BuilderQueryEditorOrderByOptions {
   Desc = 'desc',
 }
 
+export enum BuilderQueryEditorReduceParameterTypes {
+  Generic = 'generic',
+  Numeric = 'numeric',
+}
+
 export interface BuilderQueryEditorProperty {
   name: string;
+  /**
+   * Optional parameter type for function properties
+   */
+  parameterType?: BuilderQueryEditorReduceParameterTypes;
   type: BuilderQueryEditorPropertyType;
 }
 

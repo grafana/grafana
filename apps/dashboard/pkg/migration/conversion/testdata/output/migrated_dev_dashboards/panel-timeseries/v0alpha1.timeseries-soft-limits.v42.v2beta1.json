@@ -2887,5 +2887,10 @@
     "title": "Panel Tests - Graph NG - softMin/softMax",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

@@ -71,6 +71,7 @@ describe('QueryVariableEditorForm', () => {
   const mockOnQueryChange = jest.fn();
   const mockOnLegacyQueryChange = jest.fn();
   const mockOnRegExChange = jest.fn();
+  const mockOnRegexApplyToChange = jest.fn();
   const mockOnSortChange = jest.fn();
   const mockOnRefreshChange = jest.fn();
   const mockOnMultiChange = jest.fn();
@@ -89,6 +90,8 @@ describe('QueryVariableEditorForm', () => {
     timeRange: getDefaultTimeRange(),
     regex: '.*',
     onRegExChange: mockOnRegExChange,
+    regexApplyTo: 'value',
+    onRegexApplyToChange: mockOnRegexApplyToChange,
     sort: VariableSort.alphabeticalAsc,
     onSortChange: mockOnSortChange,
     refresh: VariableRefresh.onDashboardLoad,
@@ -126,6 +129,9 @@ describe('QueryVariableEditorForm', () => {
     const regexInput = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2
     );
+    const regexApplyToSelect = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExApplyToSelectV2
+    );
     const sortSelect = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2
     );
@@ -154,6 +160,8 @@ describe('QueryVariableEditorForm', () => {
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(regexInput).toBeInTheDocument();
     expect(regexInput).toHaveValue('.*');
+    expect(regexApplyToSelect).toBeInTheDocument();
+    expect(getByRole('radio', { name: 'Variable value' })).toBeChecked();
     expect(sortSelect).toBeInTheDocument();
     expect(sortSelect).toHaveTextContent('Alphabetical (asc)');
     expect(refreshSelect).toBeInTheDocument();
@@ -211,6 +219,21 @@ describe('QueryVariableEditorForm', () => {
     expect(
       ((mockOnRegExChange.mock.calls[0][0] as FormEvent<HTMLTextAreaElement>).target as HTMLTextAreaElement).value
     ).toBe('.?');
+  });
+
+  it('should call onRegexApplyToChange when selecting the regex apply to option', async () => {
+    const {
+      renderer: { getByTestId },
+    } = await setup();
+    const regexApplyToSelect = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExApplyToSelectV2
+    );
+    await userEvent.click(regexApplyToSelect);
+    const anotherOption = screen.getByText('Display text');
+    await userEvent.click(anotherOption);
+
+    expect(mockOnRegexApplyToChange).toHaveBeenCalledTimes(1);
+    expect(mockOnRegexApplyToChange).toHaveBeenCalledWith('text');
   });
 
   it('should call onSortChange when changing the sort', async () => {

@@ -21,6 +21,7 @@ const setup = (props: Partial<PageProps>) => {
     {
       id: HOME_NAV_ID,
       text: 'Home',
+      url: '/',
     },
     {
       text: 'Section name',

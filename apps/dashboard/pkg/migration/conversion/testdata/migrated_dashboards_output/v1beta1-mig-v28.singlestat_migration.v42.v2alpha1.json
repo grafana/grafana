@@ -81,7 +81,24 @@
             "kind": "stat",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
+                    "colors": [
+                      "#FF0000",
+                      "green",
+                      "orange"
+                    ],
+                    "grid": {
+                      "max": 10,
+                      "min": 1
+                    },
+                    "legend": true,
+                    "thresholds": "10,20,30"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -140,7 +157,24 @@
             "kind": "stat",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
+                    "colors": [
+                      "#FF0000",
+                      "green",
+                      "orange"
+                    ],
+                    "grid": {
+                      "max": 10,
+                      "min": 1
+                    },
+                    "legend": true,
+                    "thresholds": ""
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -184,7 +218,28 @@
             "kind": "stat",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
+                    "colors": [
+                      "#FF0000",
+                      "green",
+                      "orange"
+                    ],
+                    "gauge": {
+                      "show": true,
+                      "thresholdLabels": false,
+                      "thresholdMarkers": true
+                    },
+                    "grid": {
+                      "max": 10,
+                      "min": 1
+                    },
+                    "thresholds": "10,20,30"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -243,7 +298,47 @@
             "kind": "stat",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalOptions": {
+                    "colors": [
+                      "#FF0000",
+                      "green",
+                      "orange"
+                    ],
+                    "grid": {
+                      "max": 10,
+                      "min": 1
+                    },
+                    "legend": true,
+                    "mappingTypes": [
+                      {
+                        "name": "value to text",
+                        "value": 1
+                      }
+                    ],
+                    "thresholds": "10,20,30",
+                    "valueMaps": [
+                      {
+                        "op": "=",
+                        "text": "test",
+                        "value": "20"
+                      },
+                      {
+                        "op": "=",
+                        "text": "test1",
+                        "value": "30"
+                      },
+                      {
+                        "op": "=",
+                        "text": "50",
+                        "value": "40"
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -289,7 +384,68 @@
             "kind": "stat",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "grafana-singlestat-panel",
+                  "originalOptions": {
+                    "colorBackground": false,
+                    "colorValue": true,
+                    "colors": [
+                      "#299c46",
+                      "rgba(237, 129, 40, 0.89)",
+                      "#d44a3a"
+                    ],
+                    "format": "areaF2",
+                    "gauge": {
+                      "maxValue": 100,
+                      "minValue": 0,
+                      "show": false,
+                      "thresholdLabels": false,
+                      "thresholdMarkers": true
+                    },
+                    "mappingType": 1,
+                    "mappingTypes": [
+                      {
+                        "name": "value to text",
+                        "value": 1
+                      },
+                      {
+                        "name": "range to text",
+                        "value": 2
+                      }
+                    ],
+                    "nullPointMode": "connected",
+                    "postfix": "b",
+                    "postfixFontSize": "50%",
+                    "prefix": "a",
+                    "prefixFontSize": "50%",
+                    "rangeMaps": [
+                      {
+                        "from": "null",
+                        "text": "N/A",
+                        "to": "null"
+                      }
+                    ],
+                    "sparkline": {
+                      "fillColor": "rgba(31, 118, 189, 0.18)",
+                      "full": false,
+                      "lineColor": "rgb(31, 120, 193)",
+                      "show": true
+                    },
+                    "tableColumn": "",
+                    "thresholds": "",
+                    "valueFontSize": "80%",
+                    "valueMaps": [
+                      {
+                        "op": "=",
+                        "text": "N/A",
+                        "value": "null"
+                      }
+                    ],
+                    "valueName": "avg"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -622,5 +778,10 @@
     "title": "V28 Singlestat and Variable Properties Migration Test Dashboard",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
 }

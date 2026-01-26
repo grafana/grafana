@@ -3,6 +3,9 @@ import { App } from './components/App';
 import { QueryModal } from './components/QueryModal';
 import { selectQuery } from './utils/utils';
 import pluginJson from './plugin.json';
+import { initPluginTranslations } from '@grafana/i18n';
+
+await initPluginTranslations(pluginJson.id);
 
 export const plugin = new AppPlugin<{}>()
   .setRootPage(App)

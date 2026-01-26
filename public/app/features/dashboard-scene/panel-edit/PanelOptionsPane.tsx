@@ -41,6 +41,7 @@ export interface PanelOptionsPaneState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   isNewPanel?: boolean;
   hasPickedViz?: boolean;
+  editPreviewRef?: SceneObjectRef<VizPanel>;
 }
 
 interface PluginOptionsCache {
@@ -63,14 +64,14 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     });
   };
 
-  onChangePanelPlugin = (options: VizTypeChangeDetails) => {
-    const panel = this.state.panelRef.resolve();
+  onChangePanel = (options: VizTypeChangeDetails, panel = this.state.panelRef.resolve()) => {
     const { options: prevOptions, fieldConfig: prevFieldConfig, pluginId: prevPluginId } = panel.state;
     const pluginId = options.pluginId;
 
     reportInteraction(INTERACTION_EVENT_NAME, {
       item: INTERACTION_ITEM.SELECT_PANEL_PLUGIN,
       plugin_id: pluginId,
+      from_suggestions: options.fromSuggestions ?? false,
     });
 
     // clear custom options
@@ -137,8 +138,10 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 }
 
 function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPane>) {
-  const { isVizPickerOpen, searchQuery, listMode, panelRef, isNewPanel, hasPickedViz } = model.useState();
+  const { isVizPickerOpen, searchQuery, listMode, panelRef, isNewPanel, hasPickedViz, editPreviewRef } =
+    model.useState();
   const panel = panelRef.resolve();
+  const editPreview = editPreviewRef?.resolve() ?? panel; // if something goes wrong, at least update the panel.
   const { pluginId } = panel.useState();
   const { data } = sceneGraph.getData(panel).useState();
   const styles = useStyles2(getStyles);
@@ -229,10 +232,12 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
       {isVizPickerOpen && (
         <PanelVizTypePicker
           panel={panel}
-          onChange={model.onChangePanelPlugin}
+          editPreview={editPreview}
+          onChange={model.onChangePanel}
           onClose={model.onToggleVizPicker}
           data={data}
           showBackButton={config.featureToggles.newVizSuggestions ? hasPickedViz || !isNewPanel : true}
+          isNewPanel={isNewPanel}
         />
       )}
     </>

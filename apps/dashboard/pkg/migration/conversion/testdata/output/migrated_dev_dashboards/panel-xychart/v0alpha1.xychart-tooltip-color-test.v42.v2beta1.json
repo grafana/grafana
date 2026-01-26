@@ -128,7 +128,8 @@
                       "type": "linear"
                     },
                     "show": "points"
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }
@@ -232,7 +233,8 @@
                       "type": "linear"
                     },
                     "show": "points"
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }
@@ -336,7 +338,8 @@
                       "type": "linear"
                     },
                     "show": "points"
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }
@@ -447,7 +450,8 @@
                       "type": "linear"
                     },
                     "show": "points"
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }
@@ -558,7 +562,8 @@
                       "type": "linear"
                     },
                     "show": "points"
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }
@@ -669,7 +674,8 @@
                       "type": "linear"
                     },
                     "show": "points"
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }
@@ -907,5 +913,10 @@
     "title": "XYChart tooltip color test",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

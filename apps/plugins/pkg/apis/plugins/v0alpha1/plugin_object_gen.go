@@ -25,6 +25,13 @@ type Plugin struct {
 	Status PluginStatus `json:"status" yaml:"status"`
 }
 
+func NewPlugin() *Plugin {
+	return &Plugin{
+		Spec:   *NewPluginSpec(),
+		Status: *NewPluginStatus(),
+	}
+}
+
 func (o *Plugin) GetSpec() any {
 	return o.Spec
 }

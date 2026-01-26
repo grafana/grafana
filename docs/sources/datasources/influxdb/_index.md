@@ -52,6 +52,7 @@ The following documents will help you get started with the InfluxDB data source 
 - [Configure the InfluxDB data source](./configure-influxdb-data-source/)
 - [InfluxDB query editor](./query-editor/)
 - [InfluxDB templates and variables](./template-variables/)
+- [Troubleshoot issues with the InfluxDB data source](./troubleshooting/)
 
 Once you have configured the data source you can:
 

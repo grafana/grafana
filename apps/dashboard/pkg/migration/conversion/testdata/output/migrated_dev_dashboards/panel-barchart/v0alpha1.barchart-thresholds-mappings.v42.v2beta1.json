@@ -1721,5 +1721,10 @@
     "title": "BarChart - Thresholds \u0026 Mappings",
     "variables": []
   },
-  "status": {}
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v0alpha1"
+    }
+  }
 }

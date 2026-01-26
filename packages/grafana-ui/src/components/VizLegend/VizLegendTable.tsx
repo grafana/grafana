@@ -29,11 +29,9 @@ export const VizLegendTable = <T extends unknown>({
   isSortable,
 }: VizLegendTableProps<T>): JSX.Element => {
   const styles = useStyles2(getStyles);
-  const header: Record<string, string> = {};
-
-  if (isSortable) {
-    header[nameSortKey] = '';
-  }
+  const header: Record<string, string> = {
+    [nameSortKey]: '',
+  };
 
   for (const item of items) {
     if (item.getDisplayValues) {
@@ -90,16 +88,18 @@ export const VizLegendTable = <T extends unknown>({
     <table className={cx(styles.table, className)}>
       <thead>
         <tr>
-          {!isSortable && <th></th>}
           {Object.keys(header).map((columnTitle) => (
             <th
               title={header[columnTitle]}
               key={columnTitle}
-              className={cx(styles.header, onToggleSort && styles.headerSortable, isSortable && styles.nameHeader, {
+              className={cx(styles.header, {
+                [styles.headerSortable]: Boolean(onToggleSort),
+                [styles.nameHeader]: isSortable,
                 [styles.withIcon]: sortKey === columnTitle,
+                'sr-only': !isSortable,
               })}
               onClick={() => {
-                if (onToggleSort) {
+                if (onToggleSort && isSortable) {
                   onToggleSort(columnTitle);
                 }
               }}
