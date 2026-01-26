@@ -290,8 +290,8 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 		rule.IntervalSeconds = interval
 	}
 
-	// Pass empty string for CREATE - we're adding a new rule, not updating an existing one.
-	if err := validation.ValidateProvisioningConsistency(ctx, service.provenanceStore, rule.OrgID, provenance, delta.AffectedGroups, ""); err != nil {
+	// Validate that adding this rule won't create a mixed-provenance group.
+	if err := validation.ValidateProvisioningConsistencyCreate(ctx, service.provenanceStore, rule.OrgID, provenance, delta.AffectedGroups); err != nil {
 		return models.AlertRule{}, err
 	}
 	err = rule.SetDashboardAndPanelFromAnnotations()
@@ -790,9 +790,8 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		}
 	}
 
-	// Validate provenance consistency to prevent mixed-provenance groups.
-	// Pass rule UID for UPDATE - allows changing provenance if it's the only rule in the group.
-	if err := validation.ValidateProvisioningConsistency(ctx, service.provenanceStore, rule.OrgID, effectiveProvenance, deltaForValidation.AffectedGroups, rule.UID); err != nil {
+	// Validate that updating this rule won't create a mixed-provenance group.
+	if err := validation.ValidateProvisioningConsistencyUpdate(ctx, service.provenanceStore, rule.OrgID, effectiveProvenance, deltaForValidation.AffectedGroups, rule.UID); err != nil {
 		return models.AlertRule{}, err
 	}
 
