@@ -172,7 +172,7 @@ When in Code mode, you can write complete Elasticsearch query DSL in JSON format
 
 ### Time range handling
 
-If you want to filter by the dashboard's time range, you need to use Grafana's template variable `$__timeFilter()` in your raw DSL.
+If you want to filter by time range in a dashboard, you need to use Grafana's template variable `$__timeFilter()` in your raw DSL.
 
 ### Supported query types
 
