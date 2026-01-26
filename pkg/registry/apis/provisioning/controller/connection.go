@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -191,10 +191,23 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
 	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
 
+	// Build connection to check all triggers including token refresh
+	// This is necessary because we can't determine token status without the connection
+	c, err := cc.connectionFactory.Build(ctx, conn)
+	if err != nil {
+		logger.Error("failed to build connection", "error", err)
+		return err
+	}
+
+	// Check if token needs refresh (now that connection is built)
+	shouldRefreshToken := cc.shouldRefreshToken(ctx, conn, c)
+
 	// Determine the main triggering condition
 	switch {
 	case hasSpecChanged:
 		logger.Info("spec changed, reconciling", "generation", conn.Generation, "observedGeneration", conn.Status.ObservedGeneration)
+	case shouldRefreshToken:
+		logger.Info("token needs refresh, reconciling")
 	case shouldCheckHealth:
 		logger.Info("health is stale, refreshing", "lastChecked", conn.Status.Health.Checked, "healthy", conn.Status.Health.Healthy)
 	default:
@@ -203,7 +216,6 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	var patchOperations []map[string]interface{}
-
 	if hasSpecChanged {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
@@ -212,46 +224,81 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		})
 	}
 
-	c, err := cc.connectionFactory.Build(ctx, conn)
-	if err != nil {
-		logger.Error("failed to build connection", "error", err)
-		return err
-	}
+	// Handle token generation/refresh
+	// Always call ReconcileConnectionToken - it will check if work needs to be done
+	connectionOps, tokenGenerationError := ReconcileConnectionToken(ctx, conn, c, cc.resyncInterval)
+	patchOperations = append(patchOperations, connectionOps...)
 
-	tokenConn, ok := c.(connection.TokenConnection)
-	if ok {
-		refresh, err := cc.shouldGenerateToken(ctx, conn, tokenConn)
+	var healthStatus provisioning.HealthStatus
+	var fieldErrors []provisioning.ErrorDetails
+
+	if tokenGenerationError != nil {
+		// Token generation failed - skip health check and update health status to show failure
+		logger.Warn("skipping health check due to token generation failure", "error", tokenGenerationError)
+
+		// Create health status showing token failure
+		healthStatus = provisioning.HealthStatus{
+			Healthy: false,
+			Error:   provisioning.HealthFailureHealth,
+			Checked: time.Now().UnixMilli(),
+			Message: []string{fmt.Sprintf("Token reconciliation failed: %v", tokenGenerationError)},
+		}
+
+		// Add health status patch (ReconcileConnectionToken may have also added one, but this ensures it's set)
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/health",
+			"value": healthStatus,
+		})
+
+		// Clear fieldErrors since this is a token issue, not a spec issue
+		fieldErrors = []provisioning.ErrorDetails{}
+	} else {
+		// Handle health check
+		testResults, healthStatusResult, healthPatchOps, err := cc.healthChecker.RefreshHealthWithPatchOps(ctx, conn)
 		if err != nil {
-			logger.Error("failed to check if token needs to be generated", "error", err)
-			return err
-		}
+			// Health check failed - create unhealthy status but don't block reconciliation
+			// This ensures observedGeneration gets updated
+			logger.Error("failed to perform health check, marking as unhealthy", "error", err)
 
-		if refresh {
-			logger.Info("generating connection token")
+			healthStatus = provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{fmt.Sprintf("Health check failed: %v", err)},
+			}
 
-			token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
-			if err != nil {
-				logger.Error("failed to generate connection token", "error", err)
-				return err
+			// Add health status patch
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/health",
+				"value": healthStatus,
+			})
+
+			// Clear fieldErrors since this is a health check failure, not a spec issue
+			fieldErrors = []provisioning.ErrorDetails{}
+		} else {
+			healthStatus = healthStatusResult
+			patchOperations = append(patchOperations, healthPatchOps...)
+
+			// Update fieldErrors from test results - ensure fieldErrors are cleared when there are no errors
+			fieldErrors = testResults.Errors
+			if fieldErrors == nil {
+				fieldErrors = []provisioning.ErrorDetails{}
 			}
-			if len(tokenOps) > 0 {
-				patchOperations = append(patchOperations, tokenOps...)
-			}
-			// Substituting generated token for healthcheck
-			conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
 		}
 	}
 
-	// Handle health checks using the health checker
-	testResults, healthStatus, healthPatchOps, err := cc.healthChecker.RefreshHealthWithPatchOps(ctx, conn)
-	if err != nil {
-		logger.Error("failed to get updated health status", "error", err)
-		return fmt.Errorf("update health status: %w", err)
-	}
-	patchOperations = append(patchOperations, healthPatchOps...)
+	patchOperations = append(patchOperations, map[string]interface{}{
+		"op":    "replace",
+		"path":  "/status/fieldErrors",
+		"value": fieldErrors,
+	})
 
-	// Update state based on health status
-	if healthStatus.Healthy {
+	readyCondition := buildReadyCondition(healthStatus, tokenGenerationError)
+	patchOperations = append(patchOperations, BuildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.Generation, readyCondition)...)
+
+	if readyCondition.Status == metav1.ConditionTrue {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/state",
@@ -265,17 +312,6 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		})
 	}
 
-	// Update fieldErrors from test results - ensure fieldErrors are cleared when there are no errors
-	fieldErrors := testResults.Errors
-	if fieldErrors == nil {
-		fieldErrors = []provisioning.ErrorDetails{}
-	}
-	patchOperations = append(patchOperations, map[string]interface{}{
-		"op":    "replace",
-		"path":  "/status/fieldErrors",
-		"value": fieldErrors,
-	})
-
 	if len(patchOperations) > 0 {
 		// Update fieldErrors from test results
 		if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
@@ -283,63 +319,27 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		}
 	}
 
-	logger.Info("connection reconciled successfully", "healthy", healthStatus.Healthy)
+	logger.Info("connection reconciliation completed", "healthy", healthStatus.Healthy, "field_errors", fieldErrors)
+
 	return nil
 }
 
-func (cc *ConnectionController) shouldGenerateToken(
-	ctx context.Context,
-	obj *provisioning.Connection,
-	c connection.TokenConnection,
-) (bool, error) {
-	// In case token is not there, we should always generate it.
-	if obj.Secure.Token.IsZero() {
-		return true, nil
+// shouldRefreshToken checks if the connection token needs to be refreshed.
+// Returns true if the connection supports tokens and the token needs generation/refresh.
+// Returns false on any errors to avoid blocking reconciliation.
+func (cc *ConnectionController) shouldRefreshToken(ctx context.Context, conn *provisioning.Connection, c connection.Connection) bool {
+	// Check if connection supports token generation
+	tokenConn, ok := c.(connection.TokenConnection)
+	if !ok {
+		return false
 	}
 
-	issuingTime, err := c.TokenCreationTime(ctx)
+	// Check if token needs to be generated or refreshed
+	needsGeneration, _, err := shouldGenerateToken(ctx, conn, tokenConn, cc.resyncInterval)
 	if err != nil {
-		return false, err
-	}
-	// If the token has been recently created, we should not refresh it.
-	if tokenRecentlyCreated(issuingTime) {
-		return false, nil
+		// Don't block reconciliation on token check errors
+		return false
 	}
 
-	expiration, err := c.TokenExpiration(ctx)
-	if err != nil {
-		return false, err
-	}
-
-	return shouldRefreshBeforeExpiration(expiration, cc.resyncInterval), nil
-}
-
-// generateConnectionToken regenerates the connection token if the connection supports it.
-// Uses the TokenGenerator interface to generate tokens in a connection-type-agnostic way.
-// Returns patch operations to update the /secure/token field.
-func (cc *ConnectionController) generateConnectionToken(
-	ctx context.Context,
-	conn connection.TokenConnection,
-) (string, []map[string]interface{}, error) {
-	logger := logging.FromContext(ctx)
-
-	token, err := conn.GenerateConnectionToken(ctx)
-	if err != nil {
-		logger.Error("failed to generate connection token", "error", err)
-		return "", nil, nil // Non-blocking: return empty patches
-	}
-
-	logger.Info("successfully generated new connection token")
-
-	patchOperations := []map[string]interface{}{
-		{
-			"op":   "replace",
-			"path": "/secure/token",
-			"value": map[string]string{
-				"create": string(token),
-			},
-		},
-	}
-
-	return string(token), patchOperations, nil
+	return needsGeneration
 }
