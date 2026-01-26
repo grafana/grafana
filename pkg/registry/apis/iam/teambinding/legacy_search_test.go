@@ -1,4 +1,4 @@
-package user
+package teambinding
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
-func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
+func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 	t.Run("should return error when request is nil", func(t *testing.T) {
 		mockStore := &mockLegacyStore{}
 		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
