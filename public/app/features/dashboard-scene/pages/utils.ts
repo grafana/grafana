@@ -59,3 +59,21 @@ export function processQueryParamsForDashboardLoad(): UrlQueryMap {
 
   return queryParamsObject;
 }
+
+export function shouldHideDashboardKioskFooter(hideLogo?: string | true): boolean {
+  if (hideLogo === undefined) {
+    return false;
+  }
+
+  if (hideLogo === true || hideLogo === '1') {
+    return true;
+  }
+
+  const normalized = String(hideLogo).trim().toLowerCase();
+  if (normalized === '') {
+    return true;
+  }
+
+  // Only treat explicit values as enabling hideLogo. Anything else is treated as "not enabled" for predictability.
+  return false;
+}

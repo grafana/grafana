@@ -24,7 +24,8 @@ jobs:
       opted-in-teams: >-
         [
           "@grafana/datapro",
-          "@grafana/dataviz-squad"
+          "@grafana/dataviz-squad",
+          "@grafana/grafana-operator-experience-squad"
         ]
     steps:
       - name: Define opted-in teams

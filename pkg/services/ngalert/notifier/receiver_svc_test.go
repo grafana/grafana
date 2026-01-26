@@ -1766,6 +1766,7 @@ func TestReceiverService_AccessControlMetadata(t *testing.T) {
 		expectedPermissions.Set(models.ReceiverPermissionWrite, false)
 		expectedPermissions.Set(models.ReceiverPermissionDelete, false)
 		expectedPermissions.Set(models.ReceiverPermissionModifyProtected, false)
+		expectedPermissions.Set(models.ReceiverPermissionTest, false)
 		expectedPermissions.Set(models.ReceiverPermissionReadSecret, true)
 
 		expected := map[string]models.ReceiverPermissionSet{

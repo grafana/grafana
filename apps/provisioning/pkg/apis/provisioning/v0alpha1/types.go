@@ -311,6 +311,13 @@ type RepositoryStatus struct {
 	// +listType=atomic
 	FieldErrors []ErrorDetails `json:"fieldErrors,omitempty"`
 
+	// Conditions represent the latest available observations of the repository's state.
+	// +listType=map
+	// +listMapKey=type
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+
 	// This will get updated with the current health status (and updated periodically)
 	Health HealthStatus `json:"health"`
 

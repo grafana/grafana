@@ -63,13 +63,14 @@ type RepositoryController struct {
 
 	repoFactory       repository.Factory
 	connectionFactory connection.Factory
-	healthChecker     *HealthChecker
+	healthChecker     *RepositoryHealthChecker
 	// To allow injection for testing.
 	processFn         func(item *queueItem) error
 	enqueueRepository func(obj any)
 	keyFunc           func(obj any) (string, error)
 
-	queue workqueue.TypedRateLimitingInterface[*queueItem]
+	queue          workqueue.TypedRateLimitingInterface[*queueItem]
+	resyncInterval time.Duration
 
 	registry prometheus.Registerer
 	tracer   tracing.Tracer
@@ -87,11 +88,12 @@ func NewRepositoryController(
 		jobs.Queue
 		jobs.Store
 	},
-	healthChecker *HealthChecker,
+	healthChecker *RepositoryHealthChecker,
 	statusPatcher StatusPatcher,
 	registry prometheus.Registerer,
 	tracer tracing.Tracer,
 	parallelOperations int,
+	resyncInterval time.Duration,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 
@@ -115,10 +117,11 @@ func NewRepositoryController(
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
 		},
-		jobs:     jobs,
-		logger:   logging.DefaultLogger.With("logger", loggerName),
-		registry: registry,
-		tracer:   tracer,
+		jobs:           jobs,
+		logger:         logging.DefaultLogger.With("logger", loggerName),
+		registry:       registry,
+		tracer:         tracer,
+		resyncInterval: resyncInterval,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -665,11 +668,17 @@ func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	c *provisioning.Connection,
 ) bool {
 	// We should generate a token from the connection when
+	// - The token has not been recently created
 	// - The repo is not healthy
-	// - The token is expired
+	// - The token will expire before the next resync interval
 	// - The linked connection is healthy (which means it is able to generate valid tokens)
-	return !healthStatus.Healthy &&
-		time.UnixMilli(obj.Status.Token.Expiration).Before(time.Now()) &&
+	recentlyCreated := tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated))
+	shouldRefresh := shouldRefreshBeforeExpiration(
+		time.UnixMilli(obj.Status.Token.Expiration), rc.resyncInterval,
+	)
+	return !recentlyCreated &&
+		!healthStatus.Healthy &&
+		shouldRefresh &&
 		c.Status.Health.Healthy
 }
 

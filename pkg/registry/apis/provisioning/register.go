@@ -36,6 +36,7 @@ import (
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -94,13 +95,14 @@ type APIBuilder struct {
 	allowedTargets      []provisioning.SyncTargetType
 	allowImageRendering bool
 	minSyncInterval     time.Duration
+	quotaLimits         quotas.QuotaLimits
 
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
 
 	tracer              tracing.Tracer
 	repoStore           grafanarest.Storage
-	repoLister          repository.RepositoryLister
+	repoLister          repository.RepositoryByConnectionLister
 	repoValidator       repository.Validator
 	connectionStore     grafanarest.Storage
 	parsers             resources.ParserFactory
@@ -123,7 +125,7 @@ type APIBuilder struct {
 	accessWithEditor  auth.AccessChecker
 	accessWithViewer  auth.AccessChecker
 	statusPatcher     *appcontroller.RepositoryStatusPatcher
-	healthChecker     *controller.HealthChecker
+	healthChecker     *controller.RepositoryHealthChecker
 	admissionHandler  *appadmission.Handler
 	// Extras provides additional functionality to the API.
 	extras       []Extra
@@ -209,6 +211,15 @@ func NewAPIBuilder(
 	}
 
 	return b
+}
+
+// SetQuotas sets the quota limits (including repository and resource limits).
+// HACK: This is a workaround to avoid changing NewAPIBuilder signature which would require
+// changes in the enterprise repository. This should be moved to NewAPIBuilder parameters
+// once we can coordinate the change across repositories.
+// The limits are stored here and then passed to validators and workers via quotaLimits.
+func (b *APIBuilder) SetQuotas(limits quotas.QuotaLimits) {
+	b.quotaLimits = limits
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -299,6 +310,13 @@ func RegisterAPIService(
 		nil,
 		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
 	)
+	// HACK: Set quota limits after construction to avoid changing NewAPIBuilder signature.
+	// See SetQuotas for details.
+	// Config defaults to 10 in pkg/setting. If user sets 0, that means unlimited.
+	builder.SetQuotas(quotas.QuotaLimits{
+		MaxResources:    cfg.ProvisioningMaxResourcesPerRepository,
+		MaxRepositories: cfg.ProvisioningMaxRepositories,
+	})
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -553,7 +571,7 @@ func (b *APIBuilder) GetStatusPatcher() *appcontroller.RepositoryStatusPatcher {
 	return b.statusPatcher
 }
 
-func (b *APIBuilder) GetHealthChecker() *controller.HealthChecker {
+func (b *APIBuilder) GetHealthChecker() *controller.RepositoryHealthChecker {
 	return b.healthChecker
 }
 
@@ -617,13 +635,20 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	// Repository mutator and validator
 	b.repoValidator = repository.NewValidator(b.minSyncInterval, b.allowImageRendering, b.repoFactory)
-	existingReposValidator := repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister)
-	repoAdmissionValidator := repository.NewAdmissionValidator(b.allowedTargets, b.repoValidator, existingReposValidator)
+	// quotaLimits is set via SetQuotas HACK method, use it directly
+
+	// HACK: Use NewVerifyAgainstExistingRepositoriesValidatorWithQuotas to pass QuotaLimits directly.
+	// This avoids the need for SetQuotaLimits and moves the HACK logic to construction.
+	existingReposValidatorRaw := repository.NewVerifyAgainstExistingRepositoriesValidatorWithQuotas(b.repoLister, b.quotaLimits)
+	repoAdmissionValidator := repository.NewAdmissionValidator(b.allowedTargets, b.repoValidator, existingReposValidatorRaw)
 	b.admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(b.repoFactory))
 	b.admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), repoAdmissionValidator)
 	// Connection mutator and validator
+	connAdmissionValidator := connection.NewAdmissionValidator(b.connectionFactory)
+	connDeleteValidator := connection.NewReferencedByRepositoriesValidator(b.repoLister)
+	connCombinedValidator := appadmission.NewCombinedValidator(connAdmissionValidator, connDeleteValidator)
 	b.admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(b.connectionFactory))
-	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionValidator(b.connectionFactory))
+	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connCombinedValidator)
 	// Jobs validator (no mutator needed)
 	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator())
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
@@ -669,7 +694,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector(b)
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
-	testTester := repository.NewTester(b.repoValidator, existingReposValidator)
+	testTester := repository.NewTester(b.repoValidator, existingReposValidatorRaw)
 
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
@@ -709,11 +734,6 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 // Validate delegates to the admission handler for resource-specific validation
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	obj := a.GetObject()
-	if obj == nil || a.GetOperation() == admission.Connect || a.GetOperation() == admission.Delete {
-		return nil // This is normal for sub-resource
-	}
-
 	return b.admissionHandler.Validate(ctx, a, o)
 }
 
@@ -744,10 +764,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			b.statusPatcher = appcontroller.NewRepositoryStatusPatcher(b.GetClient())
+			healthMetricsRecorder := controller.NewHealthMetricsRecorder(b.registry)
 			// FIXME: Health checker uses basic validation only - no additional validators needed
 			// since the repository already passed admission validation when it was created/updated.
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
-			b.healthChecker = controller.NewHealthChecker(b.statusPatcher, b.registry, repository.NewTester(b.repoValidator))
+			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
 
 			// if running solely CRUD, skip the rest of the setup
 			if b.onlyApiServer {
@@ -755,7 +776,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// Informer with resync interval used for health check and reconciliation
-			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
+			informerFactoryResyncInterval := 60 * time.Second
+			sharedInformerFactory := informers.NewSharedInformerFactory(c, informerFactoryResyncInterval)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
 			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
 			connInformer := sharedInformerFactory.Provisioning().V0alpha1().Connections()
@@ -787,6 +809,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.tracer,
 				10,
 			)
+			// HACK: Set quota limits after construction to avoid changing NewSyncWorker signature.
+			// See SetQuotaLimits for details. Use the same quotaLimits constructed for the validator.
+			syncWorker.SetQuotaLimits(b.quotaLimits)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -872,6 +897,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.registry,
 				b.tracer,
 				10,
+				informerFactoryResyncInterval,
 			)
 			if err != nil {
 				return err
@@ -882,11 +908,14 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Create and run connection controller
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
+			connHealthChecker := controller.NewConnectionHealthChecker(&connTester, healthMetricsRecorder)
 			connController, err := controller.NewConnectionController(
 				b.GetClient(),
 				connInformer,
 				connStatusPatcher,
-				connTester,
+				connHealthChecker,
+				b.connectionFactory,
+				informerFactoryResyncInterval,
 			)
 			if err != nil {
 				return err
