@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
 import { CustomTransformerDefinition, SceneDataTransformer } from '@grafana/scenes';
@@ -24,7 +24,8 @@ export function QueryEditorContextWrapper({
   const panel = panelRef.resolve();
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
-  const [selectedQuery, setSelectedQuery] = useState<DataQuery | null>(null);
+  const [selectedQueryRefId, setSelectedQueryRefId] = useState<string | null>(null);
+
   const dsState = useMemo(
     () => ({
       datasource,
@@ -56,18 +57,26 @@ export function QueryEditorContextWrapper({
     };
   }, [panel]);
 
-  useEffect(() => {
+  const selectedQuery = useMemo(() => {
     const queries = queryRunnerState?.queries ?? [];
-    if (queries.length > 0) {
-      setSelectedQuery(queries[0]);
+    // If we have a selected refId, try to find that query
+    if (selectedQueryRefId) {
+      const query = queries.find((q) => q.refId === selectedQueryRefId);
+      if (query) {
+        return query;
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    // Otherwise, default to the first query if available
+    return queries.length > 0 ? queries[0] : null;
+  }, [queryRunnerState?.queries, selectedQueryRefId]);
 
   const uiState = useMemo(
     () => ({
       selectedQuery,
-      setSelectedQuery,
+      setSelectedQuery: (query: DataQuery | null) => {
+        setSelectedQueryRefId(query?.refId ?? null);
+      },
     }),
     [selectedQuery]
   );
