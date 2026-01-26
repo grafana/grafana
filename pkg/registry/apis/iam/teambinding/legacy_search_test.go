@@ -1,4 +1,4 @@
-package user
+package teambinding
 
 import (
 	"context"
@@ -19,10 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
-func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
+func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 	t.Run("should return error when request is nil", func(t *testing.T) {
 		mockStore := &mockLegacyStore{}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -37,7 +37,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 
 	t.Run("should return error when request options is nil", func(t *testing.T) {
 		mockStore := &mockLegacyStore{}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -53,7 +53,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 
 	t.Run("should return error when request key is nil", func(t *testing.T) {
 		mockStore := &mockLegacyStore{}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -71,7 +71,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 
 	t.Run("should return error when identity is missing", func(t *testing.T) {
 		mockStore := &mockLegacyStore{}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := context.Background()
 		req := &resourcepb.ResourceSearchRequest{
@@ -91,7 +91,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 
 	t.Run("should return error when subject UID is missing", func(t *testing.T) {
 		mockStore := &mockLegacyStore{}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -118,7 +118,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 
 	t.Run("should return error when page is invalid", func(t *testing.T) {
 		mockStore := &mockLegacyStore{}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -150,7 +150,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 
 	t.Run("should return error when page is less than 1", func(t *testing.T) {
 		mockStore := &mockLegacyStore{}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -187,7 +187,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 				return &legacy.ListUserTeamsResult{Items: []legacy.UserTeam{}, Continue: 0}, nil
 			},
 		}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -224,7 +224,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 				return &legacy.ListUserTeamsResult{Items: []legacy.UserTeam{}, Continue: 0}, nil
 			},
 		}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -261,7 +261,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 				return &legacy.ListUserTeamsResult{Items: []legacy.UserTeam{}, Continue: 0}, nil
 			},
 		}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -302,7 +302,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 				}, nil
 			},
 		}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -350,7 +350,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 				}, nil
 			},
 		}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -422,7 +422,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 				}, nil
 			},
 		}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -467,7 +467,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 				}, nil
 			},
 		}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -508,7 +508,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 				return nil, errors.New("store error")
 			},
 		}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -546,7 +546,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 				return &legacy.ListUserTeamsResult{Items: []legacy.UserTeam{}, Continue: 0}, nil
 			},
 		}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
@@ -583,7 +583,7 @@ func TestLegacyUserTeamSearchClient_Search(t *testing.T) {
 				return &legacy.ListUserTeamsResult{Items: []legacy.UserTeam{}, Continue: 0}, nil
 			},
 		}
-		client := NewLegacyUserTeamSearchClient(mockStore, tracing.NewNoopTracerService())
+		client := NewLegacyTeamBindingSearchClient(mockStore, tracing.NewNoopTracerService())
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Namespace: "test-namespace",
