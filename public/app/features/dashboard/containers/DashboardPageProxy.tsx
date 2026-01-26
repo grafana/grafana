@@ -7,6 +7,7 @@ import DashboardScenePage from 'app/features/dashboard-scene/pages/DashboardScen
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { DashboardRoutes } from 'app/types/dashboard';
 
+import { isDashboardSceneEnabled, isDashboardSceneForViewersEnabled } from '../../dashboard-scene/utils/utils';
 import { isDashboardV2Resource } from '../api/utils';
 
 import DashboardPage, { DashboardPageParams } from './DashboardPage';
@@ -27,7 +28,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   const location = useLocation();
   const stateManager = getDashboardScenePageStateManager();
 
-  if (forceScenes || (config.featureToggles.dashboardScene && !forceOld)) {
+  if (forceScenes || (isDashboardSceneEnabled() && !forceOld)) {
     return <DashboardScenePage {...props} />;
   }
 
@@ -75,7 +76,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return null;
   }
 
-  if (!config.featureToggles.dashboardSceneForViewers) {
+  if (!isDashboardSceneForViewersEnabled()) {
     return <DashboardPage {...props} params={params} location={location} />;
   }
 
