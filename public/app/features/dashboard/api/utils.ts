@@ -19,14 +19,13 @@ export function isV0V1StoredVersion(version: string | undefined): boolean {
 }
 
 export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
-  const isDashboardSceneEnabledValue = isDashboardSceneEnabled();
   const isKubernetesDashboardsEnabled = config.featureToggles.kubernetesDashboards;
   const isDashboardNewLayoutsEnabled = config.featureToggles.dashboardNewLayouts;
 
   const forcingOldDashboardArch = locationService.getSearch().get('scenes') === 'false';
 
   // Force legacy API when dashboard scene is disabled or explicitly forced
-  if (!isDashboardSceneEnabledValue || forcingOldDashboardArch) {
+  if (!isDashboardSceneEnabled || forcingOldDashboardArch) {
     if (responseFormat === 'v2') {
       throw new Error('v2 is not supported for legacy architecture');
     }
