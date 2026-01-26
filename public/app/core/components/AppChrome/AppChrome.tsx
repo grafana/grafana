@@ -14,11 +14,7 @@ import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboard
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
-import {
-  BottomDrawer,
-  MAX_BOTTOM_DRAWER_HEIGHT,
-  MIN_BOTTOM_DRAWER_HEIGHT,
-} from './BottomDrawer/BottomDrawer';
+import { BottomDrawer, MAX_BOTTOM_DRAWER_HEIGHT, MIN_BOTTOM_DRAWER_HEIGHT } from './BottomDrawer/BottomDrawer';
 import { useBottomDrawerContext } from './BottomDrawer/BottomDrawerProvider';
 import {
   ExtensionSidebar,
@@ -41,11 +37,7 @@ export function AppChrome({ children }: Props) {
     extensionSidebarWidth,
     setExtensionSidebarWidth,
   } = useExtensionSidebarContext();
-  const {
-    isOpen: isBottomDrawerOpen,
-    bottomDrawerHeight,
-    setBottomDrawerHeight,
-  } = useBottomDrawerContext();
+  const { isOpen: isBottomDrawerOpen, bottomDrawerHeight, setBottomDrawerHeight } = useBottomDrawerContext();
   const state = chrome.useState();
   const scopes = useScopes();
 
