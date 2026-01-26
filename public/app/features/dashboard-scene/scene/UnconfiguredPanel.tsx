@@ -77,7 +77,7 @@ function UnconfiguredPanelComp(props: PanelProps) {
 
           // If panel doesn't have a query runner yet, create one
           if (!queryRunner && !panel.state.$data) {
-            const defaultDatasource = config.defaultDatasource;
+            const defaultDatasource = getDataSourceSrv().getInstanceSettings(null)?.name;
             panel.setState({
               $data: new SceneDataTransformer({
                 $data: new SceneQueryRunner({
