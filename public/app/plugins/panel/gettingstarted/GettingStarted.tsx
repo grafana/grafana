@@ -137,8 +137,9 @@ const getStyles = stylesFactory(() => {
   const theme = config.theme2;
   return {
     container: css({
-      display: 'flex',
-      flexDirection: 'column',
+      display: 'grid',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
       height: '100%',
       backgroundSize: 'cover',
       padding: `${theme.spacing(4)} ${theme.spacing(2)} 0`,
