@@ -25,7 +25,7 @@ export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
   const forcingOldDashboardArch = locationService.getSearch().get('scenes') === 'false';
 
   // Force legacy API when dashboard scene is disabled or explicitly forced
-  if (!isDashboardSceneEnabled || forcingOldDashboardArch) {
+  if (!isDashboardSceneEnabled() || forcingOldDashboardArch) {
     if (responseFormat === 'v2') {
       throw new Error('v2 is not supported for legacy architecture');
     }
