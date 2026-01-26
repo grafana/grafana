@@ -292,8 +292,13 @@ func (cc *ConnectionController) shouldGenerateToken(
 	obj *provisioning.Connection,
 	c connection.TokenConnection,
 ) (bool, error) {
-	// In case token is not there, we should always generate it.
+	// In case the token is not there, we should always generate it.
 	if obj.Secure.Token.IsZero() {
+		return true, nil
+	}
+
+	// In case the current token is not valid, then generate a new one.
+	if !c.TokenValid(ctx) {
 		return true, nil
 	}
 
