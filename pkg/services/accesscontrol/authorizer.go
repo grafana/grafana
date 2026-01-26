@@ -167,3 +167,7 @@ func (c *LegacyAccessClient) Compile(ctx context.Context, id claims.AuthInfo, re
 		return check(fmt.Sprintf("%s:%s:%s", opts.Resource, opts.Attr, name))
 	}, claims.NoopZookie{}, nil
 }
+
+func (c *LegacyAccessClient) BatchCheck(ctx context.Context, id claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	return claims.BatchCheckResponse{}, errors.New("not implemented")
+}

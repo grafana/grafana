@@ -1,3 +1,4 @@
+import { SceneObject } from '@grafana/scenes';
 import { VariableModel } from '@grafana/schema/dist/esm/index';
 import {
   AdhocVariableKind,
@@ -6,6 +7,8 @@ import {
   QueryVariableKind,
   VariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
+import { TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DashboardModel } from '../state/DashboardModel';
@@ -121,6 +124,15 @@ export function getV2SchemaVariables(variableList: VariableKind[]) {
     }, []),
   };
 }
+
+export const getLayoutType = (obj?: SceneObject): 'row' | 'tab' | 'dashboard' => {
+  if (obj instanceof RowItem) {
+    return 'row';
+  } else if (obj instanceof TabItem) {
+    return 'tab';
+  }
+  return 'dashboard';
+};
 
 export const variableName = (type: string) => `variable_type_${type}_count`;
 const panelName = (type: string) => `panel_type_${type}_count`;

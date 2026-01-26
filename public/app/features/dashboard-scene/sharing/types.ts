@@ -15,5 +15,6 @@ export interface SceneShareTab<T extends SceneShareTabState = SceneShareTabState
 
 export interface ShareView extends SceneObject {
   getTabLabel(): string;
+  getSubtitle?(): string | undefined;
   onDismiss?: () => void;
 }

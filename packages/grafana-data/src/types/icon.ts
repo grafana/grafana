@@ -52,6 +52,7 @@ export const availableIconsIndex = {
   bookmark: true,
   'book-open': true,
   'brackets-curly': true,
+  brain: true,
   'browser-alt': true,
   bug: true,
   building: true,
@@ -85,6 +86,7 @@ export const availableIconsIndex = {
   'comments-alt': true,
   compass: true,
   'compress-arrows': true,
+  'compress-alt': true,
   copy: true,
   'corner-up-left': true,
   'corner-up-right': true,
@@ -115,6 +117,7 @@ export const availableIconsIndex = {
   eye: true,
   'eye-slash': true,
   'ellipsis-h': true,
+  'expand-alt': true,
   /* @deprecated, use 'spinner' instead */
   'fa fa-spinner': true,
   favorite: true,

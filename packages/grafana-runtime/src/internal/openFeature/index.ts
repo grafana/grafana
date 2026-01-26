@@ -16,8 +16,11 @@ export async function initOpenFeature() {
    *   to allow for overrides https://github.com/open-feature/js-sdk-contrib/tree/main/libs/providers/multi-provider
    */
 
+  const subPath = config.appSubUrl || '';
+  const baseUrl = `${subPath}/apis/features.grafana.app/v0alpha1/namespaces/${config.namespace}`;
+
   const ofProvider = new OFREPWebProvider({
-    baseUrl: '/apis/features.grafana.app/v0alpha1/namespaces/' + config.namespace,
+    baseUrl: baseUrl,
     pollInterval: -1, // disable polling
     timeoutMs: 5_000,
   });

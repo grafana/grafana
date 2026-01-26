@@ -56,7 +56,6 @@ describe('useFavoriteDatasources', () => {
       name: name,
       uid: `${name}-uid`,
       meta: createPluginMeta(name, builtIn),
-      id,
       access: 'direct',
       jsonData: {},
       type: name,

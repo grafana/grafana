@@ -20,14 +20,12 @@ const mockEventBus = {
 
 class MockDatasourceApi<T extends DataQuery> implements DataSourceApi<T> {
   name: string;
-  id: number;
   type: string;
   uid: string;
   meta: DataSourcePluginMeta<{}>;
 
-  constructor(name: string, id: number, type: string, uid: string, others?: Partial<DataSourceApi>) {
+  constructor(name: string, type: string, uid: string, others?: Partial<DataSourceApi>) {
     this.name = name;
-    this.id = id;
     this.type = type;
     this.uid = uid;
     this.meta = {
@@ -53,13 +51,12 @@ class MockDatasourceApi<T extends DataQuery> implements DataSourceApi<T> {
 }
 
 const dsStore: Record<string, DataSourceApi> = {
-  alertmanager: new MockDatasourceApi('Alertmanager', 3, 'alertmanager', 'alertmanager'),
-  loki: new MockDatasourceApi('Loki', 2, 'loki', 'loki'),
-  prometheus: new MockDatasourceApi<MockQuery>('Prometheus', 1, 'prometheus', 'prometheus', {
+  alertmanager: new MockDatasourceApi('Alertmanager', 'alertmanager', 'alertmanager'),
+  loki: new MockDatasourceApi('Loki', 'loki', 'loki'),
+  prometheus: new MockDatasourceApi<MockQuery>('Prometheus', 'prometheus', 'prometheus', {
     getQueryDisplayText: (query: MockQuery) => query.queryText || 'Unknown query',
   }),
   mixed: new MixedDatasource({
-    id: 4,
     name: 'Mixed',
     type: 'mixed',
     uid: 'mixed',

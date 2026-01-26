@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import { GrafanaTheme } from '../types/theme';
 
 import { ThemeBreakpoints } from './breakpoints';
@@ -35,27 +37,36 @@ export interface GrafanaTheme2 {
   flags: {};
 }
 
-/** @alpha */
-export interface ThemeRichColor {
+export const ThemeRichColorInputSchema = z.object({
   /** color intent (primary, secondary, info, error, etc) */
-  name: string;
+  name: z.string().optional(),
   /** Main color */
-  main: string;
+  main: z.string().optional(),
   /** Used for hover */
-  shade: string;
+  shade: z.string().optional(),
   /** Used for text */
-  text: string;
+  text: z.string().optional(),
   /** Used for borders */
-  border: string;
+  border: z.string().optional(),
   /** Used subtly colored backgrounds */
-  transparent: string;
+  transparent: z.string().optional(),
   /** Used for weak colored borders like larger alert/banner boxes and smaller badges and tags */
-  borderTransparent: string;
+  borderTransparent: z.string().optional(),
   /** Text color for text ontop of main */
-  contrastText: string;
-}
+  contrastText: z.string().optional(),
+});
+
+export const ThemeRichColorSchema = ThemeRichColorInputSchema.required();
+
+/** @alpha */
+export type ThemeRichColor = z.infer<typeof ThemeRichColorSchema>;
 
 /** @internal */
 export type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
 };
+
+/** @internal */
+export type DeepRequired<T> = Required<{
+  [P in keyof T]: T[P] extends Required<T[P]> ? T[P] : DeepRequired<T[P]>;
+}>;

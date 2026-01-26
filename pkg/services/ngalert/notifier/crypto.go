@@ -212,6 +212,23 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 			}
 
 			if authorizeProtected != nil {
+				var receiverName string
+				if currentConfig != nil {
+				NAME:
+					for _, rcv := range currentConfig.AlertmanagerConfig.Receivers {
+						for _, intg := range rcv.GrafanaManagedReceivers {
+							if intg.UID == cgmr.UID {
+								receiverName = rcv.Name
+								break NAME
+							}
+						}
+					}
+				}
+				// this is checked only if authorizeProtected is not nil to cover only the path from receiver testing API.
+				if receiverName != r.Name {
+					return UnknownReceiverError{UID: gr.UID} // return error because integration does not belong to the receiver under the requested name
+				}
+
 				incoming, errIn := legacy_storage.PostableGrafanaReceiverToIntegration(gr)
 				existing, errEx := legacy_storage.PostableGrafanaReceiverToIntegration(cgmr)
 				var secure []schema.IntegrationFieldPath
@@ -222,16 +239,6 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 				}
 				// if conversion failed, consider there are changes and authorize
 				if authz && currentConfig != nil {
-					var receiverName string
-				NAME:
-					for _, rcv := range currentConfig.AlertmanagerConfig.Receivers {
-						for _, intg := range rcv.GrafanaManagedReceivers {
-							if intg.UID == cgmr.UID {
-								receiverName = rcv.Name
-								break NAME
-							}
-						}
-					}
 					if err := authorizeProtected(receiverName, secure); err != nil {
 						return err
 					}
@@ -377,4 +384,30 @@ func EncryptedReceivers(receivers []*definitions.PostableApiReceiver, encryptFn 
 		encrypted[i] = postable
 	}
 	return encrypted, nil
+}
+
+// DecryptIntegrationSettings returns a function to decrypt integration settings.
+func DecryptIntegrationSettings(ctx context.Context, ss secretService) models.DecryptFn {
+	return func(value string) (string, error) {
+		decoded, err := base64.StdEncoding.DecodeString(value)
+		if err != nil {
+			return "", err
+		}
+		decrypted, err := ss.Decrypt(ctx, decoded)
+		if err != nil {
+			return "", err
+		}
+		return string(decrypted), nil
+	}
+}
+
+// EncryptIntegrationSettings returns a function to encrypt integration settings.
+func EncryptIntegrationSettings(ctx context.Context, ss secretService) models.EncryptFn {
+	return func(payload string) (string, error) {
+		encrypted, err := ss.Encrypt(ctx, []byte(payload), secrets.WithoutScope())
+		if err != nil {
+			return "", err
+		}
+		return base64.StdEncoding.EncodeToString(encrypted), nil
+	}
 }

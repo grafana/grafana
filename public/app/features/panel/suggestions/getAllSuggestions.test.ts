@@ -11,6 +11,7 @@ import {
   toDataFrame,
   VisualizationSuggestionScore,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   BarGaugeDisplayMode,
   BigValueColorMode,
@@ -20,7 +21,6 @@ import {
   VizOrientation,
 } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { config } from 'app/core/config';
 import { clearPanelPluginCache } from 'app/features/plugins/importPanelPlugin';
 import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 

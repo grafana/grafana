@@ -23,14 +23,11 @@ import {
   SelectableValue,
   TestDataSourceResponse,
   TimeRange,
-  urlUtil,
 } from '@grafana/data';
 import { NodeGraphOptions, SpanBarOptions, TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 import {
-  BackendSrvRequest,
   config,
   DataSourceWithBackend,
-  getBackendSrv,
   getDataSourceSrv,
   getTemplateSrv,
   reportInteraction,
@@ -59,7 +56,6 @@ import {
 import TempoLanguageProvider from './language_provider';
 import {
   enhanceTraceQlMetricsResponse,
-  formatTraceQLResponse,
   transformFromOTLP as transformFromOTEL,
   transformTrace,
 } from './resultTransformer';
@@ -419,12 +415,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             if (useStreaming) {
               return this.handleStreamingQuery(options, targets.traceql, queryValue);
             }
-
-            if (config.featureToggles.tempoSearchBackendMigration) {
-              subQueries.push(this.handleTraceQlQuery(options, targets));
-            } else {
-              subQueries.push(this.oldSearchQueryLogic(options, targets, queryValue));
-            }
+            subQueries.push(this.handleTraceQlQuery(options, targets));
           }
         }
       } catch (error) {
@@ -464,11 +455,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           if (this.isStreamingSearchEnabled()) {
             subQueries.push(this.handleStreamingQuery(options, traceqlSearchTargets, queryFromFilters));
           } else {
-            if (config.featureToggles.tempoSearchBackendMigration) {
-              subQueries.push(this.handleTraceQlQuery(options, targets));
-            } else {
-              subQueries.push(this.oldSearchQueryLogic(options, targets, queryFromFilters));
-            }
+            subQueries.push(this.handleTraceQlQuery(options, targets));
           }
         }
       } catch (error) {
@@ -712,49 +699,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     );
   }
 
-  // this is just a short term function, we will remove once we have rolled
-  // out the backend migration and are happy with the stability of the feature
-  oldSearchQueryLogic = (
-    options: DataQueryRequest<TempoQuery>,
-    targets: { [type: string]: TempoQuery[] },
-    queryValue: string
-  ) => {
-    const startTime = performance.now();
-    const tableType = targets.traceqlSearch?.[0]?.tableType ?? targets.traceql?.[0]?.tableType;
-
-    return this._request('/api/search', {
-      q: queryValue,
-      limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-      spss: options.targets[0].spss ?? DEFAULT_SPSS,
-      start: options.range.from.unix(),
-      end: options.range.to.unix(),
-    }).pipe(
-      map((response) => {
-        reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
-          success: true,
-          streaming: false,
-          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
-          query: queryValue ?? '',
-        });
-        return {
-          data: formatTraceQLResponse(response.data.traces, this.instanceSettings, tableType),
-        };
-      }),
-      catchError((err) => {
-        reportTempoQueryMetrics('grafana_traces_traceql_response', options, {
-          success: false,
-          streaming: false,
-          latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
-          query: queryValue ?? '',
-          error: getErrorMessage(err.message),
-          statusCode: err.status,
-          statusText: err.statusText,
-        });
-        return of({ error: { message: getErrorMessage(err?.data?.message) }, data: [] });
-      })
-    );
-  };
-
   handleTraceQlMetricsQuery(
     options: DataQueryRequest<TempoQuery>,
     targets: TempoQuery[],
@@ -811,7 +755,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return merge(
       ...targets.map((target) =>
         doTempoSearchStreaming(
-          { ...target, query: this.applyVariables(target, options.scopedVars).query },
+          { ...target, query: query },
           this, // the datasource
           options,
           this.instanceSettings
@@ -924,13 +868,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     const res = await this.getResource(url, params, { method: 'GET', hideFromInspector: true });
     return res?.data ?? res;
-  }
-
-  _request(apiUrl: string, data?: unknown, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
-    const params = data ? urlUtil.serializeParams(data) : '';
-    const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
-    const req = { ...options, url };
-    return getBackendSrv().fetch(req);
   }
 
   async testDatasource(): Promise<TestDataSourceResponse> {

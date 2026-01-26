@@ -2,8 +2,8 @@ import { Observable } from 'rxjs';
 
 import { DataLinkTransformationConfig } from '@grafana/data';
 import { CorrelationData, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { CreateCorrelationParams } from 'app/features/correlations/types';
 import { getCorrelationsBySourceUIDs, createCorrelation, generateDefaultLabel } from 'app/features/correlations/utils';
 import { store } from 'app/store/store';
