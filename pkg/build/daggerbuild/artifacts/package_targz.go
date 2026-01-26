@@ -195,7 +195,7 @@ func NewTarball(
 	var catalogPluginsArtifact *pipeline.Artifact
 	if len(catalogPlugins) > 0 {
 		log.Info("Creating catalog plugins artifact", "plugins", len(catalogPlugins))
-		catalogPluginsArtifact, err = NewCatalogPlugins(ctx, log, artifact, catalogPlugins, distro)
+		catalogPluginsArtifact, err = NewCatalogPlugins(ctx, log, artifact, catalogPlugins, distro, version)
 		if err != nil {
 			return nil, err
 		}

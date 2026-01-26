@@ -19,6 +19,7 @@ var (
 	CatalogPluginsFlags     = flags.JoinFlags(flags.PackageNameFlags, flags.DistroFlags())
 	CatalogPluginsArguments = []pipeline.Argument{
 		arguments.CatalogPlugins,
+		arguments.Version, // Used for compatibility headers when downloading plugins
 	}
 )
 
@@ -29,8 +30,9 @@ var CatalogPluginsInitializer = Initializer{
 
 // CatalogPlugins downloads plugins from the Grafana catalog (grafana.com).
 type CatalogPlugins struct {
-	Plugins      []arguments.CatalogPluginSpec
-	Distribution backend.Distribution
+	Plugins        []arguments.CatalogPluginSpec
+	Distribution   backend.Distribution
+	GrafanaVersion string // Optional: used for API compatibility headers
 }
 
 // Dependencies returns nil as catalog plugins have no dependencies.
@@ -52,8 +54,9 @@ func (c *CatalogPlugins) BuildFile(ctx context.Context, builder *dagger.Containe
 // BuildDir downloads the plugins and returns a directory containing them.
 func (c *CatalogPlugins) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
 	return plugins.DownloadPlugins(opts.Client, &plugins.DownloadOpts{
-		Plugins:      c.Plugins,
-		Distribution: c.Distribution,
+		Plugins:        c.Plugins,
+		Distribution:   c.Distribution,
+		GrafanaVersion: c.GrafanaVersion,
 	}), nil
 }
 
@@ -130,13 +133,16 @@ func NewCatalogPluginsFromString(ctx context.Context, log *slog.Logger, artifact
 		return nil, err
 	}
 
+	// Get Grafana version for API compatibility headers (optional, may fail if not available)
+	version, _ := state.String(ctx, arguments.Version)
+
 	if len(pluginSpecs) == 0 {
 		log.Info("No catalog plugins specified, returning empty artifact")
 	} else {
-		log.Info("Creating catalog plugins artifact", "plugins", len(pluginSpecs), "distribution", distro)
+		log.Info("Creating catalog plugins artifact", "plugins", len(pluginSpecs), "distribution", distro, "grafanaVersion", version)
 	}
 
-	return NewCatalogPlugins(ctx, log, artifact, pluginSpecs, backend.Distribution(distro))
+	return NewCatalogPlugins(ctx, log, artifact, pluginSpecs, backend.Distribution(distro), version)
 }
 
 // NewCatalogPlugins creates a new CatalogPlugins artifact.
@@ -146,14 +152,16 @@ func NewCatalogPlugins(
 	artifact string,
 	pluginSpecs []arguments.CatalogPluginSpec,
 	distro backend.Distribution,
+	grafanaVersion string,
 ) (*pipeline.Artifact, error) {
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
 		Type:           pipeline.ArtifactTypeDirectory,
 		Flags:          CatalogPluginsFlags,
 		Handler: &CatalogPlugins{
-			Plugins:      pluginSpecs,
-			Distribution: distro,
+			Plugins:        pluginSpecs,
+			Distribution:   distro,
+			GrafanaVersion: grafanaVersion,
 		},
 	})
 }
