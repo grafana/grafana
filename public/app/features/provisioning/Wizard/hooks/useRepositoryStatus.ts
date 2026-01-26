@@ -33,10 +33,14 @@ export function useRepositoryStatus(repoName?: string, options?: UseRepositorySt
       setShouldEnablePolling(false);
       return;
     }
+    if (query.isError) {
+      setShouldEnablePolling(false);
+      return;
+    }
     if (stopPollingWhenReady && isReady) {
       setShouldEnablePolling(false);
     }
-  }, [repoName, stopPollingWhenReady, isReady]);
+  }, [repoName, stopPollingWhenReady, isReady, query.isError]);
 
   return {
     isReady,

@@ -9,7 +9,6 @@ import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
-import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 
 import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
 import { BootstrapStepResourceCounting } from './BootstrapStepResourceCounting';
@@ -39,6 +38,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const repositoryType = watch('repository.type');
   const { enabledOptions, disabledOptions } = useModeOptions(repoName, settingsData);
   const { target } = enabledOptions?.[0];
+
   const {
     isReady: isRepositoryReady,
     isLoading: isRepositoryStatusLoading,
@@ -64,18 +64,37 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   }, [getValues, setValue]);
 
   useEffect(() => {
-    if (!isRepositoryHealthy) {
+    if (repositoryStatusError) {
       setStepStatusInfo({
         status: 'error',
-        error: t('provisioning.bootstrap-step.repository-not-healthy', 'Repository is not healthy'),
+        error: {
+          title: t(
+            'provisioning.bootstrap-step.error-repository-status-unhealthy-title',
+            'Repository status unhealthy'
+          ),
+          message: t(
+            'provisioning.bootstrap-step.error-repository-status-unhealthy-message',
+            'There was an issue connecting to the repository. Please check the repository settings and try again.'
+          ),
+        },
       });
+    } else {
+      setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
     }
-    setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
-  }, [isLoading, setStepStatusInfo, isRepositoryHealthy]);
+  }, [isLoading, setStepStatusInfo, repositoryStatusError]);
 
   useEffect(() => {
     setValue('repository.sync.target', target);
   }, [target, setValue]);
+
+  if (repositoryStatusError || isRepositoryHealthy === false) {
+    // error message will be set in above step status
+    return (
+      <Button onClick={retryRepositoryStatus} disabled={isRepositoryStatusLoading}>
+        {t('provisioning.wizard.retry-status-button', 'Recheck repository status')}
+      </Button>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -84,25 +103,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           text={t('provisioning.bootstrap-step.text-loading-resource-information', 'Loading resource information...')}
         />
       </Box>
-    );
-  }
-
-  if (repositoryStatusError || isRepositoryHealthy === false) {
-    return (
-      <>
-        <ProvisioningAlert
-          error={{
-            title: t('provisioning.synchronize-step.repository-health-error', 'Repository health error'),
-            message: t(
-              'provisioning.synchronize-step.repository-health-error-message',
-              'Unable to check repository status. Please verify the repository configuration and try again.'
-            ),
-          }}
-        />
-        <Button onClick={retryRepositoryStatus} disabled={isRepositoryStatusLoading}>
-          {t('provisioning.wizard.check-status-button', 'Check repository status')}
-        </Button>
-      </>
     );
   }
 
