@@ -160,23 +160,3 @@ func buildReadyCondition(healthStatus provisioning.HealthStatus, tokenGeneration
 		Message: msg,
 	}
 }
-
-// shouldRefreshToken checks if the connection token needs to be refreshed.
-// Returns true if the connection supports tokens and the token needs generation/refresh.
-// Returns false on any errors to avoid blocking reconciliation.
-func (cc *ConnectionController) shouldRefreshToken(ctx context.Context, conn *provisioning.Connection, c connection.Connection) bool {
-	// Check if connection supports token generation
-	tokenConn, ok := c.(connection.TokenConnection)
-	if !ok {
-		return false
-	}
-
-	// Check if token needs to be generated or refreshed
-	needsGeneration, _, err := shouldGenerateToken(ctx, conn, tokenConn, cc.resyncInterval)
-	if err != nil {
-		// Don't block reconciliation on token check errors
-		return false
-	}
-
-	return needsGeneration
-}
