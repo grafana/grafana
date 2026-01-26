@@ -53,7 +53,6 @@ const createMockConnection = (overrides: Partial<Connection> = {}): Connection =
     privateKey: { name: 'configured' },
   },
   status: {
-    state: 'connected',
     health: { healthy: true },
     observedGeneration: 1,
     conditions: [
