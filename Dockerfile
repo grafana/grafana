@@ -246,6 +246,11 @@ COPY --from=js-src /tmp/grafana/LICENSE ./
 RUN grafana server -v | sed -e 's/Version //' > /.grafana-version
 RUN chmod 644 /.grafana-version
 
+# Copy external catalog plugins to the plugins directory
+# These are pre-downloaded plugins bundled with --bundle-catalog-plugins
+# The directory always exists in the tarball (may be empty)
+COPY --from=go-src /tmp/grafana/plugins-external/. "$GF_PATHS_PLUGINS"/
+
 EXPOSE 3000
 
 ARG RUN_SH=./packaging/docker/run.sh
