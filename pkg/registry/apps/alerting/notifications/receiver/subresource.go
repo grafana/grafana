@@ -101,7 +101,7 @@ func (p *RequestHandler) TestReceiver(ctx context.Context, user identity.Request
 }
 
 func validateCreateReceiverIntegrationTestRequestBody(receiverUID string, body v0alpha1.CreateReceiverIntegrationTestRequestBody) error {
-    // for either new or existing integrations only one of Integration and IntegrationRef must be set
+	// for either new or existing integrations only one of Integration and IntegrationRef must be set
 	if body.Integration != nil && body.IntegrationRef != nil {
 		return errors.New("integrationRef and integration cannot be set at the same time")
 	}
@@ -122,7 +122,7 @@ func validateCreateReceiverIntegrationTestRequestBody(receiverUID string, body v
 		if len(body.Integration.SecureFields) > 0 {
 			return errors.New("integration must not have secure fields when testing a new receiver")
 		}
-		
+
 		return nil
 	}
 	// validating existing receiver
