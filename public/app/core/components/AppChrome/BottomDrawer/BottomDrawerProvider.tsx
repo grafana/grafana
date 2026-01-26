@@ -1,9 +1,10 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState, useMemo } from 'react';
-import { useLocalStorage } from 'react-use';
+import { useAsync, useLocalStorage } from 'react-use';
 
 import { PluginExtensionPoints, store } from '@grafana/data';
 import { getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
-import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
+import { ExtensionPointPluginMeta } from 'app/features/plugins/extensions/appUtils';
+import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { CloseBottomDrawerEvent, OpenBottomDrawerEvent, ToggleBottomDrawerEvent } from 'app/types/events';
 
 import { DEFAULT_BOTTOM_DRAWER_HEIGHT, MAX_BOTTOM_DRAWER_HEIGHT } from './BottomDrawer';
@@ -12,7 +13,7 @@ export const BOTTOM_DRAWER_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.bottom
 export const BOTTOM_DRAWER_HEIGHT_LOCAL_STORAGE_KEY = 'grafana.navigation.bottomDrawerHeight';
 
 // List of permitted plugins that can use the bottom drawer
-const PERMITTED_BOTTOM_DRAWER_PLUGINS: string[] = ['grafana-grafanacoda-app'];
+const PERMITTED_BOTTOM_DRAWER_PLUGINS: string[] = ['grafana-coda-app'];
 
 export type BottomDrawerContextType = {
   /**
@@ -84,18 +85,27 @@ export const BottomDrawerContextProvider = ({ children }: BottomDrawerContextPro
   // that means, a plugin would need to register both, a link and a component to
   // `grafana/bottom-drawer/v0-alpha` and the link's `configure` method would control
   // whether the component is rendered or not
-  const { links, isLoading } = usePluginLinks({
+  const { links, isLoading: isPluginLinksLoading } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.BottomDrawer,
     context: {
       path: currentPath,
     },
   });
 
+  const { loading: isExtensionPointPluginMetaLoading, value: pluginMap } = useAsync(() =>
+    getExtensionPointPluginMeta(PluginExtensionPoints.BottomDrawer)
+  );
+
+  const isLoading = useMemo(
+    () => isPluginLinksLoading || isExtensionPointPluginMetaLoading,
+    [isPluginLinksLoading, isExtensionPointPluginMetaLoading]
+  );
+
   // get all components for this extension point, but only for the permitted plugins
   const availableComponents = useMemo(
     () =>
       new Map(
-        Array.from(getExtensionPointPluginMeta(PluginExtensionPoints.BottomDrawer).entries()).filter(
+        Array.from(pluginMap?.entries() || []).filter(
           ([pluginId, pluginMeta]) =>
             PERMITTED_BOTTOM_DRAWER_PLUGINS.includes(pluginId) &&
             links.some(
@@ -105,7 +115,7 @@ export const BottomDrawerContextProvider = ({ children }: BottomDrawerContextPro
             )
         )
       ),
-    [links]
+    [pluginMap, links]
   );
 
   // check if the stored docked component is still available

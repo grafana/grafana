@@ -171,7 +171,7 @@ export function AppChrome({ children }: Props) {
             defaultSize={{ height: bottomDrawerHeight }}
             enable={{ top: true }}
             onResize={(_evt, _direction, ref) => setBottomDrawerHeight(ref.getBoundingClientRect().height)}
-            handleClasses={{ top: dragStyles.dragHandleBaseHorizontal }}
+            handleClasses={{ top: dragStyles.dragHandleHorizontal }}
             minHeight={MIN_BOTTOM_DRAWER_HEIGHT}
             maxHeight={MAX_BOTTOM_DRAWER_HEIGHT}
           >
