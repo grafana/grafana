@@ -69,6 +69,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-23,alertingProvenanceLockWrites,experimental,@grafana/alerting-squad,false,false,false
 2025-11-13,alertingUIUseBackendFilters,experimental,@grafana/alerting-squad,false,false,false
 2025-11-24,alertingUIUseFullyCompatBackendFilters,experimental,@grafana/alerting-squad,false,false,false
+2025-10-29,createAlertRuleFromPanel,experimental,@grafana/alerting-squad,false,false,true
 2023-10-30,alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 2023-10-31,annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 2023-11-02,dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
