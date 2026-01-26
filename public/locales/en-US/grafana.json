@@ -3642,7 +3642,7 @@
       "move-modal-title": "Move",
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
-      "new-folder-as-team-folder-checkbox-tooltip": "Assign an owner to the folder. Team folders are folders that inherit default sharing and permission settings, making it easier to collaborate.",
+      "new-folder-as-team-folder-checkbox-tooltip": "Team folders are folders owned by your team. Use them to keep your team’s content in one place—making it easier to find, organize, and manage access",
       "new-folder-as-team-folder-label": "Team:",
       "new-folder-name-required-phrase": "Folder name is required.",
       "new-folder-owner-selector-checkbox": "Assign an owner to the folder",
