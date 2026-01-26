@@ -22,8 +22,8 @@ export interface PanelState {
 }
 
 export interface QueryEditorUIState {
-  selectedQuery: DataQuery | null;
-  setSelectedQuery: (query: DataQuery | null) => void;
+  selectedCard: DataQuery | null;
+  setSelectedCard: (query: DataQuery | null) => void;
 }
 
 export interface QueryEditorActions {

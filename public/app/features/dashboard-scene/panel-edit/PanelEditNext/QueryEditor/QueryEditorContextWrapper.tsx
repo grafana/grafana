@@ -24,7 +24,7 @@ export function QueryEditorContextWrapper({
   const panel = panelRef.resolve();
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
-  const [selectedQueryRefId, setSelectedQueryRefId] = useState<string | null>(null);
+  const [selectedCardRefId, setSelectedCardRefId] = useState<string | null>(null);
 
   const dsState = useMemo(
     () => ({
@@ -57,11 +57,11 @@ export function QueryEditorContextWrapper({
     };
   }, [panel]);
 
-  const selectedQuery = useMemo(() => {
+  const selectedCard = useMemo(() => {
     const queries = queryRunnerState?.queries ?? [];
     // If we have a selected refId, try to find that query
-    if (selectedQueryRefId) {
-      const query = queries.find((q) => q.refId === selectedQueryRefId);
+    if (selectedCardRefId) {
+      const query = queries.find((q) => q.refId === selectedCardRefId);
       if (query) {
         return query;
       }
@@ -69,16 +69,16 @@ export function QueryEditorContextWrapper({
 
     // Otherwise, default to the first query if available
     return queries.length > 0 ? queries[0] : null;
-  }, [queryRunnerState?.queries, selectedQueryRefId]);
+  }, [queryRunnerState?.queries, selectedCardRefId]);
 
   const uiState = useMemo(
     () => ({
-      selectedQuery,
-      setSelectedQuery: (query: DataQuery | null) => {
-        setSelectedQueryRefId(query?.refId ?? null);
+      selectedCard,
+      setSelectedCard: (query: DataQuery | null) => {
+        setSelectedCardRefId(query?.refId ?? null);
       },
     }),
-    [selectedQuery]
+    [selectedCard]
   );
 
   const actions = useMemo(

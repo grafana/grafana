@@ -9,13 +9,13 @@ import { useQueryEditorUIContext } from './QueryEditorContext';
 export function QueryEditorContent() {
   const styles = useStyles2(getStyles);
 
-  const { selectedQuery } = useQueryEditorUIContext();
+  const { selectedCard } = useQueryEditorUIContext();
   return (
     <div className={styles.container}>
       <Text color="secondary">
         {t('query-editor-next.detail-placeholder', 'Query/Transform detail view goes here')}
       </Text>
-      <Text color="secondary">{selectedQuery?.refId ?? 'No query selected'}</Text>
+      <Text color="secondary">{selectedCard?.refId ?? 'No query selected'}</Text>
     </div>
   );
 }
