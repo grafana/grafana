@@ -172,7 +172,28 @@ When in Code mode, you can write complete Elasticsearch query DSL in JSON format
 
 ### Time range handling
 
-If you want to filter by time range in a dashboard, you need to use Grafana's template variable `$__timeFilter()` in your raw DSL.
+If you want to filter by time range in a dashboard, you need to use the `$__from` and `$__to` macros in your raw DSL.
+
+An example query applying dashboard time range using the `@timestamp` field:
+```json
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "$__from",
+              "lte": "$__to",
+              "format": "epoch_millis"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
 
 ### Supported query types
 
