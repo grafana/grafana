@@ -125,7 +125,7 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 		// This switches the identity to service identity for backend operations, which allows
 		// the storage layer's namespace checks to pass. Authorization is handled at the API
 		// level by the custom authorizer provided by the AppInstaller.
-		gs.KeyFunc = grafanaregistry.ClusterKeyFunc(gr)
+		gs.KeyFunc = grafanaregistry.ClusterScopedKeyFunc(gr)
 		gs.KeyRootFunc = grafanaregistry.ClusterKeyRootFunc(gr)
 
 		// Wrap with identity switcher - the genericregistry.Store implements K8sStorage
@@ -139,7 +139,7 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 			statusStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
 			statusStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
 		} else {
-			statusStore.Store.KeyFunc = grafanaregistry.ClusterKeyFunc(gr)
+			statusStore.Store.KeyFunc = grafanaregistry.ClusterScopedKeyFunc(gr)
 			statusStore.Store.KeyRootFunc = grafanaregistry.ClusterKeyRootFunc(gr)
 		}
 		return statusStore
@@ -152,7 +152,7 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 			subresourceStore.Store.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
 			subresourceStore.Store.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
 		} else {
-			subresourceStore.Store.KeyFunc = grafanaregistry.ClusterKeyFunc(gr)
+			subresourceStore.Store.KeyFunc = grafanaregistry.ClusterScopedKeyFunc(gr)
 			subresourceStore.Store.KeyRootFunc = grafanaregistry.ClusterKeyRootFunc(gr)
 		}
 		return subresourceStore
