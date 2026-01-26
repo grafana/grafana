@@ -54,18 +54,18 @@ export const SidebarCard = ({ query }: SidebarCardProps) => {
   const editorType = getEditorType(query.datasource?.type);
   const queryDsSettings = useDatasource(query.datasource);
   const { data } = useQueryRunnerContext();
-  const { selectedQueryRefId, setSelectedQueryRefId } = useQueryEditorUIContext();
+  const { selectedQuery, setSelectedQuery } = useQueryEditorUIContext();
 
   // Extract error for this specific query by matching refId
   const queryError = data?.errors?.find((e) => e.refId === query.refId);
 
   const hasError = Boolean(queryError);
-  const isSelected = selectedQueryRefId === query.refId;
+  const isSelected = selectedQuery?.refId === query.refId;
   const styles = useStyles2(getStyles, editorType, hasError, isSelected);
 
   const handleClick = () => {
     // Toggle selection: if already selected, deselect; otherwise select this card
-    setSelectedQueryRefId(isSelected ? null : query.refId);
+    setSelectedQuery(isSelected ? null : query);
   };
 
   return (

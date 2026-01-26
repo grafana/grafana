@@ -21,8 +21,8 @@ export interface PanelState {
 }
 
 export interface QueryEditorUIState {
-  selectedQueryRefId: string | null;
-  setSelectedQueryRefId: (refId: string | null) => void;
+  selectedQuery: DataQuery | null;
+  setSelectedQuery: (query: DataQuery | null) => void;
 }
 
 export interface QueryEditorActions {
