@@ -27,4 +27,5 @@ make run
 
 ## Notes
 - Keep the response limited to these commands unless the user asks for dependencies or troubleshooting.
+- After both servers are running, open the `@Browser` in Cursor at `http://localhost:3000/`. This is required, not optional.
 - If the user asks for prerequisites, point to `contribute/developer-guide.md` and mention Go and Node.js LTS with Corepack enabled.
