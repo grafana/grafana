@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -51,6 +52,7 @@ interface SidebarCardProps {
 }
 
 export const SidebarCard = ({ query }: SidebarCardProps) => {
+  const [isSelected, setIsSelected] = useState(false);
   const editorType = getEditorType(query.datasource?.type);
   const queryDsSettings = useDatasource(query.datasource);
   const { data } = useQueryRunnerContext();
@@ -59,10 +61,10 @@ export const SidebarCard = ({ query }: SidebarCardProps) => {
   const queryError = data?.errors?.find((e) => e.refId === query.refId);
 
   const hasError = Boolean(queryError);
-  const styles = useStyles2(getStyles, editorType, hasError);
+  const styles = useStyles2(getStyles, editorType, hasError, isSelected);
 
   const handleClick = () => {
-    // TODO: Implement click action (e.g., select/focus this query)
+    setIsSelected(!isSelected);
     console.log('Card clicked:', query.refId);
   };
 
@@ -73,6 +75,7 @@ export const SidebarCard = ({ query }: SidebarCardProps) => {
       onClick={handleClick}
       type="button"
       aria-label={t('query-editor-next.sidebar.card-click', 'Select query {{refId}}', { refId: query.refId })}
+      aria-pressed={isSelected}
     >
       <Header editorType={editorType} hasError={hasError} />
       <div className={styles.cardContent}>
@@ -85,16 +88,17 @@ export const SidebarCard = ({ query }: SidebarCardProps) => {
   );
 };
 
-function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: boolean) {
+function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: boolean, isSelected?: boolean) {
   return {
     card: css({
       display: 'flex',
       flexDirection: 'column',
-      background: theme.colors.background.secondary,
-      border: `1px solid ${theme.colors.border.weak}`,
+      background: isSelected ? theme.colors.action.selected : theme.colors.background.secondary,
+      border: `1px solid ${isSelected ? theme.colors.primary.border : theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       cursor: 'pointer',
       padding: 0,
+      boxShadow: isSelected ? `0 0 9px 0 rgba(58, 139, 255, 0.3)` : 'none',
 
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color'], {
@@ -103,8 +107,10 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: 
       },
 
       '&:hover': {
-        background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
-        borderColor: theme.colors.border.medium,
+        background: isSelected
+          ? theme.colors.action.selected
+          : theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+        borderColor: isSelected ? theme.colors.primary.border : theme.colors.border.medium,
       },
 
       '&:focus-visible': {
