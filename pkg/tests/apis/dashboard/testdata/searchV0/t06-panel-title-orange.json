@@ -1,0 +1,82 @@
+{
+  "totalHits": 1,
+  "hits": [
+    {
+      "resource": "dashboards",
+      "name": "timeseries-by-value-color-schemes",
+      "title": "Panel Tests - Graph NG - By value color schemes",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ],
+      "score": 0.073,
+      "explain": {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "message": "boost",
+                            "value": 5
+                          },
+                          {
+                            "message": "idf(docFreq=1, maxDocs=16)",
+                            "value": 3.079
+                          },
+                          {
+                            "message": "queryNorm",
+                            "value": 0.022
+                          }
+                        ],
+                        "message": "queryWeight(fields.panel_title:orange^5.000000), product of:",
+                        "value": 0.338
+                      },
+                      {
+                        "children": [
+                          {
+                            "message": "tf(termFreq(fields.panel_title:orange)=3",
+                            "value": 1.732
+                          },
+                          {
+                            "message": "fieldNorm(field=fields.panel_title, doc=\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001)",
+                            "value": 0.162
+                          },
+                          {
+                            "message": "idf(docFreq=1, maxDocs=16)",
+                            "value": 3.079
+                          }
+                        ],
+                        "message": "fieldWeight(fields.panel_title:orange in \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001), as per tf-idf model, product of:",
+                        "value": 0.865
+                      }
+                    ],
+                    "message": "weight(fields.panel_title:orange^5.000000 in \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001), product of:",
+                    "value": 0.293
+                  }
+                ],
+                "message": "sum of:",
+                "value": 0.293
+              }
+            ],
+            "message": "sum of:",
+            "value": 0.293
+          },
+          {
+            "message": "coord(1/4)",
+            "value": 0.25
+          }
+        ],
+        "message": "product of:",
+        "partial_match": true,
+        "value": 0.073
+      }
+    }
+  ],
+  "maxScore": 0.073
+}

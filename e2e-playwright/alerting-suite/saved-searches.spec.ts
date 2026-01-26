@@ -2,6 +2,15 @@ import { Page } from '@playwright/test';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
+// Enable required feature toggles for Saved Searches (part of RuleList.v2)
+test.use({
+  featureToggles: {
+    alertingListViewV2: true,
+    alertingFilterV2: true,
+    alertingSavedSearches: true,
+  },
+});
+
 /**
  * UI selectors for Saved Searches e2e tests.
  * Each selector is a function that takes the page and returns a locator.
@@ -26,26 +35,50 @@ const ui = {
 
   // Indicators
   emptyState: (page: Page) => page.getByText(/no saved searches/i),
-  defaultIcon: (page: Page) => page.locator('[title="Default search"]'),
+  defaultIcon: (page: Page) => page.getByRole('img', { name: /default search/i }),
   duplicateError: (page: Page) => page.getByText(/already exists/i),
 };
 
 /**
- * Helper to clear saved searches storage.
- * UserStorage uses localStorage as fallback, so we clear both potential keys.
+ * Helper to clear saved searches from UserStorage.
+ * UserStorage persists data server-side via k8s API, so we need to delete via API.
  */
 async function clearSavedSearches(page: Page) {
-  await page.evaluate(() => {
-    // Clear localStorage keys that might contain saved searches
-    // UserStorage stores under 'grafana.userstorage.alerting' pattern
-    const keysToRemove = Object.keys(localStorage).filter(
-      (key) => key.includes('alerting') && (key.includes('savedSearches') || key.includes('userstorage'))
-    );
-    keysToRemove.forEach((key) => localStorage.removeItem(key));
+  // Get namespace and user info from Grafana config
+  const storageInfo = await page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const bootData = (window as any).grafanaBootData;
+    const user = bootData?.user;
+    const userUID = user?.uid === '' || !user?.uid ? String(user?.id ?? 'anonymous') : user.uid;
+    const resourceName = `alerting:${userUID}`;
+    const namespace = bootData?.settings?.namespace || 'default';
 
-    // Also clear session storage visited flag
-    const sessionKeysToRemove = Object.keys(sessionStorage).filter((key) => key.includes('alerting'));
-    sessionKeysToRemove.forEach((key) => sessionStorage.removeItem(key));
+    return { namespace, resourceName };
+  });
+
+  // Delete the UserStorage resource
+  try {
+    await page.request.delete(
+      `/apis/userstorage.grafana.app/v0alpha1/namespaces/${storageInfo.namespace}/user-storage/${storageInfo.resourceName}`
+    );
+  } catch (error) {
+    // Ignore 404 errors (resource doesn't exist)
+    if (!(error && typeof error === 'object' && 'status' in error && error.status === 404)) {
+      console.warn('Failed to clear saved searches:', error);
+    }
+  }
+
+  // Also clear localStorage as fallback storage
+  await page.evaluate(({ resourceName }) => {
+    // The UserStorage key pattern is always `{resourceName}:{key}`
+    // For saved searches, the key is 'savedSearches'
+    const key = `${resourceName}:savedSearches`;
+    window.localStorage.removeItem(key);
+  }, storageInfo);
+
+  // Clear session storage visited flag
+  await page.evaluate(() => {
+    window.sessionStorage.removeItem('grafana.alerting.ruleList.visited');
   });
 }
 
@@ -150,7 +183,7 @@ test.describe(
 
       await ui.saveButton(page).click();
 
-      await ui.saveNameInput(page).fill('Apply Test');
+      await ui.saveNameInput(page).fill('Firing Rules');
       await ui.saveConfirmButton(page).click();
 
       // Clear the search
@@ -159,7 +192,7 @@ test.describe(
 
       // Apply the saved search
       await ui.savedSearchesButton(page).click();
-      await page.getByRole('button', { name: /apply search.*apply test/i }).click();
+      await page.getByRole('button', { name: /apply.*search.*firing rules/i }).click();
 
       // Verify the search input is updated
       await expect(ui.searchInput(page)).toHaveValue('state:firing');
@@ -182,7 +215,7 @@ test.describe(
       await ui.renameMenuItem(page).click();
 
       // Enter new name
-      const renameInput = page.getByDisplayValue('Original Name');
+      const renameInput = page.getByRole('textbox', { name: /enter a name/i });
       await renameInput.clear();
       await renameInput.fill('Renamed Search');
       await page.keyboard.press('Enter');
@@ -260,12 +293,12 @@ test.describe(
 
       await expect(ui.saveNameInput(page)).toBeVisible();
 
-      // Press Escape to cancel
+      // Press Escape to cancel - this closes the entire dropdown
       await page.keyboard.press('Escape');
 
-      // Verify we're back to list mode
-      await expect(ui.saveNameInput(page)).not.toBeVisible();
-      await expect(ui.saveButton(page)).toBeVisible();
+      // Verify the entire dialog is closed
+      await expect(ui.dropdown(page)).not.toBeVisible();
+      await expect(ui.saveButton(page)).not.toBeVisible();
     });
   }
 );

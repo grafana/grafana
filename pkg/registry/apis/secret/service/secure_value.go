@@ -302,6 +302,7 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
+	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	hasPermissionFor, _, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
 		Group:     secretv1beta1.APIGroup,
 		Resource:  secretv1beta1.SecureValuesResourceInfo.GetName(),

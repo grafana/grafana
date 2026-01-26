@@ -9,4 +9,4 @@
  * and be subject to the standard policies
  */
 
-export { default as themeJsonSchema } from './themes/schema.generated.json';
+export {};

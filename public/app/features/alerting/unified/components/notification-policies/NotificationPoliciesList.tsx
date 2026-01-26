@@ -11,7 +11,7 @@ import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alertin
 import { FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
 import { addUniqueIdentifierToRoute } from 'app/features/alerting/unified/utils/amroutes';
 import { getErrorCode, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
-import { ObjectMatcher, ROUTES_META_SYMBOL, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { anyOfRequestState, isError } from '../../hooks/useAsync';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
@@ -99,6 +99,7 @@ export const NotificationPoliciesList = () => {
     }
     return;
   }, [defaultPolicy]);
+  const routeProvenance = defaultPolicy?.provenance;
 
   // useAsync could also work but it's hard to wait until it's done in the tests
   // Combining with useEffect gives more predictable results because the condition is in useEffect
@@ -244,7 +245,7 @@ export const NotificationPoliciesList = () => {
             currentRoute={defaults(rootRoute, TIMING_OPTIONS_DEFAULTS)}
             contactPointsState={contactPointsState.receivers}
             readOnly={!hasConfigurationAPI}
-            provisioned={rootRoute[ROUTES_META_SYMBOL]?.provisioned}
+            provenance={routeProvenance}
             alertManagerSourceName={selectedAlertmanager}
             onAddPolicy={openAddModal}
             onEditPolicy={openEditModal}

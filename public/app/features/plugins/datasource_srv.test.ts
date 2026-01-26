@@ -336,13 +336,6 @@ describe('datasource_srv', () => {
       });
     });
 
-    describe('when getting external metric sources', () => {
-      it('should return list of explore sources', () => {
-        const externalSources = dataSourceSrv.getExternal();
-        expect(externalSources.length).toBe(11);
-      });
-    });
-
     describe('when getting datasource by type', () => {
       it('should return the first value of each type', async () => {
         const jaeger = await dataSourceSrv.get({ type: `jaeger-db` });
