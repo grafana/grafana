@@ -298,4 +298,3 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	logger.Info("connection reconciled successfully", "healthy", healthStatus.Healthy)
 	return nil
 }
-
