@@ -70,6 +70,10 @@ public/css/*.min.css
 !.vscode/launch.json
 .vs/
 .cursor/
+!.cursor/
+.cursor/*
+!.cursor/skills/
+!.cursor/skills/**
 .devcontainer/
 .claude/
 
