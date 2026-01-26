@@ -232,8 +232,23 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	var fieldErrors []provisioning.ErrorDetails
 
 	if tokenGenerationError != nil {
-		// Token generation failed - skip health check and use error for status
+		// Token generation failed - skip health check and update health status to show failure
 		logger.Warn("skipping health check due to token generation failure", "error", tokenGenerationError)
+
+		// Create health status showing token failure
+		healthStatus = provisioning.HealthStatus{
+			Healthy: false,
+			Error:   provisioning.HealthFailureHealth,
+			Checked: time.Now().UnixMilli(),
+			Message: []string{fmt.Sprintf("Token reconciliation failed: %v", tokenGenerationError)},
+		}
+
+		// Add health status patch (ReconcileConnectionToken may have also added one, but this ensures it's set)
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/health",
+			"value": healthStatus,
+		})
 
 		// Clear fieldErrors since this is a token issue, not a spec issue
 		fieldErrors = []provisioning.ErrorDetails{}
