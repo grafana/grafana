@@ -86,7 +86,7 @@ func ReconcileConnectionToken(
 		"op":   "replace",
 		"path": "/secure/token",
 		"value": map[string]string{
-			"create": string(token.String()),
+			"create": token.String(),
 		},
 	})
 
