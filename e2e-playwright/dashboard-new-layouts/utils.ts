@@ -181,8 +181,16 @@ export async function verifyChanges(
   await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
   await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
 }
-
-export async function importTestDashboard(page: Page, selectors: E2ESelectorGroups, title: string, dashInput?: string) {
+interface ImportTestDashboardOptions {
+  checkPanelsVisible?: boolean;
+}
+export async function importTestDashboard(
+  page: Page,
+  selectors: E2ESelectorGroups,
+  title: string,
+  dashInput?: string,
+  options: ImportTestDashboardOptions = { checkPanelsVisible: true }
+) {
   await page.goto(selectors.pages.ImportDashboard.url);
   await page
     .getByTestId(selectors.components.DashboardImportPage.textarea)
@@ -197,8 +205,9 @@ export async function importTestDashboard(page: Page, selectors: E2ESelectorGrou
   if (undockMenuVisible) {
     undockMenuButton.click();
   }
-
-  await expect(page.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
+  if (options.checkPanelsVisible) {
+    await expect(page.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
+  }
 }
 
 export async function goToEmbeddedPanel(page: Page) {
@@ -302,7 +311,11 @@ export async function getTabPosition(dashboardPage: DashboardPage, selectors: E2
   return boundingBox;
 }
 
-export async function getRowPosition(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
+export async function getRowBox(
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  rowTitle: string
+): Promise<{ x: number; y: number; width: number; height: number }> {
   const row = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).first();
   await expect(row).toBeVisible();
   const boundingBox = await row.boundingBox();
@@ -319,7 +332,6 @@ export async function checkRepeatedRowTitles(
     await expect(
       dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(`${title}${option}`))
     ).toBeVisible();
-    await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(`${title}${option}`)).click();
   }
 }
 
@@ -330,4 +342,23 @@ export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage)
   if (confirmModal) {
     await confirmModal.click();
   }
+}
+
+export async function selectRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
+  await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).click();
+}
+export async function toggleRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
+  await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).click();
+}
+
+export function getPanelByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, panelTitle: string) {
+  return dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle));
+}
+
+export function getRowByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
+  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).first();
+}
+
+export function getRowWrapper(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
+  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper(rowTitle)).first();
 }
