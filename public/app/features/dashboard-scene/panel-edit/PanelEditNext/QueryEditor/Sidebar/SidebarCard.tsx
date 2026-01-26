@@ -61,8 +61,19 @@ export const SidebarCard = ({ query }: SidebarCardProps) => {
   const hasError = Boolean(queryError);
   const styles = useStyles2(getStyles, editorType, hasError);
 
+  const handleClick = () => {
+    // TODO: Implement click action (e.g., select/focus this query)
+    console.log('Card clicked:', query.refId);
+  };
+
   return (
-    <div className={styles.card} key={query.refId}>
+    <button
+      className={styles.card}
+      key={query.refId}
+      onClick={handleClick}
+      type="button"
+      aria-label={t('query-editor-next.sidebar.card-click', 'Select query {{refId}}', { refId: query.refId })}
+    >
       <Header editorType={editorType} hasError={hasError} />
       <div className={styles.cardContent}>
         <DataSourceLogo dataSource={queryDsSettings} />
@@ -70,7 +81,7 @@ export const SidebarCard = ({ query }: SidebarCardProps) => {
           {query.refId}
         </Text>
       </div>
-    </div>
+    </button>
   );
 };
 
@@ -82,6 +93,24 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: 
       background: theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
+      cursor: 'pointer',
+      padding: 0,
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
+
+      '&:hover': {
+        background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+        borderColor: theme.colors.border.medium,
+      },
+
+      '&:focus-visible': {
+        outline: `2px solid ${theme.colors.primary.border}`,
+        outlineOffset: '2px',
+      },
     }),
     cardHeader: css({
       display: 'flex',
