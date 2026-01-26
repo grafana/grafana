@@ -149,7 +149,7 @@ func TestValidateProvisioningConsistency(t *testing.T) {
 			},
 		}
 		affectedGroups := map[models.AlertRuleGroupKey]models.RulesGroup{
-			groupKey:  {makeRule("rule-1")},                  // Single rule - should be allowed
+			groupKey:  {makeRule("rule-1")},                     // Single rule - should be allowed
 			groupKey2: {makeRule("rule-2"), makeRule("rule-3")}, // Multiple with conflict - should fail
 		}
 

@@ -720,52 +720,48 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 
 // UpdateAlertRule updates an alert rule.
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
-	var storedRule *models.AlertRule
-	var deltaForValidation *store.GroupDelta // Store delta for later provenance validation.
 	if err := service.ensureNamespace(ctx, user, rule.OrgID, rule.NamespaceUID); err != nil {
 		return models.AlertRule{}, err
 	}
-	// check if the user has full access to all rules and can bypass the regular authorization validations.
-	// If it cannot, calculate the changes to the group caused by this update and authorize them.
+
+	// Calculate delta for authorization and validation.
+	delta, err := store.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule})
+	if err != nil {
+		return models.AlertRule{}, err
+	}
+
+	// Check if the user has full access to all rules and can bypass authorization.
 	canWriteAllRules, err := service.authz.CanWriteAllRules(ctx, user)
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	if canWriteAllRules {
-		query := &models.GetAlertRuleByUIDQuery{
-			OrgID: rule.OrgID,
-			UID:   rule.UID,
-		}
-		existing, err := service.ruleStore.GetAlertRuleByUID(ctx, query)
-		if err != nil {
-			return models.AlertRule{}, err
-		}
-		storedRule = existing
-	} else {
-		delta, err := store.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule})
-		if err != nil {
-			return models.AlertRule{}, err
-		}
-		deltaForValidation = delta // Store for later reuse.
+
+	if !canWriteAllRules {
 		if err = service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
 			return models.AlertRule{}, err
 		}
-		if delta.IsEmpty() {
-			// No changes to the rule.
-			return rule, nil
+	}
+
+	if delta.IsEmpty() {
+		// No changes to the rule.
+		return rule, nil
+	}
+
+	// New rules not allowed in update for a single rule.
+	if len(delta.New) > 0 {
+		return models.AlertRule{}, fmt.Errorf("failed to update rule with UID %s because %w", rule.UID, models.ErrAlertRuleNotFound)
+	}
+
+	// Find the stored rule from the delta.
+	var storedRule *models.AlertRule
+	for _, d := range delta.Update {
+		if d.Existing.GetKey() == rule.GetKey() {
+			storedRule = d.Existing
+			break
 		}
-		// new rules not allowed in update for a single rule
-		if len(delta.New) > 0 {
-			return models.AlertRule{}, fmt.Errorf("failed to update rule with UID %s because %w", rule.UID, models.ErrAlertRuleNotFound)
-		}
-		for _, d := range delta.Update {
-			if d.Existing.GetKey() == rule.GetKey() {
-				storedRule = d.Existing
-			}
-		}
-		if storedRule == nil { // this should not happen but we better catch it to avoid panic
-			return models.AlertRule{}, fmt.Errorf("cannot find rule in the delta")
-		}
+	}
+	if storedRule == nil {
+		return models.AlertRule{}, fmt.Errorf("cannot find rule in the delta")
 	}
 	storedProvenance, err := service.provenanceStore.GetProvenance(ctx, storedRule, storedRule.OrgID)
 	if err != nil {
@@ -775,16 +771,8 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		return models.AlertRule{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
 
-	// Use stored delta if available, otherwise calculate it.
-	if deltaForValidation == nil {
-		deltaForValidation, err = store.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule})
-		if err != nil {
-			return models.AlertRule{}, fmt.Errorf("failed to calculate delta: %w", err)
-		}
-	}
-
 	// Validate that updating this rule won't create a mixed-provenance group.
-	if err := validation.ValidateRuleProvenanceInGroupUpdate(ctx, service.provenanceStore, rule.OrgID, provenance, deltaForValidation.AffectedGroups, rule.UID); err != nil {
+	if err := validation.ValidateRuleProvenanceInGroupUpdate(ctx, service.provenanceStore, rule.OrgID, provenance, delta.AffectedGroups, rule.UID); err != nil {
 		return models.AlertRule{}, err
 	}
 
