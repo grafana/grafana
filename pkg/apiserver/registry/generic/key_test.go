@@ -1,8 +1,12 @@
 package generic
 
 import (
+	"context"
 	"reflect"
+	"strings"
 	"testing"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestParseKey(t *testing.T) {
@@ -120,6 +124,65 @@ func TestKey_String(t *testing.T) {
 			got := tt.key.String()
 			if got != tt.expected {
 				t.Errorf("Key.String() = %s, expected %s", got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestClusterScopedKeyFunc(t *testing.T) {
+	gr := schema.GroupResource{
+		Group:    "iam.grafana.app",
+		Resource: "globalroles",
+	}
+	keyFunc := ClusterScopedKeyFunc(gr)
+
+	tests := []struct {
+		name     string
+		ctx      context.Context
+		objName  string
+		expected string
+		wantErr  bool
+		errMsg   string
+	}{
+		{
+			name:     "Valid cluster-scoped resource",
+			ctx:      context.Background(),
+			objName:  "admin",
+			expected: "/group/iam.grafana.app/resource/globalroles/name/admin",
+			wantErr:  false,
+		},
+		{
+			name:    "Empty name should error",
+			ctx:     context.Background(),
+			objName: "",
+			wantErr: true,
+			errMsg:  "Name parameter required",
+		},
+		{
+			name:    "Invalid name with path separator",
+			ctx:     context.Background(),
+			objName: "invalid/name",
+			wantErr: true,
+			errMsg:  "Name parameter invalid",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := keyFunc(tt.ctx, tt.objName)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ClusterScopedKeyFunc() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr && err != nil && tt.errMsg != "" {
+				// Just check if the error message contains the expected substring
+				if !strings.Contains(err.Error(), tt.errMsg) {
+					t.Errorf("ClusterScopedKeyFunc() error message = %q, expected to contain %q", err.Error(), tt.errMsg)
+				}
+				return
+			}
+			if got != tt.expected {
+				t.Errorf("ClusterScopedKeyFunc() = %q, expected %q", got, tt.expected)
 			}
 		})
 	}

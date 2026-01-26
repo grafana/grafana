@@ -5174,6 +5174,9 @@
         "deleted": "deleted"
       }
     },
+    "kiosk": {
+      "footerPoweredBy": "Powered by"
+    },
     "layout": {
       "cancel": "Cancel",
       "common": {
@@ -12593,6 +12596,13 @@
       "title-data-source-help": "Data source help"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "Query/Transform detail view goes here",
+    "sidebar": {
+      "placeholder": "Sidebar content placeholder",
+      "toggle-size": "Toggle sidebar size"
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": "Open Query Library"
@@ -13357,6 +13367,7 @@
       "label-standard": "Standard"
     },
     "suggestions": {
+      "stat": "Stat",
       "stat-color-background": "Stat - color background",
       "stat-discrete-values": "Stat - discrete values",
       "stat-discrete-values-color-background": "Stat - discrete values - color background",
@@ -14967,6 +14978,9 @@
       "label-both": "Both",
       "label-lines": "Lines",
       "label-points": "Points"
+    },
+    "suggestions": {
+      "scatter-plot": "Scatter plot"
     }
   }
 }

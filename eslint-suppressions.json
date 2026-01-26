@@ -1737,13 +1737,8 @@
       "count": 1
     }
   },
-  "public/app/features/commandPalette/actions/scopeActions.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 4
-    }
-  },
-  "public/app/features/commandPalette/actions/scopesUtils.ts": {
-    "react-hooks/rules-of-hooks": {
+  "public/app/features/browse-dashboards/components/NewFolderForm.tsx": {
+    "no-restricted-syntax": {
       "count": 1
     }
   },
