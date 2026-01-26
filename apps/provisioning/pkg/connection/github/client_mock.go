@@ -21,6 +21,64 @@ func (_m *MockClient) EXPECT() *MockClient_Expecter {
 	return &MockClient_Expecter{mock: &_m.Mock}
 }
 
+// CreateInstallationAccessToken provides a mock function with given fields: ctx, installationID, repo
+func (_m *MockClient) CreateInstallationAccessToken(ctx context.Context, installationID string, repo string) (InstallationToken, error) {
+	ret := _m.Called(ctx, installationID, repo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateInstallationAccessToken")
+	}
+
+	var r0 InstallationToken
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (InstallationToken, error)); ok {
+		return rf(ctx, installationID, repo)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) InstallationToken); ok {
+		r0 = rf(ctx, installationID, repo)
+	} else {
+		r0 = ret.Get(0).(InstallationToken)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, installationID, repo)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_CreateInstallationAccessToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateInstallationAccessToken'
+type MockClient_CreateInstallationAccessToken_Call struct {
+	*mock.Call
+}
+
+// CreateInstallationAccessToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - installationID string
+//   - repo string
+func (_e *MockClient_Expecter) CreateInstallationAccessToken(ctx interface{}, installationID interface{}, repo interface{}) *MockClient_CreateInstallationAccessToken_Call {
+	return &MockClient_CreateInstallationAccessToken_Call{Call: _e.mock.On("CreateInstallationAccessToken", ctx, installationID, repo)}
+}
+
+func (_c *MockClient_CreateInstallationAccessToken_Call) Run(run func(ctx context.Context, installationID string, repo string)) *MockClient_CreateInstallationAccessToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_CreateInstallationAccessToken_Call) Return(_a0 InstallationToken, _a1 error) *MockClient_CreateInstallationAccessToken_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_CreateInstallationAccessToken_Call) RunAndReturn(run func(context.Context, string, string) (InstallationToken, error)) *MockClient_CreateInstallationAccessToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetApp provides a mock function with given fields: ctx
 func (_m *MockClient) GetApp(ctx context.Context) (App, error) {
 	ret := _m.Called(ctx)
@@ -130,6 +188,65 @@ func (_c *MockClient_GetAppInstallation_Call) Return(_a0 AppInstallation, _a1 er
 }
 
 func (_c *MockClient_GetAppInstallation_Call) RunAndReturn(run func(context.Context, string) (AppInstallation, error)) *MockClient_GetAppInstallation_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListInstallationRepositories provides a mock function with given fields: ctx, installationID
+func (_m *MockClient) ListInstallationRepositories(ctx context.Context, installationID string) ([]Repository, error) {
+	ret := _m.Called(ctx, installationID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListInstallationRepositories")
+	}
+
+	var r0 []Repository
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]Repository, error)); ok {
+		return rf(ctx, installationID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []Repository); ok {
+		r0 = rf(ctx, installationID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]Repository)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, installationID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_ListInstallationRepositories_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListInstallationRepositories'
+type MockClient_ListInstallationRepositories_Call struct {
+	*mock.Call
+}
+
+// ListInstallationRepositories is a helper method to define mock.On call
+//   - ctx context.Context
+//   - installationID string
+func (_e *MockClient_Expecter) ListInstallationRepositories(ctx interface{}, installationID interface{}) *MockClient_ListInstallationRepositories_Call {
+	return &MockClient_ListInstallationRepositories_Call{Call: _e.mock.On("ListInstallationRepositories", ctx, installationID)}
+}
+
+func (_c *MockClient_ListInstallationRepositories_Call) Run(run func(ctx context.Context, installationID string)) *MockClient_ListInstallationRepositories_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_ListInstallationRepositories_Call) Return(_a0 []Repository, _a1 error) *MockClient_ListInstallationRepositories_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_ListInstallationRepositories_Call) RunAndReturn(run func(context.Context, string) ([]Repository, error)) *MockClient_ListInstallationRepositories_Call {
 	_c.Call.Return(run)
 	return _c
 }

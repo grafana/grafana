@@ -1,7 +1,7 @@
-import { DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, Field, FieldType } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
-import { calculateTooltipPosition, getContentItems } from './utils';
+import { calculateTooltipPosition, getContentItems, getTooltipDisplayValue } from './utils';
 
 describe('utils', () => {
   describe('calculateTooltipPosition', () => {
@@ -363,6 +363,105 @@ describe('utils', () => {
       expect(rows.length).toBe(2);
       expect(rows[0].value).toBe('NORMAL');
       expect(rows[1].value).toBe('LOW');
+    });
+  });
+
+  describe('getDisplayValueString', () => {
+    const mockField = {
+      name: 'test-field',
+      type: FieldType.string,
+      values: [],
+      config: {},
+      display: (value: unknown) => ({
+        text: String(value),
+        numeric: typeof value === 'number' ? value : NaN,
+        color: '#000',
+      }),
+    } satisfies Field;
+
+    it('returns empty string for empty arrays', () => {
+      const result = getTooltipDisplayValue([], mockField);
+      expect(result.text).toBe('');
+      expect(result.numeric).toBeNaN();
+    });
+
+    it('returns JSON.stringify for non-empty arrays', () => {
+      const value = [1, 2, 3];
+      const result = getTooltipDisplayValue(value, mockField);
+      expect(result.text).toBe('[1,2,3]');
+      expect(result.numeric).toBeNaN();
+    });
+
+    it('returns JSON.stringify for arrays of objects', () => {
+      const value = [
+        { key: 'foo', value: 'bar' },
+        { key: 'baz', value: 'qux' },
+      ];
+      const result = getTooltipDisplayValue(value, mockField);
+      expect(result.text).toBe('[{"key":"foo","value":"bar"},{"key":"baz","value":"qux"}]');
+      expect(result.numeric).toBeNaN();
+    });
+
+    it('returns JSON.stringify for objects', () => {
+      const value = { refType: 'EXTERNAL', spanID: '123', tags: [{ key: 'service', value: 'api' }] };
+      const result = getTooltipDisplayValue(value, mockField);
+      expect(result.text).toBe('{"refType":"EXTERNAL","spanID":"123","tags":[{"key":"service","value":"api"}]}');
+      expect(result.numeric).toBeNaN();
+    });
+
+    it('uses field.display for standard string values', () => {
+      const result = getTooltipDisplayValue('test-string', mockField);
+      expect(result.text).toBe('test-string');
+      expect(result.numeric).toBeNaN();
+      expect(result.color).toBe('#000');
+    });
+
+    it('uses field.display for numeric values', () => {
+      const numericField = {
+        ...mockField,
+        type: FieldType.number,
+        display: (value: unknown) => ({
+          text: String(value),
+          numeric: Number(value),
+          color: '#00f',
+        }),
+      } satisfies Field;
+
+      const result = getTooltipDisplayValue(42, numericField);
+      expect(result.text).toBe('42');
+      expect(result.numeric).toBe(42);
+      expect(result.color).toBe('#00f');
+    });
+
+    it('uses field.display for null values', () => {
+      const result = getTooltipDisplayValue(null, mockField);
+      expect(result.text).toBe('null');
+      expect(result.numeric).toBeNaN();
+      expect(result.color).toBe('#000');
+    });
+
+    it('uses field.display for undefined values', () => {
+      const result = getTooltipDisplayValue(undefined, mockField);
+      expect(result.text).toBe('undefined');
+      expect(result.numeric).toBeNaN();
+      expect(result.color).toBe('#000');
+    });
+
+    it('uses field.display for boolean values', () => {
+      const result = getTooltipDisplayValue(true, mockField);
+      expect(result.text).toBe('true');
+      expect(result.numeric).toBeNaN();
+      expect(result.color).toBe('#000');
+    });
+
+    it('handles arrays with nested arrays', () => {
+      const value = [
+        [1, 2],
+        [3, 4],
+      ];
+      const result = getTooltipDisplayValue(value, mockField);
+      expect(result.text).toBe('[[1,2],[3,4]]');
+      expect(result.numeric).toBeNaN();
     });
   });
 });

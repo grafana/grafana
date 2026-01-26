@@ -161,6 +161,17 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       defaultValue: defaultOptions.textMode,
     });
 
+    builder.addNumberInput({
+      path: 'neutral',
+      name: t('radialbar.config.neutral.title', 'Neutral value'),
+      description: t('radialbar.config.neutral.description', 'Leave empty to use Min as neutral point'),
+      category,
+      settings: {
+        placeholder: t('radialbar.config.neutral.placeholder', 'none'),
+        step: 1,
+      },
+    });
+
     builder.addBooleanSwitch({
       path: 'sparkline',
       name: t('radialbar.config.sparkline', 'Show sparkline'),
@@ -177,7 +188,8 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
 
     builder.addBooleanSwitch({
       path: 'showThresholdLabels',
-      name: t('radialbar.config.threshold-labels', 'Show threshold labels'),
+      name: t('radialbar.config.threshold-labels', 'Show labels'),
+      description: t('radialbar.config.threshold-labels-description', 'Display threshold and neutral values'),
       category,
       defaultValue: defaultOptions.showThresholdLabels,
     });

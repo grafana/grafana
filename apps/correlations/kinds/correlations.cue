@@ -31,7 +31,9 @@ ConfigSpec: {
 	transformations?: [...TransformationSpec]
 }
 
-TargetSpec:  [string]: _
+TargetSpec: {
+	...
+}
 
 TransformationSpec: {
 	type: "regex" | "logfmt"

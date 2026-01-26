@@ -317,13 +317,16 @@ Click the **Copy time range to clipboard** icon to copy the current time range t
 
 You can also copy and paste a time range using the keyboard shortcuts `t+c` and `t+v` respectively.
 
-#### Zoom out (Cmd+Z or Ctrl+Z)
+#### Zoom out
 
-Click the **Zoom out** icon to view a larger time range in the dashboard or panel visualization.
+- Click the **Zoom out** icon to view a larger time range in the dashboard or panel visualizations
+- Double click on the panel graph area (time series family visualizations only)
+- Type the `t-` keyboard shortcut
 
-#### Zoom in (only applicable to graph visualizations)
+#### Zoom in
 
-Click and drag to select the time range in the visualization that you want to view.
+- Click and drag horizontally in the panel graph area to select a time range (time series family visualizations only)
+- Type the `t+` keyboard shortcut
 
 #### Refresh dashboard
 

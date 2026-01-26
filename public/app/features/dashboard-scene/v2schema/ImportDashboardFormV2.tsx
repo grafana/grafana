@@ -95,7 +95,7 @@ export const ImportDashboardFormV2 = ({
 
           return (
             <Field
-              label={input.pluginId}
+              label={input.name}
               description={input.description}
               key={input.pluginId}
               invalid={!!errors[dataSourceOption]}

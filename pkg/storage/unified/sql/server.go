@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/dskit/services"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -99,6 +100,9 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			return nil, err
 		}
 
+		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+			opts.Cfg.SectionWithEnvOverrides("resource_api"))
+
 		if opts.Cfg.EnableSQLKVBackend {
 			sqlkv, err := resource.NewSQLKV(eDB)
 			if err != nil {
@@ -106,9 +110,11 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			}
 
 			kvBackendOpts := resource.KVBackendOptions{
-				KvStore: sqlkv,
-				Tracer:  opts.Tracer,
-				Reg:     opts.Reg,
+				KvStore:            sqlkv,
+				Tracer:             opts.Tracer,
+				Reg:                opts.Reg,
+				UseChannelNotifier: !isHA,
+				Log:                log.New("storage-backend"),
 			}
 
 			ctx := context.Background()
@@ -122,16 +128,18 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 				return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
 			}
 
-			rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-				Dialect: dialect,
-				DB:      dbConn,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("failed to create resource version manager: %w", err)
+			if opts.Cfg.EnableSQLKVCompatibilityMode {
+				rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+					Dialect: dialect,
+					DB:      dbConn,
+				})
+				if err != nil {
+					return nil, fmt.Errorf("failed to create resource version manager: %w", err)
+				}
+
+				kvBackendOpts.RvManager = rvManager
 			}
 
-			// TODO add config to decide whether to pass RvManager or not
-			kvBackendOpts.RvManager = rvManager
 			kvBackend, err := resource.NewKVStorageBackend(kvBackendOpts)
 			if err != nil {
 				return nil, fmt.Errorf("error creating kv backend: %s", err)
@@ -140,15 +148,19 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			serverOptions.Backend = kvBackend
 			serverOptions.Diagnostics = kvBackend
 		} else {
-			isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
-				opts.Cfg.SectionWithEnvOverrides("resource_api"))
-
 			backend, err := NewBackend(BackendOptions{
 				DBProvider:           eDB,
 				Reg:                  opts.Reg,
 				IsHA:                 isHA,
 				storageMetrics:       opts.StorageMetrics,
 				LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
+				GarbageCollection: GarbageCollectionConfig{
+					Enabled:          opts.Cfg.EnableGarbageCollection,
+					Interval:         opts.Cfg.GarbageCollectionInterval,
+					BatchSize:        opts.Cfg.GarbageCollectionBatchSize,
+					MaxAge:           opts.Cfg.GarbageCollectionMaxAge,
+					DashboardsMaxAge: opts.Cfg.DashboardsGarbageCollectionMaxAge,
+				},
 			})
 			if err != nil {
 				return nil, err

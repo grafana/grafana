@@ -65,3 +65,7 @@ export const stringifyFieldSelector = (fieldSelectors: FieldSelector[]): string 
 export function isProvisionedResource(provenance?: string): boolean {
   return Boolean(provenance && provenance !== KnownProvenance.None);
 }
+
+export function isImportedResource(provenance?: string): boolean {
+  return provenance === KnownProvenance.ConvertedPrometheus;
+}
