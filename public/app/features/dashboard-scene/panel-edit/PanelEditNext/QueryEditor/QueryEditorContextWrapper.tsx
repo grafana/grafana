@@ -25,7 +25,6 @@ export function QueryEditorContextWrapper({
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
   const [selectedQuery, setSelectedQuery] = useState<DataQuery | null>(null);
-
   const dsState = useMemo(
     () => ({
       datasource,
@@ -57,28 +56,13 @@ export function QueryEditorContextWrapper({
     };
   }, [panel]);
 
-  // Set the first query as selected by default
   useEffect(() => {
     const queries = queryRunnerState?.queries ?? [];
-
-    // If no query is selected and there are queries available, select the first one
-    if (!selectedQuery && queries.length > 0) {
+    if (queries.length > 0) {
       setSelectedQuery(queries[0]);
     }
-
-    // If the selected query no longer exists in the queries array, select the first one
-    if (selectedQuery && queries.length > 0) {
-      const queryStillExists = queries.some((q) => q.refId === selectedQuery.refId);
-      if (!queryStillExists) {
-        setSelectedQuery(queries[0]);
-      }
-    }
-
-    // If all queries are removed, clear the selection
-    if (selectedQuery && queries.length === 0) {
-      setSelectedQuery(null);
-    }
-  }, [queryRunnerState?.queries, selectedQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const uiState = useMemo(
     () => ({
