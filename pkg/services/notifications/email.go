@@ -20,6 +20,7 @@ type EmbeddedContent struct {
 // Message is representation of the email message.
 type Message struct {
 	To               []string
+	Bcc              []string
 	SingleEmail      bool
 	From             string
 	Subject          string

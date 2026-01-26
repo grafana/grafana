@@ -26,6 +26,21 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/notifications")
 
+type SendError struct {
+	recipients []string
+	err        error
+}
+
+func NewSendError(recipients []string, err error) *SendError {
+	return &SendError{recipients: recipients, err: err}
+}
+
+func (e *SendError) Error() string { return e.err.Error() }
+
+func (e *SendError) Recipients() []string { return e.recipients }
+
+func (e *SendError) Unwrap() error { return e.err }
+
 type SmtpClient struct {
 	cfg setting.SmtpSettings
 }
@@ -58,7 +73,7 @@ func (sc *SmtpClient) Send(ctx context.Context, messages ...*Message) (int, erro
 	for _, msg := range messages {
 		err := sc.sendMessage(ctx, dialer, msg)
 		if err != nil {
-			return sentEmailsCount, err
+			return sentEmailsCount, NewSendError(msg.To, err)
 		}
 
 		sentEmailsCount++
@@ -79,7 +94,6 @@ func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, ms
 	err := dialer.DialAndSend(m)
 	emailsSentTotal.Inc()
 	if err != nil {
-		// x
 		// As gomail does not returned typed errors we have to parse the error
 		// to catch invalid error when the address is invalid.
 		// https://github.com/go-gomail/gomail/blob/81ebce5c23dfd25c6c67194b37d3dd3f338c98b1/send.go#L113
@@ -101,7 +115,12 @@ func (sc *SmtpClient) buildEmail(ctx context.Context, msg *Message) *gomail.Mess
 		m.SetHeader(h, val)
 	}
 	m.SetHeader("From", msg.From)
-	m.SetHeader("To", msg.To...)
+	if len(msg.To) > 0 {
+		m.SetHeader("To", msg.To...)
+	}
+	if len(msg.Bcc) > 0 {
+		m.SetHeader("Bcc", msg.Bcc...)
+	}
 	m.SetHeader("Subject", msg.Subject)
 
 	from, err := mail.ParseAddress(msg.From)

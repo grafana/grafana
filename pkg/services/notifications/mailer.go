@@ -113,6 +113,7 @@ func (ns *NotificationService) buildEmailMessage(cmd *SendEmailCommand) (*Messag
 	addr := mail.Address{Name: ns.Cfg.Smtp.FromName, Address: ns.Cfg.Smtp.FromAddress}
 	return &Message{
 		To:               cmd.To,
+		Bcc:              cmd.Bcc,
 		SingleEmail:      cmd.SingleEmail,
 		From:             addr.String(),
 		Subject:          subject,
