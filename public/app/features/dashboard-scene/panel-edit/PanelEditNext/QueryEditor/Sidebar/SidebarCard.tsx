@@ -3,27 +3,13 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
-import { Icon, IconSize, Text, useStyles2 } from '@grafana/ui';
+import { Icon, Text, useStyles2 } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useQueryRunnerContext, useQueryEditorUIContext } from '../QueryEditorContext';
-
-// TODO: will remove this once we have the correct icons in constants.ts
-const CardIcon = ({ type, size = 'sm' }: { type: string | undefined; size?: IconSize }) => {
-  switch (type) {
-    case 'query':
-      return <Icon name="database" size={size} />;
-    case 'expression':
-      return <Icon name="code-branch" size={size} />;
-    case 'transformation':
-      return <Icon name="gf-interpolation-linear" size={size} />;
-    default:
-      return null;
-  }
-};
 
 const Header = ({ editorType, hasError }: { editorType: QueryEditorType; hasError: boolean }) => {
   const styles = useStyles2(getStyles, editorType, hasError);
@@ -35,7 +21,7 @@ const Header = ({ editorType, hasError }: { editorType: QueryEditorType; hasErro
   return (
     <div className={styles.cardHeader}>
       <div className={styles.cardHeaderContent}>
-        <CardIcon type={editorType} />
+        <Icon name={QUERY_EDITOR_TYPE_CONFIG[editorType].icon} />
         <Text weight="light" variant="body">
           {typeText}
         </Text>
@@ -45,7 +31,8 @@ const Header = ({ editorType, hasError }: { editorType: QueryEditorType; hasErro
   );
 };
 
-const getEditorType = (query: DataQuery): QueryEditorType => (isExpressionQuery(query) ? 'expression' : 'query');
+const getEditorType = (query: DataQuery): QueryEditorType =>
+  isExpressionQuery(query) ? QueryEditorType.Expression : QueryEditorType.Query;
 
 interface SidebarCardProps {
   query: DataQuery;
