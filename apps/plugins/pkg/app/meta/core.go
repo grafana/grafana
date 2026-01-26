@@ -2,9 +2,6 @@ package meta
 
 import (
 	"context"
-	"errors"
-	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -30,27 +27,29 @@ const (
 
 // CoreProvider retrieves plugin metadata for core plugins.
 type CoreProvider struct {
-	mu            sync.RWMutex
-	loadedPlugins map[string]pluginsv0alpha1.MetaSpec
-	initialized   bool
-	ttl           time.Duration
-	loader        pluginsLoader.Service
+	mu              sync.RWMutex
+	loadedPlugins   map[string]pluginsv0alpha1.MetaSpec
+	initialized     bool
+	ttl             time.Duration
+	loader          pluginsLoader.Service
+	pluginsPathFunc func() (string, error)
 }
 
 // NewCoreProvider creates a new CoreProvider for core plugins.
-func NewCoreProvider() *CoreProvider {
-	return NewCoreProviderWithTTL(defaultCoreTTL)
+func NewCoreProvider(pluginsPath func() (string, error)) *CoreProvider {
+	return NewCoreProviderWithTTL(pluginsPath, defaultCoreTTL)
 }
 
 // NewCoreProviderWithTTL creates a new CoreProvider with a custom TTL.
-func NewCoreProviderWithTTL(ttl time.Duration) *CoreProvider {
+func NewCoreProviderWithTTL(pluginsPathFunc func() (string, error), ttl time.Duration) *CoreProvider {
 	cfg := &config.PluginManagementCfg{
 		Features: config.Features{},
 	}
 	return &CoreProvider{
-		loadedPlugins: make(map[string]pluginsv0alpha1.MetaSpec),
-		ttl:           ttl,
-		loader:        createLoader(cfg),
+		loadedPlugins:   make(map[string]pluginsv0alpha1.MetaSpec),
+		ttl:             ttl,
+		loader:          createLoader(cfg),
+		pluginsPathFunc: pluginsPathFunc,
 	}
 }
 
@@ -100,31 +99,17 @@ func (p *CoreProvider) GetMeta(ctx context.Context, pluginID, _ string) (*Result
 }
 
 // loadPlugins discovers and caches all core plugins by fully loading them.
-// Returns an error if the static root path cannot be found or if plugin loading fails.
+// Returns an error if the plugins path cannot be found or if plugin loading fails.
 // This error will be handled gracefully by GetMeta, which will return ErrMetaNotFound
 // to allow other providers to handle the request.
 func (p *CoreProvider) loadPlugins(ctx context.Context) error {
-	var staticRootPath string
-	wd, err := os.Getwd()
+	pluginsPath, err := p.pluginsPathFunc()
 	if err != nil {
-		logging.FromContext(ctx).Warn("CoreProvider: could not determine current working directory", "error", err)
-		return errors.New("could not find Grafana static root path from current working directory")
-	}
-	// Check if we're in the Grafana root
-	publicPath := filepath.Join(wd, "public", "app", "plugins")
-	if _, err = os.Stat(publicPath); err == nil {
-		staticRootPath = filepath.Join(wd, "public")
+		logging.FromContext(ctx).Warn("CoreProvider: could not get plugins path", "error", err)
+		return err
 	}
 
-	if staticRootPath == "" {
-		logging.FromContext(ctx).Warn("CoreProvider: could not determine current working directory", "wd", wd, "error", err)
-		return errors.New("could not find Grafana static root path")
-	}
-
-	datasourcePath := filepath.Join(staticRootPath, "app", "plugins", "datasource")
-	panelPath := filepath.Join(staticRootPath, "app", "plugins", "panel")
-
-	src := sources.NewLocalSource(plugins.ClassCore, []string{datasourcePath, panelPath})
+	src := sources.NewLocalSource(plugins.ClassCore, []string{pluginsPath})
 	loadedPlugins, err := p.loader.Load(ctx, src)
 	if err != nil {
 		return err

@@ -91,6 +91,13 @@ func (a *SyncRuleStatePersister) Sync(ctx context.Context, span trace.Span, rule
 		if s.Error != nil {
 			lastError = s.Error.Error()
 		}
+		var lastResult models.LastResult
+		if s.LatestResult != nil {
+			lastResult = models.LastResult{
+				Values:    s.LatestResult.Values,
+				Condition: s.LatestResult.Condition,
+			}
+		}
 		instance := models.AlertInstance{
 			AlertInstanceKey:   key,
 			Labels:             models.InstanceLabels(s.Labels),
@@ -106,6 +113,7 @@ func (a *SyncRuleStatePersister) Sync(ctx context.Context, span trace.Span, rule
 			ResultFingerprint:  s.ResultFingerprint.String(),
 			EvaluationDuration: s.EvaluationDuration,
 			LastError:          lastError,
+			LastResult:         lastResult,
 		}
 
 		instancesToSave = append(instancesToSave, instance)

@@ -799,12 +799,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "削除",
       "duplicate": "複製",
       "label-integration": "統合",
       "label-notification-settings": "通知設定",
       "label-section": "{{name}}のオプション設定",
       "test": "テスト",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -1638,6 +1640,11 @@
       },
       "yaml-error": "YAMLファイルの解析に失敗しました: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "システムの状態を監視する",
       "monitor-status-system-tooltip": "アラートインサイトはアラートデータを監視するための既成ダッシュボードを提供します。",
@@ -1923,6 +1930,10 @@
       "select-group": "グループを選択",
       "select-namespace": "名前空間を選択"
     },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
+    },
     "need-help-info": {
       "need-help": "サポートが必要ですか？"
     },
@@ -2170,8 +2181,10 @@
       "badge-tooltip-provenance": "このリソースは{{provenance}}を介してプロビジョニングされており、UIから編集することはできません",
       "badge-tooltip-standard": "このリソースはプロビジョニングされており、UIから編集することはできません",
       "body-imported": "",
+      "body-imported-time-interval": "",
       "body-provisioned": "この{{resource}}はプロビジョニングされたものです。つまり、設定によって作成されました。この{{resource}}を更新するには、サーバー管理者にお問い合わせください。",
       "title-imported": "",
+      "title-imported-time-interval": "",
       "title-provisioned": "この{{resource}}はUI上で編集できません"
     },
     "provisioning-badge": {
@@ -2666,7 +2679,10 @@
     "rules-group": {
       "deleting": "削除しています",
       "text-federated": "フェデレーション",
-      "text-provisioned": "プロビジョニング済み"
+      "text-provisioned": "プロビジョニング済み",
+      "ungrouped": "",
+      "ungrouped-suffix": "",
+      "unknown-rule": ""
     },
     "saved-searches": {
       "actions-aria-label": "",
@@ -3709,6 +3725,7 @@
       "non-folder-item": "非フォルダ {{itemKind}} {{itemUID}}",
       "root-title": "ダッシュボード",
       "search-placeholder": "フォルダを検索",
+      "shared-with-me": "",
       "unknown-error": "不明なエラー"
     },
     "manage-folder-nav": {
@@ -3809,6 +3826,7 @@
       "label-method": "メソッド",
       "label-payload": "ペイロード",
       "label-query-parameters": "クエリのパラメータ",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "APIをテストする",
         "title-test-api": "APIをテストする"
@@ -4524,6 +4542,14 @@
     "actions": {
       "open-settings": "設定"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "「パネルを追加」ウィジェットを閉じる",
       "tooltip-close-widget": "ウィジェットを閉じる"
@@ -4906,12 +4932,14 @@
       "add-visualization-body": "データソースを選択し、グラフ、統計、テーブルを使用してデータをクエリおよび視覚化するか、リスト、マークダウン、その他のウィジェットを作成します。",
       "add-visualization-button": "視覚化を追加",
       "add-visualization-header": "視覚化を追加して新しいダッシュボードを開始します",
+      "description": "",
       "import-a-dashboard-body": "ファイルまたは<1>grafana.com</1>からダッシュボードをインポートします。",
       "import-a-dashboard-header": "ダッシュボードをインポートする",
       "import-dashboard-button": "ダッシュボードをインポート",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5123,6 +5151,9 @@
       "title": {
         "deleted": "削除済み"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -5417,6 +5448,10 @@
       "loading-configuration": "設定を読み込み中"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -5426,11 +5461,7 @@
         "tooltip": ""
       },
       "export": {
-        "title": "",
-        "unsaved-modal": {
-          "text": "",
-          "title": ""
-        }
+        "title": ""
       },
       "outline": {
         "title": "",
@@ -5570,14 +5601,6 @@
           "arrow": "共有",
           "title": "共有",
           "tooltip": "リンクをコピー"
-        },
-        "share-export": {
-          "modal": {
-            "noText": "破棄",
-            "text": "このダッシュボードには未保存の変更があります。共有する前に保存する必要があります。",
-            "title": "ダッシュボードの変更を保存しますか？",
-            "yesText": "保存"
-          }
         },
         "unlink-library-panel": "ライブラリパネルのリンクを解除"
       },
@@ -6440,7 +6463,7 @@
       "loading-connected-dashboards": "接続されたダッシュボードを読み込み中...",
       "placeholder-search-affected-dashboards": "影響を受けるダッシュボードを検索",
       "update-all": "すべて更新",
-      "affected-dashboards_other": "この更新は<1>{{count}}件のダッシュボード</1>に影響します。このパネルを使用している次のダッシュボードが影響を受けます。"
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "ダッシュボードの保存中にエラーが発生しました",
@@ -6475,6 +6498,12 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "共有メニューを切り替え"
+    },
+    "sharing": {
+      "save-before-share": {
+        "text": "",
+        "title": ""
+      }
     },
     "support-snapshot-service": {
       "description": {
@@ -9525,7 +9554,7 @@
     "query-inspector": {
       "query-inspector": "クエリ検査",
       "text-loading-query-inspector": "クエリインスペクタ読み込み中...",
-      "count-frames_other": "{{count}}個のフレーム、",
+      "count-frames_other": "",
       "count-rows_other": "{{count}}行"
     }
   },
@@ -9781,7 +9810,7 @@
       "loading-connected-dashboards": "接続されたダッシュボードを読み込み中...",
       "placeholder-search-affected-dashboards": "影響を受けるダッシュボードを検索",
       "update-all": "すべて更新",
-      "num-affected_other": "この更新は<1>{{count}}件のダッシュボード</1>に影響します。"
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -11798,10 +11827,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -11988,6 +12014,8 @@
       "error-delete-all-repositories": "すべてのリポジトリの削除に失敗しました",
       "subtitle": "設定済みのリポジトリを表示・管理",
       "success-all-repositories-deleted": "設定済みのリポジトリがすべて削除されました",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "はじめに",
       "tab-getting-started-title": "はじめに",
       "tab-repositories": "リポジトリ",
@@ -12051,6 +12079,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12071,7 +12102,6 @@
       "jobs": "ジョブ"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "設定",
       "source-code": "ソースコード"
     },
@@ -12251,6 +12281,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "完了",
@@ -12263,15 +12298,30 @@
         "dismiss": "作業を続ける",
         "title": "リポジトリの設定を破棄しますか？"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "同期する内容を選択",
+      "step-configure-repo": "",
       "step-connect": "接続",
       "step-finish": "追加設定を選択",
+      "step-github-app": "",
       "step-synchronize": "外部ストレージと同期",
       "sync-description": "リソースを外部ストレージと同期します。この一度限りの手順が完了すると、その後のすべての更新は自動的にリポジトリに保存され、インスタンスにプロビジョニングされます。",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "同期する内容を選択",
+      "title-configure-repo": "",
       "title-connect": "外部ストレージに接続",
       "title-finish": "追加設定を選択",
+      "title-github-app": "",
       "title-synchronize": "外部ストレージと同期"
     },
     "wizard-content": {
@@ -12490,15 +12540,39 @@
       "title-data-source-help": "データソースヘルプ"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
+    }
+  },
   "query-operation": {
     "header": {
+      "app-dashboard": "",
+      "app-explore": "",
+      "app-label": "",
+      "assistant-actionable-create": "",
+      "assistant-actionable-update": "",
+      "assistant-prompt-create": "",
+      "assistant-prompt-update": "",
       "collapse-row": "クエリ行を折りたたむ",
+      "current-query": "",
+      "current-query-label": "",
       "datasource-help": "データソースヘルプを表示",
       "drag-and-drop": "ドラッグアンドドロップで並べ替え",
       "duplicate-query": "クエリを複製",
       "expand-row": "クエリ行を展開",
       "hide-response": "回答を非表示にする",
+      "other-queries": "",
+      "query-with-assistant": "",
       "remove-query": "クエリを削除",
+      "selected-datasource-label": "",
       "show-response": "応答の表示"
     },
     "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
@@ -13234,6 +13308,7 @@
       "label-standard": "標準"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -13291,7 +13366,7 @@
       "label-never": "なし"
     },
     "status-history-panel": {
-      "too-many-points_other": "ポイントが多すぎて適切に可視化できません。<1></1>より少ないポイントが返されるようにクエリを更新してください。<3></3>（{{count}}ポイントを受信）"
+      "too-many-points_other": ""
     }
   },
   "support-bundles": {
@@ -14843,6 +14918,9 @@
       "label-both": "両方",
       "label-lines": "線",
       "label-points": "ポイント"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

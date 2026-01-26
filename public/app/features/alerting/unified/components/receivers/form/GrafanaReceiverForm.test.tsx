@@ -48,6 +48,11 @@ const ui = {
     existing: byRole('radio', { name: 'Use an existing IRM integration' }),
   },
   newOnCallIntegrationName: byRole('textbox', { name: /Integration name/ }),
+  // Test contact point UI elements
+  testButton: byRole('button', { name: /Test/ }),
+  testModal: byRole('dialog'),
+  sendTestNotificationButton: byRole('button', { name: /send test notification/i }),
+  closeModalButton: byRole('button', { name: /Close/ }),
   existingOnCallIntegrationSelect: (index: number) => byTestId(`items.${index}.settings.url`),
   saveButton: byRole('button', { name: /save contact point/i }),
   slack: {
@@ -597,6 +602,122 @@ describe('GrafanaReceiverForm', () => {
       expect(integrationPayload.secureFields).not.toHaveProperty('http_config.oauth2.tls_config.clientKey');
 
       expect(postRequestBody).toMatchSnapshot();
+    });
+  });
+
+  describe('Test contact point', () => {
+    it('should send empty name when testing a new contact point', async () => {
+      const capturedRequests = captureRequests(
+        (req) => req.url.includes('/config/api/v1/receivers/test') && req.method === 'POST'
+      );
+
+      const { user } = renderWithProvider(<GrafanaReceiverForm />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      // Fill in the required name field
+      const nameField = screen.getByRole('textbox', { name: /^name/i });
+      await user.type(nameField, 'my-new-contact-point');
+
+      // Fill in the required email field
+      const emailField = screen.getByRole('textbox', { name: /^Addresses/ });
+      await user.clear(emailField);
+      await user.type(emailField, 'test@example.com');
+
+      // Click the test button
+      await user.click(ui.testButton.get());
+
+      // Wait for the modal and send the test notification
+      await waitFor(() => expect(ui.testModal.query()).toBeInTheDocument());
+      await user.click(ui.sendTestNotificationButton.get());
+
+      const [request] = await capturedRequests;
+      const requestBody = await request.clone().json();
+
+      // For new receivers, the name should be empty string (not the form value)
+      // This is because the receiver doesn't exist yet, so permissions are checked against receivers:type:new scope
+      expect(requestBody.receivers[0].name).toBe('');
+    });
+
+    it('should send original name when testing an existing contact point', async () => {
+      const originalContactPointName = 'my-existing-contact-point';
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [
+          integrationFactory
+            .email()
+            .params({ settings: { addresses: 'existing@example.com' } })
+            .build(),
+        ])
+        .build({
+          id: 'contact-point-id',
+          name: originalContactPointName,
+          metadata: { name: originalContactPointName },
+        });
+
+      const capturedRequests = captureRequests(
+        (req) => req.url.includes('/config/api/v1/receivers/test') && req.method === 'POST'
+      );
+
+      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      // Click the test button
+      await user.click(ui.testButton.get());
+
+      // Wait for the modal and send the test notification
+      await waitFor(() => expect(ui.testModal.query()).toBeInTheDocument());
+      await user.click(ui.sendTestNotificationButton.get());
+
+      const [request] = await capturedRequests;
+      const requestBody = await request.clone().json();
+
+      // For existing receivers, the name should be the original name
+      // This allows the backend to check permissions against receivers:uid:<uid> scope
+      expect(requestBody.receivers[0].name).toBe(originalContactPointName);
+    });
+
+    it('should send original name even when the contact point name is changed in the form', async () => {
+      const originalContactPointName = 'original-name';
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [
+          integrationFactory
+            .email()
+            .params({ settings: { addresses: 'test@example.com' } })
+            .build(),
+        ])
+        .build({
+          id: 'contact-point-id',
+          name: originalContactPointName,
+          metadata: { name: originalContactPointName },
+        });
+
+      const capturedRequests = captureRequests(
+        (req) => req.url.includes('/config/api/v1/receivers/test') && req.method === 'POST'
+      );
+
+      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      // Change the name in the form to simulate a rename
+      const nameField = screen.getByRole('textbox', { name: /^name/i });
+      await user.clear(nameField);
+      await user.type(nameField, 'renamed-contact-point');
+
+      // Click the test button
+      await user.click(ui.testButton.get());
+
+      // Wait for the modal and send the test notification
+      await waitFor(() => expect(ui.testModal.query()).toBeInTheDocument());
+      await user.click(ui.sendTestNotificationButton.get());
+
+      const [request] = await capturedRequests;
+      const requestBody = await request.clone().json();
+
+      // Even though the name was changed in the form, the test should use the ORIGINAL name
+      // This is critical for authorization - the backend needs the original name to check permissions
+      expect(requestBody.receivers[0].name).toBe(originalContactPointName);
     });
   });
 });
