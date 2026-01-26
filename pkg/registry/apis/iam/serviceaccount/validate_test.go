@@ -77,7 +77,7 @@ func TestValidateOnCreate(t *testing.T) {
 				OrgRole: identity.RoleViewer,
 			},
 			expectError:   true,
-			errorContains: "can not assign a role higher than user's role",
+			errorContains: "cannot assign a role higher than user's role",
 		},
 		{
 			name: "external service account - valid",

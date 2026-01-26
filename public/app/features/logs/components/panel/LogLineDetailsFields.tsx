@@ -12,9 +12,11 @@ import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
 import { LogLabelStats } from '../LogLabelStats';
 import { FieldDef } from '../logParser';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
+import { useLogDetailsContext } from './LogDetailsContext';
 import { useLogListContext } from './LogListContext';
-import { LogListModel } from './processing';
+import { LogListModel, getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsFieldsProps {
   disableActions?: boolean;
@@ -138,7 +140,6 @@ export const LogLineDetailsField = ({
   const [fieldStats, setFieldStats] = useState<LogLabelStatsModel[] | null>(null);
   const {
     app,
-    closeDetails,
     displayedFields,
     isLabelFilterActive,
     noInteractions,
@@ -150,6 +151,7 @@ export const LogLineDetailsField = ({
     pinLineButtonTooltipTitle,
     prettifyJSON,
   } = useLogListContext();
+  const { closeDetails } = useLogDetailsContext();
 
   const styles = useStyles2(getFieldStyles);
 
@@ -258,62 +260,68 @@ export const LogLineDetailsField = ({
   const singleKey = keys.length === 1;
   const singleValue = values.length === 1;
 
+  const fieldSupportsFilters = keys[0] !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME;
+
   return (
     <>
       <div className={styles.row}>
         {!disableActions && (
           <div className={styles.actions}>
-            {onClickFilterLabel && (
-              <AsyncIconButton
-                name="search-plus"
-                onClick={filterLabel}
-                // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
-                isActive={labelFilterActive}
-                tooltipSuffix={refIdTooltip}
-              />
-            )}
-            {onClickFilterOutLabel && (
+            <div className={styles.actionIcons}>
+              {onClickFilterLabel && fieldSupportsFilters && (
+                <AsyncIconButton
+                  name="search-plus"
+                  onClick={filterLabel}
+                  // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
+                  isActive={labelFilterActive}
+                  tooltipSuffix={refIdTooltip}
+                />
+              )}
+              {onClickFilterOutLabel && fieldSupportsFilters && (
+                <IconButton
+                  name="search-minus"
+                  tooltip={
+                    app === CoreApp.Explore && log.dataFrame?.refId
+                      ? t('logs.log-line-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
+                          query: log.dataFrame?.refId,
+                        })
+                      : t('logs.log-line-details.fields.filter-out', 'Filter out value')
+                  }
+                  onClick={filterOutLabel}
+                />
+              )}
+              {singleKey && displayedFields.includes(keys[0]) && (
+                <IconButton
+                  variant="primary"
+                  tooltip={t('logs.log-line-details.fields.toggle-field-button.hide-this-field', 'Hide this field')}
+                  name="eye"
+                  onClick={hideField}
+                />
+              )}
+              {singleKey && !displayedFields.includes(keys[0]) && (
+                <IconButton
+                  tooltip={t(
+                    'logs.log-line-details.fields.toggle-field-button.field-instead-message',
+                    'Show this field instead of the message'
+                  )}
+                  name="eye"
+                  onClick={showField}
+                />
+              )}
               <IconButton
-                name="search-minus"
-                tooltip={
-                  app === CoreApp.Explore && log.dataFrame?.refId
-                    ? t('logs.log-line-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
-                        query: log.dataFrame?.refId,
-                      })
-                    : t('logs.log-line-details.fields.filter-out', 'Filter out value')
-                }
-                onClick={filterOutLabel}
+                variant={showFieldsStats ? 'primary' : 'secondary'}
+                name="signal"
+                tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
+                className={styles.statsIcon}
+                disabled={!singleKey}
+                onClick={showStats}
               />
-            )}
-            {singleKey && displayedFields.includes(keys[0]) && (
-              <IconButton
-                variant="primary"
-                tooltip={t('logs.log-line-details.fields.toggle-field-button.hide-this-field', 'Hide this field')}
-                name="eye"
-                onClick={hideField}
-              />
-            )}
-            {singleKey && !displayedFields.includes(keys[0]) && (
-              <IconButton
-                tooltip={t(
-                  'logs.log-line-details.fields.toggle-field-button.field-instead-message',
-                  'Show this field instead of the message'
-                )}
-                name="eye"
-                onClick={showField}
-              />
-            )}
-            <IconButton
-              variant={showFieldsStats ? 'primary' : 'secondary'}
-              name="signal"
-              tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
-              className="stats-button"
-              disabled={!singleKey}
-              onClick={showStats}
-            />
+            </div>
           </div>
         )}
-        <div className={styles.label}>{singleKey ? keys[0] : <MultipleValue values={keys} />}</div>
+        <div className={styles.label}>
+          {singleKey ? getNormalizedFieldName(keys[0]) : <MultipleValue values={keys} />}
+        </div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
             {singleValue ? (
@@ -382,6 +390,15 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   actions: css({
     whiteSpace: 'nowrap',
   }),
+  actionIcons: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    paddingRight: 2,
+  }),
+  statsIcon: css({
+    margin: 0,
+    paddingRight: 4,
+  }),
   label: css({
     paddingRight: theme.spacing(1),
     overflowWrap: 'break-word',
@@ -419,7 +436,7 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     lineHeight: theme.typography.body.lineHeight,
     whiteSpace: 'pre-wrap',
-    wordBreak: 'break-all',
+    wordBreak: 'break-word',
     maxHeight: '50vh',
     overflow: 'auto',
   }),

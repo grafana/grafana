@@ -1,8 +1,10 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 
 import { TextPanel } from './TextPanel';
 import { TextPanelEditor } from './TextPanelEditor';
+import icnTextPanelSvg from './img/icn-text-panel.svg';
 import { CodeLanguage, defaultCodeOptions, defaultOptions, Options, TextMode } from './panelcfg.gen';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
@@ -59,4 +61,9 @@ export const plugin = new PanelPlugin<Options>(TextPanel)
         defaultValue: defaultOptions.content,
       });
   })
-  .setMigrationHandler(textPanelMigrationHandler);
+  .setMigrationHandler(textPanelMigrationHandler)
+  .setSuggestionsSupplier((ds) =>
+    ds.fieldCount === 0 && !config.featureToggles.newVizSuggestions
+      ? [{ cardOptions: { imgSrc: icnTextPanelSvg } }]
+      : []
+  );

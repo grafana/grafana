@@ -1,13 +1,6 @@
-import { OverrideProperties } from 'type-fest';
-
-import { RoutingTreeMatcher } from '../api/v0alpha1/api.gen';
+import { RoutingTreeMatcher } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 
 export type Label = [string, string];
 
-// type-narrow the matchers the specify exact allowed set of operators
-export type LabelMatcher = OverrideProperties<
-  RoutingTreeMatcher,
-  {
-    type: '=' | '!=' | '=~' | '!~';
-  }
->;
+// type alias
+export type LabelMatcher = RoutingTreeMatcher;

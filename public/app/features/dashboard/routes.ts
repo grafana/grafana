@@ -1,7 +1,7 @@
+import { config } from '@grafana/runtime';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { SafeDynamicImport } from '../../core/components/DynamicImports/SafeDynamicImport';
-import { config } from '../../core/config';
 import { RouteDescriptor } from '../../core/navigation/types';
 
 export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
@@ -24,6 +24,7 @@ export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
     {
       path: '/public-dashboards/:accessToken',
       pageClass: 'page-dashboard',
+      allowAnonymous: true,
       routeName: DashboardRoutes.Public,
       chromeless: true,
       component: SafeDynamicImport(

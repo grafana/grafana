@@ -128,6 +128,101 @@ func (r RepositoryType) IsGit() bool {
 	return r == GitRepositoryType || r == GitHubRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
 }
 
+// Branch returns the branch for git-based repositories
+// or an empty string for local repositories
+func (r *Repository) Branch() string {
+	if !r.Spec.Type.IsGit() {
+		return ""
+	}
+
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			return r.Spec.GitHub.Branch
+		}
+	case GitRepositoryType:
+		if r.Spec.Git != nil {
+			return r.Spec.Git.Branch
+		}
+	case BitbucketRepositoryType:
+		if r.Spec.Bitbucket != nil {
+			return r.Spec.Bitbucket.Branch
+		}
+	case GitLabRepositoryType:
+		if r.Spec.GitLab != nil {
+			return r.Spec.GitLab.Branch
+		}
+	default:
+		return ""
+	}
+
+	return ""
+}
+
+// URL returns the URL for git-based repositories
+// or an empty string for local repositories
+func (r *Repository) URL() string {
+	if !r.Spec.Type.IsGit() {
+		return ""
+	}
+
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			return r.Spec.GitHub.URL
+		}
+	case GitRepositoryType:
+		if r.Spec.Git != nil {
+			return r.Spec.Git.URL
+		}
+	case BitbucketRepositoryType:
+		if r.Spec.Bitbucket != nil {
+			return r.Spec.Bitbucket.URL
+		}
+	case GitLabRepositoryType:
+		if r.Spec.GitLab != nil {
+			return r.Spec.GitLab.URL
+		}
+	default:
+		return ""
+	}
+
+	return ""
+}
+
+func (r *Repository) Path() string {
+	switch r.Spec.Type {
+	case GitHubRepositoryType:
+		if r.Spec.GitHub != nil {
+			return r.Spec.GitHub.Path
+		}
+	case GitRepositoryType:
+		if r.Spec.Git != nil {
+			return r.Spec.Git.Path
+		}
+	case BitbucketRepositoryType:
+		if r.Spec.Bitbucket != nil {
+			return r.Spec.Bitbucket.Path
+		}
+	case GitLabRepositoryType:
+		if r.Spec.GitLab != nil {
+			return r.Spec.GitLab.Path
+		}
+	case LocalRepositoryType:
+		if r.Spec.Local != nil {
+			return r.Spec.Local.Path
+		}
+	default:
+		return ""
+	}
+
+	return ""
+}
+
+type ConnectionInfo struct {
+	Name string `json:"name"`
+}
+
 type RepositorySpec struct {
 	// The repository display name (shown in the UI)
 	Title string `json:"title"`
@@ -165,6 +260,10 @@ type RepositorySpec struct {
 	// The repository on GitLab.
 	// Mutually exclusive with local | github | git.
 	GitLab *GitLabRepositoryConfig `json:"gitlab,omitempty"`
+
+	// The connection the repository references.
+	// This means the Repository is interacting with git via a Connection.
+	Connection *ConnectionInfo `json:"connection,omitempty"`
 }
 
 // SyncTargetType defines where we want all values to resolve
@@ -207,6 +306,18 @@ type RepositoryStatus struct {
 	// The generation of the spec last time reconciliation ran
 	ObservedGeneration int64 `json:"observedGeneration"`
 
+	// FieldErrors are errors that occurred during validation of the repository spec.
+	// These errors are intended to help users identify and fix issues in the spec.
+	// +listType=atomic
+	FieldErrors []ErrorDetails `json:"fieldErrors,omitempty"`
+
+	// Conditions represent the latest available observations of the repository's state.
+	// +listType=map
+	// +listMapKey=type
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+
 	// This will get updated with the current health status (and updated periodically)
 	Health HealthStatus `json:"health"`
 
@@ -219,31 +330,12 @@ type RepositoryStatus struct {
 
 	// Webhook Information (if applicable)
 	Webhook *WebhookStatus `json:"webhook"`
-}
 
-// HealthFailureType represents different types of repository failures
-// +enum
-type HealthFailureType string
+	// Token will get updated with current token information
+	Token TokenStatus `json:"token,omitempty"`
 
-const (
-	HealthFailureHook   HealthFailureType = "hook"
-	HealthFailureHealth HealthFailureType = "health"
-)
-
-type HealthStatus struct {
-	// When not healthy, requests will not be executed
-	Healthy bool `json:"healthy"`
-
-	// The type of the error
-	Error HealthFailureType `json:"error,omitempty"`
-
-	// When the health was checked last time
-	Checked int64 `json:"checked,omitempty"`
-
-	// Summary messages (can be shown to users)
-	// Will only be populated when not healthy
-	// +listType=atomic
-	Message []string `json:"message,omitempty"`
+	// Error information during repository deletion (if any)
+	DeleteError string `json:"deleteError,omitempty"`
 }
 
 type SyncStatus struct {
@@ -278,6 +370,11 @@ type WebhookStatus struct {
 	URL              string   `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`
+}
+
+type TokenStatus struct {
+	LastUpdated int64 `json:"lastUpdated,omitempty"`
+	Expiration  int64 `json:"expiration,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -469,8 +566,11 @@ type ResourceCount struct {
 	Count    int64  `json:"count"`
 }
 
-// HistoryList is a list of versions of a resource
+// TestResults is the result of a test connection operation
+// Deprecated: this will go way when we deprecate the test endpoint
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// TODO: This type is deprecated and will be removed when we deprecate the test endpoint
+// We should use fieldErrors from status instead.
 type TestResults struct {
 	metav1.TypeMeta `json:",inline"`
 
@@ -484,10 +584,36 @@ type TestResults struct {
 	Errors []ErrorDetails `json:"errors,omitempty"`
 }
 
+// ErrorDetails describes an individual field error intended to help users identify and fix issues
+// in resource specifications. This type is modeled after Kubernetes' StatusCause and serves the same
+// purpose: to deliver actionable feedback about fields in the spec that require attention.
+// Errors may relate to invalid formats, missing or invalid values, or cases where a referenced value
+// does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to
+// communicate validation or external reference errors that users can resolve by editing spec fields.
+// TODO: Rename this type to FieldError for consistency with Kubernetes conventions and to more clearly indicate that it represents field-level validation errors, not arbitrary error details.
 type ErrorDetails struct {
-	Type   metav1.CauseType `json:"type"`
-	Field  string           `json:"field,omitempty"`
-	Detail string           `json:"detail,omitempty"`
+	// Type is a machine-readable description of the cause of the error.
+	// This is intended for programmatic handling and matches Kubernetes' CauseType values.
+	Type metav1.CauseType `json:"type"`
+
+	// Field is the path to the field or JSON pointer that caused the error.
+	// This helps users and tools identify exactly where to correct the problem.
+	// This field is optional and may be empty if not applicable.
+	Field string `json:"field,omitempty"`
+
+	// Detail provides a human-readable explanation of what went wrong.
+	// This message may be shown directly to users and should be actionable.
+	Detail string `json:"detail,omitempty"`
+
+	// Origin indicates where the error originated in validation, or the name of the external service that reported the error.
+	// This can be useful for tooling or debugging, and may reference a specific rule, function, or service.
+	// This field is optional and may be empty.
+	Origin string `json:"origin,omitempty"`
+
+	// BadValue is the value of the field that was determined to be invalid, if applicable.
+	// This can be any type. This field is optional and may be omitted if not relevant.
+	// FIXME: DeepCopyInto and DeepCopy are not generated for interface{} or any
+	// BadValue interface{} `json:"badValue,omitempty"`
 }
 
 // HistoryList is a list of versions of a resource

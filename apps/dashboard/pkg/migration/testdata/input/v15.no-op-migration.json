@@ -32,7 +32,9 @@
         {
           "name": "server",
           "type": "query",
-          "datasource": "prometheus",
+          "datasource": {
+            "type": "prometheus"
+          },
           "query": "label_values(server)",
           "refresh": 1,
           "options": []
@@ -43,7 +45,10 @@
       "list": [
         {
           "name": "Annotations & Alerts",
-          "datasource": "grafana",
+          "datasource": {
+            "type": "grafana",
+            "uid": "grafana"
+          },
           "enable": true
         }
       ]

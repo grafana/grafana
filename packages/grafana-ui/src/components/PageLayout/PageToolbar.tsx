@@ -34,7 +34,11 @@ export interface Props {
   forceShowLeftItems?: boolean;
 }
 
-/** @deprecated Use Page instead */
+/**
+ * @deprecated Use Page instead
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/navigation-deprecated-pagetoolbar--docs
+ */
 export const PageToolbar = memo(
   ({
     title,
@@ -185,7 +189,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(2),
       justifyContent: 'space-between',
-      padding: theme.spacing(1.5, 2),
+      padding: theme.spacing(2, 2),
 
       [theme.breakpoints.down('md')]: {
         paddingLeft: '53px',

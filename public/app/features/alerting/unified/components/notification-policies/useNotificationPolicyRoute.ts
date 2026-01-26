@@ -1,6 +1,7 @@
 import { pick } from 'lodash';
 import memoize from 'micro-memoize';
 
+import { INHERITABLE_KEYS, type InheritableProperties } from '@grafana/alerting/internal';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { MatcherOperator, ROUTES_META_SYMBOL, Route } from 'app/plugins/datasource/alertmanager/types';
 
@@ -21,9 +22,9 @@ import {
 } from '../../reducers/alertmanager/notificationPolicyRoutes';
 import { FormAmRoute } from '../../types/amroutes';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
-import { PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
-import { isK8sEntityProvisioned, shouldUseK8sApi } from '../../utils/k8s/utils';
-import { INHERITABLE_KEYS, InheritableProperties } from '../../utils/notification-policies';
+import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
+import { getAnnotation, isProvisionedResource, shouldUseK8sApi } from '../../utils/k8s/utils';
+import { routeAdapter } from '../../utils/routeAdapter';
 import {
   InsertPosition,
   addRouteToReferenceRoute,
@@ -31,6 +32,11 @@ import {
   mergePartialAmRouteWithRouteTree,
   omitRouteFromRouteTree,
 } from '../../utils/routeTree';
+
+export function isRouteProvisioned(route: Route): boolean {
+  const provenance = route[ROUTES_META_SYMBOL]?.provenance ?? route.provenance;
+  return isProvisionedResource(provenance);
+}
 
 const k8sRoutesToRoutesMemoized = memoize(k8sRoutesToRoutes, { maxSize: 1 });
 
@@ -81,7 +87,7 @@ const parseAmConfigRoute = memoize((route: Route): Route => {
   return {
     ...route,
     [ROUTES_META_SYMBOL]: {
-      provisioned: Boolean(route.provenance && route.provenance !== PROVENANCE_NONE),
+      provenance: route.provenance,
     },
   };
 });
@@ -231,10 +237,11 @@ function k8sRoutesToRoutes(routes: ComGithubGrafanaGrafanaPkgApisAlertingNotific
       ...route.spec.defaults,
       routes: route.spec.routes?.map(k8sSubRouteToRoute),
       [ROUTES_META_SYMBOL]: {
-        provisioned: isK8sEntityProvisioned(route),
+        provenance: getAnnotation(route, K8sAnnotations.Provenance),
         resourceVersion: route.metadata.resourceVersion,
         name: route.metadata.name,
       },
+      provenance: getAnnotation(route, K8sAnnotations.Provenance),
     };
   });
 }
@@ -279,7 +286,7 @@ export function routeToK8sSubRoute(route: Route): ComGithubGrafanaGrafanaPkgApis
 export function createKubernetesRoutingTreeSpec(
   rootRoute: Route
 ): ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree {
-  const inheritableDefaultProperties: InheritableProperties = pick(rootRoute, INHERITABLE_KEYS);
+  const inheritableDefaultProperties: InheritableProperties = pick(routeAdapter.toPackage(rootRoute), INHERITABLE_KEYS);
 
   const defaults: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RouteDefaults = {
     ...inheritableDefaultProperties,

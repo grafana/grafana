@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { NavModelItem } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 
 import { QuickAdd } from './QuickAdd';
 
@@ -11,6 +11,13 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
+    getDataSourceSrv: () => ({
+      getList: jest
+        .fn()
+        .mockReturnValue([
+          { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
+        ]),
+    }),
   };
 });
 
@@ -72,6 +79,33 @@ describe('QuickAdd', () => {
     expect(reportInteraction).toHaveBeenCalledWith('grafana_menu_item_clicked', {
       url: '#',
       from: 'quickadd',
+    });
+  });
+
+  describe('Dashboard from template button', () => {
+    beforeEach(() => {
+      config.featureToggles.dashboardTemplates = true;
+    });
+
+    it('shows a `Dashboard from template` button when the feature flag is enabled', async () => {
+      setup();
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      expect(screen.getByRole('link', { name: 'Dashboard from template' })).toBeInTheDocument();
+    });
+
+    it('does not show a `Dashboard from template` button when the feature flag is disabled', async () => {
+      config.featureToggles.dashboardTemplates = false;
+      setup();
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      expect(screen.queryByRole('link', { name: 'Dashboard from template' })).not.toBeInTheDocument();
+    });
+
+    it('redirects the user to the dashboard from template page when the button is clicked', async () => {
+      setup();
+
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      const link = screen.getByRole('link', { name: 'Dashboard from template' });
+      expect(link).toHaveAttribute('href', '/dashboards?templateDashboards=true&source=quickAdd');
     });
   });
 });

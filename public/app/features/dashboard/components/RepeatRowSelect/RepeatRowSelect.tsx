@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneObject, sceneGraph } from '@grafana/scenes';
+import { LocalValueVariable, SceneObject, sceneGraph } from '@grafana/scenes';
 import { Combobox, ComboboxOption, Select } from '@grafana/ui';
 import { useSelector } from 'app/types/store';
 
@@ -59,10 +59,18 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
   const variables = sceneVars.useState().variables;
 
   const variableOptions = useMemo(() => {
-    const options: ComboboxOption[] = variables.map((item) => ({
-      label: item.state.name,
-      value: item.state.name,
-    }));
+    const options: ComboboxOption[] = variables
+      .filter((item) => {
+        if (sceneContext.parent) {
+          // filter out local value variables (which are only set on repeated items)
+          return !(sceneGraph.lookupVariable(item.state.name, sceneContext.parent) instanceof LocalValueVariable);
+        }
+        return true;
+      })
+      .map((item) => ({
+        label: item.state.name,
+        value: item.state.name,
+      }));
 
     options.unshift({
       label: t('dashboard.repeat-row-select2.variable-options.label.disable-repeating', 'Disable repeating'),
@@ -70,7 +78,7 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
     });
 
     return options;
-  }, [variables]);
+  }, [sceneContext, variables]);
 
   const onSelectChange = useCallback((value: ComboboxOption | null) => value && onChange(value.value), [onChange]);
 
@@ -79,7 +87,7 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
   return (
     <Combobox
       id={id}
-      value={repeat}
+      value={repeat || ''}
       onChange={onSelectChange}
       options={variableOptions}
       disabled={isDisabled}

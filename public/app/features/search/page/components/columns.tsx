@@ -13,7 +13,7 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList, Text, Tooltip } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -128,7 +128,7 @@ export const generateColumns = (
         <div key={key} className={styles.cell} {...cellProps}>
           {!response.isItemLoaded(p.row.index) ? (
             <Skeleton width={200} />
-          ) : isDeleted ? (
+          ) : isDeleted || !p.userProps.href ? (
             <span className={classNames}>{name}</span>
           ) : (
             <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>

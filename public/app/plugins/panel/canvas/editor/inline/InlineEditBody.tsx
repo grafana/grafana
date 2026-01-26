@@ -106,7 +106,7 @@ export function InlineEditBody() {
 
   return (
     <>
-      <div style={topLevelItemsContainerStyle}>{pane.items.map((item) => item.render())}</div>
+      <div style={topLevelItemsContainerStyle}>{pane.items.map((item) => item.renderElement())}</div>
       <div style={topLevelItemsContainerStyle}>
         <AddLayerButton
           onChange={(sel) => onAddItem(sel, rootLayer)}
@@ -131,7 +131,7 @@ export function InlineEditBody() {
 function renderOptionsPaneCategoryDescriptor(pane: OptionsPaneCategoryDescriptor) {
   return (
     <OptionsPaneCategory {...pane.props} key={pane.props.id}>
-      <div>{pane.items.map((v) => v.render())}</div>
+      <div>{pane.items.map((v) => v.renderElement())}</div>
       {pane.categories.map((c) => renderOptionsPaneCategoryDescriptor(c))}
     </OptionsPaneCategory>
   );

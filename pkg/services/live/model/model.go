@@ -67,21 +67,9 @@ type ChannelHandlerFactory interface {
 	GetHandlerForPath(path string) (ChannelHandler, error)
 }
 
-type LiveMessage struct {
-	ID        int64 `xorm:"pk autoincr 'id'"`
-	OrgID     int64 `xorm:"org_id"`
-	Channel   string
-	Data      json.RawMessage
-	Published time.Time
+type LivePublishCmd struct {
+	Channel string          `json:"channel"`
+	Data    json.RawMessage `json:"data,omitempty"`
 }
 
-type SaveLiveMessageQuery struct {
-	OrgID   int64 `xorm:"org_id"`
-	Channel string
-	Data    json.RawMessage
-}
-
-type GetLiveMessageQuery struct {
-	OrgID   int64 `xorm:"org_id"`
-	Channel string
-}
+type LivePublishResponse struct{}

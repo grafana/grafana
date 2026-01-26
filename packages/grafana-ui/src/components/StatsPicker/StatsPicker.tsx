@@ -1,5 +1,5 @@
 import { difference } from 'lodash';
-import { PureComponent } from 'react';
+import { memo, useEffect } from 'react';
 
 import { fieldReducers, SelectableValue, FieldReducerInfo } from '@grafana/data';
 
@@ -18,54 +18,47 @@ export interface Props {
   filterOptions?: (ext: FieldReducerInfo) => boolean;
 }
 
-export class StatsPicker extends PureComponent<Props> {
-  static defaultProps: Partial<Props> = {
-    allowMultiple: false,
-  };
+export const StatsPicker = memo<Props>(
+  ({
+    placeholder,
+    onChange,
+    stats,
+    allowMultiple = false,
+    defaultStat,
+    className,
+    width,
+    menuPlacement,
+    inputId,
+    filterOptions,
+  }) => {
+    useEffect(() => {
+      const current = fieldReducers.list(stats);
+      if (current.length !== stats.length) {
+        const found = current.map((v) => v.id);
+        const notFound = difference(stats, found);
+        console.warn('Unknown stats', notFound, stats);
+        onChange(current.map((stat) => stat.id));
+      }
 
-  componentDidMount() {
-    this.checkInput();
-  }
+      // Make sure there is only one
+      if (!allowMultiple && stats.length > 1) {
+        console.warn('Removing extra stat', stats);
+        onChange([stats[0]]);
+      }
 
-  componentDidUpdate(prevProps: Props) {
-    this.checkInput();
-  }
+      // Set the reducer from callback
+      if (defaultStat && stats.length < 1) {
+        onChange([defaultStat]);
+      }
+    }, [stats, allowMultiple, defaultStat, onChange]);
 
-  checkInput = () => {
-    const { stats, allowMultiple, defaultStat, onChange } = this.props;
-
-    const current = fieldReducers.list(stats);
-    if (current.length !== stats.length) {
-      const found = current.map((v) => v.id);
-      const notFound = difference(stats, found);
-      console.warn('Unknown stats', notFound, stats);
-      onChange(current.map((stat) => stat.id));
-    }
-
-    // Make sure there is only one
-    if (!allowMultiple && stats.length > 1) {
-      console.warn('Removing extra stat', stats);
-      onChange([stats[0]]);
-    }
-
-    // Set the reducer from callback
-    if (defaultStat && stats.length < 1) {
-      onChange([defaultStat]);
-    }
-  };
-
-  onSelectionChange = (item: SelectableValue<string>) => {
-    const { onChange } = this.props;
-    if (Array.isArray(item)) {
-      onChange(item.map((v) => v.value));
-    } else {
-      onChange(item && item.value ? [item.value] : []);
-    }
-  };
-
-  render() {
-    const { stats, allowMultiple, defaultStat, placeholder, className, menuPlacement, width, inputId, filterOptions } =
-      this.props;
+    const onSelectionChange = (item: SelectableValue<string>) => {
+      if (Array.isArray(item)) {
+        onChange(item.map((v) => v.value));
+      } else {
+        onChange(item && item.value ? [item.value] : []);
+      }
+    };
 
     const select = fieldReducers.selectOptions(stats, filterOptions);
     return (
@@ -78,10 +71,12 @@ export class StatsPicker extends PureComponent<Props> {
         isSearchable={true}
         options={select.options}
         placeholder={placeholder}
-        onChange={this.onSelectionChange}
+        onChange={onSelectionChange}
         menuPlacement={menuPlacement}
         inputId={inputId}
       />
     );
   }
-}
+);
+
+StatsPicker.displayName = 'StatsPicker';

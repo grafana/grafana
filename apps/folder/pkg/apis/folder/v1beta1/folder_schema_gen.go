@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaFolder = resource.NewSimpleSchema("folder.grafana.app", "v1beta1", &Folder{}, &FolderList{}, resource.WithKind("Folder"),
+	schemaFolder = resource.NewSimpleSchema("folder.grafana.app", "v1beta1", NewFolder(), &FolderList{}, resource.WithKind("Folder"),
 		resource.WithPlural("folders"), resource.WithScope(resource.NamespacedScope))
 	kindFolder = resource.Kind{
 		Schema: schemaFolder,

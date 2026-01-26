@@ -381,6 +381,102 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 	})
 }
 
+func TestPrometheus_executedQueryString(t *testing.T) {
+	t.Run("executedQueryString should match expected format with intervalMs 300_000", func(t *testing.T) {
+		values := []p.SamplePair{
+			{Value: 1, Timestamp: 1000},
+			{Value: 2, Timestamp: 2000},
+		}
+		result := queryResult{
+			Type: p.ValMatrix,
+			Result: p.Matrix{
+				&p.SampleStream{
+					Metric: p.Metric{"app": "Application"},
+					Values: values,
+				},
+			},
+		}
+
+		queryJSON := `{
+			"expr": "test_metric",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"interval": "2m",
+			"intervalMs": 300000,
+			"maxDataPoints": 761,
+			"refId": "A",
+			"range": true
+		}`
+
+		now := time.Now()
+		query := backend.DataQuery{
+			RefID:         "A",
+			MaxDataPoints: 761,
+			Interval:      300000 * time.Millisecond,
+			TimeRange: backend.TimeRange{
+				From: now,
+				To:   now.Add(48 * time.Hour),
+			},
+			JSON: []byte(queryJSON),
+		}
+		tctx, err := setup()
+		require.NoError(t, err)
+		res, err := execute(tctx, query, result, nil)
+		require.NoError(t, err)
+
+		require.Len(t, res, 1)
+		require.NotNil(t, res[0].Meta)
+		require.Equal(t, "Expr: test_metric\nStep: 2m0s", res[0].Meta.ExecutedQueryString)
+	})
+
+	t.Run("executedQueryString should match expected format with intervalMs 900_000", func(t *testing.T) {
+		values := []p.SamplePair{
+			{Value: 1, Timestamp: 1000},
+			{Value: 2, Timestamp: 2000},
+		}
+		result := queryResult{
+			Type: p.ValMatrix,
+			Result: p.Matrix{
+				&p.SampleStream{
+					Metric: p.Metric{"app": "Application"},
+					Values: values,
+				},
+			},
+		}
+
+		queryJSON := `{
+			"expr": "test_metric",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"interval": "2m",
+			"intervalMs": 900000,
+			"maxDataPoints": 175,
+			"refId": "A",
+			"range": true
+		}`
+
+		now := time.Now()
+		query := backend.DataQuery{
+			RefID:         "A",
+			MaxDataPoints: 175,
+			Interval:      900000 * time.Millisecond,
+			TimeRange: backend.TimeRange{
+				From: now,
+				To:   now.Add(48 * time.Hour),
+			},
+			JSON: []byte(queryJSON),
+		}
+		tctx, err := setup()
+		require.NoError(t, err)
+		res, err := execute(tctx, query, result, nil)
+		require.NoError(t, err)
+
+		require.Len(t, res, 1)
+		require.NotNil(t, res[0].Meta)
+		require.Equal(t, "Expr: test_metric\nStep: 2m0s", res[0].Meta.ExecutedQueryString)
+	})
+}
+
 type queryResult struct {
 	Type   p.ValueType `json:"resultType"`
 	Result any         `json:"result"`

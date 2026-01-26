@@ -21,6 +21,7 @@ type RepositorySpecApplyConfiguration struct {
 	Git         *GitRepositoryConfigApplyConfiguration       `json:"git,omitempty"`
 	Bitbucket   *BitbucketRepositoryConfigApplyConfiguration `json:"bitbucket,omitempty"`
 	GitLab      *GitLabRepositoryConfigApplyConfiguration    `json:"gitlab,omitempty"`
+	Connection  *ConnectionInfoApplyConfiguration            `json:"connection,omitempty"`
 }
 
 // RepositorySpecApplyConfiguration constructs a declarative configuration of the RepositorySpec type for use with
@@ -108,5 +109,13 @@ func (b *RepositorySpecApplyConfiguration) WithBitbucket(value *BitbucketReposit
 // If called multiple times, the GitLab field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithGitLab(value *GitLabRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.GitLab = value
+	return b
+}
+
+// WithConnection sets the Connection field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Connection field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithConnection(value *ConnectionInfoApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.Connection = value
 	return b
 }

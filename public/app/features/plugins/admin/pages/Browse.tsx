@@ -168,11 +168,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
   }),
   searchContainer: css({
-    backgroundColor: theme.colors.background.primary,
-    paddingTop: theme.spacing(2),
-    paddingBottom: theme.spacing(2),
+    paddingTop: theme.spacing(0.5),
+    paddingBottom: theme.spacing(1),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
-    marginBottom: theme.spacing(2),
+    marginBottom: theme.spacing(3),
   }),
   listWrap: css({
     height: 'calc(100vh - 350px)',

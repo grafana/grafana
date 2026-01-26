@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { JSX } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { OrgRole } from '@grafana/data';
@@ -7,9 +8,9 @@ import { ServiceAccountStateFilter, ServiceAccountDTO } from 'app/types/servicea
 
 import { Props, ServiceAccountsListPageUnconnected } from './ServiceAccountsListPage';
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
-    ...jest.requireActual('app/core/core').contextSrv,
+    ...jest.requireActual('app/core/services/context_srv').contextSrv,
     licensedAccessControlEnabled: () => false,
     hasPermission: () => true,
     hasPermissionInMetadata: () => true,

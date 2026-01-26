@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Flame Graph",
   "id": "flamegraph",
-
+  "suggestions": true,
   "info": {
     "author": {
       "name": "Grafana Labs",

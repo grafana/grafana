@@ -7,7 +7,6 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePlugin,
-  DataSourcePluginMeta,
   ScopedVars,
 } from '@grafana/data';
 import { RuntimeDataSource, TemplateSrv } from '@grafana/runtime';
@@ -61,9 +60,9 @@ class TestRuntimeDataSource extends RuntimeDataSource {
   }
 }
 
-jest.mock('./pluginLoader', () => ({
-  importDataSourcePlugin: (meta: DataSourcePluginMeta) => {
-    return Promise.resolve(new DataSourcePlugin(TestDataSource as any));
+jest.mock('./importer/pluginImporter', () => ({
+  pluginImporter: {
+    importDataSource: () => Promise.resolve(new DataSourcePlugin(TestDataSource as any)),
   },
 }));
 
@@ -334,13 +333,6 @@ describe('datasource_srv', () => {
       it('should load by name', async () => {
         let api = await dataSourceSrv.loadDatasource('ZZZ');
         expect(api.meta).toBe(dataSourceInit.ZZZ.meta);
-      });
-    });
-
-    describe('when getting external metric sources', () => {
-      it('should return list of explore sources', () => {
-        const externalSources = dataSourceSrv.getExternal();
-        expect(externalSources.length).toBe(11);
       });
     });
 

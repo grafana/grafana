@@ -32,6 +32,8 @@ export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onRe
  * to the user (like datasource passwords).
  *
  * @deprecated Please use the {@link SecretInput} component with a {@link Field} instead, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-secretinput--basic as seen in Storybook}
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-deprecated-secretformfield--docs
  */
 export const SecretFormField = ({
   label = 'Password',

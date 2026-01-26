@@ -249,14 +249,16 @@ The frontend code is also updated gradually. As Resource API endpoints stabilize
 
 ## 5. So does it all mean I can point `kubectl` directly at the Grafana server and use it to create dashboards?
 
-**Yes, with caveats.** `kubectl` is supported under a dev-mode-only, experimental `grafanaAPIServerEnsureKubectlAccess` feature flag and requires `server.protocol` set to `https`. Enabling `https` causes Grafana to configure its web server with TLS certificates, either loading specified certificate/key files or generating self-signed ones if none are provided.
+**It's not an officially supported way of accessing Grafana APIs, but yes.** `kubectl` requires `server.protocol` set to `https`. Enabling `https` causes Grafana to configure its web server with TLS certificates, either loading specified certificate/key files or generating self-signed ones if none are provided.
+
+The easiest way to use `kubectl` is under a dev-mode-only, experimental `grafanaAPIServerEnsureKubectlAccess` feature flag:
 
 ```bash
 #!/bin/bash
 # Assumes Grafana running from repo root - adjust if running packaged Grafana (e.g., /usr/local/etc/grafana/grafana-apiserver/grafana.kubeconfig).
 export KUBECONFIG=../../data/grafana-apiserver/grafana.kubeconfig
 
-cat <<EOF | kubectl apply -f -
+cat <<EOF | kubectl create -f -
 apiVersion: folder.grafana.app/v1beta1
 kind: Folder
 metadata:
@@ -266,7 +268,7 @@ spec:
 status: {}
 EOF
 
-cat <<EOF | kubectl apply -f -
+cat <<EOF | kubectl create -f -
 apiVersion: dashboard.grafana.app/v1beta1
 kind: Dashboard
 metadata:
@@ -288,10 +290,21 @@ EOF
 kubectl annotate --overwrite dashboards.dashboard.grafana.app kubectl-dash grafana.app/folder=kubectl-folder
 ```
 
-**Standard Behavior (Flag disabled):**
-
-By default, `kubectl` cannot connect directly to Grafana. Grafana APIs use standard Grafana authentication (sessions, API keys), which `kubectl` does not handle natively.
-
-**Experimental `kubectl` support (Flag enabled):**
-
 If you enable the `grafanaAPIServerEnsureKubectlAccess` feature flag, Grafana will enter "dev mode" and generate a `grafana.kubeconfig` file in its config directory. The kubeconfig contains a bearer token and server details allowing `kubectl` to connect to Grafana's Resource API. Relying on the flag for production workflows is discouraged in favor of using Grafana's standard provisioning method.
+
+**Grafana's auth:**
+
+You can also use `kubectl` without `grafanaAPIServerEnsureKubectlAccess` using Grafana Service Accounts (`glsa_...`) thanks to `kubectl`'s token authentication mechanism.
+
+```bash
+#!/bin/bash
+
+# note the `insecure-skip-tls-verify` - this is not intended for production
+kubectl config set-cluster localgrafana --server=https://localhost:3000 --insecure-skip-tls-verify
+
+# replace with your token
+kubectl config set-credentials localgrafana --token=glsa_...
+
+kubectl config set-context localgrafana --cluster=localgrafana --user=localgrafana
+kubectl config use-context localgrafana
+```

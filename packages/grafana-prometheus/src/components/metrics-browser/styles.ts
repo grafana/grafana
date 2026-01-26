@@ -8,6 +8,12 @@ export const getStylesMetricsBrowser = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(1),
     width: '100%',
   }),
+  spinner: css({
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 120,
+  }),
 });
 
 export const getStylesMetricSelector = (theme: GrafanaTheme2) => ({

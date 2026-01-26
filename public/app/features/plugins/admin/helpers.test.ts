@@ -158,6 +158,29 @@ describe('Plugins/Helpers', () => {
 
       config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
     });
+
+    test('local plugins without remote counterpart should also also have isProvisioned correctly added', () => {
+      const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+
+      config.pluginAdminExternalManageEnabled = true;
+
+      const merged = mergeLocalsAndRemotes({
+        local: localPlugins,
+        remote: [],
+        provisioned: [{ slug: localPlugins[0].id }],
+      });
+      const findMerged = (mergedId: string) => merged.find(({ id }) => id === mergedId);
+
+      expect(merged).toHaveLength(localPlugins.length);
+      expect(findMerged(localPlugins[0].id)).not.toBeUndefined();
+      expect(findMerged(localPlugins[0].id)?.isProvisioned).toBe(true);
+      expect(findMerged(localPlugins[1].id)).not.toBeUndefined();
+      expect(findMerged(localPlugins[1].id)?.isProvisioned).toBe(false);
+      expect(findMerged(localPlugins[2].id)).not.toBeUndefined();
+      expect(findMerged(localPlugins[2].id)?.isProvisioned).toBe(false);
+
+      config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+    });
   });
 
   describe('mergeLocalAndRemote()', () => {

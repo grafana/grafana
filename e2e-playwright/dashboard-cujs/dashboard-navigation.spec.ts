@@ -1,8 +1,10 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { setScopes } from '../utils/scope-helpers';
+import { setScopes, setupScopeRoutes } from '../utils/scope-helpers';
+import { testScopes } from '../utils/scopes';
 
 import {
+  clickFirstScopesDashboard,
   getAdHocFilterPills,
   getGroupByInput,
   getGroupByValues,
@@ -11,6 +13,7 @@ import {
   getScopesDashboardsSearchInput,
   getScopesSelectorInput,
 } from './cuj-selectors';
+import { checkDashboardReloadBehavior, getConfigDashboards, trackDashboardReloadRequests } from './utils';
 
 test.use({
   featureToggles: {
@@ -20,8 +23,10 @@ test.use({
   },
 });
 
-export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
-export const NAVIGATE_TO = 'cuj-dashboard-2';
+const USE_LIVE_DATA = Boolean(process.env.API_CONFIG_PATH);
+const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
+const DASHBOARD_UNDER_TEST_2 = 'cuj-dashboard-2';
+const NAVIGATE_TO = 'cuj-dashboard-3';
 
 test.describe(
   'Dashboard navigation CUJs',
@@ -36,12 +41,17 @@ test.describe(
       const adhocFilterPills = getAdHocFilterPills(page);
       const groupByValues = getGroupByValues(page);
 
+      // Set up routes before any navigation (only for mocked mode)
+      if (!USE_LIVE_DATA) {
+        await setupScopeRoutes(page, testScopes());
+      }
+
       await test.step('1.Search dashboard', async () => {
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         await setScopes(page);
 
-        await expect(scopeSelectorInput).toHaveValue(/.+/);
+        await expect(scopeSelectorInput).toHaveAttribute('data-value', /.+/);
 
         const firstDbName = await scopesDashboards.first().textContent();
         const scopeDashboardsCount = await scopesDashboards.count();
@@ -58,7 +68,7 @@ test.describe(
 
         await setScopes(page);
 
-        await expect(scopeSelectorInput).toHaveValue(/.+/);
+        await expect(scopeSelectorInput).toHaveAttribute('data-value', /.+/);
 
         // assert the panel is visible and has the correct value
         const markdownContent = await getMarkdownHTMLContent(dashboardPage, selectors);
@@ -72,55 +82,71 @@ test.describe(
 
         await expect(markdownContent).toContainText(`now-12h`);
 
-        await scopesDashboards.first().click();
+        await clickFirstScopesDashboard(page);
         await page.waitForURL('**/d/**');
 
         await expect(markdownContent).toBeVisible();
         await expect(markdownContent).toContainText(`now-12h`);
       });
 
-      await test.step('3.See filter/groupby selection persisting when navigating from dashboard to dashboard', async () => {
-        const dashboardPage = await gotoDashboardPage({ uid: NAVIGATE_TO });
+      const dashboards = await getConfigDashboards();
+      if (dashboards.length === 0) {
+        dashboards.push(DASHBOARD_UNDER_TEST_2);
+      }
 
-        await setScopes(page, { title: 'CUJ Dashboard 3', uid: 'cuj-dashboard-3' });
+      for (const db of dashboards) {
+        await test.step(
+          '3.See filter/groupby selection persisting when navigating from dashboard to dashboard - ' + db,
+          async () => {
+            const dashboardPage = await gotoDashboardPage({ uid: db });
 
-        await expect(scopeSelectorInput).toHaveValue(/.+/);
+            await setScopes(page, { title: 'CUJ Dashboard 3', uid: NAVIGATE_TO });
 
-        const pills = await adhocFilterPills.allTextContents();
-        const processedPills = pills
-          .map((p) => {
-            const parts = p.split(' ');
-            return `${parts[0]}${parts[1]}"${parts[2]}"`;
-          })
-          .join(',');
+            await expect(scopeSelectorInput).toHaveAttribute('data-value', /.+/);
 
-        // assert the panel is visible and has the correct value
-        const markdownContent = await getMarkdownHTMLContent(dashboardPage, selectors);
-        // no groupBy value
-        await expect(markdownContent).toContainText(`GroupByVar: \n\nAdHocVar: ${processedPills}`);
+            const pills = await adhocFilterPills.allTextContents();
+            const processedPills = pills
+              .map((p) => {
+                const parts = p.split(' ');
+                return `${parts[0]}${parts[1]}"${parts[2]}"`;
+              })
+              .join(',');
 
-        const groupByVariable = getGroupByInput(dashboardPage, selectors);
+            // assert the panel is visible and has the correct value
+            const markdownContent = await getMarkdownHTMLContent(dashboardPage, selectors);
+            // no groupBy value
+            await expect(markdownContent).toContainText(`GroupByVar: \n\nAdHocVar: ${processedPills}`);
 
-        // add a custom groupBy value
-        await groupByVariable.click();
-        await groupByVariable.fill('dev');
-        await groupByVariable.press('Enter');
-        await groupByVariable.press('Escape');
+            const groupByVariable = getGroupByInput(dashboardPage, selectors);
 
-        await expect(scopesDashboards.first()).toBeVisible();
-        await scopesDashboards.first().click();
-        await page.waitForURL('**/d/**');
+            // add a custom groupBy value
+            await groupByVariable.click();
+            await groupByVariable.fill('dev');
+            await groupByVariable.press('Enter');
+            await groupByVariable.press('Escape');
 
-        //all values are set after dashboard switch
-        await expect(markdownContent).toContainText(`GroupByVar: dev\n\nAdHocVar: ${processedPills}`);
-      });
+            const { getRequests, waitForExpectedRequests } = await trackDashboardReloadRequests(page);
+
+            await clickFirstScopesDashboard(page);
+            await page.waitForURL('**/d/**');
+            await waitForExpectedRequests();
+            await page.waitForLoadState('networkidle');
+
+            const requests = getRequests();
+            expect(checkDashboardReloadBehavior(requests)).toBe(true);
+
+            //all values are set after dashboard switch
+            await expect(markdownContent).toContainText(`GroupByVar: dev\n\nAdHocVar: ${processedPills}`);
+          }
+        );
+      }
 
       await test.step('4.Unmodified default filters and groupBy keys are not propagated to a different dashboard', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         await setScopes(page, { title: 'CUJ Dashboard 2', uid: 'cuj-dashboard-2' });
 
-        await expect(scopeSelectorInput).toHaveValue(/.+/);
+        await expect(scopeSelectorInput).toHaveAttribute('data-value', /.+/);
 
         const pillCount = await adhocFilterPills.count();
         const pillTexts = await adhocFilterPills.allTextContents();
@@ -140,8 +166,7 @@ test.describe(
         const oldFilters = `GroupByVar: ${selectedValues}\n\nAdHocVar: ${processedPills}`;
         await expect(markdownContent).toContainText(oldFilters);
 
-        await expect(scopesDashboards.first()).toBeVisible();
-        await scopesDashboards.first().click();
+        await clickFirstScopesDashboard(page);
         await page.waitForURL('**/d/**');
 
         const newPillCount = await adhocFilterPills.count();

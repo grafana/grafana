@@ -10,11 +10,14 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"text/template"
 	"time"
 
+	"github.com/google/go-github/v70/github"
+	"github.com/grafana/grafana/pkg/extensions"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,6 +33,7 @@ import (
 	dashboardsV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -37,6 +41,11 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+)
+
+const (
+	waitTimeoutDefault  = 30 * time.Second
+	waitIntervalDefault = 100 * time.Millisecond
 )
 
 func TestMain(m *testing.M) {
@@ -48,6 +57,7 @@ type provisioningTestHelper struct {
 	ProvisioningPath string
 
 	Repositories       *apis.K8sResourceClient
+	Connections        *apis.K8sResourceClient
 	Jobs               *apis.K8sResourceClient
 	Folders            *apis.K8sResourceClient
 	DashboardsV0       *apis.K8sResourceClient
@@ -93,7 +103,7 @@ func (h *provisioningTestHelper) SyncAndWait(t *testing.T, repo string, options 
 
 	name := unstruct.GetName()
 	require.NotEmpty(t, name, "expecting name to be set")
-	h.AwaitJobSuccess(t, t.Context(), unstruct)
+	h.AwaitJobs(t, repo)
 }
 
 func (h *provisioningTestHelper) TriggerJobAndWaitForSuccess(t *testing.T, repo string, spec provisioning.JobSpec) {
@@ -140,12 +150,9 @@ func (h *provisioningTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repo
 		Do(t.Context())
 
 	if apierrors.IsAlreadyExists(result.Error()) {
-		// Wait for all jobs to finish as we don't have the name.
-		h.AwaitJobs(t, repo)
-		t.Errorf("repository %s already has a job running, but we expected a new one to be created", repo)
-		t.FailNow()
-
-		return nil
+		// A job is already in-flight. Wait and return the latest historic job.
+		t.Logf("job already running for repo %q; waiting for it to complete", repo)
+		return h.AwaitLatestHistoricJob(t, repo)
 	}
 
 	obj, err := result.Get()
@@ -158,6 +165,43 @@ func (h *provisioningTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repo
 	require.NotEmpty(t, name, "expecting name to be set")
 
 	return h.AwaitJob(t, t.Context(), unstruct)
+}
+
+// AwaitLatestHistoricJob waits for the repo's queue to empty and returns the most recent historic job.
+func (h *provisioningTestHelper) AwaitLatestHistoricJob(t *testing.T, repo string) *unstructured.Unstructured {
+	t.Helper()
+	// Wait until no active jobs for this repo
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		list, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
+		if !assert.NoError(collect, err, "failed to list active jobs") {
+			return
+		}
+		for _, elem := range list.Items {
+			r, _, err := unstructured.NestedString(elem.Object, "spec", "repository")
+			if !assert.NoError(collect, err) {
+				return
+			}
+			if r == repo {
+				collect.Errorf("still have active job %q for repo %q", elem.GetName(), repo)
+				return
+			}
+		}
+	}, waitTimeoutDefault, waitIntervalDefault, "job queue must be empty before reading historic jobs")
+
+	// Fetch historic jobs and pick the newest by creationTimestamp
+	result, err := h.Repositories.Resource.Get(context.Background(), repo, metav1.GetOptions{}, "jobs")
+	require.NoError(t, err, "failed to list historic jobs")
+	list, err := result.ToList()
+	require.NoError(t, err, "results should be a list")
+	require.NotEmpty(t, list.Items, "expect at least one historic job")
+
+	latest := list.Items[0]
+	for i := 1; i < len(list.Items); i++ {
+		if list.Items[i].GetCreationTimestamp().After(latest.GetCreationTimestamp().Time) {
+			latest = list.Items[i]
+		}
+	}
+	return latest.DeepCopy()
 }
 
 func (h *provisioningTestHelper) AwaitJobSuccess(t *testing.T, ctx context.Context, job *unstructured.Unstructured) {
@@ -200,7 +244,7 @@ func (h *provisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job
 		}
 
 		lastResult = result
-	}, time.Second*10, time.Millisecond*25)
+	}, waitTimeoutDefault, waitIntervalDefault)
 	require.NotNil(t, lastResult, "expected job result to be non-nil")
 
 	return lastResult
@@ -209,83 +253,104 @@ func (h *provisioningTestHelper) AwaitJob(t *testing.T, ctx context.Context, job
 func (h *provisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 	t.Helper()
 
-	// First, we wait for all jobs for the repository to disappear (i.e. complete/fail).
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		list, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
-		if assert.NoError(collect, err, "failed to list active jobs") {
-			for _, elem := range list.Items {
-				repo, _, err := unstructured.NestedString(elem.Object, "spec", "repository")
-				if !assert.NoError(collect, err, "failed to get repository from job spec") {
-					return
-				}
+	// First, we wait for all current jobs for the repository to disappear (i.e. complete/fail).
+	j, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
+	require.NoError(t, err, "failed to list active jobs")
 
-				if !assert.NotEqual(collect, repoName, repo, "there are still remaining jobs for %s: %+v", repoName, elem) {
-					return
-				}
+	waitUntilComplete := map[string]bool{}
+	for _, item := range j.Items {
+		annotations := item.GetLabels()
+		if annotations[jobs.LabelRepository] == repoName {
+			waitUntilComplete[item.GetName()] = false
+		}
+	}
+
+	// if no active jobs for this repo, queue a pull job as a failsafe to try to ensure we are up to date as much as possible
+	if len(waitUntilComplete) == 0 {
+		body := asJSON(&provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{},
+		})
+
+		h.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repoName).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(t.Context())
+
+		j, err = h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
+		require.NoError(t, err, "failed to list active jobs")
+
+		for _, item := range j.Items {
+			annotations := item.GetLabels()
+			if annotations[jobs.LabelRepository] == repoName {
+				waitUntilComplete[item.GetName()] = false
 			}
 		}
-	}, time.Second*10, time.Millisecond*25, "job queue must be empty")
+	}
 
-	// Then, as all jobs are now historic jobs, we make sure they are successful.
-	result, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{}, "jobs")
-	require.NoError(t, err, "failed to list historic jobs")
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		for elem := range waitUntilComplete {
+			_, err := h.Jobs.Resource.Get(context.Background(), elem, metav1.GetOptions{})
+			switch {
+			case err == nil:
+				collect.Errorf("job(%s) for repo %s still exists", elem, repoName)
+				return
+			case apierrors.IsNotFound(err):
+				// yay
+				waitUntilComplete[elem] = true
+			default:
+				collect.Errorf("get(%s) for repo %s: %v", elem, repoName, err)
+				return
+			}
+		}
+		for elem, isComplete := range waitUntilComplete {
+			if !isComplete {
+				collect.Errorf("job(%s) for repo %s still exists", elem, repoName)
+				return
+			}
+		}
+	}, waitTimeoutDefault, waitIntervalDefault, "jobs for %s should finish. status: %v", repoName, waitUntilComplete)
 
-	list, err := result.ToList()
-	require.NoError(t, err, "results should be a list")
-	require.NotEmpty(t, list.Items, "expect at least one job")
+	// Then wait for them to be listed as historic jobs
+	var list *unstructured.UnstructuredList
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		result, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{}, "jobs")
+		if !assert.NoError(collect, err, "failed to list historic jobs") {
+			return
+		}
+		list, err = result.ToList()
+		if !assert.NoError(collect, err, "results should be a list") {
+			return
+		}
+		if !assert.NotEmpty(collect, list.Items, "expect at least one job") {
+			return
+		}
+	}, waitTimeoutDefault, waitIntervalDefault, "failed to list historic jobs")
 
+	// finally check that all the jobs are successful
+	successCount := 0
 	for _, elem := range list.Items {
 		require.Equal(t, repoName, elem.GetLabels()[jobs.LabelRepository], "should have repo label")
 
-		state := mustNestedString(elem.Object, "status", "state")
-		require.Equal(t, string(provisioning.JobStateSuccess), state, "job %s failed: %+v", elem.GetName(), elem.Object)
+		// historic jobs will have a suffix of -<hash>, trim that to see if the job is one we were waiting on
+		if _, ok := waitUntilComplete[getNameBeforeLastDash(elem.GetName())]; ok && (mustNestedString(elem.Object, "status", "state") != string(provisioning.JobStateError)) {
+			successCount++
+		}
 	}
+	// can be greater if a pull job was queued by a background task
+	require.GreaterOrEqual(t, successCount, len(waitUntilComplete), "should have all original jobs we were waiting on successful. got: %v. expected: %v", list.Items, waitUntilComplete)
 }
 
-// AwaitJobsWithStates waits for all jobs for a repository to complete and accepts multiple valid end states
-func (h *provisioningTestHelper) AwaitJobsWithStates(t *testing.T, repoName string, acceptedStates []string) {
-	t.Helper()
-
-	// First, we wait for all jobs for the repository to disappear (i.e. complete/fail).
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		list, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
-		if assert.NoError(collect, err, "failed to list active jobs") {
-			for _, elem := range list.Items {
-				repo, _, err := unstructured.NestedString(elem.Object, "spec", "repository")
-				if !assert.NoError(collect, err, "failed to get repository from job spec") {
-					return
-				}
-
-				if !assert.NotEqual(collect, repoName, repo, "there are still remaining jobs for %s: %+v", repoName, elem) {
-					return
-				}
-			}
-		}
-	}, time.Second*10, time.Millisecond*25, "job queue must be empty")
-
-	// Then, as all jobs are now historic jobs, we make sure they are in an accepted state.
-	result, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{}, "jobs")
-	require.NoError(t, err, "failed to list historic jobs")
-
-	list, err := result.ToList()
-	require.NoError(t, err, "results should be a list")
-	require.NotEmpty(t, list.Items, "expect at least one job")
-
-	for _, elem := range list.Items {
-		require.Equal(t, repoName, elem.GetLabels()[jobs.LabelRepository], "should have repo label")
-
-		state := mustNestedString(elem.Object, "status", "state")
-
-		// Check if state is in accepted states
-		found := false
-		for _, acceptedState := range acceptedStates {
-			if state == acceptedState {
-				found = true
-				break
-			}
-		}
-		require.True(t, found, "job %s completed with unexpected state %s (expected one of %v): %+v", elem.GetName(), state, acceptedStates, elem.Object)
+func getNameBeforeLastDash(name string) string {
+	lastDashIndex := strings.LastIndex(name, "-")
+	if lastDashIndex == -1 {
+		return name
 	}
+	return name[:lastDashIndex]
 }
 
 // RenderObject reads the filePath and renders it as a template with the given values.
@@ -562,12 +627,28 @@ func (h *provisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 
 	// Verify initial state
 	if !repo.SkipResourceAssertions {
-		dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Equal(t, repo.ExpectedDashboards, len(dashboards.Items), "should the expected dashboards after sync")
-		folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Equal(t, repo.ExpectedFolders, len(folders.Items), "should have the expected folders after sync")
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+			if err != nil {
+				collect.Errorf("could not list dashboards error: %s", err.Error())
+				return
+			}
+			if len(dashboards.Items) != repo.ExpectedDashboards {
+				collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), repo.ExpectedDashboards)
+				return
+			}
+			folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+			if err != nil {
+				collect.Errorf("could not list folders: error: %s", err.Error())
+				return
+			}
+			if len(folders.Items) != repo.ExpectedFolders {
+				collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), repo.ExpectedFolders)
+				return
+			}
+			assert.Len(collect, dashboards.Items, repo.ExpectedDashboards)
+			assert.Len(collect, folders.Items, repo.ExpectedFolders)
+		}, waitTimeoutDefault, waitIntervalDefault, "should have the expected dashboards and folders after sync")
 	}
 }
 
@@ -585,7 +666,7 @@ func (h *provisioningTestHelper) WaitForHealthyRepository(t *testing.T, name str
 		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
 		assert.True(collect, found, "repository %s does not have health status", name)
 		assert.True(collect, status, "repository %s is not healthy yet", name)
-	}, time.Second*10, time.Millisecond*50, "repository %s should become healthy", name)
+	}, waitTimeoutDefault, waitIntervalDefault, "repository %s should become healthy", name)
 }
 
 type grafanaOption func(opts *testinfra.GrafanaOpts)
@@ -604,28 +685,46 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 		},
+		// Provisioning requires resources to be fully migrated to unified storage.
+		// Mode5 ensures reads/writes go to unified storage, and EnableMigration
+		// enables the data migration at startup to migrate legacy data.
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {
-				DualWriterMode: grafanarest.Mode5,
+				DualWriterMode:  grafanarest.Mode5,
+				EnableMigration: true,
 			},
 			"folders.folder.grafana.app": {
-				DualWriterMode: grafanarest.Mode5,
+				DualWriterMode:  grafanarest.Mode5,
+				EnableMigration: true,
 			},
 		},
 		PermittedProvisioningPaths: ".|" + provisioningPath,
+		// Allow both folder and instance sync targets for tests
+		// (instance is needed for export jobs, folder for most operations)
+		ProvisioningAllowedTargets: []string{"folder", "instance"},
 	}
+
+	if extensions.IsEnterprise {
+		opts.ProvisioningRepositoryTypes = []string{"local", "github", "gitlab", "bitbucket"}
+	}
+
 	for _, o := range options {
 		o(&opts)
 	}
 	helper := apis.NewK8sTestHelper(t, opts)
 
-	// FIXME: keeping this line here to keep the dependency around until we have tests which use this again.
-	helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient()
+	// FIXME: keeping these lines here to keep the dependency around until we have tests which use this again.
+	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
 
 	repositories := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
 		GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
+	})
+	connections := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR:       provisioning.ConnectionResourceInfo.GroupVersionResource(),
 	})
 	jobs := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
@@ -687,6 +786,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		K8sTestHelper:    helper,
 
 		Repositories:       repositories,
+		Connections:        connections,
 		AdminREST:          adminClient,
 		EditorREST:         editorClient,
 		ViewerREST:         viewerClient,
@@ -738,6 +838,17 @@ func unstructuredToRepository(t *testing.T, obj *unstructured.Unstructured) *pro
 	require.NoError(t, err)
 
 	return repo
+}
+
+func unstructuredToConnection(t *testing.T, obj *unstructured.Unstructured) *provisioning.Connection {
+	bytes, err := obj.MarshalJSON()
+	require.NoError(t, err)
+
+	c := &provisioning.Connection{}
+	err = json.Unmarshal(bytes, c)
+	require.NoError(t, err)
+
+	return c
 }
 
 // postFilesRequest performs a direct HTTP POST request to the files API.
@@ -854,7 +965,7 @@ func (h *provisioningTestHelper) CleanupAllRepos(t *testing.T) {
 			return
 		}
 		assert.Equal(collect, 0, len(activeJobs.Items), "all active jobs should complete before cleanup")
-	}, time.Second*20, time.Millisecond*100, "active jobs should complete before cleanup")
+	}, waitTimeoutDefault, waitIntervalDefault, "active jobs should complete before cleanup")
 
 	// Now delete all repositories with retries
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -870,7 +981,7 @@ func (h *provisioningTestHelper) CleanupAllRepos(t *testing.T) {
 				assert.True(collect, apierrors.IsNotFound(err), "Should be able to delete repository %s (or it should already be deleted)", repo.GetName())
 			}
 		}
-	}, time.Second*10, time.Millisecond*100, "should be able to delete all repositories")
+	}, waitTimeoutDefault, waitIntervalDefault, "should be able to delete all repositories")
 
 	// Then wait for repositories to be fully deleted to ensure clean state
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -879,5 +990,181 @@ func (h *provisioningTestHelper) CleanupAllRepos(t *testing.T) {
 			return
 		}
 		assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
-	}, time.Second*15, time.Millisecond*100, "repositories should be cleaned up between subtests")
+	}, waitTimeoutDefault, waitIntervalDefault, "repositories should be cleaned up between subtests")
+}
+
+func (h *provisioningTestHelper) CreateGithubConnection(
+	t *testing.T,
+	ctx context.Context,
+	connection *unstructured.Unstructured,
+) (*unstructured.Unstructured, error) {
+	t.Helper()
+
+	err := h.setGithubClient(t, connection)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+}
+
+func (h *provisioningTestHelper) UpdateGithubConnection(
+	t *testing.T,
+	ctx context.Context,
+	connection *unstructured.Unstructured,
+) (*unstructured.Unstructured, error) {
+	t.Helper()
+
+	err := h.setGithubClient(t, connection)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.Connections.Resource.Update(ctx, connection, metav1.UpdateOptions{FieldValidation: "Strict"})
+}
+
+func (h *provisioningTestHelper) setGithubClient(t *testing.T, connection *unstructured.Unstructured) error {
+	t.Helper()
+
+	objectSpec := connection.Object["spec"].(map[string]interface{})
+	githubObj := objectSpec["github"].(map[string]interface{})
+	appID := githubObj["appID"].(string)
+	id, err := strconv.ParseInt(appID, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	appSlug := "someSlug"
+	connectionFactory := h.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+	// Setup mock repositories for the ListRepos endpoint
+	expectedRepos := []*github.Repository{
+		{
+			Name: github.Ptr("test-repo-1"),
+			Owner: &github.User{
+				Login: github.Ptr("test-owner-1"),
+			},
+			HTMLURL: github.Ptr("https://github.com/test-owner-1/test-repo-1"),
+		},
+		{
+			Name: github.Ptr("test-repo-2"),
+			Owner: &github.User{
+				Login: github.Ptr("test-owner-2"),
+			},
+			HTMLURL: github.Ptr("https://github.com/test-owner-2/test-repo-2"),
+		},
+		{
+			Name: github.Ptr("test-repo-3"),
+			Owner: &github.User{
+				Login: github.Ptr("test-owner-3"),
+			},
+			HTMLURL: github.Ptr("https://github.com/test-owner-3/test-repo-3"),
+		},
+	}
+
+	connectionFactory.Client = ghmock.NewMockedHTTPClient(
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetApp,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				app := github.App{
+					ID:   &id,
+					Slug: &appSlug,
+				}
+				_, _ = w.Write(ghmock.MustMarshal(app))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetAppInstallationsByInstallationId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				id := r.URL.Query().Get("installation_id")
+				idInt, _ := strconv.ParseInt(id, 10, 64)
+				w.WriteHeader(http.StatusOK)
+				installation := github.Installation{
+					ID: &idInt,
+				}
+				_, _ = w.Write(ghmock.MustMarshal(installation))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.PostAppInstallationsAccessTokensByInstallationId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				installation := github.InstallationToken{
+					Token:     github.Ptr("someToken"),
+					ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour * 2)},
+				}
+				_, _ = w.Write(ghmock.MustMarshal(installation))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetInstallationRepositories,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				reposResponse := &github.ListRepositories{
+					Repositories: expectedRepos,
+					TotalCount:   github.Ptr(len(expectedRepos)),
+				}
+				_, _ = w.Write(ghmock.MustMarshal(reposResponse))
+			}),
+		),
+	)
+	h.SetGithubConnectionFactory(connectionFactory)
+
+	return nil
+}
+
+func postHelper(t *testing.T, helper apis.K8sTestHelper, path string, body interface{}, user apis.User) (map[string]interface{}, int, error) {
+	return requestHelper(t, helper, http.MethodPost, path, body, user)
+}
+
+func patchHelper(t *testing.T, helper apis.K8sTestHelper, path string, body interface{}, user apis.User) (map[string]interface{}, int, error) {
+	return requestHelper(t, helper, http.MethodPatch, path, body, user)
+}
+
+func requestHelper(
+	t *testing.T,
+	helper apis.K8sTestHelper,
+	method string,
+	path string,
+	body interface{},
+	user apis.User,
+) (map[string]interface{}, int, error) {
+	bodyJSON, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	resp := apis.DoRequest(&helper, apis.RequestParams{
+		User:        user,
+		Method:      method,
+		Path:        path,
+		Body:        bodyJSON,
+		ContentType: "application/json",
+	}, &struct{}{})
+
+	if resp.Response.StatusCode != http.StatusOK {
+		res := map[string]interface{}{}
+		err := json.Unmarshal(resp.Body, &res)
+		if err != nil {
+			return nil, 0, fmt.Errorf("failed to unmarshal response JSON: %v", err)
+		}
+
+		return res, resp.Response.StatusCode, fmt.Errorf("failure when making request: %s", resp.Response.Status)
+	}
+
+	var result map[string]interface{}
+	err = json.Unmarshal(resp.Body, &result)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to unmarshal response JSON: %v", err)
+	}
+
+	return result, resp.Response.StatusCode, nil
+}
+
+// findCondition finds a condition by type in the conditions list
+func findCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
+	for i := range conditions {
+		if conditions[i].Type == conditionType {
+			return &conditions[i]
+		}
+	}
+	return nil
 }

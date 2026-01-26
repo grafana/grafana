@@ -1,399 +1,13 @@
-import { MatcherOperator, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
-
 import {
-  InheritableProperties,
-  computeInheritedTree,
-  findMatchingRoutes,
-  getInheritedProperties,
-  matchLabels,
-  normalizeRoute,
-  unquoteRouteMatchers,
-} from './notification-policies';
+  AlertState,
+  AlertmanagerAlert,
+  AlertmanagerGroup,
+  MatcherOperator,
+  ObjectMatcher,
+  RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
-const CATCH_ALL_ROUTE: Route = {
-  receiver: 'ALL',
-  object_matchers: [],
-};
-
-describe('findMatchingRoutes', () => {
-  const policies: Route = {
-    receiver: 'ROOT',
-    group_by: ['grafana_folder'],
-    object_matchers: [],
-    routes: [
-      {
-        receiver: 'A',
-        object_matchers: [['team', MatcherOperator.equal, 'operations']],
-        routes: [
-          {
-            receiver: 'B1',
-            object_matchers: [['region', MatcherOperator.equal, 'europe']],
-          },
-          {
-            receiver: 'B2',
-            object_matchers: [['region', MatcherOperator.equal, 'nasa']],
-          },
-        ],
-      },
-      {
-        receiver: 'C',
-        object_matchers: [['foo', MatcherOperator.equal, 'bar']],
-      },
-    ],
-    group_wait: '10s',
-    group_interval: '1m',
-  };
-
-  it('should match root route with no matching labels', () => {
-    const matches = findMatchingRoutes(policies, []);
-    expect(matches).toHaveLength(1);
-    expect(matches[0].route).toHaveProperty('receiver', 'ROOT');
-  });
-
-  it('should match parent route with no matching children', () => {
-    const matches = findMatchingRoutes(policies, [['team', 'operations']]);
-    expect(matches).toHaveLength(1);
-    expect(matches[0].route).toHaveProperty('receiver', 'A');
-  });
-
-  it('should match route with negative matchers', () => {
-    const policiesWithNegative = {
-      ...policies,
-      routes: policies.routes?.concat({
-        receiver: 'D',
-        object_matchers: [['name', MatcherOperator.notEqual, 'gilles']],
-      }),
-    };
-    const matches = findMatchingRoutes(policiesWithNegative, [['name', 'konrad']]);
-    expect(matches).toHaveLength(1);
-    expect(matches[0].route).toHaveProperty('receiver', 'D');
-  });
-
-  it('should match child route of matching parent', () => {
-    const matches = findMatchingRoutes(policies, [
-      ['team', 'operations'],
-      ['region', 'europe'],
-    ]);
-    expect(matches).toHaveLength(1);
-    expect(matches[0].route).toHaveProperty('receiver', 'B1');
-  });
-
-  it('should match simple policy', () => {
-    const matches = findMatchingRoutes(policies, [['foo', 'bar']]);
-    expect(matches).toHaveLength(1);
-    expect(matches[0].route).toHaveProperty('receiver', 'C');
-  });
-
-  it('should match catch-all route', () => {
-    const policiesWithAll: Route = {
-      ...policies,
-      routes: [CATCH_ALL_ROUTE, ...(policies.routes ?? [])],
-    };
-
-    const matches = findMatchingRoutes(policiesWithAll, []);
-    expect(matches).toHaveLength(1);
-    expect(matches[0].route).toHaveProperty('receiver', 'ALL');
-  });
-
-  it('should match multiple routes with continue', () => {
-    const policiesWithAll: Route = {
-      ...policies,
-      routes: [
-        {
-          ...CATCH_ALL_ROUTE,
-          continue: true,
-        },
-        ...(policies.routes ?? []),
-      ],
-    };
-
-    const matches = findMatchingRoutes(policiesWithAll, [['foo', 'bar']]);
-    expect(matches).toHaveLength(2);
-    expect(matches[0].route).toHaveProperty('receiver', 'ALL');
-    expect(matches[1].route).toHaveProperty('receiver', 'C');
-  });
-
-  it('should not match grandchild routes with same labels as parent', () => {
-    const policies: Route = {
-      receiver: 'PARENT',
-      group_by: ['grafana_folder'],
-      object_matchers: [['foo', MatcherOperator.equal, 'bar']],
-      routes: [
-        {
-          receiver: 'CHILD',
-          object_matchers: [['baz', MatcherOperator.equal, 'qux']],
-          routes: [
-            {
-              receiver: 'GRANDCHILD',
-              object_matchers: [['foo', MatcherOperator.equal, 'bar']],
-            },
-          ],
-        },
-      ],
-      group_wait: '10s',
-      group_interval: '1m',
-    };
-
-    const matches = findMatchingRoutes(policies, [['foo', 'bar']]);
-    expect(matches).toHaveLength(1);
-    expect(matches[0].route).toHaveProperty('receiver', 'PARENT');
-  });
-});
-
-describe('getInheritedProperties()', () => {
-  describe('group_by: []', () => {
-    it('should get group_by: [] from parent', () => {
-      const parent: Route = {
-        receiver: 'PARENT',
-        group_by: ['label'],
-      };
-
-      const child: Route = {
-        receiver: 'CHILD',
-        group_by: [],
-      };
-
-      const childInherited = getInheritedProperties(parent, child);
-      expect(childInherited).toHaveProperty('group_by', ['label']);
-    });
-
-    it('should get group_by: [] from parent inherited properties', () => {
-      const parent: Route = {
-        receiver: 'PARENT',
-        group_by: [],
-      };
-
-      const child: Route = {
-        receiver: 'CHILD',
-        group_by: [],
-      };
-
-      const parentInherited = { group_by: ['label'] };
-
-      const childInherited = getInheritedProperties(parent, child, parentInherited);
-      expect(childInherited).toHaveProperty('group_by', ['label']);
-    });
-
-    it('should not inherit if the child overrides an inheritable value (group_by)', () => {
-      const parent: Route = {
-        receiver: 'PARENT',
-        group_by: ['parentLabel'],
-      };
-
-      const child: Route = {
-        receiver: 'CHILD',
-        group_by: ['childLabel'],
-      };
-
-      const childInherited = getInheritedProperties(parent, child);
-      expect(childInherited).not.toHaveProperty('group_by');
-    });
-
-    it('should inherit if group_by is undefined', () => {
-      const parent: Route = {
-        receiver: 'PARENT',
-        group_by: ['label'],
-      };
-
-      const child: Route = {
-        receiver: 'CHILD',
-        group_by: undefined,
-      };
-
-      const childInherited = getInheritedProperties(parent, child);
-      expect(childInherited).toHaveProperty('group_by', ['label']);
-    });
-
-    it('should inherit from grandparent when parent is inheriting', () => {
-      const parentInheritedProperties: InheritableProperties = { receiver: 'grandparent' };
-      const parent: Route = { receiver: null, group_by: ['foo'] };
-      const child: Route = { receiver: null };
-
-      const childInherited = getInheritedProperties(parent, child, parentInheritedProperties);
-      expect(childInherited).toHaveProperty('receiver', 'grandparent');
-      expect(childInherited.group_by).toEqual(['foo']);
-    });
-  });
-
-  describe('regular "undefined" or "null" values', () => {
-    it('should compute inherited properties being undefined', () => {
-      const parent: Route = {
-        receiver: 'PARENT',
-        group_wait: '10s',
-      };
-
-      const child: Route = {
-        receiver: 'CHILD',
-      };
-
-      const childInherited = getInheritedProperties(parent, child);
-      expect(childInherited).toHaveProperty('group_wait', '10s');
-    });
-
-    it('should compute inherited properties being null', () => {
-      const parent: Route = {
-        receiver: 'PARENT',
-        group_wait: '10s',
-      };
-
-      const child: Route = {
-        receiver: null,
-      };
-
-      const childInherited = getInheritedProperties(parent, child);
-      expect(childInherited).toHaveProperty('receiver', 'PARENT');
-    });
-
-    it('should compute inherited properties being undefined from parent inherited properties', () => {
-      const parent: Route = {
-        receiver: 'PARENT',
-      };
-
-      const child: Route = {
-        receiver: 'CHILD',
-      };
-
-      const childInherited = getInheritedProperties(parent, child, { group_wait: '10s' });
-      expect(childInherited).toHaveProperty('group_wait', '10s');
-    });
-
-    it('should not inherit if the child overrides an inheritable value', () => {
-      const parent: Route = {
-        receiver: 'PARENT',
-        group_wait: '10s',
-      };
-
-      const child: Route = {
-        receiver: 'CHILD',
-        group_wait: '30s',
-      };
-
-      const childInherited = getInheritedProperties(parent, child);
-      expect(childInherited).not.toHaveProperty('group_wait');
-    });
-
-    it('should not inherit if the child overrides an inheritable value and the parent inherits', () => {
-      const parent: Route = {
-        receiver: 'PARENT',
-      };
-
-      const child: Route = {
-        receiver: 'CHILD',
-        group_wait: '30s',
-      };
-
-      const childInherited = getInheritedProperties(parent, child, { group_wait: '60s' });
-      expect(childInherited).not.toHaveProperty('group_wait');
-    });
-
-    it('should inherit if the child property is an empty string', () => {
-      const parent: Route = {
-        receiver: 'PARENT',
-      };
-
-      const child: Route = {
-        receiver: '',
-        group_wait: '30s',
-      };
-
-      const childInherited = getInheritedProperties(parent, child);
-      expect(childInherited).toHaveProperty('receiver', 'PARENT');
-    });
-  });
-
-  describe('timing options', () => {
-    it('should inherit timing options', () => {
-      const parent: Route = {
-        receiver: 'PARENT',
-        group_wait: '1m',
-        group_interval: '2m',
-      };
-
-      const child: Route = {
-        repeat_interval: '999s',
-      };
-
-      const childInherited = getInheritedProperties(parent, child);
-      expect(childInherited).toHaveProperty('group_wait', '1m');
-      expect(childInherited).toHaveProperty('group_interval', '2m');
-    });
-  });
-  it('should not inherit mute timings from parent route', () => {
-    const parent: Route = {
-      receiver: 'PARENT',
-      group_by: ['parentLabel'],
-      mute_time_intervals: ['Mon-Fri 09:00-17:00'],
-    };
-
-    const child: Route = {
-      receiver: 'CHILD',
-      group_by: ['childLabel'],
-    };
-
-    const childInherited = getInheritedProperties(parent, child);
-    expect(childInherited).not.toHaveProperty('mute_time_intervals');
-  });
-});
-
-describe('computeInheritedTree', () => {
-  it('should merge properties from parent', () => {
-    const parent: Route = {
-      receiver: 'PARENT',
-      group_wait: '1m',
-      group_interval: '2m',
-      repeat_interval: '3m',
-      routes: [
-        {
-          repeat_interval: '999s',
-        },
-      ],
-    };
-
-    const treeRoot = computeInheritedTree(parent);
-    expect(treeRoot).toHaveProperty('group_wait', '1m');
-    expect(treeRoot).toHaveProperty('group_interval', '2m');
-    expect(treeRoot).toHaveProperty('repeat_interval', '3m');
-
-    expect(treeRoot).toHaveProperty('routes.0.group_wait', '1m');
-    expect(treeRoot).toHaveProperty('routes.0.group_interval', '2m');
-    expect(treeRoot).toHaveProperty('routes.0.repeat_interval', '999s');
-  });
-
-  it('should not regress #73573', () => {
-    const parent: Route = {
-      routes: [
-        {
-          group_wait: '1m',
-          group_interval: '2m',
-          repeat_interval: '3m',
-          routes: [
-            {
-              group_wait: '10m',
-              group_interval: '20m',
-              repeat_interval: '30m',
-            },
-            {
-              repeat_interval: '999m',
-            },
-          ],
-        },
-      ],
-    };
-
-    const treeRoot = computeInheritedTree(parent);
-    expect(treeRoot).toHaveProperty('routes.0.group_wait', '1m');
-    expect(treeRoot).toHaveProperty('routes.0.group_interval', '2m');
-    expect(treeRoot).toHaveProperty('routes.0.repeat_interval', '3m');
-
-    expect(treeRoot).toHaveProperty('routes.0.routes.0.group_wait', '10m');
-    expect(treeRoot).toHaveProperty('routes.0.routes.0.group_interval', '20m');
-    expect(treeRoot).toHaveProperty('routes.0.routes.0.repeat_interval', '30m');
-
-    expect(treeRoot).toHaveProperty('routes.0.routes.1.group_wait', '1m');
-    expect(treeRoot).toHaveProperty('routes.0.routes.1.group_interval', '2m');
-    expect(treeRoot).toHaveProperty('routes.0.routes.1.repeat_interval', '999m');
-  });
-});
+import { findMatchingAlertGroups, normalizeRoute, unquoteRouteMatchers } from './notification-policies';
 
 describe('normalizeRoute', () => {
   it('should map matchers property to object_matchers', function () {
@@ -432,66 +46,6 @@ describe('normalizeRoute', () => {
   });
 });
 
-describe('matchLabels', () => {
-  it('should match with non-matching matchers', () => {
-    const result = matchLabels(
-      [
-        ['foo', MatcherOperator.equal, ''],
-        ['team', MatcherOperator.equal, 'operations'],
-      ],
-      [['team', 'operations']]
-    );
-
-    expect(result).toHaveProperty('matches', true);
-    expect(result.labelsMatch).toMatchSnapshot();
-  });
-
-  it('should match with non-equal matchers', () => {
-    const result = matchLabels(
-      [
-        ['foo', MatcherOperator.notEqual, 'bar'],
-        ['team', MatcherOperator.equal, 'operations'],
-      ],
-      [['team', 'operations']]
-    );
-
-    expect(result).toHaveProperty('matches', true);
-    expect(result.labelsMatch).toMatchSnapshot();
-  });
-
-  it('should not match with a set of matchers', () => {
-    const result = matchLabels(
-      [
-        ['foo', MatcherOperator.notEqual, 'bar'],
-        ['team', MatcherOperator.equal, 'operations'],
-      ],
-      [
-        ['team', 'operations'],
-        ['foo', 'bar'],
-      ]
-    );
-
-    expect(result).toHaveProperty('matches', false);
-    expect(result.labelsMatch).toMatchSnapshot();
-  });
-
-  it('does not match unanchored regular expressions', () => {
-    const result = matchLabels([['foo', MatcherOperator.regex, 'bar']], [['foo', 'barbarbar']]);
-    // This may seem unintuitive, but this is how Alertmanager matches, as it anchors the regex
-    expect(result.matches).toEqual(false);
-  });
-
-  it('matches regular expressions with wildcards', () => {
-    const result = matchLabels([['foo', MatcherOperator.regex, '.*bar.*']], [['foo', 'barbarbar']]);
-    expect(result.matches).toEqual(true);
-  });
-
-  it('does match regular expressions with flags', () => {
-    const result = matchLabels([['foo', MatcherOperator.regex, '(?i).*BAr.*']], [['foo', 'barbarbar']]);
-    expect(result.matches).toEqual(true);
-  });
-});
-
 describe('unquoteRouteMatchers', () => {
   it('should unquote and unescape matchers values', () => {
     const route: RouteWithID = {
@@ -525,5 +79,305 @@ describe('unquoteRouteMatchers', () => {
     expect(unwrapped.object_matchers).toHaveLength(2);
     expect(unwrapped.object_matchers).toContainEqual(['f"oo with quote', MatcherOperator.equal, 'bar']);
     expect(unwrapped.object_matchers).toContainEqual(['f\\oo with slash', MatcherOperator.equal, 'bar']);
+  });
+});
+
+describe('findMatchingAlertGroups', () => {
+  // Helper functions to create minimal test data
+  const createAlert = (labels: Record<string, string>): AlertmanagerAlert => ({
+    labels,
+    annotations: {},
+    startsAt: '2024-01-01T00:00:00Z',
+    endsAt: '2024-01-01T01:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+    fingerprint: 'test-fingerprint',
+    receivers: [{ name: 'default' }],
+    status: {
+      state: AlertState.Active,
+      silencedBy: [],
+      inhibitedBy: [],
+    },
+  });
+
+  const createGroup = (alerts: AlertmanagerAlert[]): AlertmanagerGroup => ({
+    labels: {},
+    receiver: { name: 'default' },
+    alerts,
+  });
+
+  const createRoute = (
+    id: string,
+    matchers?: ObjectMatcher[],
+    routes?: RouteWithID[],
+    continueMatching?: boolean
+  ): RouteWithID => ({
+    id,
+    receiver: 'default',
+    object_matchers: matchers,
+    routes,
+    continue: continueMatching,
+  });
+
+  it('should match alerts to the correct route by ID', () => {
+    // Create a route tree with 2 child routes
+    const teamFrontendRoute = createRoute('route-1', [['team', MatcherOperator.equal, 'frontend']]);
+    const teamBackendRoute = createRoute('route-2', [['team', MatcherOperator.equal, 'backend']]);
+    const rootRoute = createRoute('root', [], [teamFrontendRoute, teamBackendRoute]);
+
+    const frontendCriticalAlert = createAlert({ team: 'frontend', severity: 'critical' });
+    const backendWarningAlert = createAlert({ team: 'backend', severity: 'warning' });
+
+    const alertGroups: AlertmanagerGroup[] = [createGroup([frontendCriticalAlert, backendWarningAlert])];
+
+    // Test matching alerts for teamFrontendRoute
+    const result = findMatchingAlertGroups(rootRoute, teamFrontendRoute, alertGroups);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].alerts).toHaveLength(1);
+    expect(result[0].alerts).toContainEqual(frontendCriticalAlert);
+  });
+
+  it('should return empty array when no alerts match the route', () => {
+    const teamFrontendRoute = createRoute('route-1', [['team', MatcherOperator.equal, 'frontend']]);
+    const rootRoute = createRoute('root', [], [teamFrontendRoute]);
+
+    const backendAlert = createAlert({ team: 'backend' });
+    const opsAlert = createAlert({ team: 'ops' });
+
+    const alertGroups: AlertmanagerGroup[] = [createGroup([backendAlert, opsAlert])];
+
+    const result = findMatchingAlertGroups(rootRoute, teamFrontendRoute, alertGroups);
+
+    expect(result).toHaveLength(0);
+  });
+
+  it('should handle alerts matching the root route', () => {
+    // Root route with no matchers (catch-all)
+    const rootRoute = createRoute('root', []);
+
+    const frontendAlert = createAlert({ team: 'frontend' });
+    const backendAlert = createAlert({ team: 'backend' });
+
+    const alertGroups: AlertmanagerGroup[] = [createGroup([frontendAlert, backendAlert])];
+
+    const result = findMatchingAlertGroups(rootRoute, rootRoute, alertGroups);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].alerts).toHaveLength(2);
+    expect(result[0].alerts).toContainEqual(frontendAlert);
+    expect(result[0].alerts).toContainEqual(backendAlert);
+  });
+
+  it('should correctly filter alerts within groups', () => {
+    const severityCritialRoute = createRoute('route-1', [['severity', MatcherOperator.equal, 'critical']]);
+    const rootRoute = createRoute('root', [], [severityCritialRoute]);
+
+    const criticalFrontendAlert = createAlert({ severity: 'critical', team: 'frontend' });
+    const warningFrontendAlert = createAlert({ severity: 'warning', team: 'frontend' });
+    const criticalBackendAlert = createAlert({ severity: 'critical', team: 'backend' });
+
+    const alertGroups: AlertmanagerGroup[] = [
+      createGroup([criticalFrontendAlert, warningFrontendAlert, criticalBackendAlert]),
+    ];
+
+    const result = findMatchingAlertGroups(rootRoute, severityCritialRoute, alertGroups);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].alerts).toHaveLength(2);
+
+    // Verify only critical alerts are returned
+    expect(result[0].alerts).toContainEqual(criticalFrontendAlert);
+    expect(result[0].alerts).toContainEqual(criticalBackendAlert);
+    expect(result[0].alerts).not.toContainEqual(warningFrontendAlert);
+  });
+
+  it('should handle multiple alert groups', () => {
+    const teamFrontendRoute = createRoute('route-1', [['team', MatcherOperator.equal, 'frontend']]);
+    const rootRoute = createRoute('root', [], [teamFrontendRoute]);
+
+    const frontendProdAlert = createAlert({ team: 'frontend', env: 'prod' });
+    const backendProdAlert = createAlert({ team: 'backend', env: 'prod' });
+    const frontendDevAlert = createAlert({ team: 'frontend', env: 'dev' });
+
+    const alertGroups: AlertmanagerGroup[] = [
+      createGroup([frontendProdAlert]),
+      createGroup([backendProdAlert]),
+      createGroup([frontendDevAlert]),
+    ];
+
+    const result = findMatchingAlertGroups(rootRoute, teamFrontendRoute, alertGroups);
+
+    expect(result).toHaveLength(2);
+
+    // Verify we got the correct alerts (frontend only)
+    const allAlerts = result.flatMap((group) => group.alerts);
+    expect(allAlerts).toHaveLength(2);
+    expect(allAlerts).toContainEqual(frontendProdAlert);
+    expect(allAlerts).toContainEqual(frontendDevAlert);
+    expect(allAlerts).not.toContainEqual(backendProdAlert);
+  });
+
+  it('should match alerts using regex matchers', () => {
+    const route: RouteWithID = createRoute('route-1', [['service', MatcherOperator.regex, 'api-.*']]);
+    const rootRoute: RouteWithID = createRoute('root', [], [route]);
+
+    const apiFrontendAlert = createAlert({ service: 'api-frontend' });
+    const apiBackendAlert = createAlert({ service: 'api-backend' });
+    const workerAlert = createAlert({ service: 'worker' });
+
+    const alertGroups: AlertmanagerGroup[] = [createGroup([apiFrontendAlert, apiBackendAlert, workerAlert])];
+
+    const result = findMatchingAlertGroups(rootRoute, route, alertGroups);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].alerts).toHaveLength(2);
+
+    // Verify we got the api-* alerts and not the worker alert
+    expect(result[0].alerts).toContainEqual(apiFrontendAlert);
+    expect(result[0].alerts).toContainEqual(apiBackendAlert);
+    expect(result[0].alerts).not.toContainEqual(workerAlert);
+  });
+
+  it('should match alerts with multiple matchers (AND logic)', () => {
+    const route: RouteWithID = createRoute('route-1', [
+      ['team', MatcherOperator.equal, 'frontend'],
+      ['severity', MatcherOperator.equal, 'critical'],
+    ]);
+    const rootRoute: RouteWithID = createRoute('root', [], [route]);
+
+    const frontendCriticalAlert = createAlert({ team: 'frontend', severity: 'critical' });
+    const frontendWarningAlert = createAlert({ team: 'frontend', severity: 'warning' });
+    const backendCriticalAlert = createAlert({ team: 'backend', severity: 'critical' });
+
+    const alertGroups: AlertmanagerGroup[] = [
+      createGroup([frontendCriticalAlert, frontendWarningAlert, backendCriticalAlert]),
+    ];
+
+    const result = findMatchingAlertGroups(rootRoute, route, alertGroups);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].alerts).toHaveLength(1);
+
+    // Only the alert matching both conditions should be returned
+    expect(result[0].alerts).toContainEqual(frontendCriticalAlert);
+    expect(result[0].alerts).not.toContainEqual(frontendWarningAlert);
+    expect(result[0].alerts).not.toContainEqual(backendCriticalAlert);
+  });
+
+  it('should match only the first route when multiple routes have identical matchers', () => {
+    // Create two routes with identical matchers - only the first should match (depth-first left-to-right)
+    const firstTeamFrontendRoute: RouteWithID = createRoute('route-1', [['team', MatcherOperator.equal, 'frontend']]);
+    const secondTeamFrontendRoute: RouteWithID = createRoute('route-2', [['team', MatcherOperator.equal, 'frontend']]);
+    const rootRoute: RouteWithID = createRoute('root', [], [firstTeamFrontendRoute, secondTeamFrontendRoute]);
+
+    const frontendCriticalAlert = createAlert({ team: 'frontend', severity: 'critical' });
+    const alertGroups: AlertmanagerGroup[] = [createGroup([frontendCriticalAlert])];
+
+    // Check that firstTeamFrontendRoute matches
+    const resultFirst = findMatchingAlertGroups(rootRoute, firstTeamFrontendRoute, alertGroups);
+    expect(resultFirst).toHaveLength(1);
+    expect(resultFirst[0].alerts).toContainEqual(frontendCriticalAlert);
+
+    // Check that secondTeamFrontendRoute does NOT match (alert stops at first route)
+    const resultSecond = findMatchingAlertGroups(rootRoute, secondTeamFrontendRoute, alertGroups);
+    expect(resultSecond).toHaveLength(0);
+  });
+
+  it('should match multiple routes when continue flag is set to true', () => {
+    // Create routes with continue=true on the first one
+    const teamFrontendRouteWithContinue: RouteWithID = createRoute(
+      'route-1',
+      [['team', MatcherOperator.equal, 'frontend']],
+      [],
+      true // continue=true
+    );
+    const teamFrontendSiblingRoute: RouteWithID = createRoute('route-2', [['team', MatcherOperator.equal, 'frontend']]);
+    const rootRoute: RouteWithID = createRoute('root', [], [teamFrontendRouteWithContinue, teamFrontendSiblingRoute]);
+
+    const frontendCriticalAlert = createAlert({ team: 'frontend', severity: 'critical' });
+    const alertGroups: AlertmanagerGroup[] = [createGroup([frontendCriticalAlert])];
+
+    // With continue=true, both routes should match the same alert
+    const resultWithContinue = findMatchingAlertGroups(rootRoute, teamFrontendRouteWithContinue, alertGroups);
+    expect(resultWithContinue).toHaveLength(1);
+    expect(resultWithContinue[0].alerts).toContainEqual(frontendCriticalAlert);
+
+    const resultSibling = findMatchingAlertGroups(rootRoute, teamFrontendSiblingRoute, alertGroups);
+    expect(resultSibling).toHaveLength(1);
+    expect(resultSibling[0].alerts).toContainEqual(frontendCriticalAlert);
+  });
+
+  it('should handle nested routes with continue flag', () => {
+    // Create a more complex tree:
+    // root
+    //   ├─ teamFrontendRouteWithContinue (team=frontend, continue=true)
+    //   │   └─ severityCriticalSubRoute (severity=critical)
+    //   └─ teamFrontendSiblingRoute (team=frontend)
+    const severityCriticalSubRoute: RouteWithID = createRoute('severity-critical-sub', [
+      ['severity', MatcherOperator.equal, 'critical'],
+    ]);
+    const teamFrontendRouteWithContinue: RouteWithID = createRoute(
+      'team-frontend-continue',
+      [['team', MatcherOperator.equal, 'frontend']],
+      [severityCriticalSubRoute],
+      true
+    );
+    const teamFrontendSiblingRoute: RouteWithID = createRoute('team-frontend-sibling', [
+      ['team', MatcherOperator.equal, 'frontend'],
+    ]);
+    const rootRoute: RouteWithID = createRoute('root', [], [teamFrontendRouteWithContinue, teamFrontendSiblingRoute]);
+
+    const frontendCriticalAlert = createAlert({ team: 'frontend', severity: 'critical' });
+    const frontendWarningAlert = createAlert({ team: 'frontend', severity: 'warning' });
+
+    const alertGroups: AlertmanagerGroup[] = [createGroup([frontendCriticalAlert, frontendWarningAlert])];
+
+    // severityCriticalSubRoute should match only the critical alert (most specific match)
+    const resultSubRoute = findMatchingAlertGroups(rootRoute, severityCriticalSubRoute, alertGroups);
+    expect(resultSubRoute).toHaveLength(1);
+    expect(resultSubRoute[0].alerts).toHaveLength(1);
+    expect(resultSubRoute[0].alerts).toContainEqual(frontendCriticalAlert);
+
+    // teamFrontendSiblingRoute should match both alerts because teamFrontendRouteWithContinue has continue=true
+    const resultSibling = findMatchingAlertGroups(rootRoute, teamFrontendSiblingRoute, alertGroups);
+    expect(resultSibling).toHaveLength(1);
+    expect(resultSibling[0].alerts).toHaveLength(2);
+    expect(resultSibling[0].alerts).toContainEqual(frontendCriticalAlert);
+    expect(resultSibling[0].alerts).toContainEqual(frontendWarningAlert);
+  });
+
+  it('should stop at first match when continue flag is false (default)', () => {
+    // Test that without continue flag, matching stops at first route
+    const firstSeverityCriticalRoute: RouteWithID = createRoute(
+      'first-severity-critical',
+      [['severity', MatcherOperator.equal, 'critical']],
+      [],
+      false
+    );
+    const secondSeverityCriticalRoute: RouteWithID = createRoute('second-severity-critical', [
+      ['severity', MatcherOperator.equal, 'critical'],
+    ]);
+    const teamFrontendRoute: RouteWithID = createRoute('team-frontend', [['team', MatcherOperator.equal, 'frontend']]);
+    const rootRoute: RouteWithID = createRoute(
+      'root',
+      [],
+      [firstSeverityCriticalRoute, secondSeverityCriticalRoute, teamFrontendRoute]
+    );
+
+    const frontendCriticalAlert = createAlert({ team: 'frontend', severity: 'critical' });
+    const alertGroups: AlertmanagerGroup[] = [createGroup([frontendCriticalAlert])];
+
+    // firstSeverityCriticalRoute should match (first matching route)
+    const resultFirst = findMatchingAlertGroups(rootRoute, firstSeverityCriticalRoute, alertGroups);
+    expect(resultFirst).toHaveLength(1);
+    expect(resultFirst[0].alerts).toContainEqual(frontendCriticalAlert);
+
+    // secondSeverityCriticalRoute should NOT match (stopped at first route)
+    const resultSecond = findMatchingAlertGroups(rootRoute, secondSeverityCriticalRoute, alertGroups);
+    expect(resultSecond).toHaveLength(0);
+
+    // teamFrontendRoute should NOT match (stopped at first route)
+    const resultTeam = findMatchingAlertGroups(rootRoute, teamFrontendRoute, alertGroups);
+    expect(resultTeam).toHaveLength(0);
   });
 });

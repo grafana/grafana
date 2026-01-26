@@ -1,5 +1,5 @@
+import { store } from '@grafana/data';
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from '@grafana/i18n';
-import store from 'app/core/store';
 
 import { sendAppNotification } from './core/copy/appNotification';
 import { PreferencesService } from './core/services/PreferencesService';
@@ -27,7 +27,7 @@ export const potentiallySetupMockApi = async () => {
     const { default: worker } = await import('@grafana/test-utils/worker');
 
     // TODO: Generalise and move Alerting handlers into @grafana/test-utils or @grafana/alerting package
-    const { default: alertingHandlers } = await import('./features/alerting/unified/mocks/server/all-handlers');
+    const { alertingHandlers } = await import('./features/alerting/unified/mocks/server/all-handlers');
     worker.use(...alertingHandlers);
 
     worker.start({ onUnhandledRequest: 'bypass' });

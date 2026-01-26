@@ -107,6 +107,10 @@ export interface AnnotationQuery {
    */
   name: string;
   /**
+   * Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
+   */
+  placement?: AnnotationQueryPlacement;
+  /**
    * TODO.. this should just be a normal query target
    */
   target?: AnnotationTarget;
@@ -184,6 +188,10 @@ export interface VariableModel {
    */
   regex?: string;
   /**
+   * Determine whether regex applies to variable value or display text
+   */
+  regexApplyTo?: VariableRegexApplyTo;
+  /**
    * Whether the variable value should be managed by URL query params or not
    */
   skipUrlSync?: boolean;
@@ -203,6 +211,10 @@ export interface VariableModel {
    * Type of variable
    */
   type: VariableType;
+  /**
+   * Optional, indicates whether a custom type variable uses CSV or JSON to define its values
+   */
+  valuesFormat?: ('csv' | 'json');
 }
 
 export const defaultVariableModel: Partial<VariableModel> = {
@@ -212,6 +224,7 @@ export const defaultVariableModel: Partial<VariableModel> = {
   options: [],
   skipUrlSync: false,
   staticOptions: [],
+  valuesFormat: 'csv',
 };
 
 /**
@@ -254,6 +267,12 @@ export enum VariableHide {
   hideVariable = 2,
   inControlsMenu = 3,
 }
+
+/**
+ * Determine whether regex applies to variable value or display text
+ * Accepted values are "value" (apply to value used in queries) or "text" (apply to display text shown to users)
+ */
+export type VariableRegexApplyTo = ('value' | 'text');
 
 /**
  * Sort variable options
@@ -364,6 +383,93 @@ export type DashboardLinkType = ('link' | 'dashboards');
 export type DashboardLinkPlacement = 'inControlsMenu';
 
 /**
+ * Annotation Query placement. Defines where the annotation query should be displayed.
+ * - "inControlsMenu" renders the annotation query in the dashboard controls dropdown menu
+ */
+export type AnnotationQueryPlacement = 'inControlsMenu';
+
+/**
+ * Dashboard action type
+ */
+export type ActionType = ('fetch' | 'infinity');
+
+/**
+ * Fetch options
+ */
+export interface FetchOptions {
+  body?: string;
+  headers?: Array<Array<string>>;
+  method: HttpRequestMethod;
+  /**
+   * These are 2D arrays of strings, each representing a key-value pair
+   * We are defining this way because we can't generate a go struct that
+   * that would have exactly two strings in each sub-array
+   */
+  queryParams?: Array<Array<string>>;
+  url: string;
+}
+
+export const defaultFetchOptions: Partial<FetchOptions> = {
+  headers: [],
+  queryParams: [],
+};
+
+/**
+ * Infinity options
+ */
+export interface InfinityOptions {
+  body?: string;
+  datasourceUid: string;
+  headers?: Array<Array<string>>;
+  method: HttpRequestMethod;
+  /**
+   * These are 2D arrays of strings, each representing a key-value pair
+   * We are defining them this way because we can't generate a go struct that
+   * that would have exactly two strings in each sub-array
+   */
+  queryParams?: Array<Array<string>>;
+  url: string;
+}
+
+export const defaultInfinityOptions: Partial<InfinityOptions> = {
+  headers: [],
+  queryParams: [],
+};
+
+export type HttpRequestMethod = ('GET' | 'PUT' | 'POST' | 'DELETE' | 'PATCH');
+
+/**
+ * Action variable type
+ */
+export type ActionVariableType = 'string';
+
+export interface ActionVariable {
+  key: string;
+  name: string;
+  type: ActionVariableType;
+}
+
+/**
+ * Dashboard action
+ */
+export interface Action {
+  confirmation?: string;
+  fetch?: FetchOptions;
+  infinity?: InfinityOptions;
+  oneClick?: boolean;
+  style?: {
+    backgroundColor?: string;
+  };
+  title: string;
+  type: ActionType;
+  variables?: Array<ActionVariable>;
+}
+
+export const defaultAction: Partial<Action> = {
+  variables: [],
+};
+
+/**
  * Dashboard variable type
  * `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
  * `adhoc`: Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only).
@@ -373,8 +479,9 @@ export type DashboardLinkPlacement = 'inControlsMenu';
  * `textbox`: Display a free text input field with an optional default value.
  * `custom`: Define the variable options manually using a comma-separated list.
  * `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+ * `switch`: Boolean variables rendered as a switch
  */
-export type VariableType = ('query' | 'adhoc' | 'groupby' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system' | 'snapshot');
+export type VariableType = ('query' | 'adhoc' | 'groupby' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system' | 'snapshot' | 'switch');
 
 /**
  * Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
@@ -383,7 +490,12 @@ export type VariableType = ('query' | 'adhoc' | 'groupby' | 'constant' | 'dataso
  * `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
  * `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
  * `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
- * `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+ * `continuous-viridis`: Continuous Viridis palette mode
+ * `continuous-magma`: Continuous Magma palette mode
+ * `continuous-plasma`: Continuous Plasma palette mode
+ * `continuous-inferno`: Continuous Inferno palette mode
+ * `continuous-cividis`: Continuous Cividis palette mode
+ * `continuous-GrYlRd`: Continuous Green-Yellow-Red palette mode
  * `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
  * `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
  * `continuous-YlRd`: Continuous Yellow-Red palette mode
@@ -400,11 +512,16 @@ export enum FieldColorModeId {
   ContinuousBlPu = 'continuous-BlPu',
   ContinuousBlYlRd = 'continuous-BlYlRd',
   ContinuousBlues = 'continuous-blues',
+  ContinuousCividis = 'continuous-cividis',
   ContinuousGrYlRd = 'continuous-GrYlRd',
   ContinuousGreens = 'continuous-greens',
+  ContinuousInferno = 'continuous-inferno',
+  ContinuousMagma = 'continuous-magma',
+  ContinuousPlasma = 'continuous-plasma',
   ContinuousPurples = 'continuous-purples',
   ContinuousRdYlGr = 'continuous-RdYlGr',
   ContinuousReds = 'continuous-reds',
+  ContinuousViridis = 'continuous-viridis',
   ContinuousYlBl = 'continuous-YlBl',
   ContinuousYlRd = 'continuous-YlRd',
   Fixed = 'fixed',
@@ -727,6 +844,11 @@ export const defaultDashboardCursorSync: DashboardCursorSync = DashboardCursorSy
  */
 export interface Panel {
   /**
+   * When a panel is migrated from a previous version (Angular to React), this field is set to the original panel type.
+   * This is used to determine the original panel type when migrating to a new version so the plugin migration can be applied.
+   */
+  autoMigrateFrom?: string;
+  /**
    * Sets panel queries cache timeout.
    */
   cacheTimeout?: string;
@@ -803,6 +925,11 @@ export interface Panel {
    * Depends on the panel plugin. See the plugin documentation for details.
    */
   targets?: Array<Record<string, unknown>>;
+  /**
+   * Compare the current time range with a previous period
+   * For example "1d" to compare current period but shifted back 1 day
+   */
+  timeCompare?: string;
   /**
    * Overrides the relative time range for individual panels,
    * which causes them to be different than what is selected in
@@ -917,6 +1044,10 @@ export const defaultMatcherConfig: Partial<MatcherConfig> = {
  */
 export interface FieldConfig {
   /**
+   * Define interactive HTTP requests that can be triggered from data visualizations.
+   */
+  actions?: Array<Action>;
+  /**
    * Panel color configuration
    */
   color?: FieldColor;
@@ -1001,6 +1132,7 @@ export interface FieldConfig {
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
+  actions: [],
   links: [],
   mappings: [],
 };

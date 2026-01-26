@@ -1,0 +1,18 @@
+{
+  "key": {
+    "namespace": "default",
+    "group": "iam.grafana.app",
+    "resource": "searchTeams",
+    "name": "with-email-and-external-uid"
+  },
+  "name": "with-email-and-external-uid",
+  "rv": 1234,
+  "title": "Team With Email And External UID",
+  "title_ngram": "Team With Email And External UID",
+  "title_phrase": "team with email and external uid",
+  "fields": {
+    "email": "test@example.com",
+    "externalUID": "external-uid",
+    "provisioned": true
+  }
+}

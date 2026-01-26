@@ -15,8 +15,7 @@ import { fieldIndexComparer } from '@grafana/data/internal';
 
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
-import { LogRecord } from '../state-history/common';
-import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
+import { LogRecord, historyDataFrameToLogRecords } from '../state-history/common';
 
 import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAlertHistoryScene';
 import { StateFilterValues } from './constants';
@@ -55,20 +54,8 @@ const emptyFilters: HistoryFilters = {
  * We group all records by alert instance (unique set of labels) and create a DataFrame for each group (instance).
  * This allows us to be able to filter by labels and states in the groupDataFramesByTime function.
  */
-export function historyResultToDataFrame({ data }: DataFrameJSON, filters = emptyFilters): DataFrame[] {
-  // Extract timestamps and lines from the response
-  const [tsValues = [], lines = []] = data?.values ?? [];
-  const timestamps = isNumbers(tsValues) ? tsValues : [];
-
-  const logRecords = timestamps.reduce<LogRecord[]>((acc, timestamp: number, index: number) => {
-    const line = lines[index];
-    if (!isLine(line)) {
-      return acc;
-    }
-
-    acc.push({ timestamp, line });
-    return acc;
-  }, []);
+export function historyResultToDataFrame(stateHistory: DataFrameJSON, filters = emptyFilters): DataFrame[] {
+  const logRecords = historyDataFrameToLogRecords(stateHistory);
 
   // Group log records by alert instance
   const logRecordsByInstance = groupBy(logRecords, (record: LogRecord) => {

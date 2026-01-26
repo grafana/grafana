@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, type JSX } from 'react';
 
 import { GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -176,7 +176,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrap: css({
     width: '100%',
-    height: '50vh',
+    height: '65vh',
   }),
   readme: css({
     '& img': {

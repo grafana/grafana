@@ -92,7 +92,7 @@ class OptionsPaneOptionsTestScenario {
     },
   });
 
-  render() {
+  setup() {
     render(
       <Provider store={this.store}>
         <OptionsPaneOptions
@@ -113,14 +113,14 @@ class OptionsPaneOptionsTestScenario {
 describe('OptionsPaneOptions', () => {
   it('should render panel frame options', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.render();
+    scenario.setup();
 
     expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
   });
 
   it('should render all categories', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.render();
+    scenario.setup();
 
     expect(screen.getByRole('heading', { name: /Panel options/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Standard options/ })).toBeInTheDocument();
@@ -131,14 +131,14 @@ describe('OptionsPaneOptions', () => {
 
   it('should render custom  options', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.render();
+    scenario.setup();
 
     expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('TestPanel CustomBool'))).toBeInTheDocument();
   });
 
   it('should not render options that are marked as hidden from defaults', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.render();
+    scenario.setup();
 
     expect(screen.queryByLabelText(OptionsPaneSelector.fieldLabel('TestPanel HiddenFromDef'))).not.toBeInTheDocument();
   });
@@ -162,13 +162,13 @@ describe('OptionsPaneOptions', () => {
       },
     });
 
-    scenario.render();
+    scenario.setup();
     expect(screen.queryByLabelText(OptionsPaneSelector.fieldLabel('TestPanel HiddenFromDef'))).toBeInTheDocument();
   });
 
   it('should create categories for field options with category', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.render();
+    scenario.setup();
 
     expect(screen.getByRole('heading', { name: /Axis/ })).toBeInTheDocument();
   });
@@ -190,13 +190,13 @@ describe('OptionsPaneOptions', () => {
       },
     });
 
-    scenario.render();
+    scenario.setup();
     expect(screen.queryByRole('heading', { name: /Axis/ })).not.toBeInTheDocument();
   });
 
   it('should call onPanelConfigChange when updating title', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.render();
+    scenario.setup();
 
     const input = screen.getByDisplayValue(scenario.panel.title);
     fireEvent.change(input, { target: { value: 'New' } });
@@ -207,7 +207,7 @@ describe('OptionsPaneOptions', () => {
 
   it('should call onFieldConfigsChange when updating field config', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.render();
+    scenario.setup();
 
     const input = screen.getByPlaceholderText('CustomTextPropPlaceholder');
     fireEvent.change(input, { target: { value: 'New' } });
@@ -221,7 +221,7 @@ describe('OptionsPaneOptions', () => {
 
   it('should only render hits when search query specified', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.render();
+    scenario.setup();
 
     const input = screen.getByPlaceholderText('Search options');
     fireEvent.change(input, { target: { value: 'TextPropWithCategory' } });
@@ -237,7 +237,7 @@ describe('OptionsPaneOptions', () => {
       id: 'TestPanel',
     });
 
-    scenario.render();
+    scenario.setup();
 
     expect(
       screen.queryByLabelText(selectors.components.ValuePicker.button('Add field override'))
@@ -259,7 +259,7 @@ describe('OptionsPaneOptions', () => {
       },
     });
 
-    scenario.render();
+    scenario.setup();
 
     const thresholdsSection = screen.getByTestId(selectors.components.OptionsGroup.group('Thresholds'));
     expect(
@@ -285,7 +285,7 @@ describe('OptionsPaneOptions', () => {
       }),
     ];
 
-    scenario.render();
+    scenario.setup();
 
     expect(screen.getByLabelText(dataOverrideTooltipDescription)).toBeInTheDocument();
     expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
@@ -305,7 +305,7 @@ describe('OptionsPaneOptions', () => {
       },
     ];
 
-    scenario.render();
+    scenario.setup();
     expect(screen.getByLabelText(overrideRuleTooltipDescription)).toBeInTheDocument();
   });
 });

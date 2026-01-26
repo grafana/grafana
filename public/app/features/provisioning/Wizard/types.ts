@@ -1,20 +1,30 @@
 import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
 
-import { StatusInfo, RepositoryFormData } from '../types';
+import { RepositoryFormData, StatusInfo } from '../types';
 
-export type WizardStep = 'connection' | 'bootstrap' | 'finish' | 'synchronize';
+export type WizardStep = 'authType' | 'githubApp' | 'connection' | 'bootstrap' | 'finish' | 'synchronize';
 
 export type RepoType = RepositorySpec['type'];
+
+export type GitHubAuthType = 'pat' | 'github-app';
+
+export type GitHubAppMode = 'existing' | 'new';
 
 export interface MigrateFormData {
   history: boolean;
   identifier: boolean;
+  migrateResources?: boolean;
 }
 
 export interface WizardFormData {
   repository: RepositoryFormData;
   migrate?: MigrateFormData;
   repositoryName?: string;
+  githubAuthType?: GitHubAuthType;
+  githubAppMode?: GitHubAppMode;
+  githubApp?: {
+    connectionName?: string;
+  };
 }
 
 export type Target = SyncOptions['target'];
@@ -24,9 +34,9 @@ export interface ModeOption {
   label: string;
   description: string;
   subtitle: string;
+  disabled: boolean;
+  disabledReason?: string;
 }
-
-export type StepStatus = 'idle' | 'running' | 'error' | 'success';
 
 export const RepoTypeDisplay: { [key in RepoType]: string } = {
   github: 'GitHub',
@@ -41,5 +51,7 @@ export type StepStatusInfo =
   | { status: 'success'; success?: string | StatusInfo }
   | { status: 'error'; error: string | StatusInfo }
   | { status: 'warning'; warning: string | StatusInfo };
+
+export type ConnectionCreationResult = { success: true; connectionName: string } | { success: false; error: string };
 
 export type InstructionAvailability = Extract<RepoType, 'bitbucket' | 'gitlab' | 'github'>;

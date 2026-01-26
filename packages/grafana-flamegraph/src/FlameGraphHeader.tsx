@@ -90,7 +90,11 @@ const FlameGraphHeader = ({
       <div className={styles.rightContainer}>
         {!!assistantContext?.length && (
           <div className={styles.buttonSpacing}>
-            <OpenAssistantButton origin="grafana/flame-graph" prompt="Analyze Flame Graph" context={assistantContext} />
+            <OpenAssistantButton
+              origin="grafana/flame-graph"
+              prompt="Analyze this flamegraph by querying the current datasource"
+              context={assistantContext}
+            />
           </div>
         )}
         {showResetButton && (

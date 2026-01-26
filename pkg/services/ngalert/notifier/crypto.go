@@ -8,9 +8,13 @@ import (
 	"fmt"
 	"strings"
 
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
@@ -25,16 +29,18 @@ const (
 	cryptoPrefix = "crypto_"
 )
 
+type AuthorizeProtectedFn func(uid string, paths []schema.IntegrationFieldPath) error
+
 // Crypto allows decryption of Alertmanager Configuration and encryption of arbitrary payloads.
 type Crypto interface {
-	LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error
+	LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver, fn AuthorizeProtectedFn) error
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
 	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
 	EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
 	DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
 
 	getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error)
-	ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error
+	ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver, fn AuthorizeProtectedFn) error
 }
 
 // alertmanagerCrypto implements decryption of Alertmanager configuration and encryption of arbitrary payloads based on Grafana's encryptions.
@@ -53,7 +59,7 @@ func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logg
 }
 
 // ProcessSecureSettings encrypts new secure settings and loads existing secure settings from the database.
-func (c *alertmanagerCrypto) ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error {
+func (c *alertmanagerCrypto) ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver, authorizeProtected AuthorizeProtectedFn) error {
 	// First, we encrypt the new or updated secure settings. Then, we load the existing secure settings from the database
 	// and add back any that weren't updated.
 	// We perform these steps in this order to ensure the hash of the secure settings remains stable when no secure
@@ -64,7 +70,7 @@ func (c *alertmanagerCrypto) ProcessSecureSettings(ctx context.Context, orgId in
 		return fmt.Errorf("failed to encrypt receivers: %w", err)
 	}
 
-	if err := c.LoadSecureSettings(ctx, orgId, recvs); err != nil {
+	if err := c.LoadSecureSettings(ctx, orgId, recvs, authorizeProtected); err != nil {
 		return err
 	}
 
@@ -85,88 +91,85 @@ func EncryptReceiverConfigSettings(c []*definitions.PostableApiReceiver, encrypt
 func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt definitions.EncryptFn, encryptExisting bool) error {
 	// encrypt secure settings for storing them in DB
 	for _, r := range c {
-		switch r.Type() {
-		case definitions.GrafanaReceiverType:
-			for _, gr := range r.GrafanaManagedReceivers {
-				if encryptExisting {
-					for k, v := range gr.SecureSettings {
-						encryptedData, err := encrypt(context.Background(), []byte(v))
+		for _, gr := range r.GrafanaManagedReceivers {
+			if encryptExisting {
+				for k, v := range gr.SecureSettings {
+					encryptedData, err := encrypt(context.Background(), []byte(v))
+					if err != nil {
+						return fmt.Errorf("failed to encrypt secure settings: %w", err)
+					}
+					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+				}
+			}
+
+			if len(gr.Settings) > 0 {
+				// We need to parse the settings to check for secret keys. If we find any, we encrypt them and
+				// store them in SecureSettings. This can happen from incorrect configuration or when an integration
+				// definition is updated to make a field secure.
+				settings := make(map[string]any)
+				if err := json.Unmarshal(gr.Settings, &settings); err != nil {
+					return fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", gr.Type, gr.Name, err)
+				}
+
+				typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(schema.IntegrationType(gr.Type), schema.V1)
+				if !ok {
+					return fmt.Errorf("failed to get secret keys for contact point type %s", gr.Type)
+				}
+				secretPaths := typeSchema.GetSecretFieldsPaths()
+				secureSettings := gr.SecureSettings
+				if secureSettings == nil {
+					secureSettings = make(map[string]string)
+				}
+
+				settingsChanged := false
+				secureSettingsChanged := false
+				for _, secretPath := range secretPaths {
+					secretKey := secretPath.String()
+					settingsValue, ok := settings[secretKey]
+					if !ok {
+						continue
+					}
+
+					// Secrets should not be stored in settings regardless.
+					delete(settings, secretKey)
+					settingsChanged = true
+
+					// If the secret is already encrypted, we don't need to encrypt it again.
+					if _, ok := secureSettings[secretKey]; ok {
+						continue
+					}
+
+					if strVal, isString := settingsValue.(string); isString {
+						encrypted, err := encrypt(context.Background(), []byte(strVal))
 						if err != nil {
 							return fmt.Errorf("failed to encrypt secure settings: %w", err)
 						}
-						gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+						secureSettings[secretKey] = base64.StdEncoding.EncodeToString(encrypted)
+						secureSettingsChanged = true
 					}
 				}
 
-				if len(gr.Settings) > 0 {
-					// We need to parse the settings to check for secret keys. If we find any, we encrypt them and
-					// store them in SecureSettings. This can happen from incorrect configuration or when an integration
-					// definition is updated to make a field secure.
-					settings := make(map[string]any)
-					if err := json.Unmarshal(gr.Settings, &settings); err != nil {
-						return fmt.Errorf("integration '%s' of receiver '%s' has settings that cannot be parsed as JSON: %w", gr.Type, gr.Name, err)
-					}
-
-					secretKeys, err := channels_config.GetSecretKeysForContactPointType(gr.Type)
+				// Defensive checks to limit the risk of unintentional edge case changes in this legacy API.
+				if settingsChanged {
+					// If we removed any secret keys from settings, we need to save the updated settings.
+					jsonBytes, err := json.Marshal(settings)
 					if err != nil {
-						return fmt.Errorf("failed to get secret keys for contact point type %s: %w", gr.Type, err)
+						return err
 					}
-
-					secureSettings := gr.SecureSettings
-					if secureSettings == nil {
-						secureSettings = make(map[string]string)
-					}
-
-					settingsChanged := false
-					secureSettingsChanged := false
-					for _, secretKey := range secretKeys {
-						settingsValue, ok := settings[secretKey]
-						if !ok {
-							continue
-						}
-
-						// Secrets should not be stored in settings regardless.
-						delete(settings, secretKey)
-						settingsChanged = true
-
-						// If the secret is already encrypted, we don't need to encrypt it again.
-						if _, ok := secureSettings[secretKey]; ok {
-							continue
-						}
-
-						if strVal, isString := settingsValue.(string); isString {
-							encrypted, err := encrypt(context.Background(), []byte(strVal))
-							if err != nil {
-								return fmt.Errorf("failed to encrypt secure settings: %w", err)
-							}
-							secureSettings[secretKey] = base64.StdEncoding.EncodeToString(encrypted)
-							secureSettingsChanged = true
-						}
-					}
-
-					// Defensive checks to limit the risk of unintentional edge case changes in this legacy API.
-					if settingsChanged {
-						// If we removed any secret keys from settings, we need to save the updated settings.
-						jsonBytes, err := json.Marshal(settings)
-						if err != nil {
-							return err
-						}
-						gr.Settings = jsonBytes
-					}
-					if secureSettingsChanged {
-						// If we added any secure settings, we need to save the updated secure settings.
-						gr.SecureSettings = secureSettings
-					}
+					gr.Settings = jsonBytes
+				}
+				if secureSettingsChanged {
+					// If we added any secure settings, we need to save the updated secure settings.
+					gr.SecureSettings = secureSettings
 				}
 			}
-		default:
 		}
 	}
 	return nil
 }
 
 // LoadSecureSettings adds the corresponding unencrypted secrets stored to the list of input receivers.
-func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
+func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver, authorizeProtected AuthorizeProtectedFn) error {
 	// Get the last known working configuration.
 	amConfig, err := c.configs.GetLatestAlertmanagerConfiguration(ctx, orgId)
 	if err != nil {
@@ -175,10 +178,10 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 			return fmt.Errorf("failed to get latest configuration: %w", err)
 		}
 	}
-
+	var currentConfig *definitions.PostableUserConfig
 	currentReceiverMap := make(map[string]*definitions.PostableGrafanaReceiver)
 	if amConfig != nil {
-		currentConfig, err := Load([]byte(amConfig.AlertmanagerConfiguration))
+		currentConfig, err = Load([]byte(amConfig.AlertmanagerConfiguration))
 		// If the current config is un-loadable, treat it as if it never existed. Providing a new, valid config should be able to "fix" this state.
 		if err != nil {
 			c.log.Warn("Last known alertmanager configuration was invalid. Overwriting...")
@@ -206,6 +209,40 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 			if !ok {
 				// It tries to update a receiver that didn't previously exist
 				return UnknownReceiverError{UID: gr.UID}
+			}
+
+			if authorizeProtected != nil {
+				var receiverName string
+				if currentConfig != nil {
+				NAME:
+					for _, rcv := range currentConfig.AlertmanagerConfig.Receivers {
+						for _, intg := range rcv.GrafanaManagedReceivers {
+							if intg.UID == cgmr.UID {
+								receiverName = rcv.Name
+								break NAME
+							}
+						}
+					}
+				}
+				// this is checked only if authorizeProtected is not nil to cover only the path from receiver testing API.
+				if receiverName != r.Name {
+					return UnknownReceiverError{UID: gr.UID} // return error because integration does not belong to the receiver under the requested name
+				}
+
+				incoming, errIn := legacy_storage.PostableGrafanaReceiverToIntegration(gr)
+				existing, errEx := legacy_storage.PostableGrafanaReceiverToIntegration(cgmr)
+				var secure []schema.IntegrationFieldPath
+				authz := true
+				if errIn == nil && errEx == nil {
+					secure = models.HasIntegrationsDifferentProtectedFields(existing, incoming)
+					authz = len(secure) > 0
+				}
+				// if conversion failed, consider there are changes and authorize
+				if authz && currentConfig != nil {
+					if err := authorizeProtected(receiverName, secure); err != nil {
+						return err
+					}
+				}
 			}
 
 			// Frontend sends only the secure settings that have to be updated
@@ -301,4 +338,76 @@ func (c *ExtraConfigsCrypto) DecryptExtraConfigs(ctx context.Context, config *de
 	}
 
 	return nil
+}
+
+func DecryptedReceivers(receivers []*definitions.PostableApiReceiver, decryptFn models.DecryptFn) ([]*definitions.PostableApiReceiver, error) {
+	decrypted := make([]*definitions.PostableApiReceiver, len(receivers))
+	for i, r := range receivers {
+		// We don't care about the provenance here, so we pass ProvenanceNone.
+		rcv, err := legacy_storage.PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
+		if err != nil {
+			return nil, err
+		}
+
+		err = rcv.Decrypt(decryptFn)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt receiver %q: %w", rcv.Name, err)
+		}
+
+		postable, err := legacy_storage.ReceiverToPostableApiReceiver(rcv)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
+		}
+		decrypted[i] = postable
+	}
+	return decrypted, nil
+}
+
+func EncryptedReceivers(receivers []*definitions.PostableApiReceiver, encryptFn models.EncryptFn) ([]*definitions.PostableApiReceiver, error) {
+	encrypted := make([]*definitions.PostableApiReceiver, len(receivers))
+	for i, r := range receivers {
+		// We don't care about the provenance here, so we pass ProvenanceNone.
+		rcv, err := legacy_storage.PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
+		if err != nil {
+			return nil, err
+		}
+
+		err = rcv.Encrypt(encryptFn)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt receiver %q: %w", rcv.Name, err)
+		}
+
+		postable, err := legacy_storage.ReceiverToPostableApiReceiver(rcv)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
+		}
+		encrypted[i] = postable
+	}
+	return encrypted, nil
+}
+
+// DecryptIntegrationSettings returns a function to decrypt integration settings.
+func DecryptIntegrationSettings(ctx context.Context, ss secretService) models.DecryptFn {
+	return func(value string) (string, error) {
+		decoded, err := base64.StdEncoding.DecodeString(value)
+		if err != nil {
+			return "", err
+		}
+		decrypted, err := ss.Decrypt(ctx, decoded)
+		if err != nil {
+			return "", err
+		}
+		return string(decrypted), nil
+	}
+}
+
+// EncryptIntegrationSettings returns a function to encrypt integration settings.
+func EncryptIntegrationSettings(ctx context.Context, ss secretService) models.EncryptFn {
+	return func(payload string) (string, error) {
+		encrypted, err := ss.Encrypt(ctx, []byte(payload), secrets.WithoutScope())
+		if err != nil {
+			return "", err
+		}
+		return base64.StdEncoding.EncodeToString(encrypted), nil
+	}
 }

@@ -1,0 +1,580 @@
+{
+  "kind": "DashboardWithAccessInfo",
+  "apiVersion": "dashboard.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "value-mapping-test",
+    "namespace": "default",
+    "uid": "value-mapping-test",
+    "resourceVersion": "1765384157199094",
+    "generation": 2,
+    "creationTimestamp": "2025-11-19T20:09:28Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "646372978987008"
+    }
+  },
+  "spec": {
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations \u0026 Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "description": "Test dashboard for all value mapping types and override matcher types",
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "links": [],
+    "panels": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-uid"
+        },
+        "description": "Panel with ValueMap mapping type - maps specific text values to colors and display text",
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "options": {
+                  "critical": {
+                    "color": "red",
+                    "index": 0,
+                    "text": "Critical!"
+                  },
+                  "ok": {
+                    "color": "green",
+                    "index": 2,
+                    "text": "OK"
+                  },
+                  "warning": {
+                    "color": "orange",
+                    "index": 1,
+                    "text": "Warning"
+                  }
+                },
+                "type": "value"
+              }
+            ]
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "status"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 100
+                },
+                {
+                  "id": "custom.align",
+                  "value": "center"
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "targets": [
+          {
+            "expr": "up",
+            "refId": "A"
+          }
+        ],
+        "title": "ValueMap Example",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-uid"
+        },
+        "description": "Panel with RangeMap mapping type - maps numerical ranges to colors and display text",
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "options": {
+                  "from": 0,
+                  "result": {
+                    "color": "green",
+                    "index": 0,
+                    "text": "Low"
+                  },
+                  "to": 50
+                },
+                "type": "range"
+              },
+              {
+                "options": {
+                  "from": 50,
+                  "result": {
+                    "color": "orange",
+                    "index": 1,
+                    "text": "Medium"
+                  },
+                  "to": 80
+                },
+                "type": "range"
+              },
+              {
+                "options": {
+                  "from": 80,
+                  "result": {
+                    "color": "red",
+                    "index": 2,
+                    "text": "High"
+                  },
+                  "to": 100
+                },
+                "type": "range"
+              }
+            ]
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byRegexp",
+                "options": "/^cpu_/"
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "percent"
+                },
+                {
+                  "id": "decimals",
+                  "value": 2
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "id": 2,
+        "targets": [
+          {
+            "expr": "cpu_usage_percent",
+            "refId": "A"
+          }
+        ],
+        "title": "RangeMap Example",
+        "type": "gauge"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-uid"
+        },
+        "description": "Panel with RegexMap mapping type - maps values matching regex patterns to colors",
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "options": {
+                  "pattern": "/^error.*/",
+                  "result": {
+                    "color": "red",
+                    "index": 0,
+                    "text": "Error"
+                  }
+                },
+                "type": "regex"
+              },
+              {
+                "options": {
+                  "pattern": "/^warn.*/",
+                  "result": {
+                    "color": "orange",
+                    "index": 1,
+                    "text": "Warning"
+                  }
+                },
+                "type": "regex"
+              },
+              {
+                "options": {
+                  "pattern": "/^info.*/",
+                  "result": {
+                    "color": "blue",
+                    "index": 2,
+                    "text": "Info"
+                  }
+                },
+                "type": "regex"
+              }
+            ]
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byType",
+                "options": "string"
+              },
+              "properties": [
+                {
+                  "id": "custom.cellOptions",
+                  "value": {
+                    "type": "color-text"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
+        "id": 3,
+        "targets": [
+          {
+            "expr": "log_level",
+            "refId": "A"
+          }
+        ],
+        "title": "RegexMap Example",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-uid"
+        },
+        "description": "Panel with SpecialValueMap mapping type - maps special values like null, NaN, true, false to display text",
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "options": {
+                  "match": "null",
+                  "result": {
+                    "color": "gray",
+                    "index": 0,
+                    "text": "No Data"
+                  }
+                },
+                "type": "special"
+              },
+              {
+                "options": {
+                  "match": "nan",
+                  "result": {
+                    "color": "gray",
+                    "index": 1,
+                    "text": "Not a Number"
+                  }
+                },
+                "type": "special"
+              },
+              {
+                "options": {
+                  "match": "null+nan",
+                  "result": {
+                    "color": "gray",
+                    "index": 2,
+                    "text": "N/A"
+                  }
+                },
+                "type": "special"
+              },
+              {
+                "options": {
+                  "match": "true",
+                  "result": {
+                    "color": "green",
+                    "index": 3,
+                    "text": "Yes"
+                  }
+                },
+                "type": "special"
+              },
+              {
+                "options": {
+                  "match": "false",
+                  "result": {
+                    "color": "red",
+                    "index": 4,
+                    "text": "No"
+                  }
+                },
+                "type": "special"
+              },
+              {
+                "options": {
+                  "match": "empty",
+                  "result": {
+                    "color": "gray",
+                    "index": 5,
+                    "text": "Empty"
+                  }
+                },
+                "type": "special"
+              }
+            ]
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byFrameRefID",
+                "options": "A"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "fixedColor": "blue",
+                    "mode": "fixed"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        },
+        "id": 4,
+        "targets": [
+          {
+            "expr": "some_metric",
+            "refId": "A"
+          }
+        ],
+        "title": "SpecialValueMap Example",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus-uid"
+        },
+        "description": "Panel with all mapping types combined - demonstrates mixing different mapping types and multiple override matchers",
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "options": {
+                  "failure": {
+                    "color": "red",
+                    "index": 1,
+                    "text": "Failure"
+                  },
+                  "success": {
+                    "color": "green",
+                    "index": 0,
+                    "text": "Success"
+                  }
+                },
+                "type": "value"
+              },
+              {
+                "options": {
+                  "from": 0,
+                  "result": {
+                    "color": "blue",
+                    "index": 2,
+                    "text": "In Range"
+                  },
+                  "to": 100
+                },
+                "type": "range"
+              },
+              {
+                "options": {
+                  "pattern": "/^[A-Z]{3}-\\d+$/",
+                  "result": {
+                    "color": "purple",
+                    "index": 3,
+                    "text": "ID Format"
+                  }
+                },
+                "type": "regex"
+              },
+              {
+                "options": {
+                  "match": "null",
+                  "result": {
+                    "color": "gray",
+                    "index": 4,
+                    "text": "Missing"
+                  }
+                },
+                "type": "special"
+              }
+            ]
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "status"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 120
+                },
+                {
+                  "id": "custom.cellOptions",
+                  "value": {
+                    "type": "color-background"
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byRegexp",
+                "options": "/^value_/"
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "short"
+                },
+                {
+                  "id": "min",
+                  "value": 0
+                },
+                {
+                  "id": "max",
+                  "value": 100
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byType",
+                "options": "number"
+              },
+              "properties": [
+                {
+                  "id": "decimals",
+                  "value": 2
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "yellow",
+                        "value": 50
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byFrameRefID",
+                "options": "B"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Secondary Query"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byValue",
+                "options": {
+                  "op": "gte",
+                  "reducer": "allIsNull",
+                  "value": 0
+                }
+              },
+              "properties": [
+                {
+                  "id": "custom.hidden",
+                  "value": true
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 16
+        },
+        "id": 5,
+        "targets": [
+          {
+            "expr": "combined_metric",
+            "refId": "A"
+          },
+          {
+            "expr": "secondary_metric",
+            "refId": "B"
+          }
+        ],
+        "title": "Combined Mappings and Overrides Example",
+        "type": "table"
+      }
+    ],
+    "schemaVersion": 42,
+    "tags": [
+      "value-mapping",
+      "overrides",
+      "test"
+    ],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "Value Mapping and Overrides Test",
+    "weekStart": ""
+  },
+  "status": {
+    "conversion": {
+      "failed": false,
+      "storedVersion": "v1beta1"
+    }
+  }
+}

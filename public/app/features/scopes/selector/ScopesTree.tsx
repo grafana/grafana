@@ -10,6 +10,7 @@ import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
 import { NodesMap, SelectedScope, TreeNode } from './types';
+import { useScopeActions } from './useScopeActions';
 import { useScopesHighlighting } from './useScopesHighlighting';
 
 export interface ScopesTreeProps {
@@ -18,14 +19,9 @@ export interface ScopesTreeProps {
   selectedScopes: SelectedScope[];
   scopeNodes: NodesMap;
 
-  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
-
-  selectScope: (scopeNodeId: string) => void;
-  deselectScope: (scopeNodeId: string) => void;
-
   // Recent scopes are only shown at the root node
   recentScopes?: Scope[][];
-  onRecentScopesSelect?: (scopeIds: string[], parentNodeId?: string) => void;
+  onRecentScopesSelect?: (scopeIds: string[], parentNodeId?: string, scopeNodeId?: string) => void;
 }
 
 export function ScopesTree({
@@ -34,11 +30,9 @@ export function ScopesTree({
   selectedScopes,
   recentScopes,
   onRecentScopesSelect,
-  onNodeUpdate,
   scopeNodes,
-  selectScope,
-  deselectScope,
 }: ScopesTreeProps) {
+  const { selectScope, deselectScope, toggleExpandedNode } = useScopeActions();
   const styles = useStyles2(getStyles);
 
   // Used for a11y reference
@@ -52,21 +46,22 @@ export function ScopesTree({
   const anyChildExpanded = childrenArray.some(({ expanded }) => expanded);
 
   // Nodes that are already selected (not applied) are always shown if we are in their category, even if they are
-  // filtered out by query filter
+  // filtered out by query filter. Only consider the first selected scope for this display logic.
   let selectedNodesToShow: TreeNode[] = [];
-  if (selectedScopes.length > 0 && selectedScopes[0].scopeNodeId) {
-    if (tree.scopeNodeId === scopeNodes[selectedScopes[0].scopeNodeId]?.spec.parentName) {
-      selectedNodesToShow = selectedScopes
-        // We filter out those which are still shown in the normal list of results
-        .filter((s) => !childrenArray.map((c) => c.scopeNodeId).includes(s.scopeNodeId!))
-        .map((s) => ({
-          // Because we had to check the parent with the use of scopeNodeId we know we have it. (we may not have it
-          // if the selected scopes are from url persistence, in which case we don't show them)
-          scopeNodeId: s.scopeNodeId!,
-          query: '',
-          expanded: false,
-        }));
-    }
+  const firstSelectedScope = selectedScopes[0];
+  if (
+    firstSelectedScope?.scopeNodeId &&
+    scopeNodes[firstSelectedScope.scopeNodeId] &&
+    tree.scopeNodeId === scopeNodes[firstSelectedScope.scopeNodeId]?.spec.parentName &&
+    !childrenArray.map((c) => c.scopeNodeId).includes(firstSelectedScope.scopeNodeId)
+  ) {
+    selectedNodesToShow = [
+      {
+        scopeNodeId: firstSelectedScope.scopeNodeId,
+        query: '',
+        expanded: false,
+      },
+    ];
   }
 
   const { highlightedId, ariaActiveDescendant, enableHighlighting, disableHighlighting } = useScopesHighlighting({
@@ -75,7 +70,7 @@ export function ScopesTree({
     treeQuery: tree.query,
     scopeNodes,
     selectedScopes,
-    onNodeUpdate,
+    toggleExpandedNode,
     selectScope,
     deselectScope,
   });
@@ -91,7 +86,6 @@ export function ScopesTree({
       <ScopesTreeSearch
         anyChildExpanded={anyChildExpanded}
         searchArea={searchArea}
-        onNodeUpdate={onNodeUpdate}
         treeNode={tree}
         aria-controls={`${selectedNodesToShowId} ${childrenArrayId}`}
         aria-activedescendant={ariaActiveDescendant}
@@ -114,11 +108,8 @@ export function ScopesTree({
             anyChildExpanded={anyChildExpanded}
             lastExpandedNode={lastExpandedNode}
             loadingNodeName={loadingNodeName}
-            onNodeUpdate={onNodeUpdate}
             selectedScopes={selectedScopes}
             scopeNodes={scopeNodes}
-            selectScope={selectScope}
-            deselectScope={deselectScope}
             maxHeight={`${Math.min(5, selectedNodesToShow.length) * 30}px`}
             highlightedId={highlightedId}
             id={selectedNodesToShowId}
@@ -136,11 +127,8 @@ export function ScopesTree({
             anyChildExpanded={anyChildExpanded}
             lastExpandedNode={lastExpandedNode}
             loadingNodeName={loadingNodeName}
-            onNodeUpdate={onNodeUpdate}
             selectedScopes={selectedScopes}
             scopeNodes={scopeNodes}
-            selectScope={selectScope}
-            deselectScope={deselectScope}
             maxHeight={'100%'}
             highlightedId={highlightedId}
             id={childrenArrayId}

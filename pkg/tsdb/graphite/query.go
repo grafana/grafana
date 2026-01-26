@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -19,18 +18,27 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"golang.org/x/net/html"
 )
+
+type queryModel struct {
+	req       *http.Request
+	formData  url.Values
+	rawTarget string
+}
 
 func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataResponse, error) {
 	emptyQueries := []string{}
-	graphiteQueries := map[string]struct {
-		req      *http.Request
-		formData url.Values
-	}{}
+	graphiteQueries := map[string]queryModel{}
+	// FromAlert header is defined in pkg/services/ngalert/models/constants.go
+	fromAlert := req.Headers["FromAlert"] == "true"
+	result := backend.NewQueryDataResponse()
+
 	for _, query := range req.Queries {
-		graphiteReq, formData, emptyQuery, err := s.createGraphiteRequest(ctx, query, dsInfo)
+		graphiteReq, formData, emptyQuery, target, err := s.createGraphiteRequest(ctx, query, dsInfo)
 		if err != nil {
-			return nil, err
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+			return result, nil
 		}
 
 		if emptyQuery != nil {
@@ -38,16 +46,13 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			continue
 		}
 
-		graphiteQueries[query.RefID] = struct {
-			req      *http.Request
-			formData url.Values
-		}{
-			req:      graphiteReq,
-			formData: formData,
+		graphiteQueries[query.RefID] = queryModel{
+			req:       graphiteReq,
+			formData:  formData,
+			rawTarget: target,
 		}
 	}
 
-	var result = backend.QueryDataResponse{}
 	if len(emptyQueries) != 0 {
 		s.logger.Warn("Found query models without targets", "models without targets", strings.Join(emptyQueries, "\n"))
 		// If no queries had a valid target, return an error; otherwise, attempt with the targets we have
@@ -57,9 +62,9 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			}
 			// marking this downstream error as it is a user error, but arguably this is a plugin error
 			// since the plugin should have frontend validation that prevents us from getting into this state
-			missingQueryResponse := backend.ErrDataResponseWithSource(400, backend.ErrorSourceDownstream, "no query target found for the alert rule")
+			missingQueryResponse := backend.ErrDataResponseWithSource(400, backend.ErrorSourceDownstream, "no query target found")
 			result.Responses["A"] = missingQueryResponse
-			return &result, nil
+			return result, nil
 		}
 	}
 
@@ -84,7 +89,8 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
-			return &result, err
+			result.Responses[refId] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(err))
+			return result, nil
 		}
 
 		defer func() {
@@ -94,18 +100,15 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			}
 		}()
 
-		queryFrames, err := s.toDataFrames(res, refId)
+		queryFrames, err := s.toDataFrames(res, refId, fromAlert, graphiteReq.rawTarget)
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
-			return &result, err
+			result.Responses[refId] = backend.ErrorResponseWithErrorSource(err)
+			return result, nil
 		}
 
 		frames = append(frames, queryFrames...)
-	}
-
-	result = backend.QueryDataResponse{
-		Responses: make(backend.Responses),
 	}
 
 	for _, f := range frames {
@@ -119,16 +122,16 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		}
 	}
 
-	return &result, nil
+	return result, nil
 }
 
 // processQuery converts a Graphite data source query to a Graphite query target. It returns the target,
 // and the model if the target is invalid
-func (s *Service) processQuery(query backend.DataQuery) (string, *GraphiteQuery, error) {
+func (s *Service) processQuery(query backend.DataQuery) (string, *GraphiteQuery, bool, error) {
 	queryJSON := GraphiteQuery{}
 	err := json.Unmarshal(query.JSON, &queryJSON)
 	if err != nil {
-		return "", &queryJSON, fmt.Errorf("failed to decode the Graphite query: %w", err)
+		return "", &queryJSON, false, backend.PluginError(fmt.Errorf("failed to decode the Graphite query: %w", err))
 	}
 	s.logger.Debug("Graphite", "query", queryJSON)
 	currTarget := queryJSON.TargetFull
@@ -138,14 +141,14 @@ func (s *Service) processQuery(query backend.DataQuery) (string, *GraphiteQuery,
 	}
 	if currTarget == "" {
 		s.logger.Debug("Graphite", "empty query target", queryJSON)
-		return "", &queryJSON, nil
+		return "", &queryJSON, false, nil
 	}
 	target := fixIntervalFormat(currTarget)
 
-	return target, nil, nil
+	return target, nil, queryJSON.IsMetricTank, nil
 }
 
-func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQuery, dsInfo *datasourceInfo) (*http.Request, url.Values, *GraphiteQuery, error) {
+func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQuery, dsInfo *datasourceInfo) (*http.Request, url.Values, *GraphiteQuery, string, error) {
 	/*
 		graphite doc about from and until, with sdk we are getting absolute instead of relative time
 		https://graphite-api.readthedocs.io/en/latest/api.html#from-until
@@ -159,46 +162,42 @@ func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQ
 		"target":        []string{},
 	}
 
-	target, emptyQuery, err := s.processQuery(query)
+	target, emptyQuery, isMetricTank, err := s.processQuery(query)
 	if err != nil {
-		return nil, formData, nil, err
+		return nil, formData, nil, "", err
 	}
 
 	if emptyQuery != nil {
 		s.logger.Debug("Graphite", "empty query target", emptyQuery)
-		return nil, formData, emptyQuery, nil
+		return nil, formData, emptyQuery, "", nil
 	}
 
 	formData["target"] = []string{target}
 
 	s.logger.Debug("Graphite request", "params", formData)
 
-	graphiteReq, err := s.createRequest(ctx, dsInfo, formData)
-	if err != nil {
-		return nil, formData, nil, err
+	params := map[string][]string{}
+	if isMetricTank {
+		params["meta"] = []string{"true"}
 	}
 
-	return graphiteReq, formData, emptyQuery, nil
+	graphiteReq, err := s.createRequest(ctx, dsInfo, URLParams{
+		SubPath:     "render",
+		Method:      http.MethodPost,
+		Body:        strings.NewReader(formData.Encode()),
+		Headers:     map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
+		QueryParams: params,
+	})
+	if err != nil {
+		return nil, formData, nil, "", err
+	}
+
+	return graphiteReq, formData, emptyQuery, target, nil
 }
 
-func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.URL)
-	if err != nil {
-		return nil, err
-	}
-	u.Path = path.Join(u.Path, "render")
+var aliasRegex = regexp.MustCompile(`(alias|aliasByMetric|aliasByNode|aliasByTags|aliasQuery|aliasSub)\(`)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(data.Encode()))
-	if err != nil {
-		s.logger.Info("Failed to create request", "error", err)
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	return req, err
-}
-
-func (s *Service) toDataFrames(response *http.Response, refId string) (frames data.Frames, error error) {
+func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert bool, rawTarget string) (frames data.Frames, error error) {
 	responseData, err := s.parseResponse(response)
 	if err != nil {
 		return nil, err
@@ -206,6 +205,7 @@ func (s *Service) toDataFrames(response *http.Response, refId string) (frames da
 
 	frames = data.Frames{}
 	for _, series := range responseData {
+		aliasMatch := aliasRegex.MatchString(rawTarget)
 		timeVector := make([]time.Time, 0, len(series.DataPoints))
 		values := make([]*float64, 0, len(series.DataPoints))
 
@@ -221,7 +221,11 @@ func (s *Service) toDataFrames(response *http.Response, refId string) (frames da
 		tags := make(map[string]string)
 		for name, value := range series.Tags {
 			if name == "name" {
-				value = series.Target
+				// Queries with aliases should use the target as the name
+				// to ensure multi-dimensional queries are distinguishable from each other
+				if fromAlert || aliasMatch {
+					value = series.Target
+				}
 			}
 			switch value := value.(type) {
 			case string:
@@ -244,7 +248,7 @@ func (s *Service) toDataFrames(response *http.Response, refId string) (frames da
 func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		return nil, backend.DownstreamError(err)
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
@@ -253,18 +257,58 @@ func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error)
 	}()
 
 	if res.StatusCode/100 != 2 {
-		s.logger.Info("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("request failed, status: %s", res.Status)
+		graphiteError := parseGraphiteError(res.StatusCode, string(body))
+		s.logger.Info("Request failed", "status", res.Status, "error", graphiteError, "body", string(body))
+		err := fmt.Errorf("request failed with error: %s", graphiteError)
+		if backend.ErrorSourceFromHTTPStatus(res.StatusCode) == backend.ErrorSourceDownstream {
+			return nil, backend.DownstreamError(err)
+		}
+		return nil, backend.PluginError(err)
 	}
 
 	var data []TargetResponseDTO
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		s.logger.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
-		return nil, err
+		s.logger.Warn("Failed to unamrshal to newer graphite response, attempting legacy")
+		var legacyData LegacyTargetResponseDTO
+		err = json.Unmarshal(body, &legacyData)
+		if err != nil {
+			s.logger.Info("Failed to unmarshal legacy graphite response", "error", err, "status", res.Status, "body", string(body))
+			return nil, backend.PluginError(err)
+		}
+		return legacyData.Series, nil
 	}
 
 	return data, nil
+}
+
+/**
+ * Duplicated from the frontend.
+ * Graphite-web before v1.6 returns HTTP 500 with full stack traces in an HTML page
+ * when a query fails. It results in massive error alerts with HTML tags in the UI.
+ * This function removes all HTML tags and keeps only the last line from the stack
+ * trace which should be the most meaningful.
+ */
+func parseGraphiteError(status int, body string) (errorMsg string) {
+	errorMsg = body
+	if status == http.StatusInternalServerError {
+		if strings.HasPrefix(body, "<body") {
+			htmlErrorMsg := ""
+			tokenizer := html.NewTokenizer(strings.NewReader(body))
+			// Break here as that typically means we've reached EOF
+			for tokenizer.Next() != html.ErrorToken {
+				token := tokenizer.Token()
+				if token.Type == html.TextToken {
+					trimmed := strings.TrimSpace(token.Data)
+					if trimmed != "" {
+						htmlErrorMsg += html.UnescapeString(trimmed) + "\n"
+					}
+				}
+			}
+			errorMsg = strings.TrimSpace(htmlErrorMsg)
+		}
+	}
+	return errorMsg
 }
 
 func fixIntervalFormat(target string) string {

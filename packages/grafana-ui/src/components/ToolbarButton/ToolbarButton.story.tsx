@@ -76,6 +76,7 @@ export const BasicWithIcon: StoryFn<typeof ToolbarButton> = (args) => {
       icon={args.icon}
       isOpen={args.isOpen}
       tooltip={args.tooltip}
+      aria-label="This is an aria-label"
       disabled={args.disabled}
       fullWidth={args.fullWidth}
       isHighlighted={args.isHighlighted}

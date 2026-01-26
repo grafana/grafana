@@ -61,7 +61,7 @@ export const defaultCandlestickColors: Partial<CandlestickColors> = {
   up: 'green',
 };
 
-export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
+export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip, common.OptionsWithAnnotations {
   /**
    * Sets the style of the candlesticks
    */

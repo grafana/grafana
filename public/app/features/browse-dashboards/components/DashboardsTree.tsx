@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 import * as React from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 import { TableInstance, useTable } from 'react-table';
 import { VariableSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
@@ -11,20 +11,21 @@ import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { DashboardViewItem } from 'app/features/search/types';
 
+import { canSelectItems } from '../permissions';
 import {
+  BrowseDashboardsPermissions,
   DashboardsTreeCellProps,
   DashboardsTreeColumn,
   DashboardsTreeItem,
   SelectionState,
-  BrowseDashboardsPermissions,
 } from '../types';
+import { makeRowID } from '../utils/dashboards';
 
 import CheckboxCell from './CheckboxCell';
 import CheckboxHeaderCell from './CheckboxHeaderCell';
 import { NameCell } from './NameCell';
 import { TagsCell } from './TagsCell';
 import { useCustomFlexLayout } from './customFlexTableLayout';
-import { makeRowID, canSelectItems } from './utils';
 
 interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
@@ -35,6 +36,7 @@ interface DashboardsTreeProps {
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onAllSelectionChange: (newState: boolean) => void;
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
+  onTagClick: (tag: string) => void;
 
   isItemLoaded: (itemIndex: number) => boolean;
   requestLoadMore: (folderUid: string | undefined) => void;
@@ -50,6 +52,7 @@ export function DashboardsTree({
   height,
   isSelected,
   onFolderClick,
+  onTagClick,
   onAllSelectionChange,
   onItemSelectionChange,
   isItemLoaded,
@@ -98,13 +101,13 @@ export function DashboardsTree({
       id: 'tags',
       width: 2,
       Header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
-      Cell: TagsCell,
+      Cell: (props: DashboardsTreeCellProps) => <TagsCell {...props} onTagClick={onTagClick} />,
     };
     const canSelect = canSelectItems(permissions);
     const columns = [canSelect && checkboxColumn, nameColumn, tagsColumns].filter(isTruthy);
 
     return columns;
-  }, [onFolderClick, permissions]);
+  }, [onFolderClick, onTagClick, permissions]);
 
   const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;

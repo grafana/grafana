@@ -170,4 +170,70 @@ domain = example.com
 		assert.Equal(t, MisconfiguredProvider, cfg.SecretsManagement.CurrentEncryptionProvider)
 		assert.Empty(t, cfg.SecretsManagement.ConfiguredKMSProviders)
 	})
+
+	t.Run("should handle configuration with register_api_server disabled", func(t *testing.T) {
+		iniContent := `
+[secrets_manager]
+register_api_server = false
+`
+		cfg, err := NewCfgFromBytes([]byte(iniContent))
+		require.NoError(t, err)
+
+		assert.False(t, cfg.SecretsManagement.RegisterAPIServer)
+	})
+
+	t.Run("should handle configuration without register_api_server set", func(t *testing.T) {
+		iniContent := `
+[secrets_manager]
+encryption_provider = aws_kms
+`
+		cfg, err := NewCfgFromBytes([]byte(iniContent))
+		require.NoError(t, err)
+
+		assert.True(t, cfg.SecretsManagement.RegisterAPIServer)
+	})
+
+	t.Run("should handle configuration with run_secrets_db_migrations disabled", func(t *testing.T) {
+		iniContent := `
+[secrets_manager]
+run_secrets_db_migrations = false
+`
+		cfg, err := NewCfgFromBytes([]byte(iniContent))
+		require.NoError(t, err)
+
+		assert.False(t, cfg.SecretsManagement.RunSecretsDBMigrations)
+	})
+
+	t.Run("should handle configuration without run_secrets_db_migrations set", func(t *testing.T) {
+		iniContent := `
+[secrets_manager]
+encryption_provider = aws_kms
+`
+		cfg, err := NewCfgFromBytes([]byte(iniContent))
+		require.NoError(t, err)
+
+		assert.True(t, cfg.SecretsManagement.RunSecretsDBMigrations)
+	})
+
+	t.Run("should handle configuration with run_data_key_migration disabled", func(t *testing.T) {
+		iniContent := `
+[secrets_manager]
+run_data_key_migration = false
+`
+		cfg, err := NewCfgFromBytes([]byte(iniContent))
+		require.NoError(t, err)
+
+		assert.False(t, cfg.SecretsManagement.RunDataKeyMigration)
+	})
+
+	t.Run("should handle configuration without run_data_key_migration set", func(t *testing.T) {
+		iniContent := `
+[secrets_manager]
+encryption_provider = aws_kms
+`
+		cfg, err := NewCfgFromBytes([]byte(iniContent))
+		require.NoError(t, err)
+
+		assert.True(t, cfg.SecretsManagement.RunDataKeyMigration)
+	})
 }

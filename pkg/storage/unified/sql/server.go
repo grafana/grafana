@@ -10,10 +10,10 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -21,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 type QOSEnqueueDequeuer interface {
@@ -31,25 +33,23 @@ type QOSEnqueueDequeuer interface {
 
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
-	DB             infraDB.DB
-	Cfg            *setting.Cfg
-	Tracer         trace.Tracer
-	Reg            prometheus.Registerer
-	AccessClient   types.AccessClient
-	SearchOptions  resource.SearchOptions
-	StorageMetrics *resource.StorageMetrics
-	IndexMetrics   *resource.BleveIndexMetrics
-	Features       featuremgmt.FeatureToggles
-	QOSQueue       QOSEnqueueDequeuer
-	SecureValues   secrets.InlineSecureValueSupport
-	Ring           *ring.Ring
-	RingLifecycler *ring.BasicLifecycler
+	Backend          resource.StorageBackend
+	OverridesService *resource.OverridesService
+	DB               infraDB.DB
+	Cfg              *setting.Cfg
+	Tracer           trace.Tracer
+	Reg              prometheus.Registerer
+	AccessClient     types.AccessClient
+	SearchOptions    resource.SearchOptions
+	StorageMetrics   *resource.StorageMetrics
+	IndexMetrics     *resource.BleveIndexMetrics
+	Features         featuremgmt.FeatureToggles
+	QOSQueue         QOSEnqueueDequeuer
+	SecureValues     secrets.InlineSecureValueSupport
+	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
 }
 
-// Creates a new ResourceServer
-func NewResourceServer(
-	opts ServerOptions,
-) (resource.ResourceServer, error) {
+func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 
 	if opts.SecureValues == nil && opts.Cfg != nil && opts.Cfg.SecretsManagement.GrpcClientEnable {
@@ -66,7 +66,6 @@ func NewResourceServer(
 	}
 
 	serverOptions := resource.ResourceServerOptions{
-		Tracer: opts.Tracer,
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
@@ -74,7 +73,7 @@ func NewResourceServer(
 		SecureValues: opts.SecureValues,
 	}
 	if opts.AccessClient != nil {
-		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Tracer: opts.Tracer, Registry: opts.Reg})
+		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
 	}
 	// Support local file blob
 	if strings.HasPrefix(serverOptions.Blob.URL, "./data/") {
@@ -92,34 +91,93 @@ func NewResourceServer(
 	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
 	serverOptions.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
 
-	eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
-	if err != nil {
-		return nil, err
+	if opts.Backend != nil {
+		serverOptions.Backend = opts.Backend
+		// TODO: we should probably have a proper interface for diagnostics/lifecycle
+	} else {
+		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
+		if err != nil {
+			return nil, err
+		}
+
+		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+			opts.Cfg.SectionWithEnvOverrides("resource_api"))
+
+		if opts.Cfg.EnableSQLKVBackend {
+			// Initialize database connection first
+			ctx := context.Background()
+			dbConn, err := eDB.Init(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("error initializing DB: %w", err)
+			}
+
+			dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
+			if dialect == nil {
+				return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
+			}
+
+			// Create sqlkv with the standard library DB
+			sqlkv, err := resource.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+			if err != nil {
+				return nil, fmt.Errorf("error creating sqlkv: %s", err)
+			}
+
+			kvBackendOpts := resource.KVBackendOptions{
+				KvStore:            sqlkv,
+				Tracer:             opts.Tracer,
+				Reg:                opts.Reg,
+				UseChannelNotifier: !isHA,
+				Log:                log.New("storage-backend"),
+			}
+
+			if opts.Cfg.EnableSQLKVCompatibilityMode {
+				rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+					Dialect: dialect,
+					DB:      dbConn,
+				})
+				if err != nil {
+					return nil, fmt.Errorf("failed to create resource version manager: %w", err)
+				}
+
+				kvBackendOpts.RvManager = rvManager
+			}
+
+			kvBackend, err := resource.NewKVStorageBackend(kvBackendOpts)
+			if err != nil {
+				return nil, fmt.Errorf("error creating kv backend: %s", err)
+			}
+
+			serverOptions.Backend = kvBackend
+			serverOptions.Diagnostics = kvBackend
+		} else {
+			backend, err := NewBackend(BackendOptions{
+				DBProvider:           eDB,
+				Reg:                  opts.Reg,
+				IsHA:                 isHA,
+				storageMetrics:       opts.StorageMetrics,
+				LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
+				GarbageCollection: GarbageCollectionConfig{
+					Enabled:          opts.Cfg.EnableGarbageCollection,
+					Interval:         opts.Cfg.GarbageCollectionInterval,
+					BatchSize:        opts.Cfg.GarbageCollectionBatchSize,
+					MaxAge:           opts.Cfg.GarbageCollectionMaxAge,
+					DashboardsMaxAge: opts.Cfg.DashboardsGarbageCollectionMaxAge,
+				},
+			})
+			if err != nil {
+				return nil, err
+			}
+			serverOptions.Backend = backend
+			serverOptions.Diagnostics = backend
+			serverOptions.Lifecycle = backend
+		}
 	}
 
-	isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
-		opts.Cfg.SectionWithEnvOverrides("resource_api"))
-	withPruner := opts.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageHistoryPruner)
-
-	store, err := NewBackend(BackendOptions{
-		DBProvider:     eDB,
-		Tracer:         opts.Tracer,
-		Reg:            opts.Reg,
-		IsHA:           isHA,
-		withPruner:     withPruner,
-		storageMetrics: opts.StorageMetrics,
-	})
-	if err != nil {
-		return nil, err
-	}
-	serverOptions.Backend = store
-	serverOptions.Diagnostics = store
-	serverOptions.Lifecycle = store
 	serverOptions.Search = opts.SearchOptions
 	serverOptions.IndexMetrics = opts.IndexMetrics
 	serverOptions.QOSQueue = opts.QOSQueue
-	serverOptions.Ring = opts.Ring
-	serverOptions.RingLifecycler = opts.RingLifecycler
+	serverOptions.OwnsIndexFn = opts.OwnsIndexFn
+	serverOptions.OverridesService = opts.OverridesService
 
 	return resource.NewResourceServer(serverOptions)
 }

@@ -1,10 +1,10 @@
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
 
-import { getQueryRunnerFor } from './utils';
+import { getDatasourceFromQueryRunner, getQueryRunnerFor } from './utils';
 
 export function getViewPanelUrl(vizPanel: VizPanel) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), {
@@ -27,10 +27,11 @@ export function tryGetExploreUrlForPanel(vizPanel: VizPanel): Promise<string | u
   }
 
   const timeRange = sceneGraph.getTimeRange(vizPanel);
+  const datasource = getDatasourceFromQueryRunner(queryRunner);
 
   return getExploreUrl({
     queries: queryRunner.state.queries,
-    dsRef: queryRunner.state.datasource,
+    dsRef: datasource,
     timeRange: timeRange.state.value,
     scopedVars: { __sceneObject: { value: vizPanel } },
     adhocFilters: queryRunner.state.data?.request?.filters,

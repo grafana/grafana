@@ -9,7 +9,7 @@ import UpdateAllButton from 'app/features/plugins/admin/components/UpdateAllButt
 import UpdateAllModal from 'app/features/plugins/admin/components/UpdateAllModal';
 import { useGetUpdatable } from 'app/features/plugins/admin/state/hooks';
 
-import { AddNewConnection } from '../tabs/ConnectData';
+import { AddNewConnection } from '../tabs/ConnectData/ConnectData';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pageContainer: css({

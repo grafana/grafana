@@ -7,12 +7,11 @@ import (
 	"fmt"
 	"io"
 
-	"google.golang.org/grpc/metadata"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
+	stream_utils "github.com/grafana/grafana/pkg/tsdb/tempo/utils"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -43,7 +42,7 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 		response.Error = fmt.Errorf("error unmarshaling backend query model: %v", err)
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
-		return err
+		return backend.DownstreamErrorf("error unmarshaling backend query model: %v", err)
 	}
 
 	var sr *tempopb.SearchRequest
@@ -52,26 +51,26 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 		response.Error = fmt.Errorf("error unmarshaling Tempo query model: %v", err)
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
-		return err
+		return backend.DownstreamErrorf("failed to unmarshall Tempo query model: %w", err)
 	}
 
 	if sr.GetQuery() == "" {
-		return fmt.Errorf("query is empty")
+		return backend.DownstreamErrorf("tempo search query cannot be empty")
 	}
 
 	sr.Start = uint32(backendQuery.TimeRange.From.Unix())
 	sr.End = uint32(backendQuery.TimeRange.To.Unix())
 
-	// Setting the user agent for the gRPC call. When DS is decoupled we don't recreate instance when grafana config
-	// changes or updates, so we have to get it from context.
-	// Ideally this would be pushed higher, so it's set once for all rpc calls, but we have only one now.
-	ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", backend.UserAgentFromContext(ctx).String())
+	ctx = stream_utils.AppendHeadersToOutgoingContext(ctx, req)
 
 	stream, err := datasource.StreamingClient.Search(ctx, sr)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("Error Search()", "err", err)
+		if backend.IsDownstreamHTTPError(err) {
+			return backend.DownstreamError(err)
+		}
 		return err
 	}
 

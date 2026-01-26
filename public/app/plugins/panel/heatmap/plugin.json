@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Heatmap",
   "id": "heatmap",
-
+  "suggestions": true,
   "info": {
     "description": "Like a histogram over time",
     "author": {

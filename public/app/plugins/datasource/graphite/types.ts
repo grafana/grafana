@@ -17,6 +17,7 @@ export interface GraphiteQuery extends DataQuery {
   targetFull?: string;
   tags?: string[];
   fromAnnotations?: boolean;
+  isMetricTank?: boolean;
 }
 
 export interface GraphiteOptions extends DataSourceJsonData {

@@ -91,7 +91,11 @@ func (s *SocialBase) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) st
 func (s *SocialBase) getAuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
 	if s.info.LoginPrompt != "" {
 		promptOpt := oauth2.SetAuthURLParam("prompt", s.info.LoginPrompt)
-		opts = append(opts, promptOpt)
+
+		// Prepend the prompt option to the opts slice to ensure it is applied last.
+		// This is necessary in case the caller provides an option that overrides the prompt,
+		// such as `oauth2.ApprovalForce`.
+		opts = append([]oauth2.AuthCodeOption{promptOpt}, opts...)
 	}
 
 	return s.Config.AuthCodeURL(state, opts...)

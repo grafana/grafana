@@ -108,7 +108,7 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
               <VizTypePicker pluginId={plugin.meta.id} onChange={onVizChange} searchQuery={searchQuery} />
             )}
             {listMode === VisualizationSelectPaneTab.Suggestions && (
-              <VisualizationSuggestions onChange={onVizChange} searchQuery={searchQuery} panel={panel} data={data} />
+              <VisualizationSuggestions onChange={onVizChange} panel={panel} data={data} />
             )}
             {listMode === VisualizationSelectPaneTab.LibraryPanels && (
               <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />

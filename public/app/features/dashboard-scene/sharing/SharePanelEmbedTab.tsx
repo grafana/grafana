@@ -1,12 +1,11 @@
 import { TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { ShareEmbed } from 'app/features/dashboard/components/ShareModal/ShareEmbed';
 import { buildParams, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -25,9 +24,7 @@ export class SharePanelEmbedTab extends SceneObjectBase<SharePanelEmbedTabState>
   }
 
   public getTabLabel() {
-    return config.featureToggles.newDashboardSharingComponent
-      ? t('share-panel.drawer.share-embed-title', 'Share embed')
-      : t('share-modal.tab-title.panel-embed', 'Embed');
+    return t('share-panel.drawer.share-embed-title', 'Share embed');
   }
 }
 

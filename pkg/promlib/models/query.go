@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -14,6 +15,10 @@ import (
 	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+
+	scope "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
+
+	glog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 )
@@ -66,48 +71,14 @@ type PrometheusQueryProperties struct {
 	LegendFormat string `json:"legendFormat,omitempty"`
 
 	// A set of filters applied to apply to the query
-	Scopes []ScopeSpec `json:"scopes,omitempty"`
+	Scopes []scope.ScopeSpec `json:"scopes,omitempty"`
 
 	// Additional Ad-hoc filters that take precedence over Scope on conflict.
-	AdhocFilters []ScopeFilter `json:"adhocFilters,omitempty"`
+	AdhocFilters []scope.ScopeFilter `json:"adhocFilters,omitempty"`
 
 	// Group By parameters to apply to aggregate expressions in the query
 	GroupByKeys []string `json:"groupByKeys,omitempty"`
 }
-
-// ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go
-// to avoid import (temp fix). This also has metadata.name inlined.
-type ScopeSpec struct {
-	Name        string        `json:"name"` // This is the identifier from metadata.name of the scope model.
-	Title       string        `json:"title"`
-	Type        string        `json:"type"`
-	Description string        `json:"description"`
-	Category    string        `json:"category"`
-	Filters     []ScopeFilter `json:"filters"`
-}
-
-// ScopeFilter is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go
-// to avoid import (temp fix)
-type ScopeFilter struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-	// Values is used for operators that require multiple values (e.g. one-of and not-one-of).
-	Values   []string       `json:"values,omitempty"`
-	Operator FilterOperator `json:"operator"`
-}
-
-// FilterOperator is a hand copy of the ScopeFilter struct from pkg/apis/scope/v0alpha1/types.go
-type FilterOperator string
-
-// Hand copy of enum from pkg/apis/scope/v0alpha1/types.go
-const (
-	FilterOperatorEquals        FilterOperator = "equals"
-	FilterOperatorNotEquals     FilterOperator = "not-equals"
-	FilterOperatorRegexMatch    FilterOperator = "regex-match"
-	FilterOperatorRegexNotMatch FilterOperator = "regex-not-match"
-	FilterOperatorOneOf         FilterOperator = "one-of"
-	FilterOperatorNotOneOf      FilterOperator = "not-one-of"
-)
 
 // Internal interval and range variables
 const (
@@ -121,7 +92,6 @@ const (
 )
 
 // Internal interval and range variables with {} syntax
-// Repetitive code, we should have functionality to unify these
 const (
 	varIntervalAlt       = "${__interval}"
 	varIntervalMsAlt     = "${__interval_ms}"
@@ -141,7 +111,15 @@ const (
 	UnknownQueryType  TimeSeriesQueryType = "unknown"
 )
 
+// safeResolution is the maximum number of data points to prevent excessive resolution.
+// This ensures queries don't exceed reasonable data point limits, improving performance
+// and preventing potential memory issues. The value of 11000 provides a good balance
+// between resolution and performance for most use cases.
 var safeResolution = 11000
+
+// rateIntervalMultiplier is the minimum multiplier for rate interval calculation.
+// Rate intervals should be at least 4x the scrape interval to ensure accurate rate calculations.
+const rateIntervalMultiplier = 4
 
 // QueryModel includes both the common and specific values
 // NOTE: this struct may have issues when decoding JSON that requires the special handling
@@ -175,7 +153,7 @@ type Query struct {
 	ExemplarQuery bool
 	UtcOffsetSec  int64
 
-	Scopes []ScopeSpec
+	Scopes []scope.ScopeSpec
 }
 
 // This internal query struct is just like QueryModel, except it does not include:
@@ -183,7 +161,7 @@ type Query struct {
 // may be either a string or DataSourceRef
 type internalQueryModel struct {
 	PrometheusQueryProperties `json:",inline"`
-	//sdkapi.CommonQueryProperties `json:",inline"`
+	// sdkapi.CommonQueryProperties `json:",inline"`
 	IntervalMS float64 `json:"intervalMs,omitempty"`
 
 	// The following properties may be part of the request payload, however they are not saved in panel JSON
@@ -192,10 +170,10 @@ type internalQueryModel struct {
 	Interval     string `json:"interval,omitempty"`
 }
 
-func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool, enableScope bool) (*Query, error) {
+func Parse(ctx context.Context, log glog.Logger, span trace.Span, query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool) (*Query, error) {
 	model := &internalQueryModel{}
 	if err := json.Unmarshal(query.JSON, model); err != nil {
-		return nil, err
+		return nil, backend.DownstreamErrorf("error unmarshaling query: %w", err)
 	}
 	span.SetAttributes(attribute.String("rawExpr", model.Expr))
 
@@ -216,37 +194,36 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 		timeRange,
 	)
 
-	if enableScope {
-		var scopeFilters []ScopeFilter
-		for _, scope := range model.Scopes {
-			scopeFilters = append(scopeFilters, scope.Filters...)
-		}
+	var scopeFilters []scope.ScopeFilter
+	for _, scope := range model.Scopes {
+		scopeFilters = append(scopeFilters, scope.Filters...)
+	}
 
-		if len(scopeFilters) > 0 {
-			span.SetAttributes(attribute.StringSlice("scopeFilters", func() []string {
-				var filters []string
-				for _, f := range scopeFilters {
-					filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
-				}
-				return filters
-			}()))
-		}
-
-		if len(model.AdhocFilters) > 0 {
-			span.SetAttributes(attribute.StringSlice("adhocFilters", func() []string {
-				var filters []string
-				for _, f := range model.AdhocFilters {
-					filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
-				}
-				return filters
-			}()))
-		}
-
-		if len(scopeFilters) > 0 || len(model.AdhocFilters) > 0 || len(model.GroupByKeys) > 0 {
-			expr, err = ApplyFiltersAndGroupBy(expr, scopeFilters, model.AdhocFilters, model.GroupByKeys)
-			if err != nil {
-				return nil, err
+	if len(scopeFilters) > 0 {
+		span.SetAttributes(attribute.StringSlice("scopeFilters", func() []string {
+			var filters []string
+			for _, f := range scopeFilters {
+				filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
 			}
+			return filters
+		}()))
+	}
+
+	if len(model.AdhocFilters) > 0 {
+		span.SetAttributes(attribute.StringSlice("adhocFilters", func() []string {
+			var filters []string
+			for _, f := range model.AdhocFilters {
+				filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
+			}
+			return filters
+		}()))
+	}
+
+	if len(scopeFilters) > 0 || len(model.AdhocFilters) > 0 || len(model.GroupByKeys) > 0 {
+		log.Info("Applying scope filters", "scopeFiltersCount", len(scopeFilters), "adhocFiltersCount", len(model.AdhocFilters), "groupByKeysCount", len(model.GroupByKeys))
+		expr, err = ApplyFiltersAndGroupBy(expr, scopeFilters, model.AdhocFilters, model.GroupByKeys)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -302,44 +279,121 @@ func (query *Query) TimeRange() TimeRange {
 	}
 }
 
+// isRateIntervalVariable checks if the interval string is a rate interval variable
+// ($__rate_interval, ${__rate_interval}, $__rate_interval_ms, or ${__rate_interval_ms})
+func isRateIntervalVariable(interval string) bool {
+	return interval == varRateInterval ||
+		interval == varRateIntervalAlt ||
+		interval == varRateIntervalMs ||
+		interval == varRateIntervalMsAlt
+}
+
+// replaceVariable replaces both $__variable and ${__variable} formats in the expression
+func replaceVariable(expr, dollarFormat, altFormat, replacement string) string {
+	expr = strings.ReplaceAll(expr, dollarFormat, replacement)
+	expr = strings.ReplaceAll(expr, altFormat, replacement)
+	return expr
+}
+
+// isManualIntervalOverride checks if the interval is a manually specified non-variable value
+// that should override the calculated interval
+func isManualIntervalOverride(interval string) bool {
+	return interval != "" &&
+		interval != varInterval &&
+		interval != varIntervalAlt &&
+		interval != varIntervalMs &&
+		interval != varIntervalMsAlt
+}
+
+// maxDuration returns the maximum of two durations
+func maxDuration(a, b time.Duration) time.Duration {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// normalizeIntervalFactor ensures intervalFactor is at least 1
+func normalizeIntervalFactor(factor int64) int64 {
+	if factor == 0 {
+		return 1
+	}
+	return factor
+}
+
+// calculatePrometheusInterval calculates the optimal step interval for a Prometheus query.
+//
+// The function determines the query step interval by considering multiple factors:
+//   - The minimum step specified in the query (queryInterval)
+//   - The data source scrape interval (dsScrapeInterval)
+//   - The requested interval in milliseconds (intervalMs)
+//   - The time range and maximum data points from the query
+//   - The interval factor multiplier
+//
+// Special handling:
+//   - Variable intervals ($__interval, $__rate_interval, etc.) are replaced with calculated values
+//   - Rate interval variables ($__rate_interval, ${__rate_interval}) use calculateRateInterval for proper rate() function support
+//   - Manual interval overrides (non-variable strings) take precedence over calculated values
+//   - The final interval ensures safe resolution limits are not exceeded
+//
+// Parameters:
+//   - queryInterval: The minimum step interval string (may contain variables like $__interval or $__rate_interval)
+//   - dsScrapeInterval: The data source scrape interval (e.g., "15s", "30s")
+//   - intervalMs: The requested interval in milliseconds
+//   - intervalFactor: Multiplier for the calculated interval (defaults to 1 if 0)
+//   - query: The backend data query containing time range and max data points
+//   - intervalCalculator: Calculator for determining optimal intervals
+//
+// Returns:
+//   - The calculated step interval as a time.Duration
+//   - An error if the interval cannot be calculated (e.g., invalid interval string)
 func calculatePrometheusInterval(
 	queryInterval, dsScrapeInterval string,
 	intervalMs, intervalFactor int64,
 	query backend.DataQuery,
 	intervalCalculator intervalv2.Calculator,
 ) (time.Duration, error) {
-	// we need to compare the original query model after it is overwritten below to variables so that we can
-	// calculate the rateInterval if it is equal to $__rate_interval or ${__rate_interval}
+	// Preserve the original interval for later comparison, as it may be modified below
 	originalQueryInterval := queryInterval
 
-	// If we are using variable for interval/step, we will replace it with calculated interval
+	// If we are using a variable for minStep, replace it with empty string
+	// so that the interval calculation proceeds with the default logic
 	if isVariableInterval(queryInterval) {
 		queryInterval = ""
 	}
 
+	// Get the minimum interval from various sources (dsScrapeInterval, queryInterval, intervalMs)
 	minInterval, err := gtime.GetIntervalFrom(dsScrapeInterval, queryInterval, intervalMs, 15*time.Second)
 	if err != nil {
 		return time.Duration(0), err
 	}
+
+	// Calculate the optimal interval based on time range and max data points
 	calculatedInterval := intervalCalculator.Calculate(query.TimeRange, minInterval, query.MaxDataPoints)
+	// Calculate the safe interval to prevent too many data points
 	safeInterval := intervalCalculator.CalculateSafeInterval(query.TimeRange, int64(safeResolution))
 
-	adjustedInterval := safeInterval.Value
-	if calculatedInterval.Value > safeInterval.Value {
-		adjustedInterval = calculatedInterval.Value
-	}
+	// Use the larger of calculated or safe interval to ensure we don't exceed resolution limits
+	adjustedInterval := maxDuration(calculatedInterval.Value, safeInterval.Value)
 
-	// here is where we compare for $__rate_interval or ${__rate_interval}
-	if originalQueryInterval == varRateInterval || originalQueryInterval == varRateIntervalAlt {
+	// Handle rate interval variables: these require special calculation
+	if isRateIntervalVariable(originalQueryInterval) {
 		// Rate interval is final and is not affected by resolution
 		return calculateRateInterval(adjustedInterval, dsScrapeInterval), nil
-	} else {
-		queryIntervalFactor := intervalFactor
-		if queryIntervalFactor == 0 {
-			queryIntervalFactor = 1
-		}
-		return time.Duration(int64(adjustedInterval) * queryIntervalFactor), nil
 	}
+
+	// Handle manual interval override: if user specified a non-variable interval,
+	// it takes precedence over calculated values
+	if isManualIntervalOverride(originalQueryInterval) {
+		if parsedInterval, err := gtime.ParseIntervalStringToTimeDuration(originalQueryInterval); err == nil {
+			return parsedInterval, nil
+		}
+		// If parsing fails, fall through to calculated interval with factor
+	}
+
+	// Apply interval factor to the adjusted interval
+	normalizedFactor := normalizeIntervalFactor(intervalFactor)
+	return time.Duration(int64(adjustedInterval) * normalizedFactor), nil
 }
 
 // calculateRateInterval calculates the $__rate_interval value
@@ -361,7 +415,8 @@ func calculateRateInterval(
 		return time.Duration(0)
 	}
 
-	rateInterval := time.Duration(int64(math.Max(float64(queryInterval+scrapeIntervalDuration), float64(4)*float64(scrapeIntervalDuration))))
+	minRateInterval := rateIntervalMultiplier * scrapeIntervalDuration
+	rateInterval := maxDuration(queryInterval+scrapeIntervalDuration, minRateInterval)
 	return rateInterval
 }
 
@@ -396,34 +451,33 @@ func InterpolateVariables(
 		rateInterval = calculateRateInterval(queryInterval, requestedMinStep)
 	}
 
-	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(calculatedStep/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varInterval, gtime.FormatInterval(calculatedStep))
-	expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))
-	expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeSRounded, 10))
-	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
-	expr = strings.ReplaceAll(expr, varRateIntervalMs, strconv.FormatInt(int64(rateInterval/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varRateInterval, rateInterval.String())
+	// Replace interval variables (both $__var and ${__var} formats)
+	expr = replaceVariable(expr, varIntervalMs, varIntervalMsAlt, strconv.FormatInt(int64(calculatedStep/time.Millisecond), 10))
+	expr = replaceVariable(expr, varInterval, varIntervalAlt, gtime.FormatInterval(calculatedStep))
 
-	// Repetitive code, we should have functionality to unify these
-	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(calculatedStep/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varIntervalAlt, gtime.FormatInterval(calculatedStep))
-	expr = strings.ReplaceAll(expr, varRangeMsAlt, strconv.FormatInt(rangeMs, 10))
-	expr = strings.ReplaceAll(expr, varRangeSAlt, strconv.FormatInt(rangeSRounded, 10))
-	expr = strings.ReplaceAll(expr, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
-	expr = strings.ReplaceAll(expr, varRateIntervalMsAlt, strconv.FormatInt(int64(rateInterval/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varRateIntervalAlt, rateInterval.String())
+	// Replace range variables (both $__var and ${__var} formats)
+	expr = replaceVariable(expr, varRangeMs, varRangeMsAlt, strconv.FormatInt(rangeMs, 10))
+	expr = replaceVariable(expr, varRangeS, varRangeSAlt, strconv.FormatInt(rangeSRounded, 10))
+	expr = replaceVariable(expr, varRange, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
+
+	// Replace rate interval variables (both $__var and ${__var} formats)
+	expr = replaceVariable(expr, varRateIntervalMs, varRateIntervalMsAlt, strconv.FormatInt(int64(rateInterval/time.Millisecond), 10))
+	expr = replaceVariable(expr, varRateInterval, varRateIntervalAlt, rateInterval.String())
+
 	return expr
 }
 
+// isVariableInterval checks if the interval string is a variable interval
+// (any of $__interval, ${__interval}, $__interval_ms, ${__interval_ms}, $__rate_interval, ${__rate_interval}, etc.)
 func isVariableInterval(interval string) bool {
-	if interval == varInterval || interval == varIntervalMs || interval == varRateInterval || interval == varRateIntervalMs {
-		return true
-	}
-	// Repetitive code, we should have functionality to unify these
-	if interval == varIntervalAlt || interval == varIntervalMsAlt || interval == varRateIntervalAlt || interval == varRateIntervalMsAlt {
-		return true
-	}
-	return false
+	return interval == varInterval ||
+		interval == varIntervalAlt ||
+		interval == varIntervalMs ||
+		interval == varIntervalMsAlt ||
+		interval == varRateInterval ||
+		interval == varRateIntervalAlt ||
+		interval == varRateIntervalMs ||
+		interval == varRateIntervalMsAlt
 }
 
 // AlignTimeRange aligns query range to step and handles the time offset.
@@ -440,7 +494,7 @@ func AlignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
 //go:embed query.types.json
 var f embed.FS
 
-// QueryTypeDefinitionsJSON returns the query type definitions
+// QueryTypeDefinitionListJSON returns the query type definitions
 func QueryTypeDefinitionListJSON() (json.RawMessage, error) {
 	return f.ReadFile("query.types.json")
 }

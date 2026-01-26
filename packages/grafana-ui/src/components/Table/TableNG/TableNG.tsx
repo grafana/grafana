@@ -2,7 +2,7 @@ import 'react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
-import { CSSProperties, Key, ReactNode, useCallback, useMemo, useRef, useState } from 'react';
+import { CSSProperties, Key, ReactNode, useCallback, useMemo, useRef, useState, useEffect, type JSX } from 'react';
 import {
   Cell,
   CellRendererProps,
@@ -94,8 +94,9 @@ import {
   predicateByName,
   shouldTextOverflow,
   shouldTextWrap,
-  withDataLinksActionsTooltip,
   getSummaryCellTextAlign,
+  parseStyleJson,
+  IS_SAFARI_26,
 } from './utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -104,11 +105,11 @@ export function TableNG(props: TableNGProps) {
   const {
     cellHeight,
     data,
+    disableKeyboardEvents,
     disableSanitizeHtml,
     enablePagination = false,
     enableSharedCrosshair = false,
     enableVirtualization,
-    fieldConfig,
     frozenColumns = 0,
     getActions = () => [],
     height,
@@ -123,13 +124,8 @@ export function TableNG(props: TableNGProps) {
     timeRange,
     transparent,
     width,
+    initialRowIndex,
   } = props;
-
-  const hasFooter = useMemo(
-    () => data.fields.some((field) => field.config?.custom?.footer?.reducers?.length ?? false),
-    [data.fields]
-  );
-  const footerHeight = hasFooter ? calculateFooterHeight(data, fieldConfig) : 0;
 
   const theme = useTheme2();
   const styles = useStyles2(getGridStyles, enablePagination, transparent);
@@ -146,12 +142,31 @@ export function TableNG(props: TableNGProps) {
     [getActions, data, userCanExecuteActions]
   );
 
+  const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
   const hasHeader = !noHeader;
+  const hasFooter = useMemo(
+    () => visibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
+    [visibleFields]
+  );
+  const footerHeight = useMemo(
+    () => (hasFooter ? calculateFooterHeight(visibleFields) : 0),
+    [hasFooter, visibleFields]
+  );
 
   const resizeHandler = useColumnResize(onColumnResize);
 
-  const rows = useMemo(() => frameToRecords(data), [data]);
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
+  const nestedFramesFieldName = useMemo(() => {
+    if (!hasNestedFrames) {
+      return;
+    }
+    const firstNestedField = data.fields.find((f) => f.type === FieldType.nestedFrames);
+    if (!firstNestedField) {
+      return;
+    }
+    return getDisplayName(firstNestedField);
+  }, [data, hasNestedFrames]);
+  const rows = useMemo(() => frameToRecords(data, nestedFramesFieldName), [data, nestedFramesFieldName]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const {
@@ -173,7 +188,7 @@ export function TableNG(props: TableNGProps) {
   const [expandedRows, setExpandedRows] = useState(() => new Set<number>());
 
   // vt scrollbar accounting for column auto-sizing
-  const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+
   const defaultRowHeight = useMemo(
     () => getDefaultRowHeight(theme, visibleFields, cellHeight),
     [theme, visibleFields, cellHeight]
@@ -238,6 +253,14 @@ export function TableNG(props: TableNGProps) {
     rowHeight,
   });
 
+  useEffect(() => {
+    if (initialRowIndex && gridRef.current?.scrollToCell) {
+      gridRef.current.scrollToCell({
+        rowIdx: initialRowIndex,
+      });
+    }
+  }, [initialRowIndex]);
+
   const [footers, isUniformFooter] = useMemo(() => {
     const footers: Array<TableFooterOptions | undefined> = [];
     let isUniformFooter = true;
@@ -284,7 +307,7 @@ export function TableNG(props: TableNGProps) {
   const commonDataGridProps = useMemo(
     () =>
       ({
-        enableVirtualization: enableVirtualization !== false && rowHeight !== 'auto',
+        enableVirtualization: !IS_SAFARI_26 && enableVirtualization !== false && rowHeight !== 'auto',
         defaultColumnOptions: {
           minWidth: 50,
           resizable: true,
@@ -370,7 +393,11 @@ export function TableNG(props: TableNGProps) {
           return null;
         }
 
-        const expandedRecords = applySort(frameToRecords(nestedData), nestedData.fields, sortColumns);
+        const expandedRecords = applySort(
+          frameToRecords(nestedData, nestedFramesFieldName),
+          nestedData.fields,
+          sortColumns
+        );
         if (!expandedRecords.length) {
           return (
             <div className={styles.noDataNested}>
@@ -394,7 +421,7 @@ export function TableNG(props: TableNGProps) {
       width: COLUMN.EXPANDER_WIDTH,
       minWidth: COLUMN.EXPANDER_WIDTH,
     }),
-    [commonDataGridProps, data.fields.length, expandedRows, sortColumns, styles]
+    [commonDataGridProps, data.fields.length, expandedRows, sortColumns, styles, nestedFramesFieldName]
   );
 
   const fromFields = useCallback(
@@ -402,7 +429,6 @@ export function TableNG(props: TableNGProps) {
       const result: FromFieldsResult = {
         columns: [],
         cellRootRenderers: {},
-        colsWithTooltip: {},
       };
 
       let lastRowIdx = -1;
@@ -435,7 +461,7 @@ export function TableNG(props: TableNGProps) {
 
         // attach JSONCell custom display function to JSONView cell type
         if (cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other) {
-          field.display = displayJsonValue;
+          field.display = displayJsonValue(field);
         }
 
         // For some cells, "aligning" the cell will mean aligning the inline contents of the cell with
@@ -457,9 +483,9 @@ export function TableNG(props: TableNGProps) {
           ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign))
           : undefined;
 
-        const shouldOverflow = rowHeight !== 'auto' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
+        const shouldOverflow =
+          !IS_SAFARI_26 && rowHeight !== 'auto' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
         const textWrap = rowHeight === 'auto' || shouldTextWrap(field);
-        const withTooltip = withDataLinksActionsTooltip(field, cellType);
         const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
         const cellStyleOptions: TableCellStyleOptions = {
           textAlign,
@@ -468,13 +494,15 @@ export function TableNG(props: TableNGProps) {
           maxHeight: maxRowHeight,
         };
 
-        result.colsWithTooltip[displayName] = withTooltip;
-
         const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
         const cellSpecificStyles = getCellSpecificStyles(cellType, field, theme, cellStyleOptions);
         const linkStyles = getLinkStyles(theme, canBeColorized);
         const cellParentStyles = clsx(defaultCellStyles, linkStyles);
         const maxHeightClassName = maxRowHeight ? getMaxHeightCellStyles(theme, cellStyleOptions) : undefined;
+        const styleFieldValue = field.config.custom?.styleField;
+        const styleField = styleFieldValue ? data.fields.find(predicateByName(styleFieldValue)) : undefined;
+        const styleFieldName = styleField ? getDisplayName(styleField) : undefined;
+        const hasValidStyleField = Boolean(styleFieldName);
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
 
@@ -501,6 +529,9 @@ export function TableNG(props: TableNGProps) {
             const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
             const cellColorStyles = getCellColorInlineStyles(cellOptions, displayValue, applyToRowBgFn != null);
             Object.assign(style, cellColorStyles);
+          }
+          if (hasValidStyleField) {
+            style = { ...style, ...parseStyleJson(props.row[styleFieldName!]) };
           }
 
           return (
@@ -551,7 +582,6 @@ export function TableNG(props: TableNGProps) {
                 <TableCellActions
                   field={field}
                   value={value}
-                  cellOptions={cellOptions}
                   displayName={displayName}
                   cellInspect={cellInspect}
                   showFilters={showFilters}
@@ -677,7 +707,7 @@ export function TableNG(props: TableNGProps) {
           ),
           renderSummaryCell: () => (
             <SummaryCell
-              rows={rows}
+              rows={sortedRows}
               footers={footers}
               field={field}
               colIdx={i}
@@ -707,10 +737,11 @@ export function TableNG(props: TableNGProps) {
       maxRowHeight,
       numFrozenColsFullyInView,
       onCellFilterAdded,
+      rows,
       rowHeight,
       rowHeightFn,
-      rows,
       setFilter,
+      sortedRows,
       showTypeIcons,
       theme,
       timeRange,
@@ -723,9 +754,13 @@ export function TableNG(props: TableNGProps) {
     () => (hasNestedFrames ? rows.find((r) => r.data)?.data : undefined),
     [hasNestedFrames, rows]
   );
-  const [nestedFieldWidths] = useColWidths(firstRowNestedData?.fields ?? [], availableWidth);
+  const nestedVisibleFields = useMemo(
+    () => (firstRowNestedData ? getVisibleFields(firstRowNestedData.fields) : []),
+    [firstRowNestedData]
+  );
+  const [nestedFieldWidths] = useColWidths(nestedVisibleFields, availableWidth);
 
-  const { columns, cellRootRenderers, colsWithTooltip } = useMemo(() => {
+  const { columns, cellRootRenderers } = useMemo(() => {
     const result = fromFields(visibleFields, widths);
 
     // if nested frames are present, augment the columns to include the nested table expander column.
@@ -737,7 +772,7 @@ export function TableNG(props: TableNGProps) {
     const hasNestedHeaders = firstRowNestedData.meta?.custom?.noHeader !== true;
     const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
     const { columns: nestedColumns, cellRootRenderers: nestedCellRootRenderers } = fromFields(
-      firstRowNestedData.fields,
+      nestedVisibleFields,
       nestedFieldWidths
     );
 
@@ -760,6 +795,7 @@ export function TableNG(props: TableNGProps) {
     firstRowNestedData,
     fromFields,
     nestedFieldWidths,
+    nestedVisibleFields,
     panelContext,
     visibleFields,
     widths,
@@ -778,7 +814,7 @@ export function TableNG(props: TableNGProps) {
   const displayedEnd = pageRangeEnd;
   const numRows = sortedRows.length;
 
-  return (
+  let rendered = (
     <>
       <DataGrid<TableRow, TableSummaryRow>
         {...commonDataGridProps}
@@ -793,7 +829,6 @@ export function TableNG(props: TableNGProps) {
           const field = columns[column.idx].field;
 
           if (
-            colsWithTooltip[getDisplayName(field)] &&
             target instanceof HTMLElement &&
             // this walks up the tree to find either a faux link wrapper or the cell root
             // it then only proceeds if we matched the faux link wrapper
@@ -813,9 +848,9 @@ export function TableNG(props: TableNGProps) {
           }
         }}
         onCellKeyDown={
-          hasNestedFrames
+          hasNestedFrames || disableKeyboardEvents
             ? (_, event) => {
-                if (event.isDefaultPrevented()) {
+                if (disableKeyboardEvents || event.isDefaultPrevented()) {
                   // skip parent grid keyboard navigation if nested grid handled it
                   event.preventGridDefault();
                 }
@@ -866,6 +901,12 @@ export function TableNG(props: TableNGProps) {
       )}
     </>
   );
+
+  if (IS_SAFARI_26) {
+    rendered = <div className={styles.safariWrapper}>{rendered}</div>;
+  }
+
+  return rendered;
 }
 
 /**

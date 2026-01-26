@@ -1,17 +1,9 @@
-﻿import {
-  FloatingArrow,
-  arrow,
-  autoUpdate,
-  flip,
-  offset,
-  shift,
-  useFloating,
-  useTransitionStyles,
-} from '@floating-ui/react';
+﻿import { FloatingArrow, arrow, autoUpdate, offset, useFloating, useTransitionStyles } from '@floating-ui/react';
 import { useLayoutEffect, useRef } from 'react';
 import * as React from 'react';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { getPositioningMiddleware } from '../../utils/floating';
 import { getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 
@@ -42,20 +34,12 @@ export function Popover({
 }: Props) {
   const theme = useTheme2();
   const arrowRef = useRef(null);
+  const floatingUIPlacement = getPlacement(placement);
 
   // the order of middleware is important!
   // `arrow` should almost always be at the end
   // see https://floating-ui.com/docs/arrow#order
-  const middleware = [
-    offset(8),
-    flip({
-      fallbackAxisSideDirection: 'end',
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: false,
-      boundary: document.body,
-    }),
-    shift(),
-  ];
+  const middleware = [offset(8), ...getPositioningMiddleware(floatingUIPlacement)];
 
   if (renderArrow) {
     middleware.push(
@@ -67,7 +51,7 @@ export function Popover({
 
   const { context, refs, floatingStyles } = useFloating({
     open: show,
-    placement: getPlacement(placement),
+    placement: floatingUIPlacement,
     middleware,
     whileElementsMounted: autoUpdate,
     strategy: 'fixed',

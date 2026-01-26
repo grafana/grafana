@@ -17,6 +17,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.DescendantCounts": schema_pkg_apis_folder_v1beta1_DescendantCounts(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.Folder":           schema_pkg_apis_folder_v1beta1_Folder(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderAccessInfo": schema_pkg_apis_folder_v1beta1_FolderAccessInfo(ref),
+		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderClient":     schema_pkg_apis_folder_v1beta1_FolderClient(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderInfo":       schema_pkg_apis_folder_v1beta1_FolderInfo(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderInfoList":   schema_pkg_apis_folder_v1beta1_FolderInfoList(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderJSONCodec":  schema_pkg_apis_folder_v1beta1_FolderJSONCodec(ref),
@@ -103,18 +104,12 @@ func schema_pkg_apis_folder_v1beta1_Folder(ref common.ReferenceCallback) common.
 							Ref:         ref("github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderSpec"),
 						},
 					},
-					"status": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderStatus"),
-						},
-					},
 				},
-				Required: []string{"metadata", "spec", "status"},
+				Required: []string{"metadata", "spec"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderSpec", "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1.FolderSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -171,6 +166,26 @@ func schema_pkg_apis_folder_v1beta1_FolderAccessInfo(ref common.ReferenceCallbac
 				Required: []string{"canSave", "canEdit", "canAdmin", "canDelete"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_folder_v1beta1_FolderClient(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"client": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"),
+						},
+					},
+				},
+				Required: []string{"client"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"},
 	}
 }
 

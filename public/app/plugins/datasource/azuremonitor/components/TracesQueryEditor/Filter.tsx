@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { RefCallback, SyntheticEvent, useState } from 'react';
+import { RefCallback, SyntheticEvent, useState, type JSX } from 'react';
 import * as React from 'react';
 import { lastValueFrom } from 'rxjs';
 

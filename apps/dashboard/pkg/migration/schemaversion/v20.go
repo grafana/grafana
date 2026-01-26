@@ -3,8 +3,6 @@ package schemaversion
 import (
 	"context"
 	"regexp"
-
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/utils"
 )
 
 // V20 migrates legacy variable syntax in data links and field options.
@@ -92,7 +90,7 @@ func V20(_ context.Context, dashboard map[string]interface{}) error {
 // updateDataLinksVariableSyntax updates variable syntax in panel data links
 func updateDataLinksVariableSyntax(options map[string]interface{}) {
 	dataLinks, ok := options["dataLinks"].([]interface{})
-	if !ok || !utils.IsArray(dataLinks) {
+	if !ok || !IsArray(dataLinks) {
 		return
 	}
 
@@ -124,7 +122,7 @@ func updateFieldOptionsVariableSyntax(options map[string]interface{}) {
 
 	// Update field option links
 	links, ok := defaults["links"].([]interface{})
-	if !ok || !utils.IsArray(links) {
+	if !ok || !IsArray(links) {
 		return
 	}
 

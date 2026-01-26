@@ -6,6 +6,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,29 +30,58 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 	const repo1 = "pulljob-repo-1"
 	const repo2 = "pulljob-repo-2"
 
-	// Create first repository targeting "folder" with its own subdirectory
-	helper.CreateRepo(t, TestRepo{
-		Name:   repo1,
-		Path:   path.Join(helper.ProvisioningPath, "repo1"),
-		Target: "folder",
-		Copies: map[string]string{
-			"testdata/all-panels.json": "dashboard1.json",
-		},
-		ExpectedDashboards: 1,
-		ExpectedFolders:    1,
-	})
+	// create both repos concurrently to reduce duration of this test
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		helper.CreateRepo(t, TestRepo{
+			Name:   repo1,
+			Path:   path.Join(helper.ProvisioningPath, "repo1"),
+			Target: "folder",
+			Copies: map[string]string{
+				"testdata/all-panels.json": "dashboard1.json",
+			},
+			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
+		})
+	}()
+	go func() {
+		defer wg.Done()
+		helper.CreateRepo(t, TestRepo{
+			Name:   repo2,
+			Path:   path.Join(helper.ProvisioningPath, "repo2"),
+			Target: "folder",
+			Copies: map[string]string{
+				"testdata/timeline-demo.json": "dashboard2.json",
+			},
+			SkipResourceAssertions: true, // will check both at the same time below to reduce duration of this test
+		})
+	}()
+	wg.Wait()
 
-	// Create second repository targeting "folder" with its own subdirectory
-	helper.CreateRepo(t, TestRepo{
-		Name:   repo2,
-		Path:   path.Join(helper.ProvisioningPath, "repo2"),
-		Target: "folder",
-		Copies: map[string]string{
-			"testdata/timeline-demo.json": "dashboard2.json",
-		},
-		ExpectedDashboards: 2, // Total across both repos
-		ExpectedFolders:    2, // Total across both repos
-	})
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if err != nil {
+			collect.Errorf("could not list dashboards error: %s", err.Error())
+			return
+		}
+		if len(dashboards.Items) != 2 {
+			collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), 2)
+			return
+		}
+		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if err != nil {
+			collect.Errorf("could not list folders: error: %s", err.Error())
+			return
+		}
+		if len(folders.Items) != 2 {
+			collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), 2)
+			return
+		}
+
+		assert.Len(collect, dashboards.Items, 2)
+		assert.Len(collect, folders.Items, 2)
+	}, waitTimeoutDefault, waitIntervalDefault, "should have the expected dashboards and folders after sync")
 
 	// Test: Pull job should fail when trying to manage resources owned by another repository
 	t.Run("pull job should fail when trying to manage resources owned by another repository", func(t *testing.T) {
@@ -69,29 +100,30 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 			Pull:   &provisioning.SyncJobOptions{},
 		})
 
-		// Step 3: Verify the job failed with ownership conflict error
+		// Step 3: Verify the job completed with warning due to ownership conflict
 		jobObj := &provisioning.Job{}
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj)
 		require.NoError(t, err)
 
-		// The job completes with "warning" state instead of "error" state when it doesn't have too many errors
+		// The job completes with "warning" state for ownership conflicts (they are treated as warnings)
 		t.Logf("Job state: %s", jobObj.Status.State)
-		t.Logf("Job errors: %v", jobObj.Status.Errors)
+		t.Logf("Job warnings: %v", jobObj.Status.Warnings)
 
-		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State, "job should complete with warnings due to ownership conflicts")
-		require.NotEmpty(t, jobObj.Status.Errors, "should have error details")
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State, "job should complete with warning due to ownership conflicts")
+		require.NotEmpty(t, jobObj.Status.Warnings, "should have warning details")
+		require.Empty(t, jobObj.Status.Errors, "ownership conflicts should be warnings, not errors")
 
-		// Check that error mentions ownership conflict
+		// Check that warning mentions ownership conflict
 		found := false
-		for _, errMsg := range jobObj.Status.Errors {
-			t.Logf("Error message: %s", errMsg)
-			if assert.Contains(t, errMsg, fmt.Sprintf("managed by repo '%s'", repo1)) &&
-				assert.Contains(t, errMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2)) {
+		for _, warningMsg := range jobObj.Status.Warnings {
+			t.Logf("Warning message: %s", warningMsg)
+			if strings.Contains(warningMsg, fmt.Sprintf("managed by repo '%s'", repo1)) &&
+				strings.Contains(warningMsg, fmt.Sprintf("cannot be modified by repo '%s'", repo2)) {
 				found = true
 				break
 			}
 		}
-		require.True(t, found, "should have ownership conflict error")
+		require.True(t, found, "should have ownership conflict warning")
 
 		// Step 4: Verify original resource is still owned by repo1 and unchanged
 		originalDashboard, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
@@ -127,14 +159,17 @@ func TestIntegrationProvisioning_PullJobOwnershipProtection(t *testing.T) {
 		persistentRepo2Dashboard, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
 		require.NoError(t, err, "repo2's dashboard should still exist after repo1 pull")
 		require.Equal(t, repo2, persistentRepo2Dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should remain with repo2")
-		require.Equal(t, repo2Dashboard.GetResourceVersion(), persistentRepo2Dashboard.GetResourceVersion(), "repo2's resource should not be modified by repo1 pull")
+		require.Equal(t, repo2Dashboard.GetGeneration(), persistentRepo2Dashboard.GetGeneration(), "repo2's resource should not be modified by repo1 pull")
 
 		// Step 4: Pull repo2 and verify repo1's resource is still intact
-		helper.SyncAndWait(t, repo2, nil)
+		helper.TriggerJobAndWaitForSuccess(t, repo2, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{},
+		})
 
 		persistentRepo1Dashboard, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
 		require.NoError(t, err, "repo1's dashboard should still exist after repo2 pull")
 		require.Equal(t, repo1, persistentRepo1Dashboard.GetAnnotations()[utils.AnnoKeyManagerIdentity], "ownership should remain with repo1")
-		require.Equal(t, repo1Dashboard.GetResourceVersion(), persistentRepo1Dashboard.GetResourceVersion(), "repo1's resource should not be modified by repo2 pull")
+		require.Equal(t, repo1Dashboard.GetGeneration(), persistentRepo1Dashboard.GetGeneration(), "repo1's resource should not be modified by repo2 pull")
 	})
 }

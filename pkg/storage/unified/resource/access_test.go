@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -33,7 +34,7 @@ func TestAuthzLimitedClient_Check(t *testing.T) {
 			Verb:      utils.VerbGet,
 			Namespace: "stacks-1",
 		}
-		resp, err := client.Check(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
+		resp, err := client.Check(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req, "")
 		assert.NoError(t, err)
 		assert.Equal(t, test.expected, resp.Allowed)
 	}
@@ -60,7 +61,8 @@ func TestAuthzLimitedClient_Compile(t *testing.T) {
 			Verb:      utils.VerbGet,
 			Namespace: "stacks-1",
 		}
-		checker, err := client.Compile(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
+		//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
+		checker, _, err := client.Compile(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
 		assert.NoError(t, err)
 		assert.NotNil(t, checker)
 
@@ -134,7 +136,7 @@ func TestNamespaceMatching(t *testing.T) {
 			// Create a mock auth info with the specified namespace
 			// Test Check method
 			user := &identity.StaticRequester{Namespace: tt.authNamespace}
-			_, checkErr := client.Check(ctx, user, checkReq)
+			_, checkErr := client.Check(ctx, user, checkReq, "")
 
 			// Test Compile method
 			compileReq := authlib.ListRequest{
@@ -143,7 +145,8 @@ func TestNamespaceMatching(t *testing.T) {
 				Verb:      utils.VerbGet,
 				Namespace: tt.reqNamespace,
 			}
-			_, compileErr := client.Compile(ctx, user, compileReq)
+			//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
+			_, _, compileErr := client.Compile(ctx, user, compileReq)
 
 			if tt.expectError {
 				require.Error(t, checkErr, "Check should return error")
@@ -198,7 +201,7 @@ func TestNamespaceMatchingFallback(t *testing.T) {
 			// Create a mock auth info with the specified namespace
 			// Test Check method
 			user := &identity.StaticRequester{Namespace: tt.authNamespace}
-			_, checkErr := client.Check(ctx, user, checkReq)
+			_, checkErr := client.Check(ctx, user, checkReq, "")
 
 			// Test Compile method
 			compileReq := authlib.ListRequest{
@@ -207,7 +210,8 @@ func TestNamespaceMatchingFallback(t *testing.T) {
 				Verb:      utils.VerbGet,
 				Namespace: tt.reqNamespace,
 			}
-			_, compileErr := client.Compile(ctx, user, compileReq)
+			//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
+			_, _, compileErr := client.Compile(ctx, user, compileReq)
 
 			if tt.expectError {
 				require.Error(t, checkErr, "Check should return error")

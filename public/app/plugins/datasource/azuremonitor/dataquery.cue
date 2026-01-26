@@ -175,10 +175,13 @@ composableKinds: DataQuery: {
 				#BuilderQueryEditorExpressionType: "property" | "operator" | "reduce" | "function_parameter" | "group_by" | "or" | "and" | "order_by" @cuetsy(kind="enum", memberNames:"Property|Operator|Reduce|FunctionParameter|GroupBy|Or|And|OrderBy")
 				#BuilderQueryEditorPropertyType:   "number" | "string" | "boolean" | "datetime" | "time_span" | "function" | "interval"               @cuetsy(kind="enum", memberNames:"Number|String|Boolean|Datetime|TimeSpan|Function|Interval")
 				#BuilderQueryEditorOrderByOptions: "asc" | "desc"                                                                                     @cuetsy(kind="enum", memberNames:"Asc|Desc")
+				#BuilderQueryEditorReduceParameterTypes: "generic" | "numeric"                                                                                     @cuetsy(kind="enum", memberNames:"Asc|Desc")
 
 				#BuilderQueryEditorProperty: {
 					type: #BuilderQueryEditorPropertyType
 					name: string
+					// Optional parameter type for function properties
+					parameterType?: #BuilderQueryEditorReduceParameterTypes
 				} @cuetsy(kind="interface")
 
 				#BuilderQueryEditorPropertyExpression: {

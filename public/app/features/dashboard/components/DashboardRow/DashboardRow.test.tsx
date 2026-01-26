@@ -3,11 +3,19 @@ import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { PanelModel } from '../../state/PanelModel';
 
 import { DashboardRow, UnthemedDashboardRow } from './DashboardRow';
+
+// mock DashboardInteractions
+jest.mock('app/features/dashboard-scene/utils/interactions', () => ({
+  DashboardInteractions: {
+    trackRemoveRowClick: jest.fn(),
+  },
+}));
 
 describe('DashboardRow', () => {
   let panel: PanelModel, dashboardMock: any;
@@ -94,5 +102,12 @@ describe('DashboardRow', () => {
     const rowPanel = new PanelModel({ collapsed: true, panels: [panel] });
     const dashboardRow = new UnthemedDashboardRow({ panel: rowPanel, dashboard: dashboardMock, theme: createTheme() });
     expect(dashboardRow.getWarning()).not.toBeDefined();
+  });
+
+  it('should call DashboardInteractions.trackRemoveRowClick when clicking on delete row button', async () => {
+    const user = userEvent.setup();
+    render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
+    await user.click(screen.getByRole('button', { name: 'Delete row' }));
+    expect(DashboardInteractions.trackRemoveRowClick).toHaveBeenCalled();
   });
 });

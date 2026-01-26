@@ -1,229 +1,162 @@
-package schemaversion_test
+package schemaversion
 
 import (
+	"context"
 	"testing"
-
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
-func TestV23(t *testing.T) {
-	tests := []migrationTestCase{
+func TestV23TemplateVariableMigration(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    map[string]interface{}
+		description string
+	}{
 		{
-			name: "multi variable with single value gets converted to array",
+			name: "align_text_with_multi_for_multi_variables",
 			input: map[string]interface{}{
-				"title":         "V23 Multi Variable Single Value Test",
-				"schemaVersion": 22,
 				"templating": map[string]interface{}{
 					"list": []interface{}{
 						map[string]interface{}{
-							"type":    "query",
-							"name":    "multi_single_value",
-							"multi":   true,
-							"current": map[string]interface{}{"value": "A", "text": "A", "selected": true},
+							"name":  "multiVar",
+							"multi": true,
+							"current": map[string]interface{}{
+								"text":  "All",
+								"value": "All",
+							},
 						},
 					},
 				},
 			},
 			expected: map[string]interface{}{
-				"title":         "V23 Multi Variable Single Value Test",
-				"schemaVersion": 23,
 				"templating": map[string]interface{}{
 					"list": []interface{}{
 						map[string]interface{}{
-							"type":    "query",
-							"name":    "multi_single_value",
-							"multi":   true,
-							"current": map[string]interface{}{"value": []interface{}{"A"}, "text": []interface{}{"A"}, "selected": true},
+							"name":  "multiVar",
+							"multi": true,
+							"current": map[string]interface{}{
+								"text":  []interface{}{"All"},
+								"value": []interface{}{"All"},
+							},
 						},
 					},
 				},
 			},
+			description: "For multi variables, both text and value should be converted to arrays to match frontend alignCurrentWithMulti behavior",
 		},
 		{
-			name: "multi variable with array value stays as array",
+			name: "preserve_text_as_string_when_value_already_array",
 			input: map[string]interface{}{
-				"title":         "V23 Multi Variable Array Value Test",
-				"schemaVersion": 22,
 				"templating": map[string]interface{}{
 					"list": []interface{}{
 						map[string]interface{}{
-							"type":    "query",
-							"name":    "multi_array_value",
-							"multi":   true,
-							"current": map[string]interface{}{"value": []interface{}{"B", "C"}, "text": []interface{}{"B", "C"}, "selected": true},
+							"name":  "multiVar",
+							"multi": true,
+							"current": map[string]interface{}{
+								"text":  "All",
+								"value": []interface{}{"All"},
+							},
 						},
 					},
 				},
 			},
 			expected: map[string]interface{}{
-				"title":         "V23 Multi Variable Array Value Test",
-				"schemaVersion": 23,
 				"templating": map[string]interface{}{
 					"list": []interface{}{
 						map[string]interface{}{
-							"type":    "query",
-							"name":    "multi_array_value",
-							"multi":   true,
-							"current": map[string]interface{}{"value": []interface{}{"B", "C"}, "text": []interface{}{"B", "C"}, "selected": true},
+							"name":  "multiVar",
+							"multi": true,
+							"current": map[string]interface{}{
+								"text":  "All",
+								"value": []interface{}{"All"},
+							},
 						},
 					},
 				},
 			},
-		},
-		{
-			name: "non-multi variable with array value gets converted to single value",
-			input: map[string]interface{}{
-				"title":         "V23 Non-Multi Variable Array Value Test",
-				"schemaVersion": 22,
-				"templating": map[string]interface{}{
-					"list": []interface{}{
-						map[string]interface{}{
-							"type":    "query",
-							"name":    "non_multi_array_value",
-							"multi":   false,
-							"current": map[string]interface{}{"value": []interface{}{"D"}, "text": []interface{}{"D"}, "selected": true},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"title":         "V23 Non-Multi Variable Array Value Test",
-				"schemaVersion": 23,
-				"templating": map[string]interface{}{
-					"list": []interface{}{
-						map[string]interface{}{
-							"type":    "query",
-							"name":    "non_multi_array_value",
-							"multi":   false,
-							"current": map[string]interface{}{"value": "D", "text": "D", "selected": true},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "non-multi variable with single value stays as single value",
-			input: map[string]interface{}{
-				"title":         "V23 Non-Multi Variable Single Value Test",
-				"schemaVersion": 22,
-				"templating": map[string]interface{}{
-					"list": []interface{}{
-						map[string]interface{}{
-							"type":    "query",
-							"name":    "non_multi_single_value",
-							"multi":   false,
-							"current": map[string]interface{}{"value": "E", "text": "E", "selected": true},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"title":         "V23 Non-Multi Variable Single Value Test",
-				"schemaVersion": 23,
-				"templating": map[string]interface{}{
-					"list": []interface{}{
-						map[string]interface{}{
-							"type":    "query",
-							"name":    "non_multi_single_value",
-							"multi":   false,
-							"current": map[string]interface{}{"value": "E", "text": "E", "selected": true},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "variable without multi property is unchanged",
-			input: map[string]interface{}{
-				"title":         "V23 No Multi Property Test",
-				"schemaVersion": 22,
-				"templating": map[string]interface{}{
-					"list": []interface{}{
-						map[string]interface{}{
-							"type":    "query",
-							"name":    "no_multi_property",
-							"current": map[string]interface{}{"value": "F", "text": "F", "selected": true},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"title":         "V23 No Multi Property Test",
-				"schemaVersion": 23,
-				"templating": map[string]interface{}{
-					"list": []interface{}{
-						map[string]interface{}{
-							"type":    "query",
-							"name":    "no_multi_property",
-							"current": map[string]interface{}{"value": "F", "text": "F", "selected": true},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "variable with empty current is unchanged",
-			input: map[string]interface{}{
-				"title":         "V23 Empty Current Test",
-				"schemaVersion": 22,
-				"templating": map[string]interface{}{
-					"list": []interface{}{
-						map[string]interface{}{
-							"type":    "query",
-							"name":    "empty_current",
-							"multi":   true,
-							"current": map[string]interface{}{},
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"title":         "V23 Empty Current Test",
-				"schemaVersion": 23,
-				"templating": map[string]interface{}{
-					"list": []interface{}{
-						map[string]interface{}{
-							"type":    "query",
-							"name":    "empty_current",
-							"multi":   true,
-							"current": map[string]interface{}{},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "variable with nil current is unchanged",
-			input: map[string]interface{}{
-				"title":         "V23 Nil Current Test",
-				"schemaVersion": 22,
-				"templating": map[string]interface{}{
-					"list": []interface{}{
-						map[string]interface{}{
-							"type":    "query",
-							"name":    "nil_current",
-							"multi":   true,
-							"current": nil,
-						},
-					},
-				},
-			},
-			expected: map[string]interface{}{
-				"title":         "V23 Nil Current Test",
-				"schemaVersion": 23,
-				"templating": map[string]interface{}{
-					"list": []interface{}{
-						map[string]interface{}{
-							"type":    "query",
-							"name":    "nil_current",
-							"multi":   true,
-							"current": nil,
-						},
-					},
-				},
-			},
+			description: "When value is already an array, text should remain as string to match frontend behavior",
 		},
 	}
 
-	runMigrationTests(t, tests, schemaversion.V23)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dashboard := map[string]interface{}{
+				"schemaVersion": 22,
+			}
+			// Copy templating from input
+			if templating, ok := tt.input["templating"]; ok {
+				dashboard["templating"] = templating
+			}
+
+			err := V23(context.Background(), dashboard)
+			if err != nil {
+				t.Fatalf("V23 migration failed: %v", err)
+			}
+
+			if dashboard["schemaVersion"] != 23 {
+				t.Errorf("Expected schemaVersion to be 23, got %v", dashboard["schemaVersion"])
+			}
+
+			// Verify templating structure
+			templating, ok := dashboard["templating"].(map[string]interface{})
+			if !ok {
+				t.Fatalf("Expected templating to be a map")
+			}
+
+			list, ok := templating["list"].([]interface{})
+			if !ok || len(list) == 0 {
+				t.Fatalf("Expected templating.list to be a non-empty array")
+			}
+
+			variable, ok := list[0].(map[string]interface{})
+			if !ok {
+				t.Fatalf("Expected variable to be a map")
+			}
+
+			// Check current property alignment
+			expectedTemplating := tt.expected["templating"].(map[string]interface{})
+			expectedList := expectedTemplating["list"].([]interface{})
+			expectedVariable := expectedList[0].(map[string]interface{})
+
+			actualCurrent := variable["current"].(map[string]interface{})
+			expectedCurrent := expectedVariable["current"].(map[string]interface{})
+
+			if !compareValues(actualCurrent["text"], expectedCurrent["text"]) {
+				t.Errorf("Text alignment failed. Expected: %v, Got: %v", expectedCurrent["text"], actualCurrent["text"])
+			}
+
+			if !compareValues(actualCurrent["value"], expectedCurrent["value"]) {
+				t.Errorf("Value alignment failed. Expected: %v, Got: %v", expectedCurrent["value"], actualCurrent["value"])
+			}
+
+			t.Logf("✓ %s: %s", tt.name, tt.description)
+		})
+	}
+}
+
+// Helper function to compare values
+func compareValues(actual, expected interface{}) bool {
+	if actual == nil && expected == nil {
+		return true
+	}
+	if actual == nil || expected == nil {
+		return false
+	}
+
+	actualSlice, actualOk := actual.([]interface{})
+	expectedSlice, expectedOk := expected.([]interface{})
+
+	if actualOk && expectedOk {
+		if len(actualSlice) != len(expectedSlice) {
+			return false
+		}
+		for i, expectedValue := range expectedSlice {
+			if actualSlice[i] != expectedValue {
+				return false
+			}
+		}
+		return true
+	}
+
+	return actual == expected
 }

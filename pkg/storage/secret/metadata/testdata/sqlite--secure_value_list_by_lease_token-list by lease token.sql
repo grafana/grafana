@@ -18,7 +18,8 @@ SELECT
   "owner_reference_api_group",
   "owner_reference_api_version",
   "owner_reference_kind",
-  "owner_reference_name"
+  "owner_reference_name",
+  "lease_token"
 FROM
   "secret_secure_value"
 WHERE 

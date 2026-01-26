@@ -1,6 +1,7 @@
 import { CustomVariableModel } from '@grafana/data';
 import { Monaco, monacoTypes } from '@grafana/ui';
 
+import { LogGroup } from '../../../dataquery.gen';
 import { setupMockedTemplateService, logGroupNamesVariable } from '../../../mocks/CloudWatchDataSource';
 import { multiLineFullQuery } from '../../../mocks/cloudwatch-logs-sql-test-data/multiLineFullQuery';
 import { multiLineFullQueryWithCaseClause } from '../../../mocks/cloudwatch-logs-sql-test-data/multiLineFullQueryWithCaseClause';
@@ -11,7 +12,7 @@ import MonacoMock from '../../../mocks/monarch/Monaco';
 import TextModel from '../../../mocks/monarch/TextModel';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';
 import { ResourceResponse } from '../../../resources/types';
-import { LogGroup, LogGroupField } from '../../../types';
+import { LogGroupField } from '../../../types';
 import cloudWatchLogsLanguageDefinition from '../definition';
 import {
   SELECT,

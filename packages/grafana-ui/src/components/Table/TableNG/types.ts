@@ -79,7 +79,6 @@ export interface TableRow {
 
   // Nested table properties
   data?: DataFrame;
-  __nestedFrames?: DataFrame[];
   __expanded?: boolean; // For row expansion state
 
   // Generic typing for column values
@@ -138,6 +137,8 @@ export interface BaseTableProps {
   enableVirtualization?: boolean;
   // for MarkdownCell, this flag disables sanitization of HTML content. Configured via config.ini.
   disableSanitizeHtml?: boolean;
+  // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
+  disableKeyboardEvents?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
@@ -167,12 +168,12 @@ export type InspectCellProps = {
   rowIdx?: number;
   value: string;
   mode?: TableCellInspectorMode.code | TableCellInspectorMode.text;
+  preformatted?: boolean;
 };
 
 export interface TableCellActionsProps {
   field: Field;
   value: TableCellValue;
-  cellOptions: TableCellOptions;
   displayName: string;
   cellInspect: boolean;
   showFilters: boolean;
@@ -260,7 +261,7 @@ export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOpti
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
 
 // Type for converting a DataFrame into an array of TableRows
-export type FrameToRowsConverter = (frame: DataFrame) => TableRow[];
+export type FrameToRowsConverter = (frame: DataFrame, nestedFramesFieldName?: string) => TableRow[];
 
 // Type for mapping column names to their field types
 export type ColumnTypes = Record<string, FieldType>;
@@ -308,7 +309,6 @@ export type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRo
 export interface FromFieldsResult {
   columns: TableColumn[];
   cellRootRenderers: Record<string, CellRootRenderer>;
-  colsWithTooltip: Record<string, boolean>;
 }
 
 export interface FooterFieldState extends FieldState {

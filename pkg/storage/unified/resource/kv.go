@@ -15,6 +15,12 @@ import (
 
 var ErrNotFound = errors.New("key not found")
 
+// KeyValue represents a key-value pair returned by BatchGet
+type KeyValue struct {
+	Key   string
+	Value io.ReadCloser
+}
+
 type SortOrder int
 
 const (
@@ -29,6 +35,49 @@ type ListOptions struct {
 	Limit    int64     // maximum number of results to return. 0 means no limit.
 }
 
+// BatchOpMode controls the semantics of each operation in a batch
+type BatchOpMode int
+
+const (
+	// BatchOpPut performs an upsert: create or update (never fails on key state)
+	BatchOpPut BatchOpMode = iota
+	// BatchOpCreate creates a new key, fails if the key already exists
+	BatchOpCreate
+	// BatchOpUpdate updates an existing key, fails if the key doesn't exist
+	BatchOpUpdate
+	// BatchOpDelete removes a key, idempotent (never fails on key state)
+	BatchOpDelete
+)
+
+// BatchOp represents a single operation in an atomic batch
+type BatchOp struct {
+	Mode  BatchOpMode
+	Key   string
+	Value []byte // For Put/Create/Update operations, nil for Delete
+}
+
+// Maximum limit for batch operations
+const MaxBatchOps = 20
+
+// ErrKeyAlreadyExists is returned when BatchOpCreate is used on an existing key
+var ErrKeyAlreadyExists = errors.New("key already exists")
+
+// BatchError wraps errors from Batch operations with context about which operation failed
+type BatchError struct {
+	Err   error   // The underlying error
+	Index int     // Index of the failed operation in the batch
+	Op    BatchOp // The operation that failed
+}
+
+func (e *BatchError) Error() string {
+	return fmt.Sprintf("batch operation %d (mode: %d, key: %s) failed: %v",
+		e.Index, e.Op.Mode, e.Op.Key, e.Err)
+}
+
+func (e *BatchError) Unwrap() error {
+	return e.Err
+}
+
 type KV interface {
 	// Keys returns all the keys in the store
 	Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error]
@@ -36,15 +85,35 @@ type KV interface {
 	// Get retrieves the value for a key from the store
 	Get(ctx context.Context, section string, key string) (io.ReadCloser, error)
 
+	// BatchGet retrieves multiple values for the given keys from the store.
+	// Non-existent entries will not appear in the result.
+	// The order of the keys is retained in the result.
+	BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error]
+
 	// Save a new value - returns a WriteCloser to write the value to
 	Save(ctx context.Context, section string, key string) (io.WriteCloser, error)
 
 	// Delete a value
 	Delete(ctx context.Context, section string, key string) error
 
+	// BatchDelete removes multiple keys from the store.
+	// Non-existent keys will be skipped silently without error.
+	BatchDelete(ctx context.Context, section string, keys []string) error
+
 	// UnixTimestamp returns the current time in seconds since Epoch.
 	// This is used to ensure the server and client are not too far apart in time.
 	UnixTimestamp(ctx context.Context) (int64, error)
+
+	// Batch executes all operations atomically within a single transaction.
+	// If any operation fails, all operations are rolled back.
+	// Operations are executed in order; the batch stops on first failure.
+	//
+	// Operation semantics:
+	//   - BatchOpPut: Upsert (create or update), never fails on key state
+	//   - BatchOpCreate: Fail with ErrKeyAlreadyExists if key exists
+	//   - BatchOpUpdate: Fail with ErrNotFound if key doesn't exist
+	//   - BatchOpDelete: Idempotent, never fails on key state
+	Batch(ctx context.Context, section string, ops []BatchOp) error
 }
 
 var _ KV = &badgerKV{}
@@ -72,6 +141,9 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (io.Read
 	if section == "" {
 		return nil, fmt.Errorf("section is required")
 	}
+	if key == "" {
+		return nil, fmt.Errorf("key is required")
+	}
 
 	key = section + "/" + key
 
@@ -90,6 +162,56 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (io.Read
 	}
 
 	return io.NopCloser(bytes.NewReader(value)), nil
+}
+
+func (k *badgerKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error] {
+	if k.db.IsClosed() {
+		return func(yield func(KeyValue, error) bool) {
+			yield(KeyValue{}, fmt.Errorf("database is closed"))
+		}
+	}
+
+	if section == "" {
+		return func(yield func(KeyValue, error) bool) {
+			yield(KeyValue{}, fmt.Errorf("section is required"))
+		}
+	}
+
+	return func(yield func(KeyValue, error) bool) {
+		txn := k.db.NewTransaction(false)
+		defer txn.Discard()
+
+		for _, key := range keys {
+			keyWithSection := section + "/" + key
+
+			item, err := txn.Get([]byte(keyWithSection))
+			if err != nil {
+				if errors.Is(err, badger.ErrKeyNotFound) {
+					// Skip non-existent keys as per the requirement
+					continue
+				}
+				// For other errors, yield the error and stop
+				yield(KeyValue{}, err)
+				return
+			}
+
+			// Get the value and create a reader from it
+			value, err := item.ValueCopy(nil)
+			if err != nil {
+				yield(KeyValue{}, err)
+				return
+			}
+
+			kv := KeyValue{
+				Key:   key,
+				Value: io.NopCloser(bytes.NewReader(value)),
+			}
+
+			if !yield(kv, nil) {
+				return
+			}
+		}
+	}
 }
 
 // badgerWriteCloser implements io.WriteCloser for badgerKV
@@ -160,22 +282,16 @@ func (k *badgerKV) Delete(ctx context.Context, section string, key string) error
 	if section == "" {
 		return fmt.Errorf("section is required")
 	}
+	if key == "" {
+		return fmt.Errorf("key is required")
+	}
 
 	txn := k.db.NewTransaction(true)
 	defer txn.Discard()
 
 	key = section + "/" + key
 
-	// Check if key exists before deleting
-	_, err := txn.Get([]byte(key))
-	if err != nil {
-		if errors.Is(err, badger.ErrKeyNotFound) {
-			return ErrNotFound
-		}
-		return err
-	}
-
-	err = txn.Delete([]byte(key))
+	err := txn.Delete([]byte(key))
 	if err != nil {
 		return err
 	}
@@ -259,9 +375,9 @@ func PrefixRangeEnd(prefix string) string {
 
 var (
 	// validKeyRegex validates keys used in the unified storage
-	// Keys can contain lowercase alphanumeric characters, '-', '.', '/', and '~'
+	// Keys can contain alphanumeric characters (both upper and lowercase), '-', '.', '/', and '~'
 	// Any combination of these characters is allowed as long as the key is not empty
-	validKeyRegex = regexp.MustCompile(`^[a-z0-9./~-]+$`)
+	validKeyRegex = regexp.MustCompile(`^[a-zA-Z0-9./~_-]+$`)
 )
 
 func IsValidKey(key string) bool {
@@ -269,4 +385,95 @@ func IsValidKey(key string) bool {
 		return false
 	}
 	return validKeyRegex.MatchString(key)
+}
+
+func (k *badgerKV) BatchDelete(ctx context.Context, section string, keys []string) error {
+	if k.db.IsClosed() {
+		return fmt.Errorf("database is closed")
+	}
+
+	if section == "" {
+		return fmt.Errorf("section is required")
+	}
+
+	txn := k.db.NewTransaction(true)
+	defer txn.Discard()
+
+	for _, key := range keys {
+		keyWithSection := section + "/" + key
+
+		// Delete the key (BadgerDB's Delete is idempotent - succeeds even if key doesn't exist)
+		err := txn.Delete([]byte(keyWithSection))
+		if err != nil {
+			return err
+		}
+	}
+
+	return txn.Commit()
+}
+
+func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) error {
+	if k.db.IsClosed() {
+		return fmt.Errorf("database is closed")
+	}
+
+	if section == "" {
+		return fmt.Errorf("section is required")
+	}
+
+	if len(ops) > MaxBatchOps {
+		return fmt.Errorf("too many operations: %d > %d", len(ops), MaxBatchOps)
+	}
+
+	txn := k.db.NewTransaction(true)
+	defer txn.Discard()
+
+	for i, op := range ops {
+		keyWithSection := section + "/" + op.Key
+
+		switch op.Mode {
+		case BatchOpCreate:
+			// Check that key doesn't exist, then set
+			_, err := txn.Get([]byte(keyWithSection))
+			if err == nil {
+				return &BatchError{Err: ErrKeyAlreadyExists, Index: i, Op: op}
+			}
+			if !errors.Is(err, badger.ErrKeyNotFound) {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+			if err := txn.Set([]byte(keyWithSection), op.Value); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+
+		case BatchOpUpdate:
+			// Check that key exists, then set
+			_, err := txn.Get([]byte(keyWithSection))
+			if errors.Is(err, badger.ErrKeyNotFound) {
+				return &BatchError{Err: ErrNotFound, Index: i, Op: op}
+			}
+			if err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+			if err := txn.Set([]byte(keyWithSection), op.Value); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+
+		case BatchOpPut:
+			// Upsert: create or update
+			if err := txn.Set([]byte(keyWithSection), op.Value); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+
+		case BatchOpDelete:
+			// Idempotent delete - don't error if not found
+			if err := txn.Delete([]byte(keyWithSection)); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+
+		default:
+			return &BatchError{Err: fmt.Errorf("unknown operation mode: %d", op.Mode), Index: i, Op: op}
+		}
+	}
+
+	return txn.Commit()
 }

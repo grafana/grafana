@@ -2,6 +2,7 @@ import { FC, HTMLAttributes } from 'react';
 import * as React from 'react';
 
 import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
+import { PluginPageBackground } from '@grafana/runtime';
 
 import { ScrollRefElement } from '../NativeScrollbar';
 
@@ -12,6 +13,8 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   navId?: string;
   navModel?: NavModel;
   pageNav?: NavModelItem;
+  /** Determines the background color of the page. Defaults to primary. */
+  background?: PluginPageBackground;
   /** Can be used to place info inline with the heading */
   info?: PageInfoItem[];
   /** Can be used to place actions inline with the heading */

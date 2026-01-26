@@ -29,13 +29,6 @@ SecureValueSpec: {
 	// +optional
 	ref?: string & strings.MinRunes(1) & strings.MaxRunes(1024)
 
-	// Name of the keeper, being the actual storage of the secure value.
-	// If not specified, the default keeper for the namespace will be used.
-	// +k8s:validation:minLength=1
-	// +k8s:validation:maxLength=253
-	// +optional
-	keeper?: string & strings.MinRunes(1) & strings.MaxRunes(253)
-
 	// The Decrypters that are allowed to decrypt this secret.
 	// An empty list means no service can decrypt it.
 	// +k8s:validation:maxItems=64
@@ -53,4 +46,7 @@ SecureValueStatus: {
 	// External ID where the secret is stored. Cannot be set.
 	// +optional
 	externalID: string
+
+	// The name of the keeper used to create the secure value. Cannot be set.
+	keeper: string
 }

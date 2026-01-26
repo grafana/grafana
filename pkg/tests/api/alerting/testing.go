@@ -17,7 +17,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -43,21 +43,11 @@ const defaultAlertmanagerConfigJSON = `
 	"template_files": null,
 	"alertmanager_config": {
 		"route": {
-			"receiver": "grafana-default-email",
+			"receiver": "empty",
 			"group_by": ["grafana_folder", "alertname"]
 		},
 		"receivers": [{
-			"name": "grafana-default-email",
-			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
-				"type": "email",
-				"disableResolveMessage": false,
-				"settings": {
-					"addresses": "\u003cexample@email.com\u003e"
-				},
-				"secureFields": {}
-			}]
+			"name": "empty"
 		}]
 	}
 }
@@ -249,6 +239,7 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 		ExecErrState:         gettable.ExecErrState,
 		IsPaused:             &gettable.IsPaused,
 		NotificationSettings: gettable.NotificationSettings,
+		Record:               gettable.Record,
 		Metadata:             gettable.Metadata,
 	}
 }
@@ -1537,4 +1528,18 @@ func (a apiClient) GetProvisioningAlertRuleExport(t *testing.T, ruleUID string, 
 	require.NoError(t, err)
 
 	return resp.StatusCode, string(b)
+}
+
+func (a apiClient) TestReceiver(t *testing.T, params apimodels.TestReceiversConfigBodyParams) ([]byte, int, error) {
+	t.Helper()
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(params)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/alertmanager/grafana/config/api/v1/receivers/test", a.url), &buf)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	return sendRequestRaw(t, req)
 }

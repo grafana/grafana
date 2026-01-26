@@ -15,9 +15,6 @@ type Props = {
   maxHeight: string;
   selectedScopes: SelectedScope[];
   scopeNodes: NodesMap;
-  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
-  selectScope: (scopeNodeId: string) => void;
-  deselectScope: (scopeNodeId: string) => void;
   highlightedId: string | undefined;
   id: string;
 };
@@ -30,9 +27,6 @@ export function ScopesTreeItemList({
   selectedScopes,
   scopeNodes,
   loadingNodeName,
-  onNodeUpdate,
-  selectScope,
-  deselectScope,
   highlightedId,
   id,
 }: Props) {
@@ -45,15 +39,20 @@ export function ScopesTreeItemList({
   const children = (
     <div role="tree" id={id} className={anyChildExpanded ? styles.expandedContainer : undefined}>
       {items.map((childNode) => {
+        const node = scopeNodes[childNode.scopeNodeId];
+        // Skip rendering if node data isn't available
+        if (!node) {
+          return null;
+        }
         const selected =
-          isNodeSelectable(scopeNodes[childNode.scopeNodeId]) &&
+          isNodeSelectable(node) &&
           selectedScopes.some((s) => {
             if (s.scopeNodeId) {
               // If we have scopeNodeId we only match based on that so even if the actual scope is the same we don't
               // mark different scopeNode as selected.
               return s.scopeNodeId === childNode.scopeNodeId;
             } else {
-              return s.scopeId === scopeNodes[childNode.scopeNodeId]?.spec.linkId;
+              return s.scopeId === node.spec.linkId;
             }
           });
         return (
@@ -65,9 +64,6 @@ export function ScopesTreeItemList({
             scopeNodes={scopeNodes}
             loadingNodeName={loadingNodeName}
             anyChildExpanded={anyChildExpanded}
-            onNodeUpdate={onNodeUpdate}
-            selectScope={selectScope}
-            deselectScope={deselectScope}
             highlighted={childNode.scopeNodeId === highlightedId}
           />
         );

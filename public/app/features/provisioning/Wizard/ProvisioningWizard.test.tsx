@@ -1,12 +1,14 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
-import { screen, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { UserEvent } from '@testing-library/user-event';
+import type { JSX } from 'react';
 import { render } from 'test/test-utils';
 
 import {
   useCreateRepositoryJobsMutation,
   useGetFrontendSettingsQuery,
   useGetRepositoryFilesQuery,
+  useGetRepositoryStatusQuery,
   useGetResourceStatsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -29,6 +31,7 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
   useGetFrontendSettingsQuery: jest.fn(),
   useGetRepositoryFilesQuery: jest.fn(),
+  useGetRepositoryStatusQuery: jest.fn(),
   useGetResourceStatsQuery: jest.fn(),
   useCreateRepositoryJobsMutation: jest.fn(),
 }));
@@ -42,6 +45,9 @@ const mockUseGetFrontendSettingsQuery = useGetFrontendSettingsQuery as jest.Mock
 >;
 const mockUseGetRepositoryFilesQuery = useGetRepositoryFilesQuery as jest.MockedFunction<
   typeof useGetRepositoryFilesQuery
+>;
+const mockUseGetRepositoryStatusQuery = useGetRepositoryStatusQuery as jest.MockedFunction<
+  typeof useGetRepositoryStatusQuery
 >;
 const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunction<typeof useGetResourceStatsQuery>;
 const mockUseCreateRepositoryJobsMutation = useCreateRepositoryJobsMutation as jest.MockedFunction<
@@ -60,6 +66,17 @@ async function typeIntoTokenField(user: UserEvent, placeholder: string, value: s
   await user.type(screen.getByPlaceholderText(placeholder), value);
 }
 
+async function navigateToConnectionStep(user: UserEvent, type: 'github' | 'gitlab' | 'bitbucket' | 'local' | 'git') {
+  // For GitHub, we need to pass through the AuthType step first
+  if (type === 'github') {
+    // Click the "Connect" button to proceed from AuthType step to Connection step
+    await user.click(screen.getByRole('button', { name: /Connect$/i }));
+
+    // Wait for the connection step to appear
+    expect(await screen.findByRole('heading', { name: /Connect to external storage/i })).toBeInTheDocument();
+  }
+}
+
 async function fillConnectionForm(
   user: UserEvent,
   type: 'github' | 'gitlab' | 'bitbucket' | 'local' | 'git',
@@ -71,6 +88,9 @@ async function fillConnectionForm(
     path?: string;
   }
 ) {
+  // First navigate to the connection step (handles AuthType step for GitHub)
+  await navigateToConnectionStep(user, type);
+
   if (type !== 'local' && data.token) {
     const tokenPlaceholders = {
       github: 'ghp_xxxxxxxxxxxxxxxxxxxx',
@@ -115,7 +135,7 @@ describe('ProvisioningWizard', () => {
     mockUseGetFrontendSettingsQuery.mockReturnValue({
       data: {
         items: [],
-        legacyStorage: false,
+        allowImageRendering: true,
         availableRepositoryTypes: ['github', 'gitlab', 'bitbucket', 'git', 'local'],
       },
       isLoading: false,
@@ -126,6 +146,23 @@ describe('ProvisioningWizard', () => {
     mockUseGetRepositoryFilesQuery.mockReturnValue({
       data: [],
       isLoading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    mockUseGetRepositoryStatusQuery.mockReturnValue({
+      data: {
+        status: {
+          health: {
+            healthy: true,
+            checked: true,
+            message: '',
+          },
+        },
+      },
+      isLoading: false,
+      isFetching: false,
+      isError: false,
       error: null,
       refetch: jest.fn(),
     });
@@ -185,10 +222,24 @@ describe('ProvisioningWizard', () => {
   });
 
   describe('Happy Path', () => {
-    it('should render connection step initially', async () => {
+    it('should render auth type step initially for GitHub', async () => {
       setup(<ProvisioningWizard type="github" />);
 
-      expect(screen.getByRole('heading', { name: /1\. Connect to external storage/i })).toBeInTheDocument();
+      // GitHub wizard now shows AuthType step first
+      expect(screen.getByRole('heading', { name: /Choose connection type/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Connect with Personal Access Token/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Connect with GitHub App/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Connect$/i })).toBeInTheDocument();
+    });
+
+    it('should render connection step after selecting auth type', async () => {
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      // Navigate to connection step
+      await user.click(screen.getByRole('button', { name: /Connect$/i }));
+
+      expect(await screen.findByRole('heading', { name: /Connect to external storage/i })).toBeInTheDocument();
+
       expect(screen.getByText('Personal Access Token *')).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /Repository URL/i })).toBeInTheDocument();
       expect(screen.getByRole('combobox')).toBeInTheDocument();
@@ -199,6 +250,15 @@ describe('ProvisioningWizard', () => {
       mockUseGetResourceStatsQuery.mockReturnValue({
         data: {
           instance: [{ group: 'dashboard.grafana.app', count: 1 }],
+        },
+        isLoading: false,
+        error: null,
+        refetch: jest.fn(),
+      });
+      // Mock files to ensure sync step is not skipped for folder sync
+      mockUseGetRepositoryFilesQuery.mockReturnValue({
+        data: {
+          items: [{ name: 'test.json', path: 'test.json' }],
         },
         isLoading: false,
         error: null,
@@ -215,18 +275,16 @@ describe('ProvisioningWizard', () => {
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-      await waitFor(() => {
-        expect(screen.getByRole('heading', { name: /2\. Choose what to synchronize/i })).toBeInTheDocument();
-      });
+      expect(await screen.findByRole('heading', { name: /2\. Choose what to synchronize/i })).toBeInTheDocument();
 
       expect(mockUseCreateOrUpdateRepository).toHaveBeenCalled();
 
       await user.click(screen.getByRole('button', { name: /Synchronize with external storage/i }));
 
-      await waitFor(() => {
-        expect(screen.getByRole('heading', { name: /3\. Synchronize with external storage/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Begin synchronization/i })).toBeInTheDocument();
-      });
+      expect(
+        await screen.findByRole('heading', { name: /3\. Synchronize with external storage/i })
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Begin synchronization/i })).toBeInTheDocument();
     });
 
     it('should skip sync step when there are no resources', async () => {
@@ -259,9 +317,7 @@ describe('ProvisioningWizard', () => {
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-      await waitFor(() => {
-        expect(screen.getByRole('heading', { name: /2\. Choose what to synchronize/i })).toBeInTheDocument();
-      });
+      expect(await screen.findByRole('heading', { name: /2\. Choose what to synchronize/i })).toBeInTheDocument();
 
       // Should show "Choose additional settings" button instead of "Synchronize with external storage"
       expect(screen.getByRole('button', { name: /Choose additional settings/i })).toBeInTheDocument();
@@ -317,9 +373,7 @@ describe('ProvisioningWizard', () => {
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-      await waitFor(() => {
-        expect(screen.getByText('Branch "invalid-branch" not found')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('Branch "invalid-branch" not found')).toBeInTheDocument();
 
       expect(screen.getByRole('heading', { name: /1\. Connect to external storage/i })).toBeInTheDocument();
     });
@@ -351,10 +405,8 @@ describe('ProvisioningWizard', () => {
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-      await waitFor(() => {
-        expect(screen.getByRole('alert')).toBeInTheDocument();
-        expect(screen.getByText('Repository connection failed')).toBeInTheDocument();
-      });
+      expect(await screen.findByRole('alert')).toBeInTheDocument();
+      expect(screen.getByText('Repository connection failed')).toBeInTheDocument();
 
       expect(screen.getByRole('heading', { name: /1\. Connect to external storage/i })).toBeInTheDocument();
     });
@@ -392,16 +444,17 @@ describe('ProvisioningWizard', () => {
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-      await waitFor(() => {
-        expect(screen.getByRole('alert')).toBeInTheDocument();
-        expect(screen.getByText('Repository request failed')).toBeInTheDocument();
-      });
+      expect(await screen.findByRole('alert')).toBeInTheDocument();
+      expect(await screen.findByText('Repository request failed')).toBeInTheDocument();
     });
   });
 
   describe('Navigation and State', () => {
     it('should handle cancel on first step', async () => {
       const { user } = setup(<ProvisioningWizard type="github" />);
+
+      // First step is now AuthType step for GitHub
+      expect(screen.getByRole('heading', { name: /Choose connection type/i })).toBeInTheDocument();
 
       await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
@@ -420,15 +473,11 @@ describe('ProvisioningWizard', () => {
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-      await waitFor(() => {
-        expect(screen.getByRole('heading', { name: /2\. Choose what to synchronize/i })).toBeInTheDocument();
-      });
+      expect(await screen.findByRole('heading', { name: /Choose what to synchronize/i })).toBeInTheDocument();
 
       await user.click(screen.getByRole('button', { name: /Previous/i }));
 
-      await waitFor(() => {
-        expect(screen.getByRole('heading', { name: /1\. Connect to external storage/i })).toBeInTheDocument();
-      });
+      expect(await screen.findByRole('heading', { name: /Connect to external storage/i })).toBeInTheDocument();
     });
 
     it('should disable next button when submitting', async () => {
@@ -461,26 +510,35 @@ describe('ProvisioningWizard', () => {
         path: '/',
       });
 
+      // Click the submit button on the connection step
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-      expect(screen.getByRole('button', { name: /Submitting.../i })).toBeDisabled();
+      // Button should be disabled while submitting
+      expect(await screen.findByRole('button', { name: /Submitting.../i })).toBeDisabled();
     });
   });
 
   describe('Form Validation', () => {
-    it('should validate required fields', async () => {
+    it('should validate required fields on connection step', async () => {
       const { user } = setup(<ProvisioningWizard type="github" />);
 
+      // Navigate to connection step first
+      await user.click(screen.getByRole('button', { name: /Connect$/i }));
+
+      expect(await screen.findByRole('heading', { name: /Connect to external storage/i })).toBeInTheDocument();
+
+      // Try to submit without filling required fields
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-      expect(screen.getByRole('heading', { name: /1\. Connect to external storage/i })).toBeInTheDocument();
+      // Should still be on connection step due to validation
+      expect(screen.getByRole('heading', { name: /Connect to external storage/i })).toBeInTheDocument();
     });
 
     it('should show button text changes based on current step', async () => {
-      // Mock resources to ensure sync step is not skipped
-      mockUseGetResourceStatsQuery.mockReturnValue({
+      // Mock files to ensure sync step is not skipped for folder sync
+      mockUseGetRepositoryFilesQuery.mockReturnValue({
         data: {
-          instance: [{ group: 'dashboard.grafana.app', count: 1 }],
+          items: [{ name: 'test.json', path: 'test.json' }],
         },
         isLoading: false,
         error: null,
@@ -489,7 +547,8 @@ describe('ProvisioningWizard', () => {
 
       const { user } = setup(<ProvisioningWizard type="github" />);
 
-      expect(screen.getByRole('button', { name: /Choose what to synchronize/i })).toBeInTheDocument();
+      // First step shows "Connect" button
+      expect(screen.getByRole('button', { name: /Connect$/i })).toBeInTheDocument();
 
       await fillConnectionForm(user, 'github', {
         token: 'test-token',
@@ -498,11 +557,12 @@ describe('ProvisioningWizard', () => {
         path: '/',
       });
 
+      // Connection step shows "Choose what to synchronize" button
+      expect(screen.getByRole('button', { name: /Choose what to synchronize/i })).toBeInTheDocument();
+
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: /Synchronize with external storage/i })).toBeInTheDocument();
-      });
+      expect(await screen.findByRole('button', { name: /Synchronize with external storage/i })).toBeInTheDocument();
     });
   });
 

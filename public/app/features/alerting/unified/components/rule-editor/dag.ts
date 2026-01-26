@@ -132,10 +132,15 @@ export function parseRefsFromSqlExpression(input: string): string[] {
     .replace(/\s+/g, ' ')
     // Remove any potential multi line comments
     .replace(/\/\*[\s\S]*?\*\//g, '');
+
+  // Extract CTE names to exclude them from table references
+  const cteNames = parseCteNames(query);
+
   const tableMatches = [];
 
   // Extract tables after FROM - case insensitive with /i flag
-  const fromRegex = /from\s+([^;]*?)(?:\s+(?:join|where|group|having|order|limit)|\s*$)/gi;
+  // Terminate on: SQL keywords, closing paren (for CTEs/subqueries), or end of string
+  const fromRegex = /from\s+([^;)]*?)(?:\s+(?:join|where|group|having|order|limit|on|select)|\)|$)/gi;
 
   for (const match of query.matchAll(fromRegex)) {
     const fromClause = match[1].trim();
@@ -153,13 +158,44 @@ export function parseRefsFromSqlExpression(input: string): string[] {
     tableMatches.push(cleanTableName(match[1]));
   }
 
-  return compact(uniq(tableMatches));
+  // Filter out CTE names - they're local definitions, not external references
+  const externalRefs = tableMatches.filter((table) => !cteNames.has(table.toLowerCase()));
+
+  return compact(uniq(externalRefs));
+}
+
+/**
+ * Parse CTE (Common Table Expression) names from a SQL query.
+ * CTEs are defined with: WITH cte_name AS (...), another_cte AS (...)
+ */
+function parseCteNames(query: string): Set<string> {
+  const cteNames = new Set<string>();
+
+  // Match the WITH clause - handles both regular and RECURSIVE CTEs
+  const withMatch = query.match(/^\s*with\s+(?:recursive\s+)?(.*?)(?:\s+select\s)/i);
+
+  if (!withMatch) {
+    return cteNames;
+  }
+
+  const withClause = withMatch[1];
+
+  // Match CTE names - they appear before "AS" keyword followed by opening paren
+  // This handles: cte_name AS (, "quoted_name" AS (
+  const cteNameRegex = /([a-zA-Z0-9_]+|"[^"]+"|'[^']+')\s+as\s*\(/gi;
+
+  for (const match of withClause.matchAll(cteNameRegex)) {
+    const cteName = match[1].replace(/['"]/g, '').toLowerCase();
+    cteNames.add(cteName);
+  }
+
+  return cteNames;
 }
 
 // Helper function to clean table names
 function cleanTableName(tableName: string): string {
-  // Remove quotes
-  let name = tableName.replace(/['"]/g, '');
+  // Remove quotes and parentheses
+  let name = tableName.replace(/['"()]/g, '');
 
   // Remove alias if present (both "AS alias" and "alias" forms)
   if (name.includes(' as ')) {

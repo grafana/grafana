@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unsafe"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers"
 	jsoniter "github.com/json-iterator/go"
@@ -53,7 +54,7 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIRe
 		len(cp.Threema) + len(cp.Victorops) + len(cp.Webhook) + len(cp.Wecom) +
 		len(cp.Webex) + len(cp.Mqtt)
 
-	integration := make([]*notify.GrafanaIntegrationConfig, 0, contactPointsLength)
+	integration := make([]*alertingModels.IntegrationConfig, 0, contactPointsLength)
 
 	var errs []error
 	for _, i := range cp.Alertmanager {
@@ -222,20 +223,20 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIRe
 		return notify.APIReceiver{}, errors.Join(errs...)
 	}
 	contactPoint := notify.APIReceiver{
-		ConfigReceiver:      notify.ConfigReceiver{Name: cp.Name},
-		GrafanaIntegrations: notify.GrafanaIntegrations{Integrations: integration},
+		ConfigReceiver: notify.ConfigReceiver{Name: cp.Name},
+		ReceiverConfig: alertingModels.ReceiverConfig{Integrations: integration},
 	}
 	return contactPoint, nil
 }
 
 // marshallIntegration converts the API model integration to the storage model that contains settings in the JSON format.
 // The secret fields are not encrypted.
-func marshallIntegration(json jsoniter.API, integrationType string, integration interface{}, disableResolveMessage *bool) (*notify.GrafanaIntegrationConfig, error) {
+func marshallIntegration(json jsoniter.API, integrationType string, integration interface{}, disableResolveMessage *bool) (*alertingModels.IntegrationConfig, error) {
 	data, err := json.Marshal(integration)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshall integration '%s' to JSON: %w", integrationType, err)
 	}
-	e := &notify.GrafanaIntegrationConfig{
+	e := &alertingModels.IntegrationConfig{
 		Type:     integrationType,
 		Settings: data,
 	}

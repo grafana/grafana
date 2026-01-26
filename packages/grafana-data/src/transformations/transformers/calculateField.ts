@@ -72,7 +72,7 @@ interface IndexOptions {
   asPercentile: boolean;
 }
 
-const defaultReduceOptions: ReduceOptions = {
+const defaultNumericVizOptions: ReduceOptions = {
   reducer: ReducerID.sum,
 };
 
@@ -149,10 +149,10 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
         switch (mode) {
           case CalculateFieldMode.ReduceRow:
-            creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
+            creator = getReduceRowCreator(defaults(options.reduce, defaultNumericVizOptions), data);
             break;
           case CalculateFieldMode.CumulativeFunctions:
-            creator = getCumulativeCreator(defaults(options.cumulative, defaultReduceOptions), data);
+            creator = getCumulativeCreator(defaults(options.cumulative, defaultNumericVizOptions), data);
             break;
           case CalculateFieldMode.WindowFunctions:
             creator = getWindowCreator(defaults(options.window, defaultWindowOptions), data);

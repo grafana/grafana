@@ -40,6 +40,11 @@ const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
 const NO_DATA_TEXT = 'No data';
 
+/**
+ * Used for displaying tabular data
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-table--docs
+ */
 export const Table = memo((props: Props) => {
   const {
     ariaLabel,
@@ -130,7 +135,7 @@ export const Table = memo((props: Props) => {
   // `useTableStateReducer`, which is needed to construct options for `useTable` (the hook that returns
   // `toggleAllRowsExpanded`), and if we used a variable, that variable would be undefined at the time
   // we initialize `useTableStateReducer`.
-  const toggleAllRowsExpandedRef = useRef<(value?: boolean) => void>();
+  const toggleAllRowsExpandedRef = useRef<((value?: boolean) => void) | undefined>(undefined);
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer({

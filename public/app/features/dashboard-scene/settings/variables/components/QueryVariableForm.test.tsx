@@ -71,6 +71,7 @@ describe('QueryVariableEditorForm', () => {
   const mockOnQueryChange = jest.fn();
   const mockOnLegacyQueryChange = jest.fn();
   const mockOnRegExChange = jest.fn();
+  const mockOnRegexApplyToChange = jest.fn();
   const mockOnSortChange = jest.fn();
   const mockOnRefreshChange = jest.fn();
   const mockOnMultiChange = jest.fn();
@@ -89,6 +90,8 @@ describe('QueryVariableEditorForm', () => {
     timeRange: getDefaultTimeRange(),
     regex: '.*',
     onRegExChange: mockOnRegExChange,
+    regexApplyTo: 'value',
+    onRegexApplyToChange: mockOnRegexApplyToChange,
     sort: VariableSort.alphabeticalAsc,
     onSortChange: mockOnSortChange,
     refresh: VariableRefresh.onDashboardLoad,
@@ -126,6 +129,9 @@ describe('QueryVariableEditorForm', () => {
     const regexInput = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2
     );
+    const regexApplyToSelect = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExApplyToSelectV2
+    );
     const sortSelect = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2
     );
@@ -154,6 +160,8 @@ describe('QueryVariableEditorForm', () => {
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(regexInput).toBeInTheDocument();
     expect(regexInput).toHaveValue('.*');
+    expect(regexApplyToSelect).toBeInTheDocument();
+    expect(getByRole('radio', { name: 'Variable value' })).toBeChecked();
     expect(sortSelect).toBeInTheDocument();
     expect(sortSelect).toHaveTextContent('Alphabetical (asc)');
     expect(refreshSelect).toBeInTheDocument();
@@ -178,7 +186,7 @@ describe('QueryVariableEditorForm', () => {
     await userEvent.click(screen.getByText(/prometheus/i));
 
     expect(mockOnDataSourceChange).toHaveBeenCalledTimes(1);
-    expect(mockOnDataSourceChange).toHaveBeenCalledWith(promDatasource, undefined);
+    expect(mockOnDataSourceChange).toHaveBeenCalledWith(promDatasource);
   });
 
   it('should call onQueryChange when changing the query', async () => {
@@ -211,6 +219,21 @@ describe('QueryVariableEditorForm', () => {
     expect(
       ((mockOnRegExChange.mock.calls[0][0] as FormEvent<HTMLTextAreaElement>).target as HTMLTextAreaElement).value
     ).toBe('.?');
+  });
+
+  it('should call onRegexApplyToChange when selecting the regex apply to option', async () => {
+    const {
+      renderer: { getByTestId },
+    } = await setup();
+    const regexApplyToSelect = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExApplyToSelectV2
+    );
+    await userEvent.click(regexApplyToSelect);
+    const anotherOption = screen.getByText('Display text');
+    await userEvent.click(anotherOption);
+
+    expect(mockOnRegexApplyToChange).toHaveBeenCalledTimes(1);
+    expect(mockOnRegexApplyToChange).toHaveBeenCalledWith('text');
   });
 
   it('should call onSortChange when changing the sort', async () => {
@@ -337,17 +360,15 @@ describe('QueryVariableEditorForm', () => {
     );
     await userEvent.click(staticOptionsToggle);
 
-    const addButton = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsAddButton
-    );
+    const addButton = getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton);
     await userEvent.click(addButton);
 
     // Now enter label and value for the new option
     const labelInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsLabelInput
+      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.labelInput
     );
     const valueInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsValueInput
+      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.valueInput
     );
 
     // Enter label for the new option (second input)
@@ -372,7 +393,7 @@ describe('QueryVariableEditorForm', () => {
     });
 
     const deleteButtons = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsDeleteButton
+      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.deleteButton
     );
 
     // Remove the first option
@@ -392,7 +413,7 @@ describe('QueryVariableEditorForm', () => {
     });
 
     const labelInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsLabelInput
+      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.labelInput
     );
 
     await userEvent.clear(labelInputs[0]);
@@ -411,7 +432,7 @@ describe('QueryVariableEditorForm', () => {
     });
 
     const valueInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsValueInput
+      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.valueInput
     );
 
     await userEvent.clear(valueInputs[0]);
@@ -443,9 +464,7 @@ describe('QueryVariableEditorForm', () => {
     ).toBeInTheDocument();
 
     // Option rows should be visible
-    expect(
-      getAllByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsRow)
-    ).toHaveLength(2);
+    expect(getAllByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.row)).toHaveLength(2);
 
     // Uncheck the static options switch
     const staticOptionsToggle = getByTestId(
@@ -464,7 +483,7 @@ describe('QueryVariableEditorForm', () => {
       )
     ).not.toBeInTheDocument();
     expect(
-      queryByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsRow)
+      queryByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.row)
     ).not.toBeInTheDocument();
   });
 });

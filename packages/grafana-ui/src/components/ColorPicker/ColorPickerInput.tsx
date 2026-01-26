@@ -19,6 +19,9 @@ export interface ColorPickerInputProps extends Omit<InputProps, 'value' | 'onCha
   returnColorAs?: 'rgb' | 'hex';
 }
 
+/**
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/pickers-colorpickerinput--docs
+ */
 export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputProps>(
   ({ value = '', onChange, returnColorAs = 'rgb', ...inputProps }, ref) => {
     const [currentColor, setColor] = useState(value);
@@ -69,7 +72,6 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
           )}
           <ColorInput
             {...inputProps}
-            theme={theme}
             color={currentColor}
             onChange={setColor}
             buttonAriaLabel="Open color picker"

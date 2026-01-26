@@ -20,16 +20,23 @@ type JobQueueGetter interface {
 }
 
 type jobsConnector struct {
-	repoGetter RepoGetter
-	jobs       JobQueueGetter
-	historic   jobs.HistoryReader
+	repoGetter            RepoGetter
+	statusPatcherProvider StatusPatcherProvider
+	jobs                  JobQueueGetter
+	historic              jobs.HistoryReader
 }
 
-func NewJobsConnector(repoGetter RepoGetter, jobs JobQueueGetter, historic jobs.HistoryReader) *jobsConnector {
+func NewJobsConnector(
+	repoGetter RepoGetter,
+	statusPatcherProvider StatusPatcherProvider,
+	jobs JobQueueGetter,
+	historic jobs.HistoryReader,
+) *jobsConnector {
 	return &jobsConnector{
-		repoGetter: repoGetter,
-		jobs:       jobs,
-		historic:   historic,
+		repoGetter:            repoGetter,
+		statusPatcherProvider: statusPatcherProvider,
+		jobs:                  jobs,
+		historic:              historic,
 	}
 }
 
@@ -101,7 +108,17 @@ func (c *jobsConnector) Connect(
 			responder.Error(err)
 			return
 		}
+
 		cfg := repo.Config()
+
+		if cfg.DeletionTimestamp != nil && !cfg.DeletionTimestamp.IsZero() {
+			responder.Error(apierrors.NewConflict(
+				provisioning.RepositoryResourceInfo.GroupResource(),
+				"cannot create jobs for a repository marked for deletion",
+				fmt.Errorf("cannot create jobs for a repository marked for deletion"),
+			))
+			return
+		}
 
 		if idx > 0 {
 			responder.Error(apierrors.NewBadRequest("can not post to a job UID"))
@@ -120,6 +137,31 @@ func (c *jobsConnector) Connect(
 			responder.Error(err)
 			return
 		}
+
+		// For pull jobs update the sync status
+		// patch the sync status 'state' to 'pending', and reset the 'started' field, leaving other fields unchanged.
+		// Intentionally maintain the previous job name until the jobs is picked up.
+		if spec.Pull != nil {
+			err = c.statusPatcherProvider.GetStatusPatcher().Patch(ctx, cfg,
+				map[string]interface{}{
+					"op":    "replace",
+					"path":  "/status/sync/state",
+					"value": provisioning.JobStatePending,
+				},
+				map[string]interface{}{
+					// Use "replace" instead of "remove" since "remove" fails if the path does not exist (RFC 6902).
+					// "started" field uses "omitempty", so it may be missing in the JSON.
+					"op":    "replace",
+					"path":  "/status/sync/started",
+					"value": int64(0),
+				},
+			)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+		}
+
 		responder.Object(http.StatusAccepted, job)
 	}), 30*time.Second), nil
 }

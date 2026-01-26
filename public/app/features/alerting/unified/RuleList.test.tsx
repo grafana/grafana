@@ -6,7 +6,7 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 import { PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setAppEvents, usePluginLinks } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/server/configure';
 import * as actions from 'app/features/alerting/unified/state/actions';
@@ -45,6 +45,9 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('./api/buildInfo');
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
 
 jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
 jest.spyOn(apiRuler, 'rulerUrlBuilder');

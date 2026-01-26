@@ -13,15 +13,14 @@ import (
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	prom_model "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
@@ -57,10 +56,10 @@ func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
 		},
 		Spec: v0alpha1.AlertRuleSpec{
 			Title: rule.Title,
-			Data: map[string]v0alpha1.AlertRuleQuery{
+			Expressions: v0alpha1.AlertRuleExpressionMap{
 				"A": {
-					QueryType:     "query",
-					DatasourceUID: v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID),
+					QueryType:     util.Pointer(rule.Data[0].QueryType),
+					DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
 					Source:        util.Pointer(true),
 					RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
@@ -91,9 +90,9 @@ func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
 		err := json.Unmarshal(retrievedRule.Data[0].Model, &model)
 		require.NoError(t, err)
 		require.NotNil(t, model)
-		expectedModel, ok := created.Spec.Data["A"].Model.(map[string]interface{})
+		expectedModel, ok := created.Spec.Expressions["A"].Model.(map[string]interface{})
 		if !ok {
-			t.Fatalf("Expected model to be a map[string]interface{}, got %T", created.Spec.Data["A"].Model)
+			t.Fatalf("Expected model to be a map[string]interface{}, got %T", created.Spec.Expressions["A"].Model)
 		}
 		for k, v := range expectedModel {
 			require.EqualValues(t, v, model[k], "Model field %s should match", k)
@@ -145,9 +144,7 @@ func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleCompatCreateViaProvisioning(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
@@ -230,13 +227,13 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioning(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, retrievedRule)
 			require.Equal(t, r.Title, retrievedRule.Spec.Title)
-			require.NotNil(t, retrievedRule.Spec.Data[r.Data[0].RefID].Source)
-			require.True(t, *retrievedRule.Spec.Data[r.Data[0].RefID].Source)
+			require.NotNil(t, retrievedRule.Spec.Expressions[r.Data[0].RefID].Source)
+			require.True(t, *retrievedRule.Spec.Expressions[r.Data[0].RefID].Source)
 			require.Equal(t, r.FolderUID, retrievedRule.Annotations["grafana.app/folder"])
 			require.Equal(t, created.Title, retrievedRule.Labels[v0alpha1.GroupLabelKey])
 			require.Equal(t, fmt.Sprintf("%d", i), retrievedRule.Labels[v0alpha1.GroupIndexLabelKey])
 			require.Equal(t, ngmodels.ProvenanceAPI, ngmodels.Provenance(retrievedRule.GetProvenanceStatus()))
-			require.EqualValues(t, r.Data[0].DatasourceUID, retrievedRule.Spec.Data["A"].DatasourceUID)
+			require.EqualValues(t, r.Data[0].DatasourceUID, *retrievedRule.Spec.Expressions["A"].DatasourceUID)
 			expectedDuration, err := prom_model.ParseDuration(fmt.Sprintf("%ds", created.Interval))
 			require.NoError(t, err)
 			require.Equal(t, expectedDuration.String(), string(retrievedRule.Spec.Trigger.Interval))
@@ -244,9 +241,9 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioning(t *testing.T) {
 			err = json.Unmarshal(r.Data[0].Model, &expectedModel)
 			require.NoError(t, err)
 			require.NotNil(t, expectedModel)
-			retrievedModel, ok := retrievedRule.Spec.Data["A"].Model.(map[string]interface{})
+			retrievedModel, ok := retrievedRule.Spec.Expressions["A"].Model.(map[string]interface{})
 			if !ok {
-				t.Fatalf("Expected model to be a map[string]interface{}, got %T", retrievedRule.Spec.Data["A"].Model)
+				t.Fatalf("Expected model to be a map[string]interface{}, got %T", retrievedRule.Spec.Expressions["A"].Model)
 			}
 			for k, v := range expectedModel {
 				require.EqualValues(t, v, retrievedModel[k], "Model field %s should match", k)
@@ -287,9 +284,7 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioning(t *testing.T) {
 }
 
 func TestIntegrationAlertRuleCompatCreateViaProvisioningChangeGroupInK8s(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 	helper := common.GetTestHelper(t)
@@ -372,13 +367,13 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioningChangeGroupInK8s(t *test
 			require.NoError(t, err)
 			require.NotNil(t, retrievedRule)
 			require.Equal(t, r.Title, retrievedRule.Spec.Title)
-			require.NotNil(t, retrievedRule.Spec.Data[r.Data[0].RefID].Source)
-			require.True(t, *retrievedRule.Spec.Data[r.Data[0].RefID].Source)
+			require.NotNil(t, retrievedRule.Spec.Expressions[r.Data[0].RefID].Source)
+			require.True(t, *retrievedRule.Spec.Expressions[r.Data[0].RefID].Source)
 			require.Equal(t, r.FolderUID, retrievedRule.Annotations["grafana.app/folder"])
 			require.Equal(t, created.Title, retrievedRule.Labels[v0alpha1.GroupLabelKey])
 			require.Equal(t, fmt.Sprintf("%d", i), retrievedRule.Labels[v0alpha1.GroupIndexLabelKey])
 			require.Equal(t, ngmodels.ProvenanceAPI, ngmodels.Provenance(retrievedRule.GetProvenanceStatus()))
-			require.EqualValues(t, r.Data[0].DatasourceUID, retrievedRule.Spec.Data["X"].DatasourceUID)
+			require.EqualValues(t, r.Data[0].DatasourceUID, *retrievedRule.Spec.Expressions["X"].DatasourceUID)
 			expectedDuration, err := prom_model.ParseDuration(fmt.Sprintf("%ds", created.Interval))
 			require.NoError(t, err)
 			require.Equal(t, expectedDuration.String(), string(retrievedRule.Spec.Trigger.Interval))
@@ -386,9 +381,9 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioningChangeGroupInK8s(t *test
 			err = json.Unmarshal(r.Data[0].Model, &expectedModel)
 			require.NoError(t, err)
 			require.NotNil(t, expectedModel)
-			retrievedModel, ok := retrievedRule.Spec.Data["X"].Model.(map[string]interface{})
+			retrievedModel, ok := retrievedRule.Spec.Expressions["X"].Model.(map[string]interface{})
 			if !ok {
-				t.Fatalf("Expected model to be a map[string]interface{}, got %T", retrievedRule.Spec.Data["X"].Model)
+				t.Fatalf("Expected model to be a map[string]interface{}, got %T", retrievedRule.Spec.Expressions["X"].Model)
 			}
 			for k, v := range expectedModel {
 				require.EqualValues(t, v, retrievedModel[k], "Model field %s should match", k)

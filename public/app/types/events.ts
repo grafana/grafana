@@ -1,6 +1,5 @@
 import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data';
 import { IconName, ButtonVariant } from '@grafana/ui';
-import { HistoryEntryView } from 'app/core/components/AppChrome/types';
 
 /**
  * Event Payloads
@@ -29,6 +28,12 @@ export interface ShowModalReactPayload {
 }
 
 export interface OpenExtensionSidebarPayload {
+  props?: Record<string, unknown>;
+  pluginId: string;
+  componentTitle: string;
+}
+
+export interface ToggleExtensionSidebarPayload {
   props?: Record<string, unknown>;
   pluginId: string;
   componentTitle: string;
@@ -154,6 +159,10 @@ export class AbsoluteTimeEvent extends BusEventWithPayload<AbsoluteTimeEventPayl
   static type = 'absolute-time';
 }
 
+export class RunQueriesEvent extends BusEventBase {
+  static type = 'run-queries';
+}
+
 export class RemovePanelEvent extends BusEventWithPayload<number> {
   static type = 'remove-panel';
 }
@@ -181,6 +190,10 @@ export class CloseExtensionSidebarEvent extends BusEventBase {
   static type = 'close-extension-sidebar';
 }
 
+export class ToggleExtensionSidebarEvent extends BusEventWithPayload<ToggleExtensionSidebarPayload> {
+  static type = 'toggle-extension-sidebar';
+}
+
 /**
  * @deprecated use ShowModalReactEvent instead that has this capability built in
  */
@@ -206,8 +219,4 @@ export class PanelEditEnteredEvent extends BusEventWithPayload<number> {
 
 export class PanelEditExitedEvent extends BusEventWithPayload<number> {
   static type = 'panel-edit-finished';
-}
-
-export class RecordHistoryEntryEvent extends BusEventWithPayload<HistoryEntryView> {
-  static type = 'record-history-entry';
 }

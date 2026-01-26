@@ -976,6 +976,27 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			wantErr:    ErrServiceUnavailable,
 		},
 		{
+			name: "unauthorized to delete the webhook",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.DeleteReposHooksByOwnerByRepoByHookId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnauthorized)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusUnauthorized,
+							},
+							Message: "401 bad credentials",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			webhookID:  789,
+			wantErr:    ErrUnauthorized,
+		},
+		{
 			name: "other error",
 			mockHandler: mockhub.NewMockedHTTPClient(
 				mockhub.WithRequestMatchHandler(

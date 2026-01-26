@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Time series",
   "id": "timeseries",
-
+  "suggestions": true,
   "info": {
     "description": "Time based line, area and bar charts",
     "author": {

@@ -3,8 +3,8 @@ package user
 import (
 	"context"
 	"fmt"
-	"time"
 
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -34,32 +34,86 @@ var (
 	_ rest.TableConvertor       = (*LegacyStore)(nil)
 )
 
-var resource = iamv0alpha1.UserResourceInfo
+var userResource = iamv0alpha1.UserResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool) *LegacyStore {
-	return &LegacyStore{store, ac, enableAuthnMutation}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, tracer trace.Tracer) *LegacyStore {
+	return &LegacyStore{store, ac, enableAuthnMutation, tracer}
 }
 
 type LegacyStore struct {
 	store               legacy.LegacyIdentityStore
 	ac                  claims.AccessClient
 	enableAuthnMutation bool
+	tracer              trace.Tracer
 }
 
 // Update implements rest.Updater.
 func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "update")
+	ctx, span := s.tracer.Start(ctx, "user.Update")
+	defer span.End()
+
+	if !s.enableAuthnMutation {
+		return nil, false, apierrors.NewMethodNotSupported(userResource.GroupResource(), "update")
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	oldObj, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	newObj, err := objInfo.UpdatedObject(ctx, oldObj)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if updateValidation != nil {
+		if err := updateValidation(ctx, newObj, oldObj); err != nil {
+			return nil, false, err
+		}
+	}
+
+	userObj, ok := newObj.(*iamv0alpha1.User)
+	if !ok {
+		return nil, false, fmt.Errorf("expected User object, got %T", newObj)
+	}
+
+	updateCmd := legacy.UpdateUserCommand{
+		UID:           name,
+		Login:         userObj.Spec.Login,
+		Email:         userObj.Spec.Email,
+		Name:          userObj.Spec.Title,
+		IsAdmin:       userObj.Spec.GrafanaAdmin,
+		IsDisabled:    userObj.Spec.Disabled,
+		EmailVerified: userObj.Spec.EmailVerified,
+		Role:          userObj.Spec.Role,
+	}
+
+	result, err := s.store.UpdateUser(ctx, ns, updateCmd)
+	if err != nil {
+		return nil, false, err
+	}
+
+	iamUser := toUserItem(&result.User, ns.Value)
+	return &iamUser, false, nil
 }
 
 // DeleteCollection implements rest.CollectionDeleter.
 func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "deletecollection")
+	return nil, apierrors.NewMethodNotSupported(userResource.GroupResource(), "deletecollection")
 }
 
 // Delete implements rest.GracefulDeleter.
 func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Delete")
+	defer span.End()
+
 	if !s.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(resource.GroupResource(), "delete")
+		return nil, false, apierrors.NewMethodNotSupported(userResource.GroupResource(), "delete")
 	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -75,11 +129,11 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 	if err != nil {
 		return nil, false, err
 	}
-	if found == nil || len(found.Users) < 1 {
-		return nil, false, resource.NewNotFound(name)
+	if found == nil || len(found.Items) < 1 {
+		return nil, false, userResource.NewNotFound(name)
 	}
 
-	userToDelete := &found.Users[0]
+	userToDelete := &found.Items[0]
 
 	if deleteValidation != nil {
 		userObj := toUserItem(userToDelete, ns.Value)
@@ -92,7 +146,7 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 		UID: name,
 	}
 
-	_, err = s.store.DeleteUser(ctx, ns, deleteCmd)
+	err = s.store.DeleteUser(ctx, ns, deleteCmd)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to delete user: %w", err)
 	}
@@ -102,7 +156,7 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 }
 
 func (s *LegacyStore) New() runtime.Object {
-	return resource.NewFunc()
+	return userResource.NewFunc()
 }
 
 func (s *LegacyStore) Destroy() {}
@@ -112,21 +166,24 @@ func (s *LegacyStore) NamespaceScoped() bool {
 }
 
 func (s *LegacyStore) GetSingularName() string {
-	return resource.GetSingularName()
+	return userResource.GetSingularName()
 }
 
 func (s *LegacyStore) NewList() runtime.Object {
-	return resource.NewListFunc()
+	return userResource.NewListFunc()
 }
 
 func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return resource.TableConverter().ConvertToTable(ctx, object, tableOptions)
+	return userResource.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "user.List")
+	defer span.End()
+
 	res, err := common.List(
-		ctx, resource, s.ac, common.PaginationFromListOptions(options),
-		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha1.User], error) {
+		ctx, userResource, s.ac, common.PaginationFromListOptions(options),
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[*iamv0alpha1.User], error) {
 			found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
 				Pagination: p,
 			})
@@ -135,12 +192,13 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 				return nil, err
 			}
 
-			users := make([]iamv0alpha1.User, 0, len(found.Users))
-			for _, u := range found.Users {
-				users = append(users, toUserItem(&u, ns.Value))
+			users := make([]*iamv0alpha1.User, 0, len(found.Items))
+			for _, u := range found.Items {
+				user := toUserItem(&u, ns.Value)
+				users = append(users, &user)
 			}
 
-			return &common.ListResponse[iamv0alpha1.User]{
+			return &common.ListResponse[*iamv0alpha1.User]{
 				Items:    users,
 				RV:       found.RV,
 				Continue: found.Continue,
@@ -152,13 +210,21 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 		return nil, err
 	}
 
-	obj := &iamv0alpha1.UserList{Items: res.Items}
+	items := make([]iamv0alpha1.User, len(res.Items))
+	for i, u := range res.Items {
+		items[i] = *u
+	}
+
+	obj := &iamv0alpha1.UserList{Items: items}
 	obj.Continue = common.OptionalFormatInt(res.Continue)
 	obj.ResourceVersion = common.OptionalFormatInt(res.RV)
 	return obj, nil
 }
 
 func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Get")
+	defer span.End()
+
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -170,20 +236,23 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 		Pagination: common.Pagination{Limit: 1},
 	})
 	if found == nil || err != nil {
-		return nil, resource.NewNotFound(name)
+		return nil, userResource.NewNotFound(name)
 	}
-	if len(found.Users) < 1 {
-		return nil, resource.NewNotFound(name)
+	if len(found.Items) < 1 {
+		return nil, userResource.NewNotFound(name)
 	}
 
-	obj := toUserItem(&found.Users[0], ns.Value)
+	obj := toUserItem(&found.Items[0], ns.Value)
 	return &obj, nil
 }
 
 // Create implements rest.Creater.
 func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "user.Create")
+	defer span.End()
+
 	if !s.enableAuthnMutation {
-		return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "create")
+		return nil, apierrors.NewMethodNotSupported(userResource.GroupResource(), "create")
 	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
@@ -196,25 +265,27 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		return nil, fmt.Errorf("expected User object, got %T", obj)
 	}
 
+	if userObj.GenerateName != "" {
+		userObj.Name = userObj.GenerateName + util.GenerateShortUID()
+		userObj.GenerateName = ""
+	}
+
 	if createValidation != nil {
 		if err := createValidation(ctx, obj); err != nil {
 			return nil, err
 		}
 	}
 
-	if userObj.Spec.Login == "" && userObj.Spec.Email == "" {
-		return nil, fmt.Errorf("user must have either login or email")
-	}
-
 	createCmd := legacy.CreateUserCommand{
 		UID:           userObj.Name,
 		Login:         userObj.Spec.Login,
 		Email:         userObj.Spec.Email,
-		Name:          userObj.Spec.Name,
+		Name:          userObj.Spec.Title,
 		IsAdmin:       userObj.Spec.GrafanaAdmin,
 		IsDisabled:    userObj.Spec.Disabled,
 		EmailVerified: userObj.Spec.EmailVerified,
 		IsProvisioned: userObj.Spec.Provisioned,
+		Role:          userObj.Spec.Role,
 	}
 
 	result, err := s.store.CreateUser(ctx, ns, createCmd)
@@ -226,7 +297,7 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	return &iamUser, nil
 }
 
-func toUserItem(u *user.User, ns string) iamv0alpha1.User {
+func toUserItem(u *common.UserWithRole, ns string) iamv0alpha1.User {
 	item := &iamv0alpha1.User{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              u.UID,
@@ -235,26 +306,21 @@ func toUserItem(u *user.User, ns string) iamv0alpha1.User {
 			CreationTimestamp: metav1.NewTime(u.Created),
 		},
 		Spec: iamv0alpha1.UserSpec{
-			Name:          u.Name,
+			Title:         u.Name,
 			Login:         u.Login,
 			Email:         u.Email,
 			EmailVerified: u.EmailVerified,
 			Disabled:      u.IsDisabled,
 			GrafanaAdmin:  u.IsAdmin,
 			Provisioned:   u.IsProvisioned,
+			Role:          u.Role,
+		},
+		Status: iamv0alpha1.UserStatus{
+			LastSeenAt: u.LastSeenAt.Unix(),
 		},
 	}
 	obj, _ := utils.MetaAccessor(item)
 	obj.SetUpdatedTimestamp(&u.Updated)
-	obj.SetAnnotation(AnnoKeyLastSeenAt, formatTime(&u.LastSeenAt))
 	obj.SetDeprecatedInternalID(u.ID) // nolint:staticcheck
 	return *item
-}
-
-func formatTime(v *time.Time) string {
-	txt := ""
-	if v != nil && v.Unix() != 0 {
-		txt = v.UTC().Format(time.RFC3339)
-	}
-	return txt
 }

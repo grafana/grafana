@@ -7,6 +7,8 @@ import (
 	"time"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"go.opentelemetry.io/otel/codes"
+	"google.golang.org/grpc/status"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -22,6 +24,11 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 
 	res, err := s.write(ctx, req)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
 		s.logger.Error("failed to perform write request", "error", err, "namespace", req.GetNamespace())
 		return nil, errors.New("failed to perform write request")
 	}
@@ -30,7 +37,7 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 }
 
 func (s *Server) write(ctx context.Context, req *authzextv1.WriteRequest) (*authzextv1.WriteResponse, error) {
-	if err := authorize(ctx, req.GetNamespace(), s.cfg); err != nil {
+	if err := authorizeWrite(ctx, req.GetNamespace(), s.cfg); err != nil {
 		return nil, err
 	}
 
@@ -55,12 +62,14 @@ func (s *Server) write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 	}
 	if len(writeTuples) > 0 {
 		writeReq.Writes = &openfgav1.WriteRequestWrites{
-			TupleKeys: writeTuples,
+			TupleKeys:   writeTuples,
+			OnDuplicate: "ignore",
 		}
 	}
 	if len(deleteTuples) > 0 {
 		writeReq.Deletes = &openfgav1.WriteRequestDeletes{
 			TupleKeys: deleteTuples,
+			OnMissing: "ignore",
 		}
 	}
 

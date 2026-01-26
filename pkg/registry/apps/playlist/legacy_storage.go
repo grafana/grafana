@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	playlist "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
@@ -87,10 +86,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	})
 	if err != nil || dto == nil {
 		if errors.Is(err, playlistsvc.ErrPlaylistNotFound) || err == nil {
-			err = k8serrors.NewNotFound(schema.GroupResource{
-				Group:    playlist.PlaylistKind().Group(),
-				Resource: playlist.PlaylistKind().Plural(),
-			}, name)
+			err = k8serrors.NewNotFound(playlist.PlaylistKind().GroupVersionResource().GroupResource(), name)
 		}
 		return nil, err
 	}

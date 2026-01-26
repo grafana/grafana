@@ -6,8 +6,8 @@ import { PluginType, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationSearchToObject, reportInteraction } from '@grafana/runtime';
 import { LoadingPlaceholder, EmptyState, Field, RadioButtonGroup, Tooltip, Combobox, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { contextSrv } from 'app/core/services/context_srv';
 import { HorizontalGroup } from 'app/features/plugins/admin/components/HorizontalGroup';
 import { SearchField } from 'app/features/plugins/admin/components/SearchField';
 import { Sorters } from 'app/features/plugins/admin/helpers';
@@ -17,17 +17,16 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { ROUTES } from '../../constants';
 
-import { CardGrid, type CardGridItem } from './CardGrid';
-import { CategoryHeader } from './CategoryHeader';
-import { NoAccessModal } from './NoAccessModal';
+import { CardGrid, type CardGridItem } from './CardGrid/CardGrid';
+import { CategoryHeader } from './CategoryHeader/CategoryHeader';
+import { NoAccessModal } from './NoAccessModal/NoAccessModal';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   searchContainer: css({
-    backgroundColor: theme.colors.background.primary,
-    paddingTop: theme.spacing(2),
-    paddingBottom: theme.spacing(2),
+    paddingTop: theme.spacing(0.5),
+    paddingBottom: theme.spacing(1),
+    marginBottom: theme.spacing(3),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
-    marginBottom: theme.spacing(2),
   }),
   contentWrap: css({
     height: 'calc(100vh - 350px)',

@@ -8,7 +8,7 @@ export type ScopesMap = Record<string, Scope>;
 export interface SelectedScope {
   scopeId: string;
   scopeNodeId?: string;
-  // Used to display title next to selected scope
+  // Used for recent scopes functionality when scope node isn't loaded yet
   parentNodeId?: string;
 }
 
@@ -17,10 +17,13 @@ export interface TreeNode {
   expanded: boolean;
   query: string;
   children?: Record<string, TreeNode>;
+  // Check if we have loaded all the children. Used when resolving to root.
+  childrenLoaded?: boolean;
 }
 
 export interface RecentScope extends Scope {
   parentNode?: ScopeNode;
+  scopeNodeId?: string;
 }
 
 // Zod schemas for type validation
@@ -33,10 +36,8 @@ export const ScopeSpecFilterSchema = z.object({
 
 export const ScopeSpecSchema = z.object({
   title: z.string(),
-  type: z.string().optional(),
-  description: z.string().optional(),
-  category: z.string().optional(),
-  filters: z.array(ScopeSpecFilterSchema),
+  defaultPath: z.array(z.string()).optional(),
+  filters: z.array(ScopeSpecFilterSchema).optional(),
 });
 
 export const ScopeSchema = z.object({
@@ -49,6 +50,7 @@ export const ScopeSchema = z.object({
 export const ScopeNodeSpecSchema = z.object({
   nodeType: z.enum(['container', 'leaf']),
   title: z.string(),
+  subTitle: z.string().optional(),
   description: z.string().optional(),
   disableMultiSelect: z.boolean().optional(),
   linkId: z.string().optional(),
@@ -65,4 +67,5 @@ export const ScopeNodeSchema = z.object({
 
 export const RecentScopeSchema = ScopeSchema.extend({
   parentNode: ScopeNodeSchema.optional(),
+  scopeNodeId: z.string().optional(),
 });

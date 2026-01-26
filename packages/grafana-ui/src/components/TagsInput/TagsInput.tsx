@@ -29,6 +29,11 @@ export interface Props {
   autoColors?: boolean;
 }
 
+/**
+ * A set of an input field and a button next to it that allows the user to add new tags. The added tags are previewed next to the input and can be removed by clicking the "X" icon. You can customize the width of the input.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-tagsinput--docs
+ */
 export const TagsInput = forwardRef<HTMLInputElement, Props>(
   (
     {
@@ -49,6 +54,7 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
     const [newTagName, setNewTagName] = useState('');
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
+    const isTagTooLong = newTagName.length > 50;
 
     const onNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
       setNewTagName(event.target.value);
@@ -60,6 +66,9 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
 
     const onAdd = (event?: React.MouseEvent | React.KeyboardEvent) => {
       event?.preventDefault();
+      if (newTagName.length > 50) {
+        return;
+      }
       if (!tags.includes(newTagName)) {
         onChange(tags.concat(newTagName));
       }
@@ -89,14 +98,17 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
           value={newTagName}
           onKeyDown={onKeyboardAdd}
           onBlur={onBlur}
-          invalid={invalid}
+          invalid={invalid || isTagTooLong}
           suffix={
             <Button
               fill="text"
               className={styles.addButtonStyle}
               onClick={onAdd}
               size="md"
-              disabled={newTagName.length <= 0}
+              disabled={newTagName.length <= 0 || isTagTooLong}
+              title={
+                isTagTooLong ? t('grafana-ui.tags-input.tag-too-long', 'Tag too long, max 50 characters') : undefined
+              }
             >
               <Trans i18nKey="grafana-ui.tags-input.add">Add</Trans>
             </Button>

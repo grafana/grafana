@@ -27,7 +27,8 @@ type GrafanaServiceOpts struct {
 	GrafanaTarGz         *dagger.File
 	YarnCache            *dagger.CacheVolume
 	License              *dagger.File
-	InstallImageRenderer bool
+	StartImageRenderer   bool
+	ImageRendererVersion string
 }
 
 func Frontend(src *dagger.Directory) *dagger.Directory {
@@ -97,10 +98,16 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		licenseArg = "/src/license.jwt"
 	}
 
-	if opts.InstallImageRenderer {
-		container = container.WithEnvVariable("INSTALL_IMAGE_RENDERER", "true").
+	if opts.StartImageRenderer {
+		imageRendererSvc := d.Container().From("grafana/grafana-image-renderer:" + opts.ImageRendererVersion).
+			WithExposedPort(8081).
+			AsService()
+
+		container = container.WithServiceBinding("image-renderer", imageRendererSvc).
 			WithExec([]string{"apt-get", "update"}).
-			WithExec([]string{"apt-get", "install", "-y", "ca-certificates"})
+			WithExec([]string{"apt-get", "install", "-y", "ca-certificates"}).
+			WithEnvVariable("GF_RENDERING_CALLBACK_URL", "http://grafana:3001/").
+			WithEnvVariable("GF_RENDERING_SERVER_URL", "http://image-renderer:8081/render")
 	}
 
 	// We add all GF_ environment variables to allow for overriding Grafana configuration.

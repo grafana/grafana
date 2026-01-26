@@ -27,6 +27,8 @@ type ZanzanaClientSettings struct {
 	// URL called to perform exchange request.
 	// Only used when mode is set to client.
 	TokenExchangeURL string
+	// Namespace to use for the token.
+	TokenNamespace string
 }
 
 type ZanzanaServerSettings struct {
@@ -35,6 +37,8 @@ type ZanzanaServerSettings struct {
 	OpenFGAHttpAddr string
 	// Cache settings
 	CacheSettings OpenFgaCacheSettings
+	// OpenFGA server settings
+	OpenFgaServerSettings OpenFgaServerSettings
 	// Max number of results returned by ListObjects() query. Default is 1000.
 	ListObjectsMaxResults uint32
 	// Deadline for the ListObjects() query. Default is 3 seconds.
@@ -46,6 +50,92 @@ type ZanzanaServerSettings struct {
 	SigningKeysURL string
 	// Allow insecure connections to the server for development purposes.
 	AllowInsecure bool
+}
+
+type OpenFgaServerSettings struct {
+	// ListObjects settings
+	// Max number of concurrent datastore reads for ListObjects queries
+	MaxConcurrentReadsForListObjects uint32
+	// Enable dispatch throttling for ListObjects queries
+	ListObjectsDispatchThrottlingEnabled bool
+	// Frequency for dispatch throttling in ListObjects queries
+	ListObjectsDispatchThrottlingFrequency time.Duration
+	// Threshold for dispatch throttling in ListObjects queries
+	ListObjectsDispatchThrottlingThreshold uint32
+	// Max threshold for dispatch throttling in ListObjects queries
+	ListObjectsDispatchThrottlingMaxThreshold uint32
+	// Database throttle threshold for ListObjects queries
+	ListObjectsDatabaseThrottleThreshold int
+	// Database throttle duration for ListObjects queries
+	ListObjectsDatabaseThrottleDuration time.Duration
+
+	// ListUsers settings
+	// Deadline for ListUsers queries
+	ListUsersDeadline time.Duration
+	// Max number of results returned by ListUsers queries
+	ListUsersMaxResults uint32
+	// Max number of concurrent datastore reads for ListUsers queries
+	MaxConcurrentReadsForListUsers uint32
+	// Enable dispatch throttling for ListUsers queries
+	ListUsersDispatchThrottlingEnabled bool
+	// Frequency for dispatch throttling in ListUsers queries
+	ListUsersDispatchThrottlingFrequency time.Duration
+	// Threshold for dispatch throttling in ListUsers queries
+	ListUsersDispatchThrottlingThreshold uint32
+	// Max threshold for dispatch throttling in ListUsers queries
+	ListUsersDispatchThrottlingMaxThreshold uint32
+	// Database throttle threshold for ListUsers queries
+	ListUsersDatabaseThrottleThreshold int
+	// Database throttle duration for ListUsers queries
+	ListUsersDatabaseThrottleDuration time.Duration
+
+	// Check settings
+	// Max number of concurrent datastore reads for Check queries
+	MaxConcurrentReadsForCheck uint32
+	// Database throttle threshold for Check queries
+	CheckDatabaseThrottleThreshold int
+	// Database throttle duration for Check queries
+	CheckDatabaseThrottleDuration time.Duration
+
+	// Batch check settings
+	// Max number of concurrent checks per batch check request
+	MaxConcurrentChecksPerBatchCheck uint32
+	// Max number of checks per batch check request
+	MaxChecksPerBatchCheck uint32
+
+	// Resolve node settings
+	// Max number of nodes that can be resolved in a single query
+	ResolveNodeLimit uint32
+	// Max breadth of nodes that can be resolved in a single query
+	ResolveNodeBreadthLimit uint32
+
+	// Dispatch throttling settings for Check resolver
+	// Enable dispatch throttling for Check resolver
+	DispatchThrottlingCheckResolverEnabled bool
+	// Frequency for dispatch throttling in Check resolver
+	DispatchThrottlingCheckResolverFrequency time.Duration
+	// Threshold for dispatch throttling in Check resolver
+	DispatchThrottlingCheckResolverThreshold uint32
+	// Max threshold for dispatch throttling in Check resolver
+	DispatchThrottlingCheckResolverMaxThreshold uint32
+
+	// Shadow check/query settings
+	// Timeout for shadow check resolver
+	ShadowCheckResolverTimeout time.Duration
+	// Timeout for shadow ListObjects query
+	ShadowListObjectsQueryTimeout time.Duration
+	// Max delta items for shadow ListObjects query
+	ShadowListObjectsQueryMaxDeltaItems int
+
+	// Request settings
+	// Global request timeout
+	RequestTimeout time.Duration
+	// Max size in bytes for authorization model
+	MaxAuthorizationModelSizeInBytes int
+	// Size of the authorization model cache
+	AuthorizationModelCacheSize int
+	// Offset for changelog horizon
+	ChangelogHorizonOffset int
 }
 
 // Parameters to configure OpenFGA cache.
@@ -108,10 +198,23 @@ func (cfg *Cfg) readZanzanaSettings() {
 		zc.Mode = "embedded"
 	}
 
-	zc.Token = clientSec.Key("token").MustString("")
-	zc.TokenExchangeURL = clientSec.Key("token_exchange_url").MustString("")
 	zc.Addr = clientSec.Key("address").MustString("")
 	zc.ServerCertFile = clientSec.Key("tls_cert").MustString("")
+
+	grpcClientAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	zc.Token = grpcClientAuthSection.Key("token").MustString("")
+	zc.TokenExchangeURL = grpcClientAuthSection.Key("token_exchange_url").MustString("")
+	zc.TokenNamespace = grpcClientAuthSection.Key("token_namespace").MustString("stacks-" + cfg.StackID)
+
+	// TODO: remove old settings when migrated
+	token := clientSec.Key("token").MustString("")
+	tokenExchangeURL := clientSec.Key("token_exchange_url").MustString("")
+	if token != "" {
+		zc.Token = token
+	}
+	if tokenExchangeURL != "" {
+		zc.TokenExchangeURL = tokenExchangeURL
+	}
 
 	cfg.ZanzanaClient = zc
 
@@ -140,6 +243,57 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.CacheSettings.SharedIteratorEnabled = serverSec.Key("shared_iterator_enabled").MustBool(false)
 	zs.CacheSettings.SharedIteratorLimit = uint32(serverSec.Key("shared_iterator_limit").MustUint(1000))
 	zs.CacheSettings.SharedIteratorTTL = serverSec.Key("shared_iterator_ttl").MustDuration(10 * time.Second)
+
+	openfgaSec := cfg.SectionWithEnvOverrides("openfga")
+
+	// ListObjects settings
+	zs.OpenFgaServerSettings.MaxConcurrentReadsForListObjects = uint32(openfgaSec.Key("max_concurrent_reads_for_list_objects").MustUint(0))
+	zs.OpenFgaServerSettings.ListObjectsDispatchThrottlingEnabled = openfgaSec.Key("list_objects_dispatch_throttling_enabled").MustBool(false)
+	zs.OpenFgaServerSettings.ListObjectsDispatchThrottlingFrequency = openfgaSec.Key("list_objects_dispatch_throttling_frequency").MustDuration(0)
+	zs.OpenFgaServerSettings.ListObjectsDispatchThrottlingThreshold = uint32(openfgaSec.Key("list_objects_dispatch_throttling_threshold").MustUint(0))
+	zs.OpenFgaServerSettings.ListObjectsDispatchThrottlingMaxThreshold = uint32(openfgaSec.Key("list_objects_dispatch_throttling_max_threshold").MustUint(0))
+	zs.OpenFgaServerSettings.ListObjectsDatabaseThrottleThreshold = openfgaSec.Key("list_objects_database_throttle_threshold").MustInt(0)
+	zs.OpenFgaServerSettings.ListObjectsDatabaseThrottleDuration = openfgaSec.Key("list_objects_database_throttle_duration").MustDuration(0)
+
+	// ListUsers settings
+	zs.OpenFgaServerSettings.ListUsersDeadline = openfgaSec.Key("list_users_deadline").MustDuration(0)
+	zs.OpenFgaServerSettings.ListUsersMaxResults = uint32(openfgaSec.Key("list_users_max_results").MustUint(0))
+	zs.OpenFgaServerSettings.MaxConcurrentReadsForListUsers = uint32(openfgaSec.Key("max_concurrent_reads_for_list_users").MustUint(0))
+	zs.OpenFgaServerSettings.ListUsersDispatchThrottlingEnabled = openfgaSec.Key("list_users_dispatch_throttling_enabled").MustBool(false)
+	zs.OpenFgaServerSettings.ListUsersDispatchThrottlingFrequency = openfgaSec.Key("list_users_dispatch_throttling_frequency").MustDuration(0)
+	zs.OpenFgaServerSettings.ListUsersDispatchThrottlingThreshold = uint32(openfgaSec.Key("list_users_dispatch_throttling_threshold").MustUint(0))
+	zs.OpenFgaServerSettings.ListUsersDispatchThrottlingMaxThreshold = uint32(openfgaSec.Key("list_users_dispatch_throttling_max_threshold").MustUint(0))
+	zs.OpenFgaServerSettings.ListUsersDatabaseThrottleThreshold = openfgaSec.Key("list_users_database_throttle_threshold").MustInt(0)
+	zs.OpenFgaServerSettings.ListUsersDatabaseThrottleDuration = openfgaSec.Key("list_users_database_throttle_duration").MustDuration(0)
+
+	// Check settings
+	zs.OpenFgaServerSettings.MaxConcurrentReadsForCheck = uint32(openfgaSec.Key("max_concurrent_reads_for_check").MustUint(0))
+	zs.OpenFgaServerSettings.CheckDatabaseThrottleThreshold = openfgaSec.Key("check_database_throttle_threshold").MustInt(0)
+	zs.OpenFgaServerSettings.CheckDatabaseThrottleDuration = openfgaSec.Key("check_database_throttle_duration").MustDuration(0)
+
+	// Batch check settings
+	zs.OpenFgaServerSettings.MaxConcurrentChecksPerBatchCheck = uint32(openfgaSec.Key("max_concurrent_checks_per_batch_check").MustUint(0))
+	zs.OpenFgaServerSettings.MaxChecksPerBatchCheck = uint32(openfgaSec.Key("max_checks_per_batch_check").MustUint(0))
+
+	// Resolve node settings
+	zs.OpenFgaServerSettings.ResolveNodeLimit = uint32(openfgaSec.Key("resolve_node_limit").MustUint(0))
+	zs.OpenFgaServerSettings.ResolveNodeBreadthLimit = uint32(openfgaSec.Key("resolve_node_breadth_limit").MustUint(0))
+
+	// Dispatch throttling settings for Check resolver
+	zs.OpenFgaServerSettings.DispatchThrottlingCheckResolverEnabled = openfgaSec.Key("dispatch_throttling_check_resolver_enabled").MustBool(false)
+	zs.OpenFgaServerSettings.DispatchThrottlingCheckResolverFrequency = openfgaSec.Key("dispatch_throttling_check_resolver_frequency").MustDuration(0)
+	zs.OpenFgaServerSettings.DispatchThrottlingCheckResolverThreshold = uint32(openfgaSec.Key("dispatch_throttling_check_resolver_threshold").MustUint(0))
+	zs.OpenFgaServerSettings.DispatchThrottlingCheckResolverMaxThreshold = uint32(openfgaSec.Key("dispatch_throttling_check_resolver_max_threshold").MustUint(0))
+
+	// Shadow check/query settings
+	zs.OpenFgaServerSettings.ShadowCheckResolverTimeout = openfgaSec.Key("shadow_check_resolver_timeout").MustDuration(0)
+	zs.OpenFgaServerSettings.ShadowListObjectsQueryTimeout = openfgaSec.Key("shadow_list_objects_query_timeout").MustDuration(0)
+	zs.OpenFgaServerSettings.ShadowListObjectsQueryMaxDeltaItems = openfgaSec.Key("shadow_list_objects_query_max_delta_items").MustInt(0)
+
+	zs.OpenFgaServerSettings.RequestTimeout = openfgaSec.Key("request_timeout").MustDuration(0)
+	zs.OpenFgaServerSettings.MaxAuthorizationModelSizeInBytes = openfgaSec.Key("max_authorization_model_size_in_bytes").MustInt(0)
+	zs.OpenFgaServerSettings.AuthorizationModelCacheSize = openfgaSec.Key("authorization_model_cache_size").MustInt(0)
+	zs.OpenFgaServerSettings.ChangelogHorizonOffset = openfgaSec.Key("changelog_horizon_offset").MustInt(0)
 
 	cfg.ZanzanaServer = zs
 }

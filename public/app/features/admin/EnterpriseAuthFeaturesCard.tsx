@@ -7,8 +7,8 @@ import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Text, Stack, useStyles2, Button, LinkButton } from '@grafana/ui';
 import { CloudEnterpriseBadge } from 'app/core/components/Branding/CloudEnterpriseBadge';
-import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {
   page?: 'teams' | 'users';
@@ -91,7 +91,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1.5),
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       marginTop: theme.spacing(3),
       strong: {
         color: theme.colors.text.primary,

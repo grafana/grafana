@@ -1,7 +1,10 @@
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { sanitizeUrl } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { DashboardLink } from '@grafana/schema';
-import { Tooltip } from '@grafana/ui';
+import { MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
 import {
   DashboardLinkButton,
   DashboardLinksDashboard,
@@ -13,10 +16,13 @@ import { LINK_ICON_MAP } from '../settings/links/utils';
 export interface Props {
   link: DashboardLink;
   dashboardUID: string;
+  // Set to `true` if displaying a link in a drop-down menu (e.g. dashboard controls)
+  inMenu?: boolean;
 }
 
-export function DashboardLinkRenderer({ link, dashboardUID }: Props) {
+export function DashboardLinkRenderer({ link, dashboardUID, inMenu }: Props) {
   const linkInfo = getLinkSrv().getAnchorInfo(link);
+  const styles = useStyles2(getStyles);
 
   if (link.type === 'dashboards') {
     return <DashboardLinksDashboard link={link} linkInfo={linkInfo} dashboardUID={dashboardUID} />;
@@ -24,7 +30,15 @@ export function DashboardLinkRenderer({ link, dashboardUID }: Props) {
 
   const icon = LINK_ICON_MAP[link.icon];
 
-  const linkElement = (
+  const linkElement = inMenu ? (
+    <MenuItem
+      icon={icon}
+      url={sanitizeUrl(linkInfo.href)}
+      label={linkInfo.title}
+      target={link.targetBlank ? '_blank' : undefined}
+      data-testid={selectors.components.DashboardLinks.link}
+    />
+  ) : (
     <DashboardLinkButton
       icon={icon}
       href={sanitizeUrl(linkInfo.href)}
@@ -37,8 +51,18 @@ export function DashboardLinkRenderer({ link, dashboardUID }: Props) {
   );
 
   return (
-    <div data-testid={selectors.components.DashboardLinks.container}>
+    <div className={styles.linkContainer} data-testid={selectors.components.DashboardLinks.container}>
       {link.tooltip ? <Tooltip content={linkInfo.tooltip}>{linkElement}</Tooltip> : linkElement}
     </div>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    linkContainer: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      verticalAlign: 'middle',
+    }),
+  };
 }

@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -122,6 +124,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 	b := r.builder
 
 	return http.HandlerFunc(func(w http.ResponseWriter, httpreq *http.Request) {
+		w.Header().Set("X-Ds-Querier", b.instanceProvider.GetMode())
+
 		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
 		defer span.End()
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
@@ -152,11 +156,11 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 						}
 					}
 				}
-				connectLogger.Debug("responder sending status code", "statusCode", statusCode)
+				connectLogger.Debug("responder sending status code", "statusCode", statusCode, "caller", getCaller(ctx))
 			},
 
 			func(err error) {
-				connectLogger.Error("error caught in handler", "err", err)
+				connectLogger.Error("error caught in handler", "err", err, "caller", getCaller(ctx))
 				span.SetStatus(codes.Error, "query error")
 
 				if err == nil {
@@ -241,25 +245,40 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 	}), nil
 }
 
-func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper, connectLogger log.Logger) (*backend.QueryDataResponse, error) {
-	var jsonQueries = make([]*simplejson.Json, 0, len(raw.Queries))
-	for _, query := range raw.Queries {
-		dsRef, err := getValidDataSourceRef(ctx, query.Datasource, query.DatasourceID, b.legacyDatasourceLookup)
-		if err != nil {
-			connectLogger.Error("error getting valid datasource ref", err)
-		}
-		if dsRef != nil {
-			query.Datasource = dsRef
+type preparedQuery struct {
+	mReq          dtos.MetricRequest
+	cache         datasources.CacheService
+	headers       map[string]string
+	logger        log.Logger
+	builder       dsquerierclient.QSDatasourceClientBuilder
+	exprSvc       *expr.Service
+	reportMetrics func()
+}
+
+func prepareQuery(
+	ctx context.Context,
+	raw query.QueryDataRequest,
+	b QueryAPIBuilder,
+	httpreq *http.Request,
+	connectLogger log.Logger,
+) (*preparedQuery, error) {
+	// Normalize DS refs and build []*simplejson.Json
+	jsonQueries := make([]*simplejson.Json, 0, len(raw.Queries))
+	for _, q := range raw.Queries {
+		if dsRef, derr := getValidDataSourceRef(ctx, q.Datasource, q.DatasourceID, b.legacyDatasourceLookup); derr != nil {
+			connectLogger.Error("error getting valid datasource ref", "err", derr)
+		} else if dsRef != nil {
+			q.Datasource = dsRef
 		}
 
-		jsonBytes, err := json.Marshal(query)
+		jsonBytes, err := json.Marshal(q)
 		if err != nil {
-			connectLogger.Error("error marshalling", err)
+			connectLogger.Error("error marshalling query", "err", err)
 		}
 
-		sjQuery, _ := simplejson.NewJson(jsonBytes)
+		sjQuery, err := simplejson.NewJson(jsonBytes)
 		if err != nil {
-			connectLogger.Error("error unmarshalling", err)
+			connectLogger.Error("error creating simplejson for query", "err", err)
 		}
 
 		jsonQueries = append(jsonQueries, sjQuery)
@@ -274,26 +293,26 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 	cache := &MyCacheService{
 		legacy: b.legacyDatasourceLookup,
 	}
-
 	headers := ExtractKnownHeaders(httpreq.Header)
 
-	instance, err := b.instanceProvider.GetInstance(ctx, headers)
+	instance, err := b.instanceProvider.GetInstance(ctx, connectLogger, headers)
 	if err != nil {
 		connectLogger.Error("failed to get instance configuration settings", "err", err)
-		responder.Error(err)
 		return nil, err
 	}
 
 	instanceConfig := instance.GetSettings()
 
-	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger)
+	dsQuerierLoggerWithSlug := instance.GetLogger()
 
+	// Datasource client qsDsClientBuilder
 	qsDsClientBuilder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(
 		instance,
 		ctx,
 		dsQuerierLoggerWithSlug,
 	)
 
+	// Expressions service
 	exprService := expr.ProvideService(
 		&setting.Cfg{
 			ExpressionsEnabled:            instanceConfig.ExpressionsEnabled,
@@ -310,17 +329,37 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		qsDsClientBuilder,
 	)
 
-	qdr, err := service.QueryData(ctx, dsQuerierLoggerWithSlug, cache, exprService, mReq, qsDsClientBuilder, headers)
+	return &preparedQuery{
+		mReq:          mReq,
+		cache:         cache,
+		headers:       headers,
+		logger:        dsQuerierLoggerWithSlug,
+		builder:       qsDsClientBuilder,
+		exprSvc:       exprService,
+		reportMetrics: func() { instance.ReportMetrics() },
+	}, nil
+}
 
-	// tell the `instance` structure that it can now report
-	// metrics that are only reported once during a request
-	instance.ReportMetrics()
+func handlePreparedQuery(ctx context.Context, pq *preparedQuery, concurrentQueryLimit int) (*backend.QueryDataResponse, error) {
+	resp, err := service.QueryData(ctx, pq.logger, pq.cache, pq.exprSvc, pq.mReq, pq.builder, pq.headers, concurrentQueryLimit)
+	pq.reportMetrics()
+	return resp, err
+}
 
+func handleQuery(
+	ctx context.Context,
+	raw query.QueryDataRequest,
+	b QueryAPIBuilder,
+	httpreq *http.Request,
+	responder responderWrapper,
+	connectLogger log.Logger,
+) (*backend.QueryDataResponse, error) {
+	pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
 	if err != nil {
-		return qdr, err
+		responder.Error(err)
+		return nil, err
 	}
-
-	return qdr, nil
+	return handlePreparedQuery(ctx, pq, b.concurrentQueryLimit)
 }
 
 type responderWrapper struct {
@@ -442,4 +481,13 @@ func getValidDataSourceRef(ctx context.Context, ds *v0alpha1.DataSourceRef, id i
 	}
 
 	return ds, nil
+}
+
+func getCaller(ctx context.Context) string {
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return "<auth-missing>"
+	} else {
+		return strings.Join(authInfo.GetExtra()[authn.ServiceIdentityKey], ",")
+	}
 }

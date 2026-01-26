@@ -1,5 +1,7 @@
 import { PluginExtensionExposedComponents } from '@grafana/data';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
+import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
+import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -35,6 +37,18 @@ exposedComponentsRegistry.register({
       title: 'Central alert history scene',
       description: 'Central alert history scene',
       component: CentralAlertHistorySceneExposedComponent,
+    },
+    {
+      id: PluginExtensionExposedComponents.AddToDashboardFormV1,
+      title: 'Add to dashboard form',
+      description: 'Add to dashboard form',
+      component: AddToDashboardFormExposedComponent,
+    },
+    {
+      id: PluginExtensionExposedComponents.OpenQueryLibraryV1,
+      title: 'Access to the Query Library',
+      description: 'Access to the Query Library',
+      component: OpenQueryLibraryExposedComponent,
     },
   ],
 });

@@ -100,8 +100,28 @@ func TestPluginProvisioner(t *testing.T) {
 		}
 
 		err := ap.applyChanges(context.Background(), "")
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "plugin is auto enabled and cannot be disabled")
+		require.ErrorIs(t, err, ErrPluginProvisioningAutoEnabled)
+	})
+
+	t.Run("Should return error trying to configure a non-existing plugin", func(t *testing.T) {
+		cfg := []*pluginsAsConfig{
+			{
+				Apps: []*appFromConfig{
+					{PluginID: "test-plugin", OrgID: 2, Enabled: false},
+				},
+			},
+		}
+		reader := &testConfigReader{result: cfg}
+		store := &mockStore{}
+		ap := PluginProvisioner{
+			log:            log.New("test"),
+			cfgProvider:    reader,
+			pluginSettings: store,
+			pluginStore:    pluginstore.NewFakePluginStore(),
+		}
+
+		err := ap.applyChanges(context.Background(), "")
+		require.ErrorIs(t, err, ErrPluginProvisioningNotFound)
 	})
 }
 

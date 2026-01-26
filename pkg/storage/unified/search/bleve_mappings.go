@@ -5,12 +5,15 @@ import (
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
-
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func GetBleveMappings(fields resource.SearchableDocumentFields) (mapping.IndexMapping, error) {
+func GetBleveMappings(scoringModel string, fields resource.SearchableDocumentFields) (mapping.IndexMapping, error) {
 	mapper := bleve.NewIndexMapping()
+	if scoringModel != "" {
+		mapper.ScoringModel = scoringModel
+	}
 
 	err := RegisterCustomAnalyzers(mapper)
 	if err != nil {
@@ -21,7 +24,7 @@ func GetBleveMappings(fields resource.SearchableDocumentFields) (mapping.IndexMa
 	return mapper, nil
 }
 
-func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentMapping {
+func getBleveDocMappings(fields resource.SearchableDocumentFields) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 
 	nameMapping := &mapping.FieldMapping{
@@ -59,7 +62,7 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	}
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_DESCRIPTION, descriptionMapping)
 
-	tagsMapping := &mapping.FieldMapping{
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TAGS, &mapping.FieldMapping{
 		Name:               resource.SEARCH_FIELD_TAGS,
 		Type:               "text",
 		Analyzer:           keyword.Name,
@@ -68,8 +71,18 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		IncludeTermVectors: false,
 		IncludeInAll:       true,
 		DocValues:          false,
-	}
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TAGS, tagsMapping)
+	})
+
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_OWNER_REFERENCES, &mapping.FieldMapping{
+		Name:               resource.SEARCH_FIELD_OWNER_REFERENCES,
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              false,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       false,
+		DocValues:          false,
+	})
 
 	folderMapping := &mapping.FieldMapping{
 		Name:               resource.SEARCH_FIELD_FOLDER,
@@ -145,6 +158,23 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
 
 	fieldMapper := bleve.NewDocumentMapping()
+	if fields != nil {
+		for _, field := range fields.Fields() {
+			def := fields.Field(field)
+
+			// Filterable should use keyword analyzer for exact matches
+			if def.Properties != nil && def.Properties.Filterable && def.Type == resourcepb.ResourceTableColumnDefinition_STRING {
+				keywordMapping := bleve.NewKeywordFieldMapping()
+				keywordMapping.Store = true
+
+				fieldMapper.AddFieldMappingsAt(def.Name, keywordMapping)
+			}
+			// For all other fields, we do nothing.
+			// Bleve will see them at index time and dynamically map them as
+			// numeric, datetime, boolean, or standard text based on their content.
+		}
+	}
+
 	mapper.AddSubDocumentMapping("fields", fieldMapper)
 
 	return mapper

@@ -3,6 +3,7 @@ import { ReactElement, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useMeasure } from 'react-use';
 
+import { AlertLabels } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -31,7 +32,6 @@ import { usePagination } from '../../../hooks/usePagination';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { createRelativeUrl } from '../../../utils/url';
-import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
 import { LogRecord } from '../state-history/common';
 
@@ -210,8 +210,10 @@ interface EventRowProps {
 function EventRow({ record, addFilter, timeRange, hideAlertRuleColumn }: EventRowProps) {
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useState(true);
-  function onLabelClick(label: string, value: string) {
-    addFilter(label, value, 'label');
+  function onLabelClick([value, label]: [string | undefined, string | undefined]) {
+    if (label && value) {
+      addFilter(label, value, 'label');
+    }
   }
 
   return (

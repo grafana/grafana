@@ -11,13 +11,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
 var (
@@ -25,7 +24,7 @@ var (
 )
 
 type ReceiverService interface {
-	GetReceiver(ctx context.Context, q ngmodels.GetReceiverQuery, user identity.Requester) (*ngmodels.Receiver, error)
+	GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*ngmodels.Receiver, error)
 	GetReceivers(ctx context.Context, q ngmodels.GetReceiversQuery, user identity.Requester) ([]*ngmodels.Receiver, error)
 	CreateReceiver(ctx context.Context, r *ngmodels.Receiver, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
 	UpdateReceiver(ctx context.Context, r *ngmodels.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*ngmodels.Receiver, error)
@@ -116,22 +115,12 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, err
 	}
 
-	name, err := legacy_storage.UidToName(uid)
-	if err != nil {
-		return nil, apierrors.NewNotFound(ResourceInfo.GroupResource(), uid)
-	}
-	q := ngmodels.GetReceiverQuery{
-		OrgID:   info.OrgID,
-		Name:    name,
-		Decrypt: false,
-	}
-
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := s.service.GetReceiver(ctx, q, user)
+	r, err := s.service.GetReceiver(ctx, uid, false, user)
 	if err != nil {
 		return nil, err
 	}

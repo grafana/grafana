@@ -18,4 +18,18 @@ teamv0alpha1: teamKind & {
 	schema: {
 		spec: v0alpha1.TeamSpec
 	}
+	routes: {
+		"/groups": {
+			"GET": {
+				response: {
+					#ExternalGroupMapping: {
+						name: string
+						externalGroup: string
+					}
+					items: [...#ExternalGroupMapping]
+				}
+				responseMetadata: objectMeta: false
+			}
+		}
+	}
 }

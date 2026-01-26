@@ -1,7 +1,7 @@
-import { locationUtil, SetPanelAttentionEvent } from '@grafana/data';
+import { locationUtil, SetPanelAttentionEvent, LegacyGraphHoverClearEvent, dateTime } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
-import appEvents from 'app/core/app_events';
+import { behaviors, sceneGraph, VizPanel } from '@grafana/scenes';
+import { appEvents } from 'app/core/app_events';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
 import { InspectTab } from 'app/features/inspector/types';
@@ -10,7 +10,6 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
-import { ShareModal } from '../sharing/ShareModal';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
@@ -19,6 +18,7 @@ import { getPanelIdForVizPanel } from '../utils/utils';
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -59,52 +59,43 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   });
 
   // Panel share
-  if (config.featureToggles.newDashboardSharingComponent) {
-    keybindings.addBinding({
-      key: 'p u',
-      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-        const drawer = new ShareDrawer({
-          shareView: shareDashboardType.link,
-          panelRef: vizPanel.getRef(),
-        });
-
-        scene.showModal(drawer);
-      }),
-    });
-    keybindings.addBinding({
-      key: 'p e',
-      onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-        const drawer = new ShareDrawer({
-          shareView: shareDashboardType.embed,
-          panelRef: vizPanel.getRef(),
-        });
-
-        scene.showModal(drawer);
-      }),
-    });
-
-    if (
-      contextSrv.isSignedIn &&
-      config.snapshotEnabled &&
-      contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
-    ) {
-      keybindings.addBinding({
-        key: 'p s',
-        onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-          const drawer = new ShareDrawer({
-            shareView: shareDashboardType.snapshot,
-            panelRef: vizPanel.getRef(),
-          });
-
-          scene.showModal(drawer);
-        }),
+  keybindings.addBinding({
+    key: 'p u',
+    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+      const drawer = new ShareDrawer({
+        shareView: shareDashboardType.link,
+        panelRef: vizPanel.getRef(),
       });
-    }
-  } else {
+
+      scene.showModal(drawer);
+    }),
+  });
+  keybindings.addBinding({
+    key: 'p e',
+    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+      const drawer = new ShareDrawer({
+        shareView: shareDashboardType.embed,
+        panelRef: vizPanel.getRef(),
+      });
+
+      scene.showModal(drawer);
+    }),
+  });
+
+  if (
+    contextSrv.isSignedIn &&
+    config.snapshotEnabled &&
+    contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
+  ) {
     keybindings.addBinding({
       key: 'p s',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-        scene.showModal(new ShareModal({ panelRef: vizPanel.getRef() }));
+        const drawer = new ShareDrawer({
+          shareView: shareDashboardType.snapshot,
+          panelRef: vizPanel.getRef(),
+        });
+
+        scene.showModal(drawer);
       }),
     });
   }
@@ -140,13 +131,36 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: () => sceneGraph.getTimeRange(scene).onRefresh(),
   });
 
-  // Zoom out
-  keybindings.addBinding({
-    key: 't z',
-    onTrigger: () => {
-      handleZoomOut(scene);
-    },
-  });
+  if (config.featureToggles.newTimeRangeZoomShortcuts) {
+    keybindings.addBinding({
+      key: 't +',
+      onTrigger: () => {
+        handleZoom(scene, 0.5);
+      },
+    });
+
+    keybindings.addBinding({
+      key: 't =',
+      onTrigger: () => {
+        handleZoom(scene, 0.5);
+      },
+    });
+
+    keybindings.addBinding({
+      key: 't -',
+      type: 'keypress', // NOTE: Because some browsers/OS identify minus symbol differently.
+      onTrigger: () => {
+        handleZoomOut(scene);
+      },
+    });
+  } else {
+    keybindings.addBinding({
+      key: 't z',
+      onTrigger: () => {
+        handleZoomOut(scene);
+      },
+    });
+  }
 
   keybindings.addBinding({
     key: 'ctrl+z',
@@ -175,6 +189,20 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     key: 't right',
     onTrigger: () => {
       handleTimeRangeShift(scene, 'right');
+    },
+  });
+
+  keybindings.addBinding({
+    key: 'mod+o',
+    onTrigger: () => {
+      const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
+      if (cursorSync instanceof behaviors.CursorSync) {
+        const currentSync = cursorSync.state.sync;
+        const nextSync = (currentSync + 1) % 3;
+        cursorSync.setState({ sync: nextSync });
+        appEvents.publish(new LegacyGraphHoverClearEvent());
+        sceneGraph.getTimeRange(scene).onRefresh();
+      }
     },
   });
 
@@ -238,6 +266,8 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       onTrigger: () => {
         if (scene.state.body instanceof DefaultGridLayoutManager) {
           scene.state.body.collapseAllRows();
+        } else if (scene.state.body instanceof RowsLayoutManager) {
+          scene.state.body.collapseAllRows();
         }
       },
     });
@@ -247,6 +277,8 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'd shift+e',
       onTrigger: () => {
         if (scene.state.body instanceof DefaultGridLayoutManager) {
+          scene.state.body.expandAllRows();
+        } else if (scene.state.body instanceof RowsLayoutManager) {
           scene.state.body.expandAllRows();
         }
       },
@@ -260,6 +292,31 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.removeAll();
     panelAttentionSubscription.unsubscribe();
   };
+}
+
+function handleZoom(scene: DashboardScene, scale: number) {
+  const timeRange = sceneGraph.getTimeRange(scene);
+  const currentRange = timeRange.state.value;
+  const timespan = currentRange.to.valueOf() - currentRange.from.valueOf();
+
+  if (timespan === 0) {
+    return;
+  }
+
+  const center = currentRange.to.valueOf() - timespan / 2;
+  const newTimespan = timespan * scale;
+
+  const to = center + newTimespan / 2;
+  const from = center - newTimespan / 2;
+
+  timeRange.onTimeRangeChange({
+    from: dateTime(from),
+    to: dateTime(to),
+    raw: {
+      from: dateTime(from),
+      to: dateTime(to),
+    },
+  });
 }
 
 function handleZoomOut(scene: DashboardScene) {

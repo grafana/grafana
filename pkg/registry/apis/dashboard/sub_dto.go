@@ -9,52 +9,49 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	claims "github.com/grafana/authlib/types"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type dtoBuilder = func(dashboard runtime.Object, access *dashboard.DashboardAccess) (runtime.Object, error)
 
 // The DTO returns everything the UI needs in a single request
 type DTOConnector struct {
-	getter        rest.Getter
-	legacy        legacy.DashboardAccess
-	unified       resource.ResourceClient
-	largeObjects  apistore.LargeObjectSupport
-	accessControl accesscontrol.AccessControl
-	scheme        *runtime.Scheme
-	builder       dtoBuilder
+	getter                 rest.Getter
+	unified                resource.ResourceClient
+	largeObjects           apistore.LargeObjectSupport
+	accessClient           authlib.AccessClient
+	builder                dtoBuilder
+	publicDashboardService publicdashboards.Service
 }
 
 func NewDTOConnector(
 	getter rest.Getter,
 	largeObjects apistore.LargeObjectSupport,
-	legacyAccess legacy.DashboardAccess,
 	resourceClient resource.ResourceClient,
-	accessControl accesscontrol.AccessControl,
-	scheme *runtime.Scheme,
+	accessClient authlib.AccessClient,
 	builder dtoBuilder,
+	publicDashboardService publicdashboards.Service,
 ) (rest.Storage, error) {
 	return &DTOConnector{
-		getter:        getter,
-		legacy:        legacyAccess,
-		accessControl: accessControl,
-		unified:       resourceClient,
-		largeObjects:  largeObjects,
-		builder:       builder,
-		scheme:        scheme,
+		getter:                 getter,
+		accessClient:           accessClient,
+		unified:                resourceClient,
+		largeObjects:           largeObjects,
+		builder:                builder,
+		publicDashboardService: publicDashboardService,
 	}, nil
 }
 
@@ -129,33 +126,88 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		dashScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(name)
-		evaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, dashScope)
-		canView, err := r.accessControl.Evaluate(ctx, user, evaluator)
-		if err != nil || !canView {
+		logger := logging.FromContext(ctx).With("logger", "dto-connector")
+		access := &dashboard.DashboardAccess{}
+		folder := obj.GetFolder()
+		ns := obj.GetNamespace()
+
+		authInfo, ok := authlib.AuthInfoFrom(ctx)
+		if !ok {
+			responder.Error(fmt.Errorf("no identity found for request"))
+			return
+		}
+
+		gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+
+		// Check read permission using authlib.AccessClient
+		readRes, err := r.accessClient.Check(ctx, authInfo, authlib.CheckRequest{
+			Verb:      utils.VerbGet,
+			Group:     gvr.Group,
+			Resource:  gvr.Resource,
+			Namespace: ns,
+			Name:      name,
+		}, folder)
+		if err != nil {
+			logger.Warn("Failed to check read permission", "err", err)
+			responder.Error(fmt.Errorf("not allowed to view"))
+			return
+		}
+		if !readRes.Allowed {
 			responder.Error(fmt.Errorf("not allowed to view"))
 			return
 		}
 
-		access := &dashboard.DashboardAccess{}
-		writeEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashScope)
-		access.CanSave, _ = r.accessControl.Evaluate(ctx, user, writeEvaluator)
-		access.CanEdit = access.CanSave
-		adminEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsPermissionsWrite, dashScope)
-		access.CanAdmin, _ = r.accessControl.Evaluate(ctx, user, adminEvaluator)
-		deleteEvaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsDelete, dashScope)
-		access.CanDelete, _ = r.accessControl.Evaluate(ctx, user, deleteEvaluator)
-		access.CanStar = user.IsIdentityType(claims.TypeUser)
+		// Check write permission
+		writeRes, err := r.accessClient.Check(ctx, authInfo, authlib.CheckRequest{
+			Verb:      utils.VerbUpdate,
+			Group:     gvr.Group,
+			Resource:  gvr.Resource,
+			Namespace: ns,
+			Name:      name,
+		}, folder)
+		// Keeping the same logic as with accessControl.Evaluate.
+		// On errors we default on deny.
+		if err != nil {
+			logger.Warn("Failed to check write permission", "err", err)
+		}
+		access.CanSave = writeRes.Allowed
+		access.CanEdit = writeRes.Allowed
 
-		access.AnnotationsPermissions = &dashboard.AnnotationPermission{}
-		r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
-		r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
+		// Check delete permission
+		deleteRes, err := r.accessClient.Check(ctx, authInfo, authlib.CheckRequest{
+			Verb:      utils.VerbDelete,
+			Group:     gvr.Group,
+			Resource:  gvr.Resource,
+			Namespace: ns,
+			Name:      name,
+		}, folder)
+		if err != nil {
+			logger.Warn("Failed to check delete permission", "err", err)
+		}
+		access.CanDelete = deleteRes.Allowed
 
-		// FIXME!!!! does not get the title!
-		// The title property next to unstructured and not found in this model
+		// For admin permission, use write as a proxy for now
+		access.CanAdmin = writeRes.Allowed
+
+		access.CanStar = user.IsIdentityType(authlib.TypeUser)
+
+		// Annotation permissions - use write permission as proxy
+		access.AnnotationsPermissions = &dashboard.AnnotationPermission{
+			Dashboard:    dashboard.AnnotationActions{CanAdd: writeRes.Allowed, CanEdit: writeRes.Allowed, CanDelete: writeRes.Allowed},
+			Organization: dashboard.AnnotationActions{CanAdd: writeRes.Allowed, CanEdit: writeRes.Allowed, CanDelete: writeRes.Allowed},
+		}
+
 		title := obj.FindTitle("")
 		access.Slug = slugify.Slugify(title)
 		access.Url = dashboards.GetDashboardFolderURL(false, name, access.Slug)
+
+		// Only check public dashboards if service is available
+		if !util.IsInterfaceNil(r.publicDashboardService) {
+			pubDash, err := r.publicDashboardService.FindByDashboardUid(ctx, user.GetOrgID(), name)
+			if err == nil && pubDash != nil {
+				access.IsPublic = true
+			}
+		}
 
 		dash, err := r.builder(rawobj, access)
 		if err != nil {
@@ -164,27 +216,4 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 		responder.Object(http.StatusOK, dash)
 	}), nil
-}
-
-func (r *DTOConnector) getAnnotationPermissionsByScope(ctx context.Context, user identity.Requester, actions *dashboard.AnnotationActions, scope string) {
-	var err error
-	logger := logging.FromContext(ctx).With("logger", "dto-connector")
-
-	evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, scope)
-	actions.CanAdd, err = r.accessControl.Evaluate(ctx, user, evaluate)
-	if err != nil {
-		logger.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsCreate, "scope", scope)
-	}
-
-	evaluate = accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, scope)
-	actions.CanDelete, err = r.accessControl.Evaluate(ctx, user, evaluate)
-	if err != nil {
-		logger.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsDelete, "scope", scope)
-	}
-
-	evaluate = accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsWrite, scope)
-	actions.CanEdit, err = r.accessControl.Evaluate(ctx, user, evaluate)
-	if err != nil {
-		logger.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsWrite, "scope", scope)
-	}
 }

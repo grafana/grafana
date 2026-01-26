@@ -8,7 +8,7 @@ import { MOCK_TEAMS } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { CreateTeam } from './CreateTeam';
+import CreateTeam from './CreateTeam';
 
 setBackendSrv(backendSrv);
 setupMockServer();

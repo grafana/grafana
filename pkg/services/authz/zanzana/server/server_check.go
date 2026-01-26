@@ -9,6 +9,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -25,6 +26,8 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 	res, err := s.check(ctx, r)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("failed to perform check request", "error", err, "namespace", r.GetNamespace())
 		return nil, errors.New("failed to perform check request")
 	}
@@ -123,8 +126,14 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation string, resou
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
+	// Use optimized folder permission relations for permission management
+	checkRelation := relation
+	if resource.Type() == common.TypeFolder {
+		checkRelation = common.FolderPermissionRelation(relation)
+	}
+
 	// Check if subject has direct access to resource
-	res, err := s.openfgaCheck(ctx, store, subject, relation, resourceIdent, contextuals, nil)
+	res, err := s.openfgaCheck(ctx, store, subject, checkRelation, resourceIdent, contextuals, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -140,10 +149,23 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 	defer span.End()
 
 	var (
-		folderIdent    = resource.FolderIdent()
-		resourceCtx    = resource.Context()
-		folderRelation = common.SubresourceRelation(relation)
+		folderIdent         = resource.FolderIdent()
+		resourceCtx         = resource.Context()
+		folderRelation      = common.SubresourceRelation(relation)
+		folderCheckRelation = common.FolderPermissionRelation(relation)
 	)
+
+	if folderIdent != "" && isFolderPermissionBasedResource(resource.GroupResource()) {
+		// Check if resource inherits permissions from the folder (like dashboards in a folder)
+		res, err := s.openfgaCheck(ctx, store, subject, folderCheckRelation, folderIdent, contextuals, resourceCtx)
+		if err != nil {
+			return nil, err
+		}
+
+		if res.GetAllowed() {
+			return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+		}
+	}
 
 	if folderIdent != "" && common.IsSubresourceRelation(folderRelation) {
 		// Check if subject has access as a sub resource for the folder
@@ -192,4 +214,12 @@ func (s *Server) openfgaCheck(ctx context.Context, store *storeInfo, subject, re
 	}
 
 	return res, nil
+}
+
+var folderPermissionBasedResourceExceptions = map[string]bool{
+	// allow all resources to inherit permissions from the folder
+}
+
+func isFolderPermissionBasedResource(resource string) bool {
+	return !folderPermissionBasedResourceExceptions[resource]
 }

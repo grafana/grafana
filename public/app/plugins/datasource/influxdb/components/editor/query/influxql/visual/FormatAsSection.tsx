@@ -1,4 +1,5 @@
 import { cx } from '@emotion/css';
+import type { JSX } from 'react';
 
 import { Select } from '@grafana/ui';
 

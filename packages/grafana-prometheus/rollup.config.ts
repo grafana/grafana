@@ -12,7 +12,7 @@ export default [
   {
     input: entryPoint,
     plugins: [...plugins, image(), json(), dynamicImportVars()],
-    output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-prometheus')],
+    output: [cjsOutput(pkg, 'grafana-prometheus'), esmOutput(pkg, 'grafana-prometheus')],
     treeshake: false,
   },
 ];

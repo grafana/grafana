@@ -1,6 +1,6 @@
 import { pick } from 'lodash';
 
-import store from 'app/core/store';
+import { store } from '@grafana/data';
 import { removePanel } from 'app/features/dashboard/utils/panel';
 import { cleanUpPanelState } from 'app/features/panel/state/actions';
 import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
@@ -161,7 +161,7 @@ export function exitPanelEditor(): ThunkResult<void> {
 }
 
 function hasPanelChangedInPanelEdit(panel: PanelModel) {
-  return panel.hasChanged || panel.hasSavedPanelEditChange || panel.isAngularPlugin();
+  return panel.hasChanged || panel.hasSavedPanelEditChange;
 }
 
 export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {

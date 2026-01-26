@@ -190,6 +190,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 	m["stats.active_data_keys.count"] = statsResult.ActiveDataKeys
 	m["stats.public_dashboards.count"] = statsResult.PublicDashboards
 	m["stats.correlations.count"] = statsResult.Correlations
+	m["stats.repositories.count"] = statsResult.Repositories
 	if statsResult.DatabaseCreatedTime != nil {
 		m["stats.database.created.time"] = statsResult.DatabaseCreatedTime.Unix()
 	}
@@ -351,6 +352,7 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.MStatTotalPublicDashboards.Set(float64(statsResult.PublicDashboards))
 
 	metrics.MStatTotalCorrelations.Set(float64(statsResult.Correlations))
+	metrics.MStatTotalRepositories.Set(float64(statsResult.Repositories))
 
 	s.usageStats.SetReadyToReport(ctx)
 

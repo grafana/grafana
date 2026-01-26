@@ -4,4 +4,4 @@ INSERT INTO "grafana"."user"
 VALUES
   ('abcdef', 0, 'sa-2-disabled-service-account', 'sa-2-disabled-service-account', 'Disabled Service Account',
    2, false, TRUE, false,
-   false, true, '', '', '2023-02-01 10:30:00 +0000 UTC', '2023-02-01 10:30:00 +0000 UTC', '2013-02-01 10:30:00 +0000 UTC')
+   false, true, '', '', '2023-02-01 10:30:00', '2023-02-01 10:30:00', '2013-02-01 10:30:00 +0000 UTC')

@@ -75,8 +75,7 @@
         "apiVersion": "folder.grafana.app",
         "metadata": {
           "name": "yyy",
-          "namespace": "ns",
-          "creationTimestamp": null
+          "namespace": "ns"
         }
       }
     },
@@ -96,8 +95,7 @@
         "apiVersion": "folder.grafana.app",
         "metadata": {
           "name": "zzz",
-          "namespace": "ns",
-          "creationTimestamp": null
+          "namespace": "ns"
         }
       }
     }

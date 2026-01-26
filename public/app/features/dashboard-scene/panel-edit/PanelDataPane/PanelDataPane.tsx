@@ -13,9 +13,11 @@ import {
 } from '@grafana/scenes';
 import { Container, ScrollContainer, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+
+import { PanelDataPaneNext } from '../PanelEditNext/PanelDataPaneNext';
 
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
@@ -34,6 +36,16 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 
   public static createFor(panel: VizPanel) {
     const panelRef = panel.getRef();
+
+    const config = getConfig();
+    const queryExperienceNext = config.featureToggles.queryEditorNext;
+
+    // Query experience v2
+    if (queryExperienceNext) {
+      return new PanelDataPaneNext({ panelRef });
+    }
+
+    // Original experience
     const tabs: PanelDataPaneTab[] = [
       new PanelDataQueriesTab({ panelRef }),
       new PanelDataTransformationsTab({ panelRef }),
@@ -80,14 +92,16 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
   return (
     <div className={styles.dataPane} data-testid={selectors.components.PanelEditor.DataPane.content}>
-      <TabsBar className={styles.tabsBar}>
+      <TabsBar hideBorder className={styles.tabsBar}>
         {tabs.map((t) => t.renderTab({ active: t.tabId === tab, onChangeTab: () => model.onChangeTab(t) }))}
       </TabsBar>
-      <ScrollContainer backgroundColor="primary">
-        <TabContent className={styles.tabContent}>
-          <Container>{currentTab && <currentTab.Component model={currentTab} />}</Container>
-        </TabContent>
-      </ScrollContainer>
+      <div className={styles.tabBorder}>
+        <ScrollContainer>
+          <TabContent className={styles.tabContent}>
+            <Container>{currentTab && <currentTab.Component model={currentTab} />}</Container>
+          </TabContent>
+        </ScrollContainer>
+      </div>
     </div>
   );
 }
@@ -116,13 +130,18 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       width: '100%',
     }),
-    tabContent: css({
-      padding: theme.spacing(2),
+    tabBorder: css({
+      background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderLeft: 'none',
       borderBottom: 'none',
       borderTopRightRadius: theme.shape.radius.default,
       flexGrow: 1,
+      overflow: 'hidden',
+    }),
+    tabContent: css({
+      padding: theme.spacing(2),
+      height: '100%',
     }),
     tabsBar: css({
       flexShrink: 0,

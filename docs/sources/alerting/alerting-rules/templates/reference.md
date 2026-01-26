@@ -141,6 +141,20 @@ Alternatively, you can use the `index()` function to retrieve the query value:
 {{ index $values "B" }} CPU usage for {{ index $labels "instance" }} over the last 5 minutes.
 ```
 
+{{< admonition type="note" >}}
+
+Variable names that start with a number (for example, `1B`) are not [valid identifiers in Go templates](https://go.dev/ref/spec#Identifiers).
+
+To access a value or label whose key starts with a number, use the `index` function:
+
+```
+{{ index $values "1B" }} CPU usage for {{ index $labels "1instance" }} over the last 5 minutes.
+```
+
+Using `{{ $values.1B.Value }}` is invalid and causes the template code to render as plain text.
+
+{{< /admonition  >}}
+
 #### $value
 
 The `$value` variable is a string containing the labels and values of all instant queries; threshold, reduce and math expressions, and classic conditions in the alert rule.

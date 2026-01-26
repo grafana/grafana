@@ -3,7 +3,6 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceRef,
-  DataSourceSelectItem,
   ScopedVars,
   isObject,
   matchPluginId,
@@ -21,7 +20,7 @@ import {
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef, UserStorage } from '@grafana/runtime/internal';
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
 import {
   dataSource as expressionDatasource,
@@ -29,7 +28,7 @@ import {
 } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
-import { importDataSourcePlugin } from './pluginLoader';
+import { pluginImporter } from './importer/pluginImporter';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -53,7 +52,9 @@ export class DatasourceSrv implements DataSourceService {
       }
 
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
-      this.settingsMapById[dsSettings.id] = dsSettings;
+      if (dsSettings.id) {
+        this.settingsMapById[dsSettings.id] = dsSettings;
+      }
     }
 
     for (const ds of Object.values(this.runtimeDataSources)) {
@@ -215,7 +216,7 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     try {
-      const dsPlugin = await importDataSourcePlugin(instanceSettings.meta);
+      const dsPlugin = await pluginImporter.importDataSource(instanceSettings.meta);
       // check if its in cache now
       if (this.datasources[key]) {
         return this.datasources[key];
@@ -365,39 +366,6 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     return sorted;
-  }
-
-  /**
-   * @deprecated use getList
-   * */
-  getExternal(): DataSourceInstanceSettings[] {
-    return this.getList();
-  }
-
-  /**
-   * @deprecated use getList
-   * */
-  getAnnotationSources() {
-    return this.getList({ annotations: true, variables: true }).map((x) => {
-      return {
-        name: x.name,
-        value: x.name,
-        meta: x.meta,
-      };
-    });
-  }
-
-  /**
-   * @deprecated use getList
-   * */
-  getMetricSources(options?: { skipVariables?: boolean }): DataSourceSelectItem[] {
-    return this.getList({ metrics: true, variables: !options?.skipVariables }).map((x) => {
-      return {
-        name: x.name,
-        value: x.name,
-        meta: x.meta,
-      };
-    });
   }
 
   async reload() {

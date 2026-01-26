@@ -29,6 +29,10 @@ interface PropsWithDeprecatedSize extends Omit<Props, 'size'> {
 
 /**
  * @public
+ *
+ * Spinner is `fa-spinner` icon animated. It is used to alert a user to wait for an activity to complete.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-spinner--docs
  */
 export const Spinner = ({
   className,

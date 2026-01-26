@@ -1,6 +1,7 @@
+import { store } from '@grafana/data';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { SetupStep } from './types';
 
@@ -40,7 +41,7 @@ export const getSteps = (): SetupStep[] => [
           return new Promise((resolve) => {
             resolve(
               getDatasourceSrv()
-                .getMetricSources()
+                .getList({ metrics: true })
                 .filter((item) => {
                   return item.meta.builtIn !== true;
                 }).length > 0
@@ -57,8 +58,8 @@ export const getSteps = (): SetupStep[] => [
         href: 'dashboard/new',
         learnHref: 'https://grafana.com/docs/grafana/latest/guides/getting_started/#create-a-dashboard',
         check: async () => {
-          const result = await getBackendSrv().search({ limit: 1 });
-          return result.length > 0;
+          const result = await getGrafanaSearcher().search({ limit: 1, kind: ['dashboard'] });
+          return result.totalRows > 0;
         },
         done: false,
       },

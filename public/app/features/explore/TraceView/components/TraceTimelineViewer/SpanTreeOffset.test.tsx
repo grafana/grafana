@@ -47,15 +47,34 @@ describe('SpanTreeOffset', () => {
   });
 
   describe('.SpanTreeOffset--indentGuide', () => {
-    it('renders only one SpanTreeOffset--indentGuide for entire trace if span has no ancestors', () => {
+    it('renders only the trace-level indentGuide if span has no ancestors and no children', () => {
       jest.mocked(spanAncestorIdsSpy).mockReturnValue([]);
+      render(<SpanTreeOffset {...props} />);
+      const indentGuides = screen.queryAllByTestId('SpanTreeOffset--indentGuide');
+      expect(indentGuides.length).toBe(1);
+      expect(indentGuides[0]).toHaveAttribute('data-ancestor-id', specialRootID);
+    });
+
+    it('renders only one SpanTreeOffset--indentGuide for entire trace if span has no ancestors but has children', () => {
+      jest.mocked(spanAncestorIdsSpy).mockReturnValue([]);
+      props.span.hasChildren = true;
       render(<SpanTreeOffset {...props} />);
       const indentGuide = screen.getByTestId('SpanTreeOffset--indentGuide');
       expect(indentGuide).toBeInTheDocument();
       expect(indentGuide).toHaveAttribute('data-ancestor-id', specialRootID);
     });
 
-    it('renders one SpanTreeOffset--indentGuide per ancestor span, plus one for entire trace', () => {
+    it('renders one SpanTreeOffset--indentGuide per ancestor span when span has no children', () => {
+      render(<SpanTreeOffset {...props} />);
+      const indentGuides = screen.getAllByTestId('SpanTreeOffset--indentGuide');
+      expect(indentGuides.length).toBe(3);
+      expect(indentGuides[0]).toHaveAttribute('data-ancestor-id', specialRootID);
+      expect(indentGuides[1]).toHaveAttribute('data-ancestor-id', rootSpanID);
+      expect(indentGuides[2]).toHaveAttribute('data-ancestor-id', parentSpanID);
+    });
+
+    it('renders one SpanTreeOffset--indentGuide per ancestor span, plus one for entire trace when span has children', () => {
+      props.span.hasChildren = true;
       render(<SpanTreeOffset {...props} />);
       const indentGuides = screen.getAllByTestId('SpanTreeOffset--indentGuide');
       expect(indentGuides.length).toBe(3);
@@ -65,28 +84,28 @@ describe('SpanTreeOffset', () => {
     });
 
     it('adds .is-active to correct indentGuide', () => {
-      props.hoverIndentGuideIds = new Set([parentSpanID]);
+      props.hoverIndentGuideIds = new Set([rootSpanID]);
       render(<SpanTreeOffset {...props} />);
       const styles = getStyles(createTheme());
       const activeIndentGuide = document.querySelector(`.${styles.indentGuideActive}`);
       expect(activeIndentGuide).toBeInTheDocument();
-      expect(activeIndentGuide).toHaveAttribute('data-ancestor-id', parentSpanID);
+      expect(activeIndentGuide).toHaveAttribute('data-ancestor-id', rootSpanID);
     });
 
     it('calls props.addHoverIndentGuideId on mouse enter', async () => {
       render(<SpanTreeOffset {...props} />);
-      const span = document.querySelector(`[data-ancestor-id=${parentSpanID}]`);
+      const span = document.querySelector(`[data-ancestor-id=${rootSpanID}]`);
       await userEvent.hover(span!);
       expect(props.addHoverIndentGuideId).toHaveBeenCalledTimes(1);
-      expect(props.addHoverIndentGuideId).toHaveBeenCalledWith(parentSpanID);
+      expect(props.addHoverIndentGuideId).toHaveBeenCalledWith(rootSpanID);
     });
 
     it('calls props.removeHoverIndentGuideId on mouse leave', async () => {
       render(<SpanTreeOffset {...props} />);
-      const span = document.querySelector(`[data-ancestor-id=${parentSpanID}]`);
+      const span = document.querySelector(`[data-ancestor-id=${rootSpanID}]`);
       await userEvent.unhover(span!);
       expect(props.removeHoverIndentGuideId).toHaveBeenCalledTimes(1);
-      expect(props.removeHoverIndentGuideId).toHaveBeenCalledWith(parentSpanID);
+      expect(props.removeHoverIndentGuideId).toHaveBeenCalledWith(rootSpanID);
     });
   });
 
@@ -95,16 +114,20 @@ describe('SpanTreeOffset', () => {
       props = { ...props, span: { ...props.span, hasChildren: true } };
     });
 
-    it('does not render icon if props.span.hasChildren is false', () => {
+    it('renders placeholder content when props.span.hasChildren is false', () => {
       props.span.hasChildren = false;
       render(<SpanTreeOffset {...props} />);
-      expect(screen.queryByTestId('icon-wrapper')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('icon-arrow-right')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('icon-arrow-down')).not.toBeInTheDocument();
+      expect(screen.getByTestId('icon-wrapper')).toHaveTextContent('-');
     });
 
-    it('does not render icon if props.span.hasChildren is true and showChildrenIcon is false', () => {
+    it('renders placeholder content when props.span.hasChildren is true but showChildrenIcon is false', () => {
       props.showChildrenIcon = false;
       render(<SpanTreeOffset {...props} />);
-      expect(screen.queryByTestId('icon-wrapper')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('icon-arrow-right')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('icon-arrow-down')).not.toBeInTheDocument();
+      expect(screen.getByTestId('icon-wrapper')).toHaveTextContent('-');
     });
 
     it('renders arrow-right if props.span.hasChildren is true and props.childrenVisible is false', () => {

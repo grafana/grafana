@@ -259,7 +259,7 @@ type RouteConvertPrometheusPostRuleGroupParams struct {
 	// in: header
 	FolderUID string `json:"x-grafana-alerting-folder-uid"`
 	// in: header
-	NotificationReceiver string `json:"x-grafana-alerting-notification-receiver"`
+	NotificationSettings string `json:"x-grafana-alerting-notification-settings"`
 	// in:body
 	Body PrometheusRuleGroup
 }

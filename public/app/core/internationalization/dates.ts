@@ -2,14 +2,18 @@ import deepEqual from 'fast-deep-equal';
 import memoize from 'micro-memoize';
 
 import { getLanguage } from '@grafana/i18n/internal';
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
 
 const deepMemoize: typeof memoize = (fn) => memoize(fn, { isEqual: deepEqual });
 
 const isLocaleEnabled = config.featureToggles.localeFormatPreference;
 
 const createDateTimeFormatter = deepMemoize((locale: string, options: Intl.DateTimeFormatOptions) => {
-  return new Intl.DateTimeFormat(locale, options);
+  try {
+    return new Intl.DateTimeFormat(locale, options);
+  } catch {
+    return new Intl.DateTimeFormat('en-US', options);
+  }
 });
 
 const createDurationFormatter = deepMemoize((locale: string, options: Intl.DurationFormatOptions) => {

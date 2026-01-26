@@ -8,6 +8,7 @@ const jsxA11yPlugin = require('eslint-plugin-jsx-a11y');
 const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
 const reactPlugin = require('eslint-plugin-react');
+const reactPreferFunctionComponentPlugin = require('eslint-plugin-react-prefer-function-component');
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
 const unicornPlugin = require('eslint-plugin-unicorn');
 
@@ -26,7 +27,7 @@ const commonTestIgnores = [
   '**/__mocks__/**',
   '**/mocks/**/*.{ts,tsx}',
   '**/public/test/**',
-  '**/mocks.{ts,tsx}',
+  '**/{mocks,test-utils}.{ts,tsx}',
   '**/*.mock.{ts,tsx}',
   '**/{test-helpers,testHelpers}.{ts,tsx}',
   '**/{spec,test-helpers}/**/*.{ts,tsx}',
@@ -100,6 +101,7 @@ module.exports = [
       '**/build/',
       '**/compiled/',
       '**/dist/',
+      'coverage/',
       'data/',
       'deployment_tools_config.json',
       'devenv',
@@ -115,6 +117,8 @@ module.exports = [
       'scripts/grafana-server/tmp',
       'packages/grafana-ui/src/graveyard', // deprecated UI components slated for removal
       'public/build-swagger', // swagger build output
+      'apps/plugins/plugin/src/generated/meta/v0alpha1',
+      'apps/plugins/plugin/src/generated/plugin/v0alpha1',
     ],
   },
   ...grafanaConfig,
@@ -130,6 +134,7 @@ module.exports = [
       reportUnusedDisableDirectives: false,
     },
     files: ['**/*.{ts,tsx,js}'],
+    ignores: ['packages/grafana-ui/src/components/Forms/Legacy/**'],
     plugins: {
       '@emotion': emotionPlugin,
       lodash: lodashPlugin,
@@ -139,6 +144,7 @@ module.exports = [
       'no-barrel-files': barrelPlugin,
       '@grafana': grafanaPlugin,
       unicorn: unicornPlugin,
+      'react-prefer-function-component': reactPreferFunctionComponentPlugin,
     },
 
     settings: {
@@ -155,6 +161,7 @@ module.exports = [
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
       '@grafana/no-restricted-img-srcs': 'error',
+      'react-prefer-function-component/react-prefer-function-component': ['error', { allowJsxUtilityClass: true }],
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
       'react/no-unknown-property': ['error', { ignore: ['css'] }],
@@ -250,6 +257,9 @@ module.exports = [
     name: 'grafana/jsx-a11y-overrides',
     files: ['**/*.tsx'],
     ignores: ['**/*.{spec,test}.tsx'],
+    plugins: {
+      'jsx-a11y': jsxA11yPlugin,
+    },
     rules: {
       ...jsxA11yPlugin.configs.recommended.rules,
       'jsx-a11y/no-autofocus': [
@@ -271,10 +281,14 @@ module.exports = [
   {
     // No NPM package should import from @grafana/*/internal because it does not exist
     // outside of this repo - they're not published to NPM.
-    name: 'grafana/packages-overrides',
+    name: 'grafana/packages',
     files: ['packages/**/*.{ts,tsx}'],
     ignores: [],
+    plugins: {
+      import: importPlugin,
+    },
     rules: {
+      'import/no-extraneous-dependencies': ['error', { includeInternal: true }],
       'no-restricted-imports': [
         'error',
         withBaseRestrictedImportsConfig({
@@ -361,7 +375,10 @@ module.exports = [
       '**/mock*.{ts,tsx}',
     ],
     rules: {
-      '@grafana/i18n/no-untranslated-strings': ['error', { calleesToIgnore: ['^css$', 'use[A-Z].*'] }],
+      '@grafana/i18n/no-untranslated-strings': [
+        'error',
+        { calleesToIgnore: ['^css$', 'use[A-Z].*'], basePaths: ['public/app/features'] },
+      ],
       '@grafana/i18n/no-translation-top-level': 'error',
     },
   },
@@ -370,6 +387,7 @@ module.exports = [
     plugins: {
       'testing-library': testingLibraryPlugin,
       'jest-dom': jestDomPlugin,
+      jest: jestPlugin,
     },
     files: [
       'public/app/features/alerting/**/__tests__/**/*.[jt]s?(x)',
@@ -426,6 +444,7 @@ module.exports = [
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
       'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
       'public/app/plugins/datasource/mysql/**/*.{ts,tsx}',
+      'public/app/plugins/datasource/opentsdb/**/*.{ts,tsx}',
       'public/app/plugins/datasource/parca/**/*.{ts,tsx}',
       'public/app/plugins/datasource/tempo/**/*.{ts,tsx}',
       'public/app/plugins/datasource/zipkin/**/*.{ts,tsx}',
@@ -477,13 +496,34 @@ module.exports = [
     },
   },
 
+  // dataviz prefers to use `clsx` over `cx` to compose classes as a rule for performance reasons
+  {
+    files: ['public/app/plugins/panel/state-timeline/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['@emotion/css'],
+              importNames: ['cx'],
+              message: 'Do not use "cx" from @emotion/css. Instead, use `clsx` and compose together only strings.',
+            },
+          ],
+        }),
+      ],
+    },
+  },
+
   // Old betterer rules config:
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
-    ignores:
+    ignores: [
       // FIXME: Remove once all enterprise issues are fixed -
       // we don't have a suppressions file/approach for enterprise code yet
-      enterpriseIgnores,
+      ...enterpriseIgnores,
+      'packages/grafana-ui/src/components/Forms/Legacy/**',
+    ],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
@@ -537,6 +577,42 @@ module.exports = [
             "Property[key.name='a11y'][value.type='ObjectExpression'] Property[key.name='test'][value.value='off']",
           message: 'Skipping a11y tests is not allowed. Please fix the component or story instead.',
         },
+        {
+          selector: 'MemberExpression[object.name="config"][property.name="apps"]',
+          message:
+            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime instead',
+        },
+      ],
+    },
+  },
+  {
+    files: [...commonTestIgnores],
+    ignores: [
+      // FIXME: Remove once all enterprise issues are fixed -
+      // we don't have a suppressions file/approach for enterprise code yet
+      ...enterpriseIgnores,
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'MemberExpression[object.name="config"][property.name="apps"]',
+          message:
+            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime instead',
+        },
+      ],
+    },
+  },
+  {
+    files: [...enterpriseIgnores],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'MemberExpression[object.name="config"][property.name="apps"]',
+          message:
+            'Usage of config.apps is not allowed. Use the function getAppPluginMetas or useAppPluginMetas from @grafana/runtime instead',
+        },
       ],
     },
   },
@@ -547,9 +623,44 @@ module.exports = [
       // FIXME: Remove once all enterprise issues are fixed -
       // we don't have a suppressions file/approach for enterprise code yet
       ...enterpriseIgnores,
+      // Ignore decoupled plugin webpack configs
+      'public/app/**/webpack.config.ts',
     ],
     rules: {
       'no-barrel-files/no-barrel-files': 'error',
     },
   },
+
+  {
+    // @grafana/i18n shouldn't import from our 'library' NPM packages
+    name: 'grafana/packages-that-i18n-cant-import',
+    files: ['packages/grafana-i18n/**/*.{ts,tsx}'],
+    ignores: [],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['@grafana/*'],
+              message: "'@grafana/* packages' should not be imported in @grafana/i18n",
+            },
+          ],
+        }),
+      ],
+    },
+  },
+
+  // {
+  //   name: 'grafana/plugin-external-import-paths',
+  //   files: [
+  //     'public/app/plugins/panel/histogram/**/*.{ts,tsx}',
+  //   ],
+  //   plugins: {
+  //     '@grafana': grafanaPlugin,
+  //   },
+  //   rules: {
+  //     '@grafana/no-plugin-external-import-paths': 'error',
+  //   },
+  // },
 ];

@@ -4,7 +4,7 @@ import { ReactNode, MutableRefObject, useCallback, useEffect, useRef, useState }
 import { AbsoluteTimeRange, CoreApp, LogRowModel, TimeRange, rangeUtil } from '@grafana/data';
 // import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/internal';
 import { Trans } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
 import { Button, Icon } from '@grafana/ui';
 
@@ -86,7 +86,7 @@ export const InfiniteScroll = ({
     }
 
     function handleScroll(event: Event | WheelEvent) {
-      if (!scrollElement || !loadMoreLogs || !rows.length || loading || !config.featureToggles.logsInfiniteScrolling) {
+      if (!scrollElement || !loadMoreLogs || !rows.length || loading) {
         return;
       }
       const scrollDirection = shouldLoadMore(event, lastEvent.current, countRef, scrollElement, lastScroll.current);

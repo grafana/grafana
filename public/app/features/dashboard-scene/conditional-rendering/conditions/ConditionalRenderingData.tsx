@@ -68,21 +68,28 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
     };
   }
 
-  private _getObjectDataProvider(): SceneDataProvider | undefined {
+  private _getPanelFromObject(): VizPanel | undefined {
     const object = getObject(this);
 
     if (!object) {
       return undefined;
     }
 
-    let panel: VizPanel | undefined;
+    if (object instanceof VizPanel) {
+      return object;
+    }
 
     for (const val of Object.values(object.state)) {
       if (val instanceof VizPanel) {
-        panel = val;
-        break;
+        return val;
       }
     }
+
+    return undefined;
+  }
+
+  private _getObjectDataProvider(): SceneDataProvider | undefined {
+    const panel = this._getPanelFromObject();
 
     if (!panel) {
       return undefined;
@@ -133,7 +140,11 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
     }
   }
 
-  public render(): ReactElement {
+  public forceCheck() {
+    this._check();
+  }
+
+  public renderCmp(): ReactElement {
     return <this.Component model={this} key={this.state.key} />;
   }
 

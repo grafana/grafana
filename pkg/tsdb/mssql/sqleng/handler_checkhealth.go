@@ -13,7 +13,15 @@ import (
 )
 
 func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	if err := e.db.Ping(); err != nil {
+	db, err := e.getDB(ctx)
+	if err != nil {
+		logCheckHealthError(ctx, e.dsInfo, err)
+		if strings.EqualFold(req.PluginContext.User.Role, "Admin") {
+			return ErrToHealthCheckResult(err)
+		}
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: e.TransformQueryError(e.log, err).Error()}, nil
+	}
+	if err := db.Ping(); err != nil {
 		logCheckHealthError(ctx, e.dsInfo, err)
 		if strings.EqualFold(req.PluginContext.User.Role, "Admin") {
 			return ErrToHealthCheckResult(err)

@@ -16,17 +16,22 @@ interface Props {
   title?: string;
   offset?: number;
   dragClass?: string;
+  onDragStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
   onOpenMenu?: () => void;
 }
 
-export function HoverWidget({ menu, title, dragClass, children, offset = -32, onOpenMenu }: Props) {
+export function HoverWidget({ menu, title, dragClass, children, offset = -32, onOpenMenu, onDragStart }: Props) {
   const styles = useStyles2(getStyles);
   const draggableRef = useRef<HTMLDivElement>(null);
   const selectors = e2eSelectors.components.Panels.Panel.HoverWidget;
   // Capture the pointer to keep the widget visible while dragging
-  const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    draggableRef.current?.setPointerCapture(e.pointerId);
-  }, []);
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      draggableRef.current?.setPointerCapture(e.pointerId);
+      onDragStart?.(e);
+    },
+    [onDragStart]
+  );
 
   const onPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     draggableRef.current?.releasePointerCapture(e.pointerId);
@@ -37,7 +42,11 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32, on
   }
 
   return (
-    <div className={cx(styles.container, 'show-on-hover')} style={{ top: offset }} data-testid={selectors.container}>
+    <div
+      className={cx(styles.container, 'show-on-hover')}
+      style={{ top: offset === 0 ? -1 : offset }}
+      data-testid={selectors.container}
+    >
       {dragClass && (
         <div
           className={cx(styles.square, styles.draggable, dragClass)}
@@ -73,15 +82,18 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       position: 'absolute',
       zIndex: 1,
-      right: 0,
+      right: -1,
+      top: -1,
       boxSizing: 'content-box',
       alignItems: 'center',
       background: theme.colors.background.secondary,
       color: theme.colors.text.primary,
       border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
+      borderBottomLeftRadius: theme.shape.radius.default,
       height: theme.spacing(4),
       boxShadow: theme.shadows.z1,
+      gap: theme.spacing(1),
+      padding: theme.spacing(0, 1),
     }),
     square: css({
       display: 'flex',
@@ -101,9 +113,6 @@ function getStyles(theme: GrafanaTheme2) {
       // Background and border are overriden when topnav toggle is disabled
       background: 'inherit',
       border: 'none',
-      '&:hover': {
-        background: theme.colors.secondary.main,
-      },
     }),
     draggableIcon: css({
       transform: 'rotate(45deg)',

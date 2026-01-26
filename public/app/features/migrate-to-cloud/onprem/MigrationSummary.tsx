@@ -60,6 +60,7 @@ export function MigrationSummary(props: MigrationSummaryProps) {
 
   return (
     <Box
+      borderRadius="lg"
       borderColor="weak"
       borderStyle="solid"
       padding={2}

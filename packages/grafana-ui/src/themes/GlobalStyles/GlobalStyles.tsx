@@ -24,14 +24,9 @@ import { getSlateStyles } from './slate';
 import { getUplotStyles } from './uPlot';
 import { getUtilityClassStyles } from './utilityClasses';
 
-interface GlobalStylesProps {
-  isExtensionSidebarOpen?: boolean;
-}
-
 /** @internal */
-export function GlobalStyles(props: GlobalStylesProps) {
+export function GlobalStyles() {
   const theme = useTheme2();
-  const { isExtensionSidebarOpen } = props;
 
   return (
     <Global
@@ -41,7 +36,7 @@ export function GlobalStyles(props: GlobalStylesProps) {
         getCodeStyles(theme),
         getDashDiffStyles(theme),
         getDashboardGridStyles(theme),
-        getElementStyles(theme, isExtensionSidebarOpen),
+        getElementStyles(theme),
         getExtraStyles(theme),
         getFilterTableStyles(theme),
         getFontStyles(theme),

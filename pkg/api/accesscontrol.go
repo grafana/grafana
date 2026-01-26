@@ -176,41 +176,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(org.RoleViewer)},
 	}
 
-	apikeyReaderRole := ac.RoleRegistration{
-		Role: ac.RoleDTO{
-			Name:        "fixed:apikeys:reader",
-			DisplayName: "Reader",
-			Description: "Gives access to read api keys.",
-			Group:       "API Keys",
-			Permissions: []ac.Permission{
-				{
-					Action: ac.ActionAPIKeyRead,
-					Scope:  ac.ScopeAPIKeysAll,
-				},
-			},
-		},
-		Grants: []string{string(org.RoleAdmin)},
-	}
-
-	apikeyWriterRole := ac.RoleRegistration{
-		Role: ac.RoleDTO{
-			Name:        "fixed:apikeys:writer",
-			DisplayName: "Writer",
-			Description: "Gives access to add and delete api keys.",
-			Group:       "API Keys",
-			Permissions: ac.ConcatPermissions(apikeyReaderRole.Role.Permissions, []ac.Permission{
-				{
-					Action: ac.ActionAPIKeyCreate,
-				},
-				{
-					Action: ac.ActionAPIKeyDelete,
-					Scope:  ac.ScopeAPIKeysAll,
-				},
-			}),
-		},
-		Grants: []string{string(org.RoleAdmin)},
-	}
-
 	orgReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:organization:reader",
@@ -348,6 +313,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(org.RoleEditor)},
 	}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		// Keeping the name to avoid breaking changes (for users who have assigned this role to grant permissions on organization annotations)
 		annotationsReaderRole = ac.RoleRegistration{
@@ -649,11 +615,12 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, teamsReaderRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
-		foldersCreatorRole, foldersReaderRole, generalFolderReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
+		foldersCreatorRole, foldersReaderRole, generalFolderReaderRole, foldersWriterRole,
 		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole,
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
 		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole}
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if hs.Features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		allAnnotationsReaderRole := ac.RoleRegistration{
 			Role: ac.RoleDTO{

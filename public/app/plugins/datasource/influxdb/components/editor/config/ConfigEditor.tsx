@@ -8,7 +8,7 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet, TextLink } from '@grafana/ui';
+import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet } from '@grafana/ui';
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../../../constants';
 import { InfluxOptions, InfluxOptionsV1, InfluxVersion } from '../../../types';
@@ -59,11 +59,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.state.maxSeries = props.options.jsonData.maxSeries?.toString() || '';
     this.htmlPrefix = uniqueId('influxdb-config');
   }
-
-  versionNotice = {
-    Flux: 'Support for Flux in Grafana is currently in beta',
-    SQL: 'Support for SQL in Grafana is currently in alpha',
-  };
 
   onVersionChanged = (selected: SelectableValue<InfluxVersion>) => {
     const { options, onOptionsChange } = this.props;
@@ -125,17 +120,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
             />
           </Field>
         </FieldSet>
-
-        {options.jsonData.version !== InfluxVersion.InfluxQL && (
-          <Alert severity="info" title={this.versionNotice[options.jsonData.version!]}>
-            <p>
-              Please report any issues to: <br />
-              <TextLink href="https://github.com/grafana/grafana/issues/new/choose" external>
-                https://github.com/grafana/grafana/issues
-              </TextLink>
-            </p>
-          </Alert>
-        )}
 
         {isDirectAccess && (
           <Alert title="Error" severity="error">

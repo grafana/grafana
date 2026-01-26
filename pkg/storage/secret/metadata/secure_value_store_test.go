@@ -63,20 +63,20 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "test description",
 				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("test-value")),
-				Keeper:      &keeperName,
 			},
+			Status: secretv1beta1.SecureValueStatus{Keeper: keeperName},
 		}
 		testSecureValue.Name = "sv-test"
 		testSecureValue.Namespace = "default"
 
 		// Create the secure value
-		createdSecureValue, err := secureValueStorage.Create(ctx, testSecureValue, "testuser")
+		createdSecureValue, err := secureValueStorage.Create(ctx, keeperName, testSecureValue, "testuser")
 		require.NoError(t, err)
 		require.NotNil(t, createdSecureValue)
 		require.Equal(t, "sv-test", createdSecureValue.Name)
 		require.Equal(t, "default", createdSecureValue.Namespace)
 		require.Equal(t, "test description", createdSecureValue.Spec.Description)
-		require.Equal(t, keeperName, *createdSecureValue.Spec.Keeper)
+		require.Equal(t, keeperName, createdSecureValue.Status.Keeper)
 
 		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version))
 
@@ -87,7 +87,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "sv-test", readSecureValue.Name)
 		require.Equal(t, "default", readSecureValue.Namespace)
 		require.Equal(t, "test description", readSecureValue.Spec.Description)
-		require.Equal(t, keeperName, *readSecureValue.Spec.Keeper)
+		require.Equal(t, keeperName, readSecureValue.Status.Keeper)
 
 		// List secure values and verify our value is in the list
 		secureValues, err := secureValueStorage.List(ctx, xkube.Namespace("default"))
@@ -101,7 +101,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 				found = true
 				require.Equal(t, "default", sv.Namespace)
 				require.Equal(t, "test description", sv.Spec.Description)
-				require.Equal(t, keeperName, *sv.Spec.Keeper)
+				require.Equal(t, keeperName, sv.Status.Keeper)
 				break
 			}
 		}
@@ -117,14 +117,14 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "test description 2",
 				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("test-value-2")),
-				Keeper:      &keeperName,
 			},
+			Status: secretv1beta1.SecureValueStatus{Keeper: keeperName},
 		}
 		testSecureValue.Name = "sv-test-2"
 		testSecureValue.Namespace = "default"
 
 		// Create the secure value
-		createdSecureValue, err := secureValueStorage.Create(ctx, testSecureValue, "testuser")
+		createdSecureValue, err := secureValueStorage.Create(ctx, keeperName, testSecureValue, "testuser")
 		require.NoError(t, err)
 		require.NotNil(t, createdSecureValue)
 
@@ -194,13 +194,13 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 
 	rapid.Check(t, func(t *rapid.T) {
 		sut := testutils.Setup(tt)
-		model := newModel()
+		model := testutils.NewModelGsm(nil)
 
 		t.Repeat(map[string]func(*rapid.T){
 			"create": func(t *rapid.T) {
-				sv := anySecureValueGen.Draw(t, "sv")
-				modelCreatedSv, modelErr := model.create(sut.Clock.Now(), deepCopy(sv))
-				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(deepCopy(sv)))
+				sv := testutils.AnySecureValueGen.Draw(t, "sv")
+				modelCreatedSv, modelErr := model.Create(sut.Clock.Now(), sv.DeepCopy())
+				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
 					return
@@ -209,10 +209,23 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 				require.Equal(t, modelCreatedSv.Name, createdSv.Name)
 				require.Equal(t, modelCreatedSv.Status.Version, createdSv.Status.Version)
 			},
+			"read": func(t *rapid.T) {
+				ns := testutils.NamespaceGen.Draw(t, "ns")
+				name := testutils.SecureValueNameGen.Draw(t, "name")
+				modelSv, modelErr := model.Read(ns, name)
+				sv, err := sut.SecureValueMetadataStorage.Read(t.Context(), xkube.Namespace(ns), name, contracts.ReadOpts{})
+				if err != nil || modelErr != nil {
+					require.ErrorIs(t, err, modelErr)
+					return
+				}
+				require.Equal(t, modelSv.Namespace, sv.Namespace)
+				require.Equal(t, modelSv.Name, sv.Name)
+				require.Equal(t, modelSv.Status.Version, sv.Status.Version)
+			},
 			"delete": func(t *rapid.T) {
-				ns := namespaceGen.Draw(t, "ns")
-				name := nameGen.Draw(t, "name")
-				modelSv, modelErr := model.delete(ns, name)
+				ns := testutils.NamespaceGen.Draw(t, "ns")
+				name := testutils.SecureValueNameGen.Draw(t, "name")
+				modelSv, modelErr := model.Delete(ns, name)
 				sv, err := sut.DeleteSv(t.Context(), ns, name)
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
@@ -227,7 +240,7 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 				minAge := 300 * time.Second
 				leaseTTL := 30 * time.Second
 				maxBatchSize := rapid.Uint16Range(1, 10).Draw(t, "maxBatchSize")
-				modelSvs, modelErr := model.leaseInactiveSecureValues(sut.Clock.Now(), minAge, leaseTTL, maxBatchSize)
+				modelSvs, modelErr := model.LeaseInactiveSecureValues(sut.Clock.Now(), minAge, leaseTTL, maxBatchSize)
 				svs, err := sut.SecureValueMetadataStorage.LeaseInactiveSecureValues(t.Context(), maxBatchSize)
 				require.ErrorIs(t, err, modelErr)
 				require.Equal(t, len(modelSvs), len(svs))

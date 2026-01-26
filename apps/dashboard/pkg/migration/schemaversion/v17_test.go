@@ -144,7 +144,7 @@ func TestV17(t *testing.T) {
 			},
 		},
 		{
-			name: "panel with minSpan 1 gets converted to maxPerRow 24",
+			name: "panel with minSpan 1 gets minSpan removed without setting maxPerRow",
 			input: map[string]interface{}{
 				"title":         "V17 MinSpan Migration Test",
 				"schemaVersion": 16,
@@ -162,10 +162,9 @@ func TestV17(t *testing.T) {
 				"schemaVersion": 17,
 				"panels": []interface{}{
 					map[string]interface{}{
-						"id":        6,
-						"type":      "graph",
-						"title":     "Tiny Panel",
-						"maxPerRow": 24,
+						"id":    6,
+						"type":  "graph",
+						"title": "Tiny Panel",
 					},
 				},
 			},

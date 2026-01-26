@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import { PureComponent, ReactNode } from 'react';
+import { PureComponent, ReactNode, type JSX, createRef } from 'react';
 
 import {
   CoreApp,
@@ -34,7 +34,9 @@ import {
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
+import { ExpressionDatasourceUID } from '../../expressions/types';
 
+import { QueryActionAssistantButton } from './QueryActionAssistantButton';
 import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
@@ -87,6 +89,7 @@ interface State<TQuery extends DataQuery> {
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
   dataSourceSrv = getDataSourceSrv();
   id = '';
+  editorRef = createRef<HTMLDivElement>();
 
   state: State<TQuery> = {
     datasource: null,
@@ -229,6 +232,17 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onRemoveQuery = () => {
     const { onRemoveQuery, query, onQueryRemoved } = this.props;
+
+    // Track expression query removal
+    const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
+    if (isExpressionQuery && 'type' in query && query.type) {
+      reportInteraction('dashboards_expression_interaction', {
+        action: 'remove_expression',
+        expression_type: query.type,
+        context: 'panel_query_section',
+      });
+    }
+
     onRemoveQuery(query);
 
     if (onQueryRemoved) {
@@ -298,11 +312,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
-    if (datasource?.getQueryDisplayText) {
-      return datasource.getQueryDisplayText(this.props.query);
+
+    if (!datasource || typeof datasource.getQueryDisplayText !== 'function') {
+      return null;
     }
 
-    return null;
+    try {
+      return datasource.getQueryDisplayText(this.props.query);
+    } catch (error) {
+      // Some datasource plugins may throw errors in getQueryDisplayText
+      // Return null gracefully to prevent the query editor from crashing.
+      return null;
+    }
   }
 
   renderWarnings = (type: string): JSX.Element | null => {
@@ -386,16 +407,21 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
     const isEditingQueryLibrary = queryLibraryRef !== undefined;
     const isUnifiedAlerting = app === CoreApp.UnifiedAlerting;
+    const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
 
     return (
       <>
-        {!isEditingQueryLibrary && !isUnifiedAlerting && (
+        {!isEditingQueryLibrary && !isUnifiedAlerting && !isExpressionQuery && (
           <SavedQueryButtons
-            query={query}
+            query={{
+              ...query,
+              datasource: datasource ? { uid: datasource.uid, type: datasource.type } : query.datasource,
+            }}
             app={app}
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
             onSelectQuery={this.onSelectQueryFromLibrary}
             datasourceFilters={datasource?.name ? [datasource.name] : []}
+            parentRef={this.editorRef}
           />
         )}
 
@@ -442,6 +468,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   renderHeader = (props: QueryOperationRowRenderProps) => {
     const { app, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras, hideRefId } = this.props;
+    const { datasource } = this.state;
 
     return (
       <QueryEditorRowHeader
@@ -452,7 +479,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         hidden={query.hide}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
-        renderExtras={renderHeaderExtras}
+        renderExtras={() => (
+          <>
+            <QueryActionAssistantButton
+              query={query}
+              queries={queries}
+              dataSourceInstanceSettings={this.props.dataSource}
+              datasourceApi={datasource}
+              app={app}
+            />
+            {renderHeaderExtras && renderHeaderExtras()}
+          </>
+        )}
         alerting={app === CoreApp.UnifiedAlerting}
         hideRefId={hideRefId}
       />
@@ -500,7 +538,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         onOpen={onQueryOpenChanged}
       >
         <div className={rowClasses} id={this.id}>
-          <ErrorBoundaryAlert>
+          <ErrorBoundaryAlert boundaryName="query-editor-operation-row">
             {showingHelp && DatasourceCheatsheet && (
               <OperationRowHelp>
                 <DatasourceCheatsheet
@@ -519,7 +557,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     );
 
     return (
-      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
+      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows} ref={this.editorRef}>
         {queryLibraryRef && (
           <MaybeQueryLibraryEditingHeader
             query={query}
@@ -588,6 +626,7 @@ function SavedQueryButtons(props: {
   onUpdateSuccess?: () => void;
   onSelectQuery: (query: DataQuery) => void;
   datasourceFilters: string[];
+  parentRef: React.RefObject<HTMLDivElement>;
 }) {
   const { renderSavedQueryButtons } = useQueryLibraryContext();
   return renderSavedQueryButtons(
@@ -595,7 +634,8 @@ function SavedQueryButtons(props: {
     props.app,
     props.onUpdateSuccess,
     props.onSelectQuery,
-    props.datasourceFilters
+    undefined,
+    props.parentRef
   );
 }
 

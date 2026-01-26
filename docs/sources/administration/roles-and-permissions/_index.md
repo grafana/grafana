@@ -12,7 +12,7 @@ labels:
     - oss
     - cloud
 title: Roles and permissions
-weight: 300
+weight: 3100
 ---
 
 # Roles and permissions
@@ -35,10 +35,10 @@ For Grafana Cloud users, Grafana Support is not authorised to make org role chan
 
 ## Grafana server administrators
 
-A Grafana server administrator manages server-wide settings and access to resources such as organizations, users, and licenses. Grafana includes a default server administrator that you can use to manage all of Grafana, or you can divide that responsibility among other server administrators that you create.
+A Grafana server administrator (sometimes referred to as a **Grafana Admin**) manages server-wide settings and access to resources such as organizations, users, and licenses. Grafana includes a default server administrator that you can use to manage all of Grafana, or you can divide that responsibility among other server administrators that you create.
 
-{{< admonition type="note" >}}
-The server administrator role does not mean that the user is also a Grafana [organization administrator](#organization-roles).
+{{< admonition type="caution" >}}
+The server administrator role is distinct from the [organization administrator](#organization-roles) role.
 {{< /admonition >}}
 
 A server administrator can perform the following tasks:
@@ -50,7 +50,7 @@ A server administrator can perform the following tasks:
 - Upgrade the server to Grafana Enterprise.
 
 {{< admonition type="note" >}}
-The server administrator role does not exist in Grafana Cloud.
+The server administrator (Grafana Admin) role does not exist in Grafana Cloud.
 {{< /admonition >}}
 
 To assign or remove server administrator privileges, see [Server user management](../user-management/server-user-management/assign-remove-server-admin-privileges/).
@@ -119,7 +119,7 @@ You can specify the following permissions to dashboards and folders.
 - **Edit**: Can create, edit, or delete a dashboard. Can edit or delete a folder, and create dashboards and subfolders in a folder. Editors _cannot_ change folder or dashboard permissions.
 - **View**: Can only view dashboards and folders.
 
-> Important: When a user creates a dashboard or a folder they are automatically granted **Admin** permissions for it.
+> Important: When a user creates a dashboard or folder at the top level, they are automatically granted Admin permissions for it. This does not apply to dashboards within a folder or to subfolders.
 
 For more information about assigning dashboard folder permissions, refer to [Grant dashboard folder permissions](../user-management/manage-dashboard-permissions/#grant-dashboard-folder-permissions).
 

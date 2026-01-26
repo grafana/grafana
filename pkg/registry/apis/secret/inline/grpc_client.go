@@ -36,7 +36,7 @@ type TLSConfig struct {
 	InsecureSkipVerify bool
 }
 
-func NewGRPCInlineClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tracer, address string, tlsConfig TLSConfig) (*GRPCInlineClient, error) {
+func NewGRPCInlineClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tracer, address string, tlsConfig TLSConfig, clientLoadBalancingEnabled bool) (*GRPCInlineClient, error) {
 	var opts []grpc.DialOption
 	if tlsConfig.UseTLS {
 		creds, err := createTLSCredentials(tlsConfig)
@@ -47,6 +47,15 @@ func NewGRPCInlineClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tr
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+
+	if clientLoadBalancingEnabled {
+		// Use round_robin to balances requests more evenly over the available replicas.
+		opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`))
+
+		// Disable looking up service config from TXT DNS records.
+		// This reduces the number of requests made to the DNS servers.
+		opts = append(opts, grpc.WithDisableServiceConfig())
 	}
 
 	conn, err := grpc.NewClient(address, opts...)

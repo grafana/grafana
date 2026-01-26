@@ -503,6 +503,20 @@ export enum VizOrientation {
 }
 
 /**
+ * Breaks out each annotation frame into multiple lanes on the x-axis
+ */
+export interface VizAnnotations {
+  multiLane?: boolean;
+}
+
+/**
+ * TODO docs
+ */
+export interface OptionsWithAnnotations {
+  annotations?: VizAnnotations;
+}
+
+/**
  * TODO docs
  */
 export interface OptionsWithTooltip {
@@ -1009,6 +1023,10 @@ export interface TableFieldOptions extends HideableFieldConfig {
   hideHeader?: boolean;
   inspect: boolean;
   minWidth?: number;
+  /**
+   * The name of the field which contains styling overrides for this cell
+   */
+  styleField?: string;
   /**
    * Selecting or hovering this field will show a tooltip containing the content within the target field
    */

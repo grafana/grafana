@@ -4,7 +4,6 @@ import {
   VariableRefresh as VariableRefreshV1,
   VariableSort as VariableSortV1,
   DashboardCursorSync as DashboardCursorSyncV1,
-  defaultDashboardCursorSync,
   MappingType as MappingTypeV1,
   ThresholdsMode as ThresholdsModeV1,
 } from '@grafana/schema';
@@ -39,6 +38,8 @@ export function transformVariableHideToEnumV1(hide?: VariableHide): VariableHide
       return VariableHideV1.hideLabel;
     case 'hideVariable':
       return VariableHideV1.hideVariable;
+    case 'inControlsMenu':
+      return VariableHideV1.inControlsMenu;
     default:
       return VariableHideV1.dontHide;
   }
@@ -78,7 +79,7 @@ export function transformCursorSyncV2ToV1(cursorSync: DashboardCursorSync): Dash
     case 'Off':
       return DashboardCursorSyncV1.Off;
     default:
-      return defaultDashboardCursorSync;
+      return DashboardCursorSyncV1.Off;
   }
 }
 

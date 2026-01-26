@@ -4,6 +4,7 @@
 .gitignore
 .vscode
 bin
+!bin/grafana-linux-k8s
 data*
 dist
 docker

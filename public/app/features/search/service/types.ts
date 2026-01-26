@@ -1,6 +1,6 @@
 import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { PermissionLevelString } from 'app/types/acl';
+import { PermissionLevel } from 'app/types/acl';
 
 import { ManagerKind } from '../../apiserver/types';
 
@@ -21,11 +21,10 @@ export interface FacetField {
 
 export interface SearchQuery {
   query?: string;
-  location?: string;
+  location?: string; // folder!
   sort?: string;
   ds_uid?: string;
   ds_type?: string;
-  saved_query_uid?: string; // TODO: not implemented yet
   tags?: string[];
   kind?: string[];
   panel_type?: string;
@@ -33,13 +32,13 @@ export interface SearchQuery {
   uid?: string[];
   facet?: FacetField[];
   explain?: boolean;
+  panelTitleSearch?: boolean;
   withAllowedActions?: boolean;
   accessInfo?: boolean;
-  hasPreview?: string; // theme
   limit?: number;
   from?: number;
   starred?: boolean;
-  permission?: PermissionLevelString;
+  permission?: PermissionLevel;
   deleted?: boolean;
   offset?: number;
 }
@@ -97,6 +96,7 @@ export interface GrafanaSearcher {
   tags: (query: SearchQuery) => Promise<TermCount[]>;
   getSortOptions: () => Promise<SelectableValue[]>;
   sortPlaceholder?: string;
+  getLocationInfo: () => Promise<Record<string, LocationInfo>>;
 
   /** Gets the default sort used for the Folder view */
   getFolderViewSort: () => string;

@@ -9,11 +9,10 @@ import { SearchStateManager } from 'app/features/search/state/SearchStateManager
 import { DashboardViewItemKind, SearchState } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
+import { canEditItemType, canSelectItems } from '../permissions';
 import { useHasSelection } from '../state/hooks';
 import { setAllSelection, setItemSelectionState } from '../state/slice';
 import { BrowseDashboardsPermissions } from '../types';
-
-import { canEditItemType, canSelectItems } from './utils';
 
 interface SearchViewProps {
   height: number;
@@ -136,7 +135,8 @@ export function SearchView({
     onTagSelected: stateManager.onAddTag,
     keyboardEvents,
     onDatasourceChange: searchState.datasource ? stateManager.onDatasourceChange : undefined,
-    onClickItem: stateManager.onSearchItemClicked,
+    onClickItem: searchState.deleted ? undefined : stateManager.onSearchItemClicked,
+    trackingSource: 'browseDashboardsPage_SearchView',
   };
 
   return <SearchResultsTable {...props} />;

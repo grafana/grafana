@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 
+	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -25,7 +27,7 @@ type RemotePrimaryForkedAlertmanager struct {
 // NewRemotePrimaryFactory returns a function to override the default AM factory in the multi-org Alertmanager.
 func NewRemotePrimaryFactory(
 	cfg AlertmanagerConfig,
-	store stateStore,
+	store kvstore.KVStore,
 	crypto Crypto,
 	autogenFn AutogenFn,
 	m *metrics.RemoteAlertmanager,
@@ -43,7 +45,7 @@ func NewRemotePrimaryFactory(
 			cfg.OrgID = orgID
 			cfg.PromoteConfig = true
 			l := log.New("ngalert.forked-alertmanager.remote-primary")
-			remoteAM, err := NewAlertmanager(ctx, cfg, store, crypto, autogenFn, m, t)
+			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, autogenFn, m, t)
 			if err != nil {
 				l.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 				return internalAM, nil
@@ -170,6 +172,10 @@ func (fam *RemotePrimaryForkedAlertmanager) GetReceivers(ctx context.Context) ([
 
 func (fam *RemotePrimaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
 	return fam.remote.TestReceivers(ctx, c)
+}
+
+func (fam *RemotePrimaryForkedAlertmanager) TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error) {
+	return fam.remote.TestIntegration(ctx, receiverName, integrationConfig, alert)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {

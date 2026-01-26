@@ -14,6 +14,7 @@ interface PopoverMenuProps {
   y: number;
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
+  onClickSearchString?: (text: string) => void;
   onDisable: () => void;
   row: LogRowModel;
   close: () => void;
@@ -24,6 +25,7 @@ export const PopoverMenu = ({
   y,
   onClickFilterString,
   onClickFilterOutString,
+  onClickSearchString,
   selection,
   row,
   close,
@@ -50,7 +52,7 @@ export const PopoverMenu = ({
     props.onDisable();
   }, [props, row.datasourceType, selection.length]);
 
-  const supported = onClickFilterString || onClickFilterOutString;
+  const supported = onClickFilterString || onClickFilterOutString || onClickSearchString;
 
   if (!supported) {
     return null;
@@ -85,6 +87,17 @@ export const PopoverMenu = ({
                 onClickFilterOutString(selection, row.dataFrame.refId);
                 close();
                 track('line_does_not_contain', selection.length, row.datasourceType);
+              }}
+            />
+          )}
+          <Menu.Divider />
+          {onClickSearchString && (
+            <Menu.Item
+              label={t('logs.popover-menu.search-text', 'Search in results')}
+              onClick={() => {
+                onClickSearchString(selection);
+                close();
+                track('search_text', selection.length, row.datasourceType);
               }}
             />
           )}

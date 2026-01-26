@@ -1,11 +1,12 @@
 package templategroup
 
 import (
+	"github.com/grafana/alerting/definition"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -36,6 +37,7 @@ func convertToK8sResource(orgID int64, template definitions.NotificationTemplate
 		Spec: model.TemplateGroupSpec{
 			Title:   template.Name,
 			Content: template.Template,
+			Kind:    model.TemplateGroupTemplateKind(template.Kind),
 		},
 	}
 	result.SetProvenanceStatus(string(template.Provenance))
@@ -50,5 +52,6 @@ func convertToDomainModel(template *model.TemplateGroup) definitions.Notificatio
 		Template:        template.Spec.Content,
 		ResourceVersion: template.ResourceVersion,
 		Provenance:      definitions.Provenance(ngmodels.ProvenanceNone),
+		Kind:            definition.TemplateKind(template.Spec.Kind),
 	}
 }

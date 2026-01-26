@@ -6,7 +6,7 @@ test.describe('Dashboard CUJS Global Teardown', () => {
   test('cleanup test dashboards', async ({ request }) => {
     const dashboardUIDs = getDashboardUIDs();
 
-    if (!dashboardUIDs) {
+    if (!dashboardUIDs.length) {
       return;
     }
 

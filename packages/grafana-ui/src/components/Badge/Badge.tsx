@@ -47,6 +47,11 @@ const BadgeSkeleton: SkeletonComponent = ({ rootProps }) => {
   return <Skeleton width={60} height={22} containerClassName={styles.container} {...rootProps} />;
 };
 
+/**
+ * The badge component adds meta information to other content, for example about release status or new elements. You can add any `Icon` component or use the badge without an icon.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-badge--docs
+ */
 export const Badge = attachSkeleton(BadgeComponent, BadgeSkeleton);
 
 const getSkeletonStyles = () => ({
@@ -81,7 +86,7 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
     wrapper: css({
       display: 'inline-flex',
       padding: '1px 4px',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.sm,
       background: bgColor,
       border: `1px solid ${borderColor}`,
       color: textColor,

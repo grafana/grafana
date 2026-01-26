@@ -167,7 +167,10 @@ export function createTabRepeats({
     });
 
     if (!isSourceTab) {
+      tabClone.state.conditionalRendering?.setTarget(tabClone);
       repeats.push(tabClone);
+    } else {
+      tab.state.conditionalRendering?.setTarget(tab);
     }
   }
   return repeats;

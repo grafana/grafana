@@ -2,15 +2,16 @@ package clients
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/rsa"
 	"fmt"
 	"net/http"
 	"testing"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
-	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -19,6 +20,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -48,8 +51,41 @@ var (
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "default", // org ID of 1 is special and translates to default
+		},
+	}
+	validIDTokenClaimsWithServiceAccount = idTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "service-account:3",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.IDTokenClaims{
+			AuthenticatedBy: login.ExtendedJWTModule,
+			Namespace:       "default", // org ID of 1 is special and translates to default
+		},
+	}
+	validIDTokenClaimsWithRenderService = idTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "render:0",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.IDTokenClaims{
+			AuthenticatedBy: login.ExtendedJWTModule,
+			Namespace:       "default",
+		},
+	}
+	validIDTokenClaimsWithAnonymous = idTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "anonymous:0",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.IDTokenClaims{
+			AuthenticatedBy: login.ExtendedJWTModule,
+			Namespace:       "default",
 		},
 	}
 	validIDTokenClaimsWithStackSet = idTokenClaims{
@@ -59,7 +95,7 @@ var (
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "stacks-1234",
 		},
 	}
@@ -70,7 +106,7 @@ var (
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "stack-1234",
 		},
 	}
@@ -111,23 +147,24 @@ var (
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "org-2",
 		},
 	}
 	invalidSubjectIDTokenClaims = idTokenClaims{
 		Claims: jwt.Claims{
-			Subject:  "service-account:2",
+			Subject:  "api-key:2",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
 		Rest: authnlib.IDTokenClaims{
-			AuthenticatedBy: "extended_jwt",
+			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "default",
 		},
 	}
 
-	pk, _ = rsa.GenerateKey(rand.Reader, 4096)
+	// generate ES256 key
+	pk, _ = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 )
 
 var _ authnlib.Verifier[authnlib.IDTokenClaims] = &mockIDVerifier{}
@@ -173,12 +210,12 @@ func TestExtendedJWT_Test(t *testing.T) {
 		},
 		{
 			name:           "should return true when Authorization header contains Bearer prefix",
-			authHeaderFunc: func() string { return "Bearer " + generateToken(validAccessTokenClaims, pk, jose.RS256) },
+			authHeaderFunc: func() string { return "Bearer " + generateToken(t, validAccessTokenClaims, pk, jose.ES256) },
 			want:           true,
 		},
 		{
 			name:           "should return true when Authorization header only contains the token",
-			authHeaderFunc: func() string { return generateToken(validAccessTokenClaims, pk, jose.RS256) },
+			authHeaderFunc: func() string { return generateToken(t, validAccessTokenClaims, pk, jose.ES256) },
 			want:           true,
 		},
 		{
@@ -235,7 +272,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:             1,
 				AccessTokenClaims: &validAccessTokenClaims,
 				Namespace:         "default",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					SyncPermissions:        true,
@@ -254,7 +291,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:             1,
 				AccessTokenClaims: &validAccessTokenClaimsWildcard,
 				Namespace:         "*",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
@@ -273,10 +310,86 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AccessTokenClaims: &validAccessTokenClaims,
 				IDTokenClaims:     &validIDTokenClaims,
 				Namespace:         "default",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					FetchSyncedUser: true,
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+					},
+				},
+			},
+		},
+		{
+			name:        "should authenticate as service account",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &validIDTokenClaimsWithServiceAccount,
+			orgID:       1,
+			want: &authn.Identity{
+				ID:                "3",
+				Type:              claims.TypeServiceAccount,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaims,
+				IDTokenClaims:     &validIDTokenClaimsWithServiceAccount,
+				Namespace:         "default",
+				AuthenticatedBy:   login.ExtendedJWTModule,
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: true,
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+					},
+				},
+			},
+		},
+		{
+			name:        "should authenticate as render service",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &validIDTokenClaimsWithRenderService,
+			orgID:       1,
+			want: &authn.Identity{
+				ID:                "0",
+				Type:              claims.TypeRenderService,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaims,
+				IDTokenClaims:     &validIDTokenClaimsWithRenderService,
+				Namespace:         "default",
+				AuthenticatedBy:   login.ExtendedJWTModule,
+				OrgRoles:          map[int64]org.RoleType{1: org.RoleAdmin},
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: false,
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+					},
+				},
+			},
+		},
+		{
+			name:        "should authenticate as anonymous",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &validIDTokenClaimsWithAnonymous,
+			orgID:       1,
+			cfg: &setting.Cfg{
+				Anonymous: setting.AnonymousSettings{
+					OrgRole: string(org.RoleEditor),
+				},
+			},
+			want: &authn.Identity{
+				ID:                "0",
+				Type:              claims.TypeAnonymous,
+				OrgID:             1,
+				AccessTokenClaims: &validAccessTokenClaims,
+				IDTokenClaims:     &validIDTokenClaimsWithAnonymous,
+				Namespace:         "default",
+				OrgRoles:          map[int64]org.RoleType{1: org.RoleEditor},
+				AuthenticatedBy:   login.ExtendedJWTModule,
+				AuthID:            "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: false,
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{
 						RestrictedActions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
@@ -296,7 +409,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AccessTokenClaims: &validAccessTokenClaimsWildcard,
 				IDTokenClaims:     &validIDTokenClaims,
 				Namespace:         "default",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					FetchSyncedUser: true,
@@ -324,7 +437,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AccessTokenClaims: &validAccessTokenClaimsWildcard,
 				IDTokenClaims:     &validIDTokenClaimsWithStackSet,
 				Namespace:         "stacks-1234",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					FetchSyncedUser: true,
@@ -352,7 +465,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:             1,
 				AccessTokenClaims: &validAccessTokenClaimsWithStackSet,
 				Namespace:         "stacks-1234",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
@@ -371,23 +484,10 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					ExpectIssuer: "http://localhost:3000",
 				},
 			},
-			want: &authn.Identity{
-				ID:                "this-uid",
-				UID:               "this-uid",
-				Name:              "this-uid",
-				Type:              claims.TypeAccessPolicy,
-				OrgID:             1,
-				AccessTokenClaims: &validAccessTokenClaimsWithDeprecatedStackClaimSet,
-				Namespace:         "stack-1234",
-				AuthenticatedBy:   "extendedjwt",
-				AuthID:            "access-policy:this-uid",
-				ClientParams: authn.ClientParams{
-					SyncPermissions: true,
-				},
-			},
+			wantErr: errExtJWTDisallowedNamespaceClaim,
 		},
 		{
-			name:        "should authenticate as user using specific deprecated namespace claim in access and id tokens",
+			name:        "should NOT authenticate as user using specific deprecated namespace claim in access and id tokens",
 			accessToken: &validAccessTokenClaimsWithDeprecatedStackClaimSet,
 			idToken:     &validIDTokenClaimsWithDeprecatedStackClaimSet,
 			orgID:       1,
@@ -399,20 +499,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					ExpectIssuer: "http://localhost:3000",
 				},
 			},
-			want: &authn.Identity{
-				ID:                "2",
-				Type:              claims.TypeUser,
-				OrgID:             1,
-				AccessTokenClaims: &validAccessTokenClaimsWithDeprecatedStackClaimSet,
-				IDTokenClaims:     &validIDTokenClaimsWithDeprecatedStackClaimSet,
-				Namespace:         "stack-1234",
-				AuthenticatedBy:   "extendedjwt",
-				AuthID:            "access-policy:this-uid",
-				ClientParams: authn.ClientParams{
-					SyncPermissions: true,
-					FetchSyncedUser: true,
-				},
-			},
+			wantErr: errExtJWTDisallowedNamespaceClaim,
 		},
 		{
 			name:        "should authenticate as user using wildcard namespace for access token, setting allowed namespace to specific",
@@ -434,7 +521,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				AccessTokenClaims: &validAccessTokenClaimsWildcard,
 				IDTokenClaims:     &validIDTokenClaimsWithStackSet,
 				Namespace:         "stacks-1234",
-				AuthenticatedBy:   "extendedjwt",
+				AuthenticatedBy:   login.ExtendedJWTModule,
 				AuthID:            "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
 					FetchSyncedUser: true,
@@ -485,7 +572,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
-					"X-Access-Token": {generateToken(*tc.accessToken, pk, jose.RS256)},
+					"X-Access-Token": {generateToken(t, *tc.accessToken, pk, jose.ES256)},
 				},
 			}
 
@@ -493,7 +580,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			if tc.idToken != nil {
 				env.s.accessTokenVerifier = &mockVerifier{Claims: *tc.accessToken}
 				env.s.idTokenVerifier = &mockIDVerifier{Claims: *tc.idToken}
-				validHTTPReq.Header.Add(ExtJWTAuthorizationHeaderName, generateIDToken(*tc.idToken, pk, jose.RS256))
+				validHTTPReq.Header.Add(ExtJWTAuthorizationHeaderName, generateIDToken(t, *tc.idToken, pk, jose.ES256))
 			}
 
 			id, err := env.s.Authenticate(context.Background(), &authn.Request{
@@ -674,14 +761,14 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.alg == "" {
-				tc.alg = jose.RS256
+				tc.alg = jose.ES256
 			}
 
 			var tokenToTest string
 			if tc.generateWrongTyp {
-				tokenToTest = generateIDToken(*tc.idPayload, pk, tc.alg)
+				tokenToTest = generateIDToken(t, *tc.idPayload, pk, tc.alg)
 			} else {
-				tokenToTest = generateToken(*tc.payload, pk, tc.alg)
+				tokenToTest = generateToken(t, *tc.payload, pk, tc.alg)
 			}
 			_, err := env.s.accessTokenVerifier.Verify(context.Background(), tokenToTest)
 			require.Error(t, err)
@@ -711,24 +798,40 @@ type testEnv struct {
 	s *ExtendedJWT
 }
 
-func generateToken(payload accessTokenClaims, signingKey any, alg jose.SignatureAlgorithm) string {
-	signer, _ := jose.NewSigner(jose.SigningKey{Algorithm: alg, Key: signingKey}, &jose.SignerOptions{
+func generateToken(t *testing.T, payload accessTokenClaims, signingKey any, alg jose.SignatureAlgorithm) string {
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: alg, Key: signingKey}, &jose.SignerOptions{
 		ExtraHeaders: map[jose.HeaderKey]any{
 			jose.HeaderType: authnlib.TokenTypeAccess,
 			"kid":           "default",
 		}})
+	if err != nil {
+		// For incompatible algorithm/key combinations (like RS384 with ECDSA key),
+		// return invalid token to test verification failure
+		if alg == jose.RS384 {
+			return "invalid.token"
+		}
+		require.NoError(t, err)
+	}
 
-	result, _ := jwt.Signed(signer).Claims(payload).CompactSerialize()
+	result, err := jwt.Signed(signer).Claims(payload).Serialize()
+	require.NoError(t, err)
 	return result
 }
 
-func generateIDToken(payload idTokenClaims, signingKey any, alg jose.SignatureAlgorithm) string {
-	signer, _ := jose.NewSigner(jose.SigningKey{Algorithm: alg, Key: signingKey}, &jose.SignerOptions{
+func generateIDToken(t *testing.T, payload idTokenClaims, signingKey any, alg jose.SignatureAlgorithm) string {
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: alg, Key: signingKey}, &jose.SignerOptions{
 		ExtraHeaders: map[jose.HeaderKey]any{
 			jose.HeaderType: authnlib.TokenTypeID,
 			"kid":           "default",
 		}})
+	if err != nil {
+		if alg == jose.RS384 {
+			return "invalid.token"
+		}
+		require.NoError(t, err)
+	}
 
-	result, _ := jwt.Signed(signer).Claims(payload).CompactSerialize()
+	result, err := jwt.Signed(signer).Claims(payload).Serialize()
+	require.NoError(t, err)
 	return result
 }

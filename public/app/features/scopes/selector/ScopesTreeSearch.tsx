@@ -7,12 +7,12 @@ import { t } from '@grafana/i18n';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 
 import { TreeNode } from './types';
+import { useScopeActions } from './useScopeActions';
 
 export interface ScopesTreeSearchProps {
   anyChildExpanded: boolean;
   searchArea: string;
   treeNode: TreeNode;
-  onNodeUpdate: (scopeNodeId: string, expanded: boolean, query: string) => void;
   onFocus: () => void;
   onBlur: () => void;
   'aria-controls': string;
@@ -22,13 +22,13 @@ export interface ScopesTreeSearchProps {
 export function ScopesTreeSearch({
   anyChildExpanded,
   treeNode,
-  onNodeUpdate,
   searchArea,
   onFocus,
   onBlur,
   'aria-controls': ariaControls,
   'aria-activedescendant': ariaActivedescendant,
 }: ScopesTreeSearchProps) {
+  const { filterNode } = useScopeActions();
   const styles = useStyles2(getStyles);
 
   const [inputState, setInputState] = useState<{ value: string; dirty: boolean }>({
@@ -45,7 +45,7 @@ export function ScopesTreeSearch({
   useDebounce(
     () => {
       if (inputState.dirty) {
-        onNodeUpdate(treeNode.scopeNodeId, true, inputState.value);
+        filterNode(treeNode.scopeNodeId, inputState.value);
       }
     },
     500,
@@ -79,7 +79,12 @@ export function ScopesTreeSearch({
         setInputState({ value, dirty: true });
       }}
       onFocus={onFocus}
-      onBlur={onBlur}
+      onBlur={() => {
+        // TODO:Handle weird race condition where the blur event interupts selection of a radio button. This is because disableHighlighting is called, which forces a re-render of the tree. This re-render causes the radio button to lose focus, and the selection to be interrupted.
+        setTimeout(() => {
+          onBlur();
+        }, 0);
+      }}
     />
   );
 }

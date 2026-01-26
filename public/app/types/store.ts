@@ -18,6 +18,7 @@ import { ThunkAction, ThunkDispatch as GenericThunkDispatch } from 'redux-thunk'
 
 import type { createRootReducer } from 'app/core/reducers/root';
 import { AppDispatch, RootState } from 'app/store/configureStore';
+import { dispatch as storeDispatch } from 'app/store/store';
 
 export type StoreState = ReturnType<ReturnType<typeof createRootReducer>>;
 
@@ -41,3 +42,4 @@ export const createAsyncThunk = <Returned, ThunkArg = void, ThunkApiConfig exten
   createAsyncThunkUntyped<Returned, ThunkArg, ThunkApiConfig>(typePrefix, payloadCreator, options);
 
 export const addListener = addListenerUntyped as TypedAddListener<RootState, AppDispatch>;
+export const dispatch: AppDispatch = storeDispatch;

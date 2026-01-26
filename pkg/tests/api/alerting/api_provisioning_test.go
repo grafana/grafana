@@ -20,7 +20,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
@@ -1192,10 +1192,11 @@ func TestIntegrationExportFileProvisionContactPoints(t *testing.T) {
 
 func TestIntegrationFullpath(t *testing.T) {
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
+		DisableAuthZClientCache: true,
+		DisableLegacyAlerting:   true,
+		EnableUnifiedAlerting:   true,
+		DisableAnonymous:        true,
+		AppModeProduction:       true,
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)

@@ -2,9 +2,9 @@ import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorField, EditorFieldGroup, InputGroup } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
+import { CloudWatchMetricsQuery } from '../../../../dataquery.gen';
 import { CloudWatchDatasource } from '../../../../datasource';
 import { ASC, DESC, STATISTICS } from '../../../../language/cloudwatch-sql/language';
-import { CloudWatchMetricsQuery } from '../../../../types';
 import { appendTemplateVariables } from '../../../../utils/utils';
 
 import { setOrderBy, setSql } from './utils';

@@ -2,25 +2,25 @@ package live
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
-	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/centrifugal/centrifuge"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
 
-	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -241,7 +241,7 @@ func Test_handleOnPublish_IDTokenExpiration(t *testing.T) {
 	t.Run("expired token", func(t *testing.T) {
 		expiration := time.Now().Add(-time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnPublish(ctx, client, centrifuge.PublishEvent{
 			Channel: "test",
 			Data:    []byte("test"),
@@ -253,7 +253,7 @@ func Test_handleOnPublish_IDTokenExpiration(t *testing.T) {
 	t.Run("unexpired token", func(t *testing.T) {
 		expiration := time.Now().Add(time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnPublish(ctx, client, centrifuge.PublishEvent{
 			Channel: "test",
 			Data:    []byte("test"),
@@ -276,7 +276,7 @@ func Test_handleOnRPC_IDTokenExpiration(t *testing.T) {
 	t.Run("expired token", func(t *testing.T) {
 		expiration := time.Now().Add(-time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnRPC(ctx, client, centrifuge.RPCEvent{
 			Method: "grafana.query",
 			Data:   []byte("test"),
@@ -288,7 +288,7 @@ func Test_handleOnRPC_IDTokenExpiration(t *testing.T) {
 	t.Run("unexpired token", func(t *testing.T) {
 		expiration := time.Now().Add(time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnRPC(ctx, client, centrifuge.RPCEvent{
 			Method: "grafana.query",
 			Data:   []byte("test"),
@@ -311,7 +311,7 @@ func Test_handleOnSubscribe_IDTokenExpiration(t *testing.T) {
 	t.Run("expired token", func(t *testing.T) {
 		expiration := time.Now().Add(-time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnSubscribe(ctx, client, centrifuge.SubscribeEvent{
 			Channel: "test",
 		})
@@ -322,7 +322,7 @@ func Test_handleOnSubscribe_IDTokenExpiration(t *testing.T) {
 	t.Run("unexpired token", func(t *testing.T) {
 		expiration := time.Now().Add(time.Hour)
 		token := createToken(t, &expiration)
-		ctx := livecontext.SetContextSignedUser(context.Background(), &identity.StaticRequester{IDToken: token})
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{IDToken: token})
 		reply, err := g.handleOnSubscribe(ctx, client, centrifuge.SubscribeEvent{
 			Channel: "test",
 		})
@@ -339,26 +339,26 @@ func setupLiveService(cfg *setting.Cfg, t *testing.T) (*GrafanaLive, error) {
 		cfg = setting.NewCfg()
 	}
 
-	return ProvideService(nil,
-		cfg,
+	return ProvideService(cfg,
 		routing.NewRouteRegister(),
-		nil, nil, nil, nil,
-		db.InitTestDB(t),
+		nil, nil, nil,
 		nil,
 		&usagestats.UsageStatsMock{T: t},
-		nil,
 		featuremgmt.WithFeatures(),
-		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		&dashboards.FakeDashboardService{},
-		annotationstest.NewFakeAnnotationsRepo(),
-		nil, nil)
+		nil)
 }
 
 type dummyTransport struct {
 	name string
 }
 
+var (
+	_ centrifuge.Transport = (*dummyTransport)(nil)
+)
+
 func (t *dummyTransport) Name() string                      { return t.name }
+func (t *dummyTransport) AcceptProtocol() string            { return "" }
 func (t *dummyTransport) Protocol() centrifuge.ProtocolType { return centrifuge.ProtocolTypeJSON }
 func (t *dummyTransport) ProtocolVersion() centrifuge.ProtocolVersion {
 	return centrifuge.ProtocolVersion2
@@ -379,9 +379,35 @@ func newDummyTransport(name string) *dummyTransport {
 	return &dummyTransport{name: name}
 }
 
+// There is a duplication of this function in the identity package. pkg/apimachinery/identity/requester_test.go.
+// If you need to copy it, place it as a test helper function in the identity package.
+var testKey = decodePrivateKey([]byte(`
+-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEID6lXWsmcv/UWn9SptjOThsy88cifgGIBj2Lu0M9I8tQoAoGCCqGSM49
+AwEHoUQDQgAEsf6eNnNMNhl+q7jXsbdUf3ADPh248uoFUSSV9oBzgptyokHCjJz6
+n6PKDm2W7i3S2+dAs5M5f3s7d8KiLjGZdQ==
+-----END EC PRIVATE KEY-----
+`))
+
+func decodePrivateKey(data []byte) *ecdsa.PrivateKey {
+	block, _ := pem.Decode(data)
+	if block == nil {
+		panic("should include PEM block")
+	}
+
+	privateKey, err := x509.ParseECPrivateKey(block.Bytes)
+	if err != nil {
+		panic(fmt.Sprintf("should be able to parse ec private key: %v", err))
+	}
+	if privateKey.Curve.Params().Name != "P-256" {
+		panic("should be valid private key")
+	}
+
+	return privateKey
+}
+
 func createToken(t *testing.T, exp *time.Time) string {
-	key := []byte("test-secret-key")
-	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, nil)
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: testKey}, nil)
 	require.NoError(t, err)
 
 	claims := struct {
@@ -396,7 +422,7 @@ func createToken(t *testing.T, exp *time.Time) string {
 		claims.Expiry = jwt.NewNumericDate(*exp)
 	}
 
-	token, err := jwt.Signed(signer).Claims(claims).CompactSerialize()
+	token, err := jwt.Signed(signer).Claims(claims).Serialize()
 	require.NoError(t, err)
 	return token
 }

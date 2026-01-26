@@ -92,6 +92,7 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		assert.Equal(t, 200, recorder.Code)
 		assert.Contains(t, recorder.Header().Get("Content-Type"), "text/html")
+		assert.Contains(t, recorder.Header().Get("Cache-Control"), "no-store")
 
 		// The response should contain references to the assets
 		body := recorder.Body.String()

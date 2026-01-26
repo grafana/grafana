@@ -21,7 +21,7 @@ import { Trans } from '@grafana/i18n';
 import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { formatDuration } from '../utils';
+import { formatDuration } from '../../utils/date';
 
 import AccordianKeyValues from './AccordianKeyValues';
 
@@ -38,9 +38,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: 'inherit',
       display: 'flex',
       alignItems: 'center',
-      '&:hover': {
-        background: autoColor(theme, '#e8e8e8'),
-      },
     }),
     AccordianLogsContent: css({
       label: 'AccordianLogsContent',

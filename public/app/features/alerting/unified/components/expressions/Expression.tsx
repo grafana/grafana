@@ -18,7 +18,7 @@ import { ClassicConditions } from 'app/features/expressions/components/ClassicCo
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
 import { Resample } from 'app/features/expressions/components/Resample';
-import { SqlExpr } from 'app/features/expressions/components/SqlExpr';
+import { SqlExpr } from 'app/features/expressions/components/SqlExpressions/SqlExpr';
 import { Threshold } from 'app/features/expressions/components/Threshold';
 import {
   ExpressionQuery,
@@ -48,7 +48,6 @@ interface ExpressionProps {
   onSetCondition: (refId: string) => void;
   onUpdateRefId: (oldRefId: string, newRefId: string) => void;
   onRemoveExpression: (refId: string) => void;
-  onUpdateExpressionType: (refId: string, type: ExpressionQueryType) => void;
   onChangeQuery: (query: ExpressionQuery) => void;
 }
 
@@ -62,7 +61,6 @@ export const Expression: FC<ExpressionProps> = ({
   onSetCondition,
   onUpdateRefId,
   onRemoveExpression,
-  onUpdateExpressionType, // this method is not used? maybe we should remove it
   onChangeQuery,
 }) => {
   const styles = useStyles2(getStyles);
@@ -541,6 +539,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       flex: 1,
       flexBasis: '400px',
       borderRadius: theme.shape.radius.default,
+      overflow: 'hidden',
     }),
     stack: css({
       display: 'flex',

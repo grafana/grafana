@@ -4,13 +4,26 @@
 version_settings(constraint='>=0.22.2')
 
 custom_build(
-    'grafana-iam-operator',
-    command='docker build -t $EXPECTED_REF -f cmd/operator/Dockerfile .',
+    'iam-folder-reconciler',
+    command='docker buildx build --tag $EXPECTED_REF -f ./apps/iam/local/Dockerfile .',
     deps=[
-      'cmd/operator',
+      'apps/iam',
       'pkg',
     ],
     disable_push=True,
+    dir='../..',
 )
 
 k8s_yaml([filename for filename in listdir('local/yamls') if filename.lower().endswith(('.yaml', '.yml'))])
+
+# Port forward Grafana to localhost:3000
+k8s_resource('grafana', port_forwards=['3000:3000'])
+
+# Port forward Jaeger UI to localhost:16686
+k8s_resource('jaeger-agent', port_forwards=['16686:16686'])
+
+# Port forward Pyroscope UI to localhost:4040
+k8s_resource('pyroscope', port_forwards=['4040:4040'])
+
+# Port forward Alloy UI to localhost:12345
+k8s_resource('alloy', port_forwards=['12345:12345'])

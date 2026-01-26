@@ -117,6 +117,10 @@ export const PromQueryLegendEditor = React.memo<PromQueryLegendEditorProps>(
               width={22}
               onChange={onLegendModeChanged}
               value={legendModeOptions.find((x) => x.value === mode)}
+              aria-label={t(
+                'grafana-prometheus.querybuilder.prom-query-legend-editor.aria-label-legend',
+                'Legend combobox'
+              )}
             />
           )}
         </>

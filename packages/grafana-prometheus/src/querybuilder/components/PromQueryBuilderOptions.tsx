@@ -6,8 +6,8 @@ import * as React from 'react';
 import { CoreApp, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { EditorField, EditorRow, EditorSwitch } from '@grafana/plugin-ui';
-import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
+import { EditorField, EditorSwitch } from '@grafana/plugin-ui';
+import { AutoSizeInput, Box, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
 import { PromQueryFormat } from '../../dataquery';
@@ -80,7 +80,7 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
     const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryTypeValue)!.label;
 
     return (
-      <EditorRow>
+      <Box backgroundColor={'secondary'}>
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.options}>
           <QueryOptionGroup
             title={t('grafana-prometheus.querybuilder.prom-query-builder-options.title-options', 'Options')}
@@ -112,7 +112,7 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
                 type="text"
                 aria-label={t(
                   'grafana-prometheus.querybuilder.prom-query-builder-options.aria-label-lower-limit-parameter',
-                  'Set lower limit for the step parameter'
+                  'Min step text box, set lower limit for the step parameter'
                 )}
                 placeholder={t('grafana-prometheus.querybuilder.prom-query-builder-options.placeholder-auto', 'auto')}
                 minWidth={10}
@@ -128,13 +128,25 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
                 allowCustomValue
                 onChange={onChangeFormat}
                 options={FORMAT_OPTIONS}
+                aria-label={t(
+                  'grafana-prometheus.querybuilder.prom-query-builder-options.aria-label-format',
+                  'Format combobox'
+                )}
               />
             </EditorField>
             <EditorField
               label={t('grafana-prometheus.querybuilder.prom-query-builder-options.label-type', 'Type')}
               data-testid={selectors.components.DataSource.Prometheus.queryEditor.type}
             >
-              <RadioButtonGroup options={queryTypeOptions} value={queryTypeValue} onChange={onQueryTypeChange} />
+              <RadioButtonGroup
+                options={queryTypeOptions}
+                value={queryTypeValue}
+                onChange={onQueryTypeChange}
+                aria-label={t(
+                  'grafana-prometheus.querybuilder.prom-query-builder-options.aria-label-type',
+                  'Type radio button group'
+                )}
+              />
             </EditorField>
             {shouldShowExemplarSwitch(query, app) && (
               <EditorField
@@ -144,6 +156,10 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
                   value={query.exemplar || false}
                   onChange={onExemplarChange}
                   data-testid={selectors.components.DataSource.Prometheus.queryEditor.exemplars}
+                  aria-label={t(
+                    'grafana-prometheus.querybuilder.prom-query-builder-options.aria-label-exemplars',
+                    'Exemplars switch.'
+                  )}
                 />
               </EditorField>
             )}
@@ -165,7 +181,7 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
             )}
           </QueryOptionGroup>
         </div>
-      </EditorRow>
+      </Box>
     );
   }
 );

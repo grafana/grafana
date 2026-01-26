@@ -1,6 +1,6 @@
+import { CloudWatchAnnotationQuery } from '../dataquery.gen';
 import { setupMockedAnnotationQueryRunner } from '../mocks/AnnotationQueryRunner';
 import { namespaceVariable, regionVariable } from '../mocks/CloudWatchDataSource';
-import { CloudWatchAnnotationQuery } from '../types';
 
 describe('CloudWatchAnnotationQueryRunner', () => {
   const queries: CloudWatchAnnotationQuery[] = [

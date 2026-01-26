@@ -9,24 +9,28 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 type Worker struct {
 	syncWorker       jobs.Worker
 	wrapFn           repository.WrapWithStageFn
 	resourcesFactory resources.RepositoryResourcesFactory
+	metrics          jobs.JobMetrics
 }
 
-func NewWorker(syncWorker jobs.Worker, wrapFn repository.WrapWithStageFn, resourcesFactory resources.RepositoryResourcesFactory) *Worker {
+func NewWorker(syncWorker jobs.Worker, wrapFn repository.WrapWithStageFn, resourcesFactory resources.RepositoryResourcesFactory, metrics jobs.JobMetrics) *Worker {
 	return &Worker{
 		syncWorker:       syncWorker,
 		wrapFn:           wrapFn,
 		resourcesFactory: resourcesFactory,
+		metrics:          metrics,
 	}
 }
 
@@ -39,6 +43,13 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		return errors.New("missing move settings")
 	}
 	opts := *job.Spec.Move
+	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	outcome := utils.ErrorOutcome
+	start := time.Now()
+	resourcesMoved := 0
+	defer func() {
+		w.metrics.RecordJob(string(provisioning.JobActionMove), outcome, resourcesMoved, time.Since(start).Seconds())
+	}()
 
 	if opts.TargetPath == "" {
 		return errors.New("target path is required for move operation")
@@ -57,6 +68,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	fn := func(repo repository.Repository, _ bool) error {
 		rw, ok := repo.(repository.ReaderWriter)
 		if !ok {
+			logger.Error("move job submitted targeting repository that is not a ReaderWriter")
 			return errors.New("move job submitted targeting repository that is not a ReaderWriter")
 		}
 
@@ -86,6 +98,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 	err := w.wrapFn(ctx, repo, stageOptions, fn)
 	if err != nil {
+		logger.Error("failed to move files in repository", "error", err)
 		return fmt.Errorf("move files in repository: %w", err)
 	}
 
@@ -112,8 +125,16 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		}
 
 		if err := w.syncWorker.Process(ctx, repo, syncJob, progress); err != nil {
+			logger.Error("failed to pull resources", "error", err)
 			return fmt.Errorf("pull resources: %w", err)
 		}
+	}
+
+	outcome = utils.SuccessOutcome
+	jobStatus := progress.Complete(ctx, nil)
+	for _, summary := range jobStatus.Summary {
+		// FileActionRenamed increments both delete & create, use create here
+		resourcesMoved += int(summary.Create)
 	}
 
 	return nil
@@ -121,19 +142,16 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, progress jobs.JobProgressRecorder, opts provisioning.MoveJobOptions, paths ...string) error {
 	for _, path := range paths {
-		result := jobs.JobResourceResult{
-			Path:   path,
-			Action: repository.FileActionRenamed,
-		}
-
+		resultBuilder := jobs.NewPathOnlyResult(path).WithAction(repository.FileActionRenamed)
 		// Construct the target path by combining the job's target path with the file/folder name
 		targetPath := w.constructTargetPath(opts.TargetPath, path)
 
 		progress.SetMessage(ctx, "Moving "+path+" to "+targetPath)
 		if err := rw.Move(ctx, path, targetPath, opts.Ref, "Move "+path+" to "+targetPath); err != nil {
-			result.Error = fmt.Errorf("moving file %s to %s: %w", path, targetPath, err)
+			resultBuilder.WithError(fmt.Errorf("moving file %s to %s: %w", path, targetPath, err))
 		}
-		progress.Record(ctx, result)
+
+		progress.Record(ctx, resultBuilder.Build())
 		if err := progress.TooManyErrors(); err != nil {
 			return err
 		}
@@ -170,23 +188,18 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 
 	resolvedPaths := make([]string, 0, len(resources))
 	for _, resource := range resources {
-		result := jobs.JobResourceResult{
-			Name:   resource.Name,
-			Group:  resource.Group,
-			Action: repository.FileActionRenamed, // Will be used for move later
-		}
-
 		gvk := schema.GroupVersionKind{
 			Group: resource.Group,
 			Kind:  resource.Kind,
 			// Version is left empty so ForKind will use the preferred version
 		}
+		resultBuilder := jobs.NewGVKResult(resource.Name, gvk).WithAction(repository.FileActionRenamed)
 
 		progress.SetMessage(ctx, fmt.Sprintf("Finding path for resource %s/%s/%s", resource.Group, resource.Kind, resource.Name))
 		resourcePath, err := repositoryResources.FindResourcePath(ctx, resource.Name, gvk)
 		if err != nil {
-			result.Error = fmt.Errorf("find path for resource %s/%s/%s: %w", resource.Group, resource.Kind, resource.Name, err)
-			progress.Record(ctx, result)
+			resultBuilder.WithError(fmt.Errorf("find path for resource %s/%s/%s: %w", resource.Group, resource.Kind, resource.Name, err))
+			progress.Record(ctx, resultBuilder.Build())
 			// Continue with next resource instead of failing fast
 			if err := progress.TooManyErrors(); err != nil {
 				return resolvedPaths, err
@@ -194,7 +207,6 @@ func (w *Worker) resolveResourcesToPaths(ctx context.Context, rw repository.Read
 			continue
 		}
 
-		result.Path = resourcePath
 		resolvedPaths = append(resolvedPaths, resourcePath)
 	}
 

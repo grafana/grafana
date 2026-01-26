@@ -9,10 +9,14 @@ import "resource.proto";
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 service ResourceIndex {
+  // Query for documents
   rpc Search(ResourceSearchRequest) returns (ResourceSearchResponse);
 
   // Get the resource stats
   rpc GetStats(ResourceStatsRequest) returns (ResourceStatsResponse);
+
+  // Rebuild the search index
+  rpc RebuildIndexes(RebuildIndexesRequest) returns (RebuildIndexesResponse);
 }
 
 // Get statistics across multiple resources
@@ -47,6 +51,20 @@ message ResourceStatsResponse {
   repeated Stats stats = 2;
 }
 
+// This controls what query and analyzers are applied to the specified field
+// See: https://blevesearch.com/docs/Analyzers/
+enum QueryFieldType {
+  // Picks a reasonable analyzer given the input.  Currently this always uses TEXT
+  // In the future, it may change to depend on the indexed field type
+  DEFAULT = 0;
+  // Use free text analyzer.  The query is broken into a normalized set of tokens
+  TEXT = 1;
+  // The query must exactly match the indexed token
+  KEYWORD = 2;
+  // Like a text query, but the position and offsets influence the score
+  PHRASE = 3; 
+}
+
 // Search within a single resource
 message ResourceSearchRequest {
   message Sort {
@@ -60,6 +78,18 @@ message ResourceSearchRequest {
     // For now, only term queries, eventually?
     // numeric queries
     // date queries
+  }
+
+  // Defines the field in the index to query
+  // Boost is optional, and allows weighting the field higher in the results
+  message QueryField {
+    // The field name in the index to query
+    string name = 1;
+
+    QueryFieldType type = 2;
+
+    // Boost value for this field
+    float boost = 3;
   }
 
   // The key must include namespace + group + resource
@@ -97,6 +127,9 @@ message ResourceSearchRequest {
   int64 page = 11;
 
   int64 permission = 12;
+
+  // Optionally specify which fields are included in the query
+  repeated QueryField query_fields = 13;
 }
 
 message ResourceSearchResponse {
@@ -138,3 +171,23 @@ message ResourceSearchResponse {
   // Facet results
   map<string,Facet> facet = 7;
 }
+
+message RebuildIndexesRequest {
+  // Namespace (tenant) must be the same as all keys' namespace
+  string namespace = 1;
+
+  // List of ResourceKeys (Namespace + Group + Resource)
+  repeated ResourceKey keys = 2;
+}
+
+message RebuildIndexesResponse {
+  // Total count of rebuilt indexes
+  int64 rebuildCount = 1;
+
+  // Result message
+  string details = 2;
+
+  // Error details
+  ErrorResult error = 3;
+}
+

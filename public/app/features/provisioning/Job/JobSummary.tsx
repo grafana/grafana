@@ -11,7 +11,7 @@ const getSummaryColumns = () => [
   {
     id: 'resource',
     header: 'Resource',
-    cell: ({ row: { original: item } }: SummaryCell) => item.resource,
+    cell: ({ row: { original: item } }: SummaryCell) => item.kind,
   },
   {
     id: 'created',
@@ -32,6 +32,11 @@ const getSummaryColumns = () => [
     id: 'unchanged',
     header: 'Unchanged',
     cell: ({ row: { original: item } }: SummaryCell) => item.noop?.toString() || '-',
+  },
+  {
+    id: 'warnings',
+    header: 'Warnings',
+    cell: ({ row: { original: item } }: SummaryCell) => item.warning?.toString() || '-',
   },
   {
     id: 'errors',
@@ -58,7 +63,7 @@ export function JobSummary({ summary }: Props) {
       <InteractiveTable
         data={summary}
         columns={getSummaryColumns()}
-        getRowId={(item) => item.resource || ''}
+        getRowId={(item) => item.kind || ''}
         pageSize={10}
       />
     </Stack>

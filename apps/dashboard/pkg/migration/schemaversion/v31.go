@@ -128,7 +128,9 @@ func processPanelsV31(panels []interface{}) {
 			}
 		}
 
-		// Update the panel with the new transformations
-		p["transformations"] = newTransformations
+		// Update the panel with the new transformations - only if not empty
+		if len(newTransformations) > 0 {
+			p["transformations"] = newTransformations
+		}
 	}
 }

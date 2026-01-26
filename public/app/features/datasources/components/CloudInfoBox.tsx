@@ -1,8 +1,7 @@
 import { DataSourceSettings, LocalStorageValueProvider } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, TextLink } from '@grafana/ui';
-import { config } from 'app/core/config';
+import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
 
 const LOCAL_STORAGE_KEY = 'datasources.settings.cloudInfoBox.isDismissed';
 
@@ -11,8 +10,7 @@ export interface Props {
 }
 
 export function CloudInfoBox({ dataSource }: Props) {
-  let mainDS = '';
-  let extraDS = '';
+  let dsName = '';
 
   // don't show for already configured data sources or provisioned data sources
   if (dataSource.readOnly || (dataSource.version ?? 0) > 2) {
@@ -20,18 +18,22 @@ export function CloudInfoBox({ dataSource }: Props) {
   }
 
   // Skip showing this info box in some editions
-  if (config.buildInfo.edition !== GrafanaEdition.OpenSource) {
+  if (!isOpenSourceBuildOrUnlicenced()) {
     return null;
   }
 
   switch (dataSource.type) {
     case 'prometheus':
-      mainDS = 'Prometheus';
-      extraDS = 'Loki';
+      dsName = 'Prometheus';
       break;
     case 'loki':
-      mainDS = 'Loki';
-      extraDS = 'Prometheus';
+      dsName = 'Loki';
+      break;
+    case 'tempo':
+      dsName = 'Tempo';
+      break;
+    case 'grafana-pyroscope-datasource':
+      dsName = 'Pyroscope';
       break;
     default:
       return null;
@@ -45,8 +47,8 @@ export function CloudInfoBox({ dataSource }: Props) {
         }
         return (
           <Alert
-            title={t('datasources.cloud-info-box.title-alert', 'Configure your {{mainDS}} data source below', {
-              mainDS,
+            title={t('datasources.cloud-info-box.title-alert', 'Configure your {{dsName}} data source below', {
+              dsName,
             })}
             severity="info"
             bottomSpacing={4}
@@ -55,8 +57,8 @@ export function CloudInfoBox({ dataSource }: Props) {
             }}
           >
             <Trans i18nKey="datasources.cloud-info-box.body-alert">
-              Or skip the effort and get {{ mainDS }} (and {{ extraDS }}) as fully-managed, scalable, and hosted data
-              sources from Grafana Labs with the{' '}
+              Or skip the effort and get {{ dsName }} as fully-managed, scalable, and hosted data source from Grafana
+              Labs with the{' '}
               <TextLink
                 href={`https://grafana.com/signup/cloud/connect-account?src=grafana-oss&cnt=${dataSource.type}-settings`}
                 external

@@ -2,9 +2,10 @@ import { render, screen } from '@testing-library/react';
 
 import { SelectableValue } from '@grafana/data';
 
+import { ResultFormat } from '../../dataquery.gen';
 import createMockDatasource from '../../mocks/datasource';
 import createMockQuery from '../../mocks/query';
-import { AzureMonitorQuery, ResultFormat } from '../../types/query';
+import { AzureMonitorQuery } from '../../types/query';
 
 import FormatAsField from './FormatAsField';
 

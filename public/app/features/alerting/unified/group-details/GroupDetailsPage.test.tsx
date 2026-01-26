@@ -23,6 +23,10 @@ import { alertingFactory } from '../mocks/server/db';
 
 import GroupDetailsPage from './GroupDetailsPage';
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => ({ isAvailable: false, openAssistant: jest.fn() }),
+}));
+
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: Props) =>
     children({

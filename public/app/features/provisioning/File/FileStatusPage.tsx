@@ -6,26 +6,40 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, CodeEditor, LinkButton, Button, Stack, Tab, TabContent, TabsBar, DeleteButton } from '@grafana/ui';
+import { Alert, Button, CodeEditor, DeleteButton, LinkButton, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import {
-  useGetRepositoryFilesWithPathQuery,
   ResourceWrapper,
-  useReplaceRepositoryFilesWithPathMutation,
   useDeleteRepositoryFilesWithPathMutation,
+  useGetRepositoryFilesWithPathQuery,
+  useReplaceRepositoryFilesWithPathMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { PROVISIONING_URL } from '../constants';
+import { useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
+import { usePRBranch } from '../hooks/usePRBranch';
+
+enum TabSelection {
+  File = 'file',
+  Existing = 'existing',
+  DryRun = 'dryRun',
+}
+
+function isTabSelection(value: unknown): value is TabSelection {
+  return value === TabSelection.File || value === TabSelection.Existing || value === TabSelection.DryRun;
+}
 
 export default function FileStatusPage() {
   const params = useParams();
   const [queryParams] = useQueryParams();
-  const ref = (queryParams['ref'] as string) ?? undefined;
-  const tab = (queryParams['tab'] as TabSelection) ?? TabSelection.File;
+  const ref = usePRBranch();
+  const tabParam = queryParams['tab'];
+  const tab = isTabSelection(tabParam) ? tabParam : TabSelection.File;
   const name = params['name'] ?? '';
   const path = params['*'] ?? '';
   const file = useGetRepositoryFilesWithPathQuery({ name, path, ref });
+  const { isReadOnlyRepo } = useGetResourceRepositoryView({ name });
 
   return (
     <Page
@@ -41,17 +55,13 @@ export default function FileStatusPage() {
               {file.error.message}
             </Alert>
           )}
-          {file.isSuccess && file.data && <ResourceView wrap={file.data} repo={name} repoRef={ref} tab={tab} />}
+          {file.isSuccess && file.data && (
+            <ResourceView wrap={file.data} repo={name} repoRef={ref} tab={tab} isReadOnlyRepo={isReadOnlyRepo} />
+          )}
         </>
       </Page.Contents>
     </Page>
   );
-}
-
-enum TabSelection {
-  File = 'file',
-  Existing = 'existing',
-  DryRun = 'dryRun',
 }
 
 interface Props {
@@ -59,9 +69,10 @@ interface Props {
   repo: string;
   repoRef?: string;
   tab: TabSelection;
+  isReadOnlyRepo: boolean;
 }
 
-function ResourceView({ wrap, repo, repoRef, tab }: Props) {
+function ResourceView({ wrap, repo, repoRef, tab, isReadOnlyRepo }: Props) {
   const isDashboard = wrap.resource?.type?.kind === 'Dashboard';
   const existingName = wrap.resource?.existing?.metadata?.name;
   const location = useLocation();
@@ -159,8 +170,13 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
           </div>
           <Stack alignItems="flex-end" justifyContent="end">
             <Button
+              tooltip={
+                isReadOnlyRepo
+                  ? t('provisioning.resource-view.read-only-repo-tooltip', 'This is a read-only repository')
+                  : ''
+              }
               variant="primary"
-              disabled={replaceFileStatus.isLoading}
+              disabled={replaceFileStatus.isLoading || isReadOnlyRepo}
               onClick={() => {
                 replaceFile({
                   name: repo,
@@ -179,7 +195,7 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
             </Button>
             <DeleteButton
               size="md"
-              disabled={deleteFileStatus.isLoading}
+              disabled={deleteFileStatus.isLoading || isReadOnlyRepo}
               onConfirm={() => {
                 deleteFile({
                   name: repo,

@@ -5,9 +5,10 @@ import { createDataFrame } from '@grafana/data';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
+import { textToDataContainer } from '../FlameGraph/testHelpers';
 import { ColorScheme } from '../types';
 
-import FlameGraphTopTableContainer from './FlameGraphTopTableContainer';
+import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
 
 describe('FlameGraphTopTableContainer', () => {
   const setup = () => {
@@ -52,7 +53,10 @@ describe('FlameGraphTopTableContainer', () => {
     expect(cells).toHaveLength(60); // 16 rows
     expect(cells[1].textContent).toEqual('net/http.HandlerFunc.ServeHTTP');
     expect(cells[2].textContent).toEqual('31.7 K');
-    expect(cells[3].textContent).toEqual('31.7 Bil');
+    expect(cells[3].textContent).toEqual('5.58 Bil');
+    expect(cells[5].textContent).toEqual('total');
+    expect(cells[6].textContent).toEqual('16.5 K');
+    expect(cells[7].textContent).toEqual('16.5 Bil');
     expect(cells[25].textContent).toEqual('net/http.(*conn).serve');
     expect(cells[26].textContent).toEqual('5.63 K');
     expect(cells[27].textContent).toEqual('5.63 Bil');
@@ -81,5 +85,113 @@ describe('FlameGraphTopTableContainer', () => {
     await userEvents.click(sandwichButtons[0]);
 
     expect(mocks.onSandwich).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
+  });
+});
+
+describe('buildFilteredTable', () => {
+  it('should group data by label and sum values', () => {
+    const container = textToDataContainer(`
+[0////]
+[1][2]
+[3][4]
+    `);
+
+    const result = buildFilteredTable(container!);
+
+    expect(result).toEqual({
+      '0': { self: 1, total: 7, totalRight: 0 },
+      '1': { self: 0, total: 3, totalRight: 0 },
+      '2': { self: 0, total: 3, totalRight: 0 },
+      '3': { self: 3, total: 3, totalRight: 0 },
+      '4': { self: 3, total: 3, totalRight: 0 },
+    });
+  });
+
+  it('should sum values for duplicate labels', () => {
+    const container = textToDataContainer(`
+[0///]
+[1][1]
+    `);
+
+    const result = buildFilteredTable(container!);
+
+    expect(result).toEqual({
+      '0': { self: 0, total: 6, totalRight: 0 },
+      '1': { self: 6, total: 6, totalRight: 0 },
+    });
+  });
+
+  it('should filter by matchedLabels when provided', () => {
+    const container = textToDataContainer(`
+[0////]
+[1][2]
+[3][4]
+    `);
+
+    const matchedLabels = new Set(['1', '3']);
+    const result = buildFilteredTable(container!, matchedLabels);
+
+    expect(result).toEqual({
+      '1': { self: 0, total: 3, totalRight: 0 },
+      '3': { self: 3, total: 3, totalRight: 0 },
+    });
+  });
+
+  it('should handle empty matchedLabels set', () => {
+    const container = textToDataContainer(`
+[0////]
+[1][2]
+[3][4]
+    `);
+
+    const matchedLabels = new Set<string>();
+    const result = buildFilteredTable(container!, matchedLabels);
+
+    expect(result).toEqual({});
+  });
+
+  it('should handle data with no matches', () => {
+    const container = textToDataContainer(`
+[0////]
+[1][2]
+[3][4]
+    `);
+
+    const matchedLabels = new Set(['9']);
+    const result = buildFilteredTable(container!, matchedLabels);
+
+    expect(result).toEqual({});
+  });
+
+  it('should work without matchedLabels filter', () => {
+    const container = textToDataContainer(`
+[0]
+[1]
+    `);
+
+    const result = buildFilteredTable(container!);
+
+    expect(result).toEqual({
+      '0': { self: 0, total: 3, totalRight: 0 },
+      '1': { self: 3, total: 3, totalRight: 0 },
+    });
+  });
+  it('should not inflate totals for recursive calls', () => {
+    const container = textToDataContainer(`
+[0////]
+[1][2]
+[3][4]
+[0]
+    `);
+
+    const result = buildFilteredTable(container!);
+
+    expect(result).toEqual({
+      '0': { self: 4, total: 7, totalRight: 0 },
+      '1': { self: 0, total: 3, totalRight: 0 },
+      '2': { self: 0, total: 3, totalRight: 0 },
+      '3': { self: 0, total: 3, totalRight: 0 },
+      '4': { self: 3, total: 3, totalRight: 0 },
+    });
   });
 });

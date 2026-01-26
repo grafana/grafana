@@ -3,11 +3,18 @@ import { merge } from 'lodash';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { createTheme } from '../themes/createTheme';
 import { ReducerID } from '../transformations/fieldReducer';
+import { FieldType } from '../types/dataFrame';
 import { FieldConfigPropertyItem } from '../types/fieldOverrides';
 import { MappingType, SpecialValueMatch, ValueMapping } from '../types/valueMapping';
 
 import { getDisplayProcessor } from './displayProcessor';
-import { fixCellTemplateExpressions, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
+import {
+  FieldSparkline,
+  fixCellTemplateExpressions,
+  getFieldDisplayValues,
+  GetFieldDisplayValuesOptions,
+  getSparklineHighlight,
+} from './fieldDisplay';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
 describe('FieldDisplay', () => {
@@ -388,7 +395,7 @@ describe('FieldDisplay', () => {
 
       const result = getFieldDisplayValues(options);
       expect(result[0].display.color).toEqual('#73BF69');
-      expect(result[1].display.color).toEqual('#FADE2A');
+      expect(result[1].display.color).toEqual('#F2CC0C');
     });
 
     it('When showing all values lookup color via an override', () => {
@@ -435,7 +442,7 @@ describe('FieldDisplay', () => {
 
       const result = getFieldDisplayValues(options);
       expect(result[0].display.color).toEqual('#AAA');
-      expect(result[1].display.color).toEqual('#FADE2A');
+      expect(result[1].display.color).toEqual('#F2CC0C');
     });
 
     it('Multiple other string fields', () => {
@@ -554,5 +561,73 @@ describe('fixCellTemplateExpressions', () => {
     ).toEqual(
       '${__data.fields[10]:date:iso} asd ${__data.fields[15]:date:seconds} asd ${__data.fields[20]:date:YYYY-MM}'
     );
+  });
+});
+
+describe('getSparklineHighlight', () => {
+  const sparkline: FieldSparkline = {
+    y: { name: 'A', type: FieldType.number, values: [null, 2, 3, 4, 10, 8, 8, 8, 9, null], config: {} },
+  };
+
+  it.each([
+    {
+      calc: ReducerID.last,
+      expected: {
+        type: 'point',
+        xIdx: 9,
+      },
+    },
+    {
+      calc: ReducerID.max,
+      expected: {
+        type: 'point',
+        xIdx: 4,
+      },
+    },
+    {
+      calc: ReducerID.min,
+      expected: {
+        type: 'point',
+        xIdx: 1,
+      },
+    },
+    {
+      calc: ReducerID.first,
+      expected: {
+        type: 'point',
+        xIdx: 0,
+      },
+    },
+    {
+      calc: ReducerID.firstNotNull,
+      expected: {
+        type: 'point',
+        xIdx: 1,
+      },
+    },
+    {
+      calc: ReducerID.lastNotNull,
+      expected: {
+        type: 'point',
+        xIdx: 8,
+      },
+    },
+    {
+      calc: ReducerID.mean,
+      expected: {
+        type: 'line',
+        y: 6.5,
+      },
+    },
+    {
+      calc: ReducerID.median,
+      expected: {
+        type: 'line',
+        y: 8,
+      },
+    },
+  ])('it calculates the correct highlight for the $calc', ({ calc, expected }) => {
+    const result = getSparklineHighlight(sparkline, calc);
+    expect(result).toEqual(expected);
   });
 });

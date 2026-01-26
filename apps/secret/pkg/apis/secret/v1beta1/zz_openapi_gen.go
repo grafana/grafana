@@ -14,6 +14,8 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.Keeper":                         schema_pkg_apis_secret_v1beta1_Keeper(ref),
+		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSAccessKey":             schema_pkg_apis_secret_v1beta1_KeeperAWSAccessKey(ref),
+		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSAssumeRole":            schema_pkg_apis_secret_v1beta1_KeeperAWSAssumeRole(ref),
 		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSConfig":                schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref),
 		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAzureConfig":              schema_pkg_apis_secret_v1beta1_KeeperAzureConfig(ref),
 		"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperCredentialValue":          schema_pkg_apis_secret_v1beta1_KeeperCredentialValue(ref),
@@ -79,7 +81,7 @@ func schema_pkg_apis_secret_v1beta1_Keeper(ref common.ReferenceCallback) common.
 	}
 }
 
-func schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_secret_v1beta1_KeeperAWSAccessKey(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -97,6 +99,65 @@ func schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref common.ReferenceCallback
 							Ref:     ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperCredentialValue"),
 						},
 					},
+				},
+				Required: []string{"accessKeyID", "secretAccessKey"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperCredentialValue"},
+	}
+}
+
+func schema_pkg_apis_secret_v1beta1_KeeperAWSAssumeRole(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"assumeRoleArn": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"externalID": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"assumeRoleArn", "externalID"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"region": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"accessKey": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSAccessKey"),
+						},
+					},
+					"assumeRole": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSAssumeRole"),
+						},
+					},
 					"kmsKeyID": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -104,11 +165,11 @@ func schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref common.ReferenceCallback
 						},
 					},
 				},
-				Required: []string{"accessKeyID", "secretAccessKey"},
+				Required: []string{"region"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperCredentialValue"},
+			"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSAccessKey", "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1.KeeperAWSAssumeRole"},
 	}
 }
 
@@ -587,15 +648,6 @@ func schema_pkg_apis_secret_v1beta1_SecureValueSpec(ref common.ReferenceCallback
 							Format:      "",
 						},
 					},
-					"keeper": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Name of the keeper, being the actual storage of the secure value. If not specified, the default keeper for the namespace will be used.",
-							MinLength:   ptr.To[int64](1),
-							MaxLength:   ptr.To[int64](253),
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"decrypters": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
@@ -639,6 +691,14 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 							Format:      "int64",
 						},
 					},
+					"externalID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "External ID where the secret is stored. Cannot be set.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"operatorStates": {
 						SchemaProps: spec.SchemaProps{
 							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
@@ -654,9 +714,9 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 							},
 						},
 					},
-					"externalID": {
+					"keeper": {
 						SchemaProps: spec.SchemaProps{
-							Description: "External ID where the secret is stored. Cannot be set.",
+							Description: "The name of the keeper used to create the secure value. Cannot be set.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -678,6 +738,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 						},
 					},
 				},
+				Required: []string{"keeper"},
 			},
 		},
 		Dependencies: []string{

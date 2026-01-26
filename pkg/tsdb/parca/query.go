@@ -196,7 +196,7 @@ func arrowToNestedSetDataFrame(flamegraph *v1alpha1.FlamegraphArrow) (*data.Fram
 	defer arrowReader.Release()
 
 	arrowReader.Next()
-	rec := arrowReader.Record()
+	rec := arrowReader.RecordBatch()
 
 	fi, err := newFlamegraphIterator(rec)
 	if err != nil {
@@ -236,7 +236,7 @@ type flamegraphIterator struct {
 	addressBuilder *bytes.Buffer
 }
 
-func newFlamegraphIterator(rec arrow.Record) (*flamegraphIterator, error) {
+func newFlamegraphIterator(rec arrow.RecordBatch) (*flamegraphIterator, error) {
 	schema := rec.Schema()
 
 	columnChildren := rec.Column(schema.FieldIndices(FlamegraphFieldChildren)[0]).(*array.List)

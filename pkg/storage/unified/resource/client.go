@@ -2,16 +2,17 @@ package resource
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/tls"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	authnGrpcUtils "github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,6 +39,7 @@ type ResourceClient interface {
 	resourcepb.BulkStoreClient
 	resourcepb.BlobStoreClient
 	resourcepb.DiagnosticsClient
+	resourcepb.QuotasClient
 }
 
 // Internal implementation
@@ -47,9 +50,11 @@ type resourceClient struct {
 	resourcepb.BulkStoreClient
 	resourcepb.BlobStoreClient
 	resourcepb.DiagnosticsClient
+	resourcepb.QuotasClient
 }
 
 func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer) (ResourceClient, error) {
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
 		return NewLegacyResourceClient(conn, indexConn), nil
 	}
@@ -73,6 +78,7 @@ func newResourceClient(storageCc grpc.ClientConnInterface, indexCc grpc.ClientCo
 		BulkStoreClient:          resourcepb.NewBulkStoreClient(storageCc),
 		BlobStoreClient:          resourcepb.NewBlobStoreClient(storageCc),
 		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(storageCc),
+		QuotasClient:             resourcepb.NewQuotasClient(storageCc),
 	}
 }
 
@@ -99,6 +105,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 		&resourcepb.BlobStore_ServiceDesc,
 		&resourcepb.BulkStore_ServiceDesc,
 		&resourcepb.Diagnostics_ServiceDesc,
+		&resourcepb.Quotas_ServiceDesc,
 	} {
 		channel.RegisterService(
 			grpchan.InterceptServer(
@@ -155,7 +162,7 @@ func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface,
 	return newResourceClient(cc, cci), nil
 }
 
-var authLogger = slog.Default().With("logger", "resource-client-auth-interceptor")
+var authLogger = log.New("resource-client-auth-interceptor")
 
 func idTokenExtractor(ctx context.Context) (string, error) {
 	if identity.IsServiceIdentity(ctx) {
@@ -167,17 +174,20 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("no claims found")
 	}
 
+	// If the identity is the service identity, we don't need to extract the ID token
+	if info.GetIdentityType() == types.TypeAccessPolicy {
+		return "", nil
+	}
+
 	if token := info.GetIDToken(); len(token) != 0 {
 		return token, nil
 	}
 
-	if !types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy) {
-		authLogger.Warn(
-			"calling resource store as the service without id token or marking it as the service identity",
-			"subject", info.GetSubject(),
-			"uid", info.GetUID(),
-		)
-	}
+	authLogger.FromContext(ctx).Warn(
+		"calling resource store as the service without id token or marking it as the service identity",
+		"subject", info.GetSubject(),
+		"uid", info.GetUID(),
+	)
 
 	return "", nil
 }
@@ -192,6 +202,23 @@ func ProvideInProcExchanger() authnlib.StaticTokenExchanger {
 }
 
 func createInProcToken() (string, error) {
+	// Generate ES256 private key
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate ES256 private key: %w", err)
+	}
+
+	// Create signer with ES256 algorithm
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: privateKey}, &jose.SignerOptions{
+		ExtraHeaders: map[jose.HeaderKey]interface{}{
+			jose.HeaderKey("typ"): authnlib.TokenTypeAccess,
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create signer: %w", err)
+	}
+
+	// Create claims
 	claims := authnlib.Claims[authnlib.AccessTokenClaims]{
 		Claims: jwt.Claims{
 			Issuer:   "grafana",
@@ -205,18 +232,11 @@ func createInProcToken() (string, error) {
 		},
 	}
 
-	header, err := json.Marshal(map[string]string{
-		"alg": "none",
-		"typ": authnlib.TokenTypeAccess,
-	})
+	// Sign and create the JWT
+	token, err := jwt.Signed(signer).Claims(claims).Serialize()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to sign JWT: %w", err)
 	}
 
-	payload, err := json.Marshal(claims)
-	if err != nil {
-		return "", err
-	}
-
-	return base64.RawURLEncoding.EncodeToString(header) + "." + base64.RawURLEncoding.EncodeToString(payload) + ".", nil
+	return token, nil
 }

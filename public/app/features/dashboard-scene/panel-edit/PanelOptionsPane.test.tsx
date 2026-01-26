@@ -27,7 +27,7 @@ describe('PanelOptionsPane', () => {
 
       expect(panel.state.pluginId).toBe('timeseries');
 
-      optionsPane.onChangePanelPlugin({ pluginId: 'table' });
+      optionsPane.onChangePanel({ pluginId: 'table' });
 
       expect(optionsPane['_cachedPluginOptions']['timeseries']?.options).toBe(panel.state.options);
       expect(optionsPane['_cachedPluginOptions']['timeseries']?.fieldConfig).toBe(panel.state.fieldConfig);
@@ -52,7 +52,7 @@ describe('PanelOptionsPane', () => {
       panel.setState({ $data: undefined });
       panel.activate();
 
-      optionsPane.onChangePanelPlugin({
+      optionsPane.onChangePanel({
         pluginId: 'table',
         options: { showHeader: false },
         fieldConfig: {
@@ -114,7 +114,7 @@ describe('PanelOptionsPane', () => {
       expect(panel.state.fieldConfig.overrides[1].properties).toHaveLength(1);
       expect(panel.state.fieldConfig.defaults.custom).toHaveProperty('axisBorderShow');
 
-      optionsPane.onChangePanelPlugin({ pluginId: 'table' });
+      optionsPane.onChangePanel({ pluginId: 'table' });
 
       expect(mockFn).toHaveBeenCalled();
       expect(mockFn.mock.calls[0][2].defaults.color?.mode).toBe('palette-classic');
@@ -126,6 +126,64 @@ describe('PanelOptionsPane', () => {
       expect(mockFn.mock.calls[0][2].overrides[1].properties).toHaveLength(0);
       //removed fieldConfig custom values as well
       expect(mockFn.mock.calls[0][2].defaults.custom).toStrictEqual({});
+    });
+
+    it('Should merge fieldConfig overrides when fieldConfig is provided in options', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+
+      const originalFieldConfig = {
+        defaults: { unit: 'bytes' },
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [{ id: 'displayName', value: 'Original Override' }],
+          },
+        ],
+      };
+
+      panel.setState({ fieldConfig: originalFieldConfig });
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      // Call onChangePanel with fieldConfig that has overrides
+      optionsPane.onChangePanel({
+        pluginId: 'table',
+        fieldConfig: {
+          defaults: { unit: 'percent' },
+          overrides: [],
+        },
+      });
+
+      // Verify onFieldConfigChange was called with merged overrides
+      expect(mockOnFieldConfigChange).toHaveBeenCalled();
+
+      const mergedConfig = mockOnFieldConfigChange.mock.calls[0][0];
+
+      // Should have both original and new overrides
+      expect(mergedConfig.overrides).toHaveLength(1);
+
+      // First override should be from the original (filtered) fieldConfig
+      expect(mergedConfig.overrides[0].matcher).toEqual({ id: 'byName', options: 'A-series' });
+      expect(mergedConfig.overrides[0].properties[0].id).toBe('displayName');
+
+      // Should use the new fieldConfig defaults
+      expect(mergedConfig.defaults.unit).toBe('percent');
+    });
+
+    it('Should not call onFieldConfigChange when no fieldConfig provided', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      // Call without fieldConfig
+      optionsPane.onChangePanel({
+        pluginId: 'table',
+        options: { showHeader: false },
+      });
+
+      expect(mockOnFieldConfigChange).not.toHaveBeenCalled();
     });
   });
 });

@@ -17,7 +17,7 @@ test.use({
   },
 });
 
-export const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
+const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 
 test.describe(
   'GroupBy CUJs',
@@ -71,9 +71,12 @@ test.describe(
       await test.step('3.Edit and restore default groupBy', async () => {
         const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
+        // Wait for the page to load
+        const groupByVariable = getGroupByInput(dashboardPage, selectors);
+        await expect(groupByVariable).toBeVisible();
+
         const initialSelectedOptionsCount = await groupByValues.count();
 
-        const groupByVariable = getGroupByInput(dashboardPage, selectors);
         await groupByVariable.click();
 
         const groupByOption = groupByOptions.nth(1);

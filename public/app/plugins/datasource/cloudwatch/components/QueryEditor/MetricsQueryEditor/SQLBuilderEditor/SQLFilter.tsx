@@ -6,16 +6,16 @@ import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Alert, Select, useStyles2 } from '@grafana/ui';
+import {
+  CloudWatchMetricsQuery,
+  QueryEditorExpressionType,
+  QueryEditorPropertyType,
+} from 'app/plugins/datasource/cloudwatch/dataquery.gen';
 
 import { CloudWatchDatasource } from '../../../../datasource';
-import {
-  QueryEditorExpressionType,
-  QueryEditorOperatorExpression,
-  QueryEditorPropertyType,
-} from '../../../../expressions';
+import { QueryEditorOperatorExpression } from '../../../../expressions';
 import { useDimensionKeys, useEnsureVariableHasSingleSelection } from '../../../../hooks';
 import { COMPARISON_OPERATORS, EQUALS } from '../../../../language/cloudwatch-sql/language';
-import { CloudWatchMetricsQuery } from '../../../../types';
 import { appendTemplateVariables } from '../../../../utils/utils';
 
 import {

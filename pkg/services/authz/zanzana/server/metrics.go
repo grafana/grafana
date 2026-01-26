@@ -25,7 +25,7 @@ func newZanzanaServerMetrics(reg prometheus.Registerer) *metrics {
 				Subsystem: metricsSubSystem,
 				Buckets:   prometheus.ExponentialBuckets(0.00001, 4, 10),
 			},
-			[]string{"method", "namespace"},
+			[]string{"method", "request_namespace"},
 		),
 	}
 }

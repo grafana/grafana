@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/go-jose/go-jose/v3/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"go.opentelemetry.io/otel/trace"
 
 	authlib "github.com/grafana/authlib/authn"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -130,11 +132,11 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalid.Errorf("failed to parse id token subject: %w", err)
 	}
 
-	if !claims.IsIdentityType(t, claims.TypeUser) {
+	if !claims.IsIdentityType(t, claims.TypeUser, claims.TypeServiceAccount, claims.TypeRenderService, claims.TypeAnonymous) {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", idTokenClaims.Subject)
 	}
 
-	return &authn.Identity{
+	identity := &authn.Identity{
 		ID:                id,
 		Type:              t,
 		OrgID:             s.cfg.DefaultOrgID(),
@@ -150,7 +152,24 @@ func (s *ExtendedJWT) authenticateAsUser(
 			},
 			FetchSyncedUser: true,
 		},
-	}, nil
+	}
+
+	if t == claims.TypeAnonymous {
+		identity.OrgRoles = map[int64]org.RoleType{
+			s.cfg.DefaultOrgID(): org.RoleType(s.cfg.Anonymous.OrgRole),
+		}
+		identity.ClientParams.FetchSyncedUser = false
+	}
+
+	if t == claims.TypeRenderService {
+		// RenderService always has Admin role (based on render.go logic)
+		identity.OrgRoles = map[int64]org.RoleType{
+			s.cfg.DefaultOrgID(): org.RoleAdmin,
+		}
+		identity.ClientParams.FetchSyncedUser = false
+	}
+
+	return identity, nil
 }
 
 func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
@@ -215,7 +234,7 @@ func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 
-	parsedToken, err := jwt.ParseSigned(rawToken)
+	parsedToken, err := jwt.ParseSigned(rawToken, []jose.SignatureAlgorithm{jose.ES256})
 	if err != nil {
 		return false
 	}

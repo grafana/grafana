@@ -82,20 +82,19 @@ func GoBuildEnv(opts *GoBuildOpts) []containers.Env {
 
 		// https://github.com/mattn/go-sqlite3/issues/1164#issuecomment-1635253695
 		env = append(env, containers.EnvVar("CGO_CFLAGS", "-D_LARGEFILE64_SOURCE"))
+		if opts.CC != "" {
+			env = append(env, containers.EnvVar("CC", opts.CC))
+		}
+
+		if opts.CXX != "" {
+			env = append(env, containers.EnvVar("CXX", opts.CXX))
+		}
 	} else {
 		env = append(env, containers.EnvVar("CGO_ENABLED", "0"))
 	}
 
 	if opts.ExperimentalFlags != nil {
 		env = append(env, containers.EnvVar("GOEXPERIMENT", strings.Join(opts.ExperimentalFlags, ",")))
-	}
-
-	if opts.CC != "" {
-		env = append(env, containers.EnvVar("CC", opts.CC))
-	}
-
-	if opts.CXX != "" {
-		env = append(env, containers.EnvVar("CXX", opts.CXX))
 	}
 
 	return env

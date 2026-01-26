@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaDashboard = resource.NewSimpleSchema("dashboard.grafana.app", "v1beta1", &Dashboard{}, &DashboardList{}, resource.WithKind("Dashboard"),
+	schemaDashboard = resource.NewSimpleSchema("dashboard.grafana.app", "v1beta1", NewDashboard(), &DashboardList{}, resource.WithKind("Dashboard"),
 		resource.WithPlural("dashboards"), resource.WithScope(resource.NamespacedScope))
 	kindDashboard = resource.Kind{
 		Schema: schemaDashboard,

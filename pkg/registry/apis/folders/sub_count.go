@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -13,6 +14,7 @@ import (
 )
 
 type subCountREST struct {
+	getter   rest.Getter
 	searcher resourcepb.ResourceIndexClient
 }
 
@@ -45,6 +47,9 @@ func (r *subCountREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subCountREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
+	if _, err := r.getter.Get(ctx, name, &v1.GetOptions{}); err != nil {
+		return nil, err
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ns, err := request.NamespaceInfoFrom(ctx, true)
 		if err != nil {

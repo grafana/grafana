@@ -13,6 +13,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -28,6 +29,8 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 
 	res, err := s.list(ctx, r)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("failed to perform list request", "error", err, "namespace", r.GetNamespace())
 		return nil, errors.New("failed to perform list request")
 	}
@@ -82,6 +85,12 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 		resourceCtx         = resource.Context()
 	)
 
+	// Use optimized folder permission relations for permission management
+	listRelation := relation
+	if resource.Type() == common.TypeFolder {
+		listRelation = common.FolderPermissionRelation(relation)
+	}
+
 	var items []string
 	if resource.HasSubresource() && common.IsSubresourceRelation(subresourceRelation) {
 		// List requested subresources
@@ -107,7 +116,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		Type:                 resource.Type(),
-		Relation:             relation,
+		Relation:             listRelation,
 		User:                 subject,
 		ContextualTuples:     contextuals,
 	})
@@ -126,8 +135,9 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 	defer span.End()
 
 	var (
-		folderRelation = common.SubresourceRelation(relation)
-		resourceCtx    = resource.Context()
+		folderRelation     = common.SubresourceRelation(relation)
+		folderListRelation = common.FolderPermissionRelation(relation) // Optimized for permission management
+		resourceCtx        = resource.Context()
 	)
 
 	// 1. List all folders subject has access to resource type in
@@ -148,6 +158,25 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 		}
 
 		folders = res.GetObjects()
+	}
+
+	// Special case for folder permission based resources (like dashboards in a folder)
+	if isFolderPermissionBasedResource(resource.GroupResource()) {
+		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
+			StoreId:              store.ID,
+			AuthorizationModelId: store.ModelID,
+			Type:                 common.TypeFolder,
+			Relation:             folderListRelation,
+			User:                 subject,
+			Context:              resourceCtx,
+			ContextualTuples:     contextuals,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		folders = append(folders, res.GetObjects()...)
 	}
 
 	// 2. List all resource directly assigned to subject

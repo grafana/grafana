@@ -23,13 +23,16 @@ export type TypedVariableModel =
   | UserVariableModel
   | OrgVariableModel
   | DashboardVariableModel
-  | SnapshotVariableModel;
+  | SnapshotVariableModel
+  | SwitchVariableModel;
 
 export enum VariableRefresh {
   never, // removed from the UI
   onDashboardLoad,
   onTimeRangeChanged,
 }
+
+export type VariableRegexApplyTo = 'value' | 'text';
 
 export enum VariableSort {
   disabled,
@@ -100,6 +103,7 @@ export interface IntervalVariableModel extends VariableWithOptions {
 
 export interface CustomVariableModel extends VariableWithMultiSupport {
   type: 'custom';
+  valuesFormat?: 'csv' | 'json';
 }
 
 export interface DataSourceVariableModel extends VariableWithMultiSupport {
@@ -116,6 +120,7 @@ export interface QueryVariableModel extends VariableWithMultiSupport {
   queryValue?: string;
   query: any;
   regex: string;
+  regexApplyTo?: VariableRegexApplyTo;
   refresh: VariableRefresh;
   staticOptions?: VariableOption[];
   staticOptionsOrder?: 'before' | 'after' | 'sorted';
@@ -128,6 +133,10 @@ export interface TextBoxVariableModel extends VariableWithOptions {
 
 export interface ConstantVariableModel extends VariableWithOptions {
   type: 'constant';
+}
+
+export interface SwitchVariableModel extends VariableWithOptions {
+  type: 'switch';
 }
 
 export interface VariableWithMultiSupport extends VariableWithOptions {
@@ -187,7 +196,6 @@ export interface BaseVariableModel {
   error: any | null;
   description: string | null;
   usedInRepeat?: boolean;
-  showInControlsMenu?: boolean;
 }
 
 export interface SnapshotVariableModel extends VariableWithOptions {

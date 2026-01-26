@@ -1,12 +1,20 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
+)
+
+var (
+	defaultPollInterval        = 500 * time.Millisecond
+	defaultAvailabilityTimeout = 30 * time.Second
 )
 
 type DiscoveryClient interface {
@@ -15,6 +23,7 @@ type DiscoveryClient interface {
 	GetKindForResource(gvr schema.GroupVersionResource) (schema.GroupVersionKind, error)
 	GetPreferredVesion(gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error)
 	GetPreferredVersionForKind(gk schema.GroupKind) (schema.GroupVersionResource, schema.GroupVersionKind, error)
+	WaitForAvailability(ctx context.Context, gv schema.GroupVersion) error
 }
 
 type DiscoveryClientImpl struct {
@@ -70,7 +79,7 @@ func (d *DiscoveryClientImpl) GetKindForResource(gvr schema.GroupVersionResource
 func (d *DiscoveryClientImpl) GetPreferredVesion(gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error) {
 	apiList, err := d.ServerPreferredResources()
 	if err != nil {
-		return schema.GroupVersionResource{}, schema.GroupVersionKind{}, err
+		return schema.GroupVersionResource{}, schema.GroupVersionKind{}, fmt.Errorf("getting server's preferred resources: %w", err)
 	}
 	for _, apis := range apiList {
 		if !strings.HasPrefix(apis.GroupVersion, gr.Group) {
@@ -133,4 +142,14 @@ func (d *DiscoveryClientImpl) GetPreferredVersionForKind(gk schema.GroupKind) (s
 		}
 	}
 	return schema.GroupVersionResource{}, schema.GroupVersionKind{}, fmt.Errorf("preferred version not found for kind %s in group %s", gk.Kind, gk.Group)
+}
+
+func (d *DiscoveryClientImpl) WaitForAvailability(ctx context.Context, gv schema.GroupVersion) error {
+	return wait.PollUntilContextTimeout(ctx, defaultPollInterval, defaultAvailabilityTimeout, true, func(ctx context.Context) (bool, error) {
+		_, err := d.ServerResourcesForGroupVersion(gv.String())
+		if err != nil {
+			return false, nil
+		}
+		return true, nil
+	})
 }

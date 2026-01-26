@@ -38,9 +38,9 @@ jest.mock('@grafana/runtime', () => {
 
 jest.mock('../hooks/usePluginConfig.tsx', () => ({ usePluginConfig: jest.fn(() => ({ value: { meta: {} } })) }));
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
-    ...jest.requireActual('app/core/core').contextSrv,
+    ...jest.requireActual('app/core/services/context_srv').contextSrv,
     hasPermission: (action: string) => true,
     hasPermissionInMetadata: (action: string, object: WithAccessControlMetadata) => true,
   },
@@ -291,21 +291,25 @@ describe('Plugin details page', () => {
 
     it('should display an install button for enterprise plugins if license is valid', async () => {
       config.licenseInfo.enabledFeatures = { 'enterprise.plugins': true };
+      config.licenseInfo.stateInfo = 'Licensed';
 
       const { queryByRole } = renderPluginDetails({ id, isInstalled: false, isEnterprise: true });
 
       expect(await queryByRole('button', { name: /install/i })).toBeInTheDocument();
+      config.licenseInfo.stateInfo = '';
     });
 
     it('should not display install button for enterprise plugins if license is invalid (but allow uninstall)', async () => {
       config.licenseInfo.enabledFeatures = {};
       config.buildInfo.edition = GrafanaEdition.Enterprise;
 
+      const bannerText = 'This plugin is only available in Grafana Cloud and Grafana Enterprise.';
+
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true, isEnterprise: true });
 
       expect(await queryByRole('button', { name: /Install/ })).not.toBeInTheDocument();
       expect(await queryByRole('button', { name: /Uninstall/ })).toBeInTheDocument();
-      expect(queryByText(/no valid Grafana Enterprise license detected/i)).toBeInTheDocument();
+      expect(queryByText(bannerText)).toBeInTheDocument();
       expect(queryByRole('link', { name: /learn more/i })).toBeInTheDocument();
     });
 

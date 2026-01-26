@@ -1,7 +1,7 @@
 ---
 title: Grafana Advisor
 description: Learn more about Grafana Advisor, the app to monitor the health of your Grafana instance
-weight: 300
+weight: 700
 labels:
   products:
     - oss

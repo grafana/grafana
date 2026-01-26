@@ -38,7 +38,7 @@ const SpectrumPalette = ({ color, onChange }: SpectrumPaletteProps) => {
   return (
     <div className={styles.wrapper}>
       <RgbaStringColorPicker className={styles.root} color={rgbaString} onChange={setColor} />
-      <ColorInput theme={theme} color={rgbaString} onChange={setColor} className={styles.colorInput} />
+      <ColorInput color={rgbaString} onChange={setColor} className={styles.colorInput} />
     </div>
   );
 };

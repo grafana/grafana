@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/alerting/definition"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,7 +13,7 @@ import (
 
 	"github.com/grafana/alerting/templates"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -211,6 +212,7 @@ func (s *legacyStorage) defaultTemplate() (definitions.NotificationTemplate, err
 		UID:        defaultTemplate.Name,
 		Provenance: definitions.Provenance("system"),
 		Template:   defaultTemplate.Template,
+		Kind:       definition.GrafanaTemplateKind,
 	}
 
 	return dto, nil

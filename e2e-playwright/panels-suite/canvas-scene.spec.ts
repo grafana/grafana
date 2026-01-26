@@ -7,7 +7,6 @@ test.use({
     canvasPanelPanZoom: true,
   },
 });
-
 test.describe('Canvas Panel - Scene Tests', () => {
   test.beforeEach(async ({ page, gotoDashboardPage }) => {
     const dashboardPage = await gotoDashboardPage({});

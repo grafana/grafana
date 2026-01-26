@@ -355,7 +355,7 @@ func TestProcessLogsResponse(t *testing.T) {
 		// Correctly detects float64 types
 		require.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[7].Type())
 		// Correctly detects json types
-		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[8].Type())
+		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[8].Type()) //nolint:staticcheck
 		// Correctly flattens fields
 		require.Equal(t, "nested.field.double_nested", frame.Fields[13].Name)
 		require.Equal(t, data.FieldTypeNullableString, frame.Fields[13].Type())
@@ -546,7 +546,7 @@ func TestProcessRawDataResponse(t *testing.T) {
 		// Correctly detects float64 types
 		require.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[5].Type())
 		// Correctly detects json types
-		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[6].Type())
+		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[6].Type()) //nolint:staticcheck
 		// Correctly flattens fields
 		require.Equal(t, "nested.field.double_nested", frame.Fields[11].Name)
 		require.Equal(t, data.FieldTypeNullableString, frame.Fields[11].Type())
@@ -736,7 +736,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		require.Len(t, fields, 1)
 		f := fields[0]
 
-		require.Equal(t, data.FieldTypeNullableJSON, f.Type())
+		require.Equal(t, data.FieldTypeNullableJSON, f.Type()) //nolint:staticcheck
 		require.Equal(t, 2, f.Len())
 
 		v := f.At(0).(*json.RawMessage)
@@ -829,7 +829,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		//Fields have the correct length
 		require.Equal(t, 2, frame.Fields[0].Len())
 		// The only field is the raw document
-		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[0].Type())
+		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[0].Type()) //nolint:staticcheck
 		require.Equal(t, "A", frame.Fields[0].Name)
 	})
 }
@@ -3646,6 +3646,142 @@ func TestTrimEdges(t *testing.T) {
 
 	// should remove first and last value
 	requireFrameLength(t, frames[0], 1)
+}
+
+func TestFiltersAggregation_KeyedBuckets(t *testing.T) {
+	t.Run("Leaf filters (keyed buckets) returns a table with filter | Count", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+				"metrics": [{ "type": "count", "id": "1" }],
+				"bucketAggs": [{
+					"type": "filters",
+					"id": "2",
+					"settings": {
+						"filters": [
+							{ "label": "a 0-1 min", "query": "duration_seconds:[0 TO 60}" },
+							{ "label": "b 1-5 min", "query": "duration_seconds:[60 TO 300}" }
+						]
+					}
+				}]
+			}`,
+		}
+
+		// ES returns a keyed map for filters buckets (labels -> bucket)
+		response := `{
+			"responses": [{
+				"aggregations": {
+					"2": {
+						"buckets": {
+							"a 0-1 min": { "doc_count": 12 },
+							"b 1-5 min": { "doc_count": 39 }
+						}
+					}
+				}
+			}]
+		}`
+
+		result, err := parseTestResponse(targets, response, false)
+		require.NoError(t, err)
+		require.Len(t, result.Responses, 1)
+
+		res := result.Responses["A"]
+		require.NotNil(t, res)
+		require.NoError(t, res.Error)
+
+		frames := res.Frames
+		require.Len(t, frames, 1)
+
+		frame := frames[0]
+		// expect exactly 2 rows (one per filter bucket) and 2 columns: filter | Count
+		requireFrameLength(t, frame, 2)
+		require.Len(t, frame.Fields, 2)
+
+		// build field map for stable assertions
+		fieldMap := map[string]*data.Field{}
+		for _, f := range frame.Fields {
+			fieldMap[f.Name] = f
+		}
+
+		require.Contains(t, fieldMap, "filter")
+		require.Contains(t, fieldMap, "Count")
+
+		// keys are sorted lexicographically in the parser, so "a 0-1 min" then "b 1-5 min"
+		requireStringAt(t, "a 0-1 min", fieldMap["filter"], 0)
+		requireStringAt(t, "b 1-5 min", fieldMap["filter"], 1)
+
+		requireFloatAt(t, 12, fieldMap["Count"], 0)
+		requireFloatAt(t, 39, fieldMap["Count"], 1)
+	})
+
+	t.Run("Filters -> Terms keeps the filter column and yields filter | type | Count", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+				"metrics": [{ "type": "count", "id": "1" }],
+				"bucketAggs": [
+					{
+						"type": "filters",
+						"id": "2",
+						"settings": {
+							"filters": [
+								{ "label": "A", "query": "duration_seconds:[0 TO 60}" },
+								{ "label": "B", "query": "duration_seconds:[60 TO 300}" }
+							]
+						}
+					},
+					{ "type": "terms", "field": "type", "id": "3" }
+				]
+			}`,
+		}
+
+		response := `{
+			"responses": [{
+				"aggregations": {
+					"2": {
+						"buckets": {
+							"A": { "3": { "buckets": [ { "key": "pull_request", "doc_count": 10 } ] } },
+							"B": { "3": { "buckets": [ { "key": "pull_request", "doc_count": 5 } ] } }
+						}
+					}
+				}
+			}]
+		}`
+
+		result, err := parseTestResponse(targets, response, false)
+		require.NoError(t, err)
+		require.Len(t, result.Responses, 1)
+
+		res := result.Responses["A"]
+		require.NotNil(t, res)
+		require.NoError(t, res.Error)
+
+		frames := res.Frames
+		require.Len(t, frames, 1)
+
+		frame := frames[0]
+		// expect 2 rows (A, B) and 3 columns: filter | type | Count
+		requireFrameLength(t, frame, 2)
+		require.Len(t, frame.Fields, 3)
+
+		fieldMap := map[string]*data.Field{}
+		for _, f := range frame.Fields {
+			fieldMap[f.Name] = f
+		}
+
+		require.Contains(t, fieldMap, "filter")
+		require.Contains(t, fieldMap, "type")
+		require.Contains(t, fieldMap, "Count")
+
+		// filters are sorted lexicographically: A, B
+		requireStringAt(t, "A", fieldMap["filter"], 0)
+		requireStringAt(t, "B", fieldMap["filter"], 1)
+
+		// terms field "type" should repeat "pull_request" on each row
+		requireStringAt(t, "pull_request", fieldMap["type"], 0)
+		requireStringAt(t, "pull_request", fieldMap["type"], 1)
+
+		requireFloatAt(t, 10, fieldMap["Count"], 0)
+		requireFloatAt(t, 5, fieldMap["Count"], 1)
+	})
 }
 
 func parseTestResponse(tsdbQueries map[string]string, responseBody string, keepLabelsInResponse bool) (*backend.QueryDataResponse, error) {

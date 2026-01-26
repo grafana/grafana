@@ -4,7 +4,7 @@ import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack, Text, TextLink } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { getRepoHref } from '../utils/git';
+import { getRepoHrefForProvider } from '../utils/git';
 
 type RepositoryLinkProps = {
   name?: string;
@@ -19,7 +19,7 @@ export function RepositoryLink({ name, jobType }: RepositoryLinkProps) {
     return null;
   }
 
-  const repoHref = getRepoHref(repo.spec?.github);
+  const repoHref = getRepoHrefForProvider(repo.spec);
 
   if (jobType === 'sync') {
     return (

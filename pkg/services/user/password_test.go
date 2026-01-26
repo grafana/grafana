@@ -83,6 +83,12 @@ func TestPasswowrdService_ValidatePasswordHardcodePolicy(t *testing.T) {
 			expectedError:               nil,
 			strongPasswordPolicyEnabled: true,
 		},
+		{
+			name:                        "should accept underscore as a valid symbol when strong password policy is enabled",
+			passwordTest:                LOWERCASE + UPPERCASE + NUMBER + "_",
+			expectedError:               nil,
+			strongPasswordPolicyEnabled: true,
+		},
 	}
 	for _, tc := range testCases {
 		cfg := setting.NewCfg()

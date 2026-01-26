@@ -33,6 +33,9 @@ export const thresholdReducer = createReducer<ThresholdExpressionQuery>(
       //set new type in evaluator
       state.conditions[0].evaluator.type = typeInPayload;
 
+      //reset params
+      state.conditions[0].evaluator.params = [0];
+
       // check if hysteresis is checked
       const hsyteresisIsChecked = Boolean(state.conditions[0].unloadEvaluator);
 

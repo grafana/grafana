@@ -120,6 +120,7 @@ export const rulerRuleType = {
     recordingRule: isCloudRecordingRulerRule,
   },
   any: {
+    rule: (rule?: RulerRuleDTO) => isCloudRulerRule(rule) || isGrafanaRulerRule(rule),
     recordingRule: (rule?: RulerRuleDTO) => isCloudRecordingRulerRule(rule) || isGrafanaRecordingRule(rule),
     alertingRule: (rule?: RulerRuleDTO) => isAlertingRulerRule(rule) || isGrafanaAlertingRule(rule),
   },
@@ -562,3 +563,6 @@ export function getRuleUID(rule?: RulerRuleDTO | Rule) {
 
   return ruleUid;
 }
+
+export const NO_GROUP_PREFIX = 'no_group_for_rule_';
+export const isUngroupedRuleGroup = (group: string): boolean => group.startsWith(NO_GROUP_PREFIX);

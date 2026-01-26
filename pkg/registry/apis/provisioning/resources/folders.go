@@ -15,9 +15,25 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 const MaxNumberOfFolders = 10000
+
+// PathCreationError represents an error that occurred while creating a folder path.
+// It contains the path that failed and the underlying error.
+type PathCreationError struct {
+	Path string
+	Err  error
+}
+
+func (e *PathCreationError) Unwrap() error {
+	return e.Err
+}
+
+func (e *PathCreationError) Error() string {
+	return fmt.Sprintf("failed to create path %s: %v", e.Path, e.Err)
+}
 
 type FolderManager struct {
 	repo   repository.ReaderWriter
@@ -72,7 +88,11 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		}
 
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
-			return fmt.Errorf("ensure folder exists: %w", err)
+			// Wrap in PathCreationError to indicate which path failed
+			return &PathCreationError{
+				Path: f.Path,
+				Err:  fmt.Errorf("ensure folder exists: %w", err),
+			}
 		}
 
 		fm.tree.Add(f, parent)
@@ -131,6 +151,8 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 	if parent != "" {
 		meta.SetFolder(parent)
+	} else {
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 	}
 	meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
@@ -141,6 +163,28 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 	})
 
 	if _, err := fm.client.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
+		// there is a potential race here where two syncs can be triggered
+		// if we try to create and there is an error, check if it is from another sync
+		// job for this repo that created it
+		if apierrors.IsAlreadyExists(err) || err.Error() == dashboards.ErrFolderVersionMismatch.Error() {
+			obj, err2 := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
+			if err2 != nil {
+				return fmt.Errorf("failed to get folder: %w", err2)
+			} else if obj == nil {
+				return fmt.Errorf("failed to create folder: %w", err)
+			}
+
+			current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
+			if !ok {
+				return fmt.Errorf("target folder is not managed by a repository")
+			}
+			if current != cfg.Name {
+				return fmt.Errorf("target folder is managed by a different repository (%s)", current)
+			}
+
+			return nil
+		}
+
 		return fmt.Errorf("failed to create folder: %w", err)
 	}
 	return nil
@@ -148,6 +192,10 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructured.Unstructured, error) {
 	return fm.client.Get(ctx, name, metav1.GetOptions{})
+}
+
+func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
+	return fm.client.Delete(ctx, name, metav1.DeleteOptions{})
 }
 
 // ReplicateTree replicates the folder tree to the repository.
@@ -168,6 +216,8 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path s
 		if err != nil && (!errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err)) {
 			return fn(folder, false, fmt.Errorf("check if folder exists before writing: %w", err))
 		} else if err == nil {
+			// Folder already exists in repository, add it to tree so resources can find it
+			fm.tree.Add(folder, parent)
 			return fn(folder, false, nil)
 		}
 

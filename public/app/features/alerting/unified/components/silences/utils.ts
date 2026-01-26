@@ -47,7 +47,7 @@ export const getFormFieldsForSilence = (silence: Silence): SilenceFormFields => 
     startsAt: interval.start.toISOString(),
     endsAt: interval.end.toISOString(),
     comment: silence.comment,
-    createdBy: silence.createdBy,
+    createdBy: isExpired ? contextSrv.user.name : silence.createdBy,
     duration: intervalToAbbreviatedDurationString(interval),
     isRegex: false,
     matchers: silence.matchers?.map(matcherToMatcherField) || [],

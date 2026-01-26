@@ -16,7 +16,7 @@ interface CircularOptions<T> {
  * @public
  * @deprecated use a simple Arrays
  */
-export class CircularVector<T = any> extends FunctionalVector<T> {
+export class CircularVector<T = unknown> extends FunctionalVector<T> {
   private buffer: T[];
   private index: number;
   private capacity: number;

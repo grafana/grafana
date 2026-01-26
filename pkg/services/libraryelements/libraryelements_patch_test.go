@@ -3,14 +3,12 @@ package libraryelements
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/kinds/librarypanel"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/libraryelements/model"
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -83,12 +81,12 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
-						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+						CreatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      userInDbName,
 							AvatarUrl: userInDbAvatar,
 						},
-						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+						UpdatedBy: model.LibraryElementDTOMetaUser{
 							Id:        1,
 							Name:      "signed_in_user",
 							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
@@ -334,7 +332,7 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 			}
 		})
 
-	scenarioWithPanel(t, "When an admin tries to patch a library panel with a name that already exists, it should fail",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with a name that already exists, it should pass",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
 			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Another Panel")
@@ -350,10 +348,10 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
 			resp = sc.service.patchHandler(sc.reqContext)
-			require.Equal(t, 400, resp.Status())
+			require.Equal(t, 200, resp.Status())
 		})
 
-	scenarioWithPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
+	scenarioWithPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should pass",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := &folder.Folder{
 				ID:    2,
@@ -377,7 +375,7 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
 			resp := sc.service.patchHandler(sc.reqContext)
-			require.Equal(t, 400, resp.Status())
+			require.Equal(t, 200, resp.Status())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel in another org, it should fail",

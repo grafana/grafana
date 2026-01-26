@@ -2,7 +2,9 @@ package apistore
 
 import (
 	"context"
+	"encoding/json"
 	"math/rand/v2"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,6 +20,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -30,11 +33,14 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	node, err := snowflake.NewNode(rand.Int64N(1024))
 	require.NoError(t, err)
 	s := &Storage{
+		gr:        dashv1.DashboardResourceInfo.GroupResource(),
 		codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
 		snowflake: node,
 		opts: StorageOptions{
+			Scheme:              rtscheme,
 			EnableFolderSupport: true,
 			LargeObjectSupport:  nil,
+			MaximumNameLength:   100,
 		},
 	}
 
@@ -49,10 +55,18 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Error on missing name", func(t *testing.T) {
-		dashboard := dashv1.Dashboard{}
-		_, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
+		dashboard := &dashv1.Dashboard{}
+		_, err := s.prepareObjectForStorage(ctx, dashboard)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "missing name")
+		require.ErrorContains(t, err, "missing name")
+	})
+
+	t.Run("name is too long", func(t *testing.T) {
+		dashboard := &dashv1.Dashboard{}
+		dashboard.Name = strings.Repeat("a", 120)
+		_, err := s.prepareObjectForStorage(ctx, dashboard)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "name exceeds maximum length")
 	})
 
 	t.Run("Error on non-empty resource version", func(t *testing.T) {
@@ -183,6 +197,42 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "user:user2", meta2.GetUpdatedBy())
 		require.Equal(t, int64(2), meta2.GetGeneration())
+	})
+
+	t.Run("Update should skip incrementing generation when content is unchanged", func(t *testing.T) {
+		dashboard := dashv1.Dashboard{
+			ObjectMeta: v1.ObjectMeta{
+				Name:       "test",
+				Generation: 123,
+				Annotations: map[string]string{
+					"A":                           "B",
+					utils.AnnoKeyUpdatedTimestamp: "2025-12-17T01:01:00Z",
+				},
+				UID: "XXX",
+			},
+			Spec: v0alpha1.Unstructured{
+				Object: map[string]any{
+					"hello": "world",
+				},
+			},
+		}
+		dashboard.Name = "test-name"
+		obj := dashboard.DeepCopyObject()
+		tmp, err := utils.MetaAccessor(obj)
+		tmp.SetGeneration(2)
+		tmp.SetUpdatedTimestampMillis(12345)
+		require.NoError(t, err)
+
+		v, err := s.prepareObjectForUpdate(ctx, obj, &dashboard)
+		require.NoError(t, err)
+		require.False(t, v.hasChanged, "no changes")
+
+		out := &unstructured.Unstructured{}
+		err = json.Unmarshal(v.raw.Bytes(), out)
+		require.NoError(t, err)
+
+		require.Equal(t, int64(123), tmp.GetGeneration())
+		require.Equal(t, "2025-12-17T01:01:00Z", tmp.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 	})
 
 	s.opts.RequireDeprecatedInternalID = true

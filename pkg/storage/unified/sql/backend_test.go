@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -39,6 +38,26 @@ type (
 type testBackend struct {
 	*backend
 	test.TestDBProvider
+}
+
+func expectSuccessfulResourceVersionLock(t *testing.T, dbp test.TestDBProvider, rv int64, timestamp int64) {
+	dbp.SQLMock.ExpectQuery("select resource_version, unix_timestamp for update").
+		WillReturnRows(sqlmock.NewRows([]string{"resource_version", "unix_timestamp"}).
+			AddRow(rv, timestamp))
+}
+
+func expectSuccessfulResourceVersionSaveRV(t *testing.T, dbp test.TestDBProvider) {
+	dbp.SQLMock.ExpectExec("update resource set resource_version").WillReturnResult(sqlmock.NewResult(1, 1))
+	dbp.SQLMock.ExpectExec("update resource_history set resource_version").WillReturnResult(sqlmock.NewResult(1, 1))
+	dbp.SQLMock.ExpectExec("update resource_version set resource_version").WillReturnResult(sqlmock.NewResult(1, 1))
+}
+
+func expectSuccessfulResourceVersionExec(t *testing.T, dbp test.TestDBProvider, cbs ...func()) {
+	for _, cb := range cbs {
+		cb()
+	}
+	expectSuccessfulResourceVersionLock(t, dbp, 100, 200)
+	expectSuccessfulResourceVersionSaveRV(t, dbp)
 }
 
 func (b testBackend) ExecWithResult(expectedSQL string, lastInsertID int64, rowsAffected int64) {
@@ -721,7 +740,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 		// Define all pages we want to test
 		pages := []struct {
 			versions []int64
-			token    *resource.ContinueToken
+			token    *ContinueToken
 		}{
 			{
 				versions: []int64{rv51, rv52, rv53, rv54},
@@ -729,7 +748,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 			},
 			{
 				versions: []int64{rv55, rv56, rv57, rv58},
-				token: &resource.ContinueToken{
+				token: &ContinueToken{
 					ResourceVersion: rv54,
 					StartOffset:     4,
 					SortAscending:   true,
@@ -737,7 +756,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 			},
 			{
 				versions: []int64{rv59, rv60},
-				token: &resource.ContinueToken{
+				token: &ContinueToken{
 					ResourceVersion: rv58,
 					StartOffset:     8,
 					SortAscending:   true,

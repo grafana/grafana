@@ -2,13 +2,15 @@ package sql
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"hash/fnv"
 	"net"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
@@ -56,11 +58,11 @@ type service struct {
 	subservicesWatcher *services.FailureWatcher
 	hasSubservices     bool
 
-	cfg       *setting.Cfg
-	features  featuremgmt.FeatureToggles
-	db        infraDB.DB
-	stopCh    chan struct{}
-	stoppedCh chan error
+	backend       resource.StorageBackend
+	serverStopper resource.ResourceServerStopper
+	cfg           *setting.Cfg
+	features      featuremgmt.FeatureToggles
+	db            infraDB.DB
 
 	handler grpcserver.Provider
 
@@ -93,6 +95,8 @@ func ProvideUnifiedStorageGrpcService(
 	indexMetrics *resource.BleveIndexMetrics,
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
+	httpServerRouter *mux.Router,
+	backend resource.StorageBackend,
 ) (UnifiedStorageGrpcService, error) {
 	var err error
 	tracer := otel.Tracer("unified-storage")
@@ -105,9 +109,9 @@ func ProvideUnifiedStorageGrpcService(
 	})
 
 	s := &service{
+		backend:            backend,
 		cfg:                cfg,
 		features:           features,
-		stopCh:             make(chan struct{}),
 		authenticator:      authn,
 		tracing:            tracer,
 		db:                 db,
@@ -158,6 +162,10 @@ func ProvideUnifiedStorageGrpcService(
 
 		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(true)
 		subservices = append(subservices, s.ringLifecycler)
+
+		if httpServerRouter != nil {
+			httpServerRouter.Path("/prepare-downscale").Methods("GET", "POST", "DELETE").Handler(http.HandlerFunc(s.PrepareDownscale))
+		}
 	}
 
 	if cfg.QOSEnabled {
@@ -193,6 +201,49 @@ func ProvideUnifiedStorageGrpcService(
 	return s, nil
 }
 
+func (s *service) PrepareDownscale(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		s.log.Info("Preparing for downscale. Will not keep instance in ring on shutdown.")
+		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(false)
+	case http.MethodDelete:
+		s.log.Info("Downscale canceled. Will keep instance in ring on shutdown.")
+		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(true)
+	case http.MethodGet:
+		// used for delayed downscale use case, which we don't support. Leaving here for completion sake
+		s.log.Info("Received GET request for prepare-downscale. Behavior not implemented.")
+	default:
+	}
+}
+
+var (
+	// operation used by the search-servers to check if they own the namespace
+	searchOwnerRead = ring.NewOp([]ring.InstanceState{ring.JOINING, ring.ACTIVE, ring.LEAVING}, nil)
+)
+
+func (s *service) OwnsIndex(key resource.NamespacedResource) (bool, error) {
+	if s.searchRing == nil {
+		return true, nil
+	}
+
+	if st := s.searchRing.State(); st != services.Running {
+		return false, fmt.Errorf("ring is not Running: %s", st)
+	}
+
+	ringHasher := fnv.New32a()
+	_, err := ringHasher.Write([]byte(key.Namespace))
+	if err != nil {
+		return false, fmt.Errorf("error hashing namespace: %w", err)
+	}
+
+	rs, err := s.searchRing.GetWithOptions(ringHasher.Sum32(), searchOwnerRead, ring.WithReplicationFactor(s.searchRing.ReplicationFactor()))
+	if err != nil {
+		return false, fmt.Errorf("error getting replicaset from ring: %w", err)
+	}
+
+	return rs.Includes(s.ringLifecycler.GetInstanceAddr()), nil
+}
+
 func (s *service) starting(ctx context.Context) error {
 	if s.hasSubservices {
 		s.subservicesWatcher.WatchManager(s.subservices)
@@ -206,12 +257,13 @@ func (s *service) starting(ctx context.Context) error {
 		return err
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.tracing, s.docBuilders, s.indexMetrics)
+	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex)
 	if err != nil {
 		return err
 	}
 
 	serverOptions := ServerOptions{
+		Backend:        s.backend,
 		DB:             s.db,
 		Cfg:            s.cfg,
 		Tracer:         s.tracing,
@@ -222,13 +274,25 @@ func (s *service) starting(ctx context.Context) error {
 		IndexMetrics:   s.indexMetrics,
 		Features:       s.features,
 		QOSQueue:       s.queue,
-		Ring:           s.searchRing,
-		RingLifecycler: s.ringLifecycler,
+		OwnsIndexFn:    s.OwnsIndex,
 	}
+
+	if s.cfg.OverridesFilePath != "" {
+		overridesSvc, err := resource.NewOverridesService(context.Background(), s.log, s.reg, s.tracing, resource.ReloadOptions{
+			FilePath:     s.cfg.OverridesFilePath,
+			ReloadPeriod: s.cfg.OverridesReloadInterval,
+		})
+		if err != nil {
+			return err
+		}
+		serverOptions.OverridesService = overridesSvc
+	}
+
 	server, err := NewResourceServer(serverOptions)
 	if err != nil {
 		return err
 	}
+	s.serverStopper = server
 	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, interceptors.AuthenticatorFunc(s.authenticator), s.tracing, prometheus.DefaultRegisterer)
 	if err != nil {
 		return err
@@ -246,6 +310,7 @@ func (s *service) starting(ctx context.Context) error {
 	resourcepb.RegisterManagedObjectIndexServer(srv, server)
 	resourcepb.RegisterBlobStoreServer(srv, server)
 	resourcepb.RegisterDiagnosticsServer(srv, server)
+	resourcepb.RegisterQuotasServer(srv, server)
 	grpc_health_v1.RegisterHealthServer(srv, healthService)
 
 	// register reflection service
@@ -256,7 +321,7 @@ func (s *service) starting(ctx context.Context) error {
 
 	if s.cfg.EnableSharding {
 		s.log.Info("waiting until resource server is JOINING in the ring")
-		lfcCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		lfcCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ResourceServerJoinRingTimeout)
 		defer cancel()
 		if err := ring.WaitInstanceState(lfcCtx, s.searchRing, s.ringLifecycler.GetInstanceID(), ring.JOINING); err != nil {
 			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
@@ -269,15 +334,6 @@ func (s *service) starting(ctx context.Context) error {
 		s.log.Info("resource server is ACTIVE in the ring")
 	}
 
-	// start the gRPC server
-	go func() {
-		err := s.handler.Run(ctx)
-		if err != nil {
-			s.stoppedCh <- err
-		} else {
-			s.stoppedCh <- nil
-		}
-	}()
 	return nil
 }
 
@@ -287,17 +343,39 @@ func (s *service) GetAddress() string {
 }
 
 func (s *service) running(ctx context.Context) error {
+	serverErrCh := make(chan error, 1)
+	go func() {
+		serverErrCh <- s.handler.Run(ctx)
+	}()
+
 	select {
-	case err := <-s.stoppedCh:
-		if err != nil && !errors.Is(err, context.Canceled) {
+	case err := <-serverErrCh:
+		if err != nil {
 			return err
 		}
+		return nil
 	case err := <-s.subservicesWatcher.Chan():
 		return fmt.Errorf("subservice failure: %w", err)
 	case <-ctx.Done():
-		close(s.stopCh)
+		s.log.Info("Stopping resource server")
+		if s.serverStopper != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := s.serverStopper.Stop(ctx); err != nil {
+				s.log.Warn("Failed to stop resource server", "error", err)
+			} else {
+				s.log.Info("Resource server stopped")
+			}
+		}
+
+		// Now wait for the gRPC server to complete graceful shutdown.
+		s.log.Info("Waiting for gRPC server to complete graceful shutdown")
+		err := <-serverErrCh
+		if err != nil {
+			return err
+		}
+		return nil
 	}
-	return nil
 }
 
 func (s *service) stopping(_ error) error {

@@ -41,7 +41,7 @@ export const strongPasswordValidations: StrongPasswordValidation[] = [
   },
   {
     message: 'One symbol',
-    validation: (value: string) => /[\W]/.test(value),
+    validation: (value: string) => /[^A-Za-z0-9]/.test(value),
   },
 ];
 

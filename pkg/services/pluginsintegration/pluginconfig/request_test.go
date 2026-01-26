@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,8 +20,9 @@ func TestRequestConfigProvider_PluginRequestConfig_Defaults(t *testing.T) {
 	pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
-	p := NewRequestConfigProvider(pCfg)
+	p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 	require.Equal(t, map[string]string{
+		"GF_LIVE_CLIENT_QUEUE_MAX_SIZE":            "0",
 		"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
 		"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
 		"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
@@ -133,7 +135,7 @@ func TestRequestConfigProvider_PluginRequestConfig(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			p := NewRequestConfigProvider(tc.cfg)
+			p := NewRequestConfigProvider(tc.cfg, &fakeSSOSettingsProvider{})
 			require.Subset(t, p.PluginRequestConfig(context.Background(), "", nil), tc.expected)
 		})
 	}
@@ -168,7 +170,7 @@ func TestRequestConfigProvider_PluginRequestConfig_featureToggles(t *testing.T) 
 			pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), tc.features)
 			require.NoError(t, err)
 
-			p := NewRequestConfigProvider(pCfg)
+			p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 			require.Subset(t, p.PluginRequestConfig(context.Background(), "", nil), tc.expectedConfig)
 		}
 	})
@@ -182,7 +184,7 @@ func TestRequestConfigProvider_PluginRequestConfig_appURL(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		p := NewRequestConfigProvider(pCfg)
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "", nil), map[string]string{"GF_APP_URL": "https://myorg.com/"})
 	})
 }
@@ -198,7 +200,7 @@ func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		p := NewRequestConfigProvider(pCfg)
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "", nil), map[string]string{
 			"GF_SQL_ROW_LIMIT":                         "23",
 			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "24",
@@ -216,8 +218,9 @@ func TestRequestConfigProvider_PluginRequestConfig_SQL(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		p := NewRequestConfigProvider(pCfg)
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 		require.Equal(t, map[string]string{
+			"GF_LIVE_CLIENT_QUEUE_MAX_SIZE":            "0",
 			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
 			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
 			"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
@@ -233,7 +236,7 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		p := NewRequestConfigProvider(pCfg)
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "", nil), map[string]string{"GF_CONCURRENT_QUERY_COUNT": "42"})
 	})
 
@@ -242,7 +245,7 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		p := NewRequestConfigProvider(pCfg)
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 		require.NotContains(t, p.PluginRequestConfig(context.Background(), "", nil), "GF_CONCURRENT_QUERY_COUNT")
 	})
 
@@ -253,8 +256,24 @@ func TestRequestConfigProvider_PluginRequestConfig_concurrentQueryCount(t *testi
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		p := NewRequestConfigProvider(pCfg)
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 		require.NotContains(t, p.PluginRequestConfig(context.Background(), "", nil), "GF_CONCURRENT_QUERY_COUNT")
+	})
+}
+
+func TestRequestConfigProvider_PluginRequestConfig_liveClientQueueMaxSize(t *testing.T) {
+	t.Run("Sets the live client queue max size only for Tempo", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.LiveClientQueueMaxSize = 123
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
+
+		require.Subset(t, p.PluginRequestConfig(context.Background(), "tempo", nil), map[string]string{
+			"GF_LIVE_CLIENT_QUEUE_MAX_SIZE": "123",
+		})
 	})
 }
 
@@ -265,7 +284,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azureAuthEnabled(t *testing.T
 			Features:         featuremgmt.WithFeatures(),
 		}
 
-		p := NewRequestConfigProvider(cfg)
+		p := NewRequestConfigProvider(cfg, &fakeSSOSettingsProvider{})
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "", nil), map[string]string{"GFAZPL_AZURE_AUTH_ENABLED": "true"})
 	})
 
@@ -274,7 +293,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azureAuthEnabled(t *testing.T
 			Features: featuremgmt.WithFeatures(),
 		}
 
-		p := NewRequestConfigProvider(cfg)
+		p := NewRequestConfigProvider(cfg, &fakeSSOSettingsProvider{})
 		require.NotContains(t, p.PluginRequestConfig(context.Background(), "", nil), "GFAZPL_AZURE_AUTH_ENABLED")
 	})
 
@@ -284,7 +303,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azureAuthEnabled(t *testing.T
 			Features:         featuremgmt.WithFeatures(),
 		}
 
-		p := NewRequestConfigProvider(cfg)
+		p := NewRequestConfigProvider(cfg, &fakeSSOSettingsProvider{})
 		require.NotContains(t, p.PluginRequestConfig(context.Background(), "", nil), "GFAZPL_AZURE_AUTH_ENABLED")
 	})
 }
@@ -322,7 +341,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		p := NewRequestConfigProvider(pCfg)
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "grafana-azure-monitor-datasource", nil), map[string]string{
 			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":                         "mock_managed_identity_client_id",
@@ -356,7 +375,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		p := NewRequestConfigProvider(pCfg)
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "grafana-azure-monitor-datasource", nil), map[string]string{
 			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":                         "mock_managed_identity_client_id",
@@ -384,7 +403,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		p := NewRequestConfigProvider(pCfg)
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 		m := p.PluginRequestConfig(context.Background(), "", nil)
 		require.NotContains(t, m, "GFAZPL_AZURE_CLOUD")
 		require.NotContains(t, m, "GFAZPL_MANAGED_IDENTITY_ENABLED")
@@ -413,7 +432,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		p := NewRequestConfigProvider(pCfg)
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "test-datasource", nil), map[string]string{
 			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":                         "mock_managed_identity_client_id",
@@ -433,6 +452,108 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 			"GFAZPL_AZURE_ENTRA_PASSWORD_CREDENTIALS_ENABLED":           "true",
 		})
 	})
+
+	t.Run("sets user token endpoint settings from SSO settings for an Azure plugin", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Azure = azSettings
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{
+			GetForProviderFunc: getAzureSSOSettings,
+		})
+		require.Subset(t, p.PluginRequestConfig(context.Background(), "grafana-azure-monitor-datasource", nil), map[string]string{
+			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
+			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":                         "mock_managed_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":                          "true",
+			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID":                        "mock_workload_identity_tenant_id",
+			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID":                        "mock_workload_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE":                       "mock_workload_identity_token_file",
+			"GFAZPL_USER_IDENTITY_ENABLED":                              "true",
+			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED": "true",
+			"GFAZPL_USER_IDENTITY_TOKEN_URL":                            "sso_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_AUTHENTICATION":                "sso_user_client_authentication",
+			"GFAZPL_USER_IDENTITY_CLIENT_ID":                            "sso_user_identity_client_id",
+			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":                        "sso_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_MANAGED_IDENTITY_CLIENT_ID":           "sso_user_identity_managed_identity_client_id",
+			"GFAZPL_USER_IDENTITY_FEDERATED_CREDENTIAL_AUDIENCE":        "sso_user_identity_federated_credential_audience",
+			"GFAZPL_USER_IDENTITY_ASSERTION":                            "username",
+			"GFAZPL_AZURE_ENTRA_PASSWORD_CREDENTIALS_ENABLED":           "true",
+		})
+	})
+
+	t.Run("does not use SSO settings if overrides have been set for an Azure plugin", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Azure = &azsettings.AzureSettings{
+			Cloud:                   azsettings.AzurePublic,
+			ManagedIdentityEnabled:  true,
+			ManagedIdentityClientId: "mock_managed_identity_client_id",
+			WorkloadIdentityEnabled: true,
+			WorkloadIdentitySettings: &azsettings.WorkloadIdentitySettings{
+				TenantId:  "mock_workload_identity_tenant_id",
+				ClientId:  "mock_workload_identity_client_id",
+				TokenFile: "mock_workload_identity_token_file",
+			},
+			UserIdentityEnabled: true,
+			UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{
+				TokenUrl:                            "override_user_identity_token_url",
+				TokenUrlOverride:                    true,
+				ClientAuthentication:                "override_user_client_authentication",
+				ClientAuthenticationOverride:        true,
+				ClientId:                            "override_user_identity_client_id",
+				ClientIdOverride:                    true,
+				ClientSecret:                        "override_user_identity_client_secret",
+				ClientSecretOverride:                true,
+				ManagedIdentityClientId:             "override_user_identity_managed_identity_client_id",
+				ManagedIdentityClientIdOverride:     true,
+				FederatedCredentialAudience:         "override_user_identity_federated_credential_audience",
+				FederatedCredentialAudienceOverride: true,
+				UsernameAssertion:                   true,
+			},
+			UserIdentityFallbackCredentialsEnabled: true,
+			ForwardSettingsPlugins:                 []string{"grafana-azure-monitor-datasource", "prometheus", "grafana-azure-data-explorer-datasource", "mssql", "grafana-azureprometheus-datasource"},
+			AzureEntraPasswordCredentialsEnabled:   true,
+		}
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{
+			GetForProviderFunc: getAzureSSOSettings,
+		})
+		require.Subset(t, p.PluginRequestConfig(context.Background(), "grafana-azure-monitor-datasource", nil), map[string]string{
+			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
+			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":                         "mock_managed_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":                          "true",
+			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID":                        "mock_workload_identity_tenant_id",
+			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID":                        "mock_workload_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE":                       "mock_workload_identity_token_file",
+			"GFAZPL_USER_IDENTITY_ENABLED":                              "true",
+			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED": "true",
+			"GFAZPL_USER_IDENTITY_TOKEN_URL":                            "override_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_AUTHENTICATION":                "override_user_client_authentication",
+			"GFAZPL_USER_IDENTITY_CLIENT_ID":                            "override_user_identity_client_id",
+			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":                        "override_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_MANAGED_IDENTITY_CLIENT_ID":           "override_user_identity_managed_identity_client_id",
+			"GFAZPL_USER_IDENTITY_FEDERATED_CREDENTIAL_AUDIENCE":        "override_user_identity_federated_credential_audience",
+			"GFAZPL_USER_IDENTITY_ASSERTION":                            "username",
+			"GFAZPL_AZURE_ENTRA_PASSWORD_CREDENTIALS_ENABLED":           "true",
+		})
+	})
+}
+
+func getAzureSSOSettings(ctx context.Context, provider string) (*pluginsso.Settings, error) {
+	return &pluginsso.Settings{
+		Values: map[string]any{
+			"token_url":                     "sso_user_identity_token_url",
+			"client_authentication":         "sso_user_client_authentication",
+			"client_id":                     "sso_user_identity_client_id",
+			"client_secret":                 "sso_user_identity_client_secret",
+			"managed_identity_client_id":    "sso_user_identity_managed_identity_client_id",
+			"federated_credential_audience": "sso_user_identity_federated_credential_audience",
+		},
+	}, nil
 }
 
 func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
@@ -447,7 +568,7 @@ func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
 	cfg.AWSListMetricsPageLimit = "100"
 	cfg.AWSForwardSettingsPlugins = []string{"cloudwatch", "prometheus", "elasticsearch"}
 
-	p := NewRequestConfigProvider(cfg)
+	p := NewRequestConfigProvider(cfg, &fakeSSOSettingsProvider{})
 
 	t.Run("uses the aws settings for an AWS plugin", func(t *testing.T) {
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "cloudwatch", nil), map[string]string{
@@ -471,7 +592,7 @@ func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
 	t.Run("uses the aws settings for a non-aws user-specified plugin", func(t *testing.T) {
 		cfg.AWSForwardSettingsPlugins = append(cfg.AWSForwardSettingsPlugins, "test-datasource")
 
-		p = NewRequestConfigProvider(cfg)
+		p = NewRequestConfigProvider(cfg, &fakeSSOSettingsProvider{})
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "test-datasource", nil), map[string]string{
 			"AWS_AUTH_AssumeRoleEnabled":     "false",
 			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
@@ -489,9 +610,20 @@ func TestRequestConfigProvider_PluginRequestConfig_appClientSecret(t *testing.T)
 		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 		require.NoError(t, err)
 
-		p := NewRequestConfigProvider(pCfg)
+		p := NewRequestConfigProvider(pCfg, &fakeSSOSettingsProvider{})
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "", &auth.ExternalService{
 			ClientSecret: "mysecret",
 		}), map[string]string{backend.AppClientSecret: "mysecret"})
 	})
+}
+
+type fakeSSOSettingsProvider struct {
+	GetForProviderFunc func(ctx context.Context, provider string) (*pluginsso.Settings, error)
+}
+
+func (m *fakeSSOSettingsProvider) GetForProvider(ctx context.Context, provider string) (*pluginsso.Settings, error) {
+	if m.GetForProviderFunc != nil {
+		return m.GetForProviderFunc(ctx, provider)
+	}
+	return nil, nil
 }

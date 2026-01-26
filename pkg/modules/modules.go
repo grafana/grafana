@@ -23,6 +23,7 @@ type Registry interface {
 }
 
 type Manager interface {
+	services.NamedService
 	Registry
 	Engine
 }

@@ -55,6 +55,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   updatedAt: string;
   installedVersion?: string;
   details?: CatalogPluginDetails;
+  insights?: CatalogPluginInsights;
   error?: PluginErrorCode;
   angularDetected?: boolean;
   // instance plugins may not be fully installed, which means a new instance
@@ -88,6 +89,54 @@ export interface CatalogPluginDetails {
   signatureType?: PluginSignatureType;
   signature?: PluginSignatureStatus;
   screenshots?: Screenshots[] | null;
+}
+
+export type InsightLevel = 'ok' | 'warning' | 'danger' | 'good' | 'info';
+
+export const SCORE_LEVELS = {
+  EXCELLENT: 'Excellent',
+  GOOD: 'Good',
+  FAIR: 'Fair',
+  POOR: 'Poor',
+  CRITICAL: 'Critical',
+} as const;
+
+export type ScoreLevel = (typeof SCORE_LEVELS)[keyof typeof SCORE_LEVELS];
+
+export const INSIGHT_CATEGORIES = {
+  SECURITY: 'security',
+  QUALITY: 'quality',
+  PERFORMANCE: 'performance',
+} as const;
+
+export const INSIGHT_LEVELS = {
+  GOOD: 'good',
+  OK: 'ok',
+  WARNING: 'warning',
+  DANGER: 'danger',
+  INFO: 'info',
+} as const;
+
+export interface InsightItem {
+  id: string;
+  name: string;
+  description?: string;
+  level: InsightLevel;
+  link?: string;
+}
+
+export interface InsightCategory {
+  name: string;
+  items: InsightItem[];
+  scoreValue: number;
+  scoreLevel: ScoreLevel;
+}
+
+export interface CatalogPluginInsights {
+  id: number;
+  name: string;
+  version: string;
+  insights: InsightCategory[];
 }
 
 export interface CatalogPluginInfo {

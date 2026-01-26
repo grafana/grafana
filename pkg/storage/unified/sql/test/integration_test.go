@@ -2,11 +2,12 @@ package test
 
 import (
 	"context"
-	"os"
+	"sync"
 	"testing"
 	"time"
 
-	"github.com/go-jose/go-jose/v3/jwt"
+	index "github.com/blevesearch/bleve_index_api"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
@@ -24,11 +25,50 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+// initMutex is a global lock to ensure that database initialization and migration
+// only happens once at a time across all concurrent integration tests in this package.
+// This prevents race conditions where multiple tests try to alter the same table simultaneously.
+var initMutex = &sync.Mutex{}
+
+// newTestBackend creates a fresh database and backend for a test.
+// It uses a mutex to ensure the entire initialization and migration
+// process is atomic and does not race with other parallel tests.
+func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration) (resource.StorageBackend, sqldb.DB) {
+	// Lock to ensure the entire init block is atomic.
+	initMutex.Lock()
+	// Unlock once the function returns the initialized backend.
+	defer initMutex.Unlock()
+
+	dbstore := db.InitTestDB(t)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	require.NoError(t, err)
+	require.NotNil(t, eDB)
+
+	backend, err := sql.NewBackend(sql.BackendOptions{
+		DBProvider:              eDB,
+		IsHA:                    isHA,
+		SimulatedNetworkLatency: simulatedNetworkLatency,
+		LastImportTimeMaxAge:    24 * time.Hour,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, backend)
+
+	// Use a context with a reasonable timeout for migrations.
+	err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
+	require.NoError(t, err)
+
+	sqlDB, err := eDB.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
+	require.NoError(t, err)
+
+	return backend, sqlDB
+}
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
@@ -36,21 +76,10 @@ func TestMain(m *testing.M) {
 
 func TestIntegrationStorageServer(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
 
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
-		dbstore := db.InitTestDB(t)
-		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-		require.NoError(t, err)
-		require.NotNil(t, eDB)
-
-		backend, err := sql.NewBackend(sql.BackendOptions{
-			DBProvider: eDB,
-			IsHA:       true,
-		})
-		require.NoError(t, err)
-		require.NotNil(t, backend)
-		err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
-		require.NoError(t, err)
+		backend, _ := newTestBackend(t, true, 0)
 		return backend
 	})
 }
@@ -58,44 +87,80 @@ func TestIntegrationStorageServer(t *testing.T) {
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			dbstore := db.InitTestDB(t)
-			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-			require.NoError(t, err)
-			require.NotNil(t, eDB)
-
-			backend, err := sql.NewBackend(sql.BackendOptions{
-				DBProvider: eDB,
-				IsHA:       true,
-			})
-			require.NoError(t, err)
-			require.NotNil(t, backend)
-			err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
-			require.NoError(t, err)
+			backend, _ := newTestBackend(t, true, 0)
 			return backend
 		}, nil)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			dbstore := db.InitTestDB(t)
-			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-			require.NoError(t, err)
-			require.NotNil(t, eDB)
-
-			backend, err := sql.NewBackend(sql.BackendOptions{
-				DBProvider: eDB,
-				IsHA:       false,
-			})
-			require.NoError(t, err)
-			require.NotNil(t, backend)
-			err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
-			require.NoError(t, err)
+			backend, _ := newTestBackend(t, false, 0)
 			return backend
 		}, nil)
 	})
+}
+
+func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
+
+	newKvBackend := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
+		return unitest.NewTestSqlKvBackend(t, ctx, true)
+	}
+
+	opts := &unitest.TestOptions{
+		SearchServerFactory: newTestResourceServerWithSearch,
+	}
+
+	t.Run("IsHA (polling notifier)", func(t *testing.T) {
+		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
+			return newTestBackend(t, true, 0)
+		}, newKvBackend, opts)
+	})
+
+	t.Run("NotHA (in process notifier)", func(t *testing.T) {
+		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
+			return newTestBackend(t, false, 0)
+		}, newKvBackend, opts)
+	})
+}
+
+// newTestResourceServerWithSearch creates a ResourceServer with search enabled for testing
+func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBackend) resource.ResourceServer {
+	t.Helper()
+
+	// Create test config
+	cfg := setting.NewCfg()
+	cfg.EnableSearch = true
+	cfg.IndexFileThreshold = 1000 // Ensures memory indexing
+	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
+
+	// Initialize document builders for playlists
+	docBuilders := &resource.TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"playlist.grafana.app": "playlists",
+		},
+	}
+
+	// Create search options
+	features := featuremgmt.WithFeatures()
+	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
+	require.NoError(t, err)
+
+	// Create ResourceServer with search enabled
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      backend,
+		AccessClient: types.FixedAccessClient(true), // Allow all operations for testing
+		Search:       searchOpts,
+		Reg:          nil,
+	})
+	require.NoError(t, err)
+
+	return server
 }
 
 func TestIntegrationSearchAndStorage(t *testing.T) {
@@ -103,36 +168,28 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 
 	ctx := context.Background()
 
-	tempDir := t.TempDir()
-	t.Cleanup(func() {
-		_ = os.RemoveAll(tempDir)
-	})
-	// Create a new bleve backend
-	search, err := search.NewBleveBackend(search.BleveOptions{
-		FileThreshold: 0,
-		Root:          tempDir,
-	}, tracing.NewNoopTracerService(), nil)
-	require.NoError(t, err)
-	require.NotNil(t, search)
+	scoringModels := []string{index.TFIDFScoring, index.BM25Scoring}
 
-	t.Cleanup(search.CloseAllIndexes)
+	for _, model := range scoringModels {
+		t.Run(model, func(t *testing.T) {
+			// Create a new bleve backend
+			search, err := search.NewBleveBackend(search.BleveOptions{
+				FileThreshold: 0,
+				Root:          t.TempDir(),
+				ScoringModel:  model,
+			}, nil)
+			require.NoError(t, err)
+			require.NotNil(t, search)
+			t.Cleanup(search.Stop)
 
-	// Create a new resource backend
-	dbstore := db.InitTestDB(t)
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-	require.NoError(t, err)
-	require.NotNil(t, eDB)
+			// Create a new resource backend
+			storage, _ := newTestBackend(t, false, 0)
+			require.NotNil(t, storage)
 
-	storage, err := sql.NewBackend(sql.BackendOptions{
-		DBProvider: eDB,
-		IsHA:       false,
-	})
-	require.NoError(t, err)
-	require.NotNil(t, storage)
-
-	err = storage.Init(ctx)
-	require.NoError(t, err)
-	unitest.RunTestSearchAndStorage(t, ctx, storage, search)
+			// Run the shared storage and search tests
+			unitest.RunTestSearchAndStorage(t, ctx, storage, search)
+		})
+	}
 }
 
 func TestClientServer(t *testing.T) {
@@ -149,7 +206,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{})
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil)
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 

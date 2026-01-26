@@ -300,7 +300,7 @@ Complete the following steps to set up notifications.
 
       All notifications for this alert rule are sent to this contact point automatically and notification policies aren't used.
 
-   1. You can also optionally select a mute or active timing as well as groupings and timings to define when not to send notifications.
+   1. You can also optionally select a mute timing or active time interval as well as groupings and timings to define when not to send notifications.
 
    **Use notification policy**
    1. Choose this option to use the [notification policy tree](ref:notification-policies) to handle alert notifications.
