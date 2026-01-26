@@ -34,6 +34,7 @@ const stats = {
   testIdsWithTemplateStrings: 0,
   testIdsWithVariables: 0,
   filesWithSelectorImport: 0,
+  duplicateSelectorReferences: 0,
 };
 
 const results = {
@@ -42,6 +43,41 @@ const results = {
   templateStrings: [],
   variables: [],
 };
+
+// Map to track selector references: selector path -> array of file locations
+const selectorReferenceMap = new Map();
+
+/**
+ * Extract selector path from a selector reference
+ * e.g., "selectors.components.DataSourcePicker.inputV2" -> "components.DataSourcePicker.inputV2"
+ */
+function extractSelectorPath(selectorRef) {
+  // Remove leading "selectors." if present
+  let path = selectorRef.trim().replace(/^selectors\./, '');
+  
+  // Handle common patterns
+  if (path.startsWith('Components.') || path.startsWith('Pages.')) {
+    path = path.charAt(0).toLowerCase() + path.slice(1);
+  }
+  
+  return path;
+}
+
+/**
+ * Track selector reference for duplicate detection
+ */
+function trackSelectorReference(selectorRef, filePath, lineNumber) {
+  const selectorPath = extractSelectorPath(selectorRef);
+  
+  if (!selectorReferenceMap.has(selectorPath)) {
+    selectorReferenceMap.set(selectorPath, []);
+  }
+  
+  selectorReferenceMap.get(selectorPath).push({
+    file: filePath,
+    line: lineNumber,
+  });
+}
 
 /**
  * Recursively get all files in directory
@@ -124,6 +160,7 @@ function analyzeFile(filePath) {
       if (isDirectSelectorUsage || isSelectorVariable) {
         stats.testIdsWithSelectors++;
         results.selectorUsages.push({ ...result, value: trimmed });
+        trackSelectorReference(trimmed, relativePath, result.line);
       } else {
         stats.testIdsWithVariables++;
         results.variables.push({ ...result, value: trimmed });
@@ -136,6 +173,11 @@ function analyzeFile(filePath) {
       if (value.includes('${selectors.') || value.includes('${Components.') || value.includes('${Pages.')) {
         stats.testIdsWithSelectors++;
         results.selectorUsages.push({ ...result, value });
+        // Extract selector from template string
+        const selectorMatch = value.match(/\$\{(selectors\.[^}]+|Components\.[^}]+|Pages\.[^}]+)\}/);
+        if (selectorMatch) {
+          trackSelectorReference(selectorMatch[1], relativePath, result.line);
+        }
       } else {
         stats.testIdsWithStringLiterals++;
         results.stringLiterals.push({ ...result, value });
@@ -149,12 +191,41 @@ function analyzeFile(filePath) {
       ) {
         stats.testIdsWithSelectors++;
         results.selectorUsages.push({ ...result, value: templateString });
+        // Extract selector from template string
+        const selectorMatch = templateString.match(/\$\{(selectors\.[^}]+|Components\.[^}]+|Pages\.[^}]+)\}/);
+        if (selectorMatch) {
+          trackSelectorReference(selectorMatch[1], relativePath, result.line);
+        }
       } else {
         stats.testIdsWithTemplateStrings++;
         results.templateStrings.push({ ...result, value: templateString });
       }
     }
   });
+}
+
+/**
+ * Analyze selector references for duplicates
+ */
+function analyzeDuplicates() {
+  const duplicates = [];
+  
+  for (const [selectorPath, references] of selectorReferenceMap.entries()) {
+    if (references.length > 1) {
+      duplicates.push({
+        selector: selectorPath,
+        count: references.length,
+        references: references,
+      });
+    }
+  }
+  
+  // Sort by count (most duplicates first)
+  duplicates.sort((a, b) => b.count - a.count);
+  
+  stats.duplicateSelectorReferences = duplicates.length;
+  
+  return duplicates;
 }
 
 /**
@@ -175,6 +246,9 @@ function main() {
 
   // Analyze each file
   allFiles.forEach(analyzeFile);
+
+  // Analyze for duplicates
+  const duplicates = analyzeDuplicates();
 
   // Print results
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -221,7 +295,37 @@ function main() {
   console.log(`  - ${needsImprovement.toLocaleString()} data-testid attributes could be refactored to use selectors`);
   console.log('  - String literals are harder to maintain and refactor');
   console.log('  - The selectors package provides type safety and consistency\n');
-
+  // Report on duplicate selector references
+  if (duplicates.length > 0) {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('⚠️  DUPLICATE SELECTOR REFERENCES');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    
+    console.log(`Found ${duplicates.length} selectors referenced in multiple files:\n`);
+    
+    // Show top duplicates
+    const topDuplicates = duplicates.slice(0, 10);
+    topDuplicates.forEach((dup, index) => {
+      console.log(`${index + 1}. ${dup.selector} (used ${dup.count} times):`);
+      dup.references.forEach((ref) => {
+        console.log(`   - ${ref.file}:${ref.line}`);
+      });
+      console.log('');
+    });
+    
+    if (duplicates.length > 10) {
+      console.log(`... and ${duplicates.length - 10} more duplicates\n`);
+    }
+    
+    console.log('⚠️  WARNING: Duplicate selector references may cause test conflicts!');
+    console.log('Each data-testid should uniquely identify a single element.\n');
+    console.log('RECOMMENDATION: Consider:');
+    console.log('  - Creating unique selectors for each component');
+    console.log('  - Using component-specific test IDs');
+    console.log('  - Adding context to the selector name (e.g., MultipleDataSourcePicker.input)\n');
+  } else {
+    console.log('✅ No duplicate selector references found!\n');
+  }
   // Optional: Show sample files with issues
   if (process.argv.includes('--verbose') || process.argv.includes('-v')) {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -273,6 +377,7 @@ function main() {
         templateStrings: results.templateStrings,
         variables: results.variables,
       },
+      duplicates: duplicates,
     };
 
     const outputPath = path.join(WORKSPACE_ROOT, 'testid-coverage-report.json');
