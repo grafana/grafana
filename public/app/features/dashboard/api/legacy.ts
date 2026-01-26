@@ -10,7 +10,7 @@ import { SaveDashboardResponseDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI, ListDeletedDashboardsOptions } from './types';
+import { DashboardAPI, ListDashboardHistoryOptions, ListDeletedDashboardsOptions } from './types';
 
 interface HistoryResult {
   continueToken?: string;
@@ -69,12 +69,19 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard>
     return result;
   }
 
-  async listDashboardHistory(uid: string): Promise<ResourceList<Dashboard, Dashboard, string>> {
-    const result = await getBackendSrv().get<HistoryResult>(`/api/dashboards/uid/${uid}/versions`);
+  async listDashboardHistory(uid: string, options?: ListDashboardHistoryOptions) {
+    const params = {
+      limit: options?.limit ?? 10,
+      continueToken: options?.continueToken,
+    };
+    const result = await getBackendSrv().get<HistoryResult>(`/api/dashboards/uid/${uid}/versions`, params);
     return {
       apiVersion: 'v0alpha1',
       kind: 'DashboardList',
-      metadata: { resourceVersion: '0' },
+      metadata: {
+        resourceVersion: '0',
+        continue: result.continueToken,
+      },
       items: result.versions.map((v) => ({
         apiVersion: 'v0alpha1',
         kind: 'Dashboard',
@@ -82,7 +89,7 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard>
           name: v.uid,
           resourceVersion: v.version.toString(),
           generation: v.version,
-          creationTimestamp: v.created ? v.created.toISOString() : new Date().toISOString(),
+          creationTimestamp: v.created ? String(v.created) : new Date().toISOString(),
           annotations: {
             'grafana.app/updatedBy': v.createdBy,
             'grafana.app/message': v.message,
@@ -91,6 +98,41 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard>
         spec: v.data,
       })),
     };
+  }
+
+  async getDashboardHistoryVersions(uid: string, versions: number[]): Promise<Array<Resource<Dashboard>>> {
+    const requests = versions.map((version) =>
+      getBackendSrv().get<RevisionsModel>(`/api/dashboards/uid/${uid}/versions/${version}`)
+    );
+    const results = await Promise.all(requests);
+
+    return results.map((result) => ({
+      apiVersion: 'v0alpha1',
+      kind: 'Dashboard',
+      metadata: {
+        name: result.uid,
+        resourceVersion: result.version.toString(),
+        generation: result.version,
+        creationTimestamp: result.created ? String(result.created) : new Date().toISOString(),
+        annotations: {
+          'grafana.app/updatedBy': result.createdBy,
+          'grafana.app/message': result.message,
+        },
+      },
+      spec: result.data,
+    }));
+  }
+
+  async restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO> {
+    const [historicalVersion] = await this.getDashboardHistoryVersions(uid, [version]);
+    return await this.saveDashboard({
+      dashboard: {
+        ...historicalVersion.spec,
+        uid,
+      },
+      message: `Restored from version ${version}`,
+      overwrite: true,
+    });
   }
 
   /**

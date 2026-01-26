@@ -50,6 +50,8 @@ describe('validateUid', () => {
         listDeletedDashboards: jest.fn(),
         restoreDashboard: jest.fn(),
         listDashboardHistory: jest.fn(),
+        getDashboardHistoryVersions: jest.fn(),
+        restoreDashboardVersion: jest.fn(),
       },
       v2: {
         getDashboardDTO: jest.fn().mockResolvedValue(v2Dashboard),
@@ -58,6 +60,8 @@ describe('validateUid', () => {
         listDeletedDashboards: jest.fn(),
         restoreDashboard: jest.fn(),
         listDashboardHistory: jest.fn(),
+        getDashboardHistoryVersions: jest.fn(),
+        restoreDashboardVersion: jest.fn(),
       },
     });
   });
