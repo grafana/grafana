@@ -19,6 +19,15 @@ const (
 	// This is an aggregated condition that can track multiple quota types (resources, storage, etc.).
 	// True = within quota or no limits configured, False = quota reached or exceeded.
 	ConditionTypeQuota = "Quota"
+
+	// ConditionTypeSpec indicates whether the resource spec is valid.
+	// This provides a high-level validity status that complements fieldErrors.
+	// True = spec is valid, False = spec has validation errors.
+	ConditionTypeSpec = "Spec"
+
+	// ConditionTypeAuth indicates the authentication/token status for connections.
+	// True = token is valid and authentication succeeded, False = token issue or auth failed.
+	ConditionTypeAuth = "Auth"
 )
 
 // Condition reasons for the Ready condition
@@ -56,6 +65,26 @@ const (
 	ReasonResourceQuotaReached = "ResourceQuotaReached"
 	// ReasonResourceQuotaExceeded indicates the resource count exceeds the limit.
 	ReasonResourceQuotaExceeded = "ResourceQuotaExceeded"
+)
+
+// Condition reasons for the Spec condition
+const (
+	// ReasonSpecValid indicates the resource spec is valid and has no validation errors.
+	ReasonSpecValid = "Valid"
+	// ReasonSpecInvalid indicates the resource spec has validation errors.
+	ReasonSpecInvalid = "Invalid"
+)
+
+// Condition reasons for the Auth condition
+const (
+	// ReasonAuthValid indicates authentication is valid and token is working.
+	ReasonAuthValid = "Valid"
+	// ReasonAuthTokenExpired indicates the authentication token has expired.
+	ReasonAuthTokenExpired = "TokenExpired"
+	// ReasonAuthTokenGenerationFailed indicates token generation failed.
+	ReasonAuthTokenGenerationFailed = "TokenGenerationFailed"
+	// ReasonAuthTokenInvalid indicates the authentication token is invalid.
+	ReasonAuthTokenInvalid = "TokenInvalid"
 )
 
 type HealthStatus struct {

@@ -66,3 +66,31 @@ func buildReadyConditionWithReason(healthStatus provisioning.HealthStatus, reaso
 		Message: message,
 	}
 }
+
+// buildSpecCondition creates a Spec condition based on field validation errors.
+// Returns a condition with status True if there are no errors, False otherwise.
+func buildSpecCondition(fieldErrors []provisioning.ErrorDetails) metav1.Condition {
+	if len(fieldErrors) == 0 {
+		return metav1.Condition{
+			Type:    provisioning.ConditionTypeSpec,
+			Status:  metav1.ConditionTrue,
+			Reason:  provisioning.ReasonSpecValid,
+			Message: "Spec is valid",
+		}
+	}
+
+	// Build message with error count
+	var message string
+	if len(fieldErrors) == 1 {
+		message = "Spec has 1 validation error"
+	} else {
+		message = "Spec has multiple validation errors"
+	}
+
+	return metav1.Condition{
+		Type:    provisioning.ConditionTypeSpec,
+		Status:  metav1.ConditionFalse,
+		Reason:  provisioning.ReasonSpecInvalid,
+		Message: message,
+	}
+}
