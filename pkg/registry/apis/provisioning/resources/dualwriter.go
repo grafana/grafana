@@ -11,8 +11,8 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/auth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -70,7 +70,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("Parse file failed: %v", err))
+		return nil, err
 	}
 
 	// Fail as we use the dry run for this response and it's not about updating the resource

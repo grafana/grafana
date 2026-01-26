@@ -31,3 +31,4 @@ export { UserStorage } from '../utils/userStorage';
 export { initOpenFeature, evaluateBooleanFlag } from './openFeature';
 export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../services/pluginMeta/apps';
 export { useAppPluginMeta, useAppPluginMetas } from '../services/pluginMeta/hooks';
+export type { AppPluginMetas } from '../services/pluginMeta/types';

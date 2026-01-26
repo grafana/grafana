@@ -280,3 +280,8 @@ export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage)
     await confirmModal.click();
   }
 }
+
+export async function addNewPanelFromSidebar(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
+  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.addButton).click();
+  await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
+}

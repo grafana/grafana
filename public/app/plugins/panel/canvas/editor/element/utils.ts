@@ -27,7 +27,8 @@ export const callApi = (api: APIEditorConfig, updateLoadingStateCallback?: IsLoa
         updateLoadingStateCallback && updateLoadingStateCallback(false);
       },
       complete: () => {
-        appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
+        const message = api.successMessage || 'API call was successful';
+        appEvents.emit(AppEvents.alertSuccess, [message]);
         updateLoadingStateCallback && updateLoadingStateCallback(false);
       },
     });

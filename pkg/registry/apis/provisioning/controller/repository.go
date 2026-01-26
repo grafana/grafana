@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,8 +17,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
@@ -60,14 +61,16 @@ type RepositoryController struct {
 	finalizer     finalizerProcessor
 	statusPatcher StatusPatcher
 
-	repoFactory   repository.Factory
-	healthChecker *HealthChecker
+	repoFactory       repository.Factory
+	connectionFactory connection.Factory
+	healthChecker     *RepositoryHealthChecker
 	// To allow injection for testing.
 	processFn         func(item *queueItem) error
 	enqueueRepository func(obj any)
 	keyFunc           func(obj any) (string, error)
 
-	queue workqueue.TypedRateLimitingInterface[*queueItem]
+	queue          workqueue.TypedRateLimitingInterface[*queueItem]
+	resyncInterval time.Duration
 
 	registry prometheus.Registerer
 	tracer   tracing.Tracer
@@ -78,17 +81,19 @@ func NewRepositoryController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
 	repoInformer informer.RepositoryInformer,
 	repoFactory repository.Factory,
+	connectionFactory connection.Factory,
 	resourceLister resources.ResourceLister,
 	clients resources.ClientFactory,
 	jobs interface {
 		jobs.Queue
 		jobs.Store
 	},
-	healthChecker *HealthChecker,
+	healthChecker *RepositoryHealthChecker,
 	statusPatcher StatusPatcher,
 	registry prometheus.Registerer,
 	tracer tracing.Tracer,
 	parallelOperations int,
+	resyncInterval time.Duration,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 
@@ -102,19 +107,21 @@ func NewRepositoryController(
 				Name: "provisioningRepositoryController",
 			},
 		),
-		repoFactory:   repoFactory,
-		healthChecker: healthChecker,
-		statusPatcher: statusPatcher,
+		repoFactory:       repoFactory,
+		connectionFactory: connectionFactory,
+		healthChecker:     healthChecker,
+		statusPatcher:     statusPatcher,
 		finalizer: &finalizer{
 			lister:        resourceLister,
 			clientFactory: clients,
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
 		},
-		jobs:     jobs,
-		logger:   logging.DefaultLogger.With("logger", loggerName),
-		registry: registry,
-		tracer:   tracer,
+		jobs:           jobs,
+		logger:         logging.DefaultLogger.With("logger", loggerName),
+		registry:       registry,
+		tracer:         tracer,
+		resyncInterval: resyncInterval,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -516,7 +523,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	shouldResync := rc.shouldResync(ctx, obj)
 	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
-	patchOperations := []map[string]interface{}{}
+	var patchOperations []map[string]interface{}
 
 	// Determine the main triggering condition
 	switch {
@@ -554,14 +561,53 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Handle health checks using the health checker
-	_, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
+	testResults, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("update health status: %w", err)
+	}
+
+	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
+		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
+		if err != nil {
+			logger.Error("retrieving connection",
+				"connection", obj.Spec.Connection.Name,
+				"error", err,
+			)
+			return err
+		}
+
+		if rc.shouldGenerateTokenFromConnection(obj, healthStatus, c) {
+			logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
+
+			tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
+			if err != nil {
+				logger.Error("generating token for repository",
+					"connection", obj.Spec.Connection.Name,
+					"error", err,
+				)
+				return err
+			}
+
+			patchOperations = append(patchOperations, tokenOps...)
+		}
 	}
 
 	// Add health patch operations first
 	if len(healthPatchOps) > 0 {
 		patchOperations = append(patchOperations, healthPatchOps...)
+	}
+
+	// Update fieldErrors from test results - always update to ensure fieldErrors are cleared when there are no errors
+	if testResults != nil {
+		fieldErrors := testResults.Errors
+		if fieldErrors == nil {
+			fieldErrors = []provisioning.ErrorDetails{}
+		}
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/fieldErrors",
+			"value": fieldErrors,
+		})
 	}
 
 	// determine the sync strategy and sync status to apply
@@ -612,4 +658,86 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	}
 
 	return hookOps, true, nil
+}
+
+// HACK: we need a proper way of doing this check by adding Conditions
+// We're going to work on this in https://github.com/grafana/git-ui-sync-project/issues/744.
+func (rc *RepositoryController) shouldGenerateTokenFromConnection(
+	obj *provisioning.Repository,
+	healthStatus provisioning.HealthStatus,
+	c *provisioning.Connection,
+) bool {
+	// We should generate a token from the connection when
+	// - The token has not been recently created
+	// - The repo is not healthy
+	// - The token will expire before the next resync interval
+	// - The linked connection is healthy (which means it is able to generate valid tokens)
+	recentlyCreated := tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated))
+	shouldRefresh := shouldRefreshBeforeExpiration(
+		time.UnixMilli(obj.Status.Token.Expiration), rc.resyncInterval,
+	)
+	return !recentlyCreated &&
+		!healthStatus.Healthy &&
+		shouldRefresh &&
+		c.Status.Health.Healthy
+}
+
+func (rc *RepositoryController) generateRepositoryToken(
+	ctx context.Context,
+	obj *provisioning.Repository,
+	c *provisioning.Connection,
+) ([]map[string]any, error) {
+	conn, err := rc.connectionFactory.Build(ctx, c)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create connection from configuration: %w", err)
+	}
+
+	token, err := conn.GenerateRepositoryToken(ctx, obj)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create token for repository: %w", err)
+	}
+
+	patchOperations := []map[string]any{
+		{
+			"op":   "replace",
+			"path": "/status/token",
+			"value": provisioning.TokenStatus{
+				LastUpdated: time.Now().UnixMilli(),
+				Expiration:  token.ExpiresAt.UnixMilli(),
+			},
+		},
+	}
+
+	// HACK - here we need to do different things based on the status of repository
+	// https://github.com/grafana/git-ui-sync-project/issues/745 to have a proper fix on it
+	switch {
+	case obj.Secure.IsZero():
+		patchOperations = append(patchOperations, map[string]any{
+			"op":   "add",
+			"path": "/secure",
+			"value": map[string]any{
+				"token": map[string]string{
+					"create": string(token.Token),
+				},
+			},
+		})
+	case obj.Secure.Token.IsZero():
+		patchOperations = append(patchOperations, map[string]any{
+			"op":   "add",
+			"path": "/secure/token",
+			"value": map[string]string{
+				"create": string(token.Token),
+			},
+		})
+	default:
+		patchOperations = append(patchOperations, map[string]any{
+			"op":   "replace",
+			"path": "/secure/token",
+			"value": map[string]string{
+				"create": string(token.Token),
+			},
+		})
+	}
+
+	return patchOperations, nil
 }

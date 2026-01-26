@@ -1,12 +1,16 @@
 package store
 
 import (
+	"math"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -151,12 +155,41 @@ func TestAlertInstanceModelToProto(t *testing.T) {
 				LastError:            strings.Repeat("e", maxLastErrorLength-len("... (truncated)")) + "... (truncated)",
 			},
 		},
+		{
+			name: "LastResult with NaN and Inf values",
+			input: models.AlertInstance{
+				Labels: map[string]string{"key": "value"},
+				AlertInstanceKey: models.AlertInstanceKey{
+					RuleUID:    "rule-uid-1",
+					RuleOrgID:  1,
+					LabelsHash: "hash123",
+				},
+				CurrentState:      models.InstanceStateFiring,
+				CurrentStateSince: currentStateSince,
+				LastResult: models.LastResult{
+					Values:    map[string]float64{"A": math.NaN(), "B": math.Inf(1), "C": math.Inf(-1), "D": 10.5},
+					Condition: "A",
+				},
+			},
+			expected: &pb.AlertInstance{
+				Labels:            map[string]string{"key": "value"},
+				LabelsHash:        "hash123",
+				CurrentState:      "Alerting",
+				CurrentStateSince: timestamppb.New(currentStateSince),
+				CurrentStateEnd:   timestamppb.New(time.Time{}),
+				LastEvalTime:      timestamppb.New(time.Time{}),
+				LastResult: &pb.LastResult{
+					Values:    map[string]float64{"A": math.NaN(), "B": math.Inf(1), "C": math.Inf(-1), "D": 10.5},
+					Condition: "A",
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := alertInstanceModelToProto(tt.input)
-			require.Equal(t, tt.expected, result)
+			require.True(t, cmp.Equal(tt.expected, result, protocmp.Transform(), cmpopts.EquateNaNs()), "proto mismatch: %s", cmp.Diff(tt.expected, result, protocmp.Transform(), cmpopts.EquateNaNs()))
 		})
 	}
 }
@@ -212,12 +245,43 @@ func TestAlertInstanceProtoToModel(t *testing.T) {
 				EvaluationDuration: 500 * time.Millisecond,
 			},
 		},
+		{
+			name: "LastResult with NaN and Inf values",
+			input: &pb.AlertInstance{
+				Labels:            map[string]string{"key": "value"},
+				LabelsHash:        "hash123",
+				CurrentState:      "Alerting",
+				CurrentStateSince: timestamppb.New(currentStateSince),
+				CurrentStateEnd:   timestamppb.New(currentStateEnd),
+				LastEvalTime:      timestamppb.New(lastEvalTime),
+				LastResult: &pb.LastResult{
+					Values:    map[string]float64{"A": math.NaN(), "B": math.Inf(1), "C": math.Inf(-1), "D": 10.5},
+					Condition: "A",
+				},
+			},
+			expected: &models.AlertInstance{
+				Labels: map[string]string{"key": "value"},
+				AlertInstanceKey: models.AlertInstanceKey{
+					RuleUID:    ruleUID,
+					RuleOrgID:  orgID,
+					LabelsHash: "hash123",
+				},
+				CurrentState:      models.InstanceStateFiring,
+				CurrentStateSince: currentStateSince,
+				CurrentStateEnd:   currentStateEnd,
+				LastEvalTime:      lastEvalTime,
+				LastResult: models.LastResult{
+					Values:    map[string]float64{"A": math.NaN(), "B": math.Inf(1), "C": math.Inf(-1), "D": 10.5},
+					Condition: "A",
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := alertInstanceProtoToModel(ruleUID, orgID, tt.input)
-			require.Equal(t, tt.expected, result)
+			require.True(t, cmp.Equal(tt.expected, result, cmpopts.EquateNaNs()), "model mismatch: %s", cmp.Diff(tt.expected, result, cmpopts.EquateNaNs()))
 		})
 	}
 }
@@ -230,7 +294,7 @@ func TestModelAlertInstanceMatchesProtobuf(t *testing.T) {
 	// and update them accordingly.
 	t.Run("when AlertInstance model changes", func(t *testing.T) {
 		modelType := reflect.TypeOf(models.AlertInstance{})
-		require.Equal(t, 14, modelType.NumField(), "AlertInstance model has changed, update the protobuf")
+		require.Equal(t, 15, modelType.NumField(), "AlertInstance model has changed, update the protobuf")
 	})
 }
 
