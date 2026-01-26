@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
+// TODO: remove this comment is only for test
 type Service interface {
 	GetShortURLByUID(ctx context.Context, user identity.Requester, uid string) (*ShortUrl, error)
 	CreateShortURL(ctx context.Context, user identity.Requester, cmd *dtos.CreateShortURLCmd) (*ShortUrl, error)

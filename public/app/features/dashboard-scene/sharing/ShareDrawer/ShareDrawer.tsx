@@ -23,6 +23,7 @@ export interface ShareDrawerState extends SceneObjectState {
   activeShare?: ShareView;
 }
 
+//TODO: remove this comment only for test
 type CustomShareViewType = { id: string; shareOption: new (...args: SceneShareTabState[]) => ShareView };
 const customShareViewOptions: CustomShareViewType[] = [];
 
