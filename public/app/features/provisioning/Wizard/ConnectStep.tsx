@@ -1,7 +1,9 @@
-import { memo, useState } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { memo, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Combobox, Field, Input, SecretInput, Stack } from '@grafana/ui';
+import { useGetConnectionRepositoriesQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
@@ -32,6 +34,7 @@ export const ConnectStep = memo(function ConnectStep() {
     'repository.tokenUser',
     'githubAuthType',
   ]);
+  const [githubAppConnectionName = ''] = watch(['githubApp.connectionName']);
   const isGitBased = isGitProvider(type);
   const isGitHubAppAuth = type === 'github' && githubAuthType === 'github-app';
 
@@ -45,6 +48,30 @@ export const ConnectStep = memo(function ConnectStep() {
     repositoryToken,
     repositoryTokenUser,
   });
+
+  const {
+    data: connectionRepositories,
+    isLoading: repositoriesLoading,
+    error: repositoriesError,
+  } = useGetConnectionRepositoriesQuery(
+    isGitHubAppAuth && githubAppConnectionName ? { name: githubAppConnectionName } : skipToken
+  );
+
+  const repositoryOptions = useMemo(
+    () =>
+      (connectionRepositories?.items ?? []).map((repo: { name?: string; owner?: string; url?: string }) => {
+        const ownerPrefix = repo.owner ? `${repo.owner}/` : '';
+        const name = repo.name ?? '';
+        const url = repo.url ?? '';
+        const displayName = `${ownerPrefix}${name}`.trim();
+
+        return {
+          label: displayName && url ? `${displayName}` : url,
+          value: url,
+        };
+      }),
+    [connectionRepositories?.items]
+  );
 
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
   const localFields = !isGitBased ? getLocalProviderFields(type) : null;
@@ -110,14 +137,33 @@ export const ConnectStep = memo(function ConnectStep() {
             label={gitFields.urlConfig.label}
             description={gitFields.urlConfig.description}
             error={errors?.repository?.url?.message}
-            invalid={Boolean(errors?.repository?.url?.message)}
+            invalid={Boolean(errors?.repository?.url?.message || repositoriesError)}
             required={gitFields.urlConfig.required}
           >
-            <Input
-              {...register('repository.url', gitFields.urlConfig.validation)}
-              id="repository-url"
-              placeholder={gitFields.urlConfig.placeholder}
-            />
+            {isGitHubAppAuth ? (
+              <Controller
+                name="repository.url"
+                control={control}
+                rules={gitFields.urlConfig.validation}
+                render={({ field: { ref, onChange, ...field } }) => (
+                  <Combobox
+                    invalid={Boolean(errors?.repository?.url?.message || repositoriesError)}
+                    onChange={(option) => onChange(option?.value || '')}
+                    placeholder={gitFields.urlConfig.placeholder}
+                    options={repositoryOptions}
+                    loading={repositoriesLoading}
+                    isClearable
+                    {...field}
+                  />
+                )}
+              />
+            ) : (
+              <Input
+                {...register('repository.url', gitFields.urlConfig.validation)}
+                id="repository-url"
+                placeholder={gitFields.urlConfig.placeholder}
+              />
+            )}
           </Field>
 
           <Field

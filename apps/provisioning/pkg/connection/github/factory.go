@@ -23,10 +23,6 @@ func ProvideFactory() GithubFactory {
 }
 
 func (r *Factory) New(ctx context.Context, ghToken common.RawSecureValue) Client {
-	if r.Client != nil {
-		return NewClient(github.NewClient(r.Client))
-	}
-
 	if !ghToken.IsZero() {
 		tokenSrc := oauth2.StaticTokenSource(
 			&oauth2.Token{AccessToken: string(ghToken)},

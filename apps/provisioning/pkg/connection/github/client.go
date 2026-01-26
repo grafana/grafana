@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v70/github"
+	"golang.org/x/oauth2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -151,9 +152,13 @@ func (r *githubClient) ListInstallationRepositories(ctx context.Context, install
 		return nil, fmt.Errorf("create installation token: %w", err)
 	}
 
-	// Create a new client with the installation token
-	// WithAuthToken creates a copy of the client with the new auth token while preserving the HTTP transport
-	tokenClient := r.gh.WithAuthToken(installationToken.GetToken())
+	// Create a new client with the installation token.
+	// We create a fresh OAuth2 client to avoid any JWT token transport from the original client.
+	tokenSrc := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: installationToken.GetToken()},
+	)
+	tokenClient := oauth2.NewClient(ctx, tokenSrc)
+	installationClient := github.NewClient(tokenClient)
 
 	var allRepos []Repository
 	opts := &github.ListOptions{
@@ -162,7 +167,7 @@ func (r *githubClient) ListInstallationRepositories(ctx context.Context, install
 	}
 
 	for {
-		result, resp, err := tokenClient.Apps.ListRepos(ctx, opts)
+		result, resp, err := installationClient.Apps.ListRepos(ctx, opts)
 		if err != nil {
 			var ghErr *github.ErrorResponse
 			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
