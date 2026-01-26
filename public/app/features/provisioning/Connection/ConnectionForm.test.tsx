@@ -192,7 +192,7 @@ describe('ConnectionForm', () => {
               installationID: '12345678',
             },
           },
-          'configured'
+          '' // privateKey is set to empty string by default
         );
       });
     });

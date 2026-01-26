@@ -48,7 +48,7 @@
           "x": 0,
           "y": 0
         },
-        "id": -1,
+        "id": 4,
         "panels": [],
         "title": "Row with tabs",
         "type": "row"
@@ -61,7 +61,7 @@
           "x": 0,
           "y": 1
         },
-        "id": -1,
+        "id": 5,
         "panels": [],
         "title": "Tab with panels",
         "type": "row"
@@ -168,7 +168,7 @@
           "x": 0,
           "y": 10
         },
-        "id": -1,
+        "id": 6,
         "panels": [],
         "title": "Empty tab",
         "type": "row"
@@ -181,7 +181,7 @@
           "x": 0,
           "y": 11
         },
-        "id": -1,
+        "id": 7,
         "title": "Empty row",
         "type": "row"
       },
@@ -193,7 +193,7 @@
           "x": 0,
           "y": 11
         },
-        "id": -1,
+        "id": 8,
         "panels": [],
         "title": "Row with rows",
         "type": "row"
@@ -206,7 +206,7 @@
           "x": 0,
           "y": 12
         },
-        "id": -1,
+        "id": 9,
         "title": "Empty nested row",
         "type": "row"
       },
@@ -218,7 +218,7 @@
           "x": 0,
           "y": 12
         },
-        "id": -1,
+        "id": 10,
         "title": "Row with panels filling screen",
         "type": "row"
       },

@@ -87,7 +87,7 @@ v1alpha1: {
 				}
 			}
 		}
-		cluser: {}
+		cluster: {}
 	}
 	codegen: {
 		// [OPTIONAL]

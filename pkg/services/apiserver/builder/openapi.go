@@ -126,6 +126,24 @@ func addBuilderRoutes(
 	return openAPISpec, nil
 }
 
+// Checks if the path is a "for all namespaces" endpoint
+// If the path is a cluster-scoped resource, return false
+func isAllRoute(prefix, path string, paths map[string]*spec3.Path) bool {
+	if strings.HasPrefix(path, prefix+"namespaces/") {
+		return false
+	}
+
+	// Extract the resource path after the group/version prefix
+	resourcePath := strings.TrimPrefix(path, prefix)
+	// Build the potential namespaced path to check
+	namespacedPath := prefix + "namespaces/{namespace}/" + resourcePath
+	// Check if the namespaced path exists
+	_, hasNamespacedPath := paths[namespacedPath]
+	// If the namespaced path exists, this is a "for all namespaces" endpoint - remove it
+	// Otherwise, it's a cluster-scoped resource - keep it
+	return hasNamespacedPath
+}
+
 // Modify the OpenAPI spec to include the additional routes.
 // nolint:gocyclo
 func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []schema.GroupVersion, apiResourceConfig *serverstorage.ResourceConfig) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -163,7 +181,8 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 					}
 
 					// Remove the "for all namespaces" global routes from OpenAPI (v3)
-					if !strings.HasPrefix(k, prefix+"namespaces/") {
+					// Except for cluster-scoped resources
+					if isAllRoute(prefix, k, copy.Paths.Paths) {
 						delete(copy.Paths.Paths, k)
 						continue
 					}

@@ -352,7 +352,7 @@ func isSupportedDatasourceType(dsType string) bool {
 
 func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	gv := schema.GroupVersion{
-		Group:   "dashvalidator.grafana.com",
+		Group:   "dashvalidator.grafana.app",
 		Version: "v1alpha1",
 	}
 

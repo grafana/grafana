@@ -111,12 +111,27 @@ func TestGithubClient_GetApp(t *testing.T) {
 			),
 			token:   "invalid-token",
 			wantApp: conngh.App{},
-			wantErr: &github.ErrorResponse{
-				Response: &http.Response{
-					StatusCode: http.StatusUnauthorized,
-				},
-				Message: "Bad credentials",
-			},
+			wantErr: conngh.ErrAuthentication,
+		},
+		{
+			name: "not found error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetApp,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusNotFound,
+							},
+							Message: "Integration not found",
+						}))
+					}),
+				),
+			),
+			token:   "test-token",
+			wantApp: conngh.App{},
+			wantErr: conngh.ErrNotFound,
 		},
 	}
 
@@ -326,7 +341,7 @@ func TestGithubClient_CreateInstallationAccessToken(t *testing.T) {
 			repo:           "test-repo",
 			wantToken: conngh.InstallationToken{
 				Token:     "ghs_test_token_123456789",
-				ExpiresAt: "2024-01-01 00:00:00 +0000 UTC",
+				ExpiresAt: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
 			wantErr: false,
 		},
