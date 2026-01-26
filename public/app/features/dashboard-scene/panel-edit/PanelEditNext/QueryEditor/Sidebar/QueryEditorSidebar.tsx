@@ -3,7 +3,7 @@ import { memo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, CollapsableSection, Text, useStyles2 } from '@grafana/ui';
+import { Button, CollapsableSection, IconButton, Text, useStyles2 } from '@grafana/ui';
 
 import { useQueryRunnerContext } from '../QueryEditorContext';
 
@@ -34,8 +34,8 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <Button
-          icon={isMini ? 'expand-alt' : 'compress-alt'}
+        <IconButton
+          name={isMini ? 'maximize-left' : 'compress-alt-left'}
           size="sm"
           variant="secondary"
           onClick={toggleSize}
