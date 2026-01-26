@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import { memo } from 'react';
+import { set } from 'lodash';
+import { memo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Text, useStyles2 } from '@grafana/ui';
+import { Button, CollapsableSection, Text, useStyles2 } from '@grafana/ui';
 
 import { useQueryRunnerContext } from '../QueryEditorContext';
 
@@ -26,7 +27,7 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   const styles = useStyles2(getStyles);
   const isMini = sidebarSize === SidebarSize.Mini;
   const { queries } = useQueryRunnerContext();
-
+  const [isOpen, setIsOpen] = useState(true);
   const toggleSize = () => {
     setSidebarSize(isMini ? SidebarSize.Full : SidebarSize.Mini);
   };
@@ -42,15 +43,26 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           aria-label={t('query-editor-next.sidebar.toggle-size', 'Toggle sidebar size')}
         />
         <Text weight="medium" variant="h6">
-          {t('query-editor-next.sidebar.queries', 'Queries')}
+          {t('query-editor-next.sidebar.query-stack', 'Query Stack')}
         </Text>
       </div>
-      <SidebarDivider text={t('query-editor-next.sidebar.divider-text', 'Queries & Expressions')} />
-      <div className={styles.body}>
-        {queries.map((query) => (
-          <SidebarCard key={query.refId} query={query} />
-        ))}
-      </div>
+      <CollapsableSection
+        label={
+          <Text color="secondary" variant="body">
+            {t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
+          </Text>
+        }
+        isOpen={isOpen}
+        onToggle={setIsOpen}
+        className={styles.collapsableSection}
+        contentClassName={styles.collapsableSectionContent}
+      >
+        <div className={styles.body}>
+          {queries.map((query) => (
+            <SidebarCard key={query.refId} query={query} />
+          ))}
+        </div>
+      </CollapsableSection>
     </div>
   );
 });
@@ -78,6 +90,12 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
+    }),
+    collapsableSection: css({
+      alignItems: 'center',
+    }),
+    collapsableSectionContent: css({
+      padding: 0,
     }),
   };
 }
