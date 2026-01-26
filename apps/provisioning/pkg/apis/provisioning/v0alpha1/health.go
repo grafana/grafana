@@ -47,7 +47,6 @@ const (
 
 	// ReasonTokenGenerationFailed indicates failed to generate a connection token.
 	// This applies to connections that support token generation (e.g., GitHub App).
-	// Automation should NOT automatically retry - indicates a configuration or API issue.
 	ReasonTokenGenerationFailed = "TokenGenerationFailed"
 )
 
