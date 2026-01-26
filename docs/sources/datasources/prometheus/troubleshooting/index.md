@@ -202,7 +202,7 @@ The following errors occur when the data source is not configured correctly.
 1. Check your Prometheus configuration file for the `scrape_interval` setting.
 1. Update the **Scrape interval** in the Grafana data source configuration under **Interval behavior** to match.
 1. Use `$__rate_interval` instead of hardcoded time windows in `rate()` queries. This variable automatically adjusts based on your scrape interval.
-1. For more information, refer to [$__rate_interval for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
+1. For more information, refer to [$\_\_rate_interval for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
 
 ## TLS and certificate errors
 
