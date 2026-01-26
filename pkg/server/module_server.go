@@ -198,7 +198,7 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		// TODO: remove when we change deployment to use search server target and update dev setups/docs
+		// TODO: update to search server target and dev setups/docs
 		if s.cfg.EnableSearch {
 			s.log.Warn("Support for 'enable_search' config with 'storage-server' target is deprecated and will be removed in a future release. Please use the 'search-server' target instead.")
 			docBuilders, err := InitializeDocumentBuilders(s.cfg)

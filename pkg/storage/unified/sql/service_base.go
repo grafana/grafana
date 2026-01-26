@@ -145,7 +145,7 @@ func CreateOverridesService(
 }
 
 // RegisterStorageServices registers the storage-related gRPC services on the server.
-func RegisterStorageServices(cfg *setting.Cfg, handler grpcserver.Provider, server resource.ResourceServer) error {
+func RegisterStorageServices(cfg *setting.Cfg, handler grpcserver.Provider, server resource.StorageServer) error {
 	srv := handler.GetServer()
 	resourcepb.RegisterResourceStoreServer(srv, server)
 	resourcepb.RegisterBulkStoreServer(srv, server)

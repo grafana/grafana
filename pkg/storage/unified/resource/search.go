@@ -167,12 +167,7 @@ func NewSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 	return newSearchServer(opts, storage, access, blob, indexMetrics, ownsIndexFn)
 }
 
-func newSearchServer(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (server *searchServer, err error) {
-	// No backend search server
-	if opts.Backend == nil {
-		return nil, nil
-	}
-
+func newSearchServer(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
 	if opts.InitWorkerThreads < 1 {
 		opts.InitWorkerThreads = 1
 	}
@@ -187,7 +182,17 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 		}
 	}
 
-	server = &searchServer{
+	info, err := opts.Resources.GetDocumentBuilders()
+	if err != nil {
+		return nil, err
+	}
+	cacheBuilder, err := newBuilderCache(info, blob, 100, time.Minute*2) // TODO? opts
+	if err != nil {
+		return nil, err
+	}
+	log.New("cfg").Info("search server initialized", "opts", opts)
+
+	return &searchServer{
 		access:         access,
 		storage:        storage,
 		search:         opts.Backend,
@@ -201,21 +206,11 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 		dashboardIndexMaxAge: opts.DashboardIndexMaxAge,
 		maxIndexAge:          opts.MaxIndexAge,
 		minBuildVersion:      opts.MinBuildVersion,
-	}
 
-	server.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
+		builders: cacheBuilder,
 
-	info, err := opts.Resources.GetDocumentBuilders()
-	if err != nil {
-		return nil, err
-	}
-
-	server.builders, err = newBuilderCache(info, 100, time.Minute*2) // TODO? opts
-	if server.builders != nil {
-		server.builders.blob = blob
-	}
-
-	return server, err
+		rebuildQueue: debouncer.NewQueue(combineRebuildRequests),
+	}, nil
 }
 
 func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
@@ -1182,11 +1177,12 @@ type builderCache struct {
 	mu sync.Mutex // only locked for a cache miss
 }
 
-func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Duration) (*builderCache, error) {
+func newBuilderCache(cfg []DocumentBuilderInfo, blob BlobSupport, nsCacheSize int, ttl time.Duration) (*builderCache, error) {
 	cache := &builderCache{
 		fields: make(map[schema.GroupResource]SearchableDocumentFields),
 		lookup: make(map[string]map[string]DocumentBuilderInfo),
 		ns:     expirable.NewLRU[NamespacedResource, DocumentBuilder](nsCacheSize, nil, ttl),
+		blob:   blob,
 	}
 	if len(cfg) == 0 {
 		return cache, fmt.Errorf("no builders configured")

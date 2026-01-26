@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -26,7 +25,6 @@ const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultPrunerHistoryLimit = 20
 
-// GarbageCollectionConfig configures history garbage collection.
 type GarbageCollectionConfig struct {
 	Enabled          bool
 	Interval         time.Duration // how often the process runs
@@ -35,35 +33,12 @@ type GarbageCollectionConfig struct {
 	DashboardsMaxAge time.Duration // dashboard retention
 }
 
-// ProvideStorageBackend creates a new backend for storage
-// TODO: make this the central place to provide SQL backend
-// Currently it is skipped as we need to handle the cases of Diagnostics and Lifecycle
 func ProvideStorageBackend(
 	cfg *setting.Cfg,
 ) (resource.StorageBackend, error) {
+	// TODO: make this the central place to provide SQL backend
+	// Currently it is skipped as we need to handle the cases of Diagnostics and Lifecycle
 	return nil, nil
-}
-
-// isHighAvailabilityEnabled determines if high availability mode should
-// be enabled based on database configuration. High availability is enabled
-// by default except for SQLite databases.
-func isHighAvailabilityEnabled(dbCfg, resourceAPICfg *setting.DynamicSection) bool {
-	// If the resource API is using a non-SQLite database, we assume it's in HA mode.
-	resourceDBType := resourceAPICfg.Key("db_type").String()
-	if resourceDBType != "" && resourceDBType != migrator.SQLite {
-		return true
-	}
-
-	// Check in the config if HA is enabled - by default we always assume a HA setup.
-	isHA := dbCfg.Key("high_availability").MustBool(true)
-
-	// SQLite is not possible to run in HA, so we force it to false.
-	databaseType := dbCfg.Key("type").String()
-	if databaseType == migrator.SQLite {
-		isHA = false
-	}
-
-	return isHA
 }
 
 // Backend interface for unified storage

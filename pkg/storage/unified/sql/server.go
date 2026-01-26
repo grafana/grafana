@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
@@ -45,6 +47,9 @@ type StorageServerOptions struct {
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport
 	SearchOptions    *resource.SearchOptions // Deprecated: use NewSearchServer for search capabilities
+	// Minimum time between index updates. This is also used as a delay after a successful write operation, to guarantee
+	// that subsequent search will observe the effect of the writing.
+	IndexMinUpdateInterval time.Duration
 }
 
 type ResourceServerOptions struct {
@@ -63,39 +68,24 @@ type ResourceServerOptions struct {
 }
 
 type ServerOptions struct {
-	Backend      resource.StorageBackend
-	DB           infraDB.DB
-	Cfg          *setting.Cfg
-	Tracer       trace.Tracer
-	Reg          prometheus.Registerer
-	AccessClient types.AccessClient
+	Backend       resource.StorageBackend
+	DB            infraDB.DB
+	Cfg           *setting.Cfg
+	Tracer        trace.Tracer
+	Reg           prometheus.Registerer
+	AccessClient  types.AccessClient
+	EnableStorage bool
+	EnableSearch  bool
 }
 
 // NewSearchServer creates a new SearchServer with the given options.
-// This can be used to create a standalone search server or to create a search server
-// that will be passed to NewResourceServer.
-//
-// Important: When running in monolith mode, the backend should be provided by the caller
-// to avoid duplicate metrics registration. Only in standalone microservice mode should
-// this function create its own backend.
 func NewSearchServer(opts SearchServerOptions) (resource.SearchServer, error) {
-	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
-
-	blobConfig := resource.BlobConfig{
-		URL: apiserverCfg.Key("blob_url").MustString(""),
-	}
-
-	// Support local file blob
-	if strings.HasPrefix(blobConfig.URL, "./data/") {
-		dir := strings.Replace(blobConfig.URL, "./data", opts.Cfg.DataPath, 1)
-		if err := os.MkdirAll(dir, 0700); err != nil {
-			return nil, err
-		}
-		blobConfig.URL = "file:///" + dir
+	blobConfig, err := getBlobConfig(opts.Cfg)
+	if err != nil {
+		return nil, err
 	}
 
 	var blobStore resource.BlobSupport
-	var err error
 	if blobConfig.URL != "" {
 		blobStore, err = resource.NewBlobSupport(context.Background(), opts.Reg, blobConfig)
 		if err != nil {
@@ -146,117 +136,45 @@ func NewSearchServer(opts SearchServerOptions) (resource.SearchServer, error) {
 }
 
 // NewStorageServer creates a storage-only server without search capabilities.
-// Use this when you want to run storage and search as separate services.
-//
-// Important: When running in monolith mode, the backend should be provided by the caller
-// to avoid duplicate metrics registration. Only in standalone microservice mode should
-// this function create its own backend.
-func NewStorageServer(opts *StorageServerOptions) (resource.ResourceServer, error) {
-	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
-
-	if opts.SecureValues == nil && opts.Cfg != nil && opts.Cfg.SecretsManagement.GrpcClientEnable {
-		inlineSecureValueService, err := inlinesecurevalue.ProvideInlineSecureValueService(
-			opts.Cfg,
-			opts.Tracer,
-			nil, // not needed for gRPC client mode
-			nil, // not needed for gRPC client mode
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create inline secure value service: %w", err)
-		}
-		opts.SecureValues = inlineSecureValueService
+func NewStorageServer(opts *StorageServerOptions) (resource.StorageServer, error) {
+	blobConfig, err := getBlobConfig(opts.Cfg)
+	if err != nil {
+		return nil, err
 	}
 
-	serverOptions := resource.ResourceServerOptions{
-		Blob: resource.BlobConfig{
-			URL: apiserverCfg.Key("blob_url").MustString(""),
-		},
-		Reg:            opts.Reg,
-		SecureValues:   opts.SecureValues,
-		StorageMetrics: opts.StorageMetrics,
-		Search:         opts.SearchOptions, // Deprecated: use NewSearchServer for search capabilities
-	}
-	if opts.AccessClient != nil {
-		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
-	}
-	// Support local file blob
-	if strings.HasPrefix(serverOptions.Blob.URL, "./data/") {
-		dir := strings.Replace(serverOptions.Blob.URL, "./data", opts.Cfg.DataPath, 1)
-		err := os.MkdirAll(dir, 0700)
-		if err != nil {
-			return nil, err
-		}
-		serverOptions.Blob.URL = "file:///" + dir
+	secureValues, err := initSecureValues(opts.Cfg, opts.Tracer, opts.SecureValues)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create inline secure value service: %w", err)
 	}
 
-	// This is mostly for testing, being able to influence when we paginate
-	// based on the page size during tests.
-	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
-	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
-	serverOptions.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
+	serverOptions := resource.StorageServerOptions{
+		Blob:                   blobConfig,
+		Reg:                    opts.Reg,
+		SecureValues:           secureValues,
+		StorageMetrics:         opts.StorageMetrics,
+		IndexMinUpdateInterval: opts.IndexMinUpdateInterval,
+		AccessClient:           wrapAccessClient(opts.AccessClient, opts.Reg),
+		MaxPageSizeBytes:       getMaxPageSizeBytes(opts.Cfg),
+		QOSQueue:               opts.QOSQueue,
+		OverridesService:       opts.OverridesService,
+	}
 
 	if opts.Backend != nil {
 		serverOptions.Backend = opts.Backend
 	} else {
-		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
-		if err != nil {
-			return nil, err
-		}
-
 		if opts.Cfg.EnableSQLKVBackend {
-			sqlkv, err := resource.NewSQLKV(eDB)
-			if err != nil {
-				return nil, fmt.Errorf("error creating sqlkv: %s", err)
-			}
-
-			kvBackendOpts := resource.KVBackendOptions{
-				KvStore: sqlkv,
-				Tracer:  opts.Tracer,
-				Reg:     opts.Reg,
-			}
-
-			ctx := context.Background()
-			dbConn, err := eDB.Init(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("error initializing DB: %w", err)
-			}
-
-			dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
-			if dialect == nil {
-				return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
-			}
-
-			rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-				Dialect: dialect,
-				DB:      dbConn,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("failed to create resource version manager: %w", err)
-			}
-
-			kvBackendOpts.RvManager = rvManager
-			kvBackend, err := resource.NewKVStorageBackend(kvBackendOpts)
+			kvBackend, err := newSQLKVBackend(opts.ServerOptions)
 			if err != nil {
 				return nil, fmt.Errorf("error creating kv backend: %s", err)
 			}
-
 			serverOptions.Backend = kvBackend
-			opts.Backend = kvBackend // hack to reuse the backend on search server for monolith grafana
 			serverOptions.Diagnostics = kvBackend
 		} else {
-			isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
-				opts.Cfg.SectionWithEnvOverrides("resource_api"))
-
-			backend, err := NewBackend(BackendOptions{
-				DBProvider:           eDB,
-				Reg:                  opts.Reg,
-				IsHA:                 isHA,
-				storageMetrics:       opts.StorageMetrics,
-				LastImportTimeMaxAge: opts.Cfg.MaxFileIndexAge,
-				EnableStorage:        true,
-			})
+			opts.EnableStorage = true
+			opts.EnableSearch = false
+			backend, err := newSQLBackend(opts.ServerOptions, opts.StorageMetrics)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error creating kv backend: %s", err)
 			}
 			serverOptions.Backend = backend
 			serverOptions.Diagnostics = backend
@@ -264,140 +182,205 @@ func NewStorageServer(opts *StorageServerOptions) (resource.ResourceServer, erro
 		}
 	}
 
-	serverOptions.QOSQueue = opts.QOSQueue
-	serverOptions.OverridesService = opts.OverridesService
+	return resource.NewStorageServer(serverOptions)
+}
 
+// NewResourceServer creates a new ResourceServer instance
+// Deprecated: use NewStorageServer and NewSearchServer instead
+func NewResourceServer(opts *ResourceServerOptions) (resource.ResourceServer, error) {
+	blobConfig, err := getBlobConfig(opts.Cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	secureValues, err := initSecureValues(opts.Cfg, opts.Tracer, opts.SecureValues)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create inline secure value service: %w", err)
+	}
+
+	serverOptions := resource.ResourceServerOptions{
+		Blob:                   blobConfig,
+		Search:                 opts.SearchOptions,
+		IndexMetrics:           nil,
+		OwnsIndexFn:            opts.OwnsIndexFn,
+		OverridesService:       opts.OverridesService,
+		WriteHooks:             resource.WriteAccessHooks{},
+		AccessClient:           wrapAccessClient(opts.AccessClient, opts.Reg),
+		SecureValues:           secureValues,
+		Reg:                    opts.Reg,
+		StorageMetrics:         opts.StorageMetrics,
+		MaxPageSizeBytes:       getMaxPageSizeBytes(opts.Cfg),
+		IndexMinUpdateInterval: opts.Cfg.IndexMinUpdateInterval,
+		QOSQueue:               opts.QOSQueue,
+		QOSConfig:              resource.QueueConfig{},
+	}
+
+	if opts.Backend != nil {
+		serverOptions.Backend = opts.Backend
+	} else {
+		if opts.Cfg.EnableSQLKVBackend {
+			kvBackend, err := newSQLKVBackend(opts.ServerOptions)
+			if err != nil {
+				return nil, fmt.Errorf("error creating kv backend: %s", err)
+			}
+			serverOptions.Backend = kvBackend
+			opts.Backend = kvBackend // hack to reuse the backend on search server for monolith grafana
+			serverOptions.Diagnostics = kvBackend
+		} else {
+			opts.EnableStorage = true
+			opts.EnableSearch = opts.Cfg.EnableSearch
+			backend, err := newSQLBackend(opts.ServerOptions, opts.StorageMetrics)
+			if err != nil {
+				return nil, fmt.Errorf("error creating kv backend: %s", err)
+			}
+			serverOptions.Backend = backend
+			serverOptions.Diagnostics = backend
+			serverOptions.Lifecycle = backend
+		}
+	}
 	return resource.NewResourceServer(serverOptions)
 }
 
-func NewResourceServer(opts *ResourceServerOptions) (resource.ResourceServer, error) {
-	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+func newSQLKVBackend(opts ServerOptions) (resource.KVBackend, error) {
+	eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
+	if err != nil {
+		return nil, err
+	}
+	isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+		opts.Cfg.SectionWithEnvOverrides("resource_api"))
 
-	if opts.SecureValues == nil && opts.Cfg != nil && opts.Cfg.SecretsManagement.GrpcClientEnable {
-		inlineSecureValueService, err := inlinesecurevalue.ProvideInlineSecureValueService(
-			opts.Cfg,
-			opts.Tracer,
-			nil, // not needed for gRPC client mode
-			nil, // not needed for gRPC client mode
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create inline secure value service: %w", err)
-		}
-		opts.SecureValues = inlineSecureValueService
+	sqlkv, err := resource.NewSQLKV(eDB)
+	if err != nil {
+		return nil, fmt.Errorf("error creating sqlkv: %s", err)
 	}
 
-	serverOptions := resource.ResourceServerOptions{
-		Blob: resource.BlobConfig{
-			URL: apiserverCfg.Key("blob_url").MustString(""),
+	kvBackendOpts := resource.KVBackendOptions{
+		KvStore:            sqlkv,
+		Tracer:             opts.Tracer,
+		Reg:                opts.Reg,
+		UseChannelNotifier: !isHA,
+		Log:                log.New("storage-backend"),
+	}
+
+	ctx := context.Background()
+	dbConn, err := eDB.Init(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error initializing DB: %w", err)
+	}
+
+	dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
+	if dialect == nil {
+		return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
+	}
+
+	if opts.Cfg.EnableSQLKVCompatibilityMode {
+		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+			Dialect: dialect,
+			DB:      dbConn,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create resource version manager: %w", err)
+		}
+
+		kvBackendOpts.RvManager = rvManager
+	}
+	return resource.NewKVStorageBackend(kvBackendOpts)
+}
+
+func newSQLBackend(opts ServerOptions, storageMetrics *resource.StorageMetrics) (Backend, error) {
+	eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
+	if err != nil {
+		return nil, err
+	}
+	isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+		opts.Cfg.SectionWithEnvOverrides("resource_api"))
+
+	backendOpts := BackendOptions{
+		DBProvider:              eDB,
+		Reg:                     opts.Reg,
+		IsHA:                    isHA,
+		storageMetrics:          storageMetrics,
+		LastImportTimeMaxAge:    opts.Cfg.MaxFileIndexAge,
+		SimulatedNetworkLatency: opts.Cfg.IndexMinUpdateInterval,
+		GarbageCollection: GarbageCollectionConfig{
+			Enabled:          opts.Cfg.EnableGarbageCollection,
+			Interval:         opts.Cfg.GarbageCollectionInterval,
+			BatchSize:        opts.Cfg.GarbageCollectionBatchSize,
+			MaxAge:           opts.Cfg.GarbageCollectionMaxAge,
+			DashboardsMaxAge: opts.Cfg.DashboardsGarbageCollectionMaxAge,
 		},
-		Reg:            opts.Reg,
-		SecureValues:   opts.SecureValues,
-		StorageMetrics: opts.StorageMetrics,
-		Search:         opts.SearchOptions,
+		EnableStorage: opts.EnableStorage,
+		EnableSearch:  opts.EnableStorage,
 	}
-	if opts.AccessClient != nil {
-		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
+	return NewBackend(backendOpts)
+}
+
+// getBlobConfig returns a BlobConfig with local file support
+func getBlobConfig(cfg *setting.Cfg) (resource.BlobConfig, error) {
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	blobConfig := resource.BlobConfig{
+		URL: apiserverCfg.Key("blob_url").MustString(""),
 	}
+
 	// Support local file blob
-	if strings.HasPrefix(serverOptions.Blob.URL, "./data/") {
-		dir := strings.Replace(serverOptions.Blob.URL, "./data", opts.Cfg.DataPath, 1)
-		err := os.MkdirAll(dir, 0700)
-		if err != nil {
-			return nil, err
+	if strings.HasPrefix(blobConfig.URL, "./data/") {
+		dir := strings.Replace(blobConfig.URL, "./data", cfg.DataPath, 1)
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			return resource.BlobConfig{}, err
 		}
-		serverOptions.Blob.URL = "file:///" + dir
+		blobConfig.URL = "file:///" + dir
+	}
+	return blobConfig, nil
+}
+
+// initSecureValues initializes SecureValues if needed
+func initSecureValues(cfg *setting.Cfg, tracer trace.Tracer, existing secrets.InlineSecureValueSupport) (secrets.InlineSecureValueSupport, error) {
+	if existing != nil {
+		return existing, nil
+	}
+	if cfg == nil || !cfg.SecretsManagement.GrpcClientEnable {
+		return nil, nil
+	}
+	return inlinesecurevalue.ProvideInlineSecureValueService(
+		cfg,
+		tracer,
+		nil, // not needed for gRPC client mode
+		nil, // not needed for gRPC client mode
+	)
+}
+
+// wrapAccessClient wraps AccessClient with authz limiter if not nil
+func wrapAccessClient(client types.AccessClient, reg prometheus.Registerer) types.AccessClient {
+	if client == nil {
+		return nil
+	}
+	return resource.NewAuthzLimitedClient(client, resource.AuthzOptions{Registry: reg})
+}
+
+// getMaxPageSizeBytes reads max_page_size_bytes from unified_storage config
+func getMaxPageSizeBytes(cfg *setting.Cfg) int {
+	unifiedStorageCfg := cfg.SectionWithEnvOverrides("unified_storage")
+	return unifiedStorageCfg.Key("max_page_size_bytes").MustInt(0)
+}
+
+// isHighAvailabilityEnabled determines if high availability mode should
+// be enabled based on database configuration. High availability is enabled
+// by default except for SQLite databases.
+func isHighAvailabilityEnabled(dbCfg, resourceAPICfg *setting.DynamicSection) bool {
+	// If the resource API is using a non-SQLite database, we assume it's in HA mode.
+	resourceDBType := resourceAPICfg.Key("db_type").String()
+	if resourceDBType != "" && resourceDBType != migrator.SQLite {
+		return true
 	}
 
-	// This is mostly for testing, being able to influence when we paginate
-	// based on the page size during tests.
-	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
-	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
-	serverOptions.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
+	// Check in the config if HA is enabled - by default we always assume a HA setup.
+	isHA := dbCfg.Key("high_availability").MustBool(true)
 
-	if opts.Backend != nil {
-		serverOptions.Backend = opts.Backend
-	} else {
-		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
-		if err != nil {
-			return nil, err
-		}
-
-		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
-			opts.Cfg.SectionWithEnvOverrides("resource_api"))
-
-		if opts.Cfg.EnableSQLKVBackend {
-			sqlkv, err := resource.NewSQLKV(eDB)
-			if err != nil {
-				return nil, fmt.Errorf("error creating sqlkv: %s", err)
-			}
-
-			kvBackendOpts := resource.KVBackendOptions{
-				KvStore:            sqlkv,
-				Tracer:             opts.Tracer,
-				Reg:                opts.Reg,
-				UseChannelNotifier: !isHA,
-				Log:                log.New("storage-backend"),
-			}
-
-			ctx := context.Background()
-			dbConn, err := eDB.Init(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("error initializing DB: %w", err)
-			}
-
-			dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
-			if dialect == nil {
-				return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
-			}
-
-			if opts.Cfg.EnableSQLKVCompatibilityMode {
-				rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-					Dialect: dialect,
-					DB:      dbConn,
-				})
-				if err != nil {
-					return nil, fmt.Errorf("failed to create resource version manager: %w", err)
-				}
-
-				kvBackendOpts.RvManager = rvManager
-			}
-			kvBackend, err := resource.NewKVStorageBackend(kvBackendOpts)
-			if err != nil {
-				return nil, fmt.Errorf("error creating kv backend: %s", err)
-			}
-
-			serverOptions.Backend = kvBackend
-			opts.Backend = kvBackend // hack to reuse the backend on search server for monolith grafana
-			serverOptions.Diagnostics = kvBackend
-		} else {
-			backend, err := NewBackend(BackendOptions{
-				DBProvider:           eDB,
-				Reg:                  opts.Reg,
-				IsHA:                 isHA,
-				storageMetrics:       opts.StorageMetrics,
-				LastImportTimeMaxAge: opts.Cfg.MaxFileIndexAge, // No need to keep last_import_times older than max index age.
-				GarbageCollection: GarbageCollectionConfig{
-					Enabled:          opts.Cfg.EnableGarbageCollection,
-					Interval:         opts.Cfg.GarbageCollectionInterval,
-					BatchSize:        opts.Cfg.GarbageCollectionBatchSize,
-					MaxAge:           opts.Cfg.GarbageCollectionMaxAge,
-					DashboardsMaxAge: opts.Cfg.DashboardsGarbageCollectionMaxAge,
-				},
-				EnableStorage: true,
-				EnableSearch:  opts.Cfg.EnableSearch,
-			})
-			if err != nil {
-				return nil, err
-			}
-			serverOptions.Backend = backend
-			serverOptions.Diagnostics = backend
-			serverOptions.Lifecycle = backend
-		}
+	// SQLite is not possible to run in HA, so we force it to false.
+	databaseType := dbCfg.Key("type").String()
+	if databaseType == migrator.SQLite {
+		isHA = false
 	}
 
-	serverOptions.QOSQueue = opts.QOSQueue
-	serverOptions.OwnsIndexFn = opts.OwnsIndexFn
-	serverOptions.OverridesService = opts.OverridesService
-
-	return resource.NewResourceServer(serverOptions)
+	return isHA
 }

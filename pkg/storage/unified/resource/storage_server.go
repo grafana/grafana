@@ -72,7 +72,7 @@ type StorageServerOptions struct {
 	OverridesService *OverridesService
 
 	// Delay after successful write to ensure search consistency
-	WriteDelay time.Duration
+	IndexMinUpdateInterval time.Duration
 }
 
 var _ StorageServer = &storageServer{}
@@ -108,7 +108,7 @@ type storageServer struct {
 
 	// This value is used by storage server to artificially delay returning response after successful
 	// write operations to make sure that subsequent search by the same client will return up-to-date results.
-	writeDelay time.Duration
+	artificialSuccessfulWriteDelay time.Duration
 }
 
 // NewStorageServer creates a new StorageServer instance
@@ -190,7 +190,8 @@ func NewStorageServer(opts StorageServerOptions) (StorageServer, error) {
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
 		overridesService: opts.OverridesService,
-		writeDelay:       opts.WriteDelay,
+
+		artificialSuccessfulWriteDelay: opts.IndexMinUpdateInterval,
 	}
 
 	err := s.Init(ctx)
@@ -521,7 +522,7 @@ type responseWithErrorResult interface {
 //
 // This sleep is performed to guarantee search-after-write consistency, when rate-limiting updates to search index.
 func (s *storageServer) sleepAfterSuccessfulWriteOperation(operation string, key *resourcepb.ResourceKey, res responseWithErrorResult, err error) bool {
-	if s.writeDelay <= 0 {
+	if s.artificialSuccessfulWriteDelay <= 0 {
 		return false
 	}
 
@@ -541,13 +542,13 @@ func (s *storageServer) sleepAfterSuccessfulWriteOperation(operation string, key
 
 	s.log.Debug("sleeping after successful write operation",
 		"operation", operation,
-		"delay", s.writeDelay,
+		"delay", s.artificialSuccessfulWriteDelay,
 		"group", key.Group,
 		"resource", key.Resource,
 		"namespace", key.Namespace,
 		"name", key.Name)
 
-	time.Sleep(s.writeDelay)
+	time.Sleep(s.artificialSuccessfulWriteDelay)
 	return true
 }
 

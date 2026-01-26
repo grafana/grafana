@@ -590,8 +590,8 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 
 func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 	s := &storageServer{
-		writeDelay: 1 * time.Millisecond,
-		log:        log.NewNopLogger(),
+		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
+		log:                            log.NewNopLogger(),
 	}
 
 	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {

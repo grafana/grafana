@@ -5,7 +5,6 @@ import (
 	"iter"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/atomic"
@@ -30,9 +29,6 @@ type searchBackendImpl struct {
 
 // searchBackendOptions contains options for creating a searchBackendImpl.
 type searchBackendOptions struct {
-	DBProvider           db.DBProvider
-	Reg                  prometheus.Registerer
-	StorageMetrics       *resource.StorageMetrics
 	LastImportTimeMaxAge time.Duration
 }
 

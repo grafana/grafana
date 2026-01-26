@@ -306,21 +306,21 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 
 	// Create the storage server
 	storageOpts := StorageServerOptions{
-		Backend:          opts.Backend,
-		Blob:             opts.Blob,
-		Diagnostics:      opts.Diagnostics,
-		WriteHooks:       opts.WriteHooks,
-		AccessClient:     opts.AccessClient,
-		SecureValues:     opts.SecureValues,
-		Lifecycle:        opts.Lifecycle,
-		Now:              opts.Now,
-		Reg:              opts.Reg,
-		StorageMetrics:   opts.StorageMetrics,
-		MaxPageSizeBytes: opts.MaxPageSizeBytes,
-		QOSQueue:         opts.QOSQueue,
-		QOSConfig:        opts.QOSConfig,
-		OverridesService: opts.OverridesService,
-		WriteDelay:       opts.IndexMinUpdateInterval,
+		Backend:                opts.Backend,
+		Blob:                   opts.Blob,
+		Diagnostics:            opts.Diagnostics,
+		WriteHooks:             opts.WriteHooks,
+		AccessClient:           opts.AccessClient,
+		SecureValues:           opts.SecureValues,
+		Lifecycle:              opts.Lifecycle,
+		Now:                    opts.Now,
+		Reg:                    opts.Reg,
+		StorageMetrics:         opts.StorageMetrics,
+		MaxPageSizeBytes:       opts.MaxPageSizeBytes,
+		QOSQueue:               opts.QOSQueue,
+		QOSConfig:              opts.QOSConfig,
+		OverridesService:       opts.OverridesService,
+		IndexMinUpdateInterval: opts.IndexMinUpdateInterval,
 	}
 
 	storage, err := NewStorageServer(storageOpts)
@@ -340,13 +340,8 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		// Initialize search
-		if s.search != nil {
-			ctx := context.Background()
-			if err := s.search.init(ctx); err != nil {
-				return nil, fmt.Errorf("failed to initialize search: %w", err)
-			}
+		if err := s.search.init(context.Background()); err != nil {
+			return nil, fmt.Errorf("failed to initialize search: %w", err)
 		}
 	}
 
