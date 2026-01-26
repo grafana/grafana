@@ -52,7 +52,7 @@ export function SaveProvisionedDashboardForm({
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
-  const { isDirty, editPanel: panelEditor } = dashboard.useState();
+  const { isDirty } = dashboard.useState();
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
