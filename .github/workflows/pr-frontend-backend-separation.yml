@@ -24,13 +24,15 @@ jobs:
         id: changed-files
         run: |
           # Get the list of changed files in the PR
-          git fetch origin ${{ github.base_ref }}
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          BASE_REF="${{ github.base_ref }}"
+          CHANGED_FILES=$(git diff --name-only "origin/${BASE_REF}...HEAD")
 
-          # Save to output
-          echo "files<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # Save to output using grouped redirects
+          {
+            echo "files<<EOF"
+            echo "$CHANGED_FILES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
           # Debug output
           echo "Changed files:"
@@ -102,101 +104,29 @@ jobs:
             done
           done <<< "${{ steps.changed-files.outputs.files }}"
 
-          # Set outputs
-          echo "has_frontend=$HAS_FRONTEND" >> $GITHUB_OUTPUT
-          echo "has_backend=$HAS_BACKEND" >> $GITHUB_OUTPUT
-          echo "frontend_files<<EOF" >> $GITHUB_OUTPUT
-          echo -e "$FRONTEND_FILES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "backend_files<<EOF" >> $GITHUB_OUTPUT
-          echo -e "$BACKEND_FILES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # Set outputs using grouped redirects
+          {
+            echo "has_frontend=$HAS_FRONTEND"
+            echo "has_backend=$HAS_BACKEND"
+            echo "frontend_files<<EOF"
+            echo -e "$FRONTEND_FILES"
+            echo "EOF"
+            echo "backend_files<<EOF"
+            echo -e "$BACKEND_FILES"
+            echo "EOF"
 
-          # Check for mixed changes
-          if [ "$HAS_FRONTEND" = "true" ] && [ "$HAS_BACKEND" = "true" ]; then
-            echo "mixed_changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "mixed_changes=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Comment on PR
-        if: steps.check.outputs.mixed_changes == 'true'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const frontendFiles = `${{ steps.check.outputs.frontend_files }}`.trim().split('\n').filter(f => f);
-            const backendFiles = `${{ steps.check.outputs.backend_files }}`.trim().split('\n').filter(f => f);
-
-            const body = `## ⚠️ Mixed Frontend and Backend Changes Detected
-
-            This PR contains changes to both frontend and backend code, which violates our new architecture guidelines for multi-tenant deployment.
-
-            **Why this matters:**
-            - The frontend is now served as a single service for all SaaS customers
-            - Backends run on different rolling release channels
-            - Frontend must maintain compatibility with multiple backend versions
-
-            ### Changed Files:
-
-            <details>
-            <summary><strong>Frontend files (${frontendFiles.length}):</strong></summary>
-
-            \`\`\`
-            ${frontendFiles.join('\n')}
-            \`\`\`
-            </details>
-
-            <details>
-            <summary><strong>Backend files (${backendFiles.length}):</strong></summary>
-
-            \`\`\`
-            ${backendFiles.join('\n')}
-            \`\`\`
-            </details>
-
-            ### Required Actions:
-
-            Please split this PR into separate frontend and backend PRs:
-
-            1. **Frontend PR**: Include only changes to \`public/\`, \`packages/\`, and frontend configuration files
-            2. **Backend PR**: Include only changes to \`pkg/\`, Go files, and backend configuration
-
-            ### Need an exception?
-
-            If you believe this change absolutely requires coupled frontend/backend modifications:
-            1. Add the label \`frontend-backend-coupled\` to this PR
-            2. Provide detailed justification in the PR description
-            3. Get approval from the platform team
-
-            For questions, contact the platform team or see our [migration guide](docs/frontend-backend-separation.md).`;
-
-            // Check if we already commented
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number
-            });
-
-            const botComment = comments.find(comment =>
-              comment.user.type === 'Bot' &&
-              comment.body.includes('Mixed Frontend and Backend Changes Detected')
-            );
-
-            if (!botComment) {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: body
-              });
-            }
+            # Check for mixed changes
+            if [ "$HAS_FRONTEND" = "true" ] && [ "$HAS_BACKEND" = "true" ]; then
+              echo "mixed_changes=true"
+            else
+              echo "mixed_changes=false"
+            fi
+          } >> "$GITHUB_OUTPUT"
 
       - name: Set status check
         if: always()
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const mixed = '${{ steps.check.outputs.mixed_changes }}' === 'true';
             const hasException = context.payload.pull_request.labels.some(
@@ -207,7 +137,7 @@ jobs:
             const description = mixed
               ? hasException
                 ? 'Mixed changes allowed (exception label present)'
-                : 'PR contains both frontend and backend changes'
+                : 'Split into separate frontend and backend PRs or add frontend-backend-coupled label'
               : 'PR changes are properly separated';
 
             await github.rest.repos.createCommitStatus({
@@ -230,11 +160,17 @@ jobs:
               exit 0
             else
               echo "❌ This PR contains both frontend and backend changes."
-              echo "Please split into separate PRs or add the 'frontend-backend-coupled' label with justification."
+              echo ""
+              echo "Frontend and backend changes must be split into separate PRs."
+              echo ""
+              echo "If this change requires coupled modifications:"
+              echo "1. Add the 'frontend-backend-coupled' label to this PR"
+              echo "2. Provide justification in the PR description"
+              echo ""
               exit 1
             fi
           else
             echo "✅ PR changes are properly separated"
           fi
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
