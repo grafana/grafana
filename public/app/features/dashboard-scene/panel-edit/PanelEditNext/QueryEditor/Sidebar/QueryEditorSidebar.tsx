@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { set } from 'lodash';
 import { memo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,7 +8,6 @@ import { Button, CollapsableSection, Text, useStyles2 } from '@grafana/ui';
 import { useQueryRunnerContext } from '../QueryEditorContext';
 
 import { SidebarCard } from './SidebarCard';
-import { SidebarDivider } from './SidebarDivider';
 
 export enum SidebarSize {
   Mini = 'mini',
@@ -27,7 +25,8 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   const styles = useStyles2(getStyles);
   const isMini = sidebarSize === SidebarSize.Mini;
   const { queries } = useQueryRunnerContext();
-  const [isOpen, setIsOpen] = useState(true);
+  const [queriesIsOpen, setQueriesIsOpen] = useState(true);
+
   const toggleSize = () => {
     setSidebarSize(isMini ? SidebarSize.Full : SidebarSize.Mini);
   };
@@ -52,8 +51,8 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
             {t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
           </Text>
         }
-        isOpen={isOpen}
-        onToggle={setIsOpen}
+        isOpen={queriesIsOpen}
+        onToggle={setQueriesIsOpen}
         className={styles.collapsableSection}
         contentClassName={styles.collapsableSectionContent}
       >
