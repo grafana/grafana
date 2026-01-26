@@ -1,7 +1,8 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { CustomTransformerDefinition, SceneDataTransformer } from '@grafana/scenes';
+import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 
 import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
@@ -43,12 +44,18 @@ export function QueryEditorContextWrapper({
     [queryRunnerState?.queries, queryRunnerState?.data]
   );
 
-  const panelState = useMemo(
-    () => ({
+  const panelState = useMemo(() => {
+    let transformations: Array<DataTransformerConfig | CustomTransformerDefinition> = [];
+
+    if (panel.state.$data instanceof SceneDataTransformer) {
+      transformations = panel.state.$data.state.transformations;
+    }
+
+    return {
       panel,
-    }),
-    [panel]
-  );
+      transformations,
+    };
+  }, [panel]);
 
   // Set the first query as selected by default
   useEffect(() => {
