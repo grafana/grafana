@@ -617,6 +617,8 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
 				rule := dummyRule(t.Name(), orgID)
+				// Use a unique group name for each test to avoid conflicts.
+				rule.RuleGroup = fmt.Sprintf("provenance-test-%s", t.Name())
 				rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, test.from)
 				require.NoError(t, err)
 
@@ -956,7 +958,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 				return true, nil
 			}
 
-			actualRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			actualRule, err := service.CreateAlertRule(context.Background(), u, rule, groupProvenance)
 			require.NoError(t, err)
 
 			require.Len(t, ac.Calls, 1)
@@ -979,7 +981,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 			t.Run("set correct provenance", func(t *testing.T) {
 				p, err := provenanceStore.GetProvenance(context.Background(), &actualRule, orgID)
 				require.NoError(t, err)
-				require.Equal(t, models.ProvenanceNone, p)
+				require.Equal(t, groupProvenance, p)
 			})
 		})
 	})
@@ -1049,7 +1051,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 					return nil
 				}
 
-				actualRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+				actualRule, err := service.CreateAlertRule(context.Background(), u, rule, groupProvenance)
 				require.NoError(t, err)
 
 				require.Len(t, ac.Calls, 2)
@@ -1073,7 +1075,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 				t.Run("set correct provenance", func(t *testing.T) {
 					p, err := provenanceStore.GetProvenance(context.Background(), &actualRule, orgID)
 					require.NoError(t, err)
-					require.Equal(t, models.ProvenanceNone, p)
+					require.Equal(t, groupProvenance, p)
 				})
 			})
 		})
@@ -1112,7 +1114,9 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 	})
 
 	t.Run("should set the right provenance", func(t *testing.T) {
-		rule, err := ruleService.CreateAlertRule(context.Background(), u, dummyRule("test#2", orgID), models.ProvenanceAPI)
+		rule := dummyRule("test#2", orgID)
+		rule.RuleGroup = "test-group"
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		_, provenance, err := ruleService.GetAlertRule(context.Background(), u, rule.UID)
@@ -2670,6 +2674,153 @@ func initService(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.Fake
 	}
 
 	return service, ruleStore, provenanceStore, ac
+}
+
+func TestIntegrationProvisioningConsistencyValidation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("CreateAlertRule", func(t *testing.T) {
+		ruleService := createAlertRuleService(t, nil)
+		var orgID int64 = 1
+		u := &user.SignedInUser{
+			UserUID: util.GenerateShortUID(),
+			UserID:  1,
+			OrgID:   orgID,
+		}
+
+		t.Run("should reject provisioned rule added to group with non-provisioned rules", func(t *testing.T) {
+			// Create a non-provisioned rule first.
+			nonProvisionedRule := dummyRule("non-provisioned-rule", orgID)
+			nonProvisionedRule.RuleGroup = "test-group"
+			_, err := ruleService.CreateAlertRule(context.Background(), u, nonProvisionedRule, models.ProvenanceNone)
+			require.NoError(t, err)
+
+			// Try to add a provisioned rule to the same group.
+			provisionedRule := dummyRule("provisioned-rule", orgID)
+			provisionedRule.RuleGroup = "test-group"
+			_, err = ruleService.CreateAlertRule(context.Background(), u, provisionedRule, models.ProvenanceAPI)
+			require.Error(t, err)
+			assert.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+			assert.Contains(t, err.Error(), "cannot add provisioned (api) rule to group containing non-provisioned rules")
+		})
+
+		t.Run("should reject non-provisioned rule added to group with provisioned rules", func(t *testing.T) {
+			// Create a provisioned rule first.
+			provisionedRule := dummyRule("provisioned-rule-2", orgID)
+			provisionedRule.RuleGroup = "test-group-2"
+			_, err := ruleService.CreateAlertRule(context.Background(), u, provisionedRule, models.ProvenanceAPI)
+			require.NoError(t, err)
+
+			// Try to add a non-provisioned rule to the same group.
+			nonProvisionedRule := dummyRule("non-provisioned-rule-2", orgID)
+			nonProvisionedRule.RuleGroup = "test-group-2"
+			_, err = ruleService.CreateAlertRule(context.Background(), u, nonProvisionedRule, models.ProvenanceNone)
+			require.Error(t, err)
+			assert.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+			assert.Contains(t, err.Error(), "cannot add non-provisioned rule to group containing provisioned rules")
+		})
+
+		t.Run("should allow provisioned rule added to empty group", func(t *testing.T) {
+			provisionedRule := dummyRule("provisioned-rule-3", orgID)
+			provisionedRule.RuleGroup = "empty-group"
+			_, err := ruleService.CreateAlertRule(context.Background(), u, provisionedRule, models.ProvenanceAPI)
+			require.NoError(t, err)
+		})
+
+		t.Run("should allow provisioned rule added to group with other provisioned rules", func(t *testing.T) {
+			// Create first provisioned rule.
+			provisionedRule1 := dummyRule("provisioned-rule-4", orgID)
+			provisionedRule1.RuleGroup = "test-group-3"
+			_, err := ruleService.CreateAlertRule(context.Background(), u, provisionedRule1, models.ProvenanceAPI)
+			require.NoError(t, err)
+
+			// Add second provisioned rule to the same group.
+			provisionedRule2 := dummyRule("provisioned-rule-5", orgID)
+			provisionedRule2.RuleGroup = "test-group-3"
+			_, err = ruleService.CreateAlertRule(context.Background(), u, provisionedRule2, models.ProvenanceFile)
+			require.NoError(t, err)
+		})
+
+		t.Run("should allow non-provisioned rule added to group with non-provisioned rules", func(t *testing.T) {
+			// Create first non-provisioned rule.
+			nonProvisionedRule1 := dummyRule("non-provisioned-rule-3", orgID)
+			nonProvisionedRule1.RuleGroup = "test-group-4"
+			_, err := ruleService.CreateAlertRule(context.Background(), u, nonProvisionedRule1, models.ProvenanceNone)
+			require.NoError(t, err)
+
+			// Add second non-provisioned rule to the same group.
+			nonProvisionedRule2 := dummyRule("non-provisioned-rule-4", orgID)
+			nonProvisionedRule2.RuleGroup = "test-group-4"
+			_, err = ruleService.CreateAlertRule(context.Background(), u, nonProvisionedRule2, models.ProvenanceNone)
+			require.NoError(t, err)
+		})
+	})
+
+	t.Run("UpdateAlertRule", func(t *testing.T) {
+		ruleService := createAlertRuleService(t, nil)
+		var orgID int64 = 1
+		u := &user.SignedInUser{
+			UserUID: util.GenerateShortUID(),
+			UserID:  1,
+			OrgID:   orgID,
+		}
+
+		t.Run("should reject changing provenance from none to api in group with non-provisioned rules", func(t *testing.T) {
+			// Create two non-provisioned rules in the same group.
+			nonProvisionedRule1 := dummyRule("non-provisioned-update-1", orgID)
+			nonProvisionedRule1.RuleGroup = "update-test-group-1"
+			createdRule1, err := ruleService.CreateAlertRule(context.Background(), u, nonProvisionedRule1, models.ProvenanceNone)
+			require.NoError(t, err)
+
+			nonProvisionedRule2 := dummyRule("non-provisioned-update-2", orgID)
+			nonProvisionedRule2.RuleGroup = "update-test-group-1"
+			_, err = ruleService.CreateAlertRule(context.Background(), u, nonProvisionedRule2, models.ProvenanceNone)
+			require.NoError(t, err)
+
+			// Try to update the first rule to have API provenance.
+			// This would lock the group, so it should be rejected.
+			_, err = ruleService.UpdateAlertRule(context.Background(), u, createdRule1, models.ProvenanceAPI)
+			require.Error(t, err)
+			assert.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+			assert.Contains(t, err.Error(), "cannot add provisioned (api) rule to group containing non-provisioned rules")
+		})
+
+		t.Run("should allow updating provisioned rule in group with provisioned rules", func(t *testing.T) {
+			// Create two provisioned rules in the same group.
+			provisionedRule1 := dummyRule("provisioned-update-1", orgID)
+			provisionedRule1.RuleGroup = "update-test-group-2"
+			createdRule1, err := ruleService.CreateAlertRule(context.Background(), u, provisionedRule1, models.ProvenanceAPI)
+			require.NoError(t, err)
+
+			provisionedRule2 := dummyRule("provisioned-update-2", orgID)
+			provisionedRule2.RuleGroup = "update-test-group-2"
+			_, err = ruleService.CreateAlertRule(context.Background(), u, provisionedRule2, models.ProvenanceAPI)
+			require.NoError(t, err)
+
+			// Update the first rule - this should work fine.
+			createdRule1.Title = "updated-title"
+			_, err = ruleService.UpdateAlertRule(context.Background(), u, createdRule1, models.ProvenanceAPI)
+			require.NoError(t, err)
+		})
+
+		t.Run("should allow updating non-provisioned rule in group with non-provisioned rules", func(t *testing.T) {
+			// Create two non-provisioned rules in the same group.
+			nonProvisionedRule1 := dummyRule("non-provisioned-update-3", orgID)
+			nonProvisionedRule1.RuleGroup = "update-test-group-3"
+			createdRule1, err := ruleService.CreateAlertRule(context.Background(), u, nonProvisionedRule1, models.ProvenanceNone)
+			require.NoError(t, err)
+
+			nonProvisionedRule2 := dummyRule("non-provisioned-update-4", orgID)
+			nonProvisionedRule2.RuleGroup = "update-test-group-3"
+			_, err = ruleService.CreateAlertRule(context.Background(), u, nonProvisionedRule2, models.ProvenanceNone)
+			require.NoError(t, err)
+
+			// Update the first rule - this should work fine.
+			createdRule1.Title = "updated-title-2"
+			_, err = ruleService.UpdateAlertRule(context.Background(), u, createdRule1, models.ProvenanceNone)
+			require.NoError(t, err)
+		})
+	})
 }
 
 // func TestNoGroupRuleGroupIntervalHandling(t *testing.T) {
