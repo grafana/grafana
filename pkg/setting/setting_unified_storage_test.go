@@ -122,7 +122,33 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		}
 
 		setSectionKey("grafana-apiserver", "storage_type", "legacy")
-		setSectionKey("unified_storage."+PlaylistResource, "dualWriterMode", "1")
+		setSectionKey("unified_storage."+PlaylistResource, "dualWriterMode", "4")
+		setSectionKey("unified_storage."+PlaylistResource, "enableMigration", "false")
+
+		cfg.setUnifiedStorageConfig()
+
+		resourceCfg, exists := cfg.UnifiedStorage[PlaylistResource]
+		assert.True(t, exists)
+		assert.Equal(t, UnifiedStorageConfig{
+			DualWriterMode:         rest.Mode5,
+			EnableMigration:        true,
+			AutoMigrationThreshold: 0,
+		}, resourceCfg)
+	})
+
+	t.Run("force mode 5 for mode5-only resources when mode is manually set to non-5", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		setSectionKey := func(sectionName, key, value string) {
+			section := cfg.Raw.Section(sectionName)
+			_, err := section.NewKey(key, value)
+			assert.NoError(t, err)
+		}
+
+		setSectionKey("grafana-apiserver", "storage_type", "unified")
+		setSectionKey("unified_storage."+PlaylistResource, "dualWriterMode", "4")
 		setSectionKey("unified_storage."+PlaylistResource, "enableMigration", "false")
 
 		cfg.setUnifiedStorageConfig()
