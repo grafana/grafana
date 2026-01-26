@@ -247,14 +247,15 @@ test.describe(
 
     test('moves repeated rows', async ({ dashboardPage, selectors, page }) => {
       // collapse rows so it's easier to move them without simulating scrolling
-      // const dashboardWithCollapsedRows = V2DashWithRowRepeats;
-      // dashboardWithCollapsedRows.spec.layout.spec.rows[0].spec.collapse = true;
+      const dashboardWithCollapsedRows = V2DashWithRowRepeats;
+      dashboardWithCollapsedRows.spec.layout.spec.rows[0].spec.collapse = true;
 
       await importTestDashboard(
         page,
         selectors,
         'Row layout repeats - move repeated rows',
         JSON.stringify(V2DashWithRowRepeats),
+        // there are no panels to show, since all rows are collapsed
         { checkPanelsVisible: false }
       );
       const singleRowTitle = 'single row';
