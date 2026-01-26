@@ -103,9 +103,9 @@ describe('BootstrapStep', () => {
       enabledOptions: [
         {
           target: 'folder',
-          label: 'Sync external storage to a new Grafana folder',
-          description: 'A new Grafana folder will be created',
-          subtitle: 'Use this option to sync into a new folder',
+          label: 'Sync external storage with a new provisioned folder in Grafana',
+          description: 'Creates a new provisioned folder in Grafana',
+          subtitle: 'Use this option to sync external resources with Grafana',
         },
       ],
     });
