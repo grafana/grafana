@@ -17,11 +17,19 @@ type mockProvenanceStore struct {
 	err         error
 }
 
-func (m *mockProvenanceStore) GetProvenances(ctx context.Context, orgID int64, resourceType string) (map[string]models.Provenance, error) {
+func (m *mockProvenanceStore) GetProvenancesByUIDs(ctx context.Context, orgID int64, resourceType string, uids []string) (map[string]models.Provenance, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
-	return m.provenances, nil
+
+	// Filter provenances to only return requested UIDs.
+	result := make(map[string]models.Provenance)
+	for _, uid := range uids {
+		if prov, exists := m.provenances[uid]; exists {
+			result[uid] = prov
+		}
+	}
+	return result, nil
 }
 
 func TestValidateProvisioningConsistency(t *testing.T) {

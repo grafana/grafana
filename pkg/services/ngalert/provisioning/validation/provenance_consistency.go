@@ -10,9 +10,9 @@ import (
 )
 
 // provenanceStore defines the interface for getting provenance information.
-// This matches the GetProvenances method from the ProvisioningStore interface in the parent package.
+// This matches the GetProvenancesByUIDs method from the ProvisioningStore interface in the parent package.
 type provenanceStore interface {
-	GetProvenances(ctx context.Context, orgID int64, resourceType string) (map[string]models.Provenance, error)
+	GetProvenancesByUIDs(ctx context.Context, orgID int64, resourceType string, uids []string) (map[string]models.Provenance, error)
 }
 
 // ValidateProvisioningConsistencyCreate validates that creating a new rule with targetProvenance
@@ -72,8 +72,23 @@ func validateProvisioningConsistency(
 		return nil
 	}
 
-	// Get all provenances for the organization.
-	provenances, err := store.GetProvenances(ctx, orgID, (&models.AlertRule{}).ResourceType())
+	// Collect all rule UIDs from affected groups.
+	ruleUIDs := make([]string, 0)
+	for _, rules := range affectedGroups {
+		for _, rule := range rules {
+			if rule != nil {
+				ruleUIDs = append(ruleUIDs, rule.UID)
+			}
+		}
+	}
+
+	// If no rules to check, return early.
+	if len(ruleUIDs) == 0 {
+		return nil
+	}
+
+	// Get provenances only for the affected rules.
+	provenances, err := store.GetProvenancesByUIDs(ctx, orgID, (&models.AlertRule{}).ResourceType(), ruleUIDs)
 	if err != nil {
 		return fmt.Errorf("failed to get provenances: %w", err)
 	}
