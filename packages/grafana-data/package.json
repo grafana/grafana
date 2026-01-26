@@ -94,7 +94,7 @@
     "zod": "^4.3.0"
   },
   "devDependencies": {
-    "@grafana/scenes": "6.38.0",
+    "@grafana/scenes": "6.52.10",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.1",
     "@testing-library/react": "16.3.0",
