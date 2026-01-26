@@ -1,0 +1,162 @@
+name: Emit Frontend Test Coverage Metrics
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Run daily at midnight UTC
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  setup:
+    name: Setup opted-in teams
+    runs-on: ubuntu-x64-small
+    outputs:
+      # NOTE: Only collects coverage metrics for opted-in codeowners.
+      #       Please add the GitHub user/team or email used in
+      #       CODEOWNERS to the list below to opt-in.
+      opted-in-teams: >-
+        [
+          "@grafana/datapro",
+          "@grafana/dataviz-squad"
+        ]
+    steps:
+      - name: Define opted-in teams
+        run: echo "Opted-in teams defined in job outputs"
+
+  coverage:
+    name: Coverage - ${{ matrix.codeowner }}
+    needs: setup
+    runs-on: ubuntu-x64-large
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        codeowner: ${{ fromJSON(needs.setup.outputs.opted-in-teams) }}
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        run: yarn install --immutable
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          CYPRESS_INSTALL_BINARY: 0
+
+      - name: Get codeowner slug
+        id: codeowner-slug
+        run: |
+          SLUG=$(node -e "
+            const { createCodeownerSlug } = require('./scripts/codeowners-manifest/utils.js');
+            console.log(createCodeownerSlug('${{ matrix.codeowner }}'));
+          ")
+          echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
+
+      - name: Run coverage for ${{ matrix.codeowner }}
+        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
+        env:
+          SHOULD_OPEN_COVERAGE_REPORT: 'false'
+          CI: 'true'
+
+      - name: Upload coverage summary
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-main-${{ steps.codeowner-slug.outputs.slug }}
+          path: coverage-summary.json
+          retention-days: 1
+
+  aggregate-and-upload:
+    name: Aggregate and upload metrics
+    needs: [setup, coverage]
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies for slug generation
+        run: yarn install --immutable
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+          CYPRESS_INSTALL_BINARY: 0
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v6
+        with:
+          pattern: coverage-main-*
+          path: coverage/summaries-raw
+
+      - name: Organize coverage files
+        run: |
+          for dir in coverage/summaries-raw/coverage-main-*; do
+            if [ -d "$dir" ]; then
+              slug=$(basename "$dir" | sed 's/^coverage-main-//')
+              echo "Organizing coverage for slug: $slug"
+              mkdir -p "coverage/summaries/$slug"
+              mv "$dir/coverage-summary.json" "coverage/summaries/$slug/"
+            fi
+          done
+
+      - name: Aggregate coverage metrics
+        run: node scripts/aggregate-coverage-metrics.js
+
+      - name: Display generated metrics
+        run: cat coverage/coverage-metrics.txt
+
+      # - name: Get Vault secrets
+      #   id: get-secrets
+      #   uses: grafana/shared-workflows/actions/get-vault-secrets@62722333225a1fae03ae27a63d638f9bc2176edb #get-vault-secrets-v1.2.0
+      #   with:
+      #     repo_secrets: |
+      #       PROMETHEUS_URL=frontend_perf_tests:prometheus_push_url
+      #       PROMETHEUS_USER=frontend_perf_tests:prometheus_user
+      #       PROMETHEUS_TOKEN=frontend_perf_tests:prometheus_token
+
+      # - name: Authenticate Docker
+      #   uses: grafana/shared-workflows/actions/login-to-gar@main
+      #   id: login-to-gar
+      #   with:
+      #     registry: 'us-docker.pkg.dev'
+
+      # - name: Upload metrics to Grafana Bench
+      #   id: bench-upload
+      #   continue-on-error: true
+      #   run: |
+      #     docker run \
+      #       --rm \
+      #       --volume="./coverage/coverage-metrics.txt:/metrics.txt" \
+      #       -e PROMETHEUS_URL="$PROMETHEUS_URL" \
+      #       -e PROMETHEUS_USER="$PROMETHEUS_USER" \
+      #       -e PROMETHEUS_PASSWORD="$PROMETHEUS_TOKEN" \
+      #       us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.6.1 report \
+      #         --test-suite-name "FrontendCoverage" \
+      #         --report-output log \
+      #         --prometheus-metrics \
+      #         --run-metrics-file "/metrics.txt" \
+      #         --log-level DEBUG
+
+      # - name: Check upload status
+      #   env:
+      #     BENCH_OUTCOME: ${{ steps.bench-upload.outcome }}
+      #   run: |
+      #     echo "BENCH_OUTCOME: $BENCH_OUTCOME"
+      #
+      #     if [[ "$BENCH_OUTCOME" != "success" ]]; then
+      #       echo "❌ Metrics upload failed"
+      #       exit 1
+      #     fi
+      #
+      #     echo "✅ Metrics uploaded successfully"
