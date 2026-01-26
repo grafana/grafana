@@ -27,7 +27,7 @@ type LegacyTeamBindingSearchClient struct {
 	tracer trace.Tracer
 }
 
-func NewLegacyUserTeamSearchClient(store legacy.LegacyIdentityStore, tracer trace.Tracer) *LegacyTeamBindingSearchClient {
+func NewLegacyTeamBindingSearchClient(store legacy.LegacyIdentityStore, tracer trace.Tracer) *LegacyTeamBindingSearchClient {
 	return &LegacyTeamBindingSearchClient{
 		store:  store,
 		tracer: tracer,
