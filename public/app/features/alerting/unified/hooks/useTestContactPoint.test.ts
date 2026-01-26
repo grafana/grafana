@@ -15,8 +15,7 @@ import { useTestContactPoint } from './useTestContactPoint';
 const server = setupMswServer();
 
 interface K8sTestRequestBody {
-  integrationRef?: { uid: string };
-  integration?: {
+  integration: {
     uid?: string;
     type: string;
     [key: string]: unknown;
@@ -289,7 +288,7 @@ describe('useTestContactPoint', () => {
       server.resetHandlers();
     });
 
-    it('should use test-by-reference when integration has not changed', async () => {
+    it('should build payload correctly when integration is unchanged', async () => {
       let capturedBody: unknown;
       server.use(
         createK8sTestHandler({
@@ -312,13 +311,13 @@ describe('useTestContactPoint', () => {
       });
 
       expect(capturedBody).not.toBeUndefined();
-      expect(capturedBody).toEqual({
-        integrationRef: { uid: 'integration-123' },
-        alert: { labels: { alertname: 'TestAlert' }, annotations: {} },
-      });
+      expect(capturedBody).toHaveProperty('integration');
+      const body = capturedBody as K8sTestRequestBody;
+      expect(body.integration?.uid).toBe('integration-123');
+      expect(body.integration?.type).toBe('webhook');
     });
 
-    it('should use test-with-config when integration has changed (settings changed)', async () => {
+    it('should build payload correctly when integration has changed', async () => {
       let capturedBody: unknown;
       server.use(
         createK8sTestHandler({
@@ -344,7 +343,6 @@ describe('useTestContactPoint', () => {
 
       expect(capturedBody).not.toBeUndefined();
       expect(capturedBody).toHaveProperty('integration');
-      expect(capturedBody).not.toHaveProperty('integrationRef');
       const body = capturedBody as K8sTestRequestBody;
       expect(body.integration?.uid).toBe('integration-123');
       expect(body.integration?.type).toBe('webhook');
@@ -368,7 +366,6 @@ describe('useTestContactPoint', () => {
 
       expect(capturedBody).not.toBeUndefined();
       expect(capturedBody).toHaveProperty('integration');
-      expect(capturedBody).not.toHaveProperty('integrationRef');
       const body = capturedBody as K8sTestRequestBody;
       expect(body.integration?.type).toBe('email');
     });
@@ -397,7 +394,6 @@ describe('useTestContactPoint', () => {
 
       expect(capturedBody).not.toBeUndefined();
       expect(capturedBody).toHaveProperty('integration');
-      expect(capturedBody).not.toHaveProperty('integrationRef');
     });
 
     it('should use test-with-config when a secure field was cleared', async () => {
@@ -422,74 +418,6 @@ describe('useTestContactPoint', () => {
 
       expect(capturedBody).not.toBeUndefined();
       expect(capturedBody).toHaveProperty('integration');
-      expect(capturedBody).not.toHaveProperty('integrationRef');
-    });
-
-    it('should use test-by-reference when secure field is still marked as secure', async () => {
-      let capturedBody: unknown;
-      server.use(
-        createK8sTestHandler({
-          onRequestBody: (body) => {
-            capturedBody = body;
-          },
-        })
-      );
-
-      const existingIntegration = createExistingIntegration({
-        secureFields: { password: true },
-      });
-      const channelValues = createChannelValues({
-        secureFields: { password: true },
-      });
-      const contactPoint = createContactPoint();
-
-      const { result } = renderHook(() => useTestContactPoint({ contactPoint, defaultChannelValues }), {
-        wrapper: wrapper(),
-      });
-
-      await act(async () => {
-        await result.current.testChannel({ channelValues, existingIntegration });
-      });
-
-      expect(capturedBody).not.toBeUndefined();
-      expect(capturedBody).toEqual({
-        integrationRef: { uid: 'integration-123' },
-        alert: { labels: { alertname: 'TestAlert' }, annotations: {} },
-      });
-    });
-
-    it('should use test-by-reference when nested settings are unchanged', async () => {
-      let capturedBody: unknown;
-      server.use(
-        createK8sTestHandler({
-          onRequestBody: (body) => {
-            capturedBody = body;
-          },
-        })
-      );
-
-      const nestedSettings = { config: { nested: { value: 1 } } };
-      const existingIntegration = createExistingIntegration({
-        settings: nestedSettings,
-      });
-      const channelValues = createChannelValues({
-        settings: nestedSettings,
-      });
-      const contactPoint = createContactPoint();
-
-      const { result } = renderHook(() => useTestContactPoint({ contactPoint, defaultChannelValues }), {
-        wrapper: wrapper(),
-      });
-
-      await act(async () => {
-        await result.current.testChannel({ channelValues, existingIntegration });
-      });
-
-      expect(capturedBody).not.toBeUndefined();
-      expect(capturedBody).toEqual({
-        integrationRef: { uid: 'integration-123' },
-        alert: { labels: { alertname: 'TestAlert' }, annotations: {} },
-      });
     });
 
     it('should use test-with-config when nested settings have changed', async () => {
@@ -520,7 +448,6 @@ describe('useTestContactPoint', () => {
 
       expect(capturedBody).not.toBeUndefined();
       expect(capturedBody).toHaveProperty('integration');
-      expect(capturedBody).not.toHaveProperty('integrationRef');
     });
 
     it('should use test-with-config for new integrations (no existingIntegration)', async () => {
@@ -546,7 +473,6 @@ describe('useTestContactPoint', () => {
 
       expect(capturedBody).not.toBeUndefined();
       expect(capturedBody).toHaveProperty('integration');
-      expect(capturedBody).not.toHaveProperty('integrationRef');
       const body = capturedBody as K8sTestRequestBody;
       expect(body.integration?.uid).toBeUndefined();
     });

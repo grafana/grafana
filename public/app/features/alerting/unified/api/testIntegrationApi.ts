@@ -16,19 +16,11 @@ interface TestIntegrationSettings {
   disableResolveMessage?: boolean;
 }
 
-interface TestByReferenceRequest {
-  receiverUid: string;
-  integrationRef: { uid: string };
-  alert: TestIntegrationAlert;
-}
-
-interface TestWithConfigRequest {
+export interface TestIntegrationRequest {
   receiverUid: string;
   integration: TestIntegrationSettings;
   alert: TestIntegrationAlert;
 }
-
-export type TestIntegrationRequest = TestByReferenceRequest | TestWithConfigRequest;
 
 export interface TestIntegrationResponse {
   apiVersion: string;
@@ -47,10 +39,10 @@ export const testIntegrationApi = alertingApi.injectEndpoints({
         const namespace = getAPINamespace();
         const receiverName = params.receiverUid || NEW_RECEIVER_PLACEHOLDER;
 
-        const body =
-          'integrationRef' in params
-            ? { integrationRef: params.integrationRef, alert: params.alert }
-            : { integration: params.integration, alert: params.alert };
+        const body = {
+          integration: params.integration,
+          alert: params.alert,
+        };
 
         return {
           url: `/apis/alertingnotifications.grafana.app/v0alpha1/namespaces/${namespace}/receivers/${receiverName}/test`,

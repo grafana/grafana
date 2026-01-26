@@ -1,13 +1,10 @@
 import { HttpResponse, http } from 'msw';
 
 interface TestRequestBody {
-  integration?: {
+  integration: {
     uid?: string;
     type: string;
     settings: Record<string, unknown>;
-  };
-  integrationRef?: {
-    uid: string;
   };
   alert: {
     labels: Record<string, string>;
@@ -26,12 +23,8 @@ const testReceiverK8sHandler = () =>
         return HttpResponse.json({ message: 'alert is required' }, { status: 400 });
       }
 
-      if (!body.integration && !body.integrationRef) {
-        return HttpResponse.json({ message: 'integration or integrationRef is required' }, { status: 400 });
-      }
-
-      if (body.integration && body.integrationRef) {
-        return HttpResponse.json({ message: 'integration and integrationRef cannot both be set' }, { status: 400 });
+      if (!body.integration) {
+        return HttpResponse.json({ message: 'integration is required' }, { status: 400 });
       }
 
       // Simulate successful test

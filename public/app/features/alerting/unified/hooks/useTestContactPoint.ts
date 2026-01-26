@@ -1,4 +1,3 @@
-import { isEqual } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
@@ -24,46 +23,6 @@ interface TestChannelParams {
   };
 }
 
-/**
- * Determines if the form values have changed from the original integration.
- * If unchanged, we can use test-by-reference mode (more efficient).
- */
-function hasIntegrationChanged(
-  channelValues: GrafanaChannelValues,
-  existingIntegration?: GrafanaManagedReceiverConfig
-): boolean {
-  if (!existingIntegration) {
-    return true;
-  }
-
-  if (channelValues.type !== existingIntegration.type) {
-    return true;
-  }
-
-  if (!isEqual(channelValues.settings, existingIntegration.settings)) {
-    return true;
-  }
-
-  if (channelValues.disableResolveMessage !== existingIntegration.disableResolveMessage) {
-    return true;
-  }
-
-  // Check if any secure fields were modified
-  // A secure field is "modified" if it was previously stored (value = true)
-  // but the form no longer has it marked as secure (value = false or missing)
-  const existingSecureFields = existingIntegration.secureFields || {};
-  const formSecureFields = channelValues.secureFields || {};
-
-  for (const [key, wasSecure] of Object.entries(existingSecureFields)) {
-    if (wasSecure === true && formSecureFields[key] !== true) {
-      // User cleared or changed this secure field
-      return true;
-    }
-  }
-
-  return false;
-}
-
 export function useTestContactPoint({ contactPoint, defaultChannelValues }: UseTestContactPointOptions) {
   const [testOldApi, oldApiState] = useTestIntegrationMutation();
   const [testNewApi, newApiState] = useTestIntegrationK8sMutation();
@@ -85,39 +44,26 @@ export function useTestContactPoint({ contactPoint, defaultChannelValues }: UseT
       testAlert,
     }: TestChannelParams & { testAlert: { labels: Record<string, string>; annotations: Record<string, string> } }) => {
       const receiverUid = contactPoint?.id || '';
-      const integrationChanged = hasIntegrationChanged(channelValues, existingIntegration);
-      const existingIntegrationUid = existingIntegration?.uid;
-      const shouldTestWithConfig = integrationChanged || !existingIntegrationUid;
 
-      let request: TestIntegrationRequest;
+      const integrationConfig = formChannelValuesToGrafanaChannelConfig(
+        channelValues,
+        defaultChannelValues,
+        'test',
+        existingIntegration
+      );
 
-      if (shouldTestWithConfig) {
-        const integrationConfig = formChannelValuesToGrafanaChannelConfig(
-          channelValues,
-          defaultChannelValues,
-          'test',
-          existingIntegration
-        );
-
-        request = {
-          receiverUid,
-          integration: {
-            uid: existingIntegration?.uid,
-            type: integrationConfig.type,
-            version: integrationConfig.version,
-            settings: integrationConfig.settings,
-            secureFields: integrationConfig.secureFields,
-            disableResolveMessage: integrationConfig.disableResolveMessage,
-          },
-          alert: testAlert,
-        };
-      } else {
-        request = {
-          receiverUid,
-          integrationRef: { uid: existingIntegrationUid },
-          alert: testAlert,
-        };
-      }
+      const request: TestIntegrationRequest = {
+        receiverUid,
+        integration: {
+          uid: existingIntegration?.uid,
+          type: integrationConfig.type,
+          version: integrationConfig.version,
+          settings: integrationConfig.settings,
+          secureFields: integrationConfig.secureFields,
+          disableResolveMessage: integrationConfig.disableResolveMessage,
+        },
+        alert: testAlert,
+      };
 
       const result = await testNewApi(request).unwrap();
 
