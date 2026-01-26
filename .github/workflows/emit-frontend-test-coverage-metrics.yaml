@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: "0 0 * * *" # Run daily at midnight UTC
   workflow_dispatch: # Allow manual triggering
+  push:
+    branches:
+      - jesdavpet/111208-emit-test-coverage-metrics-prometheus-format # TEMPORARY: Remove before merge
 
 jobs:
   setup:
@@ -33,10 +36,9 @@ jobs:
       matrix:
         codeowner: ${{ fromJSON(needs.setup.outputs.opted-in-teams) }}
     steps:
-      - name: Checkout main branch
+      - name: Checkout branch
         uses: actions/checkout@v5
         with:
-          ref: main
           persist-credentials: false
 
       - name: Setup Node.js
@@ -78,10 +80,9 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - name: Checkout main branch
+      - name: Checkout branch
         uses: actions/checkout@v5
         with:
-          ref: main
           persist-credentials: false
 
       - name: Setup Node.js
