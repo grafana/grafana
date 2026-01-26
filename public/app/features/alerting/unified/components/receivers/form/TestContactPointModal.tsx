@@ -54,14 +54,28 @@ export const TestContactPointModal = ({
   defaultChannelValues,
 }: Props) => {
   const [notificationType, setNotificationType] = useState<NotificationType>(NotificationType.predefined);
+  const [testError, setTestError] = useState<unknown>(null);
+  const [testSuccess, setTestSuccess] = useState(false);
   const styles = useStyles2(getStyles);
   const formMethods = useForm<FormFields>({ defaultValues, mode: 'onBlur' });
-  const { testChannel, isLoading, error, isSuccess } = useTestContactPoint({
+  const {
+    testChannel,
+    isLoading,
+    error: apiError,
+    isSuccess: apiSuccess,
+  } = useTestContactPoint({
     contactPoint,
     defaultChannelValues,
   });
 
+  // Combine RTK Query errors with errors thrown by testChannel
+  const error = testError || apiError;
+  const isSuccess = !error && (testSuccess || apiSuccess);
+
   const onSubmit = async (data: FormFields) => {
+    setTestError(null);
+    setTestSuccess(false);
+
     const alert =
       notificationType === NotificationType.custom
         ? {
@@ -74,11 +88,16 @@ export const TestContactPointModal = ({
           }
         : undefined;
 
-    await testChannel({
-      channelValues,
-      existingIntegration,
-      alert,
-    });
+    try {
+      await testChannel({
+        channelValues,
+        existingIntegration,
+        alert,
+      });
+      setTestSuccess(true);
+    } catch (err) {
+      setTestError(err);
+    }
   };
 
   return (

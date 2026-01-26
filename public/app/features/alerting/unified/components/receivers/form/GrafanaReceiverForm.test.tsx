@@ -917,6 +917,83 @@ describe('GrafanaReceiverForm', () => {
         });
         expect(sendButton).toBeEnabled();
       });
+
+      it('should display error message when K8s API returns an error', async () => {
+        const errorMessage = 'Connection refused: unable to reach webhook endpoint';
+        server.use(
+          http.post<{ namespace: string; name: string }>(
+            '/apis/alertingnotifications.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+            () => {
+              return HttpResponse.json({
+                apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+                kind: 'CreateReceiverIntegrationTest',
+                status: 'failure',
+                duration: '50ms',
+                error: errorMessage,
+              });
+            }
+          )
+        );
+
+        const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+          .withIntegrations((integrationFactory) => [integrationFactory.webhook().build()])
+          .build();
+
+        const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode />);
+
+        await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+        // Open the test modal
+        await user.click(ui.testButton.get());
+        await waitFor(() => expect(ui.testModal.query()).toBeInTheDocument());
+
+        // Send the test notification
+        await user.click(ui.sendTestNotificationButton.get());
+
+        await waitFor(() => {
+          expect(screen.getByText(/test notification failed/i)).toBeInTheDocument();
+        });
+        expect(screen.getByText(errorMessage)).toBeInTheDocument();
+
+        expect(screen.queryByText(/test notification sent successfully/i)).not.toBeInTheDocument();
+      });
+
+      it('should display error message when K8s API returns HTTP error', async () => {
+        server.use(
+          http.post<{ namespace: string; name: string }>(
+            '/apis/alertingnotifications.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+            () => {
+              return HttpResponse.json(
+                { message: 'Internal server error: database connection failed' },
+                { status: 500 }
+              );
+            }
+          )
+        );
+
+        const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+          .withIntegrations((integrationFactory) => [integrationFactory.webhook().build()])
+          .build();
+
+        const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode />);
+
+        await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+        // Open the test modal
+        await user.click(ui.testButton.get());
+        await waitFor(() => expect(ui.testModal.query()).toBeInTheDocument());
+
+        // Send the test notification
+        await user.click(ui.sendTestNotificationButton.get());
+
+        // Should show the error alert
+        await waitFor(() => {
+          expect(screen.getByText(/test notification failed/i)).toBeInTheDocument();
+        });
+
+        // Success message should not be shown
+        expect(screen.queryByText(/test notification sent successfully/i)).not.toBeInTheDocument();
+      });
     });
   });
 });
