@@ -15,23 +15,23 @@ type provenanceStore interface {
 	GetProvenancesByUIDs(ctx context.Context, orgID int64, resourceType string, uids []string) (map[string]models.Provenance, error)
 }
 
-// ValidateProvisioningConsistencyCreate validates that creating a new rule with targetProvenance
+// ValidateRuleProvenanceInGroupCreate validates that creating a new rule with targetProvenance
 // would not create a mixed-provenance group (provisioned and non-provisioned rules in the same group).
 // Use this function when adding a new rule to a group.
-func ValidateProvisioningConsistencyCreate(
+func ValidateRuleProvenanceInGroupCreate(
 	ctx context.Context,
 	store provenanceStore,
 	orgID int64,
 	targetProvenance models.Provenance,
 	affectedGroups map[models.AlertRuleGroupKey]models.RulesGroup,
 ) error {
-	return validateProvisioningConsistency(ctx, store, orgID, targetProvenance, affectedGroups, "")
+	return validateRuleProvenanceInGroup(ctx, store, orgID, targetProvenance, affectedGroups, "")
 }
 
-// ValidateProvisioningConsistencyUpdate validates that updating an existing rule with targetProvenance
+// ValidateRuleProvenanceInGroupUpdate validates that updating an existing rule with targetProvenance
 // would not create a mixed-provenance group (provisioned and non-provisioned rules in the same group).
 // Use this function when modifying an existing rule. Single-rule groups are allowed to change provenance.
-func ValidateProvisioningConsistencyUpdate(
+func ValidateRuleProvenanceInGroupUpdate(
 	ctx context.Context,
 	store provenanceStore,
 	orgID int64,
@@ -42,10 +42,10 @@ func ValidateProvisioningConsistencyUpdate(
 	if ruleUID == "" {
 		return fmt.Errorf("ruleUID cannot be empty for update operations")
 	}
-	return validateProvisioningConsistency(ctx, store, orgID, targetProvenance, affectedGroups, ruleUID)
+	return validateRuleProvenanceInGroup(ctx, store, orgID, targetProvenance, affectedGroups, ruleUID)
 }
 
-// validateProvisioningConsistency checks that adding/updating a rule with targetProvenance to the affected groups
+// validateRuleProvenanceInGroup checks that adding/updating a rule with targetProvenance to the affected groups
 // would not create a mixed-provenance group (provisioned and non-provisioned rules in the same group).
 //
 // This prevents the scenario where provisioned rules are added to groups with non-provisioned rules,
@@ -60,7 +60,7 @@ func ValidateProvisioningConsistencyUpdate(
 // - If targetProvenance == ProvenanceNone: no OTHER existing rule in the group can have provenance != ProvenanceNone
 // - Empty groups (no existing rules) are always allowed
 // - Single-rule groups being updated are allowed (can change the group's provenance entirely)
-func validateProvisioningConsistency(
+func validateRuleProvenanceInGroup(
 	ctx context.Context,
 	store provenanceStore,
 	orgID int64,

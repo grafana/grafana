@@ -54,7 +54,7 @@ func TestValidateProvisioningConsistency(t *testing.T) {
 		store := &mockProvenanceStore{provenances: map[string]models.Provenance{}}
 		affectedGroups := map[models.AlertRuleGroupKey]models.RulesGroup{}
 
-		err := ValidateProvisioningConsistencyCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
+		err := ValidateRuleProvenanceInGroupCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
 		require.NoError(t, err)
 	})
 
@@ -64,7 +64,7 @@ func TestValidateProvisioningConsistency(t *testing.T) {
 			groupKey: {},
 		}
 
-		err := ValidateProvisioningConsistencyCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
+		err := ValidateRuleProvenanceInGroupCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
 		require.NoError(t, err)
 	})
 
@@ -79,7 +79,7 @@ func TestValidateProvisioningConsistency(t *testing.T) {
 			groupKey: {makeRule("rule-1"), makeRule("rule-2")},
 		}
 
-		err := ValidateProvisioningConsistencyCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
+		err := ValidateRuleProvenanceInGroupCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
 		require.Error(t, err)
 		assert.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		assert.Contains(t, err.Error(), "cannot add provisioned (api) rule to group containing non-provisioned rules")
@@ -97,7 +97,7 @@ func TestValidateProvisioningConsistency(t *testing.T) {
 			groupKey: {makeRule("rule-1"), makeRule("rule-2")},
 		}
 
-		err := ValidateProvisioningConsistencyCreate(ctx, store, orgID, models.ProvenanceNone, affectedGroups)
+		err := ValidateRuleProvenanceInGroupCreate(ctx, store, orgID, models.ProvenanceNone, affectedGroups)
 		require.Error(t, err)
 		assert.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		assert.Contains(t, err.Error(), "cannot add non-provisioned rule to group containing provisioned rules")
@@ -115,7 +115,7 @@ func TestValidateProvisioningConsistency(t *testing.T) {
 			groupKey: {makeRule("rule-1"), makeRule("rule-2")},
 		}
 
-		err := ValidateProvisioningConsistencyCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
+		err := ValidateRuleProvenanceInGroupCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
 		require.NoError(t, err)
 	})
 
@@ -130,7 +130,7 @@ func TestValidateProvisioningConsistency(t *testing.T) {
 			groupKey: {makeRule("rule-1"), makeRule("rule-2")},
 		}
 
-		err := ValidateProvisioningConsistencyCreate(ctx, store, orgID, models.ProvenanceNone, affectedGroups)
+		err := ValidateRuleProvenanceInGroupCreate(ctx, store, orgID, models.ProvenanceNone, affectedGroups)
 		require.NoError(t, err)
 	})
 
@@ -153,7 +153,7 @@ func TestValidateProvisioningConsistency(t *testing.T) {
 			groupKey2: {makeRule("rule-2"), makeRule("rule-3")}, // Multiple with conflict - should fail
 		}
 
-		err := ValidateProvisioningConsistencyCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
+		err := ValidateRuleProvenanceInGroupCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
 		require.Error(t, err)
 		assert.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		// group-1 should not be in the error since it has only 1 rule
@@ -173,7 +173,7 @@ func TestValidateProvisioningConsistency(t *testing.T) {
 		}
 
 		// Single rule in group being UPDATED - should allow changing provenance from None to API
-		err := ValidateProvisioningConsistencyUpdate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups, "rule-1")
+		err := ValidateRuleProvenanceInGroupUpdate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups, "rule-1")
 		require.NoError(t, err)
 	})
 
@@ -187,7 +187,7 @@ func TestValidateProvisioningConsistency(t *testing.T) {
 			groupKey: {nil, makeRule("rule-1"), nil},
 		}
 
-		err := ValidateProvisioningConsistencyCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
+		err := ValidateRuleProvenanceInGroupCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
 		require.NoError(t, err)
 	})
 
@@ -198,7 +198,7 @@ func TestValidateProvisioningConsistency(t *testing.T) {
 			groupKey: {makeRule("rule-1")},
 		}
 
-		err := ValidateProvisioningConsistencyCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
+		err := ValidateRuleProvenanceInGroupCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to get provenances")
 	})
@@ -216,7 +216,7 @@ func TestValidateProvisioningConsistency(t *testing.T) {
 		}
 
 		// Adding another provisioned rule to a group with mixed provisioned sources should be fine
-		err := ValidateProvisioningConsistencyCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
+		err := ValidateRuleProvenanceInGroupCreate(ctx, store, orgID, models.ProvenanceAPI, affectedGroups)
 		require.NoError(t, err)
 	})
 }

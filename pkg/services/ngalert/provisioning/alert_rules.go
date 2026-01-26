@@ -291,7 +291,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	}
 
 	// Validate that adding this rule won't create a mixed-provenance group.
-	if err := validation.ValidateProvisioningConsistencyCreate(ctx, service.provenanceStore, rule.OrgID, provenance, delta.AffectedGroups); err != nil {
+	if err := validation.ValidateRuleProvenanceInGroupCreate(ctx, service.provenanceStore, rule.OrgID, provenance, delta.AffectedGroups); err != nil {
 		return models.AlertRule{}, err
 	}
 	err = rule.SetDashboardAndPanelFromAnnotations()
@@ -775,13 +775,6 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		return models.AlertRule{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
 
-	// Validate provenance consistency to prevent mixed-provenance groups.
-	// Use the effective provenance (stored or new).
-	effectiveProvenance := provenance
-	if storedProvenance != models.ProvenanceNone {
-		effectiveProvenance = storedProvenance
-	}
-
 	// Use stored delta if available, otherwise calculate it.
 	if deltaForValidation == nil {
 		deltaForValidation, err = store.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule})
@@ -791,7 +784,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 	}
 
 	// Validate that updating this rule won't create a mixed-provenance group.
-	if err := validation.ValidateProvisioningConsistencyUpdate(ctx, service.provenanceStore, rule.OrgID, effectiveProvenance, deltaForValidation.AffectedGroups, rule.UID); err != nil {
+	if err := validation.ValidateRuleProvenanceInGroupUpdate(ctx, service.provenanceStore, rule.OrgID, provenance, deltaForValidation.AffectedGroups, rule.UID); err != nil {
 		return models.AlertRule{}, err
 	}
 
