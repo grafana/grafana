@@ -31,6 +31,7 @@ export interface Options extends common.SingleStatBaseOptions {
   endpointMarker?: ('point' | 'glow' | 'none');
   minVizHeight: number;
   minVizWidth: number;
+  neutral?: number;
   segmentCount: number;
   segmentSpacing: number;
   shape: ('circle' | 'gauge');

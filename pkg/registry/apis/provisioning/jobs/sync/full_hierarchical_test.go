@@ -72,7 +72,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 
 				// File will be recorded with error, triggering automatic tracking of folder1/ failure
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "folder1/file.json" && r.Error != nil && r.Action == repository.FileActionCreated
+					return r.Path() == "folder1/file.json" && r.Error() != nil && r.Action() == repository.FileActionCreated
 				})).Return().Once()
 			},
 		},
@@ -92,24 +92,24 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 					Return("", schema.GroupVersionKind{}, folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "folder1/file1.json" && r.Error != nil
+					return r.Path() == "folder1/file1.json" && r.Error() != nil
 				})).Return().Once()
 
 				// Subsequent files in same folder are skipped
 				progress.On("HasDirPathFailedCreation", "folder1/subfolder/file2.json").Return(true).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "folder1/subfolder/file2.json" &&
-						r.Action == repository.FileActionIgnored &&
-						r.Warning != nil &&
-						r.Warning.Error() == "resource was not processed because the parent folder could not be created"
+					return r.Path() == "folder1/subfolder/file2.json" &&
+						r.Action() == repository.FileActionIgnored &&
+						r.Warning() != nil &&
+						r.Warning().Error() == "resource was not processed because the parent folder could not be created"
 				})).Return().Once()
 
 				progress.On("HasDirPathFailedCreation", "folder1/file3.json").Return(true).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "folder1/file3.json" &&
-						r.Action == repository.FileActionIgnored &&
-						r.Warning != nil &&
-						r.Warning.Error() == "resource was not processed because the parent folder could not be created"
+					return r.Path() == "folder1/file3.json" &&
+						r.Action() == repository.FileActionIgnored &&
+						r.Warning() != nil &&
+						r.Warning().Error() == "resource was not processed because the parent folder could not be created"
 				})).Return().Once()
 			},
 		},
@@ -142,9 +142,9 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 
 				// File deletion recorded with error, automatically tracked in failedDeletions
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "folder1/file.json" &&
-						r.Action == repository.FileActionDeleted &&
-						r.Error != nil
+					return r.Path() == "folder1/file.json" &&
+						r.Action() == repository.FileActionDeleted &&
+						r.Error() != nil
 				})).Return().Once()
 			},
 		},
@@ -171,7 +171,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 					Return("", schema.GroupVersionKind{}, folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "folder1/file1.json" && r.Error != nil
+					return r.Path() == "folder1/file1.json" && r.Error() != nil
 				})).Return().Once()
 
 				// Deletion proceeds (NOT checking HasDirPathFailedCreation for deletions)
@@ -185,8 +185,8 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 
 				// Record deletion attempt (will have error since resource doesn't exist, but that's ok)
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "folder1/file2.json" &&
-						r.Action == repository.FileActionDeleted
+					return r.Path() == "folder1/file2.json" &&
+						r.Action() == repository.FileActionDeleted
 					// Not checking r.Error because resource doesn't exist in fake client
 				})).Return().Once()
 			},
@@ -207,14 +207,14 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 					Return("", schema.GroupVersionKind{}, folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "level1/file1.json" && r.Error != nil
+					return r.Path() == "level1/file1.json" && r.Error() != nil
 				})).Return().Once()
 
 				// All nested files are skipped
 				for _, path := range []string{"level1/level2/file2.json", "level1/level2/level3/file3.json"} {
 					progress.On("HasDirPathFailedCreation", path).Return(true).Once()
 					progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-						return r.Path == path && r.Action == repository.FileActionIgnored
+						return r.Path() == path && r.Action() == repository.FileActionIgnored
 					})).Return().Once()
 				}
 			},
@@ -233,7 +233,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				repoResources.On("WriteResourceFromFile", mock.Anything, "success/file1.json", "").
 					Return("resource1", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "success/file1.json" && r.Error == nil
+					return r.Path() == "success/file1.json" && r.Error() == nil
 				})).Return().Once()
 
 				// Failure path fails
@@ -242,13 +242,13 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				repoResources.On("WriteResourceFromFile", mock.Anything, "failure/file2.json", "").
 					Return("", schema.GroupVersionKind{}, folderErr).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "failure/file2.json" && r.Error != nil
+					return r.Path() == "failure/file2.json" && r.Error() != nil
 				})).Return().Once()
 
 				// Nested file in failure path is skipped
 				progress.On("HasDirPathFailedCreation", "failure/nested/file3.json").Return(true).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "failure/nested/file3.json" && r.Action == repository.FileActionIgnored
+					return r.Path() == "failure/nested/file3.json" && r.Action() == repository.FileActionIgnored
 				})).Return().Once()
 			},
 		},
@@ -271,19 +271,19 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				progress.On("HasDirPathFailedCreation", "folder1/subfolder/file2.json").Return(true).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "folder1/" && r.Error != nil
+					return r.Path() == "folder1/" && r.Error() != nil
 				})).Return().Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "folder1/subfolder/" && r.Action == repository.FileActionIgnored
+					return r.Path() == "folder1/subfolder/" && r.Action() == repository.FileActionIgnored
 				})).Return().Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "folder1/file1.json" && r.Action == repository.FileActionIgnored
+					return r.Path() == "folder1/file1.json" && r.Action() == repository.FileActionIgnored
 				})).Return().Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "folder1/subfolder/file2.json" && r.Action == repository.FileActionIgnored
+					return r.Path() == "folder1/subfolder/file2.json" && r.Action() == repository.FileActionIgnored
 				})).Return().Once()
 			},
 		},
@@ -311,13 +311,13 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				})
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "folder1/file1.json" && r.Error != nil
+					return r.Path() == "folder1/file1.json" && r.Error() != nil
 				})).Return().Once()
 
 				progress.On("HasDirPathFailedDeletion", "folder1/").Return(true).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "folder1/" && r.Action == repository.FileActionIgnored
+					return r.Path() == "folder1/" && r.Action() == repository.FileActionIgnored
 				})).Return().Once()
 			},
 		},
@@ -343,7 +343,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 
 				for _, path := range []string{"folder1/file1.json", "folder2/file2.json"} {
 					progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-						return r.Path == path && r.Error != nil
+						return r.Path() == path && r.Error() != nil
 					})).Return().Once()
 				}
 
@@ -352,7 +352,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 
 				for _, path := range []string{"folder1/", "folder2/"} {
 					progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-						return r.Path == path && r.Action == repository.FileActionIgnored
+						return r.Path() == path && r.Action() == repository.FileActionIgnored
 					})).Return().Once()
 				}
 			},
@@ -377,7 +377,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				})
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-					return r.Path == "parent/subfolder/file.json" && r.Error != nil
+					return r.Path() == "parent/subfolder/file.json" && r.Error() != nil
 				})).Return().Once()
 
 				progress.On("HasDirPathFailedDeletion", "parent/subfolder/").Return(true).Once()
@@ -385,7 +385,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 
 				for _, path := range []string{"parent/subfolder/", "parent/"} {
 					progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-						return r.Path == path && r.Action == repository.FileActionIgnored
+						return r.Path() == path && r.Action() == repository.FileActionIgnored
 					})).Return().Once()
 				}
 			},

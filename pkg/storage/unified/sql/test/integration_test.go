@@ -112,17 +112,55 @@ func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
 		return unitest.NewTestSqlKvBackend(t, ctx, true)
 	}
 
+	opts := &unitest.TestOptions{
+		SearchServerFactory: newTestResourceServerWithSearch,
+	}
+
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
 			return newTestBackend(t, true, 0)
-		}, newKvBackend, nil)
+		}, newKvBackend, opts)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
 		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
 			return newTestBackend(t, false, 0)
-		}, newKvBackend, nil)
+		}, newKvBackend, opts)
 	})
+}
+
+// newTestResourceServerWithSearch creates a ResourceServer with search enabled for testing
+func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBackend) resource.ResourceServer {
+	t.Helper()
+
+	// Create test config
+	cfg := setting.NewCfg()
+	cfg.EnableSearch = true
+	cfg.IndexFileThreshold = 1000 // Ensures memory indexing
+	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
+
+	// Initialize document builders for playlists
+	docBuilders := &resource.TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"playlist.grafana.app": "playlists",
+		},
+	}
+
+	// Create search options
+	features := featuremgmt.WithFeatures()
+	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
+	require.NoError(t, err)
+
+	// Create ResourceServer with search enabled
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      backend,
+		AccessClient: types.FixedAccessClient(true), // Allow all operations for testing
+		Search:       searchOpts,
+		Reg:          nil,
+	})
+	require.NoError(t, err)
+
+	return server
 }
 
 func TestIntegrationSearchAndStorage(t *testing.T) {

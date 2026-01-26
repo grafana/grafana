@@ -1060,6 +1060,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
     return {
       ...state,
+      queriesChangedIndex: state.queriesChangedIndex + 1,
       queries,
     };
   }
@@ -1338,6 +1339,7 @@ const processQueryResponse = (state: ExploreItemState, action: PayloadAction<Que
 
   return {
     ...state,
+    queriesChangedIndexAtRun: state.queriesChangedIndex,
     queryResponse: response,
     graphResult,
     tableResult,

@@ -48,7 +48,6 @@ export const metricDescriptors = [
 
 export const newMockDatasource = () =>
   new CloudMonitoringDatasource({
-    id: 1,
     uid: 'cm-id',
     type: 'cloud-monitoring-datasource',
     name: 'Cloud Monitoring Data Source',
