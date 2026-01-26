@@ -4,7 +4,13 @@ import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { LocalValueVariable, MultiValueVariable, SceneVariable, SceneVariableSet } from '@grafana/scenes';
+import {
+  LocalValueVariable,
+  MultiValueVariable,
+  QueryVariable,
+  SceneVariable,
+  SceneVariableSet,
+} from '@grafana/scenes';
 import { Input, TextArea, Button, Field, Box, Stack } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -16,6 +22,7 @@ import { EditableDashboardElement, EditableDashboardElementInfo } from '../../sc
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
 
+import { useVariableRefreshCategory } from './editors/QueryVariable/useVariableRefreshCategory';
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
 
 // TODO fix conditional hook usage here...
@@ -72,6 +79,10 @@ function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean
 
   if (variable instanceof MultiValueVariable) {
     categories.push(useVariableSelectionOptionsCategory(variable));
+  }
+
+  if (variable instanceof QueryVariable) {
+    categories.push(useVariableRefreshCategory(variable));
   }
 
   return categories;

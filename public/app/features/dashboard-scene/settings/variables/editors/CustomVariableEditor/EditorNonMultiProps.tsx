@@ -4,19 +4,19 @@ import { lastValueFrom } from 'rxjs';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { CustomVariable, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
-import { Alert, Button, Modal, Stack } from '@grafana/ui';
+import { Alert, Button, Stack } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../../../edit-pane/shared';
 import { VariableStaticOptionsForm, VariableStaticOptionsFormRef } from '../../components/VariableStaticOptionsForm';
 import { VariableStaticOptionsFormAddButton } from '../../components/VariableStaticOptionsFormAddButton';
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';
 
-interface ModalEditorProps {
+interface EditorProps {
   variable: CustomVariable;
   onClose: () => void;
 }
 
-export function ModalEditorNonMultiProps(props: ModalEditorProps) {
+export function EditorNonMultiProps(props: EditorProps) {
   const {
     displayMultiPropsWarningBanner,
     formRef,
@@ -28,13 +28,7 @@ export function ModalEditorNonMultiProps(props: ModalEditorProps) {
   } = useModalEditor(props);
 
   return (
-    <Modal
-      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom options')}
-      isOpen={true}
-      onDismiss={onCloseModal}
-      closeOnBackdropClick={false}
-      closeOnEscape={false}
-    >
+    <>
       {displayMultiPropsWarningBanner && (
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         <Alert severity="warning" title="Custom options with multi-properties are unavailable">
@@ -46,7 +40,9 @@ export function ModalEditorNonMultiProps(props: ModalEditorProps) {
         <VariableStaticOptionsForm options={options} onChange={onChangeOptions} ref={formRef} isInModal />
         <VariableValuesPreview options={options} />
       </Stack>
-      <Modal.ButtonRow leftItems={<VariableStaticOptionsFormAddButton onAdd={onAddNewOption} />}>
+      <Stack direction="column" gap={1}>
+        <VariableStaticOptionsFormAddButton onAdd={onAddNewOption} />
+        <Stack direction="row" gap={2}></Stack>
         <Button
           variant="secondary"
           fill="outline"
@@ -62,12 +58,12 @@ export function ModalEditorNonMultiProps(props: ModalEditorProps) {
         >
           <Trans i18nKey="dashboard.edit-pane.variable.custom-options.apply">Apply</Trans>
         </Button>
-      </Modal.ButtonRow>
-    </Modal>
+      </Stack>
+    </>
   );
 }
 
-function useModalEditor({ variable, onClose }: ModalEditorProps) {
+function useModalEditor({ variable, onClose }: EditorProps) {
   const { query, valuesFormat } = variable.state;
   const [options, setOptions] = useState(() => transformQueryToOptions(variable, query));
   const initialQueryRef = useRef(query);
@@ -101,7 +97,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
   };
 }
 
-const transformQueryToOptions = (variable: ModalEditorProps['variable'], query: string) =>
+const transformQueryToOptions = (variable: EditorProps['variable'], query: string) =>
   variable.transformCsvStringToOptions(query, false).map(({ label, value }) => ({
     value,
     label: value === label ? '' : label,

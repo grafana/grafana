@@ -6,28 +6,28 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CustomVariable } from '@grafana/scenes';
-import { Button, FieldValidationMessage, Modal, Stack, TextArea } from '@grafana/ui';
+import { Button, FieldValidationMessage, Stack, TextArea, Text } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../../../edit-pane/shared';
 import { ValuesFormatSelector } from '../../components/CustomVariableForm';
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';
 
 import { validateJsonQuery } from './CustomVariableEditor';
-import { ModalEditorNonMultiProps } from './ModalEditorNonMultiProps';
+import { EditorNonMultiProps } from './EditorNonMultiProps';
 
-interface ModalEditorProps {
+interface EditorProps {
   variable: CustomVariable;
   onClose: () => void;
 }
 
-export function ModalEditor(props: ModalEditorProps) {
+export function Editor(props: EditorProps) {
   if (!config.featureToggles.multiPropsVariables) {
-    return <ModalEditorNonMultiProps {...props} />;
+    return <EditorNonMultiProps {...props} />;
   }
-  return <ModalEditorMultiProps {...props} />;
+  return <EditorMultiProps {...props} />;
 }
 
-function ModalEditorMultiProps(props: ModalEditorProps) {
+function EditorMultiProps(props: EditorProps) {
   const {
     valuesFormat,
     query,
@@ -40,20 +40,17 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
   } = useModalEditor(props);
 
   return (
-    <Modal
-      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom options')}
-      isOpen={true}
-      onDismiss={onCloseModal}
-      closeOnBackdropClick={false}
-      closeOnEscape={false}
-    >
+    <>
       <Stack direction="column" gap={2}>
+        <Text variant="h4">
+          <Trans i18nKey="dashboard-scene.editor-multi-props.options">Options</Trans>
+        </Text>
         <ValuesFormatSelector valuesFormat={valuesFormat} onValuesFormatChange={onValuesFormatChange} />
         <div>
           <TextArea
             id={valuesFormat}
             key={valuesFormat}
-            rows={4}
+            rows={8}
             defaultValue={query}
             onChange={onQueryChange}
             placeholder={
@@ -71,30 +68,30 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
         <div>
           <VariableValuesPreview options={options} />
         </div>
+        <Stack direction="row" gap={2} justifyContent="flex-start">
+          <Button
+            variant="primary"
+            onClick={onSaveOptions}
+            disabled={Boolean(queryValidationError)}
+            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton}
+          >
+            <Trans i18nKey="dashboard.edit-pane.variable.custom-options.apply">Apply</Trans>
+          </Button>
+          <Button
+            variant="secondary"
+            fill="outline"
+            onClick={onCloseModal}
+            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.closeButton}
+          >
+            <Trans i18nKey="dashboard.edit-pane.variable.custom-options.discard">Discard</Trans>
+          </Button>
+        </Stack>
       </Stack>
-      <Modal.ButtonRow>
-        <Button
-          variant="secondary"
-          fill="outline"
-          onClick={onCloseModal}
-          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.closeButton}
-        >
-          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.discard">Discard</Trans>
-        </Button>
-        <Button
-          variant="primary"
-          onClick={onSaveOptions}
-          disabled={Boolean(queryValidationError)}
-          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton}
-        >
-          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.apply">Apply</Trans>
-        </Button>
-      </Modal.ButtonRow>
-    </Modal>
+    </>
   );
 }
 
-function useModalEditor({ variable, onClose }: ModalEditorProps) {
+function useModalEditor({ variable, onClose }: EditorProps) {
   const initialValuesFormatRef = useRef(variable.state.valuesFormat);
   const initialQueryRef = useRef(variable.state.query);
   const [valuesFormat, setValuesFormat] = useState(() => variable.state.valuesFormat);

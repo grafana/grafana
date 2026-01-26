@@ -450,7 +450,7 @@ describe('QueryVariableEditor', () => {
     consoleWarnSpy.mockRestore();
   });
 
-  it('should return an OptionsPaneItemDescriptor that renders ModalEditor with expected interactions', async () => {
+  it('should return an OptionsPaneItemDescriptor that renders drawerEditor with expected interactions', async () => {
     const variable = new QueryVariable({
       name: 'test',
       datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
@@ -472,40 +472,31 @@ describe('QueryVariableEditor', () => {
     const { queryByRole } = render(descriptor.renderElement());
     const user = userEvent.setup();
 
-    // 1. Initial state: "Open variable editor" button is visible, Modal is not.
+    // 1. Initial state: "Open variable editor" button is visible, drawer is not.
     const openEditorButton = screen.getByRole('button', { name: 'Open variable editor' });
     expect(openEditorButton).toBeInTheDocument();
-    expect(queryByRole('dialog')).not.toBeInTheDocument(); // Modal has role 'dialog'
+    expect(queryByRole('dialog')).not.toBeInTheDocument(); // drawer has role 'dialog'
 
-    // 2. Opening Modal
+    // 2. Opening drawer
     await user.click(openEditorButton);
-    const modal = await screen.findByRole('dialog'); // wait for modal to appear
-    expect(modal).toBeInTheDocument();
-    expect(within(modal).getByText('Query Variable')).toBeInTheDocument(); // Modal title
+    const drawer = await screen.findByRole('dialog'); // wait for drawer to appear
+    expect(drawer).toBeInTheDocument();
+    expect(within(drawer).getByText('Variable editor')).toBeInTheDocument(); // drawer title
 
     // 3. Assert Editor's key elements are rendered
     // DataSourcePicker's Field
-    expect(within(modal).getByLabelText('Target data source')).toBeInTheDocument();
+    expect(within(drawer).getByLabelText('Target data source')).toBeInTheDocument();
     // Regex input placeholder
-    expect(within(modal).getByPlaceholderText(/text>.*value/i)).toBeInTheDocument();
+    expect(within(drawer).getByPlaceholderText(/text>.*value/i)).toBeInTheDocument();
     // Sort select (check for its current value display)
-    expect(within(modal).getByText('Disabled')).toBeInTheDocument(); // Default sort is 0 (Disabled)
-    // Refresh select (check for its current value display)
-    expect(within(modal).getByRole('radio', { name: /on dashboard load/i })).toBeChecked(); // Default refresh
+    expect(within(drawer).getByText('Disabled')).toBeInTheDocument(); // Default sort is 0 (Disabled)
 
-    // 4. Assert Preview and Close buttons are visible
-    const previewButton = within(modal).getByRole('button', { name: 'Preview' });
-    // To distinguish from the header 'X' (aria-label="Close"), find the span with text "Close" and get its parent button.
-    const closeButtonTextSpan = within(modal).getByText(/^Close$/);
+    // 4. Assert Discard button is visible
+    const closeButtonTextSpan = within(drawer).getByText(/^Discard$/);
     const closeButton = closeButtonTextSpan.closest('button')!;
-    expect(previewButton).toBeInTheDocument();
     expect(closeButton).toBeInTheDocument();
 
-    // 5. Preview button calls variable.refreshOptions()
-    await user.click(previewButton);
-    expect(refreshOptionsSpy).toHaveBeenCalledTimes(1);
-
-    // 6. Closing Modal
+    // 5. Closing drawer
     await user.click(closeButton);
     await waitFor(() => {
       expect(queryByRole('dialog')).not.toBeInTheDocument();
