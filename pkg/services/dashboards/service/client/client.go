@@ -57,14 +57,14 @@ func ProvideK8sClientWithFallback(
 	restConfigProvider apiserver.RestConfigProvider,
 	dashboardStore dashboards.Store,
 	userService user.Service,
-	resourceClient resource.ResourceClient,
+	searchClient resource.SearchClient,
 	featureToggles featuremgmt.FeatureToggles,
 	dualWriter dualwrite.Service,
 	sorter sort.Service,
 	reg prometheus.Registerer,
 ) K8sHandlerWithFallback {
 	return NewK8sClientWithFallback(
-		cfg, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dualWriter, reg, featureToggles,
+		cfg, restConfigProvider, dashboardStore, userService, searchClient, sorter, dualWriter, reg, featureToggles,
 	)
 }
 
@@ -74,13 +74,13 @@ func NewK8sClientWithFallback(
 	restConfigProvider apiserver.RestConfigProvider,
 	dashboardStore dashboards.Store,
 	userService user.Service,
-	resourceClient resource.ResourceClient,
+	searchClient resource.SearchClient,
 	sorter sort.Service,
 	dual dualwrite.Service,
 	reg prometheus.Registerer,
 	features featuremgmt.FeatureToggles,
 ) *K8sClientWithFallback {
-	newClientFunc := newK8sClientFactory(cfg, restConfigProvider, dashboardStore, userService, resourceClient, sorter, dual, features)
+	newClientFunc := newK8sClientFactory(cfg, restConfigProvider, dashboardStore, userService, searchClient, sorter, dual, features)
 	return &K8sClientWithFallback{
 		K8sHandler:    newClientFunc(context.Background(), dashboardv0.VERSION),
 		newClientFunc: newClientFunc,
@@ -304,7 +304,7 @@ func newK8sClientFactory(
 	restConfigProvider apiserver.RestConfigProvider,
 	dashboardStore dashboards.Store,
 	userService user.Service,
-	resourceClient resource.ResourceClient,
+	searchClient resource.SearchClient,
 	sorter sort.Service,
 	dual dualwrite.Service,
 	features featuremgmt.FeatureToggles,
@@ -345,7 +345,7 @@ func newK8sClientFactory(
 		}
 
 		span.AddEvent("Creating new client")
-		newClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), gvr, restConfigProvider.GetRestConfig, dashboardStore, userService, resourceClient, sorter, features)
+		newClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), gvr, restConfigProvider.GetRestConfig, dashboardStore, userService, searchClient, sorter, features)
 		clientCache[version] = newClient
 
 		return newClient

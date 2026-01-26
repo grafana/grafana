@@ -82,7 +82,7 @@ func RegisterAPIService(
 	teamGroupsHandlerImpl externalgroupmapping.TeamGroupsHandler,
 	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler,
 	dual dualwrite.Service,
-	unified resource.ResourceClient,
+	searchClient resource.SearchClient,
 	orgService org.Service,
 	userService legacyuser.Service,
 	teamService teamservice.Service,
@@ -130,10 +130,10 @@ func RegisterAPIService(
 		logger:                            log.New("iam.apis"),
 		features:                          features,
 		dual:                              dual,
-		unified:                           unified,
-		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
-			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
-		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService), unified, features),
+		searchClient:                      searchClient,
+		userSearchClient: resource.NewSearchWrapperClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
+			searchClient, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
+		teamSearch: NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService), searchClient, features),
 		tracing:    tracing,
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, features, cfg)
@@ -482,10 +482,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 
 	legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
 
-	teamBindingSearchClient := resource.NewSearchClient(
+	teamBindingSearchClient := resource.NewSearchWrapperClient(
 		dualwrite.NewSearchAdapter(b.dual),
 		iamv0.TeamBindingResourceInfo.GroupResource(),
-		b.unified,
+		b.searchClient,
 		legacyTeamBindingSearchClient,
 		b.features,
 	)
@@ -870,7 +870,7 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 		return nil, err
 	}
 
-	client := resource.NewLocalResourceClient(server)
+	client := resource.NewLocalStorageClient(server)
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil)
 
 	store, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)

@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -147,15 +146,14 @@ func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBacke
 	}
 
 	// Create search options
-	features := featuremgmt.WithFeatures()
-	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
+	searchOpts, err := search.NewSearchOptions(cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
 
 	// Create ResourceServer with search enabled
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend:      backend,
 		AccessClient: types.FixedAccessClient(true), // Allow all operations for testing
-		Search:       searchOpts,
+		Search:       &searchOpts,
 		Reg:          nil,
 	})
 	require.NoError(t, err)
@@ -206,7 +204,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil)
+	svc, err := sql.ProvideStorageService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil)
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 
@@ -226,7 +224,7 @@ func TestClientServer(t *testing.T) {
 	t.Run("Create a client", func(t *testing.T) {
 		conn, err := unified.GrpcConn(svc.GetAddress(), prometheus.NewPedanticRegistry())
 		require.NoError(t, err)
-		client, err = resource.NewRemoteResourceClient(tracing.NewNoopTracerService(), conn, conn, resource.RemoteResourceClientConfig{
+		client, err = resource.NewRemoteStorageClient(tracing.NewNoopTracerService(), conn, resource.RemoteClientConfig{
 			Token:            "some-token",
 			TokenExchangeURL: "http://some-change-url",
 			AllowInsecure:    true,

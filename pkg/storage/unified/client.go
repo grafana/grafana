@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
+
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -46,6 +47,7 @@ type Options struct {
 	Authzc       types.AccessClient
 	Docs         resource.DocumentBuilderSupplier
 	SecureValues secrets.InlineSecureValueSupport
+	Backend      resource.StorageBackend // unused until sql.ProvideStorageBackend is implemented
 }
 
 type clientMetrics struct {
@@ -53,8 +55,9 @@ type clientMetrics struct {
 	requestRetries  *prometheus.CounterVec
 }
 
-// This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(opts *Options,
+// ProvideUnifiedResourceClient creates a unified ResourceClient to be used in the wire dependency tree.
+// Note: use a more specific client when possible
+func ProvideUnifiedResourceClient(opts *Options,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 ) (resource.ResourceClient, error) {
@@ -67,7 +70,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.Backend)
 	if err == nil {
 		// Decide whether to disable SQL fallback stats per resource in Mode 5.
 		// Otherwise we would still try to query the legacy SQL database in Mode 5.
@@ -92,6 +95,26 @@ func ProvideUnifiedStorageClient(opts *Options,
 	return client, err
 }
 
+// ProvideSearchClient adds a search client for wire dependency tree.
+func ProvideSearchClient(resourceClient resource.ResourceClient) (resource.SearchClient, error) {
+	return resourceClient, nil
+}
+
+// ProvideStorageClient adds a storage client for wire dependency tree.
+func ProvideStorageClient(resourceClient resource.ResourceClient) (resource.StorageClient, error) {
+	return resourceClient, nil
+}
+
+// ProvideMigratorClient adds a migrator client for wire dependency tree.
+func ProvideMigratorClient(resourceClient resource.ResourceClient) (resource.MigratorClient, error) {
+	return resourceClient, nil
+}
+
+// ProvideQuotaClient adds a quota client for wire dependency tree.
+func ProvideQuotaClient(resourceClient resource.ResourceClient) (resource.QuotaClient, error) {
+	return resourceClient, nil
+}
+
 func newClient(opts options.StorageOptions,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
@@ -103,6 +126,7 @@ func newClient(opts options.StorageOptions,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 	secure secrets.InlineSecureValueSupport,
+	backend resource.StorageBackend,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -170,22 +194,25 @@ func newClient(opts options.StorageOptions,
 		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
 
 	default:
-		searchOptions, err := search.NewSearchOptions(features, cfg, docs, indexMetrics, nil)
-		if err != nil {
-			return nil, err
+		storageOptions := sql.ResourceServerOptions{
+			ServerOptions: sql.ServerOptions{
+				Backend:      backend,
+				DB:           db,
+				Cfg:          cfg,
+				Tracer:       tracer,
+				Reg:          reg,
+				AccessClient: authzc,
+			},
+			StorageMetrics: storageMetrics,
+			SecureValues:   secure,
 		}
 
-		serverOptions := sql.ServerOptions{
-			DB:             db,
-			Cfg:            cfg,
-			Tracer:         tracer,
-			Reg:            reg,
-			AccessClient:   authzc,
-			SearchOptions:  searchOptions,
-			StorageMetrics: storageMetrics,
-			IndexMetrics:   indexMetrics,
-			Features:       features,
-			SecureValues:   secure,
+		if cfg.EnableSearch {
+			searchOptions, err := search.NewSearchOptions(cfg, docs, indexMetrics, nil)
+			if err != nil {
+				return nil, err
+			}
+			storageOptions.SearchOptions = &searchOptions
 		}
 
 		if cfg.QOSEnabled {
@@ -198,7 +225,7 @@ func newClient(opts options.StorageOptions,
 			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
 				return nil, fmt.Errorf("failed to start queue: %w", err)
 			}
-			scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
+			sched, err := scheduler.NewScheduler(queue, &scheduler.Config{
 				NumWorkers: cfg.QOSNumberWorker,
 				Logger:     cfg.Logger,
 			})
@@ -206,11 +233,11 @@ func newClient(opts options.StorageOptions,
 				return nil, fmt.Errorf("failed to create scheduler: %w", err)
 			}
 
-			err = services.StartAndAwaitRunning(ctx, scheduler)
+			err = services.StartAndAwaitRunning(ctx, sched)
 			if err != nil {
 				return nil, fmt.Errorf("failed to start scheduler: %w", err)
 			}
-			serverOptions.QOSQueue = queue
+			storageOptions.QOSQueue = queue
 		}
 
 		// only enable if an overrides file path is provided
@@ -222,15 +249,16 @@ func newClient(opts options.StorageOptions,
 			if err != nil {
 				return nil, err
 			}
-
-			serverOptions.OverridesService = overridesSvc
+			storageOptions.OverridesService = overridesSvc
 		}
 
-		server, err := sql.NewResourceServer(serverOptions)
+		// Create the storage server with shared backend
+		storageServer, err := sql.NewResourceServer(&storageOptions)
 		if err != nil {
 			return nil, err
 		}
-		return resource.NewLocalResourceClient(server), nil
+
+		return resource.NewLocalResourceClient(storageServer), nil
 	}
 }
 

@@ -110,9 +110,9 @@ func NewBulkSettings(md metadata.MD) (BulkSettings, error) {
 	return settings, nil
 }
 
-// BulkWrite implements ResourceServer.
+// BulkProcess implements BulkStoreServer.
 // All requests must be to the same NAMESPACE/GROUP/RESOURCE
-func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) error {
+func (s *storageServer) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) error {
 	ctx := stream.Context()
 	ctx, span := tracer.Start(ctx, "resource.server.BulkProcess")
 	defer span.End()

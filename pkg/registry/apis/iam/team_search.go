@@ -32,8 +32,8 @@ type TeamSearchHandler struct {
 	features featuremgmt.FeatureToggles
 }
 
-func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTeamSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *TeamSearchHandler {
-	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), resourceClient, legacyTeamSearcher, features)
+func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTeamSearcher resourcepb.ResourceIndexClient, client resource.SearchClient, features featuremgmt.FeatureToggles) *TeamSearchHandler {
+	searchClient := resource.NewSearchWrapperClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), client, legacyTeamSearcher, features)
 
 	return &TeamSearchHandler{
 		client:   searchClient,

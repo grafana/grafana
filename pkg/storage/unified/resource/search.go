@@ -127,8 +127,11 @@ type SearchBackend interface {
 	GetOpenIndexes() []NamespacedResource
 }
 
-// This supports indexing+search regardless of implementation
-type searchSupport struct {
+var _ SearchServer = &searchServer{}
+
+// This supports indexing+search regardless of implementation.
+// Implements SearchServer interface.
+type searchServer struct {
 	log          log.Logger
 	storage      StorageBackend
 	search       SearchBackend
@@ -156,16 +159,15 @@ type searchSupport struct {
 }
 
 var (
-	_ resourcepb.ResourceIndexServer      = (*searchSupport)(nil)
-	_ resourcepb.ManagedObjectIndexServer = (*searchSupport)(nil)
+	_ resourcepb.ResourceIndexServer      = (*searchServer)(nil)
+	_ resourcepb.ManagedObjectIndexServer = (*searchServer)(nil)
 )
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (support *searchSupport, err error) {
-	// No backend search support
-	if opts.Backend == nil {
-		return nil, nil
-	}
+func NewSearchServer(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (SearchServer, error) {
+	return newSearchServer(opts, storage, access, blob, indexMetrics, ownsIndexFn)
+}
 
+func newSearchServer(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
 	if opts.InitWorkerThreads < 1 {
 		opts.InitWorkerThreads = 1
 	}
@@ -180,7 +182,17 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		}
 	}
 
-	support = &searchSupport{
+	info, err := opts.Resources.GetDocumentBuilders()
+	if err != nil {
+		return nil, err
+	}
+	cacheBuilder, err := newBuilderCache(info, blob, 100, time.Minute*2) // TODO? opts
+	if err != nil {
+		return nil, err
+	}
+	log.New("cfg").Info("search server initialized", "opts", opts)
+
+	return &searchServer{
 		access:         access,
 		storage:        storage,
 		search:         opts.Backend,
@@ -194,21 +206,11 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		dashboardIndexMaxAge: opts.DashboardIndexMaxAge,
 		maxIndexAge:          opts.MaxIndexAge,
 		minBuildVersion:      opts.MinBuildVersion,
-	}
 
-	support.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
+		builders: cacheBuilder,
 
-	info, err := opts.Resources.GetDocumentBuilders()
-	if err != nil {
-		return nil, err
-	}
-
-	support.builders, err = newBuilderCache(info, 100, time.Minute*2) // TODO? opts
-	if support.builders != nil {
-		support.builders.blob = blob
-	}
-
-	return support, err
+		rebuildQueue: debouncer.NewQueue(combineRebuildRequests),
+	}, nil
 }
 
 func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
@@ -240,8 +242,8 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 	return ret, true
 }
 
-func (s *searchSupport) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
-	ctx, span := tracer.Start(ctx, "resource.searchSupport.ListManagedObjects")
+func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.searchServer.ListManagedObjects")
 	defer span.End()
 
 	if req.NextPageToken != "" {
@@ -298,7 +300,7 @@ func (s *searchSupport) ListManagedObjects(ctx context.Context, req *resourcepb.
 	return rsp, nil
 }
 
-func (s *searchSupport) logStats(ctx context.Context, stats *SearchStats, span trace.Span, params ...any) {
+func (s *searchServer) logStats(ctx context.Context, stats *SearchStats, span trace.Span, params ...any) {
 	elapsed := time.Since(stats.startTime)
 
 	args := []any{
@@ -325,8 +327,8 @@ func (s *searchSupport) logStats(ctx context.Context, stats *SearchStats, span t
 	}
 }
 
-func (s *searchSupport) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
-	ctx, span := tracer.Start(ctx, "resource.searchSupport.CountManagedObjects")
+func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.searchServer.CountManagedObjects")
 	defer span.End()
 
 	stats := NewSearchStats("CountManagedObjects")
@@ -383,8 +385,8 @@ func (s *searchSupport) CountManagedObjects(ctx context.Context, req *resourcepb
 }
 
 // Search implements ResourceIndexServer.
-func (s *searchSupport) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	ctx, span := tracer.Start(ctx, "resource.searchSupport.Search")
+func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.searchServer.Search")
 	defer span.End()
 
 	if req.Options.Key.Namespace == "" || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
@@ -425,8 +427,8 @@ func (s *searchSupport) Search(ctx context.Context, req *resourcepb.ResourceSear
 }
 
 // GetStats implements ResourceServer.
-func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
-	ctx, span := tracer.Start(ctx, "resource.searchSupport.GetStats")
+func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.searchServer.GetStats")
 	defer span.End()
 
 	if req.Namespace == "" {
@@ -515,8 +517,8 @@ func (s *searchSupport) GetStats(ctx context.Context, req *resourcepb.ResourceSt
 	return rsp, nil
 }
 
-func (s *searchSupport) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
-	ctx, span := tracer.Start(ctx, "resource.searchSupport.RebuildIndexes")
+func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.searchServer.RebuildIndexes")
 	defer span.End()
 
 	filterKeys := make([]NamespacedResource, len(req.Keys))
@@ -561,7 +563,7 @@ func (s *searchSupport) RebuildIndexes(ctx context.Context, req *resourcepb.Rebu
 	}, nil
 }
 
-func (s *searchSupport) buildIndexes(ctx context.Context) (int, error) {
+func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 	totalBatchesIndexed := 0
 	group := errgroup.Group{}
 	group.SetLimit(s.initWorkers)
@@ -598,10 +600,31 @@ func (s *searchSupport) buildIndexes(ctx context.Context) (int, error) {
 	return totalBatchesIndexed, nil
 }
 
-func (s *searchSupport) init(ctx context.Context) error {
+// Init implements LifecycleHooks.
+// It builds initial indexes and starts background tasks for periodic index rebuilding.
+func (s *searchServer) Init(ctx context.Context) error {
+	return s.init(ctx)
+}
+
+// Stop implements LifecycleHooks.
+// It stops background tasks (index rebuilders) and waits for them to complete.
+func (s *searchServer) Stop(_ context.Context) error {
+	s.stop()
+	return nil
+}
+
+// IsHealthy implements resourcepb.DiagnosticsServer.
+// Returns SERVING status. The search server is considered healthy if it can respond to requests.
+func (s *searchServer) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
+	return &resourcepb.HealthCheckResponse{
+		Status: resourcepb.HealthCheckResponse_SERVING,
+	}, nil
+}
+
+func (s *searchServer) init(ctx context.Context) error {
 	origCtx := ctx
 
-	ctx, span := tracer.Start(ctx, "resource.searchSupport.init")
+	ctx, span := tracer.Start(ctx, "resource.searchServer.init")
 	defer span.End()
 	start := time.Now().Unix()
 
@@ -629,13 +652,13 @@ func (s *searchSupport) init(ctx context.Context) error {
 	return nil
 }
 
-func (s *searchSupport) stop() {
+func (s *searchServer) stop() {
 	// Stop background tasks.
 	s.bgTaskCancel()
 	s.bgTaskWg.Wait()
 }
 
-func (s *searchSupport) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
+func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 	defer s.bgTaskWg.Done()
 
 	ticker := time.NewTicker(5 * time.Minute)
@@ -656,7 +679,7 @@ func (s *searchSupport) runPeriodicScanForIndexesToRebuild(ctx context.Context) 
 	}
 }
 
-func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time) []chan struct{} {
+func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time) []chan struct{} {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
 
@@ -707,7 +730,7 @@ func (s *searchSupport) findIndexesToRebuild(lastImportTimes map[NamespacedResou
 	return completeChs
 }
 
-func (s *searchSupport) getLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
+func (s *searchServer) getLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
 	result := map[NamespacedResource]time.Time{}
 	for importTime, err := range s.storage.GetResourceLastImportTimes(ctx) {
 		if err != nil {
@@ -721,7 +744,7 @@ func (s *searchSupport) getLastImportTimes(ctx context.Context) (map[NamespacedR
 
 // runIndexRebuilder is a goroutine waiting for rebuild requests, and rebuilds indexes specified in those requests.
 // Rebuild requests can be generated periodically (if configured), or after new documents have been imported into the storage with old RVs.
-func (s *searchSupport) runIndexRebuilder(ctx context.Context) {
+func (s *searchServer) runIndexRebuilder(ctx context.Context) {
 	defer s.bgTaskWg.Done()
 
 	for {
@@ -739,8 +762,8 @@ func (s *searchSupport) runIndexRebuilder(ctx context.Context) {
 	}
 }
 
-func (s *searchSupport) rebuildIndex(ctx context.Context, req rebuildRequest) {
-	ctx, span := tracer.Start(ctx, "resource.searchSupport.rebuildIndex")
+func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
+	ctx, span := tracer.Start(ctx, "resource.searchServer.rebuildIndex")
 	defer span.End()
 
 	l := s.log.New("namespace", req.Namespace, "group", req.Group, "resource", req.Resource)
@@ -861,12 +884,12 @@ func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time
 	}
 }
 
-func (s *searchSupport) getOrCreateIndex(ctx context.Context, stats *SearchStats, key NamespacedResource, reason string) (ResourceIndex, error) {
+func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats, key NamespacedResource, reason string) (ResourceIndex, error) {
 	if s == nil || s.search == nil {
 		return nil, fmt.Errorf("search is not configured properly (missing enable_search config?)")
 	}
 
-	ctx, span := tracer.Start(ctx, "resource.searchSupport.getOrCreateIndex")
+	ctx, span := tracer.Start(ctx, "resource.searchServer.getOrCreateIndex")
 	defer span.End()
 	span.SetAttributes(
 		attribute.String("namespace", key.Namespace),
@@ -948,8 +971,8 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, stats *SearchStats
 	return idx, nil
 }
 
-func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool) (ResourceIndex, error) {
-	ctx, span := tracer.Start(ctx, "resource.searchSupport.build")
+func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool) (ResourceIndex, error) {
+	ctx, span := tracer.Start(ctx, "resource.searchServer.build")
 	defer span.End()
 
 	span.SetAttributes(
@@ -1154,11 +1177,12 @@ type builderCache struct {
 	mu sync.Mutex // only locked for a cache miss
 }
 
-func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Duration) (*builderCache, error) {
+func newBuilderCache(cfg []DocumentBuilderInfo, blob BlobSupport, nsCacheSize int, ttl time.Duration) (*builderCache, error) {
 	cache := &builderCache{
 		fields: make(map[schema.GroupResource]SearchableDocumentFields),
 		lookup: make(map[string]map[string]DocumentBuilderInfo),
 		ns:     expirable.NewLRU[NamespacedResource, DocumentBuilder](nsCacheSize, nil, ttl),
+		blob:   blob,
 	}
 	if len(cfg) == 0 {
 		return cache, fmt.Errorf("no builders configured")

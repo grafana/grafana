@@ -58,13 +58,13 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 	}, nil)
 
 	statsService := &sqlStatsService{
-		db:             db,
-		dashSvc:        dashSvc,
-		orgSvc:         orgSvc,
-		folderSvc:      folderService,
-		features:       featuremgmt.WithFeatures(),
-		namespacer:     request.GetNamespaceMapper(cfg),
-		unifiedStorage: unifiedStorage,
+		db:           db,
+		dashSvc:      dashSvc,
+		orgSvc:       orgSvc,
+		folderSvc:    folderService,
+		features:     featuremgmt.WithFeatures(),
+		namespacer:   request.GetNamespaceMapper(cfg),
+		searchClient: unifiedStorage,
 	}
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {

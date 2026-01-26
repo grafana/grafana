@@ -65,6 +65,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
@@ -146,8 +147,13 @@ var wireExtsBasicSet = wire.NewSet(
 	sandbox.ProvideService,
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
 	wire.Struct(new(unified.Options), "*"),
-	unified.ProvideUnifiedStorageClient,
 	sql.ProvideStorageBackend,
+	unified.ProvideUnifiedResourceClient,
+	unified.ProvideSearchClient,
+	unified.ProvideStorageClient,
+	unified.ProvideMigratorClient,
+	unified.ProvideQuotaClient,
+	wire.Bind(new(resourcepb.ResourceIndexClient), new(resource.ResourceClient)),
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
@@ -196,6 +202,7 @@ var wireExtsModuleServerSet = wire.NewSet(
 	tracing.ProvideTracingConfig,
 	tracing.ProvideService,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
+	otelTracer,
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,

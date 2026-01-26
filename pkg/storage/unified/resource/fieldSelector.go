@@ -7,7 +7,7 @@ import (
 )
 
 // Some list queries can be calculated with simple reads or search index
-func (s *server) tryFieldSelector(ctx context.Context, req *resourcepb.ListRequest) *resourcepb.ListResponse {
+func (s *storageServer) tryFieldSelector(ctx context.Context, req *resourcepb.ListRequest) *resourcepb.ListResponse {
 	if req.Source != resourcepb.ListRequest_STORE || req.Options.Key.Namespace == "" {
 		return nil
 	}

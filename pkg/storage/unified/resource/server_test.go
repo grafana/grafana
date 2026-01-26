@@ -547,9 +547,9 @@ func TestRunInQueue(t *testing.T) {
 	})
 }
 
-// newTestServerWithQueue creates a server with a real scheduler.Queue for testing.
+// newTestServerWithQueue creates a storageServer with a real scheduler.Queue for testing.
 // It also sets up a worker to consume items from the queue.
-func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) (*server, *scheduler.Queue) {
+func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) (*storageServer, *scheduler.Queue) {
 	t.Helper()
 	q := scheduler.NewQueue(&scheduler.QueueOptions{
 		MaxSizePerTenant: maxSizePerTenant,
@@ -576,7 +576,7 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 		require.NoError(t, err)
 	})
 
-	s := &server{
+	s := &storageServer{
 		queue: q,
 		queueConfig: QueueConfig{
 			Timeout:    500 * time.Millisecond,
@@ -589,7 +589,7 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 }
 
 func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
-	s := &server{
+	s := &storageServer{
 		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
 		log:                            log.NewNopLogger(),
 	}
@@ -622,7 +622,7 @@ func TestGetQuotaUsage(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("returns error when overrides service is not configured", func(t *testing.T) {
-		s := &server{
+		s := &storageServer{
 			overridesService: nil,
 			log:              log.NewNopLogger(),
 		}
@@ -666,7 +666,7 @@ func TestGetQuotaUsage(t *testing.T) {
 			resourceStats: []ResourceStats{{Count: 42}},
 		}
 
-		s := &server{
+		s := &storageServer{
 			backend:          mockBackend,
 			overridesService: overridesService,
 			log:              log.NewNopLogger(),

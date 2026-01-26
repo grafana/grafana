@@ -31,9 +31,10 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 
 		storageBackend, _ := newTestBackend(t, gcConfig)
 		b := storageBackend.(*backend)
+		storage := b.storage
 
-		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: storageBackend,
+		server, err := resource.NewStorageServer(resource.StorageServerOptions{
+			Backend: storage,
 		})
 		require.NoError(t, err)
 
@@ -57,7 +58,7 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		require.Equal(t, 0, len(listResp.Items))
 
 		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // Everything eligible for deletion
-		rowsDeleted, err := b.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100)
+		rowsDeleted, err := storage.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), rowsDeleted)
 
@@ -84,9 +85,10 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 
 		storageBackend, _ := newTestBackend(t, gcConfig)
 		b := storageBackend.(*backend)
+		storage := b.storage
 
-		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: storageBackend,
+		server, err := resource.NewStorageServer(resource.StorageServerOptions{
+			Backend: storage,
 		})
 		require.NoError(t, err)
 
@@ -101,7 +103,7 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		require.NoError(t, err)
 
 		cutoffTimestamp := rv2 + 1
-		rowsDeleted, err := b.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100)
+		rowsDeleted, err := storage.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), rowsDeleted)
 
@@ -144,9 +146,10 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 
 		storageBackend, _ := newTestBackend(t, gcConfig)
 		b := storageBackend.(*backend)
+		storage := b.storage
 
-		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: storageBackend,
+		server, err := resource.NewStorageServer(resource.StorageServerOptions{
+			Backend: storage,
 		})
 		require.NoError(t, err)
 
@@ -161,7 +164,7 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		require.NoError(t, err)
 
 		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
-		rowsDeleted, err := b.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100)
+		rowsDeleted, err := storage.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), rowsDeleted)
 
@@ -204,9 +207,10 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 
 		storageBackend, _ := newTestBackend(t, gcConfig)
 		b := storageBackend.(*backend)
+		storage := b.storage
 
-		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: storageBackend,
+		server, err := resource.NewStorageServer(resource.StorageServerOptions{
+			Backend: storage,
 		})
 		require.NoError(t, err)
 
@@ -235,7 +239,7 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		require.Len(t, trashResp.Items, 2)
 
 		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
-		rowsDeleted, err := b.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 1)
+		rowsDeleted, err := storage.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 1)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), rowsDeleted)
 
@@ -262,9 +266,10 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 
 		storageBackend, _ := newTestBackend(t, gcConfig)
 		b := storageBackend.(*backend)
+		storage := b.storage
 
-		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: storageBackend,
+		server, err := resource.NewStorageServer(resource.StorageServerOptions{
+			Backend: storage,
 		})
 		require.NoError(t, err)
 
@@ -278,7 +283,7 @@ func TestIntegrationGarbageCollectionBatch(t *testing.T) {
 		require.NoError(t, err)
 
 		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
-		rowsDeleted, err := b.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100)
+		rowsDeleted, err := storage.garbageCollectBatch(ctx, "group", "resource", cutoffTimestamp, 100)
 		require.NoError(t, err)
 		require.Equal(t, int64(0), rowsDeleted)
 
@@ -314,9 +319,10 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 
 		storageBackend, _ := newTestBackend(t, gcConfig)
 		b := storageBackend.(*backend)
+		storage := b.storage
 
-		_, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: storageBackend,
+		_, err := resource.NewStorageServer(resource.StorageServerOptions{
+			Backend: storage,
 		})
 		require.NoError(t, err)
 
@@ -326,7 +332,7 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		require.NoError(t, err)
 
 		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
-		results := b.runGarbageCollection(ctx, cutoffTimestamp)
+		results := storage.runGarbageCollection(ctx, cutoffTimestamp)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), results["group/resource"])
 	})
@@ -339,9 +345,10 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 
 		storageBackend, _ := newTestBackend(t, gcConfig)
 		b := storageBackend.(*backend)
+		storage := b.storage
 
-		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: storageBackend,
+		server, err := resource.NewStorageServer(resource.StorageServerOptions{
+			Backend: storage,
 		})
 		require.NoError(t, err)
 
@@ -361,7 +368,7 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		require.NoError(t, err)
 
 		cutoffTimestamp := time.Now().Add(1 * time.Hour).UnixMicro() // everything eligible for deletion (except dashboards)
-		results := b.runGarbageCollection(ctx, cutoffTimestamp)
+		results := storage.runGarbageCollection(ctx, cutoffTimestamp)
 		require.Equal(t, int64(2), results["group/resource"])
 		require.Zero(t, results["dashboard.grafana.app/dashboards"])
 

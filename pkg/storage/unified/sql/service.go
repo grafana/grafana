@@ -3,47 +3,33 @@ package sql
 import (
 	"context"
 	"fmt"
-	"hash/fnv"
-	"net"
-	"net/http"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/grpc/health/grpc_health_v1"
-
-	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/dskit/kv"
-	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
-	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 var (
-	_ UnifiedStorageGrpcService = (*service)(nil)
+	_ UnifiedGrpcService = (*service)(nil)
+	_ UnifiedGrpcService = (*searchService)(nil)
+	_ UnifiedGrpcService = (*storageService)(nil)
 )
 
-type UnifiedStorageGrpcService interface {
+type UnifiedGrpcService interface {
 	services.NamedService
 
 	// Return the address where this service is running
@@ -53,18 +39,11 @@ type UnifiedStorageGrpcService interface {
 type service struct {
 	*services.BasicService
 
-	// Subservices manager
-	subservices        *services.Manager
-	subservicesWatcher *services.FailureWatcher
-	hasSubservices     bool
-
 	backend       resource.StorageBackend
 	serverStopper resource.ResourceServerStopper
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
 	db            infraDB.DB
-
-	handler grpcserver.Provider
 
 	tracing trace.Tracer
 
@@ -72,18 +51,27 @@ type service struct {
 
 	log            log.Logger
 	reg            prometheus.Registerer
+	docBuilders    resource.DocumentBuilderSupplier
 	storageMetrics *resource.StorageMetrics
 	indexMetrics   *resource.BleveIndexMetrics
 
-	docBuilders resource.DocumentBuilderSupplier
+	// Handler for the gRPC server
+	handler grpcserver.Provider
 
-	searchRing     *ring.Ring
-	ringLifecycler *ring.BasicLifecycler
+	// Ring state for sharding
+	ringState *RingState
 
-	queue     QOSEnqueueDequeuer
-	scheduler *scheduler.Scheduler
+	// QOS state
+	qos *QOSState
+
+	// Subservices state
+	subservices *SubservicesState
 }
 
+// ProvideUnifiedStorageGrpcService provides a combined storage and search service running on the same gRPC server.
+// This is used when running Grafana as a monolith where both services share the same process.
+// Each service (storage and search) maintains its own lifecycle but shares the gRPC server.
+// Deprecated: use ProvideStorageService and ProvideSearchService instead.
 func ProvideUnifiedStorageGrpcService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
@@ -97,241 +85,146 @@ func ProvideUnifiedStorageGrpcService(
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
-) (UnifiedStorageGrpcService, error) {
-	var err error
+) (UnifiedGrpcService, error) {
 	tracer := otel.Tracer("unified-storage")
 
-	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
-	// grpcutils.NewGrpcAuthenticator should be used instead.
-	authn := NewAuthenticatorWithFallback(cfg, reg, tracer, func(ctx context.Context) (context.Context, error) {
-		auth := grpc.Authenticator{Tracer: tracer}
-		return auth.Authenticate(ctx)
-	})
-
 	s := &service{
-		backend:            backend,
-		cfg:                cfg,
-		features:           features,
-		authenticator:      authn,
-		tracing:            tracer,
-		db:                 db,
-		log:                log,
-		reg:                reg,
-		docBuilders:        docBuilders,
-		storageMetrics:     storageMetrics,
-		indexMetrics:       indexMetrics,
-		searchRing:         searchRing,
-		subservicesWatcher: services.NewFailureWatcher(),
+		backend:        backend,
+		cfg:            cfg,
+		features:       features,
+		authenticator:  CreateAuthenticator(cfg, reg, tracer),
+		tracing:        tracer,
+		db:             db,
+		log:            log,
+		reg:            reg,
+		docBuilders:    docBuilders,
+		storageMetrics: storageMetrics,
+		indexMetrics:   indexMetrics,
 	}
 
-	subservices := []services.Service{}
-	if cfg.EnableSharding {
-		ringStore, err := kv.NewClient(
-			memberlistKVConfig,
-			ring.GetCodec(),
-			kv.RegistererWithKVName(reg, resource.RingName),
-			log,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create KV store client: %s", err)
-		}
+	// Collect subservices
+	var allSubservices []services.Service
 
-		lifecyclerCfg, err := toLifecyclerConfig(cfg, log)
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize storage-ring lifecycler config: %s", err)
-		}
+	// Initialize ring lifecycler if sharding is enabled
+	ringState, ringSubservices, err := InitRingLifecycler(RingConfig{
+		Cfg:                cfg,
+		Log:                log,
+		Reg:                reg,
+		MemberlistKVConfig: memberlistKVConfig,
+		SearchRing:         searchRing,
+	})
+	if err != nil {
+		return nil, err
+	}
+	s.ringState = ringState
+	allSubservices = append(allSubservices, ringSubservices...)
 
-		// Define lifecycler delegates in reverse order (last to be called defined first because they're
-		// chained via "next delegate").
-		delegate := ring.BasicLifecyclerDelegate(ring.NewInstanceRegisterDelegate(ring.JOINING, resource.RingNumTokens))
-		delegate = ring.NewLeaveOnStoppingDelegate(delegate, log)
-		delegate = ring.NewAutoForgetDelegate(resource.RingHeartbeatTimeout*2, delegate, log)
-
-		s.ringLifecycler, err = ring.NewBasicLifecycler(
-			lifecyclerCfg,
-			resource.RingName,
-			resource.RingKey,
-			ringStore,
-			delegate,
-			log,
-			reg,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize storage-ring lifecycler: %s", err)
-		}
-
-		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(true)
-		subservices = append(subservices, s.ringLifecycler)
-
-		if httpServerRouter != nil {
-			httpServerRouter.Path("/prepare-downscale").Methods("GET", "POST", "DELETE").Handler(http.HandlerFunc(s.PrepareDownscale))
-		}
+	// Register HTTP endpoints for ring management
+	if httpServerRouter != nil && ringState != nil {
+		httpServerRouter.Path("/prepare-downscale").Methods("GET", "POST", "DELETE").Handler(ringState.PrepareDownscale())
 	}
 
-	if cfg.QOSEnabled {
-		qosReg := prometheus.WrapRegistererWithPrefix("resource_server_qos_", reg)
-		queue := scheduler.NewQueue(&scheduler.QueueOptions{
-			MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-			Registerer:       qosReg,
-		})
-		scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
-			NumWorkers: cfg.QOSNumberWorker,
-			Logger:     log,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create qos scheduler: %s", err)
-		}
-
-		s.queue = queue
-		s.scheduler = scheduler
-		subservices = append(subservices, s.queue, s.scheduler)
+	// Initialize QOS if enabled
+	qosState, qosSubservices, err := InitQOS(QOSConfig{
+		Cfg: cfg,
+		Log: log,
+		Reg: reg,
+	})
+	if err != nil {
+		return nil, err
 	}
+	s.qos = qosState
+	allSubservices = append(allSubservices, qosSubservices...)
 
-	if len(subservices) > 0 {
-		s.hasSubservices = true
-		s.subservices, err = services.NewManager(subservices...)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create subservices manager: %w", err)
-		}
+	// Initialize subservices manager
+	s.subservices, err = InitSubservicesManager(allSubservices)
+	if err != nil {
+		return nil, err
 	}
 
 	// This will be used when running as a dskit service
+	// Note: We use StorageServer as the module name for backward compatibility
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.StorageServer)
 
 	return s, nil
 }
 
-func (s *service) PrepareDownscale(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodPost:
-		s.log.Info("Preparing for downscale. Will not keep instance in ring on shutdown.")
-		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(false)
-	case http.MethodDelete:
-		s.log.Info("Downscale canceled. Will keep instance in ring on shutdown.")
-		s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(true)
-	case http.MethodGet:
-		// used for delayed downscale use case, which we don't support. Leaving here for completion sake
-		s.log.Info("Received GET request for prepare-downscale. Behavior not implemented.")
-	default:
-	}
-}
-
-var (
-	// operation used by the search-servers to check if they own the namespace
-	searchOwnerRead = ring.NewOp([]ring.InstanceState{ring.JOINING, ring.ACTIVE, ring.LEAVING}, nil)
-)
-
-func (s *service) OwnsIndex(key resource.NamespacedResource) (bool, error) {
-	if s.searchRing == nil {
-		return true, nil
-	}
-
-	if st := s.searchRing.State(); st != services.Running {
-		return false, fmt.Errorf("ring is not Running: %s", st)
-	}
-
-	ringHasher := fnv.New32a()
-	_, err := ringHasher.Write([]byte(key.Namespace))
-	if err != nil {
-		return false, fmt.Errorf("error hashing namespace: %w", err)
-	}
-
-	rs, err := s.searchRing.GetWithOptions(ringHasher.Sum32(), searchOwnerRead, ring.WithReplicationFactor(s.searchRing.ReplicationFactor()))
-	if err != nil {
-		return false, fmt.Errorf("error getting replicaset from ring: %w", err)
-	}
-
-	return rs.Includes(s.ringLifecycler.GetInstanceAddr()), nil
+func (s *service) ownsIndex(key resource.NamespacedResource) (bool, error) {
+	return s.ringState.OwnsIndex(key)
 }
 
 func (s *service) starting(ctx context.Context) error {
-	if s.hasSubservices {
-		s.subservicesWatcher.WatchManager(s.subservices)
-		if err := services.StartManagerAndAwaitHealthy(ctx, s.subservices); err != nil {
-			return fmt.Errorf("failed to start subservices: %w", err)
-		}
+	// Start subservices
+	if err := s.subservices.StartSubservices(ctx); err != nil {
+		return err
 	}
 
-	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing, s.reg)
+	// Create authz client
+	authzClient, err := CreateAuthzClient(s.cfg, s.features, s.tracing, s.reg)
 	if err != nil {
 		return err
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex)
-	if err != nil {
-		return err
+	// Get QOS queue if enabled
+	var qosQueue QOSEnqueueDequeuer
+	if s.qos != nil {
+		qosQueue = s.qos.Queue
 	}
 
-	serverOptions := ServerOptions{
-		Backend:        s.backend,
-		DB:             s.db,
-		Cfg:            s.cfg,
-		Tracer:         s.tracing,
-		Reg:            s.reg,
-		AccessClient:   authzClient,
-		SearchOptions:  searchOptions,
+	serverOptions := &ResourceServerOptions{
+		ServerOptions: ServerOptions{
+			Backend:      s.backend,
+			DB:           s.db,
+			Cfg:          s.cfg,
+			Tracer:       s.tracing,
+			Reg:          s.reg,
+			AccessClient: authzClient,
+		},
 		StorageMetrics: s.storageMetrics,
+		QOSQueue:       qosQueue,
+		OwnsIndexFn:    s.ownsIndex,
 		IndexMetrics:   s.indexMetrics,
-		Features:       s.features,
-		QOSQueue:       s.queue,
-		OwnsIndexFn:    s.OwnsIndex,
 	}
 
-	if s.cfg.OverridesFilePath != "" {
-		overridesSvc, err := resource.NewOverridesService(context.Background(), s.log, s.reg, s.tracing, resource.ReloadOptions{
-			FilePath:     s.cfg.OverridesFilePath,
-			ReloadPeriod: s.cfg.OverridesReloadInterval,
-		})
+	// Create search options for the search server
+	if s.cfg.EnableSearch {
+		searchOptions, err := search.NewSearchOptions(s.cfg, s.docBuilders, s.indexMetrics, s.ownsIndex)
 		if err != nil {
 			return err
 		}
-		serverOptions.OverridesService = overridesSvc
+		serverOptions.SearchOptions = &searchOptions
 	}
+
+	// Setup overrides service if enabled
+	overridesSvc, err := CreateOverridesService(context.Background(), s.cfg, s.log, s.reg, s.tracing)
+	if err != nil {
+		return err
+	}
+	serverOptions.OverridesService = overridesSvc
 
 	server, err := NewResourceServer(serverOptions)
 	if err != nil {
 		return err
 	}
 	s.serverStopper = server
-	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, interceptors.AuthenticatorFunc(s.authenticator), s.tracing, prometheus.DefaultRegisterer)
+
+	// Create gRPC handler
+	s.handler, err = CreateGrpcHandler(s.cfg, s.features, s.authenticator, s.tracing)
 	if err != nil {
 		return err
 	}
 
-	healthService, err := resource.ProvideHealthService(server)
+	// Register unified services (storage + search)
+	err = RegisterUnifiedServices(s.cfg, s.handler, server)
 	if err != nil {
 		return err
 	}
 
-	srv := s.handler.GetServer()
-	resourcepb.RegisterResourceStoreServer(srv, server)
-	resourcepb.RegisterBulkStoreServer(srv, server)
-	resourcepb.RegisterResourceIndexServer(srv, server)
-	resourcepb.RegisterManagedObjectIndexServer(srv, server)
-	resourcepb.RegisterBlobStoreServer(srv, server)
-	resourcepb.RegisterDiagnosticsServer(srv, server)
-	resourcepb.RegisterQuotasServer(srv, server)
-	grpc_health_v1.RegisterHealthServer(srv, healthService)
-
-	// register reflection service
-	_, err = grpcserver.ProvideReflectionService(s.cfg, s.handler)
-	if err != nil {
-		return err
-	}
-
-	if s.cfg.EnableSharding {
-		s.log.Info("waiting until resource server is JOINING in the ring")
-		lfcCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ResourceServerJoinRingTimeout)
-		defer cancel()
-		if err := ring.WaitInstanceState(lfcCtx, s.searchRing, s.ringLifecycler.GetInstanceID(), ring.JOINING); err != nil {
-			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
+	// Wait for ring to become active if sharding is enabled
+	if s.ringState != nil {
+		if err := s.ringState.WaitForRingActive(ctx, s.cfg.ResourceServerJoinRingTimeout); err != nil {
+			return err
 		}
-		s.log.Info("resource server is JOINING in the ring")
-
-		if err := s.ringLifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
-			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
-		}
-		s.log.Info("resource server is ACTIVE in the ring")
 	}
 
 	return nil
@@ -354,7 +247,7 @@ func (s *service) running(ctx context.Context) error {
 			return err
 		}
 		return nil
-	case err := <-s.subservicesWatcher.Chan():
+	case err := <-s.subservices.Watcher.Chan():
 		return fmt.Errorf("subservice failure: %w", err)
 	case <-ctx.Done():
 		s.log.Info("Stopping resource server")
@@ -379,116 +272,5 @@ func (s *service) running(ctx context.Context) error {
 }
 
 func (s *service) stopping(_ error) error {
-	if s.hasSubservices {
-		err := services.StopManagerAndAwaitStopped(context.Background(), s.subservices)
-		if err != nil {
-			return fmt.Errorf("failed to stop subservices: %w", err)
-		}
-	}
-	return nil
-}
-
-type authenticatorWithFallback struct {
-	authenticator func(ctx context.Context) (context.Context, error)
-	fallback      func(ctx context.Context) (context.Context, error)
-	metrics       *metrics
-	tracer        trace.Tracer
-}
-
-type metrics struct {
-	requestsTotal *prometheus.CounterVec
-}
-
-func (f *authenticatorWithFallback) Authenticate(ctx context.Context) (context.Context, error) {
-	ctx, span := f.tracer.Start(ctx, "grpcutils.AuthenticatorWithFallback.Authenticate")
-	defer span.End()
-
-	// Try to authenticate with the new authenticator first
-	span.SetAttributes(attribute.Bool("fallback_used", false))
-	newCtx, err := f.authenticator(ctx)
-	if err == nil {
-		// fallback not used, authentication successful
-		f.metrics.requestsTotal.WithLabelValues("false", "true").Inc()
-		return newCtx, nil
-	}
-
-	// In case of error, fallback to the legacy authenticator
-	span.SetAttributes(attribute.Bool("fallback_used", true))
-	newCtx, err = f.fallback(ctx)
-	if newCtx != nil {
-		newCtx = resource.WithFallback(newCtx)
-	}
-	f.metrics.requestsTotal.WithLabelValues("true", fmt.Sprintf("%t", err == nil)).Inc()
-	return newCtx, err
-}
-
-func newMetrics(reg prometheus.Registerer) *metrics {
-	return &metrics{
-		requestsTotal: promauto.With(reg).NewCounterVec(
-			prometheus.CounterOpts{
-				Name: "grafana_grpc_authenticator_with_fallback_requests_total",
-				Help: "Number requests using the authenticator with fallback",
-			}, []string{"fallback_used", "result"}),
-	}
-}
-
-func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
-	section := cfg.SectionWithEnvOverrides("grpc_server_authentication")
-
-	return &grpcutils.AuthenticatorConfig{
-		SigningKeysURL:   section.Key("signing_keys_url").MustString(""),
-		AllowedAudiences: section.Key("allowed_audiences").Strings(","),
-		AllowInsecure:    cfg.Env == setting.Dev,
-	}
-}
-
-func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer trace.Tracer, fallback func(context.Context) (context.Context, error)) func(context.Context) (context.Context, error) {
-	authCfg := ReadGrpcServerConfig(cfg)
-	authenticator := grpcutils.NewAuthenticator(authCfg, tracer)
-	metrics := newMetrics(reg)
-	return func(ctx context.Context) (context.Context, error) {
-		a := &authenticatorWithFallback{
-			authenticator: authenticator,
-			fallback:      fallback,
-			tracer:        tracer,
-			metrics:       metrics,
-		}
-		return a.Authenticate(ctx)
-	}
-}
-
-func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecyclerConfig, error) {
-	instanceAddr, err := ring.GetInstanceAddr(cfg.MemberlistBindAddr, netutil.PrivateNetworkInterfacesWithFallback([]string{"eth0", "en0"}, logger), logger, true)
-	if err != nil {
-		return ring.BasicLifecyclerConfig{}, err
-	}
-
-	instanceId := cfg.InstanceID
-	if instanceId == "" {
-		hostname, err := os.Hostname()
-		if err != nil {
-			return ring.BasicLifecyclerConfig{}, err
-		}
-
-		instanceId = hostname
-	}
-
-	_, grpcPortStr, err := net.SplitHostPort(cfg.GRPCServer.Address)
-	if err != nil {
-		return ring.BasicLifecyclerConfig{}, fmt.Errorf("could not get grpc port from grpc server address: %s", err)
-	}
-
-	grpcPort, err := strconv.Atoi(grpcPortStr)
-	if err != nil {
-		return ring.BasicLifecyclerConfig{}, fmt.Errorf("error converting grpc address port to int: %s", err)
-	}
-
-	return ring.BasicLifecyclerConfig{
-		Addr:                fmt.Sprintf("%s:%d", instanceAddr, grpcPort),
-		ID:                  instanceId,
-		HeartbeatPeriod:     15 * time.Second,
-		HeartbeatTimeout:    resource.RingHeartbeatTimeout,
-		TokensObservePeriod: 0,
-		NumTokens:           resource.RingNumTokens,
-	}, nil
+	return s.subservices.StopSubservices()
 }

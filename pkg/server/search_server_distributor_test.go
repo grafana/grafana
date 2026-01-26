@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	claims "github.com/grafana/authlib/types"
+	"github.com/fullstorydev/grpchan"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -22,6 +22,8 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 	"k8s.io/component-base/metrics/legacyregistry"
+
+	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -33,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
@@ -70,8 +73,10 @@ func TestIntegrationDistributor(t *testing.T) {
 	testServers := make([]testModuleServer, 0, 2)
 	memberlistPort := getRandomPort()
 	distributorServer := initDistributorServerForTest(t, memberlistPort)
+	// create one storage-server with search enabled and one search-server instance while storage supports search too
 	testServers = append(testServers, createStorageServerApi(t, 1, dbType, db.ConnStr, memberlistPort))
 	testServers = append(testServers, createStorageServerApi(t, 2, dbType, db.ConnStr, memberlistPort))
+	//testServers = append(testServers, createSearchServerAPI(t, 2, dbType, db.ConnStr, memberlistPort))
 
 	startAndWaitHealthy(t, distributorServer)
 
@@ -105,7 +110,7 @@ func TestIntegrationDistributor(t *testing.T) {
 				Namespace: ns,
 			}
 			baselineRes := getBaselineResponse(t, req, baselineServer.GetStats)
-			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.GetStats, instanceResponseCount)
+			distributorRes := getDistributorResponse(t, req, distributorServer.searchClient.GetStats, instanceResponseCount)
 			require.Equal(t, baselineRes.String(), distributorRes.String())
 		}
 
@@ -122,7 +127,7 @@ func TestIntegrationDistributor(t *testing.T) {
 				Namespace: ns,
 			}
 			baselineRes := getBaselineResponse(t, req, baselineServer.CountManagedObjects)
-			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.CountManagedObjects, instanceResponseCount)
+			distributorRes := getDistributorResponse(t, req, distributorServer.searchClient.CountManagedObjects, instanceResponseCount)
 			require.Equal(t, baselineRes.String(), distributorRes.String())
 		}
 
@@ -139,7 +144,7 @@ func TestIntegrationDistributor(t *testing.T) {
 				Namespace: ns,
 			}
 			baselineRes := getBaselineResponse(t, req, baselineServer.ListManagedObjects)
-			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.ListManagedObjects, instanceResponseCount)
+			distributorRes := getDistributorResponse(t, req, distributorServer.searchClient.ListManagedObjects, instanceResponseCount)
 			require.Equal(t, baselineRes.String(), distributorRes.String())
 		}
 
@@ -162,7 +167,7 @@ func TestIntegrationDistributor(t *testing.T) {
 				},
 			}
 			baselineRes := getBaselineResponse(t, req, baselineServer.Search)
-			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.Search, instanceResponseCount)
+			distributorRes := getDistributorResponse(t, req, distributorServer.searchClient.Search, instanceResponseCount)
 			// sometimes the querycost is different between the two. Happens randomly and we don't have control over it
 			// as it comes from bleve. Since we are not testing search functionality we hard-set this to 0 to avoid
 			// flaky tests
@@ -190,7 +195,7 @@ func TestIntegrationDistributor(t *testing.T) {
 				Resource:  "folders",
 			}},
 		}
-		distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.RebuildIndexes, instanceResponseCount)
+		distributorRes := getDistributorResponse(t, req, distributorServer.searchClient.RebuildIndexes, instanceResponseCount)
 		require.Nil(t, distributorRes.Error)
 
 		// assert all instances got the response by looking at the merged details
@@ -275,12 +280,12 @@ func startAndWaitHealthy(t *testing.T, testServer testModuleServer) {
 }
 
 type testModuleServer struct {
-	server         *ModuleServer
-	healthClient   grpc_health_v1.HealthClient
-	resourceClient resource.ResourceClient
-	id             string
-	grpcAddress    string
-	httpPort       string
+	server       *ModuleServer
+	healthClient grpc_health_v1.HealthClient
+	searchClient resource.SearchClient
+	id           string
+	grpcAddress  string
+	httpPort     string
 }
 
 func getRandomPort() int {
@@ -308,15 +313,20 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	require.NoError(t, err)
-	client := resource.NewLegacyResourceClient(conn, conn)
+
+	searchConn := grpchan.InterceptClientConn(conn, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
+	client := resource.NewAuthlessSearchClient(searchConn)
 
 	server := initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
 
-	server.resourceClient = client
+	server.searchClient = client
 
 	return server
 }
 
+// createStorageServerApi creates a storage-server module server with search enabled for testing.
+// This tests that storage target still works with the distributor
+// TODO: migrate to search-server target
 func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr string, memberlistPort int) testModuleServer {
 	cfg := setting.NewCfg()
 	section, err := cfg.Raw.NewSection("database")
@@ -384,24 +394,16 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	cfg.IndexPath = t.TempDir()
 	cfg.IndexFileThreshold = testIndexFileThreshold
 	cfg.EnableSearch = true
-	features := featuremgmt.WithFeatures()
 	docBuilders, err := InitializeDocumentBuilders(cfg)
 	require.NoError(t, err)
-	tracer := noop.NewTracerProvider().Tracer("test-tracer")
+	searchOpts, err := search.NewSearchOptions(cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
-	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
-	require.NoError(t, err)
-	server, err := sql.NewResourceServer(sql.ServerOptions{
-		DB:             nil,
-		Cfg:            cfg,
-		Tracer:         tracer,
-		Reg:            nil,
-		AccessClient:   nil,
-		SearchOptions:  searchOpts,
-		StorageMetrics: nil,
-		IndexMetrics:   nil,
-		Features:       features,
-		QOSQueue:       nil,
+	server, err := sql.NewResourceServer(&sql.ResourceServerOptions{
+		ServerOptions: sql.ServerOptions{
+			Cfg:    cfg,
+			Tracer: noop.NewTracerProvider().Tracer("test-tracer"),
+		},
+		SearchOptions: &searchOpts,
 	})
 	require.NoError(t, err)
 
