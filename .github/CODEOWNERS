@@ -822,6 +822,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/NavLandingPage/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/NestedFolderPicker/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/OptionsUI/ @grafana/dashboards-squad @grafana/dataviz-squad
+/public/app/core/components/OwnerReferences/OwnerReferenceSelector.tsx @grafana/grafana-search-navigate-organise
 /public/app/core/components/Page/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/PageActionBar/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/PageInfo/ @grafana/grafana-search-navigate-organise

@@ -198,7 +198,7 @@ export const LogsPanel = ({
   const dataSourcesMap = useDatasourcesFromTargets(panelData.request?.targets);
   // Prevents the scroll position to change when new data from infinite scrolling is received
   const keepScrollPositionRef = useRef<null | 'infinite-scroll' | 'user'>(null);
-  let closeCallback = useRef<() => void>();
+  const closeCallback = useRef<(() => void) | undefined>(undefined);
   const { app, eventBus, onAddAdHocFilter } = usePanelContext();
 
   useEffect(() => {

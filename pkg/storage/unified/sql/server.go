@@ -104,7 +104,20 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			opts.Cfg.SectionWithEnvOverrides("resource_api"))
 
 		if opts.Cfg.EnableSQLKVBackend {
-			sqlkv, err := resource.NewSQLKV(eDB)
+			// Initialize database connection first
+			ctx := context.Background()
+			dbConn, err := eDB.Init(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("error initializing DB: %w", err)
+			}
+
+			dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
+			if dialect == nil {
+				return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
+			}
+
+			// Create sqlkv with the standard library DB
+			sqlkv, err := resource.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 			if err != nil {
 				return nil, fmt.Errorf("error creating sqlkv: %s", err)
 			}
@@ -115,17 +128,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 				Reg:                opts.Reg,
 				UseChannelNotifier: !isHA,
 				Log:                log.New("storage-backend"),
-			}
-
-			ctx := context.Background()
-			dbConn, err := eDB.Init(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("error initializing DB: %w", err)
-			}
-
-			dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
-			if dialect == nil {
-				return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
+				DBKeepAlive:        eDB,
 			}
 
 			if opts.Cfg.EnableSQLKVCompatibilityMode {
