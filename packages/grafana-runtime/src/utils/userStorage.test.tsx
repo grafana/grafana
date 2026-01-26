@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { config } from '../config';
 import { BackendSrvRequest, FetchError, FetchResponse, BackendSrv } from '../services';
 
-import { usePluginUserStorage, clearStorageCache } from './userStorage';
+import { usePluginUserStorage, _clearStorageCache } from './userStorage';
 
 const request = jest.fn<Promise<FetchResponse | FetchError>, BackendSrvRequest[]>();
 
@@ -47,7 +47,7 @@ describe('userStorage', () => {
     const store = getStoreMocks();
     store.get.mockReset();
     store.set.mockReset();
-    clearStorageCache();
+    _clearStorageCache();
   });
 
   afterEach(() => {

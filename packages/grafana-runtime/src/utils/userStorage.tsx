@@ -22,7 +22,10 @@ const operationLocks = new Map<string, Promise<void>>();
  * Clears the global storage cache. Used for testing purposes.
  * @internal
  */
-export function clearStorageCache() {
+export function _clearStorageCache() {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('clearStorageCache() function can only be called from tests.');
+  }
   storageCache.clear();
   operationLocks.clear();
 }
