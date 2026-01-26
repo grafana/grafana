@@ -304,9 +304,7 @@ describe('LogContextProvider', () => {
     });
 
     it('should apply all parsers in correct order (json | logfmt)', async () => {
-      logContextProvider.cachedContextFilters = [
-        { value: 'baz', enabled: true, nonIndexed: false, label: 'bar' },
-      ];
+      logContextProvider.cachedContextFilters = [{ value: 'baz', enabled: true, nonIndexed: false, label: 'bar' }];
       const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
         defaultLogRow,
         10,
