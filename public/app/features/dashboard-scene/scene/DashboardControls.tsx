@@ -301,16 +301,13 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
     // Original controls style
     controls: css({
       gap: theme.spacing(1),
-      padding: isQueryEditorNext ? 0 : theme.spacing(2, 2, 1, 2),
+      padding: theme.spacing(2, 2, 1, 2),
       flexDirection: 'row',
       flexWrap: 'nowrap',
       position: 'relative',
       width: '100%',
       marginLeft: 'auto',
       display: 'inline-block',
-      ...(isQueryEditorNext && {
-        marginBottom: theme.spacing(-1),
-      }),
       [theme.breakpoints.down('sm')]: {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
@@ -322,8 +319,14 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
     }),
     controlsPanelEdit: css({
       flexWrap: 'wrap-reverse',
-      // In panel edit we do not need any right padding as the splitter is providing it
+      ...(isQueryEditorNext && {
+        padding: 0,
+      }),
       paddingRight: 0,
+      // Add bottom margin in panel edit mode when query editor next is enabled
+      ...(isQueryEditorNext && {
+        marginBottom: theme.spacing(1),
+      }),
     }),
     // New layout styles (used when feature toggle is on)
     topRow: css({

@@ -1,6 +1,6 @@
 import { Box } from '@grafana/ui';
 
-import { QueryEditorContentHeader } from './QueryEditorContentHeader';
+import { QueryEditorContentHeader } from './QueryContentHeader/QueryEditorContentHeader';
 
 export function QueryEditorContent() {
   return (

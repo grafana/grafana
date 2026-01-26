@@ -7,13 +7,14 @@ import { DataSourcePicker } from '@grafana/runtime';
 import { useStyles2, Text, Button, Icon } from '@grafana/ui';
 import { InspectTab } from 'app/features/inspector/types';
 
-import { PanelInspectDrawer } from '../../../inspect/PanelInspectDrawer';
-import { getDashboardSceneFor } from '../../../utils/utils';
-import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../constants';
-import { getQueryType } from '../utils';
+import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
+import { getDashboardSceneFor } from '../../../../utils/utils';
+import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
+import { getQueryType } from '../../utils';
+import { useActionsContext, useDatasourceContext, usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { EditableQueryName } from './EditableQueryName';
-import { useActionsContext, useDatasourceContext, usePanelContext, useQueryRunnerContext } from './QueryEditorContext';
+import '../QueryActionsMock';
 
 export function QueryEditorContentHeader() {
   const { dsSettings } = useDatasourceContext();
@@ -27,7 +28,6 @@ export function QueryEditorContentHeader() {
 
   const styles = useStyles2(getStyles, { queryType });
 
-  // TODO: Where does this handler belong?
   const onOpenInspector = useCallback(() => {
     const dashboard = getDashboardSceneFor(panel);
     dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Query }));
@@ -45,11 +45,17 @@ export function QueryEditorContentHeader() {
         </Text>
         <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={updateSelectedQuery} />
       </div>
-      <div>
-        <Button size="sm" fill="text" icon="code" variant="secondary" onClick={onOpenInspector}>
-          <Trans i18nKey="query-editor-next.content-header.inspect-query">Inspector</Trans>
-        </Button>
-      </div>
+
+      <Button
+        size="sm"
+        fill="text"
+        icon="brackets-curly"
+        variant="secondary"
+        onClick={onOpenInspector}
+        tooltip={t('query-editor.action.inspector', 'Query inspector')}
+      >
+        <Trans i18nKey="query-editor.action.inspector">Inspector</Trans>
+      </Button>
     </div>
   );
 }
@@ -59,6 +65,7 @@ const getStyles = (theme: GrafanaTheme2, { queryType }: { queryType: QueryEditor
     borderLeft: `4px solid ${QUERY_EDITOR_TYPE_CONFIG[queryType].color}`,
     backgroundColor: theme.colors.background.secondary,
     padding: theme.spacing(0.5),
+    borderTopLeftRadius: theme.shape.radius.default,
     borderTopRightRadius: theme.shape.radius.default,
     display: 'flex',
     alignItems: 'center',
