@@ -54,7 +54,7 @@ export function CustomVariableForm({
         allowCustomValue={allowCustomValue}
         onQueryChange={onQueryChange}
         onMultiChange={onMultiChange}
-        onIncludeAllChange={onAllValueChange}
+        onIncludeAllChange={onIncludeAllChange}
         onAllValueChange={onAllValueChange}
         onAllowCustomValueChange={onAllowCustomValueChange}
       />

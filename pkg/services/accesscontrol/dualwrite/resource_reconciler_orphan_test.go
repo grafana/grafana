@@ -29,10 +29,6 @@ func (f *fakeZanzanaClient) Write(ctx context.Context, req *authzextv1.WriteRequ
 	return nil
 }
 
-func (f *fakeZanzanaClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	return &authzextv1.BatchCheckResponse{}, nil
-}
-
 func (f *fakeZanzanaClient) Mutate(ctx context.Context, req *authzextv1.MutateRequest) error {
 	return nil
 }
@@ -47,6 +43,10 @@ func (f *fakeZanzanaClient) Check(ctx context.Context, info authlib.AuthInfo, re
 
 func (f *fakeZanzanaClient) Compile(ctx context.Context, info authlib.AuthInfo, req authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
 	return func(name, folder string) bool { return true }, authlib.NoopZookie{}, nil
+}
+
+func (f *fakeZanzanaClient) BatchCheck(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, nil
 }
 
 func TestResourceReconciler_OrphanedManagedDashboardTuplesAreDeleted(t *testing.T) {

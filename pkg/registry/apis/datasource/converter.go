@@ -56,17 +56,31 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		SetBasicAuthUser(ds.BasicAuthUser).
 		SetWithCredentials(ds.WithCredentials).
 		SetIsDefault(ds.IsDefault).
-		SetReadOnly(ds.ReadOnly).
-		SetJSONData(ds.JsonData)
+		SetReadOnly(ds.ReadOnly)
 
+	if ds.JsonData != nil && !ds.JsonData.IsEmpty() {
+		obj.Spec.SetJSONData(ds.JsonData.Interface())
+	}
+
+	rv := int64(0)
 	if !ds.Created.IsZero() {
 		obj.CreationTimestamp = metav1.NewTime(ds.Created)
+		rv = ds.Created.UnixMilli()
 	}
+
+	// Only mark updated if the times have actually changed
 	if !ds.Updated.IsZero() {
-		obj.ResourceVersion = fmt.Sprintf("%d", ds.Updated.UnixMilli())
-		obj.Annotations = map[string]string{
-			utils.AnnoKeyUpdatedTimestamp: ds.Updated.Format(time.RFC3339),
+		rv = ds.Updated.UnixMilli()
+		delta := rv - obj.CreationTimestamp.UnixMilli()
+		if delta > 1500 {
+			obj.Annotations = map[string]string{
+				utils.AnnoKeyUpdatedTimestamp: ds.Updated.UTC().Format(time.RFC3339),
+			}
 		}
+	}
+
+	if rv > 0 {
+		obj.ResourceVersion = strconv.FormatInt(rv, 10)
 	}
 
 	if ds.APIVersion != "" {

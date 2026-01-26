@@ -1,6 +1,7 @@
 import { PluginExtensionExposedComponents } from '@grafana/data';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
+import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
@@ -49,6 +50,12 @@ exposedComponentsRegistry.register({
       title: 'Prometheus query results',
       description: 'Display Prometheus query results with Table/Raw toggle',
       component: PrometheusQueryResultsContainer,
+    },
+    {
+      id: PluginExtensionExposedComponents.OpenQueryLibraryV1,
+      title: 'Access to the Query Library',
+      description: 'Access to the Query Library',
+      component: OpenQueryLibraryExposedComponent,
     },
   ],
 });

@@ -8,7 +8,7 @@ import { Connection, useDeleteConnectionMutation } from 'app/api/clients/provisi
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { CONNECTIONS_URL } from '../constants';
+import { CONNECTIONS_TAB_URL } from '../constants';
 
 interface Props {
   name: string;
@@ -26,7 +26,7 @@ export function DeleteConnectionButton({ name, connection }: Props) {
     });
 
     await deleteConnection({ name });
-    navigate(CONNECTIONS_URL);
+    navigate(CONNECTIONS_TAB_URL);
   }, [deleteConnection, name, connection, navigate]);
 
   const showDeleteModal = useCallback(() => {
