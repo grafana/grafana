@@ -80,28 +80,5 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       gap: theme.spacing(1),
     }),
-    card: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
-      background: theme.colors.background.secondary,
-      border: `1px solid ${theme.colors.border.weak}`,
-    }),
-    cardHeader: css({
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      padding: theme.spacing(1),
-      background: theme.colors.background.primary,
-      color: '#FF8904',
-    }),
-    cardContent: css({
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      padding: theme.spacing(1),
-    }),
   };
 }
