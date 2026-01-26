@@ -105,11 +105,20 @@ type ResourceLastImportTime struct {
 // the underlying raw storage medium.  This interface is never exposed directly,
 // it is provided by concrete instances that actually write values.
 type StorageBackend interface {
+	StorageWriter
+	StorageReader
+	StorageWatcher
+	SearchSupport
+}
+
+type StorageWriter interface {
 	// Write a Create/Update/Delete,
 	// NOTE: the contents of WriteEvent have been validated
 	// Return the revisionVersion for this event or error
 	WriteEvent(context.Context, WriteEvent) (int64, error)
+}
 
+type StorageReader interface {
 	// Read a resource from storage optionally at an explicit version
 	ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse
 
@@ -122,16 +131,22 @@ type StorageBackend interface {
 
 	// ListHistory is like ListIterator, but it returns the history of a resource
 	ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
+}
 
+// StorageWatcher handles watch/streaming operations
+type StorageWatcher interface {
+	// Get all events from the store
+	// For HA setups, this will be more events than the local WriteEvent above!
+	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
+}
+
+// SearchSupport provides read operations for search indexing
+type SearchSupport interface {
 	// ListModifiedSince will return all resources that have changed since the given resource version.
 	// If a resource has changes, only the latest change will be returned.
 	ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error])
 
-	// Get all events from the store
-	// For HA setups, this will be more events than the local WriteEvent above!
-	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
-
-	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
+	// GetResourceStats gets resource stats within the storage backend.  When namespace is empty, it will apply to all
 	GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error)
 
 	// GetResourceLastImportTimes returns import times for all namespaced resources in the backend.

@@ -85,7 +85,7 @@ func setupBackendTest(t *testing.T) (testBackend, context.Context) {
 
 	ctx := testutil.NewDefaultTestContext(t)
 	dbp := test.NewDBProviderMatchWords(t)
-	b, err := NewBackend(BackendOptions{DBProvider: dbp})
+	b, err := NewBackend(BackendOptions{DBProvider: dbp, EnableStorage: true})
 	require.NoError(t, err)
 	require.NotNil(t, b)
 
@@ -109,7 +109,7 @@ func TestNewBackend(t *testing.T) {
 		t.Parallel()
 
 		dbp := test.NewDBProviderNopSQL(t)
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, EnableStorage: true})
 		require.NoError(t, err)
 		require.NotNil(t, b)
 	})
@@ -132,7 +132,7 @@ func TestBackend_Init(t *testing.T) {
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.NewDBProviderWithPing(t)
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, EnableStorage: true})
 		require.NoError(t, err)
 		require.NotNil(t, b)
 
@@ -156,7 +156,7 @@ func TestBackend_Init(t *testing.T) {
 		dbp := test.TestDBProvider{
 			Err: errTest,
 		}
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, EnableStorage: true})
 		require.NoError(t, err)
 		require.NotNil(t, b)
 
@@ -175,7 +175,7 @@ func TestBackend_Init(t *testing.T) {
 			DB: dbimpl.NewDB(mockDB, "juancarlo"),
 		}
 
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, EnableStorage: true})
 		require.NoError(t, err)
 		require.NotNil(t, b)
 
@@ -189,7 +189,7 @@ func TestBackend_Init(t *testing.T) {
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.NewDBProviderWithPing(t)
-		b, err := NewBackend(BackendOptions{DBProvider: dbp})
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, EnableStorage: true})
 		require.NoError(t, err)
 		require.NotNil(t, dbp.DB)
 
@@ -205,7 +205,7 @@ func TestBackend_IsHealthy(t *testing.T) {
 
 	ctx := testutil.NewDefaultTestContext(t)
 	dbp := test.NewDBProviderWithPing(t)
-	b, err := NewBackend(BackendOptions{DBProvider: dbp})
+	b, err := NewBackend(BackendOptions{DBProvider: dbp, EnableStorage: true})
 	require.NoError(t, err)
 	require.NotNil(t, dbp.DB)
 
@@ -246,7 +246,7 @@ func TestBackend_create(t *testing.T) {
 			func() { b.ExecWithResult("insert resource_history", 0, 1) },
 		)
 		b.SQLMock.ExpectCommit()
-		v, err := b.create(ctx, event)
+		v, err := b.storage.create(ctx, event)
 		require.NoError(t, err)
 		require.Equal(t, int64(200), v)
 	})
@@ -265,12 +265,12 @@ func TestBackend_create(t *testing.T) {
 		b.SQLMock.ExpectRollback()
 
 		// First we insert the resource successfully. This is what the happy path test does as well.
-		v, err := b.create(ctx, event)
+		v, err := b.storage.create(ctx, event)
 		require.NoError(t, err)
 		require.Equal(t, int64(200), v)
 
 		// Then we try to insert the same resource again. This should fail.
-		_, err = b.create(ctx, event)
+		_, err = b.storage.create(ctx, event)
 		require.ErrorIs(t, err, resource.ErrResourceAlreadyExists)
 	})
 
@@ -282,7 +282,7 @@ func TestBackend_create(t *testing.T) {
 		b.ExecWithErr("insert resource", errTest)
 		b.SQLMock.ExpectRollback()
 
-		v, err := b.create(ctx, event)
+		v, err := b.storage.create(ctx, event)
 		require.Zero(t, v)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "insert into resource")
@@ -297,7 +297,7 @@ func TestBackend_create(t *testing.T) {
 		b.ExecWithErr("insert resource_history", errTest)
 		b.SQLMock.ExpectRollback()
 
-		v, err := b.create(ctx, event)
+		v, err := b.storage.create(ctx, event)
 		require.Zero(t, v)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "insert into resource history")
@@ -328,7 +328,7 @@ func TestBackend_update(t *testing.T) {
 		)
 		b.SQLMock.ExpectCommit()
 
-		v, err := b.update(ctx, event)
+		v, err := b.storage.update(ctx, event)
 		require.NoError(t, err)
 		require.Equal(t, int64(200), v)
 	})
@@ -341,7 +341,7 @@ func TestBackend_update(t *testing.T) {
 		b.ExecWithErr("update resource", errTest)
 		b.SQLMock.ExpectRollback()
 
-		v, err := b.update(ctx, event)
+		v, err := b.storage.update(ctx, event)
 		require.Zero(t, v)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "resource update")
@@ -356,7 +356,7 @@ func TestBackend_update(t *testing.T) {
 		b.ExecWithErr("insert resource_history", errTest)
 		b.SQLMock.ExpectRollback()
 
-		v, err := b.update(ctx, event)
+		v, err := b.storage.update(ctx, event)
 		require.Zero(t, v)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "insert into resource history")
@@ -386,7 +386,7 @@ func TestBackend_delete(t *testing.T) {
 		)
 		b.SQLMock.ExpectCommit()
 
-		v, err := b.delete(ctx, event)
+		v, err := b.storage.delete(ctx, event)
 		require.NoError(t, err)
 		require.Equal(t, int64(200), v)
 	})
@@ -399,7 +399,7 @@ func TestBackend_delete(t *testing.T) {
 		b.ExecWithErr("delete resource", errTest)
 		b.SQLMock.ExpectCommit()
 
-		v, err := b.delete(ctx, event)
+		v, err := b.storage.delete(ctx, event)
 		require.Zero(t, v)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "delete resource")
@@ -414,7 +414,7 @@ func TestBackend_delete(t *testing.T) {
 		b.ExecWithErr("insert resource_history", errTest)
 		b.SQLMock.ExpectCommit()
 
-		v, err := b.delete(ctx, event)
+		v, err := b.storage.delete(ctx, event)
 		require.Zero(t, v)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "insert into resource history")

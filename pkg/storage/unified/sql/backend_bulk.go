@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	_ resource.BulkProcessingBackend = (*backend)(nil)
+	_ resource.BulkProcessingBackend = (*storageBackendImpl)(nil)
 )
 
 type bulkRV struct {
@@ -104,7 +104,7 @@ func (x *bulkLock) Active() bool {
 	return len(x.running) > 0
 }
 
-func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *storageBackendImpl) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
 	err := b.bulkLock.Start(setting.Collection)
 	if err != nil {
 		return &resourcepb.BulkResponse{
@@ -163,7 +163,7 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 }
 
 // internal bulk process
-func (b *backend) processBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *storageBackendImpl) processBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
 	rsp := &resourcepb.BulkResponse{}
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		return b.processBulkWithTx(ctx, tx, setting, iter, rsp)
@@ -176,7 +176,7 @@ func (b *backend) processBulk(ctx context.Context, setting resource.BulkSettings
 
 // processBulkWithTx performs the bulk operation using the provided transaction.
 // This is used both when creating our own transaction and when reusing an external one.
-func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resource.BulkSettings, iter resource.BulkRequestIterator, rsp *resourcepb.BulkResponse) error {
+func (b *storageBackendImpl) processBulkWithTx(ctx context.Context, tx db.Tx, setting resource.BulkSettings, iter resource.BulkRequestIterator, rsp *resourcepb.BulkResponse) error {
 	rollbackWithError := func(err error) error {
 		txerr := tx.Rollback()
 		if txerr != nil {
@@ -312,7 +312,7 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 	return nil
 }
 
-func (b *backend) updateLastImportTime(ctx context.Context, tx db.Tx, key *resourcepb.ResourceKey, now time.Time) error {
+func (b *storageBackendImpl) updateLastImportTime(ctx context.Context, tx db.Tx, key *resourcepb.ResourceKey, now time.Time) error {
 	if _, err := dbutil.Exec(ctx, tx, sqlResourceLastImportTimeInsert, sqlResourceLastImportTimeInsertRequest{
 		SQLTemplate:    sqltemplate.New(b.dialect),
 		Namespace:      key.Namespace,

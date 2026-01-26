@@ -56,6 +56,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 		IsHA:                    isHA,
 		SimulatedNetworkLatency: simulatedNetworkLatency,
 		LastImportTimeMaxAge:    24 * time.Hour,
+		EnableStorage:           true,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, backend)
