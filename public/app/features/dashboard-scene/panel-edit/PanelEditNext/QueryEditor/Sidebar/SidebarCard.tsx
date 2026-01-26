@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
-import { Icon, Text, useStyles2 } from '@grafana/ui';
+import { Icon, IconSize, Text, useStyles2 } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
 
@@ -11,14 +11,14 @@ import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useQueryRunnerContext } from '../QueryEditorContext';
 
 // TODO: will remove this once we have the correct icons in constants.ts
-const CardIcon = ({ type, size = 16 }: { type: string | undefined; size: number }) => {
+const CardIcon = ({ type, size = 'sm' }: { type: string | undefined; size?: IconSize }) => {
   switch (type) {
     case 'query':
-      return <Icon name="database" />;
+      return <Icon name="database" size={size} />;
     case 'expression':
-      return <Icon name="code-branch" />;
+      return <Icon name="code-branch" size={size} />;
     case 'transformation':
-      return <Icon name="gf-interpolation-linear" />;
+      return <Icon name="gf-interpolation-linear" size={size} />;
     default:
       return null;
   }
@@ -33,8 +33,8 @@ const Header = ({ editorType, hasError }: { editorType: QueryEditorType; hasErro
 
   return (
     <div className={styles.cardHeader}>
-      <div>
-        <CardIcon type={editorType} size={16} />
+      <div className={styles.cardHeaderContent}>
+        <CardIcon type={editorType} />
         <Text weight="light" variant="body">
           {typeText}
         </Text>
@@ -95,6 +95,12 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: 
       borderTopRightRadius: theme.shape.radius.default,
       borderTopLeftRadius: theme.shape.radius.default,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    cardHeaderContent: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
     }),
     cardContent: css({
       display: 'flex',
