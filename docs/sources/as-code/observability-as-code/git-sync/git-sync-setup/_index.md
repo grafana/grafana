@@ -48,7 +48,7 @@ You can configure a local file system instead of using GitHub. Refer to [Set up 
 
 Before you begin, ensure you have the following:
 
-- A Grafana instance (Cloud, OSS, or Enterprise).
+- A Grafana instance (Cloud, OSS, or Enterprise)
 - If you're [using webhooks or image rendering](#extend-git-sync-for-real-time-notification-and-image-rendering), a public instance with external access
 - Administration rights in your Grafana organization
 - A [GitHub private access token](#create-a-github-access-token)
@@ -66,7 +66,7 @@ For further details refer to [key concepts](https://grafana.com/docs/grafana/<GR
 
 To activate Git Sync in Grafana you need to set the `provisioning` and `kubernetesDashboards` feature toggles to `true`. To enable them:
 
-- In Grafana Cloud, open a support ticket.
+- In Grafana Cloud, open a support ticket
 
 - In Grafana OSS/Enterprise: 
 
@@ -103,9 +103,9 @@ To create a GitHub access token:
 To set up Git Sync from the Grafana UI, follow these steps:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
-1. Select **Administration > General > Provisioning** in the left-side menu to access the Git Sync configuration screen.
-1. Select **Configure with GitHub**.
-1. [Choose the connection type](#choose-the-connection-type): Personal Access Token or GitHub App
+1. Select **Administration > General > Provisioning** in the left-side menu to access the Git Sync configuration screen. If you already have an active Git Sync connection, go to the **Getting Started** tab. 
+1. Select **Configure with GitHub**. 
+1. [Choose the connection type](#choose-the-connection-type). There's two methods to connect Git Sync: Personal Access Token or via GitHub App 
 1. [Choose what content to sync with Grafana](#choose-what-to-synchronize)
 1. [Synchronize with external storage](#synchronize-with-external-storage)
 1. [Choose additional settings](#choose-additional-settings)
@@ -133,9 +133,9 @@ On this screen, you will sync your selected external resources with Grafana. The
 
 To set up synchronization:
 
-1. Select which resources you want to sync.
-1. Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
-1. Click **Synchronize** to continue.
+1. Select the external storage you want to sync with your Grafana instance. The UI shows you the 
+1. Enter a **Display name** for your repository connection. All the synced resources stored in this connection appear under the chosen display name in the Grafana UI.
+1. Click **Synchronize with external storage** to continue.
 1. You can repeat this process for up to 10 connections.
 
 {{< admonition type="note" >}}
