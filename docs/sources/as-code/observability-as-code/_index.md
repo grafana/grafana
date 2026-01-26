@@ -31,9 +31,9 @@ cards:
       description: Grafana dashboards are represented as JSON objects that store metadata, panels, variables, and settings. Observability as Code works with all versions of the JSON model, and it's fully compatible with version 2.
     - title: Git Sync (private preview)
       height: 24
-      href: ./provision-resources/intro-git-sync/
+      href: ./git-sync/intro-git-sync/
       description: Git Sync lets you store your dashboard files in a GitHub repository and synchronize those changes with your Grafana instance, enabling version control, branching, and pull requests directly from Grafana.
-    - title: File provisioning (private preview)
+    - title: On-prem file provisioning
       height: 24
       href: ./provision-resources/
       description: File provisioning in Grafana lets you include resources, including folders and dashboard JSON files, that are stored in a local file system.

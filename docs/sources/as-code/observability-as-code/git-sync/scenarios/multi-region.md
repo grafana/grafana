@@ -3,6 +3,8 @@ title: Git Sync with regional replication
 menuTitle: Regional replication
 description: Synchronize multiple regional Grafana instances from a shared Git location
 weight: 30
+aliases:
+  - ../../provision-resources/git-sync-deployment-scenarios/multi-region
 ---
 
 # Git Sync with regional replication
