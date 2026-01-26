@@ -4,16 +4,18 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, Card, Field, Icon, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Button, Card, Field, Icon, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
+import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 
 import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
 import { BootstrapStepResourceCounting } from './BootstrapStepResourceCounting';
 import { useStepStatus } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
+import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
 import { WizardFormData } from './types';
 
@@ -37,8 +39,22 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const repositoryType = watch('repository.type');
   const { enabledOptions, disabledOptions } = useModeOptions(repoName, settingsData);
   const { target } = enabledOptions?.[0];
-  const { resourceCountString, fileCountString, isLoading, filesReady } = useResourceStats(repoName, selectedTarget);
+  const {
+    isReady: isRepositoryReady,
+    isLoading: isRepositoryStatusLoading,
+    hasError: repositoryStatusError,
+    refetch: retryRepositoryStatus,
+    isHealthy: isRepositoryHealthy,
+  } = useRepositoryStatus(repoName);
+
+  const {
+    resourceCountString,
+    fileCountString,
+    isLoading: isResourceStatsLoading,
+  } = useResourceStats(repoName, selectedTarget);
   const styles = useStyles2(getStyles);
+
+  const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
 
   useEffect(() => {
     // Pick a name nice name based on type+settings
@@ -48,20 +64,45 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   }, [getValues, setValue]);
 
   useEffect(() => {
+    if (!isRepositoryHealthy) {
+      setStepStatusInfo({
+        status: 'error',
+        error: t('provisioning.bootstrap-step.repository-not-healthy', 'Repository is not healthy'),
+      });
+    }
     setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
-  }, [isLoading, setStepStatusInfo]);
+  }, [isLoading, setStepStatusInfo, isRepositoryHealthy]);
 
   useEffect(() => {
     setValue('repository.sync.target', target);
   }, [target, setValue]);
 
-  if (isLoading || !filesReady) {
+  if (isLoading) {
     return (
       <Box padding={4}>
         <LoadingPlaceholder
           text={t('provisioning.bootstrap-step.text-loading-resource-information', 'Loading resource information...')}
         />
       </Box>
+    );
+  }
+
+  if (repositoryStatusError || isRepositoryHealthy === false) {
+    return (
+      <>
+        <ProvisioningAlert
+          error={{
+            title: t('provisioning.synchronize-step.repository-health-error', 'Repository health error'),
+            message: t(
+              'provisioning.synchronize-step.repository-health-error-message',
+              'Unable to check repository status. Please verify the repository configuration and try again.'
+            ),
+          }}
+        />
+        <Button onClick={retryRepositoryStatus} disabled={isRepositoryStatusLoading}>
+          {t('provisioning.wizard.check-status-button', 'Check repository status')}
+        </Button>
+      </>
     );
   }
 

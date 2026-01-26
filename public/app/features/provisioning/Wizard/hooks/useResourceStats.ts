@@ -9,10 +9,11 @@ import {
   RepositoryView,
   ResourceCount,
   useGetRepositoryFilesQuery,
-  useGetRepositoryStatusQuery,
   useGetResourceStatsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
+
+import { useRepositoryStatus } from './useRepositoryStatus';
 
 function getManagedCount(managed?: ManagerStats[]) {
   let totalCount = 0;
@@ -102,19 +103,11 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
  * Hook that provides resource statistics and sync logic
  */
 export function useResourceStats(repoName?: string, syncTarget?: RepositoryView['target'], migrateResources?: boolean) {
+  const { isHealthy } = useRepositoryStatus(repoName); // Ensure repository status is fetched
+
   const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
-  const repositoryStatusQuery = useGetRepositoryStatusQuery(repoName ? { name: repoName } : skipToken, {
-    pollingInterval: 5000,
-    skipPollingIfUnfocused: true,
-  });
-
-  const health = repositoryStatusQuery.data?.status?.health;
-  const observedGeneration = repositoryStatusQuery.data?.status?.observedGeneration ?? 0;
-  const healthStatusNotReady = health?.healthy === false && observedGeneration === 0;
-
-  const shouldSkipFiles = !repoName || repositoryStatusQuery.isLoading || healthStatusNotReady;
-  const filesQuery = useGetRepositoryFilesQuery(shouldSkipFiles ? skipToken : { name: repoName });
-  const filesReady = !shouldSkipFiles && !filesQuery.isLoading && !filesQuery.isError;
+  // files endpoint requires healthy repository
+  const filesQuery = useGetRepositoryFilesQuery(repoName && isHealthy ? { name: repoName } : skipToken);
 
   const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading;
 
@@ -157,6 +150,5 @@ export function useResourceStats(repoName?: string, syncTarget?: RepositoryView[
     isLoading,
     requiresMigration,
     shouldSkipSync,
-    filesReady,
   };
 }
