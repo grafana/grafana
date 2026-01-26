@@ -3642,7 +3642,10 @@
       "move-modal-title": "Move",
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
+      "new-folder-as-team-folder-checkbox-tooltip": "Team folders are folders owned by your team. Use them to keep your team’s content in one place—making it easier to find, organize, and manage access",
+      "new-folder-as-team-folder-label": "Team:",
       "new-folder-name-required-phrase": "Folder name is required.",
+      "new-folder-owner-selector-checkbox": "Assign an owner to the folder",
       "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
       "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
@@ -5170,6 +5173,9 @@
       "title": {
         "deleted": "deleted"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": "Powered by"
     },
     "layout": {
       "cancel": "Cancel",

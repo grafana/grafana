@@ -6,23 +6,26 @@ export enum QueryEditorType {
   Transformation = 'transformation',
 }
 
-export const QUERY_EDITOR_TYPE_CONFIG: Record<
-  QueryEditorType,
-  {
-    icon: IconName;
-    color: string;
-  }
-> = {
+export interface QueryEditorTypeConfig {
+  icon: IconName;
+  color: string;
+  label: string;
+}
+
+export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeConfig> = {
   [QueryEditorType.Query]: {
     icon: 'database',
     color: '#FF8904',
+    label: 'Query',
   },
   [QueryEditorType.Expression]: {
-    icon: 'code',
+    icon: 'brackets-curly',
     color: '#C27AFF',
+    label: 'Expression',
   },
   [QueryEditorType.Transformation]: {
-    icon: 'pivot',
+    icon: 'process',
     color: '#00D492',
+    label: 'Transformation',
   },
 } as const;
