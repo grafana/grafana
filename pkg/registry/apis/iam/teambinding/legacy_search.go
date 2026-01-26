@@ -1,4 +1,4 @@
-package user
+package teambinding
 
 import (
 	"context"
@@ -19,23 +19,23 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
-var _ resourcepb.ResourceIndexClient = (*LegacyUserTeamSearchClient)(nil)
+var _ resourcepb.ResourceIndexClient = (*LegacyTeamBindingSearchClient)(nil)
 
-type LegacyUserTeamSearchClient struct {
+type LegacyTeamBindingSearchClient struct {
 	store  legacy.LegacyIdentityStore
 	log    *slog.Logger
 	tracer trace.Tracer
 }
 
-func NewLegacyUserTeamSearchClient(store legacy.LegacyIdentityStore, tracer trace.Tracer) *LegacyUserTeamSearchClient {
-	return &LegacyUserTeamSearchClient{
+func NewLegacyTeamBindingSearchClient(store legacy.LegacyIdentityStore, tracer trace.Tracer) *LegacyTeamBindingSearchClient {
+	return &LegacyTeamBindingSearchClient{
 		store:  store,
 		tracer: tracer,
 		log:    slog.Default().With("logger", "legacy-user-team-search-client"),
 	}
 }
 
-func (c *LegacyUserTeamSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := c.tracer.Start(ctx, "user.teams.legacy")
 	defer span.End()
 
@@ -126,11 +126,11 @@ func (c *LegacyUserTeamSearchClient) Search(ctx context.Context, req *resourcepb
 	return resp, nil
 }
 
-func (c *LegacyUserTeamSearchClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+func (c *LegacyTeamBindingSearchClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	return &resourcepb.ResourceStatsResponse{}, nil
 }
 
-func (c *LegacyUserTeamSearchClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, _ ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+func (c *LegacyTeamBindingSearchClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, _ ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
 	return &resourcepb.RebuildIndexesResponse{}, nil
 }
 

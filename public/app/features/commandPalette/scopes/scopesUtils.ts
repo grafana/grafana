@@ -10,8 +10,30 @@ import { NodesMap, SelectedScope, TreeNode } from '../../scopes/selector/types';
 import { CommandPaletteAction } from '../types';
 import { SCOPES_PRIORITY } from '../values';
 
+const defaultState: ScopesSelectorServiceState = {
+  loading: false,
+  loadingNodeName: undefined,
+  opened: false,
+  nodes: {},
+  scopes: {},
+  selectedScopes: [],
+  appliedScopes: [],
+  tree: {
+    scopeNodeId: '',
+    expanded: false,
+    query: '',
+  },
+};
+
 export function useScopeServicesState() {
   const services = useScopesServices();
+  // Call hook unconditionally to follow React Hooks rules
+  const selectorServiceState: ScopesSelectorServiceState =
+    useObservable(
+      services?.scopesSelectorService.stateObservable ?? new Observable(),
+      services?.scopesSelectorService.state ?? defaultState
+    ) ?? defaultState;
+
   if (!services) {
     return {
       filterNode: () => Promise.resolve(),
@@ -21,23 +43,15 @@ export function useScopeServicesState() {
       getScopeNodes: (_: string[]) => Promise.resolve([]),
       apply: () => {},
       deselectScope: () => {},
-      nodes: {},
-      scopes: {},
-      selectedScopes: [],
-      appliedScopes: [],
-      tree: {
-        scopeNodeId: '',
-        expanded: false,
-        query: '',
-      },
+      nodes: defaultState.nodes,
+      scopes: defaultState.scopes,
+      selectedScopes: defaultState.selectedScopes,
+      appliedScopes: defaultState.appliedScopes,
+      tree: defaultState.tree,
     };
   }
   const { filterNode, selectScope, resetSelection, searchAllNodes, deselectScope, apply, getScopeNodes } =
     services.scopesSelectorService;
-  const selectorServiceState: ScopesSelectorServiceState | undefined = useObservable(
-    services.scopesSelectorService.stateObservable ?? new Observable(),
-    services.scopesSelectorService.state
-  );
 
   return {
     getScopeNodes,
@@ -47,7 +61,11 @@ export function useScopeServicesState() {
     searchAllNodes,
     apply,
     deselectScope,
-    ...selectorServiceState,
+    nodes: selectorServiceState.nodes,
+    scopes: selectorServiceState.scopes,
+    selectedScopes: selectorServiceState.selectedScopes,
+    appliedScopes: selectorServiceState.appliedScopes,
+    tree: selectorServiceState.tree,
   };
 }
 

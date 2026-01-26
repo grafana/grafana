@@ -2,6 +2,7 @@ import { waitFor, renderHook } from '@testing-library/react';
 import { setIn } from 'immutable';
 import { useRegisterActions } from 'kbar';
 
+import { ScopeNode } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { NodesMap, TreeNode } from '../../scopes/selector/types';
@@ -36,7 +37,8 @@ const mockScopeServicesState = {
   deselectScope: jest.fn(),
   apply: jest.fn(),
   searchAllNodes: jest.fn(),
-  scopes: [],
+  getScopeNodes: jest.fn(),
+  scopes: {},
 };
 
 const rootScopeAction = {
@@ -95,7 +97,8 @@ describe('useRegisterScopesActions', () => {
     });
 
     expect(result.current.scopesRow).toBeUndefined();
-    expect(useRegisterActions).not.toHaveBeenCalled();
+    // useRegisterActions is called unconditionally (to follow React Hooks rules) but with empty array when feature toggle is off
+    expect(useRegisterActions).toHaveBeenCalledWith([], [[]]);
   });
 
   it('should register scope tree actions and return scopesRow when scopes are selected', () => {
@@ -304,5 +307,224 @@ describe('useRegisterScopesActions', () => {
     expect(mockScopeServicesState.resetSelection).toHaveBeenCalledTimes(1);
     unmount();
     expect(mockScopeServicesState.resetSelection).toHaveBeenCalledTimes(2);
+  });
+
+  it('should handle empty nodes and scopes correctly', () => {
+    (useScopeServicesState as jest.Mock).mockReturnValue({
+      ...mockScopeServicesState,
+      nodes: {},
+      scopes: {},
+      selectedScopes: [],
+      appliedScopes: [],
+      tree: {
+        scopeNodeId: '',
+        expanded: false,
+        query: '',
+      },
+    });
+
+    const { result } = renderHook(() => {
+      return useRegisterScopesActions('', jest.fn());
+    });
+
+    // Should still register the root scope action even with empty nodes
+    expect(useRegisterActions).toHaveBeenCalled();
+    expect(result.current.scopesRow).toBeNull();
+  });
+
+  it('should handle isDirty calculation with empty arrays', () => {
+    (useScopeServicesState as jest.Mock).mockReturnValue({
+      ...mockScopeServicesState,
+      selectedScopes: [],
+      appliedScopes: [],
+    });
+
+    const { result } = renderHook(() => {
+      return useRegisterScopesActions('', jest.fn());
+    });
+
+    // When both are empty, isDirty should be false, so scopesRow should be null
+    expect(result.current.scopesRow).toBeNull();
+  });
+
+  it('should show scopesRow when isDirty is true', () => {
+    (useScopeServicesState as jest.Mock).mockReturnValue({
+      ...mockScopeServicesState,
+      selectedScopes: [{ scopeId: 'scope1' }],
+      appliedScopes: [],
+    });
+
+    const { result } = renderHook(() => {
+      return useRegisterScopesActions('', jest.fn());
+    });
+
+    // Should show scopesRow when there's a difference between selected and applied
+    expect(result.current.scopesRow).toBeDefined();
+  });
+
+  it('should show scopesRow when selectedScopes has items even if not dirty', () => {
+    const appliedScopes = [{ scopeId: 'scope1' }];
+    (useScopeServicesState as jest.Mock).mockReturnValue({
+      ...mockScopeServicesState,
+      selectedScopes: [{ scopeId: 'scope1' }],
+      appliedScopes,
+    });
+
+    const { result } = renderHook(() => {
+      return useRegisterScopesActions('', jest.fn());
+    });
+
+    // Should show scopesRow when selectedScopes has items, even if not dirty
+    expect(result.current.scopesRow).toBeDefined();
+  });
+
+  it('should handle useGlobalScopesSearch when useMultipleScopeNodesEndpoint is enabled', async () => {
+    config.featureToggles.useMultipleScopeNodesEndpoint = true;
+    const mockGetScopeNodes = jest.fn().mockResolvedValue([
+      {
+        metadata: { name: 'parent1' },
+        spec: { title: 'Parent 1', nodeType: 'container' },
+      },
+    ]);
+
+    (useScopeServicesState as jest.Mock).mockReturnValue({
+      ...mockScopeServicesState,
+      getScopeNodes: mockGetScopeNodes,
+      searchAllNodes: jest.fn().mockResolvedValue([
+        {
+          metadata: { name: 'scope1' },
+          spec: {
+            title: 'Scope 1',
+            nodeType: 'leaf',
+            parentName: 'parent1',
+          },
+        },
+      ]),
+    });
+
+    renderHook(() => {
+      return useRegisterScopesActions('test', jest.fn());
+    });
+
+    await waitFor(() => {
+      expect(mockGetScopeNodes).toHaveBeenCalled();
+    });
+
+    config.featureToggles.useMultipleScopeNodesEndpoint = false;
+  });
+
+  it('should clear actions when search query changes quickly (race condition)', async () => {
+    const mockSearchAllNodes = jest.fn();
+    let resolveFirst: ((value: ScopeNode[]) => void) | undefined;
+    const firstPromise = new Promise<ScopeNode[]>((resolve) => {
+      resolveFirst = resolve;
+    });
+
+    mockSearchAllNodes.mockReturnValueOnce(firstPromise).mockResolvedValueOnce([]);
+
+    (useScopeServicesState as jest.Mock).mockReturnValue({
+      ...mockScopeServicesState,
+      searchAllNodes: mockSearchAllNodes,
+    });
+
+    const { rerender } = renderHook(({ searchQuery }) => useRegisterScopesActions(searchQuery, jest.fn()), {
+      initialProps: { searchQuery: 'first' },
+    });
+
+    // Change search query before first promise resolves
+    rerender({ searchQuery: 'second' });
+
+    // Resolve first promise - should be ignored due to searchQueryRef check
+    if (resolveFirst) {
+      resolveFirst([
+        {
+          metadata: { name: 'scope1' },
+          spec: { title: 'Scope 1', nodeType: 'leaf' },
+        },
+      ]);
+    }
+
+    await waitFor(() => {
+      // Second search should be initiated
+      expect(mockSearchAllNodes).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('should handle keyboard shortcut for applying scopes', () => {
+    const mockApply = jest.fn();
+    const onApply = jest.fn();
+
+    (useScopeServicesState as jest.Mock).mockReturnValue({
+      ...mockScopeServicesState,
+      selectedScopes: [{ scopeId: 'scope1' }],
+      appliedScopes: [],
+      apply: mockApply,
+    });
+
+    renderHook(() => {
+      return useRegisterScopesActions('', onApply);
+    });
+
+    // Simulate Cmd+Enter keypress
+    const event = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      metaKey: true,
+    });
+    window.dispatchEvent(event);
+
+    expect(mockApply).toHaveBeenCalled();
+    expect(onApply).toHaveBeenCalled();
+  });
+
+  it('should not trigger keyboard shortcut when not dirty', () => {
+    const mockApply = jest.fn();
+    const onApply = jest.fn();
+
+    (useScopeServicesState as jest.Mock).mockReturnValue({
+      ...mockScopeServicesState,
+      selectedScopes: [{ scopeId: 'scope1' }],
+      appliedScopes: [{ scopeId: 'scope1' }],
+      apply: mockApply,
+    });
+
+    renderHook(() => {
+      return useRegisterScopesActions('', onApply);
+    });
+
+    // Simulate Cmd+Enter keypress when not dirty
+    const event = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      metaKey: true,
+    });
+    window.dispatchEvent(event);
+
+    // Should not call apply when not dirty
+    expect(mockApply).not.toHaveBeenCalled();
+    expect(onApply).not.toHaveBeenCalled();
+  });
+
+  it('should clear global search actions when parentId is set to a non-scopes value', () => {
+    const mockSearchAllNodes = jest.fn().mockResolvedValue([]);
+
+    (useScopeServicesState as jest.Mock).mockReturnValue({
+      ...mockScopeServicesState,
+      searchAllNodes: mockSearchAllNodes,
+    });
+
+    const { rerender } = renderHook(
+      ({ parentId }: { parentId: string | null | undefined }) => useRegisterScopesActions('test', jest.fn(), parentId),
+      {
+        initialProps: { parentId: null as string | null },
+      }
+    );
+
+    // First render with no parentId should trigger search
+    expect(mockSearchAllNodes).toHaveBeenCalled();
+
+    // Change to a non-scopes parentId
+    rerender({ parentId: 'other/parent' as string | null });
+
+    // Should not trigger another search
+    expect(mockSearchAllNodes).toHaveBeenCalledTimes(1);
   });
 });
