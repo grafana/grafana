@@ -24,6 +24,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -58,6 +59,7 @@ import {
 import { serializeAutoGridItem } from '../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { getElement } from '../serialization/layoutSerializers/utils';
+import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
@@ -447,21 +449,30 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
-    debugger;
+    const api = getDashboardAPI();
     // the id here is the resource version in k8s, use this instead to get the specific version
-    const versionRsp = await getDashboardAPI().restoreDashboardVersion(version.uid, version.id);
+    const versionRsp = await api.restoreDashboardVersion(version.uid, version.id);
 
     if (!Number.isInteger(versionRsp.version)) {
       return false;
     }
 
-    const dashboardDTO: DashboardDTO = {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- v1 restore path requires Dashboard type
-      dashboard: new DashboardModel(version.data as Dashboard),
-      meta: this.state.meta,
-    };
+    let dashScene: DashboardScene;
 
-    const dashScene = transformSaveModelToScene(dashboardDTO);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    if (isDashboardV2Spec(version.data as Dashboard | DashboardV2Spec)) {
+      const dto = await getDashboardAPI('v2').getDashboardDTO(version.uid);
+      dashScene = transformSaveModelSchemaV2ToScene(dto);
+    } else {
+      const dashboardDTO: DashboardDTO = {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- v1 restore path requires Dashboard type
+        dashboard: new DashboardModel(version.data as Dashboard),
+        meta: this.state.meta,
+      };
+
+      dashScene = transformSaveModelToScene(dashboardDTO);
+    }
+
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
 

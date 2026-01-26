@@ -113,17 +113,19 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
   };
 
   private transformToRevisionModels(items: Array<Resource<unknown>>): RevisionModel[] {
-    return items.map((item) => ({
-      id: item.metadata.generation ?? 0,
-      checked: false,
-      uid: item.metadata.name,
-      version: item.metadata.generation ?? 0,
-      created: item.metadata.creationTimestamp ?? new Date().toISOString(),
-      createdBy: item.metadata.annotations?.['grafana.app/updatedBy'] ?? '',
-      message: item.metadata.annotations?.['grafana.app/message'] ?? '',
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      data: item.spec as object,
-    }));
+    return items.map(
+      (item): RevisionModel => ({
+        id: item.metadata.generation ?? 0,
+        checked: false,
+        uid: item.metadata.name,
+        version: item.metadata.generation ?? 0,
+        created: item.metadata.creationTimestamp ?? new Date().toISOString(),
+        createdBy: item.metadata.annotations?.['grafana.app/updatedBy'] ?? '',
+        message: item.metadata.annotations?.['grafana.app/message'] ?? '',
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        data: item.spec as object,
+      })
+    );
   }
 
   public getDiff = () => {

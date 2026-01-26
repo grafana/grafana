@@ -8,7 +8,6 @@ export interface RevisionModel {
   created: string;
   createdBy: string;
   message: string;
-  // sine this is only used for diffing, we can use object instead of dashboard v1/v2 spec
   data: object;
 }
 

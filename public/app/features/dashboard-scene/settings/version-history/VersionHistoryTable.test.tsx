@@ -13,6 +13,15 @@ jest.mock('../../utils/interactions', () => ({
   },
 }));
 
+function createMockResource(version: number, spec: object) {
+  return {
+    apiVersion: 'v0alpha1',
+    kind: 'Dashboard',
+    metadata: { name: '0', generation: version, resourceVersion: '0', creationTimestamp: '' },
+    spec,
+  };
+}
+
 const mockVersions: DecoratedRevisionModel[] = [
   {
     id: 1,
@@ -23,7 +32,7 @@ const mockVersions: DecoratedRevisionModel[] = [
     checked: false,
     uid: '0',
     created: '2023-01-01T00:00:00Z',
-    data: { schemaVersion: 1, uid: '0', title: 'Dashboard', panels: [] },
+    data: createMockResource(1, { schemaVersion: 1, uid: '0', title: 'Dashboard', panels: [] }),
     ageString: '1 day ago',
   },
   {
@@ -35,7 +44,7 @@ const mockVersions: DecoratedRevisionModel[] = [
     checked: false,
     uid: '0',
     created: '2023-02-01T00:00:00Z',
-    data: { schemaVersion: 1, uid: '0', title: 'Dashboard', panels: [] },
+    data: createMockResource(2, { schemaVersion: 1, uid: '0', title: 'Dashboard', panels: [] }),
     ageString: '10 days ago',
   },
 ];

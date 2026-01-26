@@ -264,6 +264,9 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
         ...historicalVersion.spec,
         uid,
       },
+      k8s: {
+        name: uid,
+      },
       message: `Restored from version ${version}`,
     });
   }
