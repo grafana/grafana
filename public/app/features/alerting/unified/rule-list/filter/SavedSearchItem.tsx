@@ -107,7 +107,9 @@ export function SavedSearchItem({
       <Stack direction="row" alignItems="center" gap={1} wrap={false}>
         {/* Name and default indicator */}
         <Stack direction="row" alignItems="center" gap={0.5} flex={1}>
-          <Text truncate>{search.name}</Text>
+          <button type="button" className={styles.clickableName} onClick={onApply} disabled={isDisabled}>
+            <Text truncate>{search.name}</Text>
+          </button>
           {search.isDefault && (
             <Icon
               name="favorite"
@@ -117,18 +119,6 @@ export function SavedSearchItem({
             />
           )}
         </Stack>
-
-        {/* Apply button (magnifying glass) */}
-        <IconButton
-          name="search"
-          tooltip={t('alerting.saved-searches.apply-tooltip', 'Apply search "{{name}}"', {
-            name: search.name,
-          })}
-          onClick={onApply}
-          size="md"
-          variant="secondary"
-          disabled={isDisabled}
-        />
 
         {/* Action menu - stop propagation to prevent parent Dropdown from closing */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
@@ -220,6 +210,27 @@ function getStyles(theme: GrafanaTheme2) {
     actionMenuWrapper: css({
       display: 'flex',
       alignItems: 'center',
+    }),
+    clickableName: css({
+      // Reset button styles
+      background: 'none',
+      border: 'none',
+      padding: 0,
+      font: 'inherit',
+      color: 'inherit',
+      textAlign: 'left',
+      cursor: 'pointer',
+      // Truncation support
+      minWidth: 0,
+      maxWidth: '100%',
+      // Hover effect
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+      '&:disabled': {
+        cursor: 'not-allowed',
+        opacity: 0.6,
+      },
     }),
   };
 }
