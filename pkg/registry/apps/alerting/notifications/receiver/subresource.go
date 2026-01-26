@@ -101,6 +101,14 @@ func (p *RequestHandler) TestReceiver(ctx context.Context, user identity.Request
 }
 
 func validateCreateReceiverIntegrationTestRequestBody(receiverUID string, body v0alpha1.CreateReceiverIntegrationTestRequestBody) error {
+    // for either new or existing integrations only one of Integration and IntegrationRef must be set
+	if body.Integration != nil && body.IntegrationRef != nil {
+		return errors.New("integrationRef and integration cannot be set at the same time")
+	}
+	if body.Integration == nil && body.IntegrationRef == nil {
+		return errors.New("integrationRef or integration must be set")
+	}
+	// validate new receiver
 	if receiverUID == "" {
 		if body.IntegrationRef != nil {
 			return errors.New("only full integration configuration must be provided for testing a new receiver")
@@ -114,13 +122,10 @@ func validateCreateReceiverIntegrationTestRequestBody(receiverUID string, body v
 		if len(body.Integration.SecureFields) > 0 {
 			return errors.New("integration must not have secure fields when testing a new receiver")
 		}
+		
+		return nil
 	}
-	if body.Integration != nil && body.IntegrationRef != nil {
-		return errors.New("integrationRef and integration cannot be set at the same time")
-	}
-	if body.Integration == nil && body.IntegrationRef == nil {
-		return errors.New("integrationRef or integration must be set")
-	}
+	// validating existing receiver
 	if body.IntegrationRef != nil && body.IntegrationRef.Uid == "" {
 		return errors.New("integrationRef UID must be set")
 	}
