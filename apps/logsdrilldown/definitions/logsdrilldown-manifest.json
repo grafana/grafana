@@ -191,7 +191,13 @@
               }
             },
             "conversion": false
-          },
+          }
+        ]
+      },
+      {
+        "name": "v1beta1",
+        "served": true,
+        "kinds": [
           {
             "kind": "LogsDrilldownDefaultColumns",
             "plural": "LogsDrilldownDefaultColumns",
@@ -314,6 +320,6 @@
         ]
       }
     ],
-    "preferredVersion": "v1alpha1"
+    "preferredVersion": "v1beta1"
   }
 }

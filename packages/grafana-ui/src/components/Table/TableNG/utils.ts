@@ -1108,12 +1108,18 @@ export function parseStyleJson(rawValue: unknown): CSSProperties | void {
   }
 }
 
-// Safari 26 introduced rendering bugs which require us to disable several features of the table.
+// Safari 26.0 introduced rendering bugs which require us to disable several features of the table.
+// The bugs were later fixed in Safari 26.2.
 export const IS_SAFARI_26 = (() => {
   if (navigator == null) {
     return false;
   }
   const userAgent = navigator.userAgent;
-  const safariVersionMatch = userAgent.match(/Version\/(\d+)\./);
-  return safariVersionMatch && parseInt(safariVersionMatch[1], 10) === 26;
+  const safariVersionMatch = userAgent.match(/Version\/(\d+)\.(\d+)/);
+  if (!safariVersionMatch) {
+    return false;
+  }
+  const majorVersion = +safariVersionMatch[1];
+  const minorVersion = +safariVersionMatch[2];
+  return majorVersion === 26 && minorVersion <= 1;
 })();

@@ -91,7 +91,7 @@ func setupDsConfigHandlerMetrics() (prometheus.Registerer, *prometheus.Histogram
 		Namespace: "grafana",
 		Name:      "ds_config_handler_requests_duration_seconds",
 		Help:      "Duration of requests handled by datasource configuration handlers",
-	}, []string{"code_path", "handler"})
+	}, []string{"handler"})
 	promRegister.MustRegister(dsConfigHandlerRequestsDuration)
 	return promRegister, dsConfigHandlerRequestsDuration
 }

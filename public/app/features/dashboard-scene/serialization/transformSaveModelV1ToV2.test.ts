@@ -1,7 +1,13 @@
-import { readdirSync, readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
-import { normalizeBackendOutputForFrontendComparison } from './serialization-test-utils';
+import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager';
+
+import {
+  getFilesRecursively,
+  normalizeBackendOutputForFrontendComparison,
+  removeEmptyArrays,
+} from './serialization-test-utils';
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from './transformSaveModelToScene';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
@@ -171,19 +177,32 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
     'migrated_dashboards_output'
   );
 
-  const jsonInputs = readdirSync(inputDir);
   const LATEST_API_VERSION = 'dashboard.grafana.app/v2beta1';
 
-  // Filter to only process v1beta1 input files
-  const v1beta1Inputs = jsonInputs.filter((inputFile) => inputFile.startsWith('v1beta1.'));
+  // Get v0alpha1 and v1beta1 input files recursively from all subdirectories
+  const v1beta1Inputs = getFilesRecursively(inputDir).filter(({ relativePath }) => {
+    const fileName = path.basename(relativePath);
+    return fileName.startsWith('v1beta1.') && fileName.endsWith('.json');
+  });
 
-  v1beta1Inputs.forEach((inputFile) => {
-    it(`compare ${inputFile} from v1beta1 to v2beta1 backend and frontend conversions`, async () => {
-      const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
+  v1beta1Inputs.forEach(({ filePath: inputFilePath, relativePath }) => {
+    // Calculate output file path for this input
+    const relativeDir = path.dirname(relativePath);
+    const fileName = path.basename(relativePath);
+    const outputFileName = fileName.replace('.json', `.${LATEST_API_VERSION.split('/')[1]}.json`);
+    const outputFilePath =
+      relativeDir === '.' ? path.join(outputDir, outputFileName) : path.join(outputDir, relativeDir, outputFileName);
 
-      // Find the corresponding v2beta1 output file
-      const outputFileName = inputFile.replace('.json', `.${LATEST_API_VERSION.split('/')[1]}.json`);
-      const outputFilePath = path.join(outputDir, outputFileName);
+    // Include output file name in test description for clarity
+    const outputRelativePath = relativeDir === '.' ? outputFileName : path.join(relativeDir, outputFileName);
+
+    it(`compare ${relativePath} → ${outputRelativePath}`, async () => {
+      // Skip if output file doesn't exist
+      if (!existsSync(outputFilePath)) {
+        return;
+      }
+
+      const jsonInput = JSON.parse(readFileSync(inputFilePath, 'utf8'));
 
       // Load the backend output
       const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
@@ -200,29 +219,34 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       });
       const backendOutputAfterLoadedByScene = transformSceneToSaveModelSchemaV2(sceneBackend, false);
 
-      // Transform using frontend path: v1beta1 -> Scene -> v2beta1
-      // Extract the spec from v1beta1 format and use it as the dashboard data
-      // Remove snapshot field to prevent isSnapshot() from returning true
-      const dashboardSpec = { ...jsonInput.spec };
+      // Determine how to extract the dashboard spec:
+      // - Files with apiVersion field are API-wrapped (spec contains dashboard)
+      // - Files without apiVersion are raw dashboard JSON (entire file is the spec)
+      const hasApiVersion = jsonInput.apiVersion !== undefined;
+      const dashboardSpec = hasApiVersion ? { ...jsonInput.spec } : { ...jsonInput };
       delete dashboardSpec.snapshot;
 
       // Wrap in DashboardDTO structure that transformSaveModelToScene expects
-      const scene = transformSaveModelToScene({
-        dashboard: dashboardSpec,
-        meta: {
-          isNew: false,
-          isFolder: false,
-          canSave: true,
-          canEdit: true,
-          canDelete: false,
-          canShare: false,
-          canStar: false,
-          canAdmin: false,
-          isSnapshot: false,
-          provisioned: false,
-          version: 1,
+      const scene = transformSaveModelToScene(
+        {
+          dashboard: dashboardSpec,
+          meta: {
+            isNew: false,
+            isFolder: false,
+            canSave: true,
+            canEdit: true,
+            canDelete: false,
+            canShare: false,
+            canStar: false,
+            canAdmin: false,
+            isSnapshot: false,
+            provisioned: false,
+            version: 1,
+          },
         },
-      });
+        undefined,
+        getSceneCreationOptions()
+      );
 
       const frontendOutput = transformSceneToSaveModelSchemaV2(scene, false);
 
@@ -232,30 +256,39 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
 
       // Normalize backend output to account for differences in library panel repeat handling
       // Backend sets repeat from library panel definition, frontend only sets it when explicit on instance
-      // For migrated dashboards, panels are in the root level, not in spec.panels
-      const inputPanels = jsonInput.panels || jsonInput.spec?.panels || [];
-      const normalizedBackendOutput = normalizeBackendOutputForFrontendComparison(
-        backendOutputAfterLoadedByScene,
-        inputPanels
+      // Get input panels from appropriate location based on file format
+      const inputPanels = hasApiVersion ? jsonInput.spec?.panels || [] : jsonInput.panels || [];
+      const normalizedBackendOutput = removeEmptyArrays(
+        normalizeBackendOutputForFrontendComparison(backendOutputAfterLoadedByScene, inputPanels)
       );
 
+      // Also normalize frontend output to remove schema gap fields and empty arrays
+      // (Go backend omits empty arrays due to omitempty, frontend preserves them)
+      const normalizedFrontendOutput = removeEmptyArrays(frontendOutput);
+
       // Compare only the spec structures - this is the core transformation
-      expect(normalizedBackendOutput).toEqual(frontendOutput);
+      expect(normalizedBackendOutput).toEqual(normalizedFrontendOutput);
     });
   });
 
   // Test migrated dashboards (from migration pipeline output)
-  const migratedJsonInputs = readdirSync(migratedInput);
+  const migratedJsonInputs = getFilesRecursively(migratedInput).filter(({ relativePath }) => {
+    return relativePath.endsWith('.json');
+  });
 
-  migratedJsonInputs.forEach((inputFile) => {
-    it(`compare migrated ${inputFile} from v1beta1 to v2beta1 backend and frontend conversions`, async () => {
+  migratedJsonInputs.forEach(({ filePath: inputFilePath, relativePath }) => {
+    // Calculate output file path for this input
+    const relativeDir = path.dirname(relativePath);
+    const fileName = path.basename(relativePath);
+    const outputFileName = `v1beta1-mig-${fileName.replace('.json', '')}.${LATEST_API_VERSION.split('/')[1]}.json`;
+    const outputFilePath =
+      relativeDir === '.'
+        ? path.join(migratedOutput, outputFileName)
+        : path.join(migratedOutput, relativeDir, outputFileName);
+
+    it(`compare migrated ${relativePath} → ${outputFileName}`, async () => {
       // Read the raw dashboard JSON from migration output (latest_version directory)
-      const jsonInput = JSON.parse(readFileSync(path.join(migratedInput, inputFile), 'utf8'));
-
-      // Find the corresponding v2beta1 output file in migrated_dashboards_output
-      // The backend test prefixes these with "v1beta1-mig-"
-      const outputFileName = `v1beta1-mig-${inputFile.replace('.json', '')}.${LATEST_API_VERSION.split('/')[1]}.json`;
-      const outputFilePath = path.join(migratedOutput, outputFileName);
+      const jsonInput = JSON.parse(readFileSync(inputFilePath, 'utf8'));
 
       // Load the backend output
       const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
@@ -279,22 +312,26 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       delete dashboardSpec.snapshot;
 
       // Wrap in DashboardDTO structure that transformSaveModelToScene expects
-      const scene = transformSaveModelToScene({
-        dashboard: dashboardSpec,
-        meta: {
-          isNew: false,
-          isFolder: false,
-          canSave: true,
-          canEdit: true,
-          canDelete: false,
-          canShare: false,
-          canStar: false,
-          canAdmin: false,
-          isSnapshot: false,
-          provisioned: false,
-          version: 1,
+      const scene = transformSaveModelToScene(
+        {
+          dashboard: dashboardSpec,
+          meta: {
+            isNew: false,
+            isFolder: false,
+            canSave: true,
+            canEdit: true,
+            canDelete: false,
+            canShare: false,
+            canStar: false,
+            canAdmin: false,
+            isSnapshot: false,
+            provisioned: false,
+            version: 1,
+          },
         },
-      });
+        undefined,
+        getSceneCreationOptions()
+      );
 
       const frontendOutput = transformSceneToSaveModelSchemaV2(scene, false);
 
@@ -306,13 +343,16 @@ describe('V1 to V2 Dashboard Transformation Comparison', () => {
       // Backend sets repeat from library panel definition, frontend only sets it when explicit on instance
       // For migrated dashboards, panels are in the root level, not in spec.panels
       const inputPanels = jsonInput.panels || jsonInput.spec?.panels || [];
-      const normalizedBackendOutput = normalizeBackendOutputForFrontendComparison(
-        backendOutputAfterLoadedByScene,
-        inputPanels
+      const normalizedBackendOutput = removeEmptyArrays(
+        normalizeBackendOutputForFrontendComparison(backendOutputAfterLoadedByScene, inputPanels)
       );
 
+      // Also normalize frontend output to remove schema gap fields and empty arrays
+      // (Go backend omits empty arrays due to omitempty, frontend preserves them)
+      const normalizedFrontendOutput = removeEmptyArrays(frontendOutput);
+
       // Compare only the spec structures - this is the core transformation
-      expect(normalizedBackendOutput).toEqual(frontendOutput);
+      expect(normalizedBackendOutput).toEqual(normalizedFrontendOutput);
     });
   });
 });

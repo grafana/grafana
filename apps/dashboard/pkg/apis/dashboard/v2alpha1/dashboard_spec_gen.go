@@ -419,6 +419,11 @@ type DashboardFieldConfig struct {
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
 	Custom map[string]interface{} `json:"custom,omitempty"`
+	// Calculate min max per field
+	FieldMinMax *bool `json:"fieldMinMax,omitempty"`
+	// How null values should be handled when calculating field stats
+	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
+	NullValueMode *DashboardNullValueMode `json:"nullValueMode,omitempty"`
 }
 
 // NewDashboardFieldConfig creates a new DashboardFieldConfig object.
@@ -744,6 +749,16 @@ func NewDashboardActionVariable() *DashboardActionVariable {
 // Action variable type
 // +k8s:openapi-gen=true
 const DashboardActionVariableType = "string"
+
+// How null values should be handled
+// +k8s:openapi-gen=true
+type DashboardNullValueMode string
+
+const (
+	DashboardNullValueModeNull       DashboardNullValueMode = "null"
+	DashboardNullValueModeConnected  DashboardNullValueMode = "connected"
+	DashboardNullValueModeNullAsZero DashboardNullValueMode = "null as zero"
+)
 
 // +k8s:openapi-gen=true
 type DashboardDynamicConfigValue struct {
@@ -1703,18 +1718,19 @@ func NewDashboardCustomVariableKind() *DashboardCustomVariableKind {
 // Custom variable specification
 // +k8s:openapi-gen=true
 type DashboardCustomVariableSpec struct {
-	Name             string                    `json:"name"`
-	Query            string                    `json:"query"`
-	Current          DashboardVariableOption   `json:"current"`
-	Options          []DashboardVariableOption `json:"options"`
-	Multi            bool                      `json:"multi"`
-	IncludeAll       bool                      `json:"includeAll"`
-	AllValue         *string                   `json:"allValue,omitempty"`
-	Label            *string                   `json:"label,omitempty"`
-	Hide             DashboardVariableHide     `json:"hide"`
-	SkipUrlSync      bool                      `json:"skipUrlSync"`
-	Description      *string                   `json:"description,omitempty"`
-	AllowCustomValue bool                      `json:"allowCustomValue"`
+	Name             string                                   `json:"name"`
+	Query            string                                   `json:"query"`
+	Current          DashboardVariableOption                  `json:"current"`
+	Options          []DashboardVariableOption                `json:"options"`
+	Multi            bool                                     `json:"multi"`
+	IncludeAll       bool                                     `json:"includeAll"`
+	AllValue         *string                                  `json:"allValue,omitempty"`
+	Label            *string                                  `json:"label,omitempty"`
+	Hide             DashboardVariableHide                    `json:"hide"`
+	SkipUrlSync      bool                                     `json:"skipUrlSync"`
+	Description      *string                                  `json:"description,omitempty"`
+	AllowCustomValue bool                                     `json:"allowCustomValue"`
+	ValuesFormat     *DashboardCustomVariableSpecValuesFormat `json:"valuesFormat,omitempty"`
 }
 
 // NewDashboardCustomVariableSpec creates a new DashboardCustomVariableSpec object.
@@ -2096,6 +2112,14 @@ const (
 	DashboardQueryVariableSpecStaticOptionsOrderBefore DashboardQueryVariableSpecStaticOptionsOrder = "before"
 	DashboardQueryVariableSpecStaticOptionsOrderAfter  DashboardQueryVariableSpecStaticOptionsOrder = "after"
 	DashboardQueryVariableSpecStaticOptionsOrderSorted DashboardQueryVariableSpecStaticOptionsOrder = "sorted"
+)
+
+// +k8s:openapi-gen=true
+type DashboardCustomVariableSpecValuesFormat string
+
+const (
+	DashboardCustomVariableSpecValuesFormatCsv  DashboardCustomVariableSpecValuesFormat = "csv"
+	DashboardCustomVariableSpecValuesFormatJson DashboardCustomVariableSpecValuesFormat = "json"
 )
 
 // +k8s:openapi-gen=true

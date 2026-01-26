@@ -13,7 +13,7 @@ import (
 func jsonEquals(dialect migrator.Dialect, column, key, value string) (string, []any) {
 	switch dialect.DriverName() {
 	case migrator.MySQL:
-		return fmt.Sprintf("JSON_UNQUOTE(JSON_EXTRACT(NULLIF(%s, ''), CONCAT('$.', ?))) = ?", column), []any{key, value}
+		return fmt.Sprintf(`JSON_UNQUOTE(JSON_EXTRACT(NULLIF(%s, ''), CONCAT('$."', ?, '"'))) = ?`, column), []any{key, value}
 	case migrator.Postgres:
 		return fmt.Sprintf("jsonb_extract_path_text(NULLIF(%s, '')::jsonb, ?) = ?", column), []any{key, value}
 	default:
@@ -25,7 +25,7 @@ func jsonNotEquals(dialect migrator.Dialect, column, key, value string) (string,
 	var jx string
 	switch dialect.DriverName() {
 	case migrator.MySQL:
-		jx = fmt.Sprintf("JSON_UNQUOTE(JSON_EXTRACT(NULLIF(%s, ''), CONCAT('$.', ?)))", column)
+		jx = fmt.Sprintf(`JSON_UNQUOTE(JSON_EXTRACT(NULLIF(%s, ''), CONCAT('$."', ?, '"')))`, column)
 	case migrator.Postgres:
 		jx = fmt.Sprintf("jsonb_extract_path_text(NULLIF(%s, '')::jsonb, ?)", column)
 	default:
@@ -49,7 +49,7 @@ func jsonKeyCondition(dialect migrator.Dialect, column, key string, exists bool)
 	}
 	switch dialect.DriverName() {
 	case migrator.MySQL:
-		return fmt.Sprintf("JSON_EXTRACT(NULLIF(%s, ''), CONCAT('$.', ?)) %s", column, nullCheck), []any{key}, nil
+		return fmt.Sprintf(`JSON_EXTRACT(NULLIF(%s, ''), CONCAT('$."', ?, '"')) %s`, column, nullCheck), []any{key}, nil
 	case migrator.Postgres:
 		return fmt.Sprintf("jsonb_extract_path_text(NULLIF(%s, '')::jsonb, ?) %s", column, nullCheck), []any{key}, nil
 	default:

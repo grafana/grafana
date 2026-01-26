@@ -17,7 +17,7 @@ import {
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { DashboardStateChangedEvent } from '../../edit-pane/shared';
+import { DashboardStateChangedEvent, RepeatsUpdatedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView, scrollIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
@@ -219,6 +219,7 @@ export class DashboardGridItem
     }
 
     this._prevRepeatValues = values;
+    this.publishEvent(new RepeatsUpdatedEvent(this), true);
   }
 
   public handleVariableName() {

@@ -13,20 +13,20 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/services';
+import { canSelectItems } from '../permissions';
 import { fetchNextChildrenPage } from '../state/actions';
 import {
-  useFlatTreeState,
+  rootItemsSelector,
+  useBrowseLoadingStatus,
   useCheckboxSelectionState,
   useChildrenByParentUIDState,
-  useBrowseLoadingStatus,
+  useFlatTreeState,
   useLoadNextChildrenPage,
-  rootItemsSelector,
 } from '../state/hooks';
-import { setFolderOpenState, setItemSelectionState, setAllSelection } from '../state/slice';
-import { BrowseDashboardsState, DashboardTreeSelection, SelectionState, BrowseDashboardsPermissions } from '../types';
+import { setAllSelection, setFolderOpenState, setItemSelectionState } from '../state/slice';
+import { BrowseDashboardsPermissions, BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
-import { canSelectItems } from './utils';
 
 interface BrowseViewProps {
   height: number;

@@ -19,7 +19,7 @@ export function RenderUserContentAsHTML<T>({
   ...rest
 }: PropsWithChildren<RenderUserContentAsHTMLProps<T>>): JSX.Element {
   return createElement(component || 'span', {
-    dangerouslySetInnerHTML: { __html: textUtil.sanitize(content) },
     ...rest,
+    dangerouslySetInnerHTML: { __html: textUtil.sanitize(content) },
   });
 }

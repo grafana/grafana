@@ -2454,7 +2454,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			ruleGen.WithLabels(map[string]string{"glob": "*[?]"}),
 			ruleGen.WithTitle("rule_glob")))
 		ruleSpecialChars := createRule(t, store, ruleGen.With(
-			ruleGen.WithLabels(map[string]string{"json": "line1\nline2\\end\"quote"}),
+			ruleGen.WithLabels(map[string]string{"label-with-hyphen": "line1\nline2\\end\"quote"}),
 			ruleGen.WithTitle("rule_special_chars")))
 		ruleEmpty := createRule(t, store, ruleGen.With(
 			ruleGen.WithLabels(map[string]string{"empty": ""}),
@@ -2531,7 +2531,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				name: "JSON escape characters are handled correctly",
 				labelMatchers: labels.Matchers{
 					func() *labels.Matcher {
-						m, _ := labels.NewMatcher(labels.MatchEqual, "json", "line1\nline2\\end\"quote")
+						m, _ := labels.NewMatcher(labels.MatchEqual, "label-with-hyphen", "line1\nline2\\end\"quote")
 						return m
 					}(),
 				},

@@ -46,6 +46,7 @@ export type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'nam
   state?: PromAlertingRuleState[];
   title?: string;
   searchGroupName?: string;
+  searchFolder?: string;
   type?: 'alerting' | 'recording';
   ruleMatchers?: string[];
   plugins?: 'hide' | 'only';
@@ -103,6 +104,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
         title,
         datasources,
         searchGroupName,
+        searchFolder,
         dashboardUid,
         ruleMatchers,
         plugins,
@@ -123,6 +125,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
           datasource_uid: datasources,
           'search.rule_name': title,
           'search.rule_group': searchGroupName,
+          'search.folder': searchFolder,
           dashboard_uid: dashboardUid,
           rule_matcher: ruleMatchers,
           plugins: plugins,

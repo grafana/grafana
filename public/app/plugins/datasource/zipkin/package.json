@@ -11,7 +11,7 @@
     "@grafana/plugin-ui": "^0.11.0",
     "@grafana/runtime": "workspace:*",
     "@grafana/ui": "workspace:*",
-    "lodash": "4.17.21",
+    "lodash": "^4.17.23",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-select": "5.10.2",

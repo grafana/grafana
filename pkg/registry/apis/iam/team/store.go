@@ -174,7 +174,7 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 
 	res, err := common.List(
 		ctx, resource, s.ac, common.PaginationFromListOptions(options),
-		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha1.Team], error) {
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[*iamv0alpha1.Team], error) {
 			found, err := s.store.ListTeams(ctx, ns, legacy.ListTeamQuery{
 				Pagination: p,
 			})
@@ -183,12 +183,13 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 				return nil, err
 			}
 
-			teams := make([]iamv0alpha1.Team, 0, len(found.Teams))
+			teams := make([]*iamv0alpha1.Team, 0, len(found.Teams))
 			for _, t := range found.Teams {
-				teams = append(teams, toTeamObject(t, ns))
+				team := toTeamObject(t, ns)
+				teams = append(teams, &team)
 			}
 
-			return &common.ListResponse[iamv0alpha1.Team]{
+			return &common.ListResponse[*iamv0alpha1.Team]{
 				Items:    teams,
 				RV:       found.RV,
 				Continue: found.Continue,
@@ -200,7 +201,12 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 		return nil, fmt.Errorf("failed to list teams: %w", err)
 	}
 
-	list := &iamv0alpha1.TeamList{Items: res.Items}
+	items := make([]iamv0alpha1.Team, len(res.Items))
+	for i, t := range res.Items {
+		items[i] = *t
+	}
+
+	list := &iamv0alpha1.TeamList{Items: items}
 	list.Continue = common.OptionalFormatInt(res.Continue)
 	list.ResourceVersion = common.OptionalFormatInt(res.RV)
 

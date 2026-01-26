@@ -1,6 +1,8 @@
 package validator
 
 import (
+	"context"
+	"fmt"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -9,14 +11,17 @@ import (
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-type keeperValidator struct{}
+type keeperValidator struct {
+	features featuremgmt.FeatureToggles
+}
 
 var _ contracts.KeeperValidator = &keeperValidator{}
 
-func ProvideKeeperValidator() contracts.KeeperValidator {
-	return &keeperValidator{}
+func ProvideKeeperValidator(features featuremgmt.FeatureToggles) contracts.KeeperValidator {
+	return &keeperValidator{features: features}
 }
 
 func (v *keeperValidator) Validate(keeper *secretv1beta1.Keeper, oldKeeper *secretv1beta1.Keeper, operation admission.Operation) field.ErrorList {
@@ -57,51 +62,110 @@ func (v *keeperValidator) Validate(keeper *secretv1beta1.Keeper, oldKeeper *secr
 	}
 
 	if keeper.Spec.Aws != nil {
-		if err := validateCredentialValue(field.NewPath("spec", "aws", "accessKeyID"), keeper.Spec.Aws.AccessKeyID); err != nil {
-			errs = append(errs, err)
-		}
-
-		if err := validateCredentialValue(field.NewPath("spec", "aws", "secretAccessKey"), keeper.Spec.Aws.SecretAccessKey); err != nil {
-			errs = append(errs, err)
+		//nolint
+		if !v.features.IsEnabled(context.Background(), featuremgmt.FlagSecretsManagementAppPlatformAwsKeeper) {
+			errs = append(errs,
+				field.Forbidden(field.NewPath("spec", "aws"),
+					fmt.Sprintf("enable aws keeper feature toggle to create aws keepers: %s", featuremgmt.FlagSecretsManagementAppPlatformAwsKeeper)))
+		} else {
+			errs = append(errs, validateAws(keeper.Spec.Aws)...)
 		}
 	}
 
 	if keeper.Spec.Azure != nil {
-		if keeper.Spec.Azure.KeyVaultName == "" {
-			errs = append(errs, field.Required(field.NewPath("spec", "azure", "keyVaultName"), "a `keyVaultName` is required"))
-		}
-
-		if keeper.Spec.Azure.TenantID == "" {
-			errs = append(errs, field.Required(field.NewPath("spec", "azure", "tenantID"), "a `tenantID` is required"))
-		}
-
-		if keeper.Spec.Azure.ClientID == "" {
-			errs = append(errs, field.Required(field.NewPath("spec", "azure", "clientID"), "a `clientID` is required"))
-		}
-
-		if err := validateCredentialValue(field.NewPath("spec", "azure", "clientSecret"), keeper.Spec.Azure.ClientSecret); err != nil {
-			errs = append(errs, err)
-		}
+		errs = append(errs, validateAzure(keeper.Spec.Azure)...)
 	}
 
 	if keeper.Spec.Gcp != nil {
-		if keeper.Spec.Gcp.ProjectID == "" {
-			errs = append(errs, field.Required(field.NewPath("spec", "gcp", "projectID"), "a `projectID` is required"))
-		}
-
-		if keeper.Spec.Gcp.CredentialsFile == "" {
-			errs = append(errs, field.Required(field.NewPath("spec", "gcp", "credentialsFile"), "a `credentialsFile` is required"))
-		}
+		errs = append(errs, validateGcp(keeper.Spec.Gcp)...)
 	}
 
 	if keeper.Spec.HashiCorpVault != nil {
-		if keeper.Spec.HashiCorpVault.Address == "" {
-			errs = append(errs, field.Required(field.NewPath("spec", "hashiCorpVault", "address"), "an `address` is required"))
-		}
+		errs = append(errs, validateHashiCorpVault(keeper.Spec.HashiCorpVault)...)
+	}
 
-		if err := validateCredentialValue(field.NewPath("spec", "hashiCorpVault", "token"), keeper.Spec.HashiCorpVault.Token); err != nil {
+	return errs
+}
+
+func validateAws(cfg *secretv1beta1.KeeperAWSConfig) field.ErrorList {
+	errs := make(field.ErrorList, 0)
+
+	if cfg.Region == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "aws", "region"), "region must be present"))
+	}
+
+	switch {
+	case cfg.AccessKey == nil && cfg.AssumeRole == nil:
+		errs = append(errs, field.Required(field.NewPath("spec", "aws"), "one of `accessKey` or `assumeRole` must be present"))
+
+	case cfg.AccessKey != nil && cfg.AssumeRole != nil:
+		errs = append(errs, field.Required(field.NewPath("spec", "aws"), "only one of `accessKey` or `assumeRole` can be present"))
+
+	case cfg.AccessKey != nil:
+		if err := validateCredentialValue(field.NewPath("spec", "aws", "accessKey", "accessKeyID"), cfg.AccessKey.AccessKeyID); err != nil {
 			errs = append(errs, err)
 		}
+		if err := validateCredentialValue(field.NewPath("spec", "aws", "accessKey", "secretAccessKey"), cfg.AccessKey.SecretAccessKey); err != nil {
+			errs = append(errs, err)
+		}
+
+	case cfg.AssumeRole != nil:
+		if cfg.AssumeRole.AssumeRoleArn == "" {
+			errs = append(errs, field.Required(field.NewPath("spec", "aws", "assumeRole", "assumeRoleArn"), "arn of the role to assume must be present"))
+		}
+		if cfg.AssumeRole.ExternalID == "" {
+			errs = append(errs, field.Required(field.NewPath("spec", "aws", "assumeRole", "externalId"), "externalId must be present"))
+		}
+	}
+
+	return errs
+}
+
+func validateAzure(cfg *secretv1beta1.KeeperAzureConfig) field.ErrorList {
+	errs := make(field.ErrorList, 0)
+
+	if cfg.KeyVaultName == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "azure", "keyVaultName"), "a `keyVaultName` is required"))
+	}
+
+	if cfg.TenantID == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "azure", "tenantID"), "a `tenantID` is required"))
+	}
+
+	if cfg.ClientID == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "azure", "clientID"), "a `clientID` is required"))
+	}
+
+	if err := validateCredentialValue(field.NewPath("spec", "azure", "clientSecret"), cfg.ClientSecret); err != nil {
+		errs = append(errs, err)
+	}
+
+	return errs
+}
+
+func validateGcp(cfg *secretv1beta1.KeeperGCPConfig) field.ErrorList {
+	errs := make(field.ErrorList, 0)
+
+	if cfg.ProjectID == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "gcp", "projectID"), "a `projectID` is required"))
+	}
+
+	if cfg.CredentialsFile == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "gcp", "credentialsFile"), "a `credentialsFile` is required"))
+	}
+
+	return errs
+}
+
+func validateHashiCorpVault(cfg *secretv1beta1.KeeperHashiCorpConfig) field.ErrorList {
+	errs := make(field.ErrorList, 0)
+
+	if cfg.Address == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "hashiCorpVault", "address"), "an `address` is required"))
+	}
+
+	if err := validateCredentialValue(field.NewPath("spec", "hashiCorpVault", "token"), cfg.Token); err != nil {
+		errs = append(errs, err)
 	}
 
 	return errs

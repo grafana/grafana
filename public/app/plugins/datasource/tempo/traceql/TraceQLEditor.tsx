@@ -52,7 +52,7 @@ export function TraceQLEditor(props: Props) {
   const onRunQueryRef = useRef(onRunQuery);
   onRunQueryRef.current = onRunQuery;
 
-  const errorTimeoutId = useRef<number>(null);
+  const errorTimeoutId = useRef<number | undefined>(undefined);
 
   return (
     <>

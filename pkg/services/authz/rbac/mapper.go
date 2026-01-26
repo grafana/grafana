@@ -182,25 +182,6 @@ func newFolderTranslation() translation {
 	return folderTranslation
 }
 
-func newExternalGroupMappingTranslation() translation {
-	return translation{
-		resource:  "teams.permissions",
-		attribute: "uid",
-		verbMapping: map[string]string{
-			utils.VerbGet:            "teams.permissions:read",
-			utils.VerbList:           "teams.permissions:read",
-			utils.VerbWatch:          "teams.permissions:read",
-			utils.VerbCreate:         "teams.permissions:write",
-			utils.VerbUpdate:         "teams.permissions:write",
-			utils.VerbPatch:          "teams.permissions:write",
-			utils.VerbDelete:         "teams.permissions:write",
-			utils.VerbGetPermissions: "teams.permissions:write",
-			utils.VerbSetPermissions: "teams.permissions:write",
-		},
-		folderSupport: false,
-	}
-}
-
 func NewMapperRegistry() MapperRegistry {
 	skipScopeOnAllVerbs := map[string]bool{
 		utils.VerbCreate:           true,
@@ -229,8 +210,6 @@ func NewMapperRegistry() MapperRegistry {
 			"serviceaccounts": newResourceTranslation("serviceaccounts", "uid", false, map[string]bool{utils.VerbCreate: true}),
 			// Teams is a special case. We translate user permissions from id to uid based.
 			"teams": newResourceTranslation("teams", "uid", false, map[string]bool{utils.VerbCreate: true}),
-			// ExternalGroupMappings is a special case. We translate team permissions from id to uid based.
-			"externalgroupmappings": newExternalGroupMappingTranslation(),
 			"coreroles": translation{
 				resource:  "roles",
 				attribute: "uid",
@@ -242,6 +221,17 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport: false,
 				// No need to skip scope on create for roles because we translate `permissions:type:delegate` to `roles:*``
 				skipScopeOnVerb: nil,
+			},
+			"globalroles": translation{
+				resource:  "roles",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:   "roles:read",
+					utils.VerbList:  "roles:read",
+					utils.VerbWatch: "roles:read",
+				},
+				folderSupport:    false,
+				useWildcardScope: true,
 			},
 			"roles": translation{
 				resource:  "roles",

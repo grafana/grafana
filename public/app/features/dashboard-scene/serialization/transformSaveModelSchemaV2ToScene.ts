@@ -343,12 +343,12 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
     }
     return new AdHocFiltersVariable(adhocVariableState);
   }
+
   if (variable.kind === defaultCustomVariableKind().kind) {
     return new CustomVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
       text: variable.spec.current?.text ?? '',
-
       query: variable.spec.query,
       isMulti: variable.spec.multi,
       allValue: variable.spec.allValue || undefined,
@@ -357,6 +357,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       ...(variable.spec.allowCustomValue !== undefined && { allowCustomValue: variable.spec.allowCustomValue }),
+      valuesFormat: variable.spec.valuesFormat || 'csv',
     });
   } else if (variable.kind === defaultQueryVariableKind().kind) {
     return new QueryVariable({
@@ -377,6 +378,15 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       definition: variable.spec.definition,
       ...(variable.spec.allowCustomValue !== undefined && { allowCustomValue: variable.spec.allowCustomValue }),
+      ...(variable.spec.staticOptions?.length
+        ? {
+            staticOptions: variable.spec.staticOptions.map((option) => ({
+              label: String(option.text),
+              value: String(option.value),
+            })),
+          }
+        : {}),
+      ...(variable.spec.staticOptionsOrder !== undefined && { staticOptionsOrder: variable.spec.staticOptionsOrder }),
     });
   } else if (variable.kind === defaultDatasourceVariableKind().kind) {
     return new DataSourceVariable({

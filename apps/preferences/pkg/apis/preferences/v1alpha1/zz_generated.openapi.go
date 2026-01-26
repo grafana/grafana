@@ -15,7 +15,6 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.Preferences":                       schema_pkg_apis_preferences_v1alpha1_Preferences(ref),
-		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesCookiePreferences":      schema_pkg_apis_preferences_v1alpha1_PreferencesCookiePreferences(ref),
 		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesList":                   schema_pkg_apis_preferences_v1alpha1_PreferencesList(ref),
 		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesNavbarPreference":       schema_pkg_apis_preferences_v1alpha1_PreferencesNavbarPreference(ref),
 		"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesQueryHistoryPreference": schema_pkg_apis_preferences_v1alpha1_PreferencesQueryHistoryPreference(ref),
@@ -62,36 +61,6 @@ func schema_pkg_apis_preferences_v1alpha1_Preferences(ref common.ReferenceCallba
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-	}
-}
-
-func schema_pkg_apis_preferences_v1alpha1_PreferencesCookiePreferences(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"analytics": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"object"},
-							Format: "",
-						},
-					},
-					"performance": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"object"},
-							Format: "",
-						},
-					},
-					"functional": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"object"},
-							Format: "",
-						},
-					},
-				},
-			},
-		},
 	}
 }
 
@@ -243,12 +212,6 @@ func schema_pkg_apis_preferences_v1alpha1_PreferencesSpec(ref common.ReferenceCa
 							Ref:         ref("github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesQueryHistoryPreference"),
 						},
 					},
-					"cookiePreferences": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Cookie preferences",
-							Ref:         ref("github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesCookiePreferences"),
-						},
-					},
 					"navbar": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Navigation preferences",
@@ -259,6 +222,6 @@ func schema_pkg_apis_preferences_v1alpha1_PreferencesSpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesCookiePreferences", "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesNavbarPreference", "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesQueryHistoryPreference"},
+			"github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesNavbarPreference", "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1.PreferencesQueryHistoryPreference"},
 	}
 }

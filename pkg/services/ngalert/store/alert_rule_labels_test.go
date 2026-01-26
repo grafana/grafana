@@ -73,21 +73,21 @@ func TestBuildLabelMatcherJSON(t *testing.T) {
 			name:     "MySQL MatchEqual with non-empty value",
 			dialect:  migrator.NewMysqlDialect(),
 			matcher:  &labels.Matcher{Type: labels.MatchEqual, Name: "team", Value: "alerting"},
-			wantSQL:  "JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?))) = ?",
+			wantSQL:  `JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$."', ?, '"'))) = ?`,
 			wantArgs: []any{"team", "alerting"},
 		},
 		{
 			name:     "MySQL MatchEqual with empty value",
 			dialect:  migrator.NewMysqlDialect(),
 			matcher:  &labels.Matcher{Type: labels.MatchEqual, Name: "team", Value: ""},
-			wantSQL:  "(JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?))) = ? OR JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?)) IS NULL)",
+			wantSQL:  `(JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$."', ?, '"'))) = ? OR JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$."', ?, '"')) IS NULL)`,
 			wantArgs: []any{"team", "", "team"},
 		},
 		{
 			name:     "MySQL MatchNotEqual",
 			dialect:  migrator.NewMysqlDialect(),
 			matcher:  &labels.Matcher{Type: labels.MatchNotEqual, Name: "team", Value: "alerting"},
-			wantSQL:  "(JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?))) IS NULL OR JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?))) != ?)",
+			wantSQL:  `(JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$."', ?, '"'))) IS NULL OR JSON_UNQUOTE(JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$."', ?, '"'))) != ?)`,
 			wantArgs: []any{"team", "team", "alerting"},
 		},
 		{
@@ -149,7 +149,7 @@ func TestBuildLabelKeyExistsCondition(t *testing.T) {
 			dialect:  migrator.NewMysqlDialect(),
 			column:   "labels",
 			key:      "__grafana_origin",
-			wantSQL:  "JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?)) IS NOT NULL",
+			wantSQL:  `JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$."', ?, '"')) IS NOT NULL`,
 			wantArgs: []any{"__grafana_origin"},
 		},
 		{
@@ -194,7 +194,7 @@ func TestBuildLabelKeyMissingCondition(t *testing.T) {
 			dialect:  migrator.NewMysqlDialect(),
 			column:   "labels",
 			key:      "__grafana_origin",
-			wantSQL:  "JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$.', ?)) IS NULL",
+			wantSQL:  `JSON_EXTRACT(NULLIF(labels, ''), CONCAT('$."', ?, '"')) IS NULL`,
 			wantArgs: []any{"__grafana_origin"},
 		},
 		{
