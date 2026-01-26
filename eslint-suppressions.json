@@ -1732,11 +1732,6 @@
       "count": 1
     }
   },
-  "public/app/features/browse-dashboards/components/NewFolderForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/connections/tabs/ConnectData/ConnectData.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
