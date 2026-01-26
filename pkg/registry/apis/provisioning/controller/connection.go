@@ -254,21 +254,6 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 	patchOperations = append(patchOperations, healthPatchOps...)
 
-	// Update state based on health status
-	if healthStatus.Healthy {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/state",
-			"value": provisioning.ConnectionStateConnected,
-		})
-	} else {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/state",
-			"value": provisioning.ConnectionStateDisconnected,
-		})
-	}
-
 	// Update fieldErrors from test results - ensure fieldErrors are cleared when there are no errors
 	fieldErrors := testResults.Errors
 	if fieldErrors == nil {
