@@ -8,6 +8,7 @@ import { useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/cl
 import { BootstrapStep, Props } from './BootstrapStep';
 import { StepStatusProvider } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
+import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { WizardFormData } from './types';
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
@@ -21,6 +22,10 @@ jest.mock('./hooks/useModeOptions', () => ({
 
 jest.mock('./hooks/useResourceStats', () => ({
   useResourceStats: jest.fn(),
+}));
+
+jest.mock('./hooks/useRepositoryStatus', () => ({
+  useRepositoryStatus: jest.fn(),
 }));
 
 // Wrapper component to provide form context
@@ -86,6 +91,14 @@ describe('BootstrapStep', () => {
     (useGetResourceStatsQuery as jest.Mock).mockReturnValue({
       data: { instance: [] },
       isLoading: false,
+    });
+
+    (useRepositoryStatus as jest.Mock).mockReturnValue({
+      isReady: true,
+      isLoading: false,
+      hasError: false,
+      isHealthy: true,
+      refetch: jest.fn(),
     });
 
     const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
