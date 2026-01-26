@@ -34,6 +34,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { DOCS_URL_TEMPLATE_EXAMPLES, DOCS_URL_TEMPLATE_NOTIFICATIONS } from '../../utils/docs';
 import { isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { EditorColumnHeader } from '../EditorColumnHeader';
@@ -293,7 +294,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                             'alerting.template-form.label-examples-documentation',
                                             'Examples documentation'
                                           )}
-                                          url="https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/"
+                                          url={DOCS_URL_TEMPLATE_EXAMPLES}
                                           target="_blank"
                                           icon="external-link-alt"
                                         />
@@ -419,7 +420,7 @@ For detailed information about notification templates, refer to our documentatio
           <div style={{ whiteSpace: 'pre' }}>{intro}</div>
           <div>
             <LinkButton
-              href="https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/"
+              href={DOCS_URL_TEMPLATE_NOTIFICATIONS}
               target="_blank"
               icon="external-link-alt"
               variant="secondary"

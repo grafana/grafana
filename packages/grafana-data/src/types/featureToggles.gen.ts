@@ -1431,6 +1431,11 @@ export interface FeatureToggles {
   */
   queryWithAssistant?: boolean;
   /**
+  * Enables next generation query editor experience
+  * @default false
+  */
+  queryEditorNext?: boolean;
+  /**
   * Enables search for team bindings in the app platform API
   * @default false
   */

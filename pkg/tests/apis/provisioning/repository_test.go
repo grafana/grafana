@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -510,7 +511,10 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	// Explicitly set max repositories to 10 to test the limit enforcement
+	helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningMaxRepositories = 10
+	})
 	ctx := context.Background()
 
 	originalName := "original-repo"
@@ -585,6 +589,27 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	})
 
 	t.Run("repository limit validation of 10 for folder syncs repositories", func(t *testing.T) {
+		// Ensure the original repo is folder sync before testing limits
+		// (it was changed to folder sync in a previous subtest)
+		require.Eventually(t, func() bool {
+			repo, err := helper.Repositories.Resource.Get(ctx, originalName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			syncTarget, found, err := unstructured.NestedString(repo.Object, "spec", "sync", "target")
+			if err != nil || !found {
+				return false
+			}
+			return syncTarget == "folder"
+		}, time.Second*10, time.Millisecond*100, "original repo should be folder sync")
+
+		// Count existing repos (should be 1: original-repo)
+		existingRepos, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "failed to list repositories")
+		existingCount := len(existingRepos.Items)
+		require.Equal(t, 1, existingCount, "should have 1 existing repository (original-repo)")
+
+		// Create repos to reach the limit of 10 (we already have 1, so create 9 more)
 		for i := 2; i <= 10; i++ {
 			repoName := fmt.Sprintf("limit-test-repo-%d", i)
 			limitTestRepo := TestRepo{
@@ -605,10 +630,10 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 			"SyncTarget":  "folder",
 		})
 
-		_, err := helper.Repositories.Resource.Create(ctx, eleventhRepo, metav1.CreateOptions{FieldValidation: "Strict"})
-		require.Error(t, err, "11th repository should be rejected due to limit")
+		_, createErr := helper.Repositories.Resource.Create(ctx, eleventhRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.Error(t, createErr, "11th repository should be rejected due to limit")
 
-		statusError := helper.RequireApiErrorStatus(err, metav1.StatusReasonInvalid, http.StatusUnprocessableEntity)
+		statusError := helper.RequireApiErrorStatus(createErr, metav1.StatusReasonInvalid, http.StatusUnprocessableEntity)
 		require.Contains(t, statusError.Message, "Maximum number of 10 repositories reached")
 	})
 }

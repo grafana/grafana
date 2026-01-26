@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/playlist
 go 1.25.6
 
 require (
-	github.com/grafana/grafana-app-sdk v0.48.7
+	github.com/grafana/grafana-app-sdk v0.49.0
 	k8s.io/apimachinery v0.34.3
 	k8s.io/client-go v0.34.3
 	k8s.io/klog/v2 v2.130.1
@@ -42,7 +42,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.48.7 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.49.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.4 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

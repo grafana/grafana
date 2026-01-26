@@ -55,7 +55,41 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 
 	app, err := ghClient.GetApp(ctx)
 	if err != nil {
-		if errors.Is(err, ErrServiceUnavailable) {
+		// Check for specific error types
+		switch {
+		case errors.Is(err, ErrAuthentication):
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
+				},
+				Code:    http.StatusUnauthorized,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "token").String(),
+						Detail: ErrAuthentication.Error(),
+					},
+				},
+			}, nil
+		case errors.Is(err, ErrNotFound):
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
+				},
+				Code:    http.StatusNotFound,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "appID").String(),
+						Detail: "app not found",
+					},
+				},
+			}, nil
+		case errors.Is(err, ErrServiceUnavailable):
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
@@ -71,22 +105,24 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 					},
 				},
 			}, nil
-		}
-		return &provisioning.TestResults{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: provisioning.APIVERSION,
-				Kind:       "TestResults",
-			},
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors: []provisioning.ErrorDetails{
-				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  field.NewPath("spec", "token").String(),
-					Detail: "invalid token",
+		default:
+			// Generic error - invalid spec
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
 				},
-			},
-		}, nil
+				Code:    http.StatusUnprocessableEntity,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "token").String(),
+						Detail: "invalid token",
+					},
+				},
+			}, nil
+		}
 	}
 
 	if fmt.Sprintf("%d", app.ID) != c.obj.Spec.GitHub.AppID {
@@ -109,7 +145,41 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 
 	_, err = ghClient.GetAppInstallation(ctx, c.obj.Spec.GitHub.InstallationID)
 	if err != nil {
-		if errors.Is(err, ErrServiceUnavailable) {
+		// Check for specific error types
+		switch {
+		case errors.Is(err, ErrAuthentication):
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
+				},
+				Code:    http.StatusUnauthorized,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "installationID").String(),
+						Detail: ErrAuthentication.Error(),
+					},
+				},
+			}, nil
+		case errors.Is(err, ErrNotFound):
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
+				},
+				Code:    http.StatusNotFound,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "installationID").String(),
+						Detail: "installation not found",
+					},
+				},
+			}, nil
+		case errors.Is(err, ErrServiceUnavailable):
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
@@ -120,27 +190,29 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Errors: []provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("spec", "token").String(),
+						Field:  field.NewPath("spec", "installationID").String(),
 						Detail: ErrServiceUnavailable.Error(),
 					},
 				},
 			}, nil
-		}
-		return &provisioning.TestResults{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: provisioning.APIVERSION,
-				Kind:       "TestResults",
-			},
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors: []provisioning.ErrorDetails{
-				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  field.NewPath("spec", "installationID").String(),
-					Detail: fmt.Sprintf("invalid installation ID: %s", c.obj.Spec.GitHub.InstallationID),
+		default:
+			// Generic error - invalid spec
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
 				},
-			},
-		}, nil
+				Code:    http.StatusUnprocessableEntity,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "installationID").String(),
+						Detail: fmt.Sprintf("invalid installation ID: %s", c.obj.Spec.GitHub.InstallationID),
+					},
+				},
+			}, nil
+		}
 	}
 
 	return &provisioning.TestResults{
