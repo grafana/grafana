@@ -2636,7 +2636,7 @@ __metadata:
     "@types/react-dom": "npm:18.3.5"
     "@types/semver": "npm:7.7.1"
     jest: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     lucene: "npm:^2.1.1"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -2686,7 +2686,7 @@ __metadata:
     i18next-cli: "npm:^1.24.22"
     immer: "npm:10.2.0"
     jest: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     monaco-editor: "npm:0.34.1"
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
@@ -2724,7 +2724,7 @@ __metadata:
     "@types/node": "npm:24.10.1"
     "@types/react": "npm:18.3.18"
     jest: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
@@ -2759,7 +2759,7 @@ __metadata:
     css-loader: "npm:7.1.2"
     fast-deep-equal: "npm:^3.1.3"
     jest: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     monaco-editor: "npm:0.34.1"
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
@@ -2801,7 +2801,7 @@ __metadata:
     "@types/uuid": "npm:10.0.0"
     d3-random: "npm:^3.0.1"
     jest: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     micro-memoize: "npm:^4.1.2"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -2843,7 +2843,7 @@ __metadata:
     "@types/semver": "npm:7.7.1"
     "@types/uuid": "npm:10.0.0"
     jest: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     moment: "npm:2.30.1"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -2886,7 +2886,7 @@ __metadata:
     "@types/react-window": "npm:1.8.8"
     "@types/uuid": "npm:10.0.0"
     jest: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     logfmt: "npm:^1.3.2"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -2931,7 +2931,7 @@ __metadata:
     "@types/uuid": "npm:10.0.0"
     d3-random: "npm:^3.0.1"
     jest: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     micro-memoize: "npm:^4.1.2"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -2969,7 +2969,7 @@ __metadata:
     "@types/node": "npm:24.10.1"
     "@types/react": "npm:18.3.18"
     i18next-cli: "npm:^1.24.22"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
@@ -3001,7 +3001,7 @@ __metadata:
     "@types/node": "npm:24.10.1"
     "@types/react": "npm:18.3.18"
     jest: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
@@ -3037,7 +3037,7 @@ __metadata:
     "@types/uuid": "npm:10.0.0"
     debounce-promise: "npm:3.1.2"
     jest: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-select: "npm:5.10.2"
@@ -3071,7 +3071,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     jest: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     monaco-editor: "npm:0.34.1"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
@@ -3115,7 +3115,7 @@ __metadata:
     i18next: "npm:^25.0.0"
     immer: "npm:10.2.0"
     jest: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     monaco-editor: "npm:0.34.1"
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
@@ -3170,7 +3170,7 @@ __metadata:
     glob: "npm:11.1.0"
     i18next: "npm:^25.0.0"
     jest: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     lru-cache: "npm:11.2.2"
     monaco-editor: "npm:0.34.1"
     prismjs: "npm:1.30.0"
@@ -3214,7 +3214,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     jest: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-select: "npm:5.10.2"
@@ -3359,7 +3359,7 @@ __metadata:
     eventemitter3: "npm:5.0.1"
     fast_array_intersect: "npm:1.1.0"
     history: "npm:4.10.1"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     marked: "npm:16.3.0"
     marked-mangle: "npm:1.1.12"
     moment: "npm:2.30.1"
@@ -3515,7 +3515,7 @@ __metadata:
     fs-extra: "npm:^11.3.2"
     jest: "npm:^29.6.4"
     jest-canvas-mock: "npm:2.5.2"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     react-use: "npm:17.6.0"
     react-virtualized-auto-sizer: "npm:1.0.26"
@@ -3679,17 +3679,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "@grafana/plugin-e2e@npm:3.1.0"
+"@grafana/plugin-e2e@npm:^3.1.3":
+  version: 3.1.3
+  resolution: "@grafana/plugin-e2e@npm:3.1.3"
   dependencies:
-    "@grafana/e2e-selectors": "npm:12.4.0-20165274911"
+    "@grafana/e2e-selectors": "npm:12.4.0-20331417332"
     semver: "npm:^7.5.4"
     uuid: "npm:^13.0.0"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.52.0
-  checksum: 10/a4003a1c594e8ecd771a8ab7af77357cfe2d942dee821d922e317da2eb7962f86c19bddcc4bdf4d0c793b3ebfec409095b25022b0e3664d66b93163e61cc3fb5
+  checksum: 10/16276e45eede97bdabe1d116c6007957a96fd7424070ec4cc22a9a28cfe43e549499367c027f60d438df93437b6eb909206a444c156b7c52095542499b343b1f
   languageName: node
   linkType: hard
 
@@ -3765,7 +3765,7 @@ __metadata:
     i18next-cli: "npm:^1.24.22"
     jest: "npm:29.7.0"
     jest-environment-jsdom: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
     monaco-editor: "npm:0.34.1"
@@ -3818,7 +3818,7 @@ __metadata:
     "@types/systemjs": "npm:6.15.3"
     esbuild: "npm:0.25.8"
     history: "npm:4.10.1"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-loading-skeleton: "npm:3.5.0"
@@ -3837,11 +3837,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:6.52.2":
-  version: 6.52.2
-  resolution: "@grafana/scenes-react@npm:6.52.2"
+"@grafana/scenes-react@npm:6.52.11":
+  version: 6.52.11
+  resolution: "@grafana/scenes-react@npm:6.52.11"
   dependencies:
-    "@grafana/scenes": "npm:6.52.2"
+    "@grafana/scenes": "npm:6.52.11"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3853,7 +3853,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/c393faf6612e78254dab79b15cc970448d74ba9784ccda623953c5dbc21d91a8da94b7ad7d0d294eac51314cc193c419a7cb48295fd50b1f9c4472699669eb3e
+  checksum: 10/44897f0db4c0f7ed80117a1d33aa635181afdb519f6dc4c75988037657631244247712e5ad59807bdc7363adcdc74d1471f27e37be150048acaa9124ffb02d6b
   languageName: node
   linkType: hard
 
@@ -3883,9 +3883,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.52.2":
-  version: 6.52.2
-  resolution: "@grafana/scenes@npm:6.52.2"
+"@grafana/scenes@npm:6.52.11":
+  version: 6.52.11
+  resolution: "@grafana/scenes@npm:6.52.11"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3905,7 +3905,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/f6dbe20db78bb1aa09cc38025534917887713d73119a172febb44700837ed859363ee0436b5f4bda6bc063f9432115e32519ab4c8da7834cf1fc22d43fea7711
+  checksum: 10/d53791b1f453fc5ae71e7f7bed9ad1538f8b520e5abb0b628d723d09a076776b0e8ecdc6bf5aa66b37e8f55fd5832fac5770220ba63f0f5690dc81c6d1fef02d
   languageName: node
   linkType: hard
 
@@ -3953,7 +3953,7 @@ __metadata:
     i18next-cli: "npm:^1.24.22"
     immutable: "npm:5.1.4"
     jest: "npm:^29.6.4"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     react-select: "npm:5.10.2"
@@ -3984,7 +3984,7 @@ __metadata:
     chance: "npm:^1.1.13"
     jest: "npm:29.7.0"
     jest-matcher-utils: "npm:29.7.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     msw: "npm:2.10.4"
     rxjs: "npm:7.8.2"
     typescript: "npm:5.9.2"
@@ -4090,7 +4090,7 @@ __metadata:
     immutable: "npm:5.1.4"
     is-hotkey: "npm:0.2.0"
     jquery: "npm:3.7.1"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     micro-memoize: "npm:^4.1.2"
     mock-raf: "npm:1.0.1"
     moment: "npm:2.30.1"
@@ -7625,6 +7625,13 @@ __metadata:
   version: 1.19.1
   resolution: "@remix-run/router@npm:1.19.1"
   checksum: 10/2800c2f6567a982fe942aacc4cb5b170e7cc89bd455960e3bea2424161ff7dac32d01886322d88dd19b88d1bea711f39566d17f02b73eeb74999affb471f8f52
+  languageName: node
+  linkType: hard
+
+"@remix-run/router@npm:1.23.2":
+  version: 1.23.2
+  resolution: "@remix-run/router@npm:1.23.2"
+  checksum: 10/50eb497854881bbd2e1016d4eb83c935ecd618e1c3888b74718851317e3b04edbaae9fe1baa49ec08c5c52cfe7118f4664e37144813d9500f45f922d6602a782
   languageName: node
   linkType: hard
 
@@ -16542,23 +16549,23 @@ __metadata:
   linkType: hard
 
 "diff@npm:^4.0.1":
-  version: 4.0.2
-  resolution: "diff@npm:4.0.2"
-  checksum: 10/ec09ec2101934ca5966355a229d77afcad5911c92e2a77413efda5455636c4cf2ce84057e2d7715227a2eeeda04255b849bd3ae3a4dd22eb22e86e76456df069
+  version: 4.0.4
+  resolution: "diff@npm:4.0.4"
+  checksum: 10/5019b3f5ae124ea9e95137119e1a83a59c252c75ddac873cc967832fd7a834570a58a4d58b941bdbd07832ebf98dcb232b27c561b7f5584357da6dae59bcac62
   languageName: node
   linkType: hard
 
 "diff@npm:^5.1.0":
-  version: 5.2.0
-  resolution: "diff@npm:5.2.0"
-  checksum: 10/01b7b440f83a997350a988e9d2f558366c0f90f15be19f4aa7f1bb3109a4e153dfc3b9fbf78e14ea725717017407eeaa2271e3896374a0181e8f52445740846d
+  version: 5.2.2
+  resolution: "diff@npm:5.2.2"
+  checksum: 10/8a885b38113d96138d87f6cb474ee959b7e9ab33c0c4cb1b07dcf019ec544945a2309d53d721532af020de4b3a58fb89f1026f64f42f9421aa9c3ae48a36998b
   languageName: node
   linkType: hard
 
 "diff@npm:^8.0.0":
-  version: 8.0.2
-  resolution: "diff@npm:8.0.2"
-  checksum: 10/82a2120d3418f97822e17a6044ccd4b99a91e26e145e8698353673d7146bd2d092bbebb79c112aae7badc7b9c526f9098cbe342f96174feb6beabdd2587b3c42
+  version: 8.0.3
+  resolution: "diff@npm:8.0.3"
+  checksum: 10/52f957e1fa53db4616ff5f4811b92b22b97a160c12a2f86f22debd4181227b0f6751aa8fd711d6a8fcf4618acb13b86bc702e6d9d6d6ed82acfd00c9cb26ace2
   languageName: node
   linkType: hard
 
@@ -19933,12 +19940,12 @@ __metadata:
     "@grafana/llm": "npm:1.0.1"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:^3.1.0"
+    "@grafana/plugin-e2e": "npm:^3.1.3"
     "@grafana/plugin-ui": "npm:^0.11.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:6.52.2"
-    "@grafana/scenes-react": "npm:6.52.2"
+    "@grafana/scenes": "npm:6.52.11"
+    "@grafana/scenes-react": "npm:6.52.11"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -20138,7 +20145,7 @@ __metadata:
     kbar: "npm:0.1.0-beta.48"
     lerna: "npm:9.0.3"
     leven: "npm:^4.0.0"
-    lodash: "npm:4.17.21"
+    lodash: "npm:^4.17.23"
     logfmt: "npm:^1.3.2"
     lossless-json: "npm:^4.1.1"
     lru-cache: "npm:11.2.2"
@@ -23992,9 +23999,9 @@ __metadata:
   linkType: hard
 
 "lodash-es@npm:^4.17.21":
-  version: 4.17.21
-  resolution: "lodash-es@npm:4.17.21"
-  checksum: 10/03f39878ea1e42b3199bd3f478150ab723f93cc8730ad86fec1f2804f4a07c6e30deaac73cad53a88e9c3db33348bb8ceeb274552390e7a75d7849021c02df43
+  version: 4.17.23
+  resolution: "lodash-es@npm:4.17.23"
+  checksum: 10/1feae200df22eb0bd93ca86d485e77784b8a9fb1d13e91b66e9baa7a7e5e04be088c12a7e20c2250fc0bd3db1bc0ef0affc7d9e3810b6af2455a3c6bf6dde59e
   languageName: node
   linkType: hard
 
@@ -24117,10 +24124,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:4.17.21, lodash@npm:^4, lodash@npm:^4.1.1, lodash@npm:^4.15.0, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.20, lodash@npm:^4.17.21, lodash@npm:^4.17.4, lodash@npm:~4.17.21":
-  version: 4.17.21
-  resolution: "lodash@npm:4.17.21"
-  checksum: 10/c08619c038846ea6ac754abd6dd29d2568aa705feb69339e836dfa8d8b09abbb2f859371e86863eda41848221f9af43714491467b5b0299122431e202bb0c532
+"lodash@npm:^4, lodash@npm:^4.1.1, lodash@npm:^4.15.0, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.20, lodash@npm:^4.17.21, lodash@npm:^4.17.23, lodash@npm:^4.17.4, lodash@npm:~4.17.21":
+  version: 4.17.23
+  resolution: "lodash@npm:4.17.23"
+  checksum: 10/82504c88250f58da7a5a4289f57a4f759c44946c005dd232821c7688b5fcfbf4a6268f6a6cdde4b792c91edd2f3b5398c1d2a0998274432cff76def48735e233
   languageName: node
   linkType: hard
 
@@ -29439,17 +29446,17 @@ __metadata:
   linkType: hard
 
 "react-router-dom-v5-compat@npm:^6.26.1":
-  version: 6.26.1
-  resolution: "react-router-dom-v5-compat@npm:6.26.1"
+  version: 6.30.3
+  resolution: "react-router-dom-v5-compat@npm:6.30.3"
   dependencies:
-    "@remix-run/router": "npm:1.19.1"
+    "@remix-run/router": "npm:1.23.2"
     history: "npm:^5.3.0"
-    react-router: "npm:6.26.1"
+    react-router: "npm:6.30.3"
   peerDependencies:
     react: ">=16.8"
     react-dom: ">=16.8"
     react-router-dom: 4 || 5
-  checksum: 10/c8249404e0b219ff00797ae0ff8818394a07309b62617a9a4e47d5a8769801098431ceec38eca8c712cbee4a04843326cb2334ed15ea08b7848b5ce5a58ad0a3
+  checksum: 10/af355cb7c38541c0766a23a140d431537fdeb5c4bda29a45a16242704731875d2ae8bfb96e0bedeb7232a2b6ebe710c47a090aea58f235258b22fbb9e48e903e
   languageName: node
   linkType: hard
 
@@ -29510,6 +29517,17 @@ __metadata:
   peerDependencies:
     react: ">=16.8"
   checksum: 10/b3761515c75da65a1678f005d08a6285ceccd9df7237ae6fdd9ab2ab816ef328435b75610f705ecd9ecd41c6878fd22eb9b44c5391cdef2e1ed99ddbc78de8a4
+  languageName: node
+  linkType: hard
+
+"react-router@npm:6.30.3":
+  version: 6.30.3
+  resolution: "react-router@npm:6.30.3"
+  dependencies:
+    "@remix-run/router": "npm:1.23.2"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 10/1a51bdcc42b8d7979228dea8b5c44a28a4add9b681781f75b74f5f920d20058a92ffe5f1d0ba0621f03abe1384b36025b53b402515ecb35f27a6a2f2f25d6fbe
   languageName: node
   linkType: hard
 
@@ -34147,16 +34165,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"use-sync-external-store@npm:^1.0.0, use-sync-external-store@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "use-sync-external-store@npm:1.4.0"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10/08bf581a8a2effaefc355e9d18ed025d436230f4cc973db2f593166df357cf63e47b9097b6e5089b594758bde322e1737754ad64905e030d70f8ff7ee671fd01
-  languageName: node
-  linkType: hard
-
-"use-sync-external-store@npm:^1.5.0":
+"use-sync-external-store@npm:^1.0.0, use-sync-external-store@npm:^1.4.0, use-sync-external-store@npm:^1.5.0":
   version: 1.6.0
   resolution: "use-sync-external-store@npm:1.6.0"
   peerDependencies:

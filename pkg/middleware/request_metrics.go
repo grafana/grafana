@@ -55,27 +55,24 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagEnableNativeHTTPHistogram) {
-		// the recommended default value from the prom_client
-		// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
-		// Giving this variable a value means the client will expose a native
-		// histogram.
-		reqDurationOptions.NativeHistogramBucketFactor = 1.1
-		reqSizeOptions.NativeHistogramBucketFactor = 1.1
-		// The default value in OTel. It probably good enough for us as well.
-		reqDurationOptions.NativeHistogramMaxBucketNumber = 160
-		reqSizeOptions.NativeHistogramMaxBucketNumber = 160
-		reqDurationOptions.NativeHistogramMinResetDuration = time.Hour
-		reqSizeOptions.NativeHistogramMinResetDuration = time.Hour
+	// the recommended default value from the prom_client
+	// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
+	// Giving this variable a value means the client will expose a native
+	// histogram.
+	reqDurationOptions.NativeHistogramBucketFactor = 1.1
+	reqSizeOptions.NativeHistogramBucketFactor = 1.1
+	// The default value in OTel. It probably good enough for us as well.
+	reqDurationOptions.NativeHistogramMaxBucketNumber = 160
+	reqSizeOptions.NativeHistogramMaxBucketNumber = 160
+	reqDurationOptions.NativeHistogramMinResetDuration = time.Hour
+	reqSizeOptions.NativeHistogramMinResetDuration = time.Hour
 
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if features.IsEnabledGlobally(featuremgmt.FlagDisableClassicHTTPHistogram) {
-			// setting Buckets to nil with native options set means the classic
-			// histogram will no longer be exposed - this can be a good way to
-			// reduce cardinality in the exposed metrics
-			reqDurationOptions.Buckets = nil
-			reqSizeOptions.Buckets = nil
-		}
+	if !cfg.ClassicHTTPHistogramEnabled {
+		// setting Buckets to nil with native options set means the classic
+		// histogram will no longer be exposed - this can be a good way to
+		// reduce cardinality in the exposed metrics
+		reqDurationOptions.Buckets = nil
+		reqSizeOptions.Buckets = nil
 	}
 
 	httpRequestDurationHistogram := prometheus.NewHistogramVec(

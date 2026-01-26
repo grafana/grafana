@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Sil",
       "duplicate": "Çoğalt",
       "label-integration": "Entegrasyon",
       "label-notification-settings": "Bildirim ayarları",
       "label-section": "İsteğe bağlı {{name}} ayarları",
       "test": "Test",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -1643,6 +1645,11 @@
       },
       "yaml-error": "YAML dosyası ayrıştırılamadı: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Sistem durumunu izleyin",
       "monitor-status-system-tooltip": "Uyarı analizleri, uyarı verilerinizi izlemek için önceden oluşturulmuş panolar sunar.",
@@ -1928,6 +1935,10 @@
     "namespace-and-group-filter": {
       "select-group": "Grup seç",
       "select-namespace": "Ad alanı seç"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Yardıma mı ihtiyacınız var?"
@@ -3730,6 +3741,7 @@
       "non-folder-item": "Klasörsüz {{itemKind}} {{itemUID}}",
       "root-title": "Panolar",
       "search-placeholder": "Klasör ara",
+      "shared-with-me": "",
       "unknown-error": "Bilinmeyen hata"
     },
     "manage-folder-nav": {
@@ -3833,6 +3845,7 @@
       "label-method": "Yöntem",
       "label-payload": "Yük",
       "label-query-parameters": "Sorgu parametreleri",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Test API'si",
         "title-test-api": "Test API'si"
@@ -4548,6 +4561,14 @@
     "actions": {
       "open-settings": "Ayarlar"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "\"Panel Ekle\" widget'ını kapat",
       "tooltip-close-widget": "Widget'ı kapat"
@@ -4930,12 +4951,14 @@
       "add-visualization-body": "Bir veri kaynağı seçin ve ardından grafikler, istatistikler ve tablolarla verilerinizi sorgulayın ve görselleştirin veya listeler, markdown'lar ve diğer widget'lar oluşturun.",
       "add-visualization-button": "Görselleştirme ekle",
       "add-visualization-header": "Bir görselleştirme ekleyerek yeni panonuzu başlatın",
+      "description": "",
       "import-a-dashboard-body": "Panoları dosyalardan veya <2>grafana.com</2>'dan içe aktarın.",
       "import-a-dashboard-header": "Bir panoyu içe aktar",
       "import-dashboard-button": "Panoyu içe aktar",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5147,6 +5170,9 @@
       "title": {
         "deleted": "silindi"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -5442,6 +5468,10 @@
       "loading-configuration": "Yapılandırma yükleniyor"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -11847,10 +11877,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12039,6 +12066,8 @@
       "error-delete-all-repositories": "Tüm depolar silinemedi",
       "subtitle": "Yapılandırılmış depoları görüntüleyin ve yönetin",
       "success-all-repositories-deleted": "Yapılandırılmış tüm depolar silindi",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Başlarken",
       "tab-getting-started-title": "Başlarken",
       "tab-repositories": "Depolar",
@@ -12102,6 +12131,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12122,7 +12154,6 @@
       "jobs": "İşler"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Ayarlar",
       "source-code": "Kaynak kodu"
     },
@@ -12302,6 +12333,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Sonlandır",
@@ -12314,15 +12350,30 @@
         "dismiss": "Çalışmaya devam et",
         "title": "Depo kurulumu silinsin mi?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Nelerin senkronize edileceğini seçin",
+      "step-configure-repo": "",
       "step-connect": "Bağlan",
       "step-finish": "Ek ayarlar seçin",
+      "step-github-app": "",
       "step-synchronize": "Harici depolama ile senkronize et",
       "sync-description": "Kaynakları harici depolama ile senkronize edin. Bu tek seferlik adımdan sonra tüm gelecekteki güncellemeler otomatik olarak depoya kaydedilecek ve örneğe geri sağlanacaktır.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Nelerin senkronize edileceğini seçin",
+      "title-configure-repo": "",
       "title-connect": "Harici depolamaya bağlan",
       "title-finish": "Ek ayarlar seçin",
+      "title-github-app": "",
       "title-synchronize": "Harici depolama ile senkronize et"
     },
     "wizard-content": {
@@ -12540,6 +12591,18 @@
       "query-inspector": "Sorgu denetçisi",
       "query-tab-help-button-title-open-data-source-help": "Veri kaynağı yardımını aç",
       "title-data-source-help": "Veri kaynağı yardımı"
+    }
+  },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {
@@ -13301,6 +13364,7 @@
       "label-standard": "Standart"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14911,6 +14975,9 @@
       "label-both": "Her ikisi de",
       "label-lines": "Çizgiler",
       "label-points": "Noktalar"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

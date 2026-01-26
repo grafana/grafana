@@ -29,6 +29,11 @@ import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { RuleFormValues } from '../../types/rule-form';
 import {
+  DOCS_URL_NO_DATA_ERROR_HANDLING,
+  DOCS_URL_RULE_EVALUATION,
+  DOCS_URL_STALE_ALERT_INSTANCES,
+} from '../../utils/docs';
+import {
   isGrafanaAlertingRuleByType,
   isGrafanaManagedRuleByType,
   isGrafanaRecordingRuleByType,
@@ -420,9 +425,7 @@ export function GrafanaEvaluationBehaviorStep({
                         )}
                       </>
                     }
-                    externalLink={
-                      'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/'
-                    }
+                    externalLink={DOCS_URL_STALE_ALERT_INSTANCES}
                     linkText={t(
                       'alerting.alert-missing-evaluations-to-stale.help-info.link-text',
                       `Read more about stale alert instances`
@@ -672,9 +675,6 @@ function KeepFiringFor({ evaluateEvery }: { evaluateEvery: string }) {
 }
 
 function NeedHelpInfoForConfigureNoDataError() {
-  const docsLink =
-    'https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling';
-
   return (
     <Stack direction="row" gap={0.5} alignItems="center">
       <Text variant="bodySmall" color="secondary">
@@ -687,7 +687,7 @@ function NeedHelpInfoForConfigureNoDataError() {
           'alerting.rule-form.evaluation-behaviour.info-help.content',
           'These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts.'
         )}
-        externalLink={docsLink}
+        externalLink={DOCS_URL_NO_DATA_ERROR_HANDLING}
         linkText={t('alerting.rule-form.evaluation-behaviour.info-help.link-text', `Read more about this option`)}
         title={t(
           'alerting.rule-form.evaluation-behaviour.info-help.link-title',
@@ -699,8 +699,6 @@ function NeedHelpInfoForConfigureNoDataError() {
 }
 
 function getDescription(isGrafanaRecordingRule: boolean) {
-  const docsLink = 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/';
-
   return (
     <Stack direction="row" gap={0.5} alignItems="center">
       <Text variant="bodySmall" color="secondary">
@@ -736,7 +734,7 @@ function getDescription(isGrafanaRecordingRule: boolean) {
             </p>
           </>
         }
-        externalLink={docsLink}
+        externalLink={DOCS_URL_RULE_EVALUATION}
         linkText={t(
           'alerting.rule-form.evaluation-behaviour.info-help2.link-text',
           `Read about evaluation and alert states`

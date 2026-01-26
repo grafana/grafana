@@ -156,7 +156,10 @@ export interface Route {
 	reqRole?: string;
 	reqAction?: string;
 	// +listType=atomic
-	headers?: string[];
+	headers?: {
+		name: string;
+		content: string;
+	}[];
 	body?: Record<string, any>;
 	tokenAuth?: {
 		url?: string;
@@ -262,9 +265,6 @@ export interface Spec {
 		status: "internal" | "valid" | "invalid" | "modified" | "unsigned";
 		type?: "grafana" | "commercial" | "community" | "private" | "private-glob";
 		org?: string;
-	};
-	angular?: {
-		detected: boolean;
 	};
 	translations?: Record<string, string>;
 	// +listType=atomic

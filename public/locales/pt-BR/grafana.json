@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Excluir",
       "duplicate": "Duplicar",
       "label-integration": "Integração",
       "label-notification-settings": "Configurações de notificações",
       "label-section": "Configurações de {{name}} opcionais",
       "test": "Teste",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -1643,6 +1645,11 @@
       },
       "yaml-error": "Falha ao analisar o arquivo YAML: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Monitore o status do seu sistema",
       "monitor-status-system-tooltip": "Os insights de alerta oferecem painéis pré-configurados para monitorar seus dados de alerta.",
@@ -1928,6 +1935,10 @@
     "namespace-and-group-filter": {
       "select-group": "Selecionar o grupo",
       "select-namespace": "Selecionar nomenclatura "
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Precisa de ajuda?"
@@ -3730,6 +3741,7 @@
       "non-folder-item": "{{itemKind}} {{itemUID}} não é uma pasta",
       "root-title": "Painéis de controle",
       "search-placeholder": "Buscar pastas",
+      "shared-with-me": "",
       "unknown-error": "Erro desconhecido"
     },
     "manage-folder-nav": {
@@ -3833,6 +3845,7 @@
       "label-method": "Método",
       "label-payload": "Carga útil",
       "label-query-parameters": "Parâmetros de consulta",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Testar API",
         "title-test-api": "Testar API"
@@ -4548,6 +4561,14 @@
     "actions": {
       "open-settings": "Configurações"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Fechar o widget \"Adicionar painel\"",
       "tooltip-close-widget": "Fechar widget"
@@ -4930,12 +4951,14 @@
       "add-visualization-body": "Selecione uma fonte de dados e consulte e visualize seus dados com gráficos, estatísticas e tabelas ou crie listas, markdowns e outros widgets.",
       "add-visualization-button": "Adicionar visualização",
       "add-visualization-header": "Comece seu novo painel de controle adicionando uma visualização",
+      "description": "",
       "import-a-dashboard-body": "Importe painéis por meio de arquivos ou do <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importar um painel de controle",
       "import-dashboard-button": "Importar painel de controle",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5147,6 +5170,9 @@
       "title": {
         "deleted": "excluída"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -5442,6 +5468,10 @@
       "loading-configuration": "Carregando configuração"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -10815,7 +10845,7 @@
       "title": "Consultas gravadas"
     },
     "reporting": {
-      "title": "Reportar"
+      "title": "Relatórios"
     },
     "scenes": {
       "title": "Cenários"
@@ -11847,10 +11877,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12039,6 +12066,8 @@
       "error-delete-all-repositories": "Falha ao excluir todos os repositórios",
       "subtitle": "Visualize e gerencie seus repositórios configurados",
       "success-all-repositories-deleted": "Todos os repositórios configurados foram excluídos",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Como começar",
       "tab-getting-started-title": "Como começar",
       "tab-repositories": "Repositórios",
@@ -12102,6 +12131,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12122,7 +12154,6 @@
       "jobs": "Tarefas"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Configurações",
       "source-code": "Código fonte"
     },
@@ -12302,6 +12333,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Finalizar",
@@ -12314,15 +12350,30 @@
         "dismiss": "Continuar trabalhando",
         "title": "Descartar configuração do repositório?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Escolha o que será sincronizado",
+      "step-configure-repo": "",
       "step-connect": "Conectar",
       "step-finish": "Escolha configurações adicionais",
+      "step-github-app": "",
       "step-synchronize": "Sincronizar com armazenamento externo",
       "sync-description": "Sincronize recursos com armazenamento externo. Após esta única etapa, todas as atualizações futuras serão salvas automaticamente no repositório e provisionadas de volta para a instância.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Escolha o que será sincronizado",
+      "title-configure-repo": "",
       "title-connect": "Conectar ao armazenamento externo",
       "title-finish": "Escolha configurações adicionais",
+      "title-github-app": "",
       "title-synchronize": "Sincronizar com armazenamento externo"
     },
     "wizard-content": {
@@ -12540,6 +12591,18 @@
       "query-inspector": "Inspetor da consulta",
       "query-tab-help-button-title-open-data-source-help": "Abrir ajuda da fonte de dados",
       "title-data-source-help": "Ajuda da fonte de dados"
+    }
+  },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {
@@ -13301,6 +13364,7 @@
       "label-standard": "Padrão"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -13637,13 +13701,13 @@
       "from-input": "De",
       "open-input-calendar": "Abrir calendário",
       "range-error": "\"De\" não pode ser após \"Para\"",
-      "to-input": "Para"
+      "to-input": "Até"
     },
     "range-picker": {
       "backwards-time-aria-label": "Mover intervalo de tempo para trás",
       "current-time-selected": "Intervalo de tempo selecionado: {{currentTimeRange}}",
       "forwards-time-aria-label": "Avançar intervalo de tempo",
-      "to": "para",
+      "to": "até",
       "zoom-out-button": "Diminuir o intervalo de tempo",
       "zoom-out-tooltip": "",
       "zoom-out-tooltip-new": ""
@@ -14911,6 +14975,9 @@
       "label-both": "Ambos",
       "label-lines": "Linhas",
       "label-points": "Pontos"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

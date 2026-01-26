@@ -808,12 +808,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Удалить",
       "duplicate": "Дублировать",
       "label-integration": "Интеграция",
       "label-notification-settings": "Параметры уведомлений",
       "label-section": "Дополнительные параметры {{name}}",
       "test": "Тестирование",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -1653,6 +1655,11 @@
       },
       "yaml-error": "Не удалось проанализировать YAML-файл: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Следите за состоянием своей системы",
       "monitor-status-system-tooltip": "Аналитика по оповещениям предлагает готовые дашборды для мониторинга данных оповещений.",
@@ -1940,6 +1947,10 @@
     "namespace-and-group-filter": {
       "select-group": "Выбрать группу",
       "select-namespace": "Выбрать пространство имен"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Нужна помощь?"
@@ -3762,6 +3773,7 @@
       "non-folder-item": "{{itemKind}} {{itemUID}} не является папкой",
       "root-title": "Дашборды",
       "search-placeholder": "Поиск папок",
+      "shared-with-me": "",
       "unknown-error": "Неизвестная ошибка"
     },
     "manage-folder-nav": {
@@ -3871,6 +3883,7 @@
       "label-method": "Метод",
       "label-payload": "Полезные данные",
       "label-query-parameters": "Параметры запроса",
+      "label-successmessage": "",
       "render-test-apibutton": {
         "test-api": "Тест API",
         "title-test-api": "Тест API"
@@ -4586,6 +4599,14 @@
     "actions": {
       "open-settings": "Параметры"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Закрыть виджет «Добавление панели»",
       "tooltip-close-widget": "Закрыть виджет"
@@ -4968,12 +4989,14 @@
       "add-visualization-body": "Выберите источник данных, а затем запрашивайте и визуализируйте свои данные с помощью диаграмм, статистики и таблиц или создавайте списки, разметки и другие виджеты.",
       "add-visualization-button": "Добавить визуализацию",
       "add-visualization-header": "Создание нового дашборда с добавлением визуализации",
+      "description": "",
       "import-a-dashboard-body": "Импортируйте дашборды из файлов или с <1>grafana.com</1>.",
       "import-a-dashboard-header": "Импорт дашборда",
       "import-dashboard-button": "Импорт дашборда",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5185,6 +5208,9 @@
       "title": {
         "deleted": "удалено"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -5482,6 +5508,10 @@
       "loading-configuration": "Загрузка конфигурации"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -11947,10 +11977,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12143,6 +12170,8 @@
       "error-delete-all-repositories": "Не удалось удалить все репозитории",
       "subtitle": "Просмотр настроенных репозиториев и управление ими",
       "success-all-repositories-deleted": "Все настроенные репозитории удалены",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Начало работы",
       "tab-getting-started-title": "Начало работы",
       "tab-repositories": "Репозитории",
@@ -12206,6 +12235,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12226,7 +12258,6 @@
       "jobs": "Задания"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Параметры",
       "source-code": "Исходный код"
     },
@@ -12406,6 +12437,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Готово",
@@ -12418,15 +12454,30 @@
         "dismiss": "Продолжить работу",
         "title": "Отменить настройку репозитория?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Выберите, что синхронизировать",
+      "step-configure-repo": "",
       "step-connect": "Подключить",
       "step-finish": "Выберите дополнительные параметры",
+      "step-github-app": "",
       "step-synchronize": "Синхронизировать с внешним хранилищем",
       "sync-description": "Синхронизируйте ресурсы с внешним хранилищем. После этого разового шага все будущие обновления будут автоматически сохраняться в репозитории и загружаться обратно в экземпляр.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Выберите, что синхронизировать",
+      "title-configure-repo": "",
       "title-connect": "Подключение к внешнему хранилищу",
       "title-finish": "Выбор дополнительных параметров",
+      "title-github-app": "",
       "title-synchronize": "Синхронизировать с внешним хранилищем"
     },
     "wizard-content": {
@@ -12646,6 +12697,18 @@
       "query-inspector": "Инспектор запросов",
       "query-tab-help-button-title-open-data-source-help": "Открыть справку по источнику данных",
       "title-data-source-help": "Справка по источнику данных"
+    }
+  },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {
@@ -13413,6 +13476,7 @@
       "label-standard": "Стандартный"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -15025,6 +15089,9 @@
       "label-both": "Оба",
       "label-lines": "Линии",
       "label-points": "Точки"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

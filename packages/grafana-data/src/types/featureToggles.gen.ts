@@ -244,16 +244,6 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
-  * Enables native HTTP Histograms
-  * @default false
-  */
-  enableNativeHTTPHistogram?: boolean;
-  /**
-  * Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
-  * @default false
-  */
-  disableClassicHTTPHistogram?: boolean;
-  /**
   * Routes snapshot requests from /api to the /apis endpoint
   * @default false
   */
@@ -603,6 +593,11 @@ export interface FeatureToggles {
   * @default false
   */
   suggestedDashboards?: boolean;
+  /**
+  * Enables dashboard validator app to run compatibility checks between a dashboard and data source
+  * @default false
+  */
+  dashboardValidatorApp?: boolean;
   /**
   * Enables a flow to get started with a new dashboard from a template
   * @default false
@@ -1001,6 +996,7 @@ export interface FeatureToggles {
   azureMonitorLogsBuilderEditor?: boolean;
   /**
   * Specifies the locale so the correct format for numbers and dates can be shown
+  * @deprecated
   * @default false
   */
   localeFormatPreference?: boolean;
@@ -1105,6 +1101,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAuthzRolesApi?: boolean;
+  /**
+  * Registers AuthZ TeamLBACRule /apis endpoint
+  * @default false
+  */
+  kubernetesAuthzTeamLBACRuleApi?: boolean;
   /**
   * Registers AuthZ Role Bindings /apis endpoint
   * @default false
@@ -1430,4 +1431,14 @@ export interface FeatureToggles {
   * @default false
   */
   bottomDrawer?: boolean;
+  /**
+  * Enables next generation query editor experience
+  * @default false
+  */
+  queryEditorNext?: boolean;
+  /**
+  * Enables search for team bindings in the app platform API
+  * @default false
+  */
+  kubernetesTeamBindings?: boolean;
 }

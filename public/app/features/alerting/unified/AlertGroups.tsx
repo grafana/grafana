@@ -9,6 +9,7 @@ import { AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/typ
 
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
+import { InhibitionRulesAlert } from './components/InhibitionRulesAlert';
 import { AlertGroup } from './components/alert-groups/AlertGroup';
 import { AlertGroupFilter } from './components/alert-groups/AlertGroupFilter';
 import { useFilteredAmGroups } from './hooks/useFilteredAmGroups';
@@ -81,6 +82,8 @@ const AlertGroups = () => {
           </Trans>
         </Alert>
       )}
+
+      {selectedAlertmanager && <InhibitionRulesAlert alertmanagerSourceName={selectedAlertmanager} />}
 
       {results &&
         filteredAlertGroups.map((group, index) => {
