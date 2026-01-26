@@ -7,12 +7,12 @@ import { t } from '@grafana/i18n';
 import { FilterInput, useStyles2 } from '@grafana/ui';
 
 import { TreeNode } from './types';
+import { useScopeActions } from './useScopeActions';
 
 export interface ScopesTreeSearchProps {
   anyChildExpanded: boolean;
   searchArea: string;
   treeNode: TreeNode;
-  filterNode: (scopeNodeId: string, query: string) => void;
   onFocus: () => void;
   onBlur: () => void;
   'aria-controls': string;
@@ -22,13 +22,13 @@ export interface ScopesTreeSearchProps {
 export function ScopesTreeSearch({
   anyChildExpanded,
   treeNode,
-  filterNode,
   searchArea,
   onFocus,
   onBlur,
   'aria-controls': ariaControls,
   'aria-activedescendant': ariaActivedescendant,
 }: ScopesTreeSearchProps) {
+  const { filterNode } = useScopeActions();
   const styles = useStyles2(getStyles);
 
   const [inputState, setInputState] = useState<{ value: string; dirty: boolean }>({

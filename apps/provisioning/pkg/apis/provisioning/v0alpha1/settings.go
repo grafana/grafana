@@ -15,6 +15,9 @@ type RepositoryViewList struct {
 	// Whether image rendering is allowed for dashboard previews
 	AllowImageRendering bool `json:"allowImageRendering"`
 
+	// MaxRepositories is the maximum number of repositories allowed per namespace (0 = unlimited)
+	MaxRepositories int64 `json:"maxRepositories"`
+
 	// AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)
 	AvailableRepositoryTypes []RepositoryType `json:"availableRepositoryTypes,omitempty"`
 

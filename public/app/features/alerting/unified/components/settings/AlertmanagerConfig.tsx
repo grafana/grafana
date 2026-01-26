@@ -11,6 +11,7 @@ import { reportFormErrors } from '../../Analytics';
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
+import { InhibitionRulesAlert } from '../InhibitionRulesAlert';
 import { Spacer } from '../Spacer';
 
 export interface FormValues {
@@ -153,6 +154,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
           </Trans>
         </Alert>
       )}
+      <InhibitionRulesAlert alertmanagerSourceName={alertmanagerName} />
       {/* form error state */}
       {errors.configJSON && (
         <Alert

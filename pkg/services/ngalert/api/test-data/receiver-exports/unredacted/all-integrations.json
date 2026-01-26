@@ -844,7 +844,7 @@
        "clientKey": "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49\nAwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q\nEKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==\n-----END EC PRIVATE KEY-----",
        "insecureSkipVerify": false
       },
-      "url": "http://localhost",
+      "url": "grafana://noop",
       "username": "test-user"
      },
      "disableResolveMessage": false

@@ -76,9 +76,13 @@ type DataSource struct {
 	isSecureSocksDSProxyEnabled *bool `xorm:"-"`
 }
 
+func IsSecureSocksDSProxyEnabled(jsonData *simplejson.Json) bool {
+	return jsonData != nil && jsonData.Get("enableSecureSocksProxy").MustBool(false)
+}
+
 func (ds *DataSource) IsSecureSocksDSProxyEnabled() bool {
 	if ds.isSecureSocksDSProxyEnabled == nil {
-		enabled := ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false)
+		enabled := IsSecureSocksDSProxyEnabled(ds.JsonData)
 		ds.isSecureSocksDSProxyEnabled = &enabled
 	}
 	return *ds.isSecureSocksDSProxyEnabled

@@ -925,6 +925,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "dashboardValidatorApp",
+			Description:  "Enables dashboard validator app to run compatibility checks between a dashboard and data source",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardTemplates",
 			Description:  "Enables a flow to get started with a new dashboard from a template",
 			Stage:        FeatureStagePublicPreview,
@@ -1551,7 +1559,7 @@ var (
 		{
 			Name:        "localeFormatPreference",
 			Description: "Specifies the locale so the correct format for numbers and dates can be shown",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageDeprecated, // not continuing the work for now, will be removed
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 		},
@@ -2240,6 +2248,14 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaOSSBigTent,
+			Expression:   "false",
+		},
+		{
+			Name:         "queryEditorNext",
+			Description:  "Enables next generation query editor experience",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDataProSquad,
 			Expression:   "false",
 		},
 		{

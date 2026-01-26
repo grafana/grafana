@@ -111,12 +111,27 @@ func TestGithubClient_GetApp(t *testing.T) {
 			),
 			token:   "invalid-token",
 			wantApp: conngh.App{},
-			wantErr: &github.ErrorResponse{
-				Response: &http.Response{
-					StatusCode: http.StatusUnauthorized,
-				},
-				Message: "Bad credentials",
-			},
+			wantErr: conngh.ErrAuthentication,
+		},
+		{
+			name: "not found error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetApp,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusNotFound,
+							},
+							Message: "Integration not found",
+						}))
+					}),
+				),
+			),
+			token:   "test-token",
+			wantApp: conngh.App{},
+			wantErr: conngh.ErrNotFound,
 		},
 	}
 

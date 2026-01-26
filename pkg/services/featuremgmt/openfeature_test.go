@@ -25,7 +25,7 @@ func TestCreateProvider(t *testing.T) {
 	testCases := []struct {
 		name                  string
 		cfg                   setting.OpenFeatureSettings
-		expectedProvider      string
+		expectedProvider      setting.OpenFeatureProviderType
 		expectExchangeRequest *authlib.TokenExchangeRequest
 		failSigning           bool
 	}{

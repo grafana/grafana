@@ -594,6 +594,11 @@ export interface FeatureToggles {
   */
   suggestedDashboards?: boolean;
   /**
+  * Enables dashboard validator app to run compatibility checks between a dashboard and data source
+  * @default false
+  */
+  dashboardValidatorApp?: boolean;
+  /**
   * Enables a flow to get started with a new dashboard from a template
   * @default false
   */
@@ -991,6 +996,7 @@ export interface FeatureToggles {
   azureMonitorLogsBuilderEditor?: boolean;
   /**
   * Specifies the locale so the correct format for numbers and dates can be shown
+  * @deprecated
   * @default false
   */
   localeFormatPreference?: boolean;
@@ -1420,6 +1426,11 @@ export interface FeatureToggles {
   * @default false
   */
   queryWithAssistant?: boolean;
+  /**
+  * Enables next generation query editor experience
+  * @default false
+  */
+  queryEditorNext?: boolean;
   /**
   * Enables search for team bindings in the app platform API
   * @default false

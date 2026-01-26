@@ -73,6 +73,9 @@ type kvStorageBackend struct {
 	//reg           prometheus.Registerer
 
 	rvManager *rvmanager.ResourceVersionManager
+
+	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
+	dbKeepAlive any
 }
 
 var _ KVBackend = &kvStorageBackend{}
@@ -96,6 +99,10 @@ type KVBackendOptions struct {
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
+
+	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
+	// needed for sqlkv
+	DBKeepAlive any
 }
 
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
@@ -136,6 +143,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		eventPruningInterval:         eventPruningInterval,
 		withExperimentalClusterScope: opts.WithExperimentalClusterScope,
 		rvManager:                    opts.RvManager,
+		dbKeepAlive:                  opts.DBKeepAlive,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {

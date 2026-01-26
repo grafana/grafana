@@ -97,7 +97,12 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 	if gvr == receiver.ResourceInfo.GroupVersionResource() {
 		return receiver.NewStorage(api.ReceiverService, namespacer, api.ReceiverService)
 	} else if gvr == timeinterval.ResourceInfo.GroupVersionResource() {
-		return timeinterval.NewStorage(api.MuteTimings, namespacer)
+		srv := api.MuteTimings
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+			srv = srv.WithIncludeImported()
+		}
+		return timeinterval.NewStorage(srv, namespacer)
 	} else if gvr == templategroup.ResourceInfo.GroupVersionResource() {
 		srv := api.Templates
 		//nolint:staticcheck // not yet migrated to OpenFeature

@@ -46,7 +46,10 @@ func TestParser(t *testing.T) {
 			Data: []byte("hello"), // not a real resource
 		})
 		require.Error(t, err)
-		require.Equal(t, "unable to read file as a resource", err.Error())
+		// Check that it's a ResourceValidationError
+		var resourceErr *ResourceValidationError
+		require.ErrorAs(t, err, &resourceErr, "error should be a ResourceValidationError")
+		require.Contains(t, err.Error(), "resource validation failed")
 	})
 
 	t.Run("dashboard parsing (with and without name)", func(t *testing.T) {

@@ -799,12 +799,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "刪除",
       "duplicate": "重複",
       "label-integration": "整合",
       "label-notification-settings": "通知設定",
       "label-section": "可選{{name}}設定",
       "test": "測試",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -1638,6 +1640,11 @@
       },
       "yaml-error": "無法剖析 YAML 檔案：{{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "監控系統狀態",
       "monitor-status-system-tooltip": "警報深入解析提供預先建立的儀表板，以便監控您的警報資料。",
@@ -1922,6 +1929,10 @@
     "namespace-and-group-filter": {
       "select-group": "選擇群組",
       "select-namespace": "選擇命名空間"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "需要幫忙嗎？"
@@ -4531,6 +4542,14 @@
     "actions": {
       "open-settings": "設定"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "關閉「新增面板」小工具",
       "tooltip-close-widget": "關閉小工具"
@@ -4913,12 +4932,14 @@
       "add-visualization-body": "選取資料來源，然後使用圖表、統計資料及表格查詢並將資料可視化，或建立清單、標記及其他小工具。",
       "add-visualization-button": "新增可視化",
       "add-visualization-header": "透過新增可視化來啟動您的新儀表板",
+      "description": "",
       "import-a-dashboard-body": "從檔案或 <2>grafana.com</2> 匯入儀表板。",
       "import-a-dashboard-header": "匯入儀表板",
       "import-dashboard-button": "匯入儀表板",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5130,6 +5151,9 @@
       "title": {
         "deleted": "已刪除"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -5424,6 +5448,10 @@
       "loading-configuration": "正在匯入設定"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -11799,10 +11827,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -11989,6 +12014,8 @@
       "error-delete-all-repositories": "無法刪除所有儲存庫",
       "subtitle": "檢視及管理您設定的儲存庫",
       "success-all-repositories-deleted": "已刪除所有已設定的儲存庫",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "立即開始",
       "tab-getting-started-title": "立即開始",
       "tab-repositories": "儲存庫",
@@ -12052,6 +12079,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12072,7 +12102,6 @@
       "jobs": "作業"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "設定",
       "source-code": "原始碼"
     },
@@ -12252,6 +12281,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "結束",
@@ -12264,15 +12298,30 @@
         "dismiss": "繼續工作",
         "title": "要捨棄儲存庫設定嗎？"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "選擇要同步的內容",
+      "step-configure-repo": "",
       "step-connect": "連接",
       "step-finish": "選擇附加設定",
+      "step-github-app": "",
       "step-synchronize": "與外部儲存空間同步",
       "sync-description": "將資源與外部儲存空間同步。在此一次性步驟之後，未來的所有更新都將自動儲存到儲存庫中，並佈建回執行個體。",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "選擇要同步的內容",
+      "title-configure-repo": "",
       "title-connect": "連接到外部儲存空間",
       "title-finish": "選擇附加設定",
+      "title-github-app": "",
       "title-synchronize": "與外部儲存空間同步"
     },
     "wizard-content": {
@@ -12489,6 +12538,18 @@
       "query-inspector": "查詢檢查器",
       "query-tab-help-button-title-open-data-source-help": "開啟資料來源說明",
       "title-data-source-help": "資料來源說明"
+    }
+  },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {
@@ -13247,6 +13308,7 @@
       "label-standard": "標準"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14856,6 +14918,9 @@
       "label-both": "兩者",
       "label-lines": "線",
       "label-points": "點"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

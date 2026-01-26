@@ -396,6 +396,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/invite/:code',
+      allowAnonymous: true,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SignupInvited" */ 'app/features/invites/SignupInvited')
       ),
