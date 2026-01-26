@@ -10921,6 +10921,11 @@
     }
   },
   "navigation": {
+    "bottom-drawer": {
+      "aria-label": "Open bottom drawer",
+      "close-tooltip": "Close {{title}}",
+      "open-tooltip": "Open {{title}}"
+    },
     "breadcrumbs": {
       "aria-label": "Breadcrumbs"
     },

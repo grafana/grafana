@@ -22,7 +22,7 @@ export function BottomDrawer() {
     extensionPointId: PluginExtensionPoints.BottomDrawer,
   });
 
-  if (!dockedComponentId || isLoading) {
+  if (isLoading || !dockedComponentId) {
     return null;
   }
 

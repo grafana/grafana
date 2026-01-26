@@ -26,6 +26,7 @@ export const BottomDrawerButton = memo(function BottomDrawerButton() {
     <ToolbarButton
       iconOnly
       icon="brackets-curly"
+      data-testid={`bottom-drawer-button-${isOpen ? 'close' : 'open'}`}
       aria-label={t('navigation.bottom-drawer.aria-label', 'Open bottom drawer')}
       variant={isOpen ? 'active' : 'default'}
       tooltip={
