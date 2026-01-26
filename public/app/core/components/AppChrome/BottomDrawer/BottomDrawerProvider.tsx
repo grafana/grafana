@@ -2,7 +2,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState,
 import { useAsync, useLocalStorage } from 'react-use';
 
 import { PluginExtensionPoints, store } from '@grafana/data';
-import { getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
+import { config, getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
 import { ExtensionPointPluginMeta } from 'app/features/plugins/extensions/appUtils';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { CloseBottomDrawerEvent, OpenBottomDrawerEvent, ToggleBottomDrawerEvent } from 'app/types/events';
@@ -61,7 +61,37 @@ interface BottomDrawerContextProps {
   children: ReactNode;
 }
 
+/**
+ * Provider wrapper that checks the feature flag before rendering the full provider
+ */
 export const BottomDrawerContextProvider = ({ children }: BottomDrawerContextProps) => {
+  const isFeatureEnabled = config.featureToggles.bottomDrawer;
+
+  // If the feature flag is not enabled, render children with a minimal disabled context
+  if (!isFeatureEnabled) {
+    return (
+      <BottomDrawerContext.Provider
+        value={{
+          isOpen: false,
+          dockedComponentId: undefined,
+          setDockedComponentId: () => {},
+          availableComponents: new Map(),
+          bottomDrawerHeight: DEFAULT_BOTTOM_DRAWER_HEIGHT,
+          setBottomDrawerHeight: () => {},
+        }}
+      >
+        {children}
+      </BottomDrawerContext.Provider>
+    );
+  }
+
+  return <BottomDrawerContextProviderInternal>{children}</BottomDrawerContextProviderInternal>;
+};
+
+/**
+ * Internal provider component with all hooks - only rendered when feature is enabled
+ */
+const BottomDrawerContextProviderInternal = ({ children }: BottomDrawerContextProps) => {
   const [props, setProps] = useState<Record<string, unknown> | undefined>(undefined);
   const storedDockedPluginId = store.get(BOTTOM_DRAWER_DOCKED_LOCAL_STORAGE_KEY);
   const [bottomDrawerHeight, setBottomDrawerHeight] = useLocalStorage(

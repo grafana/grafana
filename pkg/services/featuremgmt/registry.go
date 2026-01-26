@@ -2252,6 +2252,15 @@ var (
 			Owner:        grafanaOSSBigTent,
 			Expression:   "false",
 		},
+		{
+			Name:         "bottomDrawer",
+			Description:  "Enables the bottom drawer extension point for plugins",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPathfinderSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
 	}
 )
 

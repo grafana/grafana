@@ -1425,4 +1425,9 @@ export interface FeatureToggles {
   * @default false
   */
   queryWithAssistant?: boolean;
+  /**
+  * Enables the bottom drawer extension point for plugins
+  * @default false
+  */
+  bottomDrawer?: boolean;
 }

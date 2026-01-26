@@ -912,6 +912,24 @@
     },
     {
       "metadata": {
+        "name": "bottomDrawer",
+        "resourceVersion": "1769441173337",
+        "creationTimestamp": "2026-01-26T15:19:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-26 15:26:13.33739 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the bottom drawer extension point for plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/pathfinder",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "cachingOptimizeSerializationMemoryUsage",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2023-10-12T16:56:49Z",

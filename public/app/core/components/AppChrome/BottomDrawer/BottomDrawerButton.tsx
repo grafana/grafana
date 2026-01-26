@@ -1,6 +1,7 @@
 import { memo } from 'react';
 
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { ToolbarButton } from '@grafana/ui';
 
 import { useBottomDrawerContext } from './BottomDrawerProvider';
@@ -8,12 +9,8 @@ import { useBottomDrawerContext } from './BottomDrawerProvider';
 export const BottomDrawerButton = memo(function BottomDrawerButton() {
   const { isOpen, setDockedComponentId, availableComponents } = useBottomDrawerContext();
 
-  // TODO: Remove this temporary bypass once grafana-grafanacoda-app plugin registers extensions
-  // For now, always show the button for development/testing purposes
-  const TEMP_ALWAYS_SHOW_BUTTON = true;
-
-  // Only show the button if there are extension point components available
-  if (!TEMP_ALWAYS_SHOW_BUTTON && availableComponents.size === 0) {
+  // Only show the button if the feature flag is enabled and there are extension point components available
+  if (!config.featureToggles.bottomDrawer || availableComponents.size === 0) {
     return null;
   }
 
