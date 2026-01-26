@@ -34,8 +34,8 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 
 require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.48.7
-	github.com/grafana/grafana-app-sdk/logging v0.48.7
+	github.com/grafana/grafana-app-sdk v0.49.0
+	github.com/grafana/grafana-app-sdk/logging v0.49.0
 	github.com/stretchr/testify v1.11.1
 	k8s.io/apimachinery v0.34.3
 	k8s.io/kube-openapi v0.0.0-20251125145642-4e65d59e963e
@@ -184,7 +184,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20260112172717-98a49ed9557f // indirect
+	github.com/grafana/alerting v0.0.0-20260122140035-50b2f7c394f7 // indirect
 	github.com/grafana/authlib v0.0.0-20260119104241-f33edcf42077 // indirect
 	github.com/grafana/authlib/types v0.0.0-20260119104241-f33edcf42077 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect

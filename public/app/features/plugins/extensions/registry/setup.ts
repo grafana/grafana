@@ -1,8 +1,9 @@
+/* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { PluginExtensionExposedComponents } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { getAppPluginMetas } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
+import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -43,24 +44,21 @@ async function initPluginExtensionRegistries(): Promise<PluginExtensionRegistrie
     configs: [
       {
         id: PluginExtensionExposedComponents.CentralAlertHistorySceneV1,
-        title: t(
-          'plugins.get-plugin-extension-registries.title.central-alert-history-scene',
-          'Central alert history scene'
-        ),
-        description: t(
-          'plugins.get-plugin-extension-registries.description.central-alert-history-scene',
-          'Central alert history scene'
-        ),
+        title: 'Central alert history scene',
+        description: 'Central alert history scene',
         component: CentralAlertHistorySceneExposedComponent,
       },
       {
         id: PluginExtensionExposedComponents.AddToDashboardFormV1,
-        title: t('plugins.get-plugin-extension-registries.title.add-to-dashboard-form', 'Add to dashboard form'),
-        description: t(
-          'plugins.get-plugin-extension-registries.description.add-to-dashboard-form',
-          'Add to dashboard form'
-        ),
+        title: 'Add to dashboard form',
+        description: 'Add to dashboard form',
         component: AddToDashboardFormExposedComponent,
+      },
+      {
+        id: PluginExtensionExposedComponents.OpenQueryLibraryV1,
+        title: 'Access to the Query Library',
+        description: 'Access to the Query Library',
+        component: OpenQueryLibraryExposedComponent,
       },
     ],
   });
