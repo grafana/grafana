@@ -100,9 +100,9 @@ To create a dashboard, follow these steps:
    {{< /admonition >}}
 
 1. Click **Refresh** to query the data source.
-1. In the visualization list, select a visualization type.
+1. Select a suggested visualization or click **All visualizations** and select one from the full list.
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-select-visualization-v12.png" max-width="350px" alt="Visualization selector" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-select-visualization-v12.4.png" max-width="350px" alt="Visualization selector" >}}
 
    Grafana displays a preview of your query results with the visualization applied.
 
