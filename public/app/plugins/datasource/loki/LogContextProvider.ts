@@ -16,7 +16,15 @@ import {
   dateTime,
   ScopedVars,
 } from '@grafana/data';
-import { LabelParser, LabelFilter, LineFilters, PipelineStage, Logfmt, Json } from '@grafana/lezer-logql';
+import {
+  LabelParser,
+  LabelFilter,
+  LineFilters,
+  PipelineStage,
+  Logfmt,
+  Json,
+  JsonExpressionParser,
+} from '@grafana/lezer-logql';
 
 import { LokiContextUi } from './components/LokiContextUi';
 import { LokiQueryDirection, LokiQueryType } from './dataquery.gen';
@@ -25,7 +33,7 @@ import { escapeLabelValueInExactSelector, getLabelTypeFromFrame } from './langua
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
 import {
   getNodePositionsFromQuery,
-  getParserFromQuery,
+  getNodesFromQuery,
   getStreamSelectorsFromQuery,
   isQueryWithParser,
 } from './queryUtils';
@@ -250,14 +258,17 @@ export class LogContextProvider {
     let expr = `{${labelFilters}}`;
 
     // We need to have original query to get parser and include parsed labels
-    // We only add parser and parsed labels if there is only one parser in query
+    // We add all parsers if there is at least one parser in the query
     if (query) {
       let hasParser = false;
-      if (isQueryWithParser(query.expr).parserCount === 1) {
+      const parserInfo = isQueryWithParser(query.expr);
+      if (parserInfo.parserCount >= 1) {
         hasParser = true;
-        const parser = getParserFromQuery(query.expr);
-        if (parser) {
-          expr = addParserToQuery(expr, parser);
+        // Extract all parsers and add them to the context query
+        const parserNodes = getNodesFromQuery(query.expr, [LabelParser, JsonExpressionParser, Logfmt]);
+        for (const node of parserNodes) {
+          const parserName = query.expr.substring(node.from, node.to).trim();
+          expr = addParserToQuery(expr, parserName);
         }
       }
 

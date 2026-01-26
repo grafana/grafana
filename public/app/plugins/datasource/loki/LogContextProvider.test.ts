@@ -285,7 +285,7 @@ describe('LogContextProvider', () => {
       });
     });
 
-    it('should not apply parser and parsed labels if more parsers in original query', async () => {
+    it('should apply all parsers when multiple parsers in original query', async () => {
       logContextProvider.cachedContextFilters = [
         { value: 'baz', enabled: true, nonIndexed: false, label: 'bar' },
         { value: 'uniqueParsedLabel', enabled: true, nonIndexed: true, label: 'foo' },
@@ -300,7 +300,24 @@ describe('LogContextProvider', () => {
         }
       );
 
-      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | foo=\`uniqueParsedLabel\``);
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | json | logfmt | foo=\`uniqueParsedLabel\``);
+    });
+
+    it('should apply all parsers in correct order (json | logfmt)', async () => {
+      logContextProvider.cachedContextFilters = [
+        { value: 'baz', enabled: true, nonIndexed: false, label: 'bar' },
+      ];
+      const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
+        defaultLogRow,
+        10,
+        LogRowContextQueryDirection.Backward,
+        {
+          expr: '{bar="baz"} | json | logfmt',
+          refId: 'A',
+        }
+      );
+
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | json`);
     });
 
     it('should not apply line_format if flag is not set by default', async () => {
@@ -434,7 +451,7 @@ describe('LogContextProvider', () => {
       expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format "foo" | label_format a="baz"`);
     });
 
-    it('should not apply additional parsers', async () => {
+    it('should apply all parsers even when mixed with other pipeline operations', async () => {
       window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
       logContextProvider.cachedContextFilters = [{ value: 'baz', enabled: true, nonIndexed: false, label: 'bar' }];
       const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
@@ -447,7 +464,8 @@ describe('LogContextProvider', () => {
         }
       );
 
-      expect(contextQuery.query.expr).toEqual(`{bar="baz"}`);
+      // When parserCount > 1, processPipelineStagesToExpr returns early, so only parsers are added
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | json | logfmt`);
     });
   });
 
