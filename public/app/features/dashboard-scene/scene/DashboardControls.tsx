@@ -321,12 +321,9 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
       flexWrap: 'wrap-reverse',
       ...(isQueryEditorNext && {
         padding: 0,
-      }),
-      paddingRight: 0,
-      // Add bottom margin in panel edit mode when query editor next is enabled
-      ...(isQueryEditorNext && {
         marginBottom: theme.spacing(1),
       }),
+      paddingRight: 0,
     }),
     // New layout styles (used when feature toggle is on)
     topRow: css({
