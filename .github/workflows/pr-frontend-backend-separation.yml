@@ -139,7 +139,7 @@ jobs:
             const description = mixed
               ? hasException
                 ? 'Mixed changes allowed (exception label present)'
-                : 'Split into separate frontend and backend PRs or add frontend-backend-coupled label'
+                : 'Frontend and backend must be in separate PRs (or add exception label)'
               : 'PR changes are properly separated';
 
             await github.rest.repos.createCommitStatus({
@@ -163,12 +163,21 @@ jobs:
             else
               echo "❌ This PR contains both frontend and backend changes."
               echo ""
-              echo "Frontend and backend changes must be split into separate PRs."
+              echo "Why this check failed:"
+              echo "• Frontend and backend are deployed independently in our SaaS architecture"
+              echo "• Frontend serves all customers with a single deployment"
+              echo "• Backend runs multiple versions on different release channels"
+              echo "• Mixed changes break compatibility between frontend and backend versions"
               echo ""
-              echo "If this change requires coupled modifications:"
-              echo "1. Add the 'frontend-backend-coupled' label to this PR"
-              echo "2. Provide justification in the PR description"
+              echo "How to fix:"
+              echo "• Split this PR into two separate PRs (recommended):"
+              echo "  - One PR for frontend changes (public/, packages/, *.ts, *.tsx)"
+              echo "  - One PR for backend changes (pkg/, *.go, go.mod)"
               echo ""
+              echo "Exception process (if changes MUST be coupled):"
+              echo "• Add the 'frontend-backend-coupled' label to this PR"
+              echo "• Explain in the PR description why these changes cannot be separated"
+              echo "• Get platform team approval"
               exit 1
             fi
           else
