@@ -6,6 +6,7 @@ import { DataQuery } from '@grafana/schema';
 import { Icon, IconSize, Text, useStyles2 } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useQueryRunnerContext, useQueryEditorUIContext } from '../QueryEditorContext';
@@ -44,14 +45,14 @@ const Header = ({ editorType, hasError }: { editorType: QueryEditorType; hasErro
   );
 };
 
-const getEditorType = (type: string | undefined) => (type === '__expr__' ? 'expression' : 'query');
+const getEditorType = (query: DataQuery): QueryEditorType => (isExpressionQuery(query) ? 'expression' : 'query');
 
 interface SidebarCardProps {
   query: DataQuery;
 }
 
 export const SidebarCard = ({ query }: SidebarCardProps) => {
-  const editorType = getEditorType(query.datasource?.type);
+  const editorType = getEditorType(query);
   const queryDsSettings = useDatasource(query.datasource);
   const { data } = useQueryRunnerContext();
   const { selectedQuery, setSelectedQuery } = useQueryEditorUIContext();
