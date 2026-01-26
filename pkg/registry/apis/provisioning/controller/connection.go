@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -203,7 +203,6 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	var patchOperations []map[string]interface{}
-
 	if hasSpecChanged {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
@@ -219,33 +218,13 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	// Handle token generation/refresh
-	tokenResult := ReconcileConnectionToken(ctx, conn, c, cc.resyncInterval)
-
-	// Add token patch operations
-	if len(tokenResult.PatchOperations) > 0 {
-		patchOperations = append(patchOperations, tokenResult.PatchOperations...)
+	connectionOps, tokenGenerationError := ReconcileConnectionToken(ctx, conn, c, cc.resyncInterval)
+	if tokenGenerationError != nil {
+		return fmt.Errorf("reconcile connection token: %w", tokenGenerationError)
 	}
+	patchOperations = append(patchOperations, connectionOps...)
 
-	// If token was generated, substitute it for health check
-	if tokenResult.Token != "" {
-		conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(tokenResult.Token)}
-	}
-
-	// If token reconciliation says don't continue, apply patches and return
-	if !tokenResult.ShouldContinue {
-		logger.Warn("skipping health check due to token issues")
-
-		if len(patchOperations) > 0 {
-			if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
-				return fmt.Errorf("failed to update connection status: %w", err)
-			}
-		}
-
-		logger.Info("connection reconciliation stopped due to token issues")
-		return nil
-	}
-
-	// Handle health checks using the health checker
+	// Handle health check
 	testResults, healthStatus, healthPatchOps, err := cc.healthChecker.RefreshHealthWithPatchOps(ctx, conn)
 	if err != nil {
 		logger.Error("failed to get updated health status", "error", err)
@@ -253,17 +232,22 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 	patchOperations = append(patchOperations, healthPatchOps...)
 
-	// If token reconciliation provided a condition, override Ready condition
-	if tokenResult.Condition != nil {
-		if conditionPatchOps := BuildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.Generation, *tokenResult.Condition); conditionPatchOps != nil {
-			patchOperations = append(patchOperations, conditionPatchOps...)
-		}
+	// Update fieldErrors from test results - ensure fieldErrors are cleared when there are no errors
+	fieldErrors := testResults.Errors
+	if fieldErrors == nil {
+		fieldErrors = []provisioning.ErrorDetails{}
 	}
 
-	// Update state based on health status and token condition
-	// Token generation failure means the connection is not connected
-	tokenFailed := tokenResult.Condition != nil && tokenResult.Condition.Status == "False"
-	if healthStatus.Healthy && !tokenFailed {
+	patchOperations = append(patchOperations, map[string]interface{}{
+		"op":    "replace",
+		"path":  "/status/fieldErrors",
+		"value": fieldErrors,
+	})
+
+	readyCondition := buildReadyCondition(healthStatus, tokenGenerationError)
+	patchOperations = append(patchOperations, BuildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.Generation, readyCondition)...)
+
+	if readyCondition.Status == metav1.ConditionTrue {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/state",
@@ -277,17 +261,6 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		})
 	}
 
-	// Update fieldErrors from test results - ensure fieldErrors are cleared when there are no errors
-	fieldErrors := testResults.Errors
-	if fieldErrors == nil {
-		fieldErrors = []provisioning.ErrorDetails{}
-	}
-	patchOperations = append(patchOperations, map[string]interface{}{
-		"op":    "replace",
-		"path":  "/status/fieldErrors",
-		"value": fieldErrors,
-	})
-
 	if len(patchOperations) > 0 {
 		// Update fieldErrors from test results
 		if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
@@ -295,6 +268,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		}
 	}
 
-	logger.Info("connection reconciled successfully", "healthy", healthStatus.Healthy)
+	logger.Info("connection reconciliation completed", "healthy", healthStatus.Healthy, "field_errors", fieldErrors)
+
 	return nil
 }

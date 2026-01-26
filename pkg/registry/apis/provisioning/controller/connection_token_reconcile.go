@@ -10,133 +10,71 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
-
-// TokenReconcileResult contains the result of token reconciliation
-type TokenReconcileResult struct {
-	// ShouldContinue indicates whether reconciliation should proceed to health checks.
-	// False means token issues prevent meaningful health checks (e.g., expired token with failed refresh).
-	ShouldContinue bool
-
-	// PatchOperations are JSON patch operations to update the connection (e.g., new token).
-	PatchOperations []map[string]interface{}
-
-	// Condition is the Ready condition reflecting token state, or nil if no condition update needed.
-	Condition *metav1.Condition
-
-	// Token is the new token value to use for health checks (if generated).
-	Token string
-}
 
 // ReconcileConnectionToken handles token generation and refresh for a connection.
 // It determines if the connection is ready to proceed with health checks based on token state.
-// When the token is expired and generation fails, it builds all necessary patch operations
-// to mark the connection as disconnected.
-//
+// When the token is expired and generation fails, it builds all necessary patch operations to mark the connection as disconnected.
 // Returns:
-//   - TokenReconcileResult with continuation flag, patch operations, and condition
+//   - Patch operations to update the connection status and ready condition
+//   - Error if the token generation fails
 func ReconcileConnectionToken(
 	ctx context.Context,
 	conn *provisioning.Connection,
 	c connection.Connection,
 	resyncInterval time.Duration,
-) TokenReconcileResult {
+) (patchOps []map[string]interface{}, err error) {
 	logger := logging.FromContext(ctx)
 
 	// Check if connection supports token generation
 	tokenConn, ok := c.(connection.TokenConnection)
 	if !ok {
 		// Not a token connection, nothing to do
-		return TokenReconcileResult{
-			ShouldContinue: true,
-		}
+		return nil, nil
 	}
 
 	// Check if token needs to be generated or refreshed
-	needsGeneration, tokenExpired, err := shouldGenerateToken(ctx, conn, tokenConn, resyncInterval)
+	needsGeneration, isTokenExpired, err := shouldGenerateToken(ctx, conn, tokenConn, resyncInterval)
 	if err != nil {
-		logger.Warn("failed to check if token needs generation", "error", err)
-		// Can't determine token state - let health check decide
-		return TokenReconcileResult{
-			ShouldContinue: true,
-			Condition:      nil, // Health check will set the condition
+		if conn.Generation == conn.Status.ObservedGeneration {
+			logger.Error("token reconciliation failed, but spec did not change; ignoring until spec changes", "error", err)
+			return nil, nil
 		}
+
+		// In this case we must necessarily fail, as we can't determine if the token needs generation
+		// and therefore validate if spec changed.
+		return nil, fmt.Errorf("determine if token needs generation: %w", err)
 	}
 
 	if !needsGeneration {
-		// Token is fine, continue with health checks
-		return TokenReconcileResult{
-			ShouldContinue: true,
-		}
+		return nil, nil
 	}
 
 	// Token needs generation - attempt to generate
 	logger.Info("generating connection token")
 	token, err := tokenConn.GenerateConnectionToken(ctx)
 	if err != nil {
-		logger.Error("failed to generate connection token", "error", err)
-
-		// Generation failed - check if existing token is expired
-		if tokenExpired {
-			// Can't proceed with expired token and failed generation
-			// Build all patch operations to mark connection as disconnected
-			condition := buildReadyCondition(false, provisioning.ReasonTokenGenerationFailed,
-				fmt.Sprintf("Failed to generate connection token: %v", err))
-
-			var patchOps []map[string]interface{}
-
-			// Add condition patch
-			if conditionPatchOps := BuildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.Generation, condition); conditionPatchOps != nil {
-				patchOps = append(patchOps, conditionPatchOps...)
-			}
-
-			// Set state to disconnected
-			patchOps = append(patchOps, map[string]interface{}{
-				"op":    "replace",
-				"path":  "/status/state",
-				"value": provisioning.ConnectionStateDisconnected,
-			})
-
-			// Clear fieldErrors
-			patchOps = append(patchOps, map[string]interface{}{
-				"op":    "replace",
-				"path":  "/status/fieldErrors",
-				"value": []provisioning.ErrorDetails{},
-			})
-
-			return TokenReconcileResult{
-				ShouldContinue:  false,
-				PatchOperations: patchOps,
-				Condition:       &condition,
-			}
+		if isTokenExpired {
+			return nil, fmt.Errorf("token expired: %w", err)
 		}
 
-		// Token not expired yet - continue with existing token, but surface the error
-		condition := buildReadyCondition(false, provisioning.ReasonTokenGenerationFailed,
-			fmt.Sprintf("Failed to refresh token: %v", err))
-		return TokenReconcileResult{
-			ShouldContinue: true, // Can still try health check with existing token
-			Condition:      &condition,
-		}
+		logger.Error("failed to refresh token ahead of time but will try again later", "error", err)
+		return nil, nil // Not an error, we will try again later
 	}
 
-	// Token generated successfully
 	logger.Info("successfully generated new connection token")
-	patchOps := []map[string]interface{}{
-		{
-			"op":   "replace",
-			"path": "/secure/token",
-			"value": map[string]string{
-				"create": string(token),
-			},
+	// TODO: Update or create if there was a previous one
+	conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token.String())}
+	patchOps = append(patchOps, map[string]interface{}{
+		"op":   "replace",
+		"path": "/secure/token",
+		"value": map[string]string{
+			"create": string(token.String()),
 		},
-	}
+	})
 
-	return TokenReconcileResult{
-		ShouldContinue:  true,
-		PatchOperations: patchOps,
-		Token:           string(token),
-	}
+	return patchOps, nil
 }
 
 // shouldGenerateToken determines if a token needs to be generated or refreshed.
@@ -183,16 +121,26 @@ func shouldGenerateToken(
 }
 
 // buildReadyCondition creates a Ready condition with the specified status and reason.
-func buildReadyCondition(healthy bool, reason string, message string) metav1.Condition {
+func buildReadyCondition(healthStatus provisioning.HealthStatus, tokenGenerationError error) metav1.Condition {
 	status := metav1.ConditionTrue
-	if !healthy {
+	reason := provisioning.ReasonAvailable
+	msg := "Connection is available"
+
+	if !healthStatus.Healthy {
 		status = metav1.ConditionFalse
+		reason = provisioning.ReasonInvalidSpec
+		msg = "Spec is invalid"
+	}
+
+	if tokenGenerationError != nil && reason != provisioning.ReasonInvalidSpec {
+		reason = provisioning.ReasonTokenGenerationFailed
+		msg = tokenGenerationError.Error()
 	}
 
 	return metav1.Condition{
 		Type:    provisioning.ConditionTypeReady,
 		Status:  status,
 		Reason:  reason,
-		Message: message,
+		Message: msg,
 	}
 }
