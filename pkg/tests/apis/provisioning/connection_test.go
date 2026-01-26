@@ -796,12 +796,6 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 		valid, err := verifyToken(t, "12345", k)
 		require.NoError(t, err, "error verifying token: %s", k)
 		require.True(t, valid, "token should be valid: %s", k)
-
-		// Verify Auth condition is set correctly
-		authCondition := meta.FindStatusCondition(initial.Status.Conditions, provisioning.ConditionTypeAuth)
-		require.NotNil(t, authCondition, "Auth condition should exist")
-		assert.Equal(t, metav1.ConditionTrue, authCondition.Status, "Auth condition should be True")
-		assert.Equal(t, provisioning.ReasonAuthValid, authCondition.Reason, "Auth condition should have Valid reason")
 	})
 
 	t.Run("token gets updated if appID changes", func(t *testing.T) {

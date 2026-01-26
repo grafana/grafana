@@ -219,7 +219,6 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return err
 	}
 
-	var authCondition *metav1.Condition
 	tokenConn, ok := c.(connection.TokenConnection)
 	if ok {
 		refresh, err := cc.shouldGenerateToken(ctx, conn, tokenConn)
@@ -231,12 +230,11 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		if refresh {
 			logger.Info("generating connection token")
 
-			token, tokenOps, authCond, err := cc.generateConnectionToken(ctx, tokenConn)
+			token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
 			if err != nil {
 				logger.Error("failed to generate connection token", "error", err)
 				return err
 			}
-			authCondition = &authCond
 			if len(tokenOps) > 0 {
 				patchOperations = append(patchOperations, tokenOps...)
 			}
@@ -285,13 +283,6 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		patchOperations = append(patchOperations, conditionPatchOps...)
 	}
 
-	// Update Auth condition if token was generated
-	if authCondition != nil {
-		if conditionPatchOps := BuildConditionPatchOpsFromExisting(conn.Status.Conditions, conn.GetGeneration(), *authCondition); conditionPatchOps != nil {
-			patchOperations = append(patchOperations, conditionPatchOps...)
-		}
-	}
-
 	if len(patchOperations) > 0 {
 		// Update fieldErrors from test results
 		if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
@@ -337,23 +328,17 @@ func (cc *ConnectionController) shouldGenerateToken(
 
 // generateConnectionToken regenerates the connection token if the connection supports it.
 // Uses the TokenGenerator interface to generate tokens in a connection-type-agnostic way.
-// Returns the token, patch operations to update the /secure/token field, an Auth condition, and an error.
+// Returns patch operations to update the /secure/token field.
 func (cc *ConnectionController) generateConnectionToken(
 	ctx context.Context,
 	conn connection.TokenConnection,
-) (string, []map[string]interface{}, metav1.Condition, error) {
+) (string, []map[string]interface{}, error) {
 	logger := logging.FromContext(ctx)
 
 	token, err := conn.GenerateConnectionToken(ctx)
 	if err != nil {
 		logger.Error("failed to generate connection token", "error", err)
-		authCondition := metav1.Condition{
-			Type:    provisioning.ConditionTypeAuth,
-			Status:  metav1.ConditionFalse,
-			Reason:  provisioning.ReasonAuthTokenGenerationFailed,
-			Message: fmt.Sprintf("Token generation failed: %v", err),
-		}
-		return "", nil, authCondition, nil // Non-blocking: return empty patches but set Auth condition
+		return "", nil, nil // Non-blocking: return empty patches
 	}
 
 	logger.Info("successfully generated new connection token")
@@ -368,12 +353,5 @@ func (cc *ConnectionController) generateConnectionToken(
 		},
 	}
 
-	authCondition := metav1.Condition{
-		Type:    provisioning.ConditionTypeAuth,
-		Status:  metav1.ConditionTrue,
-		Reason:  provisioning.ReasonAuthValid,
-		Message: "Token generated successfully",
-	}
-
-	return string(token), patchOperations, authCondition, nil
+	return string(token), patchOperations, nil
 }

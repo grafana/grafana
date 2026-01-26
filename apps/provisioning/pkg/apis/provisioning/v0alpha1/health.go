@@ -24,10 +24,6 @@ const (
 	// This provides a high-level validity status that complements fieldErrors.
 	// True = spec is valid, False = spec has validation errors.
 	ConditionTypeSpec = "Spec"
-
-	// ConditionTypeAuth indicates the authentication/token status for connections.
-	// True = token is valid and authentication succeeded, False = token issue or auth failed.
-	ConditionTypeAuth = "Auth"
 )
 
 // Condition reasons for the Ready condition
@@ -73,18 +69,6 @@ const (
 	ReasonSpecValid = "Valid"
 	// ReasonSpecInvalid indicates the resource spec has validation errors.
 	ReasonSpecInvalid = "Invalid"
-)
-
-// Condition reasons for the Auth condition
-const (
-	// ReasonAuthValid indicates authentication is valid and token is working.
-	ReasonAuthValid = "Valid"
-	// ReasonAuthTokenExpired indicates the authentication token has expired.
-	ReasonAuthTokenExpired = "TokenExpired"
-	// ReasonAuthTokenGenerationFailed indicates token generation failed.
-	ReasonAuthTokenGenerationFailed = "TokenGenerationFailed"
-	// ReasonAuthTokenInvalid indicates the authentication token is invalid.
-	ReasonAuthTokenInvalid = "TokenInvalid"
 )
 
 type HealthStatus struct {
