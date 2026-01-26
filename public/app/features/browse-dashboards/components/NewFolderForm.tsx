@@ -88,7 +88,7 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
               <Tooltip
                 content={t(
                   'browse-dashboards.action.new-folder-as-team-folder-checkbox-tooltip',
-                  'Assign an owner to the folder. Team folders are folders that inherit default sharing and permission settings, making it easier to collaborate.'
+                  'Team folders are folders owned by your team. Use them to keep your team’s content in one place—making it easier to find, organize, and manage access'
                 )}
                 placement="top"
               >
