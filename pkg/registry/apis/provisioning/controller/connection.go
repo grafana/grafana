@@ -8,7 +8,6 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -250,21 +249,6 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return fmt.Errorf("update health status: %w", err)
 	}
 	patchOperations = append(patchOperations, healthPatchOps...)
-
-	// Update state based on health status
-	if healthStatus.Healthy {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/state",
-			"value": provisioning.ConnectionStateConnected,
-		})
-	} else {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/state",
-			"value": provisioning.ConnectionStateDisconnected,
-		})
-	}
 
 	// Update fieldErrors from test results - ensure fieldErrors are cleared when there are no errors
 	fieldErrors := testResults.Errors
