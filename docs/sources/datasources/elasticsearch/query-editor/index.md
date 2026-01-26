@@ -175,6 +175,7 @@ When in Code mode, you can write complete Elasticsearch query DSL in JSON format
 If you want to filter by time range in a dashboard, you need to use the `$__from` and `$__to` macros in your raw DSL.
 
 An example query applying dashboard time range using the `@timestamp` field:
+
 ```json
 {
   "query": {
