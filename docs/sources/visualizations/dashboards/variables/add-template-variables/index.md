@@ -346,7 +346,7 @@ Learn more in:
 
 - [Configure data links and actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-data-links/)
 - [Create dashboard URL variables – Ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#ad-hoc-filters)
-{{< /admonition >}}
+  {{< /admonition >}}
 
 ### Filter any data using the Dashboard data source
 
