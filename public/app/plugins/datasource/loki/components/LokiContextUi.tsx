@@ -126,7 +126,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
     window.localStorage.getItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true'
   );
 
-  const timerHandle = useRef<number | null>(null);
+  const timerHandle = useRef<number | undefined>(undefined);
   const previousInitialized = useRef<boolean>(false);
   const previousContextFilters = useRef<ContextFilter[]>([]);
 
