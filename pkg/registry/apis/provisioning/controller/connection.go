@@ -225,11 +225,17 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	// Handle token generation/refresh
-	connectionOps, tokenGenerationError := ReconcileConnectionToken(ctx, conn, c, cc.resyncInterval)
-	patchOperations = append(patchOperations, connectionOps...)
+	var (
+		tokenGenerationError error
+		healthStatus         provisioning.HealthStatus
+		fieldErrors          []provisioning.ErrorDetails
+	)
 
-	var healthStatus provisioning.HealthStatus
-	var fieldErrors []provisioning.ErrorDetails
+	if shouldRefreshToken {
+		var connectionOps []map[string]interface{}
+		connectionOps, tokenGenerationError = ReconcileConnectionToken(ctx, conn, c, cc.resyncInterval)
+		patchOperations = append(patchOperations, connectionOps...)
+	}
 
 	if tokenGenerationError != nil {
 		// Token generation failed - skip health check and update health status to show failure
@@ -321,24 +327,4 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	logger.Info("connection reconciliation completed", "healthy", healthStatus.Healthy, "field_errors", fieldErrors)
 
 	return nil
-}
-
-// shouldRefreshToken checks if the connection token needs to be refreshed.
-// Returns true if the connection supports tokens and the token needs generation/refresh.
-// Returns false on any errors to avoid blocking reconciliation.
-func (cc *ConnectionController) shouldRefreshToken(ctx context.Context, conn *provisioning.Connection, c connection.Connection) bool {
-	// Check if connection supports token generation
-	tokenConn, ok := c.(connection.TokenConnection)
-	if !ok {
-		return false
-	}
-
-	// Check if token needs to be generated or refreshed
-	needsGeneration, _, err := shouldGenerateToken(ctx, conn, tokenConn, cc.resyncInterval)
-	if err != nil {
-		// Don't block reconciliation on token check errors
-		return false
-	}
-
-	return needsGeneration
 }
