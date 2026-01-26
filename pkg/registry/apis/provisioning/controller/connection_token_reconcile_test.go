@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -144,7 +145,7 @@ func TestReconcileConnectionToken(t *testing.T) {
 	ctx := context.Background()
 	resyncInterval := 2 * time.Minute
 
-	t.Run("not a token connection - should continue", func(t *testing.T) {
+	t.Run("not a token connection - should return no patches", func(t *testing.T) {
 		conn := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "test-conn",
@@ -153,15 +154,13 @@ func TestReconcileConnectionToken(t *testing.T) {
 		}
 		mockConn := connection.NewMockConnection(t)
 
-		result := ReconcileConnectionToken(ctx, conn, mockConn, resyncInterval)
+		patchOps, err := ReconcileConnectionToken(ctx, conn, mockConn, resyncInterval)
 
-		assert.True(t, result.ShouldContinue)
-		assert.Nil(t, result.Condition)
-		assert.Empty(t, result.PatchOperations)
-		assert.Empty(t, result.Token)
+		assert.NoError(t, err)
+		assert.Empty(t, patchOps)
 	})
 
-	t.Run("token doesn't need generation - should continue", func(t *testing.T) {
+	t.Run("token doesn't need generation - should return no patches", func(t *testing.T) {
 		conn := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "test-conn",
@@ -179,15 +178,13 @@ func TestReconcileConnectionToken(t *testing.T) {
 			TokenConnection: mockTokenConn,
 		}
 
-		result := ReconcileConnectionToken(ctx, conn, mockWrapper, resyncInterval)
+		patchOps, err := ReconcileConnectionToken(ctx, conn, mockWrapper, resyncInterval)
 
-		assert.True(t, result.ShouldContinue)
-		assert.Nil(t, result.Condition)
-		assert.Empty(t, result.PatchOperations)
-		assert.Empty(t, result.Token)
+		assert.NoError(t, err)
+		assert.Empty(t, patchOps)
 	})
 
-	t.Run("token generation succeeds - should return patches and token", func(t *testing.T) {
+	t.Run("token generation succeeds - should return patch ops", func(t *testing.T) {
 		conn := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "test-conn",
@@ -199,23 +196,23 @@ func TestReconcileConnectionToken(t *testing.T) {
 		}
 		mockConn := connection.NewMockConnection(t)
 		mockTokenConn := connection.NewMockTokenConnection(t)
-		mockTokenConn.EXPECT().GenerateConnectionToken(ctx).Return("new-token", nil)
+		mockTokenConn.EXPECT().GenerateConnectionToken(ctx).Return(common.RawSecureValue("new-token"), nil)
 		mockWrapper := &mockTokenConnectionWrapper{
 			Connection:      mockConn,
 			TokenConnection: mockTokenConn,
 		}
 
-		result := ReconcileConnectionToken(ctx, conn, mockWrapper, resyncInterval)
+		patchOps, err := ReconcileConnectionToken(ctx, conn, mockWrapper, resyncInterval)
 
-		assert.True(t, result.ShouldContinue)
-		assert.Nil(t, result.Condition)
-		assert.Len(t, result.PatchOperations, 1)
-		assert.Equal(t, "new-token", result.Token)
-		assert.Equal(t, "replace", result.PatchOperations[0]["op"])
-		assert.Equal(t, "/secure/token", result.PatchOperations[0]["path"])
+		assert.NoError(t, err)
+		require.Len(t, patchOps, 1)
+		assert.Equal(t, "replace", patchOps[0]["op"])
+		assert.Equal(t, "/secure/token", patchOps[0]["path"])
+		// Verify token was set on connection
+		assert.False(t, conn.Secure.Token.IsZero())
 	})
 
-	t.Run("token generation fails, token not expired - should continue with condition", func(t *testing.T) {
+	t.Run("token generation fails, token not expired - should return no error", func(t *testing.T) {
 		conn := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "test-conn",
@@ -230,25 +227,20 @@ func TestReconcileConnectionToken(t *testing.T) {
 		mockTokenConn.EXPECT().TokenCreationTime(ctx).Return(time.Now().Add(-15*time.Second), nil)
 		// Token expires in 2 minutes - needs refresh but not expired
 		mockTokenConn.EXPECT().TokenExpiration(ctx).Return(time.Now().Add(2*time.Minute), nil)
-		mockTokenConn.EXPECT().GenerateConnectionToken(ctx).Return("", errors.New("generation failed"))
+		mockTokenConn.EXPECT().GenerateConnectionToken(ctx).Return(common.RawSecureValue(""), errors.New("generation failed"))
 		mockWrapper := &mockTokenConnectionWrapper{
 			Connection:      mockConn,
 			TokenConnection: mockTokenConn,
 		}
 
-		result := ReconcileConnectionToken(ctx, conn, mockWrapper, resyncInterval)
+		patchOps, err := ReconcileConnectionToken(ctx, conn, mockWrapper, resyncInterval)
 
-		assert.True(t, result.ShouldContinue) // Can still try with existing token
-		assert.NotNil(t, result.Condition)
-		assert.Equal(t, provisioning.ConditionTypeReady, result.Condition.Type)
-		assert.Equal(t, metav1.ConditionFalse, result.Condition.Status)
-		assert.Equal(t, provisioning.ReasonTokenGenerationFailed, result.Condition.Reason)
-		assert.Contains(t, result.Condition.Message, "Failed to refresh token")
-		assert.Empty(t, result.PatchOperations)
-		assert.Empty(t, result.Token)
+		// Should not return error - will retry later
+		assert.NoError(t, err)
+		assert.Empty(t, patchOps)
 	})
 
-	t.Run("token generation fails, token expired - should not continue", func(t *testing.T) {
+	t.Run("token generation fails, token expired - should return error", func(t *testing.T) {
 		conn := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "test-conn",
@@ -262,43 +254,28 @@ func TestReconcileConnectionToken(t *testing.T) {
 		mockTokenConn := connection.NewMockTokenConnection(t)
 		mockTokenConn.EXPECT().TokenCreationTime(ctx).Return(time.Now().Add(-15*time.Second), nil)
 		mockTokenConn.EXPECT().TokenExpiration(ctx).Return(time.Now().Add(-1*time.Minute), nil)
-		mockTokenConn.EXPECT().GenerateConnectionToken(ctx).Return("", errors.New("generation failed"))
+		mockTokenConn.EXPECT().GenerateConnectionToken(ctx).Return(common.RawSecureValue(""), errors.New("generation failed"))
 		mockWrapper := &mockTokenConnectionWrapper{
 			Connection:      mockConn,
 			TokenConnection: mockTokenConn,
 		}
 
-		result := ReconcileConnectionToken(ctx, conn, mockWrapper, resyncInterval)
+		patchOps, err := ReconcileConnectionToken(ctx, conn, mockWrapper, resyncInterval)
 
-		assert.False(t, result.ShouldContinue) // Can't proceed with expired token
-		assert.NotNil(t, result.Condition)
-		assert.Equal(t, provisioning.ConditionTypeReady, result.Condition.Type)
-		assert.Equal(t, metav1.ConditionFalse, result.Condition.Status)
-		assert.Equal(t, provisioning.ReasonTokenGenerationFailed, result.Condition.Reason)
-		assert.Contains(t, result.Condition.Message, "Failed to generate connection token")
-
-		// Should include all patch operations (condition, state, fieldErrors)
-		assert.NotEmpty(t, result.PatchOperations)
-		assert.GreaterOrEqual(t, len(result.PatchOperations), 3) // condition, state, fieldErrors
-
-		// Verify state patch
-		var hasStatePatch bool
-		for _, patch := range result.PatchOperations {
-			if patch["path"] == "/status/state" {
-				hasStatePatch = true
-				assert.Equal(t, provisioning.ConnectionStateDisconnected, patch["value"])
-			}
-		}
-		assert.True(t, hasStatePatch, "Should include state patch to disconnected")
-
-		assert.Empty(t, result.Token)
+		// Should return error when token is expired
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "token expired")
+		assert.Empty(t, patchOps)
 	})
 
-	t.Run("error checking if token needs generation - should continue", func(t *testing.T) {
+	t.Run("error checking token, spec unchanged - should return no error", func(t *testing.T) {
 		conn := &provisioning.Connection{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       "test-conn",
 				Generation: 1,
+			},
+			Status: provisioning.ConnectionStatus{
+				ObservedGeneration: 1, // Same as Generation
 			},
 			Secure: provisioning.ConnectionSecure{
 				Token: common.InlineSecureValue{Name: "existing-token"},
@@ -312,31 +289,62 @@ func TestReconcileConnectionToken(t *testing.T) {
 			TokenConnection: mockTokenConn,
 		}
 
-		result := ReconcileConnectionToken(ctx, conn, mockWrapper, resyncInterval)
+		patchOps, err := ReconcileConnectionToken(ctx, conn, mockWrapper, resyncInterval)
 
-		assert.True(t, result.ShouldContinue) // Let health check decide
-		assert.Nil(t, result.Condition)       // Health check will set condition
-		assert.Empty(t, result.PatchOperations)
-		assert.Empty(t, result.Token)
+		// Should not error when spec unchanged
+		assert.NoError(t, err)
+		assert.Empty(t, patchOps)
+	})
+
+	t.Run("error checking token, spec changed - should return error", func(t *testing.T) {
+		conn := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "test-conn",
+				Generation: 2,
+			},
+			Status: provisioning.ConnectionStatus{
+				ObservedGeneration: 1, // Different from Generation
+			},
+			Secure: provisioning.ConnectionSecure{
+				Token: common.InlineSecureValue{Name: "existing-token"},
+			},
+		}
+		mockConn := connection.NewMockConnection(t)
+		mockTokenConn := connection.NewMockTokenConnection(t)
+		mockTokenConn.EXPECT().TokenCreationTime(ctx).Return(time.Time{}, errors.New("parse error"))
+		mockWrapper := &mockTokenConnectionWrapper{
+			Connection:      mockConn,
+			TokenConnection: mockTokenConn,
+		}
+
+		patchOps, err := ReconcileConnectionToken(ctx, conn, mockWrapper, resyncInterval)
+
+		// Should error when spec changed
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "determine if token needs generation")
+		assert.Empty(t, patchOps)
 	})
 }
 
 func TestBuildReadyCondition(t *testing.T) {
-	t.Run("healthy condition", func(t *testing.T) {
-		condition := buildReadyCondition(true, provisioning.ReasonAvailable, "Connection is healthy")
+	t.Run("healthy with no token error", func(t *testing.T) {
+		healthStatus := provisioning.HealthStatus{Healthy: true}
+		condition := buildReadyCondition(healthStatus, nil)
 
 		assert.Equal(t, provisioning.ConditionTypeReady, condition.Type)
 		assert.Equal(t, metav1.ConditionTrue, condition.Status)
 		assert.Equal(t, provisioning.ReasonAvailable, condition.Reason)
-		assert.Equal(t, "Connection is healthy", condition.Message)
+		assert.Equal(t, "Connection is available", condition.Message)
 	})
 
-	t.Run("unhealthy condition", func(t *testing.T) {
-		condition := buildReadyCondition(false, provisioning.ReasonTokenGenerationFailed, "Token generation failed")
+	t.Run("unhealthy with no token error", func(t *testing.T) {
+		healthStatus := provisioning.HealthStatus{Healthy: false}
+		condition := buildReadyCondition(healthStatus, nil)
 
 		assert.Equal(t, provisioning.ConditionTypeReady, condition.Type)
 		assert.Equal(t, metav1.ConditionFalse, condition.Status)
-		assert.Equal(t, provisioning.ReasonTokenGenerationFailed, condition.Reason)
-		assert.Equal(t, "Token generation failed", condition.Message)
+		assert.Equal(t, provisioning.ReasonInvalidSpec, condition.Reason)
+		assert.Equal(t, "Spec is invalid", condition.Message)
 	})
+
 }
