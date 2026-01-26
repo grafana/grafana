@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -33,6 +34,13 @@ func DefaultBenchmarkOptions() *BenchmarkOptions {
 		NumGroups:        1,
 		NumResourceTypes: 1,
 	}
+}
+
+func (opts *BenchmarkOptions) String() string {
+	return fmt.Sprintf(
+		"Workers=%d, Resources=%d, Namespaces=%d, Groups=%d, Resource Types=%d",
+		opts.Concurrency, opts.NumResources, opts.NumNamespaces, opts.NumGroups, opts.NumResourceTypes,
+	)
 }
 
 // BenchmarkResult contains the benchmark metrics
@@ -69,13 +77,9 @@ func initializeBackend(ctx context.Context, backend resource.StorageBackend, opt
 
 // runStorageBackendBenchmark runs a write throughput benchmark
 func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBackend, opts *BenchmarkOptions) (*BenchmarkResult, error) {
-	if opts == nil {
-		opts = DefaultBenchmarkOptions()
-	}
-
 	// Create channels for workers
 	jobs := make(chan int, opts.NumResources)
-	results := make(chan time.Duration, opts.NumResources)
+	latencies := make([]time.Duration, opts.NumResources)
 	errors := make(chan error, opts.NumResources)
 
 	// Fill the jobs channel
@@ -89,9 +93,7 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 	// Start workers
 	startTime := time.Now()
 	for workerID := 0; workerID < opts.Concurrency; workerID++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for jobID := range jobs {
 				// Calculate a unique ID for this job that's guaranteed to be unique across all workers
 				uniqueID := jobID
@@ -115,14 +117,13 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 					return
 				}
 
-				results <- time.Since(writeStart)
+				latencies[jobID] = time.Since(writeStart)
 			}
-		}()
+		})
 	}
 
 	// Wait for all workers to complete
 	wg.Wait()
-	close(results)
 	close(errors)
 
 	// Check for errors
@@ -130,19 +131,11 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 		return nil, <-errors // Return the first error encountered
 	}
 
-	// Collect all latencies
-	latencies := make([]time.Duration, 0, opts.NumResources)
-	for latency := range results {
-		latencies = append(latencies, latency)
-	}
-
-	// Sort latencies for percentile calculation
-	sort.Slice(latencies, func(i, j int) bool {
-		return latencies[i] < latencies[j]
-	})
-
 	totalDuration := time.Since(startTime)
 	throughput := float64(opts.NumResources) / totalDuration.Seconds()
+
+	// Sort latencies for percentile calculation
+	slices.Sort(latencies)
 
 	return &BenchmarkResult{
 		TotalDuration: totalDuration,
@@ -159,23 +152,14 @@ func BenchmarkStorageBackend(b testing.TB, backend resource.StorageBackend, opts
 	ctx := context.Background()
 
 	// Initialize the backend
-	err := initializeBackend(ctx, backend, opts)
-	require.NoError(b, err)
+	require.NoError(b, initializeBackend(ctx, backend, opts))
 
 	// Run the benchmark
 	result, err := runStorageBackendBenchmark(ctx, backend, opts)
 	require.NoError(b, err)
 
-	// Only report metrics if we're running a benchmark
-	if bb, ok := b.(*testing.B); ok {
-		bb.ReportMetric(result.Throughput, "writes/sec")
-		bb.ReportMetric(float64(result.P50Latency.Milliseconds()), "p50-latency-ms")
-		bb.ReportMetric(float64(result.P90Latency.Milliseconds()), "p90-latency-ms")
-		bb.ReportMetric(float64(result.P99Latency.Milliseconds()), "p99-latency-ms")
-	}
-
-	// Also log the results for better visibility
-	b.Logf("Benchmark Configuration: Workers=%d, Resources=%d, Namespaces=%d, Groups=%d, Resource Types=%d", opts.Concurrency, opts.NumResources, opts.NumNamespaces, opts.NumGroups, opts.NumResourceTypes)
+	// Log the results for better visibility.
+	b.Logf("Benchmark Configuration: %s", opts)
 	b.Logf("")
 	b.Logf("Benchmark Results:")
 	b.Logf("Total Duration: %v", result.TotalDuration)
@@ -316,15 +300,8 @@ func BenchmarkSearchBackend(tb testing.TB, backend resource.SearchBackend, opts 
 	result, err := runSearchBackendBenchmarkWriteThroughput(ctx, backend, opts)
 	require.NoError(tb, err)
 
-	if b, ok := tb.(*testing.B); ok {
-		b.ReportMetric(result.Throughput, "writes/sec")
-		b.ReportMetric(float64(result.P50Latency.Milliseconds()), "p50-latency-ms")
-		b.ReportMetric(float64(result.P90Latency.Milliseconds()), "p90-latency-ms")
-		b.ReportMetric(float64(result.P99Latency.Milliseconds()), "p99-latency-ms")
-	}
-
 	// Also log the results for better visibility
-	tb.Logf("Benchmark Configuration: Workers=%d, Resources=%d, Namespaces=%d, Groups=%d, Resource Types=%d", opts.Concurrency, opts.NumResources, opts.NumNamespaces, opts.NumGroups, opts.NumResourceTypes)
+	tb.Logf("Benchmark Configuration: %s", opts)
 	tb.Logf("")
 	tb.Logf("Benchmark Results:")
 	tb.Logf("Total Duration: %v", result.TotalDuration)
