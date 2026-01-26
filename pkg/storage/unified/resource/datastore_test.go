@@ -32,7 +32,9 @@ func setupTestDataStoreSqlKv(t *testing.T) *dataStore {
 	dbstore := db.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
-	kv, err := NewSQLKV(eDB)
+	dbConn, err := eDB.Init(context.Background())
+	require.NoError(t, err)
+	kv, err := NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	require.NoError(t, err)
 	return newDataStore(kv)
 }
