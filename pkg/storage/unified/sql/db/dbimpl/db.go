@@ -28,6 +28,12 @@ func (d sqlDB) DriverName() string {
 	return d.driverName
 }
 
+// SqlDB returns the underlying *sql.DB.
+// This is needed for code that requires direct access to stdlib database/sql methods.
+func (d sqlDB) SqlDB() *sql.DB {
+	return d.DB
+}
+
 func (d sqlDB) QueryContext(ctx context.Context, query string, args ...any) (db.Rows, error) {
 	return d.DB.QueryContext(ctx, query, args...)
 }
