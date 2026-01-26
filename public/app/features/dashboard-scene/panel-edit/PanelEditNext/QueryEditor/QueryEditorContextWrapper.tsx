@@ -1,4 +1,4 @@
-import { ReactNode, useMemo } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
 
@@ -22,6 +22,7 @@ export function QueryEditorContextWrapper({
   const panel = panelRef.resolve();
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
+  const [selectedQueryRefId, setSelectedQueryRefId] = useState<string | null>(null);
 
   const dsState = useMemo(
     () => ({
@@ -48,6 +49,14 @@ export function QueryEditorContextWrapper({
     [panel]
   );
 
+  const uiState = useMemo(
+    () => ({
+      selectedQueryRefId,
+      setSelectedQueryRefId,
+    }),
+    [selectedQueryRefId]
+  );
+
   const actions = useMemo(
     () => ({
       updateQueries: dataPane.updateQueries,
@@ -63,7 +72,13 @@ export function QueryEditorContextWrapper({
   );
 
   return (
-    <QueryEditorProvider dsState={dsState} qrState={qrState} panelState={panelState} actions={actions}>
+    <QueryEditorProvider
+      dsState={dsState}
+      qrState={qrState}
+      panelState={panelState}
+      uiState={uiState}
+      actions={actions}
+    >
       {children}
     </QueryEditorProvider>
   );

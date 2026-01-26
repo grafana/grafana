@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -9,7 +8,7 @@ import { DataSourceLogo } from 'app/features/datasources/components/picker/DataS
 import { useDatasource } from 'app/features/datasources/hooks';
 
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
-import { useQueryRunnerContext } from '../QueryEditorContext';
+import { useQueryRunnerContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 // TODO: will remove this once we have the correct icons in constants.ts
 const CardIcon = ({ type, size = 'sm' }: { type: string | undefined; size?: IconSize }) => {
@@ -52,20 +51,21 @@ interface SidebarCardProps {
 }
 
 export const SidebarCard = ({ query }: SidebarCardProps) => {
-  const [isSelected, setIsSelected] = useState(false);
   const editorType = getEditorType(query.datasource?.type);
   const queryDsSettings = useDatasource(query.datasource);
   const { data } = useQueryRunnerContext();
+  const { selectedQueryRefId, setSelectedQueryRefId } = useQueryEditorUIContext();
 
   // Extract error for this specific query by matching refId
   const queryError = data?.errors?.find((e) => e.refId === query.refId);
 
   const hasError = Boolean(queryError);
+  const isSelected = selectedQueryRefId === query.refId;
   const styles = useStyles2(getStyles, editorType, hasError, isSelected);
 
   const handleClick = () => {
-    setIsSelected(!isSelected);
-    console.log('Card clicked:', query.refId);
+    // Toggle selection: if already selected, deselect; otherwise select this card
+    setSelectedQueryRefId(isSelected ? null : query.refId);
   };
 
   return (
