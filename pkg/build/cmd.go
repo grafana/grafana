@@ -102,7 +102,7 @@ func RunCmd() int {
 			}
 
 		case "build":
-			//clean()
+			// clean()
 			for _, binary := range binaries {
 				log.Println("building binaries", cmd)
 				// Can't use filepath.Join here because filepath.Join calls filepath.Clean, which removes the `./` from this path, which upsets `go build`
@@ -164,10 +164,11 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 	if opts.libc != "" {
 		libcPart = fmt.Sprintf("-%s", opts.libc)
 	}
-	binary := fmt.Sprintf("./bin/%s", binaryName)
 
-	//don't include os/arch/libc in output path in dev environment
-	if !opts.isDev {
+	var binary string
+	if opts.isDev {
+		binary = fmt.Sprintf("./bin/dev-%s-%s%s/%s", opts.goos, opts.goarch, libcPart, binaryName)
+	} else {
 		binary = fmt.Sprintf("./bin/%s-%s%s/%s", opts.goos, opts.goarch, libcPart, binaryName)
 	}
 
@@ -212,11 +213,6 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 	args = append(args, pkg)
 
 	runPrint("go", args...)
-
-	if opts.isDev {
-		return nil
-	}
-
 	runPrint("go", "version")
 	libcPart = ""
 	if opts.libc != "" {
@@ -290,7 +286,7 @@ func setBuildEnv(opts BuildOpts) error {
 	}
 
 	if (opts.goos != GoOSLinux || opts.goarch != "amd64") &&
-		opts.goos != GoOSDarwin {
+		opts.goos != GoOSDarwin && !opts.isDev {
 		// needed for archs other than linux/amd64 and darwin/arm64 + darwin/amd64
 		opts.cgo = true
 	}
