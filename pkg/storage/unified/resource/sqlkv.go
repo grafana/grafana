@@ -288,10 +288,13 @@ func (w *sqlWriteCloser) Close() error {
 		return nil
 	}
 
-	// Backwards-compatible mode: minimal INSERT with only guid and value
-	// The rvmanager will set key_path at the end of the transaction
-	// The datastore's applyBackwardsCompatibleChanges() will populate other fields
-	// Parse key to extract GUID (but don't parse all fields - that's done in datastore)
+	// special, temporary backwards-compatible save that includes all the fields in resource_history that are not relevant
+	// for the kvstore. This is only called if an RvManager was passed to storage_backend, as that
+	// component will be responsible for populating the resource_version and key_path columns.
+	// For full backwards-compatibility, the `Save` function needs to be called within a callback that updates the resource_history
+	// table with `previous_resource_version` and `generation` and updates the `resource` table accordingly. See the
+	// storage_backend for the full implementation.
+	// the `resource` table is updated in datastore.go applyBackwardsCompatibleChanges method
 	dataKey, err := ParseKeyWithGUID(w.key)
 	if err != nil {
 		return fmt.Errorf("failed to parse key for GUID: %w", err)

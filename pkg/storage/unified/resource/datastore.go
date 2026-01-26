@@ -842,10 +842,10 @@ func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, err
 
 // TODO: remove when backwards compatibility is no longer needed.
 var (
-	sqlKVUpdateLegacyResourceHistoryFull = mustTemplate("sqlkv_update_legacy_resource_history_full.sql")
-	sqlKVInsertLegacyResource            = mustTemplate("sqlkv_insert_legacy_resource.sql")
-	sqlKVUpdateLegacyResource            = mustTemplate("sqlkv_update_legacy_resource.sql")
-	sqlKVDeleteLegacyResource            = mustTemplate("sqlkv_delete_legacy_resource.sql")
+	sqlKVUpdateLegacyResourceHistory = mustTemplate("sqlkv_update_legacy_resource_history.sql")
+	sqlKVInsertLegacyResource        = mustTemplate("sqlkv_insert_legacy_resource.sql")
+	sqlKVUpdateLegacyResource        = mustTemplate("sqlkv_update_legacy_resource.sql")
+	sqlKVDeleteLegacyResource        = mustTemplate("sqlkv_delete_legacy_resource.sql")
 )
 
 // TODO: remove when backwards compatibility is no longer needed.
@@ -869,12 +869,6 @@ func (req sqlKVLegacySaveRequest) Validate() error {
 type sqlKVLegacyUpdateHistoryRequest struct {
 	sqltemplate.SQLTemplate
 	GUID       string
-	Group      string
-	Resource   string
-	Namespace  string
-	Name       string
-	Action     int64
-	Folder     string
 	PreviousRV int64
 	Generation int64
 }
@@ -908,6 +902,18 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		previousRV = rvmanager.RVFromSnowflake(event.PreviousRV)
 	}
 
+	// fill in remaining required fields for backwards compatibility: previous_resource_version and generation
+	_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResourceHistory, sqlKVLegacyUpdateHistoryRequest{
+		SQLTemplate: sqltemplate.New(d.legacyDialect),
+		GUID:        key.GUID,
+		PreviousRV:  previousRV,
+		Generation:  generation,
+	})
+
+	if err != nil {
+		return fmt.Errorf("compatibility layer: failed to update resource_history: %w", err)
+	}
+
 	var action int64
 	switch key.Action {
 	case DataActionCreated:
@@ -916,19 +922,6 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 		action = 2
 	case DataActionDeleted:
 		action = 3
-	}
-
-	// fill in remaining required fields for backwards compatibility: action, previous_resource_version and generation
-	_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResourceHistoryFull, sqlKVLegacyUpdateHistoryRequest{
-		SQLTemplate: sqltemplate.New(d.legacyDialect),
-		GUID:        key.GUID,
-		Action:      action,
-		PreviousRV:  previousRV,
-		Generation:  generation,
-	})
-
-	if err != nil {
-		return fmt.Errorf("compatibility layer: failed to update resource_history: %w", err)
 	}
 
 	switch key.Action {
