@@ -1161,6 +1161,11 @@ export interface FeatureToggles {
   */
   alertingImportAlertmanagerUI?: boolean;
   /**
+  * Disables the DMA feature in the UI
+  * @default false
+  */
+  alertingDisableDMAinUI?: boolean;
+  /**
   * Enables image sharing functionality for dashboards
   * @default true
   */
