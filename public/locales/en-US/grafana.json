@@ -12599,7 +12599,12 @@
   "query-editor-next": {
     "detail-placeholder": "Query/Transform detail view goes here",
     "sidebar": {
+      "card-click": "Select query {{refId}}",
+      "divider-text": "Queries & Expressions",
+      "expression": "Expression",
       "placeholder": "Sidebar content placeholder",
+      "queries": "Queries",
+      "query": "Query",
       "toggle-size": "Toggle sidebar size"
     }
   },
