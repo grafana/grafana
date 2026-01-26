@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { DataSourcePicker } from '@grafana/runtime';
-import { useStyles2, Text, Button, Stack, Icon } from '@grafana/ui';
+import { useStyles2, Text, Button, Icon } from '@grafana/ui';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { PanelInspectDrawer } from '../../../inspect/PanelInspectDrawer';
@@ -27,6 +27,7 @@ export function QueryEditorContentHeader() {
 
   const styles = useStyles2(getStyles, { queryType });
 
+  // TODO: Where does this handler belong?
   const onOpenInspector = useCallback(() => {
     const dashboard = getDashboardSceneFor(panel);
     dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Query }));
@@ -34,7 +35,7 @@ export function QueryEditorContentHeader() {
 
   return (
     <div className={styles.container}>
-      <Stack direction="row" alignItems="center" gap={1}>
+      <div className={styles.queryHeaderWrapper}>
         <Icon name={QUERY_EDITOR_TYPE_CONFIG[queryType].icon} size="sm" />
         <div className={styles.dataSourcePickerWrapper}>
           <DataSourcePicker current={dsSettings?.uid ?? null} onChange={changeDataSource} />
@@ -42,12 +43,8 @@ export function QueryEditorContentHeader() {
         <Text variant="h4" color="secondary">
           /
         </Text>
-        {selectedQuery ? (
-          <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={updateSelectedQuery} />
-        ) : (
-          <Text variant="body">{t('query-editor-next.content-header.no-query', 'No query selected')}</Text>
-        )}
-      </Stack>
+        <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={updateSelectedQuery} />
+      </div>
       <div>
         <Button size="sm" fill="text" icon="code" variant="secondary" onClick={onOpenInspector}>
           <Trans i18nKey="query-editor-next.content-header.inspect-query">Inspector</Trans>
@@ -67,6 +64,12 @@ const getStyles = (theme: GrafanaTheme2, { queryType }: { queryType: QueryEditor
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: theme.spacing(1),
+  }),
+  queryHeaderWrapper: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    padding: `0 ${theme.spacing(0.5)}`,
   }),
   dataSourcePickerWrapper: css({
     '& .ds-picker': {

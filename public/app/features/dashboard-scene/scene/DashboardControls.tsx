@@ -322,7 +322,8 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
     }),
     controlsPanelEdit: css({
       flexWrap: 'wrap-reverse',
-      padding: 0,
+      // In panel edit we do not need any right padding as the splitter is providing it
+      paddingRight: 0,
     }),
     // New layout styles (used when feature toggle is on)
     topRow: css({
