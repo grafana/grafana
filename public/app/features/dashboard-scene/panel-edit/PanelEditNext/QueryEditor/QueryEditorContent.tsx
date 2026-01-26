@@ -14,8 +14,8 @@ export function QueryEditorContent() {
     <div className={styles.container}>
       <Text color="secondary">
         {t('query-editor-next.detail-placeholder', 'Query/Transform detail view goes here')}
-        {selectedQuery?.refId}
       </Text>
+      <Text color="secondary">{selectedQuery?.refId ?? 'No query selected'}</Text>
     </div>
   );
 }
@@ -26,6 +26,7 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       width: '100%',
       display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       padding: theme.spacing(2),
