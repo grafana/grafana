@@ -48,7 +48,7 @@ func TestExpandJinja2Summary_MissingLabel(t *testing.T) {
 		Labels: map[string]string{"pod": "web-1"},
 	}
 
-	result, err := ExpandJinja2Summary("{{ labels.nonexistent }}", ctx)
+	result, err := ExpandJinja2Summary("{{ labels.nonexistent }}{{ alert.labels.nonexistent }}", ctx)
 
 	require.NoError(t, err)
 	require.Equal(t, "", result)
@@ -59,7 +59,7 @@ func TestExpandJinja2Summary_EmptyLabels(t *testing.T) {
 		Labels: map[string]string{},
 	}
 
-	result, err := ExpandJinja2Summary("{{ labels.pod }}", ctx)
+	result, err := ExpandJinja2Summary("{{ labels.pod }}{{ alert.labels.pod }}", ctx)
 
 	require.NoError(t, err)
 	require.Equal(t, "", result)
@@ -68,7 +68,7 @@ func TestExpandJinja2Summary_EmptyLabels(t *testing.T) {
 func TestExpandJinja2Summary_NilLabels(t *testing.T) {
 	ctx := SummaryContext{}
 
-	result, err := ExpandJinja2Summary("{{ labels.pod }}", ctx)
+	result, err := ExpandJinja2Summary("{{ labels.pod }}{{ alert.labels.pod }}", ctx)
 
 	require.NoError(t, err)
 	require.Equal(t, "", result)
@@ -81,10 +81,10 @@ func TestExpandJinja2Summary_SpecialCharactersInLabels(t *testing.T) {
 		},
 	}
 
-	result, err := ExpandJinja2Summary("Pod: {{ labels.pod }}", ctx)
+	result, err := ExpandJinja2Summary("Pod: {{ labels.pod }} {{ alert.labels.pod }}", ctx)
 
 	require.NoError(t, err)
-	require.Equal(t, "Pod: web-1 <test> & \"special\"", result)
+	require.Equal(t, "Pod: web-1 <test> & \"special\" web-1 <test> & \"special\"", result)
 }
 
 func TestExpandJinja2Summary_MultiplePlaceholders(t *testing.T) {
@@ -182,6 +182,39 @@ func TestExpandJinja2Summary_Creator(t *testing.T) {
 	require.Equal(t, "Created by: admin@example.com", result)
 }
 
+func TestExpandJinja2Summary_AlertAlertname(t *testing.T) {
+	ctx := SummaryContext{
+		MonitorName: "CPU High Alert",
+	}
+
+	result, err := ExpandJinja2Summary("Alert: {{ alert.alertname }}", ctx)
+
+	require.NoError(t, err)
+	require.Equal(t, "Alert: CPU High Alert", result)
+}
+
+func TestExpandJinja2Summary_Fingerprint(t *testing.T) {
+	ctx := SummaryContext{
+		Fingerprint: "abc123def456",
+	}
+
+	result, err := ExpandJinja2Summary("Fingerprint: {{ fingerprint }}", ctx)
+
+	require.NoError(t, err)
+	require.Equal(t, "Fingerprint: abc123def456", result)
+}
+
+func TestExpandJinja2Summary_AlertFingerprint(t *testing.T) {
+	ctx := SummaryContext{
+		Fingerprint: "abc123def456",
+	}
+
+	result, err := ExpandJinja2Summary("Fingerprint: {{ alert.fingerprint }}({{ fingerprint }})", ctx)
+
+	require.NoError(t, err)
+	require.Equal(t, "Fingerprint: abc123def456(abc123def456)", result)
+}
+
 func TestExpandJinja2Summary_AllFields(t *testing.T) {
 	ctx := SummaryContext{
 		MonitorName: "High CPU",
@@ -190,103 +223,17 @@ func TestExpandJinja2Summary_AllFields(t *testing.T) {
 			"pod":       "web-1",
 			"namespace": "prod",
 		},
-		Value:     85.5,
-		Threshold: 80.0,
-		State:     "Alerting",
-		Query:     "cpu > 80",
-		Creator:   "ops-team",
+		Fingerprint: "abc123",
+		Value:       85.5,
+		Threshold:   80.0,
+		State:       "Alerting",
+		Query:       "cpu > 80",
+		Creator:     "ops-team",
 	}
 
-	tmpl := "[{{ severity }}] {{ monitor_name }}: {{ labels.pod }} in {{ labels.namespace }} - {{ state }} ({{ value }}/{{ threshold }}) query={{ query }} by={{ creator }}"
+	tmpl := "[{{ severity }}] {{ monitor_name }}({{ alert.alertname }}): {{ labels.pod }}({{ alert.labels.pod }}) in {{ labels.namespace }}({{ alert.labels.namespace }}) - {{ state }} ({{ value }}/{{ threshold }}) query={{ query }} by={{ creator }} fingerprint={{ fingerprint }}({{ alert.fingerprint }})"
 	result, err := ExpandJinja2Summary(tmpl, ctx)
 
 	require.NoError(t, err)
-	require.Equal(t, "[warning] High CPU: web-1 in prod - Alerting (85.500000/80.000000) query=cpu > 80 by=ops-team", result)
-}
-
-// Tests for ExpandLegacySummary
-
-func TestExpandLegacySummary_BasicVariables(t *testing.T) {
-	ctx := LegacySummaryContext{
-		Labels: map[string]string{
-			"pod":       "web-1",
-			"namespace": "prod",
-		},
-	}
-
-	result, err := ExpandLegacySummary("Pod {{ alert.labels.pod }} in {{ alert.labels.namespace }}", ctx)
-
-	require.NoError(t, err)
-	require.Equal(t, "Pod web-1 in prod", result)
-}
-
-func TestExpandLegacySummary_NoTemplateMarkers(t *testing.T) {
-	ctx := LegacySummaryContext{
-		Labels: map[string]string{"pod": "web-1"},
-	}
-
-	result, err := ExpandLegacySummary("Plain text without markers", ctx)
-
-	require.NoError(t, err)
-	require.Equal(t, "Plain text without markers", result)
-}
-
-func TestExpandLegacySummary_InvalidSyntax(t *testing.T) {
-	ctx := LegacySummaryContext{
-		Labels: map[string]string{"pod": "web-1"},
-	}
-
-	_, err := ExpandLegacySummary("{{ invalid syntax {% ", ctx)
-
-	require.Error(t, err)
-	var expandErr ExpandError
-	require.ErrorAs(t, err, &expandErr)
-}
-
-func TestExpandLegacySummary_MissingLabel(t *testing.T) {
-	ctx := LegacySummaryContext{
-		Labels: map[string]string{"pod": "web-1"},
-	}
-
-	result, err := ExpandLegacySummary("{{ alert.labels.nonexistent }}", ctx)
-
-	require.NoError(t, err)
-	require.Equal(t, "", result)
-}
-
-func TestExpandLegacySummary_EmptyLabels(t *testing.T) {
-	ctx := LegacySummaryContext{
-		Labels: map[string]string{},
-	}
-
-	result, err := ExpandLegacySummary("{{ alert.labels.pod }}", ctx)
-
-	require.NoError(t, err)
-	require.Equal(t, "", result)
-}
-
-func TestExpandLegacySummary_NilLabels(t *testing.T) {
-	ctx := LegacySummaryContext{}
-
-	result, err := ExpandLegacySummary("{{ alert.labels.pod }}", ctx)
-
-	require.NoError(t, err)
-	require.Equal(t, "", result)
-}
-
-func TestExpandLegacySummary_MultiplePlaceholders(t *testing.T) {
-	ctx := LegacySummaryContext{
-		Labels: map[string]string{
-			"pod":       "web-1",
-			"namespace": "prod",
-			"service":   "api",
-			"cluster":   "us-east-1",
-		},
-	}
-
-	tmpl := "[{{ alert.labels.cluster }}] {{ alert.labels.namespace }}/{{ alert.labels.service }}: {{ alert.labels.pod }}"
-	result, err := ExpandLegacySummary(tmpl, ctx)
-
-	require.NoError(t, err)
-	require.Equal(t, "[us-east-1] prod/api: web-1", result)
+	require.Equal(t, "[warning] High CPU(High CPU): web-1(web-1) in prod(prod) - Alerting (85.500000/80.000000) query=cpu > 80 by=ops-team fingerprint=abc123(abc123)", result)
 }

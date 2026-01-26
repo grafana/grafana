@@ -342,14 +342,21 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 
 		gcQuery := extractGCQuery(state.Annotations[gcMonitorYamlAnnotation], logger)
 		sanitizedLabels[models.GCQueryLabel] = gcQuery
+		fingerprint := calculateFingerprint(labelMap)
 
 		parsedSummary := expandSummaryTemplate(
 			state.Annotations[models.GCIssueHeaderAnnotation],
-			state.Annotations[models.GCTemplateLanguageAnnotation],
-			rule,
-			state,
-			labelMap,
-			gcQuery,
+			template.SummaryContext{
+				MonitorName: rule.Title,
+				Severity:    labelMap[models.GCSeverityLabel],
+				Labels:      labelMap,
+				Fingerprint: fingerprint,
+				Value:       state.State.Values[models.GCThresholdInputQueryKey],
+				Threshold:   state.State.Values[models.GCThreshold1Key],
+				State:       state.Formatted(),
+				Query:       gcQuery,
+				Creator:     state.Annotations[models.GCCreatorAnnotation],
+			},
 			logger,
 		)
 
@@ -361,7 +368,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			Condition:                 rule.Condition,
 			DashboardUID:              rule.DashboardUID,
 			PanelID:                   rule.PanelID,
-			Fingerprint:               calculateFingerprint(state.Labels),
+			Fingerprint:               fingerprint,
 			RuleTitle:                 rule.Title,
 			RuleID:                    rule.ID,
 			RuleUID:                   rule.UID,
@@ -744,36 +751,14 @@ func cleanAnnotations(annotations map[string]string, annotationsToDelete map[str
 
 func expandSummaryTemplate(
 	summaryTemplate string,
-	templateLanguage string,
-	rule history_model.RuleMeta,
-	st state.StateTransition,
-	labels map[string]string,
-	query string,
+	summaryCtx template.SummaryContext,
 	logger log.Logger,
 ) string {
 	if summaryTemplate == "" {
 		return ""
 	}
 
-	var parsed string
-	var err error
-
-	if templateLanguage == models.GCTemplateLanguageJinja2 {
-		summaryCtx := template.SummaryContext{
-			MonitorName: rule.Title,
-			Severity:    labels[models.GCSeverityLabel],
-			Labels:      labels,
-			Value:       st.State.Values[models.GCThresholdInputQueryKey],
-			Threshold:   st.State.Values[models.GCThreshold1Key],
-			State:       st.Formatted(),
-			Query:       query,
-			Creator:     st.Annotations[models.GCCreatorAnnotation],
-		}
-		parsed, err = template.ExpandJinja2Summary(summaryTemplate, summaryCtx)
-	} else {
-		parsed, err = template.ExpandLegacySummary(summaryTemplate, template.LegacySummaryContext{Labels: labels})
-	}
-
+	parsed, err := template.ExpandJinja2Summary(summaryTemplate, summaryCtx)
 	if err != nil {
 		logger.Warn("Failed to expand issue summary template", "error", err, "template", summaryTemplate)
 		return summaryTemplate

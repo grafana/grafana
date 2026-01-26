@@ -13,11 +13,11 @@ func init() {
 	pongo2.SetAutoescape(false)
 }
 
-// SummaryContext holds all the context fields available for summary template expansion.
 type SummaryContext struct {
 	MonitorName string
 	Severity    string
 	Labels      map[string]string
+	Fingerprint string
 	Value       float64
 	Threshold   float64
 	State       string
@@ -27,8 +27,8 @@ type SummaryContext struct {
 
 // ExpandJinja2Summary expands a Jinja2-style summary template with the given context.
 // Supports variable interpolation using {{ variable }} syntax.
-// Available variables: monitor_name, severity, labels, value, threshold, state, query, creator
-// This should only be used when _gc_template_language annotation is set to "jinja2".
+// Available variables: monitor_name, severity, labels, fingerprint, value, threshold, state, query, creator
+// To support legacy monitors, we also inject all the labels as alert.labels, monitor_name as alert.alertname and fingerprint as alert.fingerprint.
 func ExpandJinja2Summary(tmpl string, ctx SummaryContext) (string, error) {
 	if !strings.Contains(tmpl, "{{") {
 		return tmpl, nil
@@ -43,37 +43,12 @@ func ExpandJinja2Summary(tmpl string, ctx SummaryContext) (string, error) {
 		"state":        ctx.State,
 		"query":        ctx.Query,
 		"creator":      ctx.Creator,
-	}
-
-	tpl, err := pongo2.FromString(tmpl)
-	if err != nil {
-		return "", ExpandError{Tmpl: tmpl, Err: err}
-	}
-
-	result, err := tpl.Execute(pongoCtx)
-	if err != nil {
-		return "", ExpandError{Tmpl: tmpl, Err: err}
-	}
-
-	return result, nil
-}
-
-// LegacySummaryContext holds the context fields available for legacy summary template expansion.
-type LegacySummaryContext struct {
-	Labels map[string]string
-}
-
-// ExpandLegacySummary expands a summary template using the legacy context format.
-// Supports {{ alert.labels.X }} syntax for variable interpolation.
-// This is the default when _gc_template_language annotation is not set to "jinja2".
-func ExpandLegacySummary(tmpl string, ctx LegacySummaryContext) (string, error) {
-	if !strings.Contains(tmpl, "{{") {
-		return tmpl, nil
-	}
-
-	pongoCtx := pongo2.Context{
-		"alert": map[string]interface{}{
-			"labels": ctx.Labels,
+		"fingerprint":  ctx.Fingerprint,
+		// Legacy support for alert. prefix (Keep workflows)
+		"alert": map[string]any{
+			"labels":      ctx.Labels,
+			"fingerprint": ctx.Fingerprint,
+			"alertname":   ctx.MonitorName,
 		},
 	}
 
