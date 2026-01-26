@@ -53,7 +53,7 @@ func (f *PromQueryFormat) UnmarshalJSON(data []byte) error {
 
 	// If that fails, try as number and convert to the default format
 	// This handles cases where clients incorrectly send numeric values
-	var n float64
+	var n uint32
 	if err := json.Unmarshal(data, &n); err == nil {
 		// Map numbers to format strings for backwards compatibility
 		switch int(n) {
