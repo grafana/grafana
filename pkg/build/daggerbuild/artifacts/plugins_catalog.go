@@ -1,0 +1,159 @@
+package artifacts
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"path"
+	"strings"
+
+	"dagger.io/dagger"
+	"github.com/grafana/grafana/pkg/build/daggerbuild/arguments"
+	"github.com/grafana/grafana/pkg/build/daggerbuild/backend"
+	"github.com/grafana/grafana/pkg/build/daggerbuild/flags"
+	"github.com/grafana/grafana/pkg/build/daggerbuild/pipeline"
+	"github.com/grafana/grafana/pkg/build/daggerbuild/plugins"
+)
+
+var (
+	CatalogPluginsFlags     = flags.JoinFlags(flags.PackageNameFlags, flags.DistroFlags())
+	CatalogPluginsArguments = []pipeline.Argument{
+		arguments.CatalogPlugins,
+	}
+)
+
+var CatalogPluginsInitializer = Initializer{
+	InitializerFunc: NewCatalogPluginsFromString,
+	Arguments:       CatalogPluginsArguments,
+}
+
+// CatalogPlugins downloads plugins from the Grafana catalog (grafana.com).
+type CatalogPlugins struct {
+	Plugins      []arguments.CatalogPluginSpec
+	Distribution backend.Distribution
+}
+
+// Dependencies returns nil as catalog plugins have no dependencies.
+func (c *CatalogPlugins) Dependencies(ctx context.Context) ([]*pipeline.Artifact, error) {
+	return nil, nil
+}
+
+// Builder creates the container that will download the plugins.
+func (c *CatalogPlugins) Builder(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
+	return opts.Client.Container().From(plugins.AlpineImage).
+		WithExec([]string{"apk", "add", "--no-cache", "curl", "unzip"}), nil
+}
+
+// BuildFile is not implemented as CatalogPlugins returns a directory.
+func (c *CatalogPlugins) BuildFile(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.File, error) {
+	panic("not implemented") // CatalogPlugins doesn't return a file
+}
+
+// BuildDir downloads the plugins and returns a directory containing them.
+func (c *CatalogPlugins) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
+	return plugins.DownloadPlugins(opts.Client, &plugins.DownloadOpts{
+		Plugins:      c.Plugins,
+		Distribution: c.Distribution,
+	}), nil
+}
+
+// Publisher is not implemented.
+func (c *CatalogPlugins) Publisher(ctx context.Context, opts *pipeline.ArtifactContainerOpts) (*dagger.Container, error) {
+	return nil, nil
+}
+
+// PublishFile is not implemented.
+func (c *CatalogPlugins) PublishFile(ctx context.Context, opts *pipeline.ArtifactPublishFileOpts) error {
+	panic("not implemented")
+}
+
+// PublishDir is not implemented.
+func (c *CatalogPlugins) PublishDir(ctx context.Context, opts *pipeline.ArtifactPublishDirOpts) error {
+	return nil
+}
+
+// VerifyFile is not implemented as CatalogPlugins returns a directory.
+func (c *CatalogPlugins) VerifyFile(ctx context.Context, client *dagger.Client, file *dagger.File) error {
+	return nil
+}
+
+// VerifyDirectory verifies the downloaded plugins directory.
+func (c *CatalogPlugins) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
+	// Verify that each expected plugin directory exists
+	for _, plugin := range c.Plugins {
+		entries, err := dir.Entries(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to list plugin directory entries: %w", err)
+		}
+
+		found := false
+		for _, entry := range entries {
+			if entry == plugin.ID {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return fmt.Errorf("plugin %s not found in downloaded plugins", plugin.ID)
+		}
+	}
+	return nil
+}
+
+// Filename returns a deterministic path for caching purposes.
+func (c *CatalogPlugins) Filename(ctx context.Context) (string, error) {
+	// Create a unique filename based on plugins and distribution
+	var pluginIDs []string
+	for _, p := range c.Plugins {
+		pluginIDs = append(pluginIDs, fmt.Sprintf("%s-%s", p.ID, p.Version))
+	}
+
+	os, arch := backend.OSAndArch(c.Distribution)
+	return path.Join("bin", "catalog-plugins", os, arch, strings.Join(pluginIDs, "_")), nil
+}
+
+// NewCatalogPluginsFromString creates a CatalogPlugins artifact from an artifact string.
+func NewCatalogPluginsFromString(ctx context.Context, log *slog.Logger, artifact string, state pipeline.StateHandler) (*pipeline.Artifact, error) {
+	options, err := pipeline.ParseFlags(artifact, CatalogPluginsFlags)
+	if err != nil {
+		return nil, err
+	}
+
+	distro, err := options.String(flags.Distribution)
+	if err != nil {
+		return nil, err
+	}
+
+	pluginSpecs, err := arguments.GetCatalogPlugins(ctx, state)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pluginSpecs) == 0 {
+		log.Info("No catalog plugins specified, returning empty artifact")
+	} else {
+		log.Info("Creating catalog plugins artifact", "plugins", len(pluginSpecs), "distribution", distro)
+	}
+
+	return NewCatalogPlugins(ctx, log, artifact, pluginSpecs, backend.Distribution(distro))
+}
+
+// NewCatalogPlugins creates a new CatalogPlugins artifact.
+func NewCatalogPlugins(
+	ctx context.Context,
+	log *slog.Logger,
+	artifact string,
+	pluginSpecs []arguments.CatalogPluginSpec,
+	distro backend.Distribution,
+) (*pipeline.Artifact, error) {
+	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
+		ArtifactString: artifact,
+		Type:           pipeline.ArtifactTypeDirectory,
+		Flags:          CatalogPluginsFlags,
+		Handler: &CatalogPlugins{
+			Plugins:      pluginSpecs,
+			Distribution: distro,
+		},
+	})
+}
