@@ -263,6 +263,12 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	if err != nil {
 		return models.AlertRule{}, err
 	}
+
+	delta, err := store.CalculateRuleCreate(ctx, service.ruleStore, &rule)
+	if err != nil {
+		return models.AlertRule{}, fmt.Errorf("failed to calculate delta: %w", err)
+	}
+
 	if canWriteAllRules {
 		groupInterval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
 		// if the alert group does not exist we just use the default interval
@@ -272,10 +278,6 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 			return models.AlertRule{}, err
 		}
 	} else {
-		delta, err := store.CalculateRuleCreate(ctx, service.ruleStore, &rule)
-		if err != nil {
-			return models.AlertRule{}, fmt.Errorf("failed to calculate delta: %w", err)
-		}
 		if err := service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
 			return models.AlertRule{}, err
 		}
@@ -286,6 +288,11 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	}
 	if rule.RuleGroup != "" {
 		rule.IntervalSeconds = interval
+	}
+
+	// Pass empty string for CREATE - we're adding a new rule, not updating an existing one.
+	if err := validation.ValidateProvisioningConsistency(ctx, service.provenanceStore, rule.OrgID, provenance, delta.AffectedGroups, ""); err != nil {
+		return models.AlertRule{}, err
 	}
 	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
@@ -714,6 +721,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 // UpdateAlertRule updates an alert rule.
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
 	var storedRule *models.AlertRule
+	var deltaForValidation *store.GroupDelta // Store delta for later provenance validation.
 	if err := service.ensureNamespace(ctx, user, rule.OrgID, rule.NamespaceUID); err != nil {
 		return models.AlertRule{}, err
 	}
@@ -738,6 +746,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		if err != nil {
 			return models.AlertRule{}, err
 		}
+		deltaForValidation = delta // Store for later reuse.
 		if err = service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
 			return models.AlertRule{}, err
 		}
@@ -765,6 +774,28 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
 		return models.AlertRule{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
+
+	// Validate provenance consistency to prevent mixed-provenance groups.
+	// Use the effective provenance (stored or new).
+	effectiveProvenance := provenance
+	if storedProvenance != models.ProvenanceNone {
+		effectiveProvenance = storedProvenance
+	}
+
+	// Use stored delta if available, otherwise calculate it.
+	if deltaForValidation == nil {
+		deltaForValidation, err = store.CalculateRuleUpdate(ctx, service.ruleStore, &models.AlertRuleWithOptionals{AlertRule: rule})
+		if err != nil {
+			return models.AlertRule{}, fmt.Errorf("failed to calculate delta: %w", err)
+		}
+	}
+
+	// Validate provenance consistency to prevent mixed-provenance groups.
+	// Pass rule UID for UPDATE - allows changing provenance if it's the only rule in the group.
+	if err := validation.ValidateProvisioningConsistency(ctx, service.provenanceStore, rule.OrgID, effectiveProvenance, deltaForValidation.AffectedGroups, rule.UID); err != nil {
+		return models.AlertRule{}, err
+	}
+
 	if len(rule.NotificationSettings) > 0 {
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
 		if err != nil {
