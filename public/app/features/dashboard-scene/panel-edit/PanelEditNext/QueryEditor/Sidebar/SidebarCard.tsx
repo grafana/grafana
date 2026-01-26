@@ -52,7 +52,7 @@ export const SidebarCard = ({ query }: SidebarCardProps) => {
   const styles = useStyles2(getStyles, editorType, hasError, isSelected);
 
   const handleClick = () => {
-    // Only select if not already selected, don't allow deselection
+    // We don't allow deselecting cards so don't do anything if already selected
     if (!isSelected) {
       setSelectedQuery(query);
     }
