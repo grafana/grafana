@@ -12600,11 +12600,11 @@
     "detail-placeholder": "Query/Transform detail view goes here",
     "sidebar": {
       "card-click": "Select query {{refId}}",
-      "divider-text": "Queries & Expressions",
       "expression": "Expression",
       "placeholder": "Sidebar content placeholder",
-      "queries": "Queries",
+      "queries-expressions": "Queries & Expressions",
       "query": "Query",
+      "query-stack": "Query Stack",
       "toggle-size": "Toggle sidebar size"
     }
   },
