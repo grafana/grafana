@@ -180,7 +180,7 @@ func (qb *queryBuilder) buildInsertDatastoreQuery(keyPath string, value []byte, 
 
 // buildInsertDatastoreBackwardCompatQuery generates INSERT for backward-compatible mode
 // Inserts guid, value, and placeholder values for NOT NULL columns - these will be updated by applyBackwardsCompatibleChanges()
-func (qb *queryBuilder) buildInsertDatastoreBackwardCompatQuery(value []byte, guid, group, resource, namespace, name, folder string) (string, []interface{}) {
+func (qb *queryBuilder) buildInsertDatastoreBackwardCompatQuery(value []byte, guid, group, resource, namespace, name, folder string, action int64) (string, []interface{}) {
 	query := fmt.Sprintf(
 		"INSERT INTO %s (%s, %s, %s, %s, %s, %s, %s, %s) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
 		qb.dialect.QuoteIdent(qb.tableName),
@@ -201,7 +201,7 @@ func (qb *queryBuilder) buildInsertDatastoreBackwardCompatQuery(value []byte, gu
 		qb.dialect.Placeholder(7), // action
 		qb.dialect.Placeholder(8), // folder
 	)
-	return query, []interface{}{guid, value, group, resource, namespace, name, 0, folder}
+	return query, []interface{}{guid, value, group, resource, namespace, name, action, folder}
 }
 
 // buildUpdateDatastoreQuery generates UPDATE for datastore section
