@@ -2256,7 +2256,10 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaPathfinderSquad,
-    },
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "queryEditorNext",
 			Description:  "Enables next generation query editor experience",
 			Stage:        FeatureStageExperimental,
