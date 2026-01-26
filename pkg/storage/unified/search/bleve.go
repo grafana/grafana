@@ -81,11 +81,6 @@ type BleveOptions struct {
 	// Indexes that are not owned by current instance are eligible for cleanup.
 	// If nil, all indexes are owned by the current instance.
 	OwnsIndex func(key resource.NamespacedResource) (bool, error)
-
-	// ScoringModel defines the scoring model used for the bleve indexes
-	// Default: index.TFIDFScoring
-	// Supported values: index.TFIDFScoring and index.BM25Scoring
-	ScoringModel string
 }
 
 type bleveBackend struct {
@@ -373,7 +368,7 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	mapper, err := GetBleveMappings(b.opts.ScoringModel, fields)
+	mapper, err := GetBleveMappings(fields)
 	if err != nil {
 		return nil, err
 	}
