@@ -76,11 +76,19 @@ func TestConnectionController_process(t *testing.T) {
 								Checked: time.Now().UnixMilli(),
 							},
 						},
+						Spec: provisioning.ConnectionSpec{
+							Type: provisioning.GithubConnectionType,
+						},
 					},
 				}
 				mockHealthChecker := NewMockConnectionHealthChecker(t)
 				mockHealthChecker.EXPECT().ShouldCheckHealth(mock.IsType(&provisioning.Connection{})).Return(false)
-				return mockLister, mockHealthChecker, nil, nil
+
+				mockFactory := connection.NewMockFactory(t)
+				mockConnection := connection.NewMockConnection(t)
+				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnection, nil)
+
+				return mockLister, mockHealthChecker, nil, mockFactory
 			},
 			conn: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{
@@ -94,6 +102,9 @@ func TestConnectionController_process(t *testing.T) {
 						Healthy: true,
 						Checked: time.Now().UnixMilli(),
 					},
+				},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
 				},
 			},
 			expectError: false,

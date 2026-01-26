@@ -191,10 +191,23 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
 	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
 
+	// Build connection to check all triggers including token refresh
+	// This is necessary because we can't determine token status without the connection
+	c, err := cc.connectionFactory.Build(ctx, conn)
+	if err != nil {
+		logger.Error("failed to build connection", "error", err)
+		return err
+	}
+
+	// Check if token needs refresh (now that connection is built)
+	shouldRefreshToken := cc.shouldRefreshToken(ctx, conn, c)
+
 	// Determine the main triggering condition
 	switch {
 	case hasSpecChanged:
 		logger.Info("spec changed, reconciling", "generation", conn.Generation, "observedGeneration", conn.Status.ObservedGeneration)
+	case shouldRefreshToken:
+		logger.Info("token needs refresh, reconciling")
 	case shouldCheckHealth:
 		logger.Info("health is stale, refreshing", "lastChecked", conn.Status.Health.Checked, "healthy", conn.Status.Health.Healthy)
 	default:
@@ -209,12 +222,6 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 			"path":  "/status/observedGeneration",
 			"value": conn.Generation,
 		})
-	}
-
-	c, err := cc.connectionFactory.Build(ctx, conn)
-	if err != nil {
-		logger.Error("failed to build connection", "error", err)
-		return err
 	}
 
 	// Handle token generation/refresh
@@ -299,4 +306,24 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	logger.Info("connection reconciliation completed", "healthy", healthStatus.Healthy, "field_errors", fieldErrors)
 
 	return nil
+}
+
+// shouldRefreshToken checks if the connection token needs to be refreshed.
+// Returns true if the connection supports tokens and the token needs generation/refresh.
+// Returns false on any errors to avoid blocking reconciliation.
+func (cc *ConnectionController) shouldRefreshToken(ctx context.Context, conn *provisioning.Connection, c connection.Connection) bool {
+	// Check if connection supports token generation
+	tokenConn, ok := c.(connection.TokenConnection)
+	if !ok {
+		return false
+	}
+
+	// Check if token needs to be generated or refreshed
+	needsGeneration, _, err := shouldGenerateToken(ctx, conn, tokenConn, cc.resyncInterval)
+	if err != nil {
+		// Don't block reconciliation on token check errors
+		return false
+	}
+
+	return needsGeneration
 }
