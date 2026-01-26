@@ -797,6 +797,127 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 		require.NoError(t, err, "error verifying token: %s", k)
 		require.True(t, valid, "token should be valid: %s", k)
 	})
+
+	t.Run("token gets updated if appID changes", func(t *testing.T) {
+		// Create a connection using unstructured (like other connection tests)
+		connUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-health",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "12345",
+					"installationID": "67890",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		connName := createdUnstructured.GetName()
+
+		t.Cleanup(func() {
+			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+		})
+
+		// Wait for initial reconciliation - controller should update status
+		require.Eventually(t, func() bool {
+			updated, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return updated.Status.ObservedGeneration == updated.Generation &&
+				updated.Status.Health.Checked > 0 &&
+				updated.Status.State == provisioning.ConnectionStateConnected &&
+				updated.Status.Health.Healthy
+		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled")
+
+		// Verify initial health check was set
+		initial, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, initial)
+		require.False(t, initial.Secure.Token.IsZero())
+
+		// Verifying token
+		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", initial.Namespace, initial.Secure.Token.Name)
+		require.NoError(t, err, "decryption error")
+		require.Len(t, decrypted, 1)
+
+		val := decrypted[initial.Secure.Token.Name].Value()
+		require.NotNil(t, val)
+		k := val.DangerouslyExposeAndConsumeValue()
+		valid, err := verifyToken(t, "12345", k)
+		require.NoError(t, err, "error verifying token: %s", k)
+		require.True(t, valid, "token should be valid: %s", k)
+
+		// Create a connection using unstructured (like other connection tests)
+		updated := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      connName,
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"type": "github",
+				"github": map[string]any{
+					"appID":          "54321",
+					"installationID": "67890",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		updatedUnstructured, err := helper.UpdateGithubConnection(t, ctx, updated)
+		require.NoError(t, err)
+		require.NotNil(t, updatedUnstructured)
+
+		// Wait for initial reconciliation - controller should update status
+		require.Eventually(t, func() bool {
+			updated, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return updated.Status.ObservedGeneration == updated.Generation &&
+				updated.Status.Health.Checked > 0 &&
+				updated.Status.State == provisioning.ConnectionStateConnected &&
+				updated.Status.Health.Healthy
+		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled again")
+
+		c, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, c)
+		// Verify secret got updated
+		require.NotEqual(t, c.Secure.Token.Name, initial.Secure.Token.Name)
+
+		// Verifying token
+		newSecretDecrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", c.Namespace, c.Secure.Token.Name)
+		require.NoError(t, err, "decryption error")
+		require.Len(t, decrypted, 1)
+
+		newVal := newSecretDecrypted[c.Secure.Token.Name].Value()
+		require.NotNil(t, newVal)
+		newK := newVal.DangerouslyExposeAndConsumeValue()
+		require.NotEqual(t, k, newK)
+		valid, err = verifyToken(t, "54321", newK)
+		require.NoError(t, err, "error verifying token: %s", newK)
+		require.True(t, valid, "token should be valid: %s", newK)
+	})
 }
 
 func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
@@ -1077,7 +1198,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 
 		// Verify all fields explicitly
 		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, installationIDError.Type, "Type must be FieldValueInvalid")
-		assert.Equal(t, "spec.installationID", installationIDError.Field, "Field must be spec.installationID")
+		assert.Equal(t, "spec.github.installationID", installationIDError.Field, "Field must be spec.installationID")
 		assert.Equal(t, "installation not found", installationIDError.Detail, "Detail must match expected error message")
 		assert.Empty(t, installationIDError.Origin, "Origin should be empty")
 
@@ -1179,7 +1300,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 
 		// Verify all fields explicitly
 		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, appIDError.Type, "Type must be FieldValueInvalid")
-		assert.Equal(t, "spec.appID", appIDError.Field, "Field must be spec.appID")
+		assert.Equal(t, "spec.github.appID", appIDError.Field, "Field must be spec.appID")
 		assert.Equal(t, "appID mismatch: expected 123456, got 999999", appIDError.Detail, "Detail must match expected error message")
 		assert.Empty(t, appIDError.Origin, "Origin should be empty")
 
@@ -1589,12 +1710,16 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 		}, 30*time.Second, 100*time.Millisecond, "repository should be deleted")
 
 		// Now deletion should succeed
-		err = helper.Connections.Resource.Delete(ctx, "test-conn-delete-blocked", deleteOptions)
-		require.NoError(t, err, "expected deletion to succeed after repository deletion")
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			err := helper.Connections.Resource.Delete(ctx, "test-conn-delete-blocked", deleteOptions)
+			require.NoError(collect, err, "failed to delete connection")
+		}, 10*time.Second, 100*time.Millisecond, "deletion should succeed")
 
 		// Verify connection is actually deleted
-		_, err = helper.Connections.Resource.Get(ctx, "test-conn-delete-blocked", metav1.GetOptions{})
-		assert.True(t, k8serrors.IsNotFound(err), "connection should be deleted")
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			_, err = helper.Connections.Resource.Get(ctx, "test-conn-delete-blocked", metav1.GetOptions{})
+			require.True(collect, k8serrors.IsNotFound(err), "connection should be deleted")
+		}, 10*time.Second, 100*time.Millisecond, "connection should be deleted")
 	})
 }
 
@@ -1642,29 +1767,6 @@ func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) 
 	})
 }
 
-func verifyToken(t *testing.T, appID, token string) (bool, error) {
-	t.Helper()
-
-	// Parse the private key
-	key, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(testPrivateKeyPEM))
-	if err != nil {
-		return false, err
-	}
-
-	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
-		return &key.PublicKey, nil
-	}, jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
-	if err != nil {
-		return false, err
-	}
-
-	claims, ok := parsedToken.Claims.(jwt.MapClaims)
-	if !ok || !parsedToken.Valid {
-		return false, fmt.Errorf("invalid token")
-	}
-
-	return claims.VerifyIssuer(appID, true), nil
-}
 func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -1757,4 +1859,28 @@ func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) 
 		// Verify message contains the actual error returned by the GitHub client
 		assert.Contains(t, readyCondition.Message, "github is unavailable", "condition message should contain the actual error text")
 	})
+}
+
+func verifyToken(t *testing.T, appID, token string) (bool, error) {
+	t.Helper()
+
+	// Parse the private key
+	key, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(testPrivateKeyPEM))
+	if err != nil {
+		return false, err
+	}
+
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
+		return &key.PublicKey, nil
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
+	if err != nil {
+		return false, err
+	}
+
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok || !parsedToken.Valid {
+		return false, fmt.Errorf("invalid token")
+	}
+
+	return claims.VerifyIssuer(appID, true), nil
 }

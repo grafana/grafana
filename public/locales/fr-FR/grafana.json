@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Supprimer",
       "duplicate": "Dupliquer",
       "label-integration": "Intégration",
       "label-notification-settings": "Paramètres de notification",
       "label-section": "Paramètres facultatifs : {{name}}",
       "test": "Test",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -1933,6 +1935,10 @@
     "namespace-and-group-filter": {
       "select-group": "Sélectionner un groupe",
       "select-namespace": "Sélectionner le namespace"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Vous avez besoin d’aide ?"
@@ -5164,6 +5170,9 @@
       "title": {
         "deleted": "supprimé"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -12584,6 +12593,13 @@
       "title-data-source-help": "Aide sur la source de données"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": ""
@@ -13348,6 +13364,7 @@
       "label-standard": "Standard"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14958,6 +14975,9 @@
       "label-both": "Les deux",
       "label-lines": "Lignes",
       "label-points": "Points"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

@@ -15,7 +15,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -193,31 +192,23 @@ func (req sqlKVDeleteRequest) Validate() error {
 var _ KV = &sqlKV{}
 
 type sqlKV struct {
-	dbProvider db.DBProvider
-	db         db.DB
-	dialect    sqltemplate.Dialect
+	db      *sql.DB
+	dialect sqltemplate.Dialect
 }
 
-func NewSQLKV(dbProvider db.DBProvider) (KV, error) {
-	if dbProvider == nil {
-		return nil, fmt.Errorf("dbProvider is required")
+func NewSQLKV(db *sql.DB, driverName string) (KV, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db is required")
 	}
 
-	ctx := context.Background()
-	dbConn, err := dbProvider.Init(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error initializing DB: %w", err)
-	}
-
-	dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
+	dialect := sqltemplate.DialectForDriver(driverName)
 	if dialect == nil {
-		return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
+		return nil, fmt.Errorf("unsupported database driver: %s", driverName)
 	}
 
 	return &sqlKV{
-		dbProvider: dbProvider,
-		db:         dbConn,
-		dialect:    dialect,
+		db:      db,
+		dialect: dialect,
 	}, nil
 }
 
@@ -227,7 +218,7 @@ func (k *sqlKV) Ping(ctx context.Context) error {
 
 func (k *sqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
-		rows, err := dbutil.QueryRows(ctx, k.db, sqlKVKeys, sqlKVKeysRequest{
+		rows, err := queryRowsTemplate(ctx, k.db, sqlKVKeys, sqlKVKeysRequest{
 			SQLTemplate:  sqltemplate.New(k.dialect),
 			sqlKVSection: sqlKVSection{section},
 			Options:      opt,
@@ -257,12 +248,17 @@ func (k *sqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.
 }
 
 func (k *sqlKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
-	value, err := dbutil.QueryRow(ctx, k.db, sqlKVGet, sqlKVGetRequest{
+	row, err := queryRowTemplate(ctx, k.db, sqlKVGet, sqlKVGetRequest{
 		SQLTemplate:      sqltemplate.New(k.dialect),
 		sqlKVSectionKey:  sqlKVSectionKey{sqlKVSection{section}, key},
 		sqlKVGetResponse: new(sqlKVGetResponse),
 	})
 	if err != nil {
+		return nil, fmt.Errorf("failed to query: %w", err)
+	}
+
+	var value []byte
+	if err := row.Scan(&value); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
 		}
@@ -278,7 +274,7 @@ func (k *sqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 			return
 		}
 
-		rows, err := dbutil.QueryRows(ctx, k.db, sqlKVBatchGet, sqlKVBatchRequest{
+		rows, err := queryRowsTemplate(ctx, k.db, sqlKVBatchGet, sqlKVBatchRequest{
 			SQLTemplate:  sqltemplate.New(k.dialect),
 			sqlKVSection: sqlKVSection{section},
 			Keys:         keys,
@@ -358,7 +354,7 @@ func (w *sqlWriteCloser) Close() error {
 	// do regular kv save: simple key_path + value insert with conflict check.
 	// can only do this on resource_events for now, until we drop the columns in resource_history
 	if w.sectionKey.Section == eventsSection {
-		_, err := dbutil.Exec(w.ctx, w.kv.db, sqlKVSaveEvent, sqlKVSaveRequest{
+		_, err := execTemplate(w.ctx, w.kv.db, sqlKVSaveEvent, sqlKVSaveRequest{
 			SQLTemplate:     sqltemplate.New(w.kv.dialect),
 			sqlKVSectionKey: w.sectionKey,
 			Value:           value,
@@ -381,7 +377,7 @@ func (w *sqlWriteCloser) Close() error {
 		// - remove all unnecessary columns (or at least their NOT NULL constraints)
 		_, err := w.kv.Get(w.ctx, w.sectionKey.Section, w.sectionKey.Key)
 		if errors.Is(err, ErrNotFound) {
-			_, err := dbutil.Exec(w.ctx, w.kv.db, sqlKVInsertData, sqlKVSaveRequest{
+			_, err := execTemplate(w.ctx, w.kv.db, sqlKVInsertData, sqlKVSaveRequest{
 				SQLTemplate:     sqltemplate.New(w.kv.dialect),
 				sqlKVSectionKey: w.sectionKey,
 				GUID:            uuid.New().String(),
@@ -399,7 +395,7 @@ func (w *sqlWriteCloser) Close() error {
 			return fmt.Errorf("failed to get for save: %w", err)
 		}
 
-		_, err = dbutil.Exec(w.ctx, w.kv.db, sqlKVUpdateData, sqlKVSaveRequest{
+		_, err = execTemplate(w.ctx, w.kv.db, sqlKVUpdateData, sqlKVSaveRequest{
 			SQLTemplate:     sqltemplate.New(w.kv.dialect),
 			sqlKVSectionKey: w.sectionKey,
 			Value:           value,
@@ -435,7 +431,7 @@ func (w *sqlWriteCloser) Close() error {
 		return fmt.Errorf("failed to parse key: invalid action")
 	}
 
-	_, err = dbutil.Exec(w.ctx, tx, sqlKVInsertLegacyResourceHistory, sqlKVSaveRequest{
+	_, err = execTemplateWithTx(w.ctx, tx, sqlKVInsertLegacyResourceHistory, sqlKVSaveRequest{
 		SQLTemplate:     sqltemplate.New(w.kv.dialect),
 		sqlKVSectionKey: w.sectionKey, // unused: key_path is set by rvmanager
 		Value:           value,
@@ -456,7 +452,7 @@ func (w *sqlWriteCloser) Close() error {
 }
 
 func (k *sqlKV) Delete(ctx context.Context, section string, key string) error {
-	_, err := dbutil.Exec(ctx, k.db, sqlKVDelete, sqlKVDeleteRequest{
+	_, err := execTemplate(ctx, k.db, sqlKVDelete, sqlKVDeleteRequest{
 		SQLTemplate:     sqltemplate.New(k.dialect),
 		sqlKVSectionKey: sqlKVSectionKey{sqlKVSection{section}, key},
 	})
@@ -472,7 +468,7 @@ func (k *sqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 		return nil
 	}
 
-	if _, err := dbutil.Exec(ctx, k.db, sqlKVBatchDelete, sqlKVBatchRequest{
+	if _, err := execTemplate(ctx, k.db, sqlKVBatchDelete, sqlKVBatchRequest{
 		SQLTemplate:  sqltemplate.New(k.dialect),
 		sqlKVSection: sqlKVSection{section},
 		Keys:         keys,
@@ -491,7 +487,77 @@ func (k *sqlKV) UnixTimestamp(ctx context.Context) (int64, error) {
 	return time.Now().Unix(), nil
 }
 
-func closeRows[T any](rows db.Rows, yield func(T, error) bool) {
+func validateAndExecuteTemplate(tmpl *template.Template, req sqltemplate.SQLTemplate) (string, []interface{}, error) {
+	var buf bytes.Buffer
+	if err := req.Validate(); err != nil {
+		return "", nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	if err := tmpl.Execute(&buf, req); err != nil {
+		return "", nil, fmt.Errorf("template execution failed: %w", err)
+	}
+
+	return buf.String(), req.GetArgs(), nil
+}
+
+// execTemplate renders a SQL template and executes it
+func execTemplate(
+	ctx context.Context,
+	db *sql.DB,
+	tmpl *template.Template,
+	req sqltemplate.SQLTemplate,
+) (sql.Result, error) {
+	query, args, err := validateAndExecuteTemplate(tmpl, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return db.ExecContext(ctx, query, args...)
+}
+
+// execTemplateWithTx renders and executes a template within a transaction
+func execTemplateWithTx(
+	ctx context.Context,
+	tx db.ContextExecer,
+	tmpl *template.Template,
+	req sqltemplate.SQLTemplate,
+) (sql.Result, error) {
+	query, args, err := validateAndExecuteTemplate(tmpl, req)
+	if err != nil {
+		return nil, err
+	}
+	return tx.ExecContext(ctx, query, args...)
+}
+
+// queryRowsTemplate renders a SQL template and queries multiple rows
+func queryRowsTemplate(
+	ctx context.Context,
+	db *sql.DB,
+	tmpl *template.Template,
+	req sqltemplate.SQLTemplate,
+) (*sql.Rows, error) {
+	query, args, err := validateAndExecuteTemplate(tmpl, req)
+	if err != nil {
+		return nil, err
+	}
+	return db.QueryContext(ctx, query, args...)
+}
+
+// queryRowTemplate renders a SQL template and queries a single row
+func queryRowTemplate(
+	ctx context.Context,
+	db *sql.DB,
+	tmpl *template.Template,
+	req sqltemplate.SQLTemplate,
+) (*sql.Row, error) {
+	query, args, err := validateAndExecuteTemplate(tmpl, req)
+	if err != nil {
+		return nil, err
+	}
+	return db.QueryRowContext(ctx, query, args...), nil
+}
+
+func closeRows[T any](rows *sql.Rows, yield func(T, error) bool) {
 	if err := rows.Close(); err != nil {
 		var zero T
 		yield(zero, fmt.Errorf("error closing rows: %w", err))

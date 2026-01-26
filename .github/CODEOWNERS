@@ -102,6 +102,7 @@
 /apps/example/ @grafana/grafana-app-platform-squad
 /apps/logsdrilldown/ @grafana/observability-logs
 /apps/annotation/ @grafana/grafana-backend-services-squad
+/apps/dashvalidator/ @grafana/sharing-squad
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/query @grafana/grafana-datasources-core-services
@@ -821,6 +822,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/NavLandingPage/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/NestedFolderPicker/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/OptionsUI/ @grafana/dashboards-squad @grafana/dataviz-squad
+/public/app/core/components/OwnerReferences/OwnerReferenceSelector.tsx @grafana/grafana-search-navigate-organise
 /public/app/core/components/Page/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/PageActionBar/ @grafana/grafana-search-navigate-organise
 /public/app/core/components/PageInfo/ @grafana/grafana-search-navigate-organise
@@ -933,6 +935,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/geo/ @grafana/dataviz-squad
 /public/app/features/visualization/data-hover/ @grafana/dataviz-squad
 /public/app/features/commandPalette/ @grafana/grafana-search-navigate-organise
+/public/app/features/commandPalette/scopes/ @grafana/grafana-operator-experience-squad
 /public/app/features/connections/ @grafana/plugins-platform-frontend
 /public/app/features/correlations/ @grafana/datapro
 /public/app/features/dashboard/ @grafana/dashboards-squad
@@ -1193,6 +1196,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apps/advisor @grafana/plugins-platform-backend
 /pkg/registry/apps/alerting @grafana/alerting-backend
 /pkg/registry/apps/plugins @grafana/plugins-platform-backend
+/pkg/registry/apps/dashvalidator @grafana/sharing-squad
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/codegen/generators @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code

@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Törlés",
       "duplicate": "Duplikálás",
       "label-integration": "Integráció",
       "label-notification-settings": "Értesítési beállítások",
       "label-section": "Opcionális {{name}}-beállítások",
       "test": "Teszt",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -1933,6 +1935,10 @@
     "namespace-and-group-filter": {
       "select-group": "Csoport kijelölése",
       "select-namespace": "Névtér kijelölése"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Segítségre van szüksége?"
@@ -5164,6 +5170,9 @@
       "title": {
         "deleted": "törölve"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -12584,6 +12593,13 @@
       "title-data-source-help": "Adatforrás súgója"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": ""
@@ -13348,6 +13364,7 @@
       "label-standard": "Standard"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14958,6 +14975,9 @@
       "label-both": "Mindkettő",
       "label-lines": "Vonalak",
       "label-points": "Pontok"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }
