@@ -116,6 +116,8 @@ On this screen you will configure your Git Sync connection, either using a Perso
 
 #### Connect with a Personal Access Token
 
+Configure your connection with a Personal Access Token:
+
 1. Paste your GitHub personal access token into **Enter your access token**. Refer to [Create a GitHub access token](#create-a-github-access-token) for instructions.
 1. Paste the **Repository URL** for your GitHub repository into the text box.
 1. Enter a branch to use for provisioning. The default value is `main`.
@@ -125,7 +127,10 @@ Select **Choose what to synchronize** to have the connection to your repository 
 
 #### Connect with GitHub App
 
-TBD
+1. 
+1. Paste the **Repository URL** for your GitHub repository into the text box.
+1. Enter a branch to use for provisioning. The default value is `main`.
+1. Optionally, you can add a **Path** to a subdirectory where your dashboards are stored. The default value is `grafana/`. If your dashboards are stored in the root of your repository, then remove the directory name.
 
 ### Choose what to synchronize
 
@@ -133,8 +138,8 @@ On this screen, you will sync your selected external resources with Grafana. The
 
 To set up synchronization:
 
-1. Select the external storage you want to sync with your Grafana instance. The UI shows you the 
-1. Enter a **Display name** for your repository connection. All the synced resources stored in this connection appear under the chosen display name in the Grafana UI.
+1. Select the external storage you want to sync with your Grafana instance. The UI provides information about the available resources you can sync.
+1. Enter a **Display name** for your repository connection. All the synced resources from this Git Sync connection will appear under the this name in the Grafana UI.
 1. Click **Synchronize with external storage** to continue.
 1. You can repeat this process for up to 10 connections.
 
@@ -152,13 +157,23 @@ Full instance sync is not available in Grafana Cloud and is experimental and uns
 
 ### Synchronize with external storage
 
-Check the **Migrate existing resources** box to migrate your unmanaged dashboards to the provisioned folder. If you select this option, all future updates are automatically saved to the synced Git repository and provisioned back to the instance.
+In this screen:
+
+1. Review the known limitations before proceeding.
+1. Check the **Migrate existing resources** box to migrate your unmanaged dashboards to the provisioned folder. If you select this option, all future updates are automatically saved to the synced Git repository and provisioned back to the instance.
+1. Click **Begin synchronization** to create the Git Sync connection.
+
+{{< admonition type="caution" >}}
+
+This process can take a few minutes.
+
+{{< /admonition >}}
 
 ### Choose additional settings
 
-You can configure the following additional settings:
+You connection is complete!
 
-- **Sync interval (seconds)**. Enter how often you want your Grafana instance to pull updates from GitHub. The default value is 60 seconds.
+In this last step, you can configure the **Sync interval (seconds)** to indicate how often you want your Grafana instance to pull updates from GitHub. The default value is 60 seconds.
 
 You can also select these optional settings: 
 
