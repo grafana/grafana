@@ -9,7 +9,7 @@ import { UserIcon } from './UserIcon';
 import { UserView } from './types';
 
 export interface UsersIndicatorProps {
-  /** An object that contains the user's details and 'lastActiveAt' status */
+  /** An object that contains the user's details and an optional 'lastActiveAt' status */
   users: UserView[];
   /** A limit of how many user icons to show before collapsing them and showing a number of users instead */
   limit?: number;
@@ -23,7 +23,7 @@ export interface UsersIndicatorProps {
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/iconography-usersindicator--docs
  */
 export const UsersIndicator = ({ users, onClick, limit = 4 }: UsersIndicatorProps) => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, limit);
   if (!users.length) {
     return null;
   }
@@ -39,34 +39,41 @@ export const UsersIndicator = ({ users, onClick, limit = 4 }: UsersIndicatorProp
       className={styles.container}
       aria-label={t('grafana-ui.users-indicator.container-label', 'Users indicator container')}
     >
+      {users.slice(0, limitReached ? limit : limit + 1).map((userView, idx, arr) => (
+        <UserIcon key={userView.user.name} userView={userView} />
+      ))}
       {limitReached && (
-        <UserIcon onClick={onClick} userView={{ user: { name: 'Extra users' }, lastActiveAt: '' }} showTooltip={false}>
+        <UserIcon onClick={onClick} userView={{ user: { name: 'Extra users' } }} showTooltip={false}>
           {tooManyUsers
             ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               '...'
             : `+${extraUsers}`}
         </UserIcon>
       )}
-      {users
-        .slice(0, limitReached ? limit : limit + 1)
-        .reverse()
-        .map((userView) => (
-          <UserIcon key={userView.user.name} userView={userView} />
-        ))}
     </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, limit: number) => {
   return {
     container: css({
       display: 'flex',
       justifyContent: 'center',
-      flexDirection: 'row-reverse',
       marginLeft: theme.spacing(1),
+      isolation: 'isolate',
 
       '& > button': {
         marginLeft: theme.spacing(-1), // Overlay the elements a bit on top of each other
+
+        // Ensure overlaying user icons are stacked correctly with z-index on each element
+        ...Object.fromEntries(
+          Array.from({ length: limit }).map((_, idx) => [
+            `&:nth-of-type(${idx + 1})`,
+            {
+              zIndex: limit - idx,
+            },
+          ])
+        ),
       },
     }),
     dots: css({

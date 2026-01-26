@@ -66,7 +66,78 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [
+                      {
+                        "colorMode": "gray",
+                        "fill": true,
+                        "fillColor": "rgba(255, 255, 255, 0.03)",
+                        "from": "08:30",
+                        "fromDayOfWeek": 1,
+                        "line": false,
+                        "lineColor": "rgba(255, 255, 255, 0.2)",
+                        "op": "time",
+                        "to": "16:45",
+                        "toDayOfWeek": 5
+                      }
+                    ],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -112,7 +183,140 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {
+                      "A-series": "#d683ce"
+                    },
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 0.5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [
+                      {
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(255, 0, 0, 0.22)",
+                        "from": "",
+                        "fromDayOfWeek": 1,
+                        "line": true,
+                        "lineColor": "rgba(255, 0, 0, 0.32)",
+                        "op": "time",
+                        "to": "",
+                        "toDayOfWeek": 1
+                      },
+                      {
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(255, 127, 0, 0.22)",
+                        "fromDayOfWeek": 2,
+                        "line": true,
+                        "lineColor": "rgba(255, 127, 0, 0.32)",
+                        "op": "time",
+                        "toDayOfWeek": 2
+                      },
+                      {
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(255, 255, 0, 0.22)",
+                        "fromDayOfWeek": 3,
+                        "line": true,
+                        "lineColor": "rgba(255, 255, 0, 0.22)",
+                        "op": "time",
+                        "toDayOfWeek": 3
+                      },
+                      {
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(0, 255, 0, 0.22)",
+                        "fromDayOfWeek": 4,
+                        "line": true,
+                        "lineColor": "rgba(0, 255, 0, 0.32)",
+                        "op": "time",
+                        "toDayOfWeek": 4
+                      },
+                      {
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(0, 0, 255, 0.22)",
+                        "fromDayOfWeek": 5,
+                        "line": true,
+                        "lineColor": "rgba(0, 0, 255, 0.32)",
+                        "op": "time",
+                        "toDayOfWeek": 5
+                      },
+                      {
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(75, 0, 130, 0.22)",
+                        "fromDayOfWeek": 6,
+                        "line": true,
+                        "lineColor": "rgba(75, 0, 130, 0.32)",
+                        "op": "time",
+                        "toDayOfWeek": 6
+                      },
+                      {
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(148, 0, 211, 0.22)",
+                        "fromDayOfWeek": 7,
+                        "line": true,
+                        "lineColor": "rgba(148, 0, 211, 0.32)",
+                        "op": "time",
+                        "toDayOfWeek": 7
+                      }
+                    ],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -161,7 +365,78 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [
+                      {
+                        "colorMode": "red",
+                        "fill": true,
+                        "fillColor": "rgba(255, 255, 255, 0.03)",
+                        "from": "20:00",
+                        "fromDayOfWeek": 7,
+                        "line": false,
+                        "lineColor": "rgba(255, 255, 255, 0.2)",
+                        "op": "time",
+                        "to": "23:00",
+                        "toDayOfWeek": 7
+                      }
+                    ],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -210,7 +485,73 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [
+                      {
+                        "colorMode": "red",
+                        "fill": false,
+                        "from": "05:00",
+                        "line": true,
+                        "op": "time"
+                      }
+                    ],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -255,7 +596,76 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [
+                      {
+                        "colorMode": "gray",
+                        "fill": true,
+                        "fillColor": "rgba(234, 112, 112, 0.12)",
+                        "from": "22:00",
+                        "line": false,
+                        "lineColor": "rgba(237, 46, 24, 0.60)",
+                        "op": "time",
+                        "to": "00:30"
+                      }
+                    ],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

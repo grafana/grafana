@@ -39,7 +39,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	_, span := tracing.DefaultTracer().Start(ctx, "graphite healthcheck")
 	defer span.End()
-	graphiteReq, formData, _, err := s.createGraphiteRequest(ctx, healthCheckQuery, dsInfo)
+	graphiteReq, formData, _, _, err := s.createGraphiteRequest(ctx, healthCheckQuery, dsInfo)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -81,7 +81,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}
 	}()
 
-	_, err = s.toDataFrames(res, healthCheckQuery.RefID)
+	_, err = s.toDataFrames(res, healthCheckQuery.RefID, false, targetStr)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())

@@ -185,6 +185,7 @@ function grafanaChannelConfigToFormChannelValues(
   const values: GrafanaChannelValues = {
     __id: id,
     type: channel.type as NotifierType,
+    version: channel.version,
     provenance: channel.provenance,
     settings: { ...channel.settings },
     secureFields: { ...channel.secureFields },
@@ -239,6 +240,7 @@ export function formChannelValuesToGrafanaChannelConfig(
     }),
     secureFields: secureFieldsFromValues,
     type: values.type,
+    version: values.version ?? existing?.version,
     name,
     disableResolveMessage:
       values.disableResolveMessage ?? existing?.disableResolveMessage ?? defaults.disableResolveMessage,

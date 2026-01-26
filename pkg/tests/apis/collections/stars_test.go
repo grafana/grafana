@@ -42,9 +42,10 @@ func TestIntegrationStars(t *testing.T) {
 		}
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    false, // required for experimental APIs
-			DisableAnonymous:     true,
-			EnableFeatureToggles: flags,
+			DisableDataMigrations: true,
+			AppModeProduction:     false, // required for experimental APIs
+			DisableAnonymous:      true,
+			EnableFeatureToggles:  flags,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: mode,
@@ -139,7 +140,8 @@ func TestIntegrationStars(t *testing.T) {
 			}, &raw)
 			require.Equal(t, http.StatusOK, legacyResponse.Response.StatusCode, "removed dashboard star")
 
-			rspObj, err := starsClient.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
+			adminStarName := "user-" + starsClient.Args.User.Identity.GetIdentifier()
+			rspObj, err := starsClient.Resource.Get(ctx, adminStarName, metav1.GetOptions{})
 			require.NoError(t, err)
 
 			after := typed(t, rspObj, &collections.Stars{})
@@ -153,7 +155,7 @@ func TestIntegrationStars(t *testing.T) {
 			rspObj, err = starsClient.Resource.Update(ctx, &unstructured.Unstructured{
 				Object: map[string]any{
 					"metadata": map[string]any{
-						"name":      "user-" + starsClient.Args.User.Identity.GetIdentifier(),
+						"name":      adminStarName,
 						"namespace": "default",
 					},
 					"spec": map[string]any{
@@ -178,7 +180,15 @@ func TestIntegrationStars(t *testing.T) {
 				[]string{"test-2", "aaa", "bbb"}, // keeps the requested order, removing duplicates
 				resources[0].Names)
 
-			rspObj, err = starsClient.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
+			// Now add a star with the sub-resource route used by the UI
+			client := helper.Org1.Admin.RESTClient(t, &collections.GroupVersion)
+			res := client.Put().AbsPath("apis", "collections.grafana.app", "v1alpha1",
+				"namespaces", "default",
+				"stars", adminStarName,
+				"update", "dashboard.grafana.app", "Dashboard", "xxx").Do(ctx)
+			require.NoError(t, res.Error())
+
+			rspObj, err = starsClient.Resource.Get(ctx, adminStarName, metav1.GetOptions{})
 			require.NoError(t, err)
 
 			after = typed(t, rspObj, &collections.Stars{})
@@ -196,7 +206,8 @@ func TestIntegrationStars(t *testing.T) {
 							"names": [
 								"aaa",
 								"bbb",
-								"test-2"
+								"test-2",
+								"xxx"
 							]
 						}
 					]
@@ -211,6 +222,17 @@ func TestIntegrationStars(t *testing.T) {
 			rspObj, err = starsClientViewer.Resource.Get(ctx, "user-"+starsClient.Args.User.Identity.GetIdentifier(), metav1.GetOptions{})
 			require.Error(t, err)
 			require.Nil(t, rspObj)
+
+			// Use the API to star a non-dashboard resource
+			res = client.Put().AbsPath("apis", "collections.grafana.app", "v1alpha1",
+				"namespaces", "default",
+				"stars", adminStarName,
+				"update", "servicemodel.ext.grafana.com", "Component", "xxx").Do(ctx)
+			if mode == grafanarest.Mode5 {
+				require.NoError(t, res.Error())
+			} else {
+				require.Error(t, res.Error(), "only dashboard stars are supported until the migration to unified storage is complete")
+			}
 		})
 	}
 }

@@ -147,7 +147,65 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": true,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": true,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -195,7 +253,64 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": false,
+                    "linewidth": 2,
+                    "nullPointMode": "null as zero",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": true,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -243,7 +358,64 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": false,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": true,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -291,7 +463,69 @@
             "kind": "bargauge",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": true,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": false,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": false,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "series",
+                      "show": true,
+                      "values": [
+                        "total"
+                      ]
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -339,7 +573,69 @@
             "kind": "bargauge",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": true,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": false,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": false,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "series",
+                      "show": true,
+                      "values": [
+                        "total"
+                      ]
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -387,7 +683,64 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": false,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": true,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -435,7 +788,69 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "hideEmpty": false,
+                      "hideZero": false,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": true,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": true,
+                    "pointradius": 3,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": true,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -483,7 +898,67 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": true,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": true,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -531,7 +1006,69 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "hideEmpty": false,
+                      "hideZero": false,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": true,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": true,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -579,7 +1116,38 @@
             "kind": "table",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "columns": [],
+                    "fontSize": "100%",
+                    "scroll": true,
+                    "showHeader": true,
+                    "sort": {
+                      "col": 1,
+                      "desc": false
+                    },
+                    "styles": [
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "decimals": 2,
+                        "pattern": "/.*/",
+                        "thresholds": [],
+                        "type": "string",
+                        "unit": "short"
+                      }
+                    ],
+                    "transform": "table"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -627,7 +1195,67 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": true,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": true,
+                    "pointradius": 3,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": true,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -675,7 +1303,70 @@
             "kind": "histogram",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": false,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": false,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": true,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "buckets": 20,
+                      "mode": "histogram",
+                      "show": true,
+                      "values": [
+                        "current"
+                      ]
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -723,7 +1414,70 @@
             "kind": "histogram",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": false,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": false,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "buckets": 100,
+                      "mode": "histogram",
+                      "show": true,
+                      "values": [
+                        "total"
+                      ]
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -771,7 +1525,70 @@
             "kind": "histogram",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": false,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": false,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": true,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": true,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "buckets": 20,
+                      "mode": "histogram",
+                      "show": true,
+                      "values": [
+                        "current"
+                      ]
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -819,7 +1636,70 @@
             "kind": "histogram",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": false,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": false,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": true,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": true,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "buckets": 20,
+                      "mode": "histogram",
+                      "show": true,
+                      "values": [
+                        "total"
+                      ]
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -867,7 +1747,70 @@
             "kind": "histogram",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": false,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": false,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "buckets": 50,
+                      "mode": "histogram",
+                      "show": true,
+                      "values": [
+                        "current"
+                      ]
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -915,7 +1858,70 @@
             "kind": "histogram",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": false,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": false,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": true,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "buckets": 20,
+                      "mode": "histogram",
+                      "show": true,
+                      "values": [
+                        "total"
+                      ]
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -963,7 +1969,69 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "hideEmpty": false,
+                      "hideZero": false,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": true,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1011,7 +2079,67 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": true,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1060,7 +2188,45 @@
             "kind": "table",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "columns": [],
+                    "fontSize": "100%",
+                    "scroll": true,
+                    "showHeader": true,
+                    "sort": {
+                      "col": 0,
+                      "desc": true
+                    },
+                    "styles": [
+                      {
+                        "alias": "Time",
+                        "align": "auto",
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "pattern": "time",
+                        "type": "date"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "decimals": 2,
+                        "pattern": "/.*/",
+                        "thresholds": [],
+                        "type": "number",
+                        "unit": "short"
+                      }
+                    ],
+                    "transform": "table"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1109,7 +2275,45 @@
             "kind": "table",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "columns": [],
+                    "fontSize": "100%",
+                    "scroll": true,
+                    "showHeader": true,
+                    "sort": {
+                      "col": 0,
+                      "desc": true
+                    },
+                    "styles": [
+                      {
+                        "alias": "Time",
+                        "align": "auto",
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "pattern": "time",
+                        "type": "date"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "decimals": 2,
+                        "pattern": "/.*/",
+                        "thresholds": [],
+                        "type": "number",
+                        "unit": "short"
+                      }
+                    ],
+                    "transform": "table"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1158,7 +2362,45 @@
             "kind": "table",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "columns": [],
+                    "fontSize": "100%",
+                    "scroll": true,
+                    "showHeader": true,
+                    "sort": {
+                      "col": 0,
+                      "desc": true
+                    },
+                    "styles": [
+                      {
+                        "alias": "Time",
+                        "align": "auto",
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "pattern": "time",
+                        "type": "date"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "decimals": 2,
+                        "pattern": "/.*/",
+                        "thresholds": [],
+                        "type": "number",
+                        "unit": "short"
+                      }
+                    ],
+                    "transform": "table"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1207,7 +2449,45 @@
             "kind": "table",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "columns": [],
+                    "fontSize": "100%",
+                    "scroll": true,
+                    "showHeader": true,
+                    "sort": {
+                      "col": 0,
+                      "desc": true
+                    },
+                    "styles": [
+                      {
+                        "alias": "Time",
+                        "align": "auto",
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "pattern": "time",
+                        "type": "date"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "decimals": 2,
+                        "pattern": "/.*/",
+                        "thresholds": [],
+                        "type": "number",
+                        "unit": "short"
+                      }
+                    ],
+                    "transform": "table"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1255,7 +2535,65 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": true,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": true,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1303,7 +2641,64 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": true,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": false,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": true,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1351,7 +2746,69 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "hideEmpty": false,
+                      "hideZero": false,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": true,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1399,7 +2856,67 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": true,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1447,7 +2964,69 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "hideEmpty": false,
+                      "hideZero": false,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": true,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1495,7 +3074,67 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": true,
+                      "current": true,
+                      "max": true,
+                      "min": true,
+                      "rightSide": true,
+                      "show": true,
+                      "total": true,
+                      "values": true
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1543,7 +3182,65 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": true,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": true,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -1591,7 +3288,65 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 2,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 2,
+                    "nullPointMode": "null as zero",
+                    "percentage": false,
+                    "pointradius": 3,
+                    "points": true,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": true,
+                    "thresholds": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

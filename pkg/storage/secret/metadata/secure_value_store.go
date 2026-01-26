@@ -85,7 +85,7 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 	var row *secureValueDB
 
 	err := s.db.Transaction(ctx, func(ctx context.Context) error {
-		latest, err := s.getLatestVersionAndCreatedAt(ctx, xkube.Namespace(sv.Namespace), sv.Name)
+		latest, err := s.getLatestVersionAndCreated(ctx, xkube.Namespace(sv.Namespace), sv.Name)
 		if err != nil {
 			return fmt.Errorf("fetching latest secure value version: %w", err)
 		}
@@ -110,7 +110,13 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 			}
 			updatedAt := now
 
-			row, err = toCreateRow(createdAt, updatedAt, keeper, sv, actorUID)
+			createdBy := actorUID
+			if latest.createdBy != "" {
+				createdBy = latest.createdBy
+			}
+			updatedBy := actorUID
+
+			row, err = toCreateRow(createdAt, updatedAt, keeper, sv, createdBy, updatedBy)
 			if err != nil {
 				return fmt.Errorf("to create row: %w", err)
 			}
@@ -161,13 +167,14 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 	return createdSecureValue, nil
 }
 
-type versionAndCreatedAt struct {
+type versionAndCreated struct {
 	createdAt int64
+	createdBy string
 	version   int64
 }
 
-func (s *secureValueMetadataStorage) getLatestVersionAndCreatedAt(ctx context.Context, namespace xkube.Namespace, name string) (versionAndCreatedAt, error) {
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.getLatestVersionAndCreatedAt", trace.WithAttributes(
+func (s *secureValueMetadataStorage) getLatestVersionAndCreated(ctx context.Context, namespace xkube.Namespace, name string) (versionAndCreated, error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.getLatestVersionAndCreated", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
 	))
@@ -181,45 +188,48 @@ func (s *secureValueMetadataStorage) getLatestVersionAndCreatedAt(ctx context.Co
 
 	q, err := sqltemplate.Execute(sqlGetLatestSecureValueVersionAndCreatedAt, req)
 	if err != nil {
-		return versionAndCreatedAt{}, fmt.Errorf("execute template %q: %w", sqlGetLatestSecureValueVersionAndCreatedAt.Name(), err)
+		return versionAndCreated{}, fmt.Errorf("execute template %q: %w", sqlGetLatestSecureValueVersionAndCreatedAt.Name(), err)
 	}
 
 	rows, err := s.db.QueryContext(ctx, q, req.GetArgs()...)
 	if err != nil {
-		return versionAndCreatedAt{}, fmt.Errorf("fetching latest version for secure value: namespace=%+v name=%+v %w", namespace, name, err)
+		return versionAndCreated{}, fmt.Errorf("fetching latest version for secure value: namespace=%+v name=%+v %w", namespace, name, err)
 	}
 	defer func() { _ = rows.Close() }()
 
 	if err := rows.Err(); err != nil {
-		return versionAndCreatedAt{}, fmt.Errorf("error executing query: %w", err)
+		return versionAndCreated{}, fmt.Errorf("error executing query: %w", err)
 	}
 
 	if !rows.Next() {
-		return versionAndCreatedAt{}, nil
+		return versionAndCreated{}, nil
 	}
 
 	var (
 		createdAt       int64
+		createdBy       string
 		version         int64
 		active          bool
 		namespaceFromDB string
 		nameFromDB      string
 	)
-	if err := rows.Scan(&createdAt, &version, &active, &namespaceFromDB, &nameFromDB); err != nil {
-		return versionAndCreatedAt{}, fmt.Errorf("scanning version from returned rows: %w", err)
+	if err := rows.Scan(&createdAt, &createdBy, &version, &active, &namespaceFromDB, &nameFromDB); err != nil {
+		return versionAndCreated{}, fmt.Errorf("scanning version and created from returned rows: %w", err)
 	}
 
 	if namespaceFromDB != namespace.String() || nameFromDB != name {
-		return versionAndCreatedAt{}, fmt.Errorf("bug: expected to find latest version for namespace=%+v name=%+v but got version for namespace=%+v name=%+v",
+		return versionAndCreated{}, fmt.Errorf("bug: expected to find version and created for namespace=%+v name=%+v but got for namespace=%+v name=%+v",
 			namespace, name, namespaceFromDB, nameFromDB)
 	}
 
 	if !active {
 		createdAt = 0
+		createdBy = ""
 	}
 
-	return versionAndCreatedAt{
+	return versionAndCreated{
 		createdAt: createdAt,
+		createdBy: createdBy,
 		version:   version,
 	}, nil
 }

@@ -432,6 +432,21 @@ func getPanels(dashboard map[string]interface{}) []map[string]interface{} {
 		}
 	}
 
+	// Also get panels from rows
+	if rows, ok := dashboard["rows"].([]interface{}); ok {
+		for _, rowInterface := range rows {
+			if row, ok := rowInterface.(map[string]interface{}); ok {
+				if rowPanels, ok := row["panels"].([]interface{}); ok {
+					for _, panelInterface := range rowPanels {
+						if panel, ok := panelInterface.(map[string]interface{}); ok {
+							panels = append(panels, panel)
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return panels
 }
 
@@ -940,67 +955,18 @@ func applyPanelAutoMigration(panel map[string]interface{}) {
 		return
 	}
 
-	var newType string
-
 	// Graph needs special logic as it can be migrated to multiple panels
 	// Including graphite which was previously migrated to graph in the schema version 2 migration in DashboardMigrator.ts
 	// but this was a bug because in there graphite was set to graph, but since those migrations run
 	// after PanelModel.restoreModel where autoMigrateFrom is set, this caused the graph migration to be skipped.
 	// And this resulted in a dashboard with invalid panels.
-	if panelType == "graph" || panelType == "graphite" {
-		// Check xaxis mode for special cases
-		newType = getGraphAutoMigration(panel)
-	} else {
-		// Check autoMigrateAngular mapping
-		autoMigrateAngular := map[string]string{
-			"table-old":                "table",
-			"singlestat":               "stat",
-			"grafana-singlestat-panel": "stat",
-			"grafana-piechart-panel":   "piechart",
-			"grafana-worldmap-panel":   "geomap",
-			"natel-discrete-panel":     "state-timeline",
-		}
-
-		if mappedType, exists := autoMigrateAngular[panelType]; exists {
-			newType = mappedType
-		}
-	}
+	newType := schemaversion.GetAngularPanelMigration(panelType, panel)
 
 	// Apply auto-migration if a new type was determined
 	if newType != "" {
 		panel["autoMigrateFrom"] = panelType
 		panel["type"] = newType
 	}
-}
-
-func getGraphAutoMigration(panel map[string]interface{}) string {
-	newType := ""
-	if xaxis, ok := panel["xaxis"].(map[string]interface{}); ok {
-		if mode, ok := xaxis["mode"].(string); ok {
-			switch mode {
-			case "series":
-				// Check legend values for bargauge
-				if legend, ok := panel["legend"].(map[string]interface{}); ok {
-					if values, ok := legend["values"].(bool); ok && values {
-						newType = "bargauge"
-					} else {
-						newType = "barchart"
-					}
-				} else {
-					newType = "barchart"
-				}
-			case "histogram":
-				newType = "histogram"
-			}
-		}
-	}
-
-	// Default graph migration to timeseries
-	if newType == "" {
-		newType = "timeseries"
-	}
-
-	return newType
 }
 
 // removeNullValuesRecursively removes null values from nested objects and arrays

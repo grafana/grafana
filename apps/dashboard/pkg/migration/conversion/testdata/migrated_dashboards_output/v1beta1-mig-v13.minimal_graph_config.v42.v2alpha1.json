@@ -72,7 +72,12 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {}
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

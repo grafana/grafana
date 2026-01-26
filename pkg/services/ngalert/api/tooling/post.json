@@ -647,12 +647,6 @@
   },
   "BacktestConfig": {
    "properties": {
-    "annotations": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object"
-    },
     "condition": {
      "type": "string"
     },
@@ -662,8 +656,16 @@
      },
      "type": "array"
     },
+    "exec_err_state": {
+     "enum": [
+      "OK",
+      "Alerting",
+      "Error"
+     ],
+     "type": "string"
+    },
     "for": {
-     "$ref": "#/definitions/Duration"
+     "type": "string"
     },
     "from": {
      "format": "date-time",
@@ -672,11 +674,21 @@
     "interval": {
      "$ref": "#/definitions/Duration"
     },
+    "keep_firing_for": {
+     "type": "string"
+    },
     "labels": {
      "additionalProperties": {
       "type": "string"
      },
      "type": "object"
+    },
+    "missing_series_evals_to_resolve": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "namespace_uid": {
+     "type": "string"
     },
     "no_data_state": {
      "enum": [
@@ -686,11 +698,17 @@
      ],
      "type": "string"
     },
+    "rule_group": {
+     "type": "string"
+    },
     "title": {
      "type": "string"
     },
     "to": {
      "format": "date-time",
+     "type": "string"
+    },
+    "uid": {
      "type": "string"
     }
    },
@@ -1813,6 +1831,12 @@
     "interval": {
      "$ref": "#/definitions/Duration"
     },
+    "labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
     "limit": {
      "format": "int64",
      "type": "integer"
@@ -1822,6 +1846,12 @@
     },
     "query_offset": {
      "type": "string"
+    },
+    "remote_write": {
+     "items": {
+      "$ref": "#/definitions/RemoteWriteConfig"
+     },
+     "type": "array"
     },
     "rules": {
      "items": {
@@ -3142,6 +3172,12 @@
     "interval": {
      "$ref": "#/definitions/Duration"
     },
+    "labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
     "limit": {
      "format": "int64",
      "type": "integer"
@@ -3151,6 +3187,12 @@
     },
     "query_offset": {
      "type": "string"
+    },
+    "remote_write": {
+     "items": {
+      "$ref": "#/definitions/RemoteWriteConfig"
+     },
+     "type": "array"
     },
     "rules": {
      "items": {
@@ -3817,6 +3859,14 @@
    },
    "type": "object"
   },
+  "RemoteWriteConfig": {
+   "properties": {
+    "url": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "ResponseDetails": {
    "properties": {
     "msg": {
@@ -4093,6 +4143,12 @@
     "interval": {
      "$ref": "#/definitions/Duration"
     },
+    "labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
     "limit": {
      "format": "int64",
      "type": "integer"
@@ -4102,6 +4158,12 @@
     },
     "query_offset": {
      "type": "string"
+    },
+    "remote_write": {
+     "items": {
+      "$ref": "#/definitions/RemoteWriteConfig"
+     },
+     "type": "array"
     },
     "rules": {
      "items": {
@@ -7560,6 +7622,15 @@
        "type": "string"
       },
       "name": "matcher",
+      "type": "array"
+     },
+     {
+      "description": "Filter rules by their static labels (not alert instance labels). Each value is a JSON-encoded Prometheus-like matcher (for example, {\"type\":0,\"name\":\"severity\",\"value\":\"critical\"}).\nFor equality matchers with empty string values (e.g., name=\"\"), rules that have the label with an empty value OR rules without the label will match (standard Prometheus behavior).",
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "rule_matcher",
       "type": "array"
      }
     ],

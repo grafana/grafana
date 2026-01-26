@@ -1,13 +1,17 @@
 import { HttpResponse, http } from 'msw';
 
+import {
+  API_GROUP,
+  API_VERSION,
+  UpdateReceiverApiResponse,
+} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+
 import { getAPIBaseURLForMocks } from '../../../../../../mocks/util';
-import { UpdateReceiverApiResponse } from '../../../../v0alpha1/notifications.api.gen';
-import { GROUP, VERSION } from '../../../const';
 
 export function updateReceiverHandler(
   data: UpdateReceiverApiResponse | ((info: Parameters<Parameters<typeof http.patch>[1]>[0]) => Response)
 ) {
-  return http.patch(getAPIBaseURLForMocks(GROUP, VERSION, '/receivers/:name'), function handler(info) {
+  return http.patch(getAPIBaseURLForMocks(API_GROUP, API_VERSION, '/receivers/:name'), function handler(info) {
     if (typeof data === 'function') {
       return data(info);
     }

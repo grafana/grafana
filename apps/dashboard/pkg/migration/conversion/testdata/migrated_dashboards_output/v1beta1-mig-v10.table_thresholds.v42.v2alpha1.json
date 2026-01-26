@@ -66,7 +66,29 @@
             "kind": "table",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "align": "auto",
+                        "thresholds": [
+                          "20",
+                          "30"
+                        ]
+                      },
+                      {
+                        "align": "auto",
+                        "thresholds": [
+                          "200",
+                          "300"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -110,7 +132,22 @@
             "kind": "table",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "align": "auto",
+                        "thresholds": [
+                          "50",
+                          "75"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -154,7 +191,22 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "styles": [
+                      {
+                        "thresholds": [
+                          "5",
+                          "10",
+                          "15"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

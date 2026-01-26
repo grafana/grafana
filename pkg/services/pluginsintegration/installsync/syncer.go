@@ -217,7 +217,6 @@ func (s *syncer) syncNamespace(ctx context.Context, namespace string, source ins
 		err := s.installRegistrar.Register(ctx, namespace, &install.PluginInstall{
 			ID:      p.ID,
 			Version: p.Info.Version,
-			Class:   install.Class(p.Class),
 			Source:  source,
 		})
 		if err != nil {

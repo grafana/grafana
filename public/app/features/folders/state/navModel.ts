@@ -52,7 +52,11 @@ export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: Fol
     });
   }
 
-  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) && config.unifiedAlertingEnabled) {
+  if (
+    !isProvisioned &&
+    contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
+    config.unifiedAlertingEnabled
+  ) {
     model.children!.push({
       active: false,
       icon: 'bell',

@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/endpoints/request"
+
+	authlib "github.com/grafana/authlib/types"
 )
 
 // testProvider tracks how many times get() is called
@@ -44,7 +44,7 @@ func TestCachedProvider_CacheHit(t *testing.T) {
 
 	underlying := newTestProvider(datasources)
 	// Test newCachedProvider directly instead of the wrapper
-	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
+	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute)
 
 	// Use "default" namespace (org 1) - this is the standard Grafana namespace format
 	ctx := request.WithNamespace(context.Background(), "default")
@@ -69,7 +69,7 @@ func TestCachedProvider_NamespaceIsolation(t *testing.T) {
 	}
 
 	underlying := newTestProvider(datasources)
-	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
+	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute)
 
 	// Use "default" (org 1) and "org-2" (org 2) - standard Grafana namespace formats
 	ctx1 := request.WithNamespace(context.Background(), "default")
@@ -102,7 +102,7 @@ func TestCachedProvider_NoNamespaceFallback(t *testing.T) {
 	}
 
 	underlying := newTestProvider(datasources)
-	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
+	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute)
 
 	// Context without namespace - should fall back to direct provider call
 	ctx := context.Background()
@@ -123,7 +123,7 @@ func TestCachedProvider_ConcurrentAccess(t *testing.T) {
 	}
 
 	underlying := newTestProvider(datasources)
-	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
+	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute)
 
 	// Use "default" namespace (org 1)
 	ctx := request.WithNamespace(context.Background(), "default")
@@ -155,7 +155,7 @@ func TestCachedProvider_ConcurrentNamespaces(t *testing.T) {
 	}
 
 	underlying := newTestProvider(datasources)
-	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute, log.New("test"))
+	cached := newCachedProvider(underlying.get, defaultCacheSize, time.Minute)
 
 	var wg sync.WaitGroup
 	numOrgs := 10
@@ -198,7 +198,7 @@ func TestCachedProvider_CorrectDataPerNamespace(t *testing.T) {
 			"org-2":   {{UID: "org2-ds", Type: "loki", Name: "Org2 DS", Default: true}},
 		},
 	}
-	cached := newCachedProvider(underlying.Index, defaultCacheSize, time.Minute, log.New("test"))
+	cached := newCachedProvider(underlying.Index, defaultCacheSize, time.Minute)
 
 	// Use valid namespace formats
 	ctx1 := request.WithNamespace(context.Background(), "default")
@@ -228,7 +228,7 @@ func TestCachedProvider_PreloadMultipleNamespaces(t *testing.T) {
 			"org-3":   {{UID: "org3-ds", Type: "tempo", Name: "Org3 DS", Default: true}},
 		},
 	}
-	cached := newCachedProvider(underlying.Index, defaultCacheSize, time.Minute, log.New("test"))
+	cached := newCachedProvider(underlying.Index, defaultCacheSize, time.Minute)
 
 	// Preload multiple namespaces
 	nsInfos := []authlib.NamespaceInfo{
@@ -346,7 +346,7 @@ func TestCachedProvider_TTLExpiration(t *testing.T) {
 	underlying := newTestProvider(datasources)
 	// Use a very short TTL for testing
 	shortTTL := 50 * time.Millisecond
-	cached := newCachedProvider(underlying.get, defaultCacheSize, shortTTL, log.New("test"))
+	cached := newCachedProvider(underlying.get, defaultCacheSize, shortTTL)
 
 	ctx := request.WithNamespace(context.Background(), "default")
 
@@ -379,7 +379,7 @@ func TestCachedProvider_ParallelNamespacesFetch(t *testing.T) {
 			{UID: "ds1", Type: "prometheus", Name: "Prometheus", Default: true},
 		},
 	}
-	cached := newCachedProvider(provider.get, defaultCacheSize, time.Minute, log.New("test"))
+	cached := newCachedProvider(provider.get, defaultCacheSize, time.Minute)
 
 	numNamespaces := 5
 	var wg sync.WaitGroup
@@ -421,7 +421,7 @@ func TestCachedProvider_SameNamespaceSerialFetch(t *testing.T) {
 			{UID: "ds1", Type: "prometheus", Name: "Prometheus", Default: true},
 		},
 	}
-	cached := newCachedProvider(provider.get, defaultCacheSize, time.Minute, log.New("test"))
+	cached := newCachedProvider(provider.get, defaultCacheSize, time.Minute)
 
 	numGoroutines := 10
 	var wg sync.WaitGroup

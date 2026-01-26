@@ -34,6 +34,11 @@ const getSummaryColumns = () => [
     cell: ({ row: { original: item } }: SummaryCell) => item.noop?.toString() || '-',
   },
   {
+    id: 'warnings',
+    header: 'Warnings',
+    cell: ({ row: { original: item } }: SummaryCell) => item.warning?.toString() || '-',
+  },
+  {
     id: 'errors',
     header: 'Errors',
     cell: ({ row: { original: item } }: SummaryCell) => item.error?.toString() || '-',

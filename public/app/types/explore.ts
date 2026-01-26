@@ -135,6 +135,19 @@ export interface ExploreItemState {
    * converted to a query row.
    */
   queries: DataQuery[];
+
+  /**
+   * Index increased when queries change.
+   * Required to derive queriesChangedIndexAtRun correctly.
+   */
+  queriesChangedIndex: number;
+
+  /**
+   * Index updated after running the query. Changes if new query was run.
+   * Used to reset legend in the main graph to match Dashboard's behavior (#113975)
+   */
+  queriesChangedIndexAtRun: number;
+
   /**
    * True if this Explore area has been initialized.
    * Used to distinguish URL state injection versus split view state injection.

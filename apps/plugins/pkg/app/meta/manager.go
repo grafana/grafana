@@ -16,7 +16,7 @@ const (
 
 // cachedMeta represents a cached metadata entry with expiration time
 type cachedMeta struct {
-	meta      pluginsv0alpha1.MetaJSONData
+	meta      pluginsv0alpha1.MetaSpec
 	ttl       time.Duration
 	expiresAt time.Time
 }
@@ -84,7 +84,7 @@ func (pm *ProviderManager) GetMeta(ctx context.Context, pluginID, version string
 		if err == nil {
 			// Don't cache results with a zero TTL
 			if result.TTL == 0 {
-				continue
+				return result, nil
 			}
 
 			pm.cacheMu.Lock()

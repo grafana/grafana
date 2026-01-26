@@ -113,7 +113,12 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {}
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -161,7 +166,12 @@
             "group": "stat",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "singlestat",
+                  "originalOptions": {}
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

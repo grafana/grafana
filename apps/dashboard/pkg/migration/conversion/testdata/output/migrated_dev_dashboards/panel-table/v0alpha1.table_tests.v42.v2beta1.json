@@ -87,7 +87,85 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "columns": [],
+                    "fontSize": "100%",
+                    "scroll": true,
+                    "showHeader": true,
+                    "sort": {
+                      "col": 0,
+                      "desc": true
+                    },
+                    "styles": [
+                      {
+                        "alias": "Time",
+                        "align": "auto",
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "pattern": "Time",
+                        "type": "date"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colorMode": "cell",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "decimals": 2,
+                        "mappingType": 1,
+                        "pattern": "ColorCell",
+                        "thresholds": [
+                          "5",
+                          "10"
+                        ],
+                        "type": "number",
+                        "unit": "currencyUSD"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colorMode": "value",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "decimals": 2,
+                        "mappingType": 1,
+                        "pattern": "ColorValue",
+                        "thresholds": [
+                          "5",
+                          "10"
+                        ],
+                        "type": "number",
+                        "unit": "Bps"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "decimals": 2,
+                        "pattern": "/.*/",
+                        "thresholds": [],
+                        "type": "number",
+                        "unit": "short"
+                      }
+                    ],
+                    "transform": "timeseries_to_columns"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -154,7 +232,86 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "columns": [],
+                    "fontSize": "100%",
+                    "pageSize": 10,
+                    "scroll": true,
+                    "showHeader": true,
+                    "sort": {
+                      "col": 0,
+                      "desc": true
+                    },
+                    "styles": [
+                      {
+                        "alias": "Time",
+                        "align": "auto",
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "pattern": "Time",
+                        "type": "date"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colorMode": "cell",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "decimals": 2,
+                        "mappingType": 1,
+                        "pattern": "ColorCell",
+                        "thresholds": [
+                          "5",
+                          "10"
+                        ],
+                        "type": "number",
+                        "unit": "currencyUSD"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colorMode": "value",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "decimals": 2,
+                        "mappingType": 1,
+                        "pattern": "ColorValue",
+                        "thresholds": [
+                          "5",
+                          "10"
+                        ],
+                        "type": "number",
+                        "unit": "Bps"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "decimals": 2,
+                        "pattern": "/.*/",
+                        "thresholds": [],
+                        "type": "number",
+                        "unit": "short"
+                      }
+                    ],
+                    "transform": "timeseries_to_rows"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -221,7 +378,99 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "columns": [
+                      {
+                        "text": "Avg",
+                        "value": "avg"
+                      },
+                      {
+                        "text": "Max",
+                        "value": "max"
+                      },
+                      {
+                        "text": "Current",
+                        "value": "current"
+                      }
+                    ],
+                    "fontSize": "100%",
+                    "pageSize": 10,
+                    "scroll": true,
+                    "showHeader": true,
+                    "sort": {
+                      "col": 0,
+                      "desc": true
+                    },
+                    "styles": [
+                      {
+                        "alias": "Time",
+                        "align": "auto",
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "pattern": "Time",
+                        "type": "date"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colorMode": "cell",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "decimals": 2,
+                        "mappingType": 1,
+                        "pattern": "ColorCell",
+                        "thresholds": [
+                          "5",
+                          "10"
+                        ],
+                        "type": "number",
+                        "unit": "currencyUSD"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colorMode": "value",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "decimals": 2,
+                        "mappingType": 1,
+                        "pattern": "ColorValue",
+                        "thresholds": [
+                          "5",
+                          "10"
+                        ],
+                        "type": "number",
+                        "unit": "Bps"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "decimals": 2,
+                        "pattern": "/.*/",
+                        "thresholds": [],
+                        "type": "number",
+                        "unit": "short"
+                      }
+                    ],
+                    "transform": "timeseries_aggregations"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -271,7 +520,65 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "columns": [],
+                    "fontSize": "100%",
+                    "scroll": true,
+                    "showHeader": true,
+                    "sort": {
+                      "col": 0,
+                      "desc": true
+                    },
+                    "styles": [
+                      {
+                        "alias": "Time",
+                        "align": "auto",
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "pattern": "Time",
+                        "type": "date"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colorMode": "row",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "decimals": 2,
+                        "mappingType": 1,
+                        "pattern": "/Color/",
+                        "thresholds": [
+                          "5",
+                          "10"
+                        ],
+                        "type": "number",
+                        "unit": "currencyUSD"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "decimals": 2,
+                        "pattern": "/.*/",
+                        "thresholds": [],
+                        "type": "number",
+                        "unit": "short"
+                      }
+                    ],
+                    "transform": "timeseries_to_columns"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -338,7 +645,92 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table-old",
+                  "originalOptions": {
+                    "columns": [],
+                    "fontSize": "100%",
+                    "pageSize": 20,
+                    "scroll": true,
+                    "showHeader": true,
+                    "sort": {
+                      "col": 0,
+                      "desc": true
+                    },
+                    "styles": [
+                      {
+                        "alias": "Time",
+                        "align": "auto",
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "pattern": "Time",
+                        "type": "date"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colorMode": "cell",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.5)",
+                          "rgba(237, 129, 40, 0.5)",
+                          "rgba(50, 172, 45, 0.5)"
+                        ],
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "decimals": 2,
+                        "link": true,
+                        "linkTargetBlank": true,
+                        "linkTooltip": "",
+                        "linkUrl": "http://www.grafana.com",
+                        "mappingType": 1,
+                        "pattern": "ColorCell",
+                        "thresholds": [
+                          "5",
+                          "10"
+                        ],
+                        "type": "number",
+                        "unit": "currencyUSD"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colorMode": "value",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.5)",
+                          "rgba(237, 129, 40, 0.5)",
+                          "rgba(50, 172, 45, 0.5)"
+                        ],
+                        "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                        "decimals": 2,
+                        "link": true,
+                        "linkUrl": "http://www.grafana.com",
+                        "mappingType": 1,
+                        "pattern": "ColorValue",
+                        "thresholds": [
+                          "5",
+                          "10"
+                        ],
+                        "type": "number",
+                        "unit": "Bps"
+                      },
+                      {
+                        "alias": "",
+                        "align": "auto",
+                        "colors": [
+                          "rgba(245, 54, 54, 0.9)",
+                          "rgba(237, 129, 40, 0.89)",
+                          "rgba(50, 172, 45, 0.97)"
+                        ],
+                        "decimals": 2,
+                        "pattern": "/.*/",
+                        "thresholds": [],
+                        "type": "number",
+                        "unit": "short"
+                      }
+                    ],
+                    "transform": "timeseries_to_columns"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

@@ -1,12 +1,13 @@
 SELECT
   {{ .Ident "created" }},
+  {{ .Ident "created_by" }},
   {{ .Ident "version" }},
   {{ .Ident "active" }},
   {{ .Ident "namespace" }},
   {{ .Ident "name" }}
 FROM
   {{ .Ident "secret_secure_value" }}
-WHERE 
+WHERE
   {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
   {{ .Ident "name" }} = {{ .Arg .Name }}
 ORDER BY {{ .Ident "version" }} DESC

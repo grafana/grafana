@@ -12,6 +12,7 @@ import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
@@ -64,8 +65,9 @@ export function SaveProvisionedDashboardForm({
     register,
     formState: { dirtyFields },
   } = methods;
-  // button enabled if form comment is dirty or dashboard state is dirty
-  const isDirtyState = Boolean(dirtyFields.comment) || isDirty;
+  // button enabled if form comment is dirty or dashboard state is dirty or raw JSON was provided from editor
+  const rawDashboardJSON = dashboard.getRawJsonFromEditor();
+  const isDirtyState = Boolean(dirtyFields.comment) || isDirty || Boolean(rawDashboardJSON);
   const [workflow, ref, path] = watch(['workflow', 'ref', 'path']);
 
   // Update the form if default values change
@@ -190,19 +192,24 @@ export function SaveProvisionedDashboardForm({
 
     const message = comment || `Save dashboard: ${dashboard.state.title}`;
 
-    const body = dashboard.getSaveResource({
-      isNew,
-      title,
-      description,
-      copyTags,
-      saveAsCopy,
-    });
+    const body = rawDashboardJSON
+      ? dashboard.getSaveResourceFromSpec(rawDashboardJSON)
+      : dashboard.getSaveResource({
+          isNew,
+          title,
+          description,
+          copyTags,
+          saveAsCopy,
+        });
 
     reportInteraction('grafana_provisioning_dashboard_save_submitted', {
       workflow,
       repositoryName: repo,
       repositoryType: repository?.type ?? 'unknown',
     });
+
+    // ignore incoming save events
+    dashboardWatcher.ignoreNextSave();
 
     createOrUpdateFile({
       // Skip adding ref to the default branch request

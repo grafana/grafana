@@ -126,8 +126,14 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation string, resou
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
+	// Use optimized folder permission relations for permission management
+	checkRelation := relation
+	if resource.Type() == common.TypeFolder {
+		checkRelation = common.FolderPermissionRelation(relation)
+	}
+
 	// Check if subject has direct access to resource
-	res, err := s.openfgaCheck(ctx, store, subject, relation, resourceIdent, contextuals, nil)
+	res, err := s.openfgaCheck(ctx, store, subject, checkRelation, resourceIdent, contextuals, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -143,14 +149,15 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 	defer span.End()
 
 	var (
-		folderIdent    = resource.FolderIdent()
-		resourceCtx    = resource.Context()
-		folderRelation = common.SubresourceRelation(relation)
+		folderIdent         = resource.FolderIdent()
+		resourceCtx         = resource.Context()
+		folderRelation      = common.SubresourceRelation(relation)
+		folderCheckRelation = common.FolderPermissionRelation(relation)
 	)
 
 	if folderIdent != "" && isFolderPermissionBasedResource(resource.GroupResource()) {
 		// Check if resource inherits permissions from the folder (like dashboards in a folder)
-		res, err := s.openfgaCheck(ctx, store, subject, relation, folderIdent, contextuals, resourceCtx)
+		res, err := s.openfgaCheck(ctx, store, subject, folderCheckRelation, folderIdent, contextuals, resourceCtx)
 		if err != nil {
 			return nil, err
 		}

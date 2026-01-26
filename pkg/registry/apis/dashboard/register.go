@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,7 +63,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -128,7 +128,6 @@ type DashboardsAPIBuilder struct {
 }
 
 func RegisterAPIService(
-	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
@@ -154,7 +153,14 @@ func RegisterAPIService(
 	publicDashboardService publicdashboards.Service,
 	snapshotService dashboardsnapshots.Service,
 	dashboardActivityChannel live.DashboardActivityChannel,
+	configProvider configprovider.ConfigProvider,
 ) *DashboardsAPIBuilder {
+	cfg, err := configProvider.Get(context.Background())
+	if err != nil {
+		logging.DefaultLogger.Error("failed to load settings configuration instance", "stackId", cfg.StackID, "err", err)
+		return nil
+	}
+
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
@@ -222,7 +228,7 @@ func RegisterAPIService(
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *DashboardsAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, search *SearchHandler) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
 	return &DashboardsAPIBuilder{
 		minRefreshInterval:     "10s",
@@ -231,12 +237,13 @@ func NewAPIService(ac authlib.AccessClient, features featuremgmt.FeatureToggles,
 		dashboardService:       &dashsvc.DashboardServiceImpl{}, // for validation helpers only
 		folderClientProvider:   folderClientProvider,
 		resourcePermissionsSvc: resourcePermissionsSvc,
+		search:                 search,
 		isStandalone:           true,
 	}
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
-	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts, featuremgmt.FlagKubernetesDashboardsV2) {
+	if featuremgmt.AnyEnabled(b.features, featuremgmt.FlagDashboardNewLayouts) {
 		// If dashboards v2 is enabled, we want to use v2beta1 as the default API version.
 		return []schema.GroupVersion{
 			dashv2beta1.DashboardResourceInfo.GroupVersion(),
@@ -382,6 +389,11 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return apierrors.NewBadRequest(err.Error())
 	}
 
+	// Validate tags
+	if err := validateDashboardTags(dashObj); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
 	id, err := identity.GetRequester(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting requester: %w", err)
@@ -449,6 +461,11 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 
 	// Basic validations
 	if err := b.dashboardService.ValidateBasicDashboardProperties(title, newAccessor.GetName(), newAccessor.GetMessage()); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	// Validate tags
+	if err := validateDashboardTags(newDashObj); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
@@ -547,6 +564,32 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 	}
 
 	return title, refresh, nil
+}
+
+// validateDashboardTags validates that all dashboard tags are within the maximum length
+func validateDashboardTags(obj runtime.Object) error {
+	var tags []string
+
+	switch d := obj.(type) {
+	case *dashv0.Dashboard:
+		tags = d.Spec.GetNestedStringSlice("tags")
+	case *dashv1.Dashboard:
+		tags = d.Spec.GetNestedStringSlice("tags")
+	case *dashv2alpha1.Dashboard:
+		tags = d.Spec.Tags
+	case *dashv2beta1.Dashboard:
+		tags = d.Spec.Tags
+	default:
+		return fmt.Errorf("unsupported dashboard version: %T", obj)
+	}
+
+	for _, tag := range tags {
+		if len(tag) > 50 {
+			return dashboards.ErrDashboardTagTooLong
+		}
+	}
+
+	return nil
 }
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
@@ -746,7 +789,6 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			ResourceInfo: *snapshots,
 			Service:      b.snapshotService,
 			Namespacer:   b.namespacer,
-			Options:      b.snapshotOptions,
 		}
 		storage[snapshots.StoragePath()] = snapshotLegacyStore
 		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(dashboards, b.snapshotService)

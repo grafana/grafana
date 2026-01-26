@@ -41,6 +41,69 @@ const (
 	dfLabels = "labels"
 )
 
+// QueryResultBuilder is a builder for a data frame that represents query results from Loki.
+// It contains three fields: time (timestamp), line (JSON data), and labels (JSON labels).
+type QueryResultBuilder struct {
+	frame *data.Frame
+}
+
+// NewQueryResultBuilder creates a new QueryResultBuilder with the specified capacity.
+// The capacity is used to pre-allocate the underlying slices for better performance.
+func NewQueryResultBuilder(capacity int) *QueryResultBuilder {
+	frame := data.NewFrame("states")
+	lbls := data.Labels(map[string]string{})
+
+	// We represent state history as a single merged history, that roughly corresponds to what you get in the Grafana Explore tab when querying Loki directly.
+	// The format is composed of the following vectors:
+	//   1. `time` - timestamp - when the transition happened
+	//   2. `line` - JSON - the full data of the transition
+	//   3. `labels` - JSON - the labels associated with that state transition
+	times := make([]time.Time, 0, capacity)
+	lines := make([]json.RawMessage, 0, capacity)
+	labels := make([]json.RawMessage, 0, capacity)
+
+	frame.Fields = append(frame.Fields, data.NewField(dfTime, lbls, times))
+	frame.Fields = append(frame.Fields, data.NewField(dfLine, lbls, lines))
+	frame.Fields = append(frame.Fields, data.NewField(dfLabels, lbls, labels))
+
+	return &QueryResultBuilder{frame: frame}
+}
+
+func (qr QueryResultBuilder) AddRowRaw(timestamp time.Time, line json.RawMessage, labels json.RawMessage) {
+	frame := qr.frame
+	frame.Fields[0].Append(timestamp)
+	frame.Fields[1].Append(line)
+	frame.Fields[2].Append(labels)
+}
+
+func (qr QueryResultBuilder) AddRow(timestamp time.Time, line LokiEntry, labels json.RawMessage) error {
+	lineBytes, err := json.Marshal(line)
+	if err != nil {
+		return err
+	}
+	qr.AddRowRaw(timestamp, lineBytes, labels)
+	return nil
+}
+
+// ToFrame converts the QueryResultBuilder back to a data.Frame.
+func (qr QueryResultBuilder) ToFrame() *data.Frame {
+	return qr.frame
+}
+
+func (qr QueryResultBuilder) AddWarn(s string) {
+	m := qr.frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		qr.frame.SetMeta(m)
+	}
+	m.Notices = append(m.Notices, data.Notice{
+		Severity: data.NoticeSeverityWarning,
+		Text:     s,
+		Link:     "",
+		Inspect:  0,
+	})
+}
+
 const (
 	StateHistoryLabelKey   = "from"
 	StateHistoryLabelValue = "state-history"
@@ -191,20 +254,7 @@ func (h RemoteLokiBackend) merge(res []lokiclient.Stream, folderUIDToFilter []st
 		totalLen += len(arr.Values)
 	}
 
-	// Create a new slice to store the merged elements.
-	frame := data.NewFrame("states")
-
-	// We merge all series into a single linear history.
-	lbls := data.Labels(map[string]string{})
-
-	// We represent state history as a single merged history, that roughly corresponds to what you get in the Grafana Explore tab when querying Loki directly.
-	// The format is composed of the following vectors:
-	//   1. `time` - timestamp - when the transition happened
-	//   2. `line` - JSON - the full data of the transition
-	//   3. `labels` - JSON - the labels associated with that state transition
-	times := make([]time.Time, 0, totalLen)
-	lines := make([]json.RawMessage, 0, totalLen)
-	labels := make([]json.RawMessage, 0, totalLen)
+	queryResult := NewQueryResultBuilder(totalLen)
 
 	// Initialize a slice of pointers to the current position in each array.
 	pointers := make([]int, len(res))
@@ -259,17 +309,10 @@ func (h RemoteLokiBackend) merge(res []lokiclient.Stream, folderUIDToFilter []st
 			pointers[minElStreamIdx]++
 			continue
 		}
-		times = append(times, time.Unix(0, tsNano))
-		labels = append(labels, lblsJson)
-		lines = append(lines, json.RawMessage(entryBytes))
+		queryResult.AddRowRaw(time.Unix(0, tsNano), entryBytes, lblsJson)
 		pointers[minElStreamIdx]++
 	}
-
-	frame.Fields = append(frame.Fields, data.NewField(dfTime, lbls, times))
-	frame.Fields = append(frame.Fields, data.NewField(dfLine, lbls, lines))
-	frame.Fields = append(frame.Fields, data.NewField(dfLabels, lbls, labels))
-
-	return frame, nil
+	return queryResult.ToFrame(), nil
 }
 
 func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) lokiclient.Stream {
@@ -282,28 +325,11 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 
 	samples := make([]lokiclient.Sample, 0, len(states))
 	for _, state := range states {
-		if !shouldRecord(state) {
+		if !ShouldRecord(state) {
 			continue
 		}
 
-		sanitizedLabels := removePrivateLabels(state.Labels)
-		entry := LokiEntry{
-			SchemaVersion:  1,
-			Previous:       state.PreviousFormatted(),
-			Current:        state.Formatted(),
-			Values:         valuesAsDataBlob(state.State),
-			Condition:      rule.Condition,
-			DashboardUID:   rule.DashboardUID,
-			PanelID:        rule.PanelID,
-			Fingerprint:    labelFingerprint(sanitizedLabels),
-			RuleTitle:      rule.Title,
-			RuleID:         rule.ID,
-			RuleUID:        rule.UID,
-			InstanceLabels: sanitizedLabels,
-		}
-		if state.State.State == eval.Error {
-			entry.Error = state.Error.Error()
-		}
+		entry := StateTransitionToLokiEntry(rule, state)
 
 		jsn, err := json.Marshal(entry)
 		if err != nil {
@@ -322,6 +348,28 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		Stream: labels,
 		Values: samples,
 	}
+}
+
+func StateTransitionToLokiEntry(rule history_model.RuleMeta, state state.StateTransition) LokiEntry {
+	sanitizedLabels := removePrivateLabels(state.Labels)
+	entry := LokiEntry{
+		SchemaVersion:  1,
+		Previous:       state.PreviousFormatted(),
+		Current:        state.Formatted(),
+		Values:         valuesAsDataBlob(state.State),
+		Condition:      rule.Condition,
+		DashboardUID:   rule.DashboardUID,
+		PanelID:        rule.PanelID,
+		Fingerprint:    labelFingerprint(sanitizedLabels),
+		RuleTitle:      rule.Title,
+		RuleID:         rule.ID,
+		RuleUID:        rule.UID,
+		InstanceLabels: sanitizedLabels,
+	}
+	if state.State.State == eval.Error && state.Error != nil {
+		entry.Error = state.Error.Error()
+	}
+	return entry
 }
 
 func (h *RemoteLokiBackend) recordStreams(ctx context.Context, stream lokiclient.Stream, logger log.Logger) error {
@@ -505,30 +553,25 @@ func (h *RemoteLokiBackend) getFolderUIDsForFilter(ctx context.Context, query mo
 	if err != nil {
 		return nil, err
 	}
-	if bypass { // if user has access to all rules and folder, remove filter
+
+	if query.RuleUID != "" {
+		return h.getFolderUIDsForRuleFilter(ctx, query, bypass)
+	}
+
+	// If the query has no rule filter, we need to return all folder UIDs the user has access to.
+	// For a user with access to all rules and folders, the full list of folders will likely be too large to be an
+	// effective optimization in Loki, so we skip folderUID filtering entirely in that case.
+	if bypass {
 		return nil, nil
 	}
-	// if there is a filter by rule UID, find that rule UID and make sure that user has access to it.
-	if query.RuleUID != "" {
-		rule, err := h.ruleStore.GetAlertRuleByUID(ctx, &models.GetAlertRuleByUIDQuery{
-			UID:   query.RuleUID,
-			OrgID: query.OrgID,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch alert rule by UID: %w", err)
-		}
-		if rule == nil {
-			return nil, models.ErrAlertRuleNotFound
-		}
-		return nil, h.ac.AuthorizeAccessInFolder(ctx, query.SignedInUser, rule)
-	}
-	// if no filter, then we need to get all namespaces user has access to
+
+	// All folders the user has access to.
 	folders, err := h.ruleStore.GetUserVisibleNamespaces(ctx, query.OrgID, query.SignedInUser)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch folders that user can access: %w", err)
 	}
 	uids := make([]string, 0, len(folders))
-	// now keep only UIDs of folder in which user can read rules.
+	// Keep only UIDs of folder in which user can read rules.
 	for _, f := range folders {
 		hasAccess, err := h.ac.HasAccessInFolder(ctx, query.SignedInUser, models.NewNamespace(f))
 		if err != nil {
@@ -544,4 +587,72 @@ func (h *RemoteLokiBackend) getFolderUIDsForFilter(ctx context.Context, query mo
 	}
 	sort.Strings(uids)
 	return uids, nil
+}
+
+func (h *RemoteLokiBackend) getFolderUIDsForRuleFilter(ctx context.Context, query models.HistoryQuery, canReadAll bool) ([]string, error) {
+	rule, err := h.ruleStore.GetAlertRuleByUID(ctx, &models.GetAlertRuleByUIDQuery{
+		UID:   query.RuleUID,
+		OrgID: query.OrgID,
+	})
+	if err != nil {
+		if canReadAll {
+			// When the user can read all rules, filtering by folder UID is purely an optimization, so we can ignore errors here.
+			h.log.FromContext(ctx).Debug("failed to fetch alert rule by UID", "err", err)
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to fetch alert rule by UID: %w", err)
+	}
+
+	// First, we check if the user has access to the current version of the rule. If not, we can return early.
+	// Whether we should check historical folders they might still have access to is not 100% clear, but it seems more
+	// intuitive to deny access in this case.
+	if !canReadAll {
+		if err := h.ac.AuthorizeAccessInFolder(ctx, query.SignedInUser, rule); err != nil {
+			return nil, err
+		}
+	}
+
+	// We want to return folder UIDs when possible, as it's indexed in Loki and will help with query performance.
+	// However, by just returning the current folder UID the user can lose history when a rule is moved between folders.
+	// So, we attempt to get historical folder UIDs from the rule's history.
+	historicalFolders, err := h.ruleStore.GetAlertRuleVersionFolders(ctx, rule.OrgID, rule.GUID)
+	if err != nil {
+		// Including historical folders is an edge case enhancement, better to just log the error and continue
+		// with the current folder UID.
+		h.log.FromContext(ctx).Debug("failed to include historical folder UIDs for rule", "err", err)
+	}
+
+	accessibleFolders := make([]string, 0, len(historicalFolders)+1)
+	dedup := make(map[string]struct{})
+
+	accessibleFolders = append(accessibleFolders, rule.GetNamespaceUID())
+	dedup[rule.GetNamespaceUID()] = struct{}{}
+
+	for _, folderUID := range historicalFolders {
+		if _, exists := dedup[folderUID]; exists {
+			continue
+		}
+
+		if canReadAll {
+			// If the user can read all rules, no need to check access to each folder.
+			accessibleFolders = append(accessibleFolders, folderUID)
+			continue
+		}
+
+		hasAccess, err := h.ac.HasAccessInFolder(ctx, query.SignedInUser, models.Namespace{
+			UID: folderUID,
+		})
+		if err != nil {
+			// Including historical folders is an edge case enhancement, better to just log the error and continue
+			// with the current folder UID.
+			h.log.FromContext(ctx).Debug("failed to check access to folder", "err", err, "folderUID", folderUID)
+			continue
+		}
+		if !hasAccess {
+			continue
+		}
+		accessibleFolders = append(accessibleFolders, folderUID)
+	}
+
+	return accessibleFolders, nil
 }

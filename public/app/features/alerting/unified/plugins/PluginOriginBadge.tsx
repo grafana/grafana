@@ -12,7 +12,7 @@ interface PluginOriginBadgeProps {
 }
 
 export function PluginOriginBadge({ pluginId, size = 'md' }: PluginOriginBadgeProps) {
-  const { value: pluginMeta, loading } = useAsync(() => getPluginSettings(pluginId));
+  const { value: pluginMeta, loading } = useAsync(() => getPluginSettings(pluginId, { showErrorAlert: false }));
 
   if (loading) {
     return null;

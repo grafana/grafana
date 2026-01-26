@@ -26,14 +26,12 @@ func TestPluginInstall_ShouldUpdate(t *testing.T) {
 		Spec: pluginsv0alpha1.PluginSpec{
 			Id:      "plugin-1",
 			Version: "1.0.0",
-			Class:   pluginsv0alpha1.PluginSpecClass(ClassExternal),
 		},
 	}
 
 	baseInstall := PluginInstall{
 		ID:      "plugin-1",
 		Version: "1.0.0",
-		Class:   ClassExternal,
 		Source:  SourcePluginStore,
 	}
 
@@ -51,13 +49,6 @@ func TestPluginInstall_ShouldUpdate(t *testing.T) {
 			name: "version differs",
 			modifyInstall: func(pi *PluginInstall) {
 				pi.Version = "2.0.0"
-			},
-			expectUpdate: true,
-		},
-		{
-			name: "class differs",
-			modifyInstall: func(pi *PluginInstall) {
-				pi.Class = ClassCore
 			},
 			expectUpdate: true,
 		},
@@ -109,7 +100,6 @@ func TestInstallRegistrar_Register(t *testing.T) {
 			install: &PluginInstall{
 				ID:      "plugin-1",
 				Version: "1.0.0",
-				Class:   ClassExternal,
 				Source:  SourcePluginStore,
 			},
 			existingErr:     errorsK8s.NewNotFound(pluginGroupResource(), "plugin-1"),
@@ -120,7 +110,6 @@ func TestInstallRegistrar_Register(t *testing.T) {
 			install: &PluginInstall{
 				ID:      "plugin-1",
 				Version: "2.0.0",
-				Class:   ClassExternal,
 				Source:  SourcePluginStore,
 			},
 			existing: &pluginsv0alpha1.Plugin{
@@ -135,7 +124,6 @@ func TestInstallRegistrar_Register(t *testing.T) {
 				Spec: pluginsv0alpha1.PluginSpec{
 					Id:      "plugin-1",
 					Version: "1.0.0",
-					Class:   pluginsv0alpha1.PluginSpecClass(ClassExternal),
 				},
 			},
 			expectedUpdates: 1,
@@ -145,7 +133,6 @@ func TestInstallRegistrar_Register(t *testing.T) {
 			install: &PluginInstall{
 				ID:      "plugin-1",
 				Version: "1.0.0",
-				Class:   ClassExternal,
 				Source:  SourcePluginStore,
 			},
 			existing: &pluginsv0alpha1.Plugin{
@@ -160,7 +147,6 @@ func TestInstallRegistrar_Register(t *testing.T) {
 				Spec: pluginsv0alpha1.PluginSpec{
 					Id:      "plugin-1",
 					Version: "1.0.0",
-					Class:   pluginsv0alpha1.PluginSpecClass(ClassExternal),
 				},
 			},
 		},
@@ -169,7 +155,6 @@ func TestInstallRegistrar_Register(t *testing.T) {
 			install: &PluginInstall{
 				ID:      "plugin-err",
 				Version: "1.0.0",
-				Class:   ClassExternal,
 				Source:  SourcePluginStore,
 			},
 			existingErr: errorsK8s.NewInternalError(errors.New("boom")),
@@ -410,7 +395,6 @@ func TestPluginInstall_ToPluginInstallV0Alpha1(t *testing.T) {
 			install: PluginInstall{
 				ID:      "plugin-1",
 				Version: "1.0.0",
-				Class:   ClassExternal,
 				Source:  SourcePluginStore,
 			},
 			namespace: "org-1",
@@ -424,7 +408,6 @@ func TestPluginInstall_ToPluginInstallV0Alpha1(t *testing.T) {
 				ID:      "plugin-1",
 				Version: "1.0.0",
 				URL:     "https://example.com/plugin.zip",
-				Class:   ClassExternal,
 				Source:  SourcePluginStore,
 			},
 			namespace: "org-1",
@@ -434,24 +417,10 @@ func TestPluginInstall_ToPluginInstallV0Alpha1(t *testing.T) {
 			},
 		},
 		{
-			name: "core class is mapped correctly",
-			install: PluginInstall{
-				ID:      "plugin-core",
-				Version: "2.0.0",
-				Class:   ClassCore,
-				Source:  SourcePluginStore,
-			},
-			namespace: "org-2",
-			validate: func(t *testing.T, p *pluginsv0alpha1.Plugin) {
-				require.Equal(t, pluginsv0alpha1.PluginSpecClass(ClassCore), p.Spec.Class)
-			},
-		},
-		{
 			name: "source annotation is set correctly",
 			install: PluginInstall{
 				ID:      "plugin-1",
 				Version: "1.0.0",
-				Class:   ClassExternal,
 				Source:  SourceUnknown,
 			},
 			namespace: "org-1",
@@ -464,7 +433,6 @@ func TestPluginInstall_ToPluginInstallV0Alpha1(t *testing.T) {
 			install: PluginInstall{
 				ID:      "my-plugin",
 				Version: "1.0.0",
-				Class:   ClassExternal,
 				Source:  SourcePluginStore,
 			},
 			namespace: "my-namespace",
@@ -556,7 +524,6 @@ func TestPluginInstall_ShouldUpdate_URLTransitions(t *testing.T) {
 				ID:      "plugin-1",
 				Version: "1.0.0",
 				URL:     newURL,
-				Class:   ClassExternal,
 				Source:  SourcePluginStore,
 			},
 			existingURL:  nil,
@@ -568,7 +535,6 @@ func TestPluginInstall_ShouldUpdate_URLTransitions(t *testing.T) {
 				ID:      "plugin-1",
 				Version: "1.0.0",
 				URL:     "",
-				Class:   ClassExternal,
 				Source:  SourcePluginStore,
 			},
 			existingURL:  &existingURL,
@@ -580,7 +546,6 @@ func TestPluginInstall_ShouldUpdate_URLTransitions(t *testing.T) {
 				ID:      "plugin-1",
 				Version: "1.0.0",
 				URL:     "",
-				Class:   ClassExternal,
 				Source:  SourcePluginStore,
 			},
 			existingURL:  nil,
@@ -592,7 +557,6 @@ func TestPluginInstall_ShouldUpdate_URLTransitions(t *testing.T) {
 				ID:      "plugin-1",
 				Version: "1.0.0",
 				URL:     existingURL,
-				Class:   ClassExternal,
 				Source:  SourcePluginStore,
 			},
 			existingURL:  &existingURL,
@@ -614,7 +578,6 @@ func TestPluginInstall_ShouldUpdate_URLTransitions(t *testing.T) {
 					Id:      "plugin-1",
 					Version: "1.0.0",
 					Url:     tt.existingURL,
-					Class:   pluginsv0alpha1.PluginSpecClass(ClassExternal),
 				},
 			}
 
@@ -670,7 +633,6 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 			install: &PluginInstall{
 				ID:      "plugin-1",
 				Version: "1.0.0",
-				Class:   ClassExternal,
 				Source:  SourcePluginStore,
 			},
 			setupClient: func(fc *fakePluginInstallClient) {
@@ -688,7 +650,6 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 			install: &PluginInstall{
 				ID:      "plugin-1",
 				Version: "2.0.0",
-				Class:   ClassExternal,
 				Source:  SourcePluginStore,
 			},
 			setupClient: func(fc *fakePluginInstallClient) {
@@ -705,7 +666,6 @@ func TestInstallRegistrar_Register_ErrorCases(t *testing.T) {
 						Spec: pluginsv0alpha1.PluginSpec{
 							Id:      "plugin-1",
 							Version: "1.0.0",
-							Class:   pluginsv0alpha1.PluginSpecClass(ClassExternal),
 						},
 					}, nil
 				}
@@ -876,7 +836,6 @@ func TestInstallRegistrar_GetClientError(t *testing.T) {
 		install := &PluginInstall{
 			ID:      "plugin-1",
 			Version: "1.0.0",
-			Class:   ClassExternal,
 			Source:  SourcePluginStore,
 		}
 

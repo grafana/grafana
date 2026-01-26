@@ -365,7 +365,9 @@
     "type": "changedfiles",
     "matches": [
       "public/app/plugins/panel/gauge/**/*",
-      "/packages/grafana-ui/src/components/Gauge/**/*"
+      "public/app/plugins/panel/radialbar/**/*",
+      "/packages/grafana-ui/src/components/Gauge/**/*",
+      "/packages/grafana-ui/src/components/RadialGauge/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "area/panel/gauge"

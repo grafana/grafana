@@ -33,6 +33,10 @@
     "liveNow": false,
     "panels": [
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 3,
           "w": 6,
@@ -55,6 +59,10 @@
         "type": "timeseries"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "default-ds-uid"
+        },
         "gridPos": {
           "h": 3,
           "w": 6,

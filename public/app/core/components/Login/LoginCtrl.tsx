@@ -119,11 +119,11 @@ export const LoginCtrl = memo(({ resetCode, children }: Props) => {
   }, []);
 
   const login = useCallback(
-    (formModel: FormModel) => {
+    async (formModel: FormModel) => {
       setLoginErrorMessage(undefined);
       setIsLoggingIn(true);
 
-      getBackendSrv()
+      return getBackendSrv()
         .post<LoginDTO>('/login', formModel, { showErrorAlert: false })
         .then((result) => {
           setResult(result);

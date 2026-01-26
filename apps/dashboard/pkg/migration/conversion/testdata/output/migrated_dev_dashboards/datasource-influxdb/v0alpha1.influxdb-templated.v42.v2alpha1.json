@@ -113,7 +113,78 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "annotate": {
+                      "enable": false
+                    },
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "editable": true,
+                    "error": false,
+                    "fill": 2,
+                    "grid": {},
+                    "legend": {
+                      "alignAsTable": true,
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "rightSide": true,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "connected",
+                    "percentage": false,
+                    "pointradius": 5,
+                    "points": false,
+                    "renderer": "flot",
+                    "resolution": 100,
+                    "scale": 1,
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": true,
+                    "steppedLine": false,
+                    "thresholds": [],
+                    "timeRegions": [],
+                    "tooltip": {
+                      "msResolution": false,
+                      "query_as_alias": true,
+                      "shared": false,
+                      "sort": 0,
+                      "value_type": "cumulative"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      },
+                      {
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    },
+                    "zerofill": true
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

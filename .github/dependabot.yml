@@ -19,7 +19,6 @@ updates:
       - "/apps/dashboard"
       - "/apps/folder"
       - "/apps/iam"
-      - "/apps/investigations"
       - "/apps/playlist"
       - "/apps/plugins"
       - "/apps/preferences"

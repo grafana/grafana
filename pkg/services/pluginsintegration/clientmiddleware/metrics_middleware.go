@@ -58,7 +58,7 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_seconds",
 		Help:      "Plugin request duration in seconds",
-		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25},
+		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 60, 120, 300, 600},
 	}, append([]string{"source", "plugin_id", "endpoint", "status", "target", "plugin_version"}, additionalLabels...))
 	pluginRequestConnectionUnavailableCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace:   "grafana",

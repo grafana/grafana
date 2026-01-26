@@ -176,6 +176,88 @@
             "spec": {
               "pluginVersion": "7.5.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "hiddenSeries": false,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [
+                      {
+                        "$$hashKey": "object:14",
+                        "colorMode": "critical",
+                        "fill": false,
+                        "line": true,
+                        "op": "gt",
+                        "value": 80,
+                        "yaxis": "left"
+                      },
+                      {
+                        "$$hashKey": "object:44",
+                        "colorMode": "warning",
+                        "fill": false,
+                        "line": true,
+                        "op": "gt",
+                        "value": 50,
+                        "yaxis": "left"
+                      }
+                    ],
+                    "timeRegions": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "$$hashKey": "object:26",
+                        "format": "short",
+                        "logBase": 1,
+                        "max": "100",
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "$$hashKey": "object:27",
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
                 "alertThreshold": true
               },
               "fieldConfig": {
@@ -339,6 +421,88 @@
             "spec": {
               "pluginVersion": "7.5.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "hiddenSeries": false,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [
+                      {
+                        "$$hashKey": "object:109",
+                        "colorMode": "critical",
+                        "fill": true,
+                        "line": true,
+                        "op": "lt",
+                        "value": 20,
+                        "yaxis": "left"
+                      },
+                      {
+                        "$$hashKey": "object:115",
+                        "colorMode": "warning",
+                        "fill": true,
+                        "line": true,
+                        "op": "lt",
+                        "value": 60,
+                        "yaxis": "left"
+                      }
+                    ],
+                    "timeRegions": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "$$hashKey": "object:26",
+                        "format": "short",
+                        "logBase": 1,
+                        "max": "100",
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "$$hashKey": "object:27",
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
                 "alertThreshold": true
               },
               "fieldConfig": {
@@ -826,6 +990,88 @@
             "spec": {
               "pluginVersion": "7.5.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "hiddenSeries": false,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [
+                      {
+                        "$$hashKey": "object:14",
+                        "colorMode": "critical",
+                        "fill": true,
+                        "line": true,
+                        "op": "gt",
+                        "value": 80,
+                        "yaxis": "left"
+                      },
+                      {
+                        "$$hashKey": "object:44",
+                        "colorMode": "warning",
+                        "fill": true,
+                        "line": true,
+                        "op": "gt",
+                        "value": 50,
+                        "yaxis": "left"
+                      }
+                    ],
+                    "timeRegions": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "$$hashKey": "object:26",
+                        "format": "short",
+                        "logBase": 1,
+                        "max": "100",
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "$$hashKey": "object:27",
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
                 "alertThreshold": true
               },
               "fieldConfig": {
@@ -876,6 +1122,88 @@
             "spec": {
               "pluginVersion": "7.5.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "hiddenSeries": false,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [
+                      {
+                        "$$hashKey": "object:109",
+                        "colorMode": "critical",
+                        "fill": true,
+                        "line": false,
+                        "op": "gt",
+                        "value": 80,
+                        "yaxis": "left"
+                      },
+                      {
+                        "$$hashKey": "object:115",
+                        "colorMode": "warning",
+                        "fill": true,
+                        "line": false,
+                        "op": "gt",
+                        "value": 60,
+                        "yaxis": "left"
+                      }
+                    ],
+                    "timeRegions": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "$$hashKey": "object:26",
+                        "format": "short",
+                        "logBase": 1,
+                        "max": "100",
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "$$hashKey": "object:27",
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
                 "alertThreshold": true
               },
               "fieldConfig": {
@@ -928,6 +1256,97 @@
             "spec": {
               "pluginVersion": "7.5.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 0,
+                    "fillGradient": 0,
+                    "hiddenSeries": false,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 1,
+                    "points": true,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [
+                      {
+                        "$$hashKey": "object:14",
+                        "colorMode": "critical",
+                        "fill": true,
+                        "line": true,
+                        "op": "gt",
+                        "value": 80,
+                        "yaxis": "left"
+                      },
+                      {
+                        "$$hashKey": "object:44",
+                        "colorMode": "warning",
+                        "fill": true,
+                        "line": true,
+                        "op": "lt",
+                        "value": 40,
+                        "yaxis": "left"
+                      },
+                      {
+                        "$$hashKey": "object:40",
+                        "colorMode": "critical",
+                        "fill": true,
+                        "line": true,
+                        "op": "lt",
+                        "value": 20,
+                        "yaxis": "left"
+                      }
+                    ],
+                    "timeRegions": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "$$hashKey": "object:26",
+                        "format": "short",
+                        "logBase": 1,
+                        "max": "100",
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "$$hashKey": "object:27",
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
                 "alertThreshold": true
               },
               "fieldConfig": {
@@ -980,6 +1399,92 @@
             "spec": {
               "pluginVersion": "7.5.0-pre",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "fill": 0,
+                    "fillGradient": 0,
+                    "hiddenSeries": false,
+                    "legend": {
+                      "avg": false,
+                      "current": false,
+                      "max": false,
+                      "min": false,
+                      "show": true,
+                      "total": false,
+                      "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "percentage": false,
+                    "pointradius": 1,
+                    "points": true,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "thresholds": [
+                      {
+                        "$$hashKey": "object:14",
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(50, 161, 230, 0.13)",
+                        "line": true,
+                        "lineColor": "#B877D9",
+                        "op": "gt",
+                        "value": 80,
+                        "yaxis": "left"
+                      },
+                      {
+                        "$$hashKey": "object:44",
+                        "colorMode": "custom",
+                        "fill": true,
+                        "fillColor": "rgba(184, 119, 217, 0.23)",
+                        "line": true,
+                        "lineColor": "rgba(93, 196, 31, 0.6)",
+                        "op": "lt",
+                        "value": 40,
+                        "yaxis": "left"
+                      }
+                    ],
+                    "timeRegions": [],
+                    "tooltip": {
+                      "shared": true,
+                      "sort": 0,
+                      "value_type": "individual"
+                    },
+                    "xaxis": {
+                      "mode": "time",
+                      "show": true,
+                      "values": []
+                    },
+                    "yaxes": [
+                      {
+                        "$$hashKey": "object:26",
+                        "format": "short",
+                        "logBase": 1,
+                        "max": "100",
+                        "min": "0",
+                        "show": true
+                      },
+                      {
+                        "$$hashKey": "object:27",
+                        "format": "short",
+                        "logBase": 1,
+                        "show": true
+                      }
+                    ],
+                    "yaxis": {
+                      "align": false
+                    }
+                  }
+                },
                 "alertThreshold": true
               },
               "fieldConfig": {

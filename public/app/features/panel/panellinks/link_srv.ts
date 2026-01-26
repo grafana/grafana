@@ -14,6 +14,7 @@ import {
   locationUtil,
   ScopedVars,
   textUtil,
+  TypedVariableModel,
   urlUtil,
   VariableOrigin,
   VariableSuggestion,
@@ -79,14 +80,48 @@ const buildLabelPath = (label: string) => {
   return label.includes('.') || label.trim().includes(' ') ? `["${label}"]` : `.${label}`;
 };
 
+const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
+  if (!('valuesFormat' in variable) || variable.valuesFormat !== 'json') {
+    return [];
+  }
+
+  function collectFieldPaths(option: Record<string, string>, currentPath: string) {
+    let paths: string[] = [];
+    for (const field in option) {
+      if (option.hasOwnProperty(field)) {
+        const newPath = `${currentPath}.${field}`;
+        const value = option[field];
+        if (typeof value === 'object' && value !== null) {
+          paths = [...paths, ...collectFieldPaths(value, newPath)];
+        }
+        paths.push(newPath);
+      }
+    }
+    return paths;
+  }
+
+  try {
+    return collectFieldPaths(JSON.parse(variable.query)[0], variable.name);
+  } catch {
+    return [];
+  }
+};
+
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...getTemplateSrv()
     .getVariables()
-    .map((variable) => ({
-      value: variable.name,
-      label: variable.name,
-      origin: VariableOrigin.Template,
-    })),
+    .flatMap((variable) => [
+      {
+        value: variable.name,
+        label: variable.name,
+        origin: VariableOrigin.Template,
+      },
+      ...getVariableValueProperties(variable).map((fieldPath) => ({
+        value: fieldPath,
+        label: fieldPath,
+        origin: VariableOrigin.Template,
+      })),
+    ]),
   {
     value: `${DataLinkBuiltInVars.includeVars}`,
     label: t('panel.get-panel-links-variable-suggestions.label.all-variables', 'All variables'),

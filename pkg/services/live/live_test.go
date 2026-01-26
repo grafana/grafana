@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -340,16 +339,14 @@ func setupLiveService(cfg *setting.Cfg, t *testing.T) (*GrafanaLive, error) {
 		cfg = setting.NewCfg()
 	}
 
-	return ProvideService(nil,
-		cfg,
+	return ProvideService(cfg,
 		routing.NewRouteRegister(),
-		nil, nil, nil, nil,
+		nil, nil, nil,
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		featuremgmt.WithFeatures(),
-		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		&dashboards.FakeDashboardService{},
-		nil, nil)
+		nil)
 }
 
 type dummyTransport struct {

@@ -493,7 +493,9 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 // swagger:route GET /dashboards/home dashboards getHomeDashboard
 //
-// Get home dashboard.
+// NOTE: the home dashboard is configured in preferences.  This API will be removed in G13
+//
+// Deprecated: true
 //
 // Responses:
 // 200: getHomeDashboardResponse
@@ -793,6 +795,10 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 // swagger:route POST /dashboards/uid/{uid}/restore dashboards versions restoreDashboardVersionByUID
 //
 // Restore a dashboard to a given dashboard version using UID.
+// This API will be removed when /apis/dashboards.grafana.app/v1 is released.
+// You can restore a dashboard by reading it from history, then creating it again.
+//
+// Deprecated: true
 //
 // Responses:
 // 200: postDashboardResponse

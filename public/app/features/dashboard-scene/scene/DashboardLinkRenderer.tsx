@@ -63,7 +63,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'inline-flex',
       alignItems: 'center',
       verticalAlign: 'middle',
-      marginBottom: theme.spacing(1),
     }),
   };
 }

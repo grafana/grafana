@@ -263,7 +263,16 @@ export const Footer: StoryFn<typeof Table> = (args) => {
   );
 };
 
-export const Pagination: StoryFn<typeof Table> = (args) => <Basic {...args} />;
+export const Pagination: StoryFn<typeof Table> = (args) => {
+  const theme = useTheme2();
+  const data = buildData(theme, {});
+
+  return (
+    <DashboardStoryCanvas>
+      <Table {...args} data={data} />
+    </DashboardStoryCanvas>
+  );
+};
 Pagination.args = {
   enablePagination: true,
 };

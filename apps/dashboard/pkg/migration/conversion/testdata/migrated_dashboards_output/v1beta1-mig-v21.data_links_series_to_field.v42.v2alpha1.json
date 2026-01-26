@@ -181,6 +181,10 @@
             "spec": {
               "pluginVersion": "",
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {}
+                },
                 "dataLinks": [
                   {
                     "title": "Graph Data Link",

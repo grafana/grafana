@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -129,10 +128,6 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 		}
 
 		if include.Type == "page" {
-			if !middleware.PageIsFeatureToggleEnabled(c.Req.Context(), include.Path) {
-				s.log.Debug("Skipping page", "plugin", plugin.ID, "path", include.Path)
-				continue
-			}
 			link := &navtree.NavLink{
 				Text:     include.Name,
 				Icon:     include.Icon,
@@ -217,7 +212,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 	s.addPluginToSection(c, treeRoot, plugin, appLink)
 
-	if plugin.ID == "grafana-slo-app" {
+	if s.loadServiceCenterInSlo(c, plugin) {
 		// Add Service Center as a standalone nav item under Alerts & IRM
 		if alertsSection := treeRoot.FindById(navtree.NavIDAlertsAndIncidents); alertsSection != nil {
 			serviceLink := &navtree.NavLink{
@@ -391,6 +386,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "Assistant", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle", IsNew: true},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7},
+		"grafana-servicecenter-app":        {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "Service center", IsNew: true},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},
 		"grafana-adaptivelogs-app":         {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 2},
@@ -460,4 +456,16 @@ func (s *ServiceImpl) readNavigationSettings() {
 
 		s.navigationAppPathConfig[url] = *appCfg
 	}
+}
+
+// loadServiceCenterInSlo returns true if Service Center should be loaded via the SLO plugin
+// This only happens when processing grafana-slo-app AND the grafana-servicecenter-app does not exist.
+func (s *ServiceImpl) loadServiceCenterInSlo(c *contextmodel.ReqContext, plugin pluginstore.Plugin) bool {
+	if plugin.ID != "grafana-slo-app" {
+		return false
+	}
+
+	// Only load Service Center via SLO plugin if grafana-servicecenter-app doesn't exist
+	_, exists := s.pluginStore.Plugin(c.Req.Context(), "grafana-servicecenter-app")
+	return !exists
 }

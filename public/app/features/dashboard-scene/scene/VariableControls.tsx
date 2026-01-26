@@ -19,14 +19,40 @@ import { AddVariableButton } from './VariableControlsAddButton';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
+  const { isEditing } = dashboard.useState();
+  const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+
+  // Get visible variables for drilldown layout
+  const visibleVariables = variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
+
+  const adHocVar = visibleVariables.find((v) => sceneUtils.isAdHocVariable(v));
+  const groupByVar = visibleVariables.find((v) => sceneUtils.isGroupByVariable(v));
+
+  const hasDrilldownControls = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
+
+  const restVariables = visibleVariables.filter(
+    (v) => v.state.name !== adHocVar?.state.name && v.state.name !== groupByVar?.state.name
+  );
+
+  //  Variables to render (exclude adhoc/groupby when drilldown controls are shown in top row)
+  // Only filter out inControlsMenu - VariableValueSelectWrapper handles rendering logic:
+  // - UNSAFE_renderAsHidden variables render invisibly (for ScopesVariable)
+  // - Regular hidden variables render greyed out in edit mode, or not at all otherwise
+  const variablesToRender = hasDrilldownControls
+    ? restVariables.filter((v) => v.state.hide !== VariableHide.inControlsMenu)
+    : variables.filter((v) => v.state.hide !== VariableHide.inControlsMenu);
 
   return (
     <>
-      {variables
-        .filter((v) => v.state.hide !== VariableHide.inControlsMenu)
-        .map((variable) => (
-          <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
+      {variablesToRender.length > 0 &&
+        variablesToRender.map((variable) => (
+          <VariableValueSelectWrapper
+            key={variable.state.key}
+            variable={variable}
+            isEditingNewLayouts={isEditingNewLayouts}
+          />
         ))}
+
       {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
     </>
   );
@@ -35,18 +61,22 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
 interface VariableSelectProps {
   variable: SceneVariable;
   inMenu?: boolean;
+  isEditingNewLayouts?: boolean;
 }
 
-export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectProps) {
+export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayouts }: VariableSelectProps) {
   const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
   const { isSelected, onSelect, isSelectable } = useElementSelection(variable.state.key);
+  const isHidden = state.hide === VariableHide.hideVariable;
+  const shouldShowHiddenVariables = isEditingNewLayouts && isHidden;
   const styles = useStyles2(getStyles);
 
-  if (state.hide === VariableHide.hideVariable) {
-    if (variable.UNSAFE_renderAsHidden) {
-      return <variable.Component model={variable} />;
-    }
+  // UNSAFE_renderAsHidden variables (like ScopesVariable) should always render invisibly
+  if (isHidden && variable.UNSAFE_renderAsHidden) {
+    return <variable.Component model={variable} />;
+  }
 
+  if (isHidden && !isEditingNewLayouts) {
     return null;
   }
 
@@ -80,6 +110,7 @@ export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectP
       <div
         className={cx(
           styles.switchMenuContainer,
+          shouldShowHiddenVariables && styles.hidden,
           isSelected && 'dashboard-selected-element',
           isSelectable && !isSelected && 'dashboard-selectable-element'
         )}
@@ -103,6 +134,7 @@ export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectP
       <div
         className={cx(
           styles.verticalContainer,
+          shouldShowHiddenVariables && styles.hidden,
           isSelected && 'dashboard-selected-element',
           isSelectable && !isSelected && 'dashboard-selectable-element'
         )}
@@ -119,6 +151,7 @@ export function VariableValueSelectWrapper({ variable, inMenu }: VariableSelectP
     <div
       className={cx(
         styles.container,
+        shouldShowHiddenVariables && styles.hidden,
         isSelected && 'dashboard-selected-element',
         isSelectable && !isSelected && 'dashboard-selectable-element'
       )}
@@ -205,5 +238,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     display: 'flex',
     alignItems: 'center',
+  }),
+  hidden: css({
+    opacity: 0.6,
+    '&:hover': css({
+      opacity: 1,
+    }),
+    label: css({
+      textDecoration: 'line-through',
+    }),
   }),
 });

@@ -8,6 +8,7 @@ export const EVENT_LOCATIONS = {
   MODAL_PROVISIONED_TAB: 'suggested_dashboards_modal_provisioned_tab',
   MODAL_COMMUNITY_TAB: 'suggested_dashboards_modal_community_tab',
   BROWSE_DASHBOARDS_PAGE: 'browse_dashboards_page',
+  COMMUNITY_DASHBOARD_LOADED: 'community_dashboard_loaded',
 } as const;
 
 export const CONTENT_KINDS = {

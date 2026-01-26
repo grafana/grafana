@@ -118,10 +118,7 @@ class K8sAPI implements DashboardSnapshotSrv {
   }
 
   async getSharingOptions() {
-    // TODO? should this be in a config service, or in the same service?
-    // we have http://localhost:3000/apis/dashboardsnapshot.grafana.app/v0alpha1/namespaces/default/options
-    // BUT that has an unclear user mapping story still, so lets stick with the existing shared-options endpoint
-    return getBackendSrv().get<SnapshotSharingOptions>('/api/snapshot/shared-options');
+    return getBackendSrv().get<SnapshotSharingOptions>(this.url + '/settings');
   }
 
   async getSnapshot(uid: string): Promise<DashboardDTO> {

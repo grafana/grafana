@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -21,10 +22,18 @@ var (
 		"Time interval cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}",
 		errutil.WithPublic(`Time interval cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}. You must update those resources first using the original provision method.`),
 	)
+	ErrTimeIntervalOrigin = errutil.BadRequest("alerting.notifications.time-intervals.originInvalid").MustTemplate(
+		"Time interval '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
+		errutil.WithPublic("Time interval '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
+	)
 
 	ErrTemplateNotFound = errutil.NotFound("alerting.notifications.templates.notFound")
 	ErrTemplateInvalid  = errutil.BadRequest("alerting.notifications.templates.invalidFormat").MustTemplate("Invalid format of the submitted template", errutil.WithPublic("Template is in invalid format. Correct the payload and try again."))
 	ErrTemplateExists   = errutil.BadRequest("alerting.notifications.templates.nameExists", errutil.WithPublicMessage("Template file with this name already exists. Use a different name or update existing one."))
+	ErrTemplateOrigin   = errutil.BadRequest("alerting.notifications.templates.originInvalid").MustTemplate(
+		"Template '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
+		errutil.WithPublic("Template '{{ .Public.Name }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
+	)
 
 	ErrContactPointReferenced = errutil.Conflict("alerting.notifications.contact-points.referenced", errutil.WithPublicMessage("Contact point is currently referenced by a notification policy."))
 	ErrContactPointUsedInRule = errutil.Conflict("alerting.notifications.contact-points.used-by-rule", errutil.WithPublicMessage("Contact point is currently used in the notification settings of one or many alert rules."))
@@ -127,5 +136,15 @@ func MakeErrContactPointUidExists(uid, name string) error {
 			"UID":  uid,
 			"Name": name,
 		},
+	})
+}
+
+func makeErrTemplateOrigin(t definitions.NotificationTemplate, action string) error {
+	return ErrTemplateOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": t.Name}})
+}
+
+func makeErrMuteTimeIntervalOrigin(mt definitions.MuteTimeInterval, action string) error {
+	return ErrTimeIntervalOrigin.Build(errutil.TemplateData{
+		Public: map[string]interface{}{"Action": action, "Name": mt.Name},
 	})
 }

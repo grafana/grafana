@@ -1,12 +1,13 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { BarGaugeSizing, VizOrientation } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
 
 import { EffectsEditor } from './EffectsEditor';
-import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './GaugeMigrations';
 import { RadialBarPanel } from './RadialBarPanel';
+import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './migrations';
 import { defaultGaugePanelEffects, defaultOptions, Options } from './panelcfg.gen';
 import { radialBarSuggestionsSupplier } from './suggestions';
 
@@ -16,7 +17,7 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
     const category = [t('gauge.category-radial-bar', 'Gauge')];
 
     addStandardDataReduceOptions(builder);
-    addOrientationOption(builder, category);
+
     commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true });
 
     builder.addRadio({
@@ -31,6 +32,51 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
         ],
       },
     });
+
+    addOrientationOption(builder, category);
+
+    builder
+      .addRadio({
+        path: 'sizing',
+        name: t('gauge.name-gauge-size', 'Gauge size'),
+        settings: {
+          options: [
+            { value: BarGaugeSizing.Auto, label: t('gauge.gauge-size-options.label-auto', 'Auto') },
+            { value: BarGaugeSizing.Manual, label: t('gauge.gauge-size-options.label-manual', 'Manual') },
+          ],
+        },
+        category,
+        defaultValue: defaultOptions.sizing,
+        showIf: (options: Options) => options.orientation !== VizOrientation.Auto,
+      })
+      .addSliderInput({
+        path: 'minVizWidth',
+        name: t('gauge.name-min-width', 'Min width'),
+        description: t('gauge.description-min-width', 'Minimum column width (vertical orientation)'),
+        defaultValue: defaultOptions.minVizWidth,
+        settings: {
+          min: 0,
+          max: 600,
+          step: 1,
+        },
+        category,
+        showIf: (options: Options) =>
+          options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Vertical,
+      })
+      .addSliderInput({
+        path: 'minVizHeight',
+        name: t('gauge.name-min-height', 'Min height'),
+        description: t('gauge.description-min-height', 'Minimum row height (horizontal orientation)'),
+        defaultValue: defaultOptions.minVizHeight,
+        category,
+        settings: {
+          min: 0,
+          max: 600,
+          step: 1,
+        },
+        showIf: (options: Options) =>
+          options.sizing === BarGaugeSizing.Manual && options.orientation === VizOrientation.Horizontal,
+      });
 
     builder.addSliderInput({
       path: 'barWidthFactor',
@@ -69,6 +115,63 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
       },
     });
 
+    builder.addRadio({
+      path: 'barShape',
+      name: t('radialbar.config.bar-shape', 'Bar Style'),
+      category,
+      defaultValue: defaultOptions.barShape,
+      settings: {
+        options: [
+          { value: 'flat', label: t('radialbar.config.bar-shape-flat', 'Flat') },
+          { value: 'rounded', label: t('radialbar.config.bar-shape-rounded', 'Rounded') },
+        ],
+      },
+      showIf: (options) => options.segmentCount === 1,
+    });
+
+    builder.addRadio({
+      path: 'endpointMarker',
+      name: t('radialbar.config.endpoint-marker', 'Endpoint marker'),
+      description: t('radialbar.config.endpoint-marker-description', 'Glow is only supported in dark mode'),
+      category,
+      defaultValue: defaultOptions.endpointMarker,
+      settings: {
+        options: [
+          { value: 'point', label: t('radialbar.config.endpoint-marker-point', 'Point') },
+          { value: 'glow', label: t('radialbar.config.endpoint-marker-glow', 'Glow') },
+          { value: 'none', label: t('radialbar.config.endpoint-marker-none', 'None') },
+        ],
+      },
+      showIf: (options) => options.barShape === 'rounded' && options.segmentCount === 1,
+    });
+
+    builder.addSelect({
+      path: 'textMode',
+      name: t('radialbar.config.text-mode', 'Text mode'),
+      category,
+      settings: {
+        options: [
+          { value: 'auto', label: t('radialbar.config.text-mode-auto', 'Auto') },
+          { value: 'value_and_name', label: t('radialbar.config.text-mode-value-and-name', 'Value and Name') },
+          { value: 'value', label: t('radialbar.config.text-mode-value', 'Value') },
+          { value: 'name', label: t('radialbar.config.text-mode-name', 'Name') },
+          { value: 'none', label: t('radialbar.config.text-mode-none', 'None') },
+        ],
+      },
+      defaultValue: defaultOptions.textMode,
+    });
+
+    builder.addNumberInput({
+      path: 'neutral',
+      name: t('radialbar.config.neutral.title', 'Neutral value'),
+      description: t('radialbar.config.neutral.description', 'Leave empty to use Min as neutral point'),
+      category,
+      settings: {
+        placeholder: t('radialbar.config.neutral.placeholder', 'none'),
+        step: 1,
+      },
+    });
+
     builder.addBooleanSwitch({
       path: 'sparkline',
       name: t('radialbar.config.sparkline', 'Show sparkline'),
@@ -85,7 +188,8 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
 
     builder.addBooleanSwitch({
       path: 'showThresholdLabels',
-      name: t('radialbar.config.threshold-labels', 'Show threshold labels'),
+      name: t('radialbar.config.threshold-labels', 'Show labels'),
+      description: t('radialbar.config.threshold-labels-description', 'Display threshold and neutral values'),
       category,
       defaultValue: defaultOptions.showThresholdLabels,
     });

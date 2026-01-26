@@ -341,7 +341,7 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
     return;
   }
 
-  const val = item.process(value.value, context, item.settings);
+  let val = item.process(value.value, context, item.settings);
 
   const remove = val === undefined || val === null;
 
@@ -352,6 +352,15 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
       unset(config, item.path);
     }
   } else {
+    // Merge arrays (e.g. mappings) when multiple overrides target the same field
+    if (Array.isArray(val)) {
+      const existingValue = item.isCustom ? get(config.custom, item.path) : get(config, item.path);
+
+      if (Array.isArray(existingValue)) {
+        val = [...existingValue, ...val];
+      }
+    }
+
     if (item.isCustom) {
       if (!config.custom) {
         config.custom = {};

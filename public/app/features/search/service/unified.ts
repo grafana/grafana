@@ -1,6 +1,9 @@
 import { isEmpty } from 'lodash';
 
-import { BASE_URL as v0alphaBaseURL } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import {
+  API_GROUP as DASHBOARD_API_GROUP,
+  BASE_URL as v0alphaBaseURL,
+} from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/rtkq/legacy/user';
 import { DataFrame, DataFrameView, getDisplayProcessor, SelectableValue, toDataFrame } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -85,10 +88,11 @@ export class UnifiedSearcher implements GrafanaSearcher {
           fieldSelector: `metadata.name=${name}`,
         })
       );
-      starsIds =
-        result.data.items?.[0].spec.resource.find(
-          (info) => info.group === 'dashboard.grafana.app' && info.kind === 'Dashboard'
-        )?.names || [];
+      const items = result.data.items;
+      starsIds = items?.length
+        ? items[0].spec.resource.find(({ group, kind }) => group === DASHBOARD_API_GROUP && kind === 'Dashboard')
+            ?.names || []
+        : [];
     } else {
       starsIds = await dispatch(legacyUserAPI.endpoints.getStars.initiate()).unwrap();
     }
@@ -106,7 +110,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
     const qry = query.query ?? '*';
-    let uri = `${searchURI}?facet=tags&query=${qry}&limit=1`;
+    let uri = `${searchURI}?facet=tags&facetLimit=1000&query=${qry}&limit=1`;
     const resp = await getBackendSrv().get<SearchAPIResponse>(uri);
     return resp.facets?.tags?.terms || [];
   }
@@ -297,6 +301,18 @@ export class UnifiedSearcher implements GrafanaSearcher {
       uri += '&' + query.kind.map((kind) => `type=${kind}`).join('&');
     }
 
+    if (query.ds_type?.length) {
+      uri += '&dataSourceType=' + query.ds_type;
+    }
+
+    if (query.panel_type?.length) {
+      uri += '&panelType=' + query.panel_type;
+    }
+
+    if (query.panelTitleSearch) {
+      uri += '&panelTitleSearch=true';
+    }
+
     if (query.tags?.length) {
       uri += '&' + query.tags.map((tag) => `tag=${encodeURIComponent(tag)}`).join('&');
     }
@@ -323,7 +339,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     if (query.deleted) {
-      uri = `${getAPIBaseURL('dashboard.grafana.app', 'v1beta1')}/dashboards/?labelSelector=grafana.app/get-trash=true`;
+      uri = `${getAPIBaseURL(DASHBOARD_API_GROUP, 'v1beta1')}/dashboards/?labelSelector=grafana.app/get-trash=true`;
     }
     return uri;
   }

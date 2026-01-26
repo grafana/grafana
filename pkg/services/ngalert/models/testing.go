@@ -973,6 +973,24 @@ func (a AlertInstanceMutators) WithAnnotations(annotations InstanceAnnotations) 
 	}
 }
 
+func (a AlertInstanceMutators) WithResultFingerprint(fp string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.ResultFingerprint = fp
+	}
+}
+
+func (a AlertInstanceMutators) WithLastError(lastError string) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.LastError = lastError
+	}
+}
+
+func (a AlertInstanceMutators) WithLastResult(lastResult LastResult) AlertInstanceMutator {
+	return func(i *AlertInstance) {
+		i.LastResult = lastResult
+	}
+}
+
 type Mutator[T any] func(*T)
 
 // CopyNotificationSettings creates a deep copy of NotificationSettings.
@@ -1448,6 +1466,12 @@ func (n IntegrationMutators) WithSecureSettings(secureSettings map[string]string
 func (n IntegrationMutators) AddSecureSetting(key, val string) Mutator[Integration] {
 	return func(r *Integration) {
 		r.SecureSettings[key] = val
+	}
+}
+
+func (n IntegrationMutators) RemoveSetting(key string) Mutator[Integration] {
+	return func(c *Integration) {
+		delete(c.Settings, key)
 	}
 }
 

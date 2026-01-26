@@ -138,6 +138,10 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	if code != 0 {
+		if stdout, _ := c.Stdout(ctx); len(stdout) > 0 {
+			log.Printf("e2e test suite stdout:\n%s", stdout)
+		}
+
 		return fmt.Errorf("e2e tests failed with exit code %d", code)
 	}
 

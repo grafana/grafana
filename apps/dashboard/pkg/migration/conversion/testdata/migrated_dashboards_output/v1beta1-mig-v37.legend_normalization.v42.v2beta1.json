@@ -115,6 +115,10 @@
             "version": "",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {}
+                },
                 "legend": {
                   "displayMode": "list",
                   "showLegend": false
@@ -214,6 +218,10 @@
             "version": "",
             "spec": {
               "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {}
+                },
                 "legend": {
                   "displayMode": "list",
                   "showLegend": false

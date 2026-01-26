@@ -112,17 +112,15 @@ func TestGetHomeDashboard(t *testing.T) {
 }
 
 func newTestLive(t *testing.T) *live.GrafanaLive {
-	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 	cfg.AppURL = "http://localhost:3000/"
-	gLive, err := live.ProvideService(nil, cfg,
+	gLive, err := live.ProvideService(cfg,
 		routing.NewRouteRegister(),
 		nil, nil, nil, nil,
-		nil,
 		&usagestats.UsageStatsMock{T: t},
-		features, acimpl.ProvideAccessControl(features),
-		&dashboards.FakeDashboardService{},
-		nil, nil)
+		featuremgmt.WithFeatures(),
+		&dashboards.FakeDashboardService{}, nil)
+
 	require.NoError(t, err)
 	return gLive
 }

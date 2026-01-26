@@ -1,9 +1,15 @@
 import { MatcherOperator, ROUTES_META_SYMBOL, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route } from '../../openapi/routesApi.gen';
+import { KnownProvenance } from '../../types/knownProvenance';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
-import { createKubernetesRoutingTreeSpec, k8sSubRouteToRoute, routeToK8sSubRoute } from './useNotificationPolicyRoute';
+import {
+  createKubernetesRoutingTreeSpec,
+  isRouteProvisioned,
+  k8sSubRouteToRoute,
+  routeToK8sSubRoute,
+} from './useNotificationPolicyRoute';
 
 test('k8sSubRouteToRoute', () => {
   const input: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route = {
@@ -114,4 +120,87 @@ test('createKubernetesRoutingTreeSpec', () => {
 
   expect(tree.metadata.name).toBe(ROOT_ROUTE_NAME);
   expect(tree).toMatchSnapshot();
+});
+
+describe('isRouteProvisioned', () => {
+  it('returns false when route has no provenance', () => {
+    const route: Route = {
+      receiver: 'test-receiver',
+    };
+
+    expect(isRouteProvisioned(route)).toBeFalsy();
+  });
+
+  it('returns false when route has KnownProvenance.None in metadata', () => {
+    const route: Route = {
+      receiver: 'test-receiver',
+      [ROUTES_META_SYMBOL]: {
+        provenance: KnownProvenance.None,
+      },
+    };
+
+    expect(isRouteProvisioned(route)).toBeFalsy();
+  });
+
+  it('returns false when route has KnownProvenance.None at top level', () => {
+    const route: Route = {
+      receiver: 'test-receiver',
+      provenance: KnownProvenance.None,
+    };
+    expect(isRouteProvisioned(route)).toBeFalsy();
+  });
+
+  it('returns true when route has file provenance in metadata', () => {
+    const route: Route = {
+      receiver: 'test-receiver',
+      [ROUTES_META_SYMBOL]: {
+        provenance: KnownProvenance.File,
+      },
+    };
+
+    expect(isRouteProvisioned(route)).toBeTruthy();
+  });
+
+  it('returns true when route has api provenance in metadata', () => {
+    const route: Route = {
+      receiver: 'test-receiver',
+      [ROUTES_META_SYMBOL]: {
+        provenance: KnownProvenance.API,
+      },
+    };
+
+    expect(isRouteProvisioned(route)).toBeTruthy();
+  });
+
+  it('returns true when route has converted_prometheus provenance in metadata', () => {
+    const route: Route = {
+      receiver: 'test-receiver',
+      [ROUTES_META_SYMBOL]: {
+        provenance: KnownProvenance.ConvertedPrometheus,
+      },
+    };
+
+    expect(isRouteProvisioned(route)).toBeTruthy();
+  });
+
+  it('returns true when route has file provenance at top level', () => {
+    const route: Route = {
+      receiver: 'test-receiver',
+      provenance: KnownProvenance.File,
+    };
+
+    expect(isRouteProvisioned(route)).toBeTruthy();
+  });
+
+  it('falls back to top-level provenance when metadata provenance is missing', () => {
+    const route: Route = {
+      receiver: 'test-receiver',
+      provenance: KnownProvenance.File,
+      [ROUTES_META_SYMBOL]: {
+        provenance: undefined,
+      },
+    };
+
+    expect(isRouteProvisioned(route)).toBeTruthy();
+  });
 });

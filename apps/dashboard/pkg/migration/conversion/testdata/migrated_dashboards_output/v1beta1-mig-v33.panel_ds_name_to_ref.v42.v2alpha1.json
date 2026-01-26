@@ -345,7 +345,12 @@
             "kind": "timeseries",
             "spec": {
               "pluginVersion": "",
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {}
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -548,7 +553,7 @@
             "kind": "RowsLayoutRow",
             "spec": {
               "title": "",
-              "collapse": true,
+              "collapse": false,
               "hideHeader": true,
               "layout": {
                 "kind": "GridLayout",

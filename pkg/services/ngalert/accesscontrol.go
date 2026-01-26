@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -134,7 +135,7 @@ var (
 			Group:       models.AlertRolesGroup,
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingReceiversCreate},
-				{Action: accesscontrol.ActionAlertingReceiversTest},
+				{Action: accesscontrol.ActionAlertingReceiversTestCreate, Scope: models.ScopeReceiversProvider.GetResourceScopeType(alertingac.NewReceiverType)},
 			},
 		},
 	}
@@ -148,6 +149,7 @@ var (
 			Permissions: accesscontrol.ConcatPermissions(receiversReaderRole.Role.Permissions, receiversCreatorRole.Role.Permissions, []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingReceiversUpdate, Scope: models.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingReceiversDelete, Scope: models.ScopeReceiversAll},
+				{Action: accesscontrol.ActionAlertingReceiversTestCreate, Scope: models.ScopeReceiversAll},
 			}),
 		},
 	}
@@ -289,12 +291,13 @@ var (
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "alerting:admin",
 			DisplayName: "Full admin access",
-			Description: "Full write access in Grafana and all external providers, including their permissions and secrets",
+			Description: "Full write access in Grafana and all external providers, including their permissions, protected fields and secrets",
 			Group:       models.AlertRolesGroup,
 			Permissions: accesscontrol.ConcatPermissions(alertingWriterRole.Role.Permissions, []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingReceiversPermissionsRead, Scope: models.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingReceiversPermissionsWrite, Scope: models.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingReceiversReadSecrets, Scope: models.ScopeReceiversAll},
+				{Action: accesscontrol.ActionAlertingReceiversUpdateProtected, Scope: models.ScopeReceiversAll},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},

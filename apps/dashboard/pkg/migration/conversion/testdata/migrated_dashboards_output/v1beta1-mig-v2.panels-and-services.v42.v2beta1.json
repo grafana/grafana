@@ -71,7 +71,20 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graphite",
+                  "originalOptions": {
+                    "grid": {
+                      "max": 100,
+                      "min": 0
+                    },
+                    "legend": true,
+                    "y2_format": "short",
+                    "y_format": "percent"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -119,7 +132,18 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graph",
+                  "originalOptions": {
+                    "grid": {
+                      "min": 0
+                    },
+                    "legend": false,
+                    "y_format": "bytes"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -165,7 +189,20 @@
             "group": "table",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "table",
+                  "originalOptions": {
+                    "grid": {
+                      "max": 100,
+                      "min": 0
+                    },
+                    "legend": true,
+                    "y2_format": "bytes",
+                    "y_format": "short"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []
@@ -213,7 +250,15 @@
             "group": "timeseries",
             "version": "",
             "spec": {
-              "options": {},
+              "options": {
+                "__angularMigration": {
+                  "autoMigrateFrom": "graphite",
+                  "originalOptions": {
+                    "legend": true,
+                    "y2_format": "Bps"
+                  }
+                }
+              },
               "fieldConfig": {
                 "defaults": {},
                 "overrides": []

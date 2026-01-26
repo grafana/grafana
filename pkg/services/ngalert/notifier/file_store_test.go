@@ -106,3 +106,48 @@ func TestFileStore_NotificationLog(t *testing.T) {
 		t.Errorf("Unexpected Diff: %v", cmp.Diff(newState, decoded))
 	}
 }
+
+func TestFileStore_FlushLog(t *testing.T) {
+	store := fakes.NewFakeKVStore(t)
+	ctx := context.Background()
+	var orgId int64 = 1
+
+	// Initialize kvstore with empty flush log state.
+	initialState := flushLogState{} // FlushLog uses the same structure as nflog
+	decodedState, err := initialState.MarshalBinary()
+	require.NoError(t, err)
+	encodedState := base64.StdEncoding.EncodeToString(decodedState)
+	err = store.Set(ctx, orgId, KVNamespace, FlushLogFilename, encodedState)
+	require.NoError(t, err)
+
+	fs := NewFileStore(orgId, store)
+
+	// Load initial (empty).
+	flushLog, err := fs.GetFlushLog(ctx)
+	require.NoError(t, err)
+	decoded, err := decodeFlushLogState(strings.NewReader(flushLog))
+	require.NoError(t, err)
+	if !cmp.Equal(initialState, decoded) {
+		t.Errorf("Unexpected Diff: %v", cmp.Diff(initialState, decoded))
+	}
+
+	// Save new flush log state.
+	now := time.Now()
+	oneHour := now.Add(time.Hour)
+
+	v1 := createFlushLog(1, now, oneHour)
+	v2 := createFlushLog(2, now, oneHour)
+	newState := flushLogState{1: v1, 2: v2}
+	size, err := fs.SaveFlushLog(ctx, newState)
+	require.NoError(t, err)
+	require.Greater(t, size, int64(0))
+
+	// Load new.
+	flushLog, err = fs.GetFlushLog(ctx)
+	require.NoError(t, err)
+	decoded, err = decodeFlushLogState(strings.NewReader(flushLog))
+	require.NoError(t, err)
+	if !cmp.Equal(newState, decoded) {
+		t.Errorf("Unexpected Diff: %v", cmp.Diff(newState, decoded))
+	}
+}
