@@ -2110,9 +2110,6 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
 	xact := &provisioning.NopTransactionManager{}
-	prov := &provisioning.MockProvisioningStore{}
-	prov.EXPECT().SaveSucceeds()
-	prov.EXPECT().GetReturns(models.ProvenanceNone)
 
 	dashboardService := dashboards.NewFakeDashboardService(t)
 	dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(&dashboards.Dashboard{
@@ -2193,7 +2190,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		folderService:    folderService,
 		dashboardService: dashboardService,
 		xact:             xact,
-		prov:             prov,
+		prov:             store,
 		quotas:           quotas,
 		ac:               ac,
 		user:             user,

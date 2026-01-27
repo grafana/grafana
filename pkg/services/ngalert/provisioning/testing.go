@@ -74,6 +74,15 @@ func (n *NopTransactionManager) InTransaction(ctx context.Context, work func(ctx
 func (m *MockProvisioningStore_Expecter) GetReturns(p models.Provenance) *MockProvisioningStore_Expecter {
 	m.GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(p, nil)
 	m.GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+	m.GetProvenancesByUIDs(mock.Anything, mock.Anything, mock.Anything, mock.Anything).RunAndReturn(
+		func(ctx context.Context, orgID int64, resourceType string, uids []string) (map[string]models.Provenance, error) {
+			// Return a map with all requested UIDs having the same provenance.
+			result := make(map[string]models.Provenance, len(uids))
+			for _, uid := range uids {
+				result[uid] = p
+			}
+			return result, nil
+		})
 	return m
 }
 
