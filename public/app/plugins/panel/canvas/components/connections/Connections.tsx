@@ -26,6 +26,10 @@ import {
   HALF_SIZE,
 } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
+import {
+  updateConnectionsAfterIndividualMove as sharedUpdateIndividual,
+  updateConnectionsAfterGroupMove as sharedUpdateGroup,
+} from './connectionMovementUtils';
 
 export const CONNECTION_VERTEX_ID = 'vertex';
 export const CONNECTION_VERTEX_ADD_ID = 'vertexAdd';
@@ -681,115 +685,38 @@ export class Connections {
 
   // Update connection coordinates when an individual element is moved
   updateConnectionsAfterIndividualMove = (movedElement: ElementState) => {
-    // Find connections where this element is the source or target
-    this.state.forEach(connectionState => {
-      const isSource = connectionState.source.getName() === movedElement.getName();
-      const isTarget = connectionState.target.getName() === movedElement.getName();
+    // Adapter for calculateCoordinates to match the shared utility signature
+    const calculateCoords = (source: ElementState, target: ElementState, connectionState: ConnectionState) => {
+      const sourceRect = source.div?.getBoundingClientRect();
+      const parent = source.div?.parentElement;
+      const transformScale = this.scene.scale;
+      const parentRect = getParentBoundingClientRect(this.scene);
 
-      if (isSource || isTarget) {
-        // Get current positions of source and target
-        const sourceRect = connectionState.source.div?.getBoundingClientRect();
-        const parent = connectionState.source.div?.parentElement;
-        const transformScale = this.scene.scale;
-        const parentRect = getParentBoundingClientRect(this.scene);
-
-        if (sourceRect && connectionState.target.div && parent && parentRect) {
-          const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, connectionState.info, connectionState.target, transformScale);
-
-          // Store old original coordinates for vertex recalculation
-          const oldSourceOriginal = connectionState.sourceOriginal ? { ...connectionState.sourceOriginal } : { x: x1, y: y1 };
-          const oldTargetOriginal = connectionState.targetOriginal ? { ...connectionState.targetOriginal } : { x: x2, y: y2 };
-
-          // Connections are stored on the source element, not the moved element
-          const sourceElement = connectionState.source;
-          if (sourceElement.options.connections && connectionState.index >= 0) {
-            const connection = sourceElement.options.connections[connectionState.index];
-
-            // Update only the coordinate for the moved element
-            if (isSource) {
-              connection.sourceOriginal = { x: x1, y: y1 };
-            } else if (isTarget) {
-              connection.targetOriginal = { x: x2, y: y2 };
-            }
-
-            // Recalculate vertex relative coordinates to maintain visual shape
-            if (connection.vertices && connection.vertices.length > 0) {
-              const newSourceOriginal = connection.sourceOriginal || { x: x1, y: y1 };
-              const newTargetOriginal = connection.targetOriginal || { x: x2, y: y2 };
-
-              const oldXDist = oldTargetOriginal.x - oldSourceOriginal.x;
-              const oldYDist = oldTargetOriginal.y - oldSourceOriginal.y;
-              const newXDist = newTargetOriginal.x - newSourceOriginal.x;
-              const newYDist = newTargetOriginal.y - newSourceOriginal.y;
-
-              // Avoid division by zero
-              const safeNewXDist = newXDist === 0 ? 0.001 : newXDist;
-              const safeNewYDist = newYDist === 0 ? 0.001 : newYDist;
-
-              connection.vertices.forEach(vertex => {
-                // Convert from old relative coordinates to absolute positions
-                const oldAbsX = vertex.x * oldXDist + oldSourceOriginal.x;
-                const oldAbsY = vertex.y * oldYDist + oldSourceOriginal.y;
-
-                // Convert back to new relative coordinates
-                vertex.x = (oldAbsX - newSourceOriginal.x) / safeNewXDist;
-                vertex.y = (oldAbsY - newSourceOriginal.y) / safeNewYDist;
-              });
-            }
-          }
-        }
+      if (sourceRect && target.div && parent && parentRect) {
+        return calculateCoordinates(sourceRect, parentRect, connectionState.info, target, transformScale);
       }
-    });
-  };
+      return { x1: 0, y1: 0, x2: 0, y2: 0 };
+    };
 
+    sharedUpdateIndividual(movedElement, this.state, calculateCoords);
+  };
 
   // Update connection coordinates based on what's selected in a group move
   updateConnectionsAfterGroupMove = (movedElements: ElementState[], selectedTargets: Array<HTMLElement | SVGElement>) => {
+    // Adapter for calculateCoordinates to match the shared utility signature
+    const calculateCoords = (source: ElementState, target: ElementState, connectionState: ConnectionState) => {
+      const sourceRect = source.div?.getBoundingClientRect();
+      const parent = source.div?.parentElement;
+      const transformScale = this.scene.scale;
+      const parentRect = getParentBoundingClientRect(this.scene);
 
-    // Check each connection
-    this.state.forEach(connectionState => {
-      const sourceDiv = connectionState.source.div;
-      const targetDiv = connectionState.target.div;
-
-      // Find if the connection itself is selected (by checking its transparent overlay)
-      const connectionSelected = selectedTargets.some(target =>
-        target instanceof SVGElement &&
-        target.hasAttribute('data-connection-index') &&
-        parseInt(target.getAttribute('data-connection-index') || '-1', 10) === connectionState.index &&
-        target.getAttribute('data-connection-source') === connectionState.source.getName()
-      );
-
-      if (connectionSelected) {
-        // Connection itself is selected - it will be moved by handleConnectionDrag, no need to do anything here
-        return;
+      if (sourceRect && target.div && parent && parentRect) {
+        return calculateCoordinates(sourceRect, parentRect, connectionState.info, target, transformScale);
       }
+      return { x1: 0, y1: 0, x2: 0, y2: 0 };
+    };
 
-      // Check if both source and target elements are selected
-      if (sourceDiv && targetDiv && selectedTargets.includes(sourceDiv) && selectedTargets.includes(targetDiv)) {
-        // Both source and target are selected - update both original coordinates to current positions
-        const sourceElement = movedElements.find(el => el.div === sourceDiv);
-        const targetElement = movedElements.find(el => el.div === targetDiv);
-
-        if (sourceElement && targetElement) {
-          // Get current positions of source and target
-          const sourceRect = sourceElement.div?.getBoundingClientRect();
-          const parent = sourceElement.div?.parentElement;
-          const transformScale = this.scene.scale;
-          const parentRect = getParentBoundingClientRect(this.scene);
-
-          if (sourceRect && targetElement.div && parent && parentRect) {
-            const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, connectionState.info, targetElement, transformScale);
-
-            // Update both original coordinates to the new positions
-            if (sourceElement.options.connections) {
-              sourceElement.options.connections[connectionState.index].sourceOriginal = { x: x1, y: y1 };
-              sourceElement.options.connections[connectionState.index].targetOriginal = { x: x2, y: y2 };
-            }
-          }
-        }
-      }
-      // If neither the connection nor both elements are selected, the connection stays frozen
-    });
+    sharedUpdateGroup(movedElements, selectedTargets, this.state, calculateCoords);
   };
 
   renderElement() {
