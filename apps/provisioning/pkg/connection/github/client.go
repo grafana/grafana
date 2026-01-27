@@ -27,7 +27,7 @@ var (
 type Client interface {
 	GetApp(ctx context.Context) (App, error)
 	GetAppInstallation(ctx context.Context, installationID string) (AppInstallation, error)
-	ListInstallationRepositories(ctx context.Context, installationID string) ([]Repository, error)
+	ListInstallationRepositories(ctx context.Context) ([]Repository, error)
 	CreateInstallationAccessToken(ctx context.Context, installationID string, repo string) (InstallationToken, error)
 }
 
@@ -134,27 +134,7 @@ const (
 )
 
 // ListInstallationRepositories lists all repositories accessible by the specified GitHub App installation.
-// It first creates an installation access token using the JWT, then uses that token to list repositories.
-func (r *githubClient) ListInstallationRepositories(ctx context.Context, installationID string) ([]Repository, error) {
-	id, err := strconv.ParseInt(installationID, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("invalid installation ID: %s", installationID)
-	}
-
-	// Create an installation access token
-	installationToken, _, err := r.gh.Apps.CreateInstallationToken(ctx, id, nil)
-	if err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return nil, ErrServiceUnavailable
-		}
-		return nil, fmt.Errorf("create installation token: %w", err)
-	}
-
-	// Create a new client with the installation token
-	// WithAuthToken creates a copy of the client with the new auth token while preserving the HTTP transport
-	tokenClient := r.gh.WithAuthToken(installationToken.GetToken())
-
+func (r *githubClient) ListInstallationRepositories(ctx context.Context) ([]Repository, error) {
 	var allRepos []Repository
 	opts := &github.ListOptions{
 		Page:    1,
@@ -162,7 +142,7 @@ func (r *githubClient) ListInstallationRepositories(ctx context.Context, install
 	}
 
 	for {
-		result, resp, err := tokenClient.Apps.ListRepos(ctx, opts)
+		result, resp, err := r.gh.Apps.ListRepos(ctx, opts)
 		if err != nil {
 			var ghErr *github.ErrorResponse
 			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
@@ -204,8 +184,11 @@ func (r *githubClient) CreateInstallationAccessToken(ctx context.Context, instal
 		return InstallationToken{}, fmt.Errorf("invalid installation ID: %s", installationID)
 	}
 
-	opts := &github.InstallationTokenOptions{
-		Repositories: []string{repo},
+	var opts *github.InstallationTokenOptions
+	if repo != "" {
+		opts = &github.InstallationTokenOptions{
+			Repositories: []string{repo},
+		}
 	}
 
 	token, _, err := r.gh.Apps.CreateInstallationToken(ctx, int64(id), opts)
