@@ -393,7 +393,7 @@ describe('QueryVariableEditor', () => {
   it('should update the variable state when adding two static options', async () => {
     const {
       variable,
-      renderer: { getByTestId, getAllByTestId },
+      renderer: { getByTestId, getAllByPlaceholderText },
       user,
     } = await setup();
 
@@ -411,8 +411,8 @@ describe('QueryVariableEditor', () => {
     await user.click(addButton);
 
     // Enter label and value for first option
-    await user.type(getAllByTestId('static-option-input-text')[0], 'First Option[Tab]');
-    await user.type(getAllByTestId('static-option-input-value')[0], 'first-value[Tab]');
+    await user.type(getAllByPlaceholderText('text')[0], 'First Option[Tab]');
+    await user.type(getAllByPlaceholderText('value')[0], 'first-value[Tab]');
     await screen.findByDisplayValue('first-value');
 
     await waitFor(async () => {
@@ -427,8 +427,8 @@ describe('QueryVariableEditor', () => {
     await user.click(addButton);
 
     // Enter label and value for second option
-    await user.type(getAllByTestId('static-option-input-text')[1], 'Second Option[Tab]');
-    await user.type(getAllByTestId('static-option-input-value')[1], 'second-value[Tab]');
+    await user.type(getAllByPlaceholderText('text')[1], 'Second Option[Tab]');
+    await user.type(getAllByPlaceholderText('value')[1], 'second-value[Tab]');
     await screen.findByDisplayValue('second-value');
 
     await waitFor(async () => {
