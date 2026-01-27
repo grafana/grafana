@@ -1,6 +1,6 @@
 import { Box } from '@grafana/ui';
 
-import { QueryEditorContentHeader } from './QueryContentHeader/QueryEditorContentHeader';
+import { ContentHeader } from './Header/ContentHeader';
 
 export function QueryEditorContent() {
   return (
@@ -12,7 +12,7 @@ export function QueryEditorContent() {
       height="100%"
       width="100%"
     >
-      <QueryEditorContentHeader />
+      <ContentHeader />
     </Box>
   );
 }

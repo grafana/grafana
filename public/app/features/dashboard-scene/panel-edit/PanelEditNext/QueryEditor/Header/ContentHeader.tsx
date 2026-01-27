@@ -1,51 +1,58 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { DataSourcePicker } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { useStyles2, Text, Button, Icon } from '@grafana/ui';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
 import { getDashboardSceneFor } from '../../../../utils/utils';
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
-import { getQueryType } from '../../utils';
-import { useActionsContext, useDatasourceContext, usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
+import {
+  useActionsContext,
+  usePanelContext,
+  useQueryEditorUIContext,
+  useQueryRunnerContext,
+} from '../QueryEditorContext';
 
 import { EditableQueryName } from './EditableQueryName';
-import '../QueryActionsMock';
 
-export function QueryEditorContentHeader() {
-  const { dsSettings } = useDatasourceContext();
+export function ContentHeader() {
   const { panel } = usePanelContext();
+  const { selectedCard } = useQueryEditorUIContext();
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
 
-  // TODO: Replace with selectedQuery from context when selector is ready
-  const selectedQuery = queries[0];
-  const queryType = getQueryType(panel, selectedQuery);
+  // TODO: Add transformation support
+  const cardType = isExpressionQuery(selectedCard ?? undefined) ? QueryEditorType.Expression : QueryEditorType.Query;
 
-  const styles = useStyles2(getStyles, { queryType });
+  const styles = useStyles2(getStyles, { cardType });
 
   const onOpenInspector = useCallback(() => {
     const dashboard = getDashboardSceneFor(panel);
     dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Query }));
   }, [panel]);
 
+  // We have to do defensive null checks since queries might be an empty array :(
+  if (!selectedCard) {
+    return null;
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.queryHeaderWrapper}>
-        <Icon name={QUERY_EDITOR_TYPE_CONFIG[queryType].icon} size="sm" />
-        <div className={styles.dataSourcePickerWrapper}>
-          <DataSourcePicker current={dsSettings?.uid ?? null} onChange={changeDataSource} />
-        </div>
-        <Text variant="h4" color="secondary">
-          /
-        </Text>
-        <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={updateSelectedQuery} />
+        <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />
+        {cardType === QueryEditorType.Query && (
+          <DatasourceSection selectedCard={selectedCard} onChange={changeDataSource} />
+        )}
+        <EditableQueryName query={selectedCard} queries={queries} onQueryUpdate={updateSelectedQuery} />
       </div>
 
+      {/* TODO: Will fix up buttons in header actions ticket */}
       <Button
         size="sm"
         fill="text"
@@ -60,9 +67,29 @@ export function QueryEditorContentHeader() {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, { queryType }: { queryType: QueryEditorType }) => ({
+interface DatasourceSectionProps {
+  selectedCard: DataQuery;
+  onChange: (settings: DataSourceInstanceSettings) => void;
+}
+
+function DatasourceSection({ selectedCard, onChange }: DatasourceSectionProps) {
+  const styles = useStyles2(getDatasourceSectionStyles);
+
+  return (
+    <>
+      <div className={styles.dataSourcePickerWrapper}>
+        <DataSourcePicker current={selectedCard.datasource} onChange={onChange} />
+      </div>
+      <Text variant="h4" color="secondary">
+        /
+      </Text>
+    </>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2, { cardType }: { cardType: QueryEditorType }) => ({
   container: css({
-    borderLeft: `4px solid ${QUERY_EDITOR_TYPE_CONFIG[queryType].color}`,
+    borderLeft: `4px solid ${QUERY_EDITOR_TYPE_CONFIG[cardType].color}`,
     backgroundColor: theme.colors.background.secondary,
     padding: theme.spacing(0.5),
     borderTopLeftRadius: theme.shape.radius.default,
@@ -71,6 +98,7 @@ const getStyles = (theme: GrafanaTheme2, { queryType }: { queryType: QueryEditor
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: theme.spacing(1),
+    minHeight: theme.spacing(5),
   }),
   queryHeaderWrapper: css({
     display: 'flex',
@@ -78,6 +106,9 @@ const getStyles = (theme: GrafanaTheme2, { queryType }: { queryType: QueryEditor
     gap: theme.spacing(1),
     padding: `0 ${theme.spacing(0.5)}`,
   }),
+});
+
+const getDatasourceSectionStyles = (theme: GrafanaTheme2) => ({
   dataSourcePickerWrapper: css({
     '& .ds-picker': {
       border: 'none',
