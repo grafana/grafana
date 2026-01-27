@@ -164,11 +164,10 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 	if opts.libc != "" {
 		libcPart = fmt.Sprintf("-%s", opts.libc)
 	}
+	binary := fmt.Sprintf("./bin/%s", binaryName)
 
-	var binary string
-	if opts.isDev {
-		binary = fmt.Sprintf("./bin/dev-%s-%s%s/%s", opts.goos, opts.goarch, libcPart, binaryName)
-	} else {
+	// don't include os/arch/libc in output path in dev environment
+	if !opts.isDev {
 		binary = fmt.Sprintf("./bin/%s-%s%s/%s", opts.goos, opts.goarch, libcPart, binaryName)
 	}
 
@@ -290,9 +289,8 @@ func setBuildEnv(opts BuildOpts) error {
 		}
 	}
 
-	if (opts.goos != GoOSLinux || opts.goarch != "amd64") &&
-		opts.goos != GoOSDarwin && !opts.isDev {
-		// needed for archs other than linux/amd64 and darwin/arm64 + darwin/amd64
+	if opts.goos != GoOSLinux && opts.goos != GoOSDarwin {
+		// needed for archs other than linux/amd64, linux/arm64, darwin/arm64 and darwin/amd64
 		opts.cgo = true
 	}
 
