@@ -450,6 +450,7 @@ type Cfg struct {
 	ExternalUserMngInfo            string
 	ExternalUserMngAnalytics       bool
 	ExternalUserMngAnalyticsParams string
+	ExternalUserUpgradeLinkUrl     string
 	AutoAssignOrg                  bool
 	AutoAssignOrgId                int
 	AutoAssignOrgRole              string
@@ -603,7 +604,6 @@ type Cfg struct {
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
-	IndexScoringModel                          string        // Note: Temporary config to switch the index scoring model and will be removed soon.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	EnableSharding                             bool
@@ -1854,6 +1854,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
 	cfg.ExternalUserMngAnalytics = users.Key("external_manage_analytics").MustBool(false)
 	cfg.ExternalUserMngAnalyticsParams = valueAsString(users, "external_manage_analytics_params", "")
+	cfg.ExternalUserUpgradeLinkUrl = valueAsString(users, "external_upgrade_link_url", "")
 
 	//nolint:staticcheck
 	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
