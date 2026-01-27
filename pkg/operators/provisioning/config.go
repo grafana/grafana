@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"reflect"
 	"time"
 
 	"github.com/grafana/authlib/authn"
@@ -25,23 +26,47 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	gitrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	githubrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 )
 
-// provisioningControllerConfig contains the configuration that overlaps for the jobs and repo controllers
-type provisioningControllerConfig struct {
-	provisioningClient  *client.Clientset
-	resyncInterval      time.Duration
-	unified             resources.ResourceStore
-	clients             resources.ClientFactory
-	tokenExchangeClient *authn.TokenExchangeClient
-	tlsConfig           rest.TLSClientConfig
+var registeredConfigOptions = []ConfigOption{}
+
+func RegisterConfigOptions(opts ...ConfigOption) {
+	registeredConfigOptions = append(registeredConfigOptions, opts...)
+}
+
+type ConfigOption func(ctx context.Context, cfg *ControllerConfig) error
+
+// ControllerConfig contains the configuration that overlaps for the jobs and repo controllers
+type ControllerConfig struct {
+	Settings              *setting.Cfg
+	provisioningClient    *client.Clientset
+	resyncInterval        time.Duration
+	unified               resources.ResourceStore
+	clients               resources.ClientFactory
+	tokenExchangeClient   *authn.TokenExchangeClient
+	tlsConfig             rest.TLSClientConfig
+	decryptService        decrypt.DecryptService
+	registry              prometheus.Registerer
+	repositoryFactory     repository.Factory
+	RepositoryFactoryFunc func() (repository.Factory, error)
+	connectionFactory     connection.Factory
+	ConnectionFactoryFunc func() (connection.Factory, error)
+	healthMetricsRecorder controller.HealthMetricsRecorder
+	tracer                tracing.Tracer
+	quotaGetter           quotas.QuotaGetter
+	QuotaGetterFunc       func() (quotas.QuotaGetter, error)
+	workerCount           int
+	urlProvider           func(ctx context.Context, namespace string) string
+	UrlProviderFunc       func() (func(ctx context.Context, namespace string) string, error)
 }
 
 // expects:
@@ -73,48 +98,34 @@ type provisioningControllerConfig struct {
 // local_permitted_prefixes =
 // [provisioning]
 // repository_types =
-func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controllerCfg *provisioningControllerConfig, err error) {
+func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*ControllerConfig, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("no configuration available")
 	}
-	// TODO: we should setup tracing properly
-	// https://github.com/grafana/git-ui-sync-project/issues/507
-	tracer := tracing.NewNoopTracerService()
-
-	gRPCAuth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
-	token := gRPCAuth.Key("token").String()
-	if token == "" {
-		return nil, fmt.Errorf("token is required in [grpc_client_authentication] section")
-	}
-	tokenExchangeURL := gRPCAuth.Key("token_exchange_url").String()
-	if tokenExchangeURL == "" {
-		return nil, fmt.Errorf("token_exchange_url is required in [grpc_client_authentication] section")
-	}
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
-	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
-	if provisioningServerURL == "" {
-		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
+	controllerCfg := &ControllerConfig{
+		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
+		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 	}
 
-	tlsInsecure := operatorSec.Key("tls_insecure").MustBool(false)
-	tlsCertFile := operatorSec.Key("tls_cert_file").String()
-	tlsKeyFile := operatorSec.Key("tls_key_file").String()
-	tlsCAFile := operatorSec.Key("tls_ca_file").String()
-
-	tokenExchangeClient, err := authn.NewTokenExchangeClient(authn.TokenExchangeConfig{
-		TokenExchangeURL: tokenExchangeURL,
-		Token:            token,
-	})
+	tokenExchangeClient, err := controllerCfg.TokenExchangeClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 
-	tlsConfig, err := buildTLSConfig(tlsInsecure, tlsCertFile, tlsKeyFile, tlsCAFile)
+	tlsConfig, err := controllerCfg.TLSConfig()
 	if err != nil {
-		return nil, fmt.Errorf("failed to build TLS configuration: %w", err)
+		return nil, fmt.Errorf("failed to get TLS configuration: %w", err)
 	}
 
+	// TODO: This should use also lazy loading.
+
+	// Provisioning API Server
+	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
+	if provisioningServerURL == "" {
+		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
+	}
 	config := &rest.Config{
 		APIPath: "/apis",
 		Host:    provisioningServerURL,
@@ -131,13 +142,21 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
+	controllerCfg.provisioningClient = provisioningClient
 
+	// TODO: unified storage should use lazy loading.
 	// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
 	// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
 	// go through the api server. Once there is a global search endpoint, we will switch to that here as well.
+	tracer, err := controllerCfg.Tracer()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tracer: %w", err)
+	}
+
+	gRPCAuth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
 	resourceClientCfg := resource.RemoteResourceClientConfig{
-		Token:            token,
-		TokenExchangeURL: tokenExchangeURL,
+		Token:            gRPCAuth.Key("token").String(),
+		TokenExchangeURL: gRPCAuth.Key("token_exchange_url").String(),
 		Namespace:        gRPCAuth.Key("token_namespace").String(),
 	}
 	unified, err := setupUnifiedStorageClient(cfg, tracer, resourceClientCfg)
@@ -145,6 +164,9 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 		return nil, fmt.Errorf("failed to setup unified storage: %w", err)
 	}
 
+	controllerCfg.unified = unified
+
+	// TODO: This should use also lazy loading.
 	dashboardsServerURL := operatorSec.Key("dashboards_server_url").String()
 	if dashboardsServerURL == "" {
 		return nil, fmt.Errorf("dashboards_server_url is required in [operator] section")
@@ -193,15 +215,15 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (controll
 	}
 
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders)
+	controllerCfg.clients = clients
 
-	return &provisioningControllerConfig{
-		provisioningClient:  provisioningClient,
-		unified:             unified,
-		clients:             clients,
-		resyncInterval:      operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
-		tokenExchangeClient: tokenExchangeClient,
-		tlsConfig:           tlsConfig,
-	}, nil
+	for _, opt := range registeredConfigOptions {
+		if err := opt(context.Background(), controllerCfg); err != nil {
+			return nil, fmt.Errorf("failed to apply config option: %w", err)
+		}
+	}
+
+	return controllerCfg, nil
 }
 
 func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {
@@ -231,6 +253,209 @@ func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSCl
 	}
 
 	return tlsConfig, nil
+}
+
+func (c *ControllerConfig) DecryptService() (decrypt.DecryptService, error) {
+	if c.decryptService != nil {
+		return c.decryptService, nil
+	}
+
+	decryptSvc, err := setupDecryptService(c.Settings, tracing.NewNoopTracerService(), c.tokenExchangeClient)
+	if err != nil {
+		return nil, fmt.Errorf("setup decrypt service: %w", err)
+	}
+
+	c.decryptService = decryptSvc
+
+	return decryptSvc, nil
+}
+
+func (c *ControllerConfig) QuotaGetter() (quotas.QuotaGetter, error) {
+	if c.quotaGetter != nil {
+		return c.quotaGetter, nil
+	}
+
+	if c.QuotaGetterFunc != nil {
+		quotaGetter, err := c.QuotaGetterFunc()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get quota getter: %w", err)
+		}
+		c.quotaGetter = quotaGetter
+		return quotaGetter, nil
+	}
+
+	quotaLimits := quotas.QuotaLimits{
+		MaxResources:    c.Settings.SectionWithEnvOverrides("provisioning").Key("max_resources_per_repository").MustInt64(0),
+		MaxRepositories: c.Settings.SectionWithEnvOverrides("provisioning").Key("max_repositories").MustInt64(10),
+	}
+
+	c.quotaGetter = quotas.NewFixedQuotaGetter(quotaLimits)
+
+	return c.quotaGetter, nil
+}
+
+func (c *ControllerConfig) Registry() prometheus.Registerer {
+	if c.registry != nil {
+		return c.registry
+	}
+
+	return prometheus.NewPedanticRegistry()
+}
+
+func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
+	if c.tracer != nil {
+		return c.tracer, nil
+	}
+
+	tracingConfig, err := tracing.ProvideTracingConfig(c.Settings)
+	if err != nil {
+		return nil, fmt.Errorf("failed to provide tracing config: %w", err)
+	}
+
+	tracer, err := tracing.ProvideService(tracingConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to provide tracing service: %w", err)
+	}
+
+	return tracer, nil
+}
+
+func (c *ControllerConfig) TokenExchangeClient() (*authn.TokenExchangeClient, error) {
+	if c.tokenExchangeClient == nil {
+		return nil, fmt.Errorf("token exchange client is not set")
+	}
+
+	gRPCAuth := c.Settings.SectionWithEnvOverrides("grpc_client_authentication")
+	token := gRPCAuth.Key("token").String()
+	if token == "" {
+		return nil, fmt.Errorf("token is required in [grpc_client_authentication] section")
+	}
+	tokenExchangeURL := gRPCAuth.Key("token_exchange_url").String()
+	if tokenExchangeURL == "" {
+		return nil, fmt.Errorf("token_exchange_url is required in [grpc_client_authentication] section")
+	}
+
+	tokenExchangeClient, err := authn.NewTokenExchangeClient(authn.TokenExchangeConfig{
+		TokenExchangeURL: tokenExchangeURL,
+		Token:            token,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
+	}
+	c.tokenExchangeClient = tokenExchangeClient
+
+	return tokenExchangeClient, nil
+}
+
+func (c *ControllerConfig) TLSConfig() (rest.TLSClientConfig, error) {
+	if !reflect.ValueOf(c.tlsConfig).IsZero() {
+		return c.tlsConfig, nil
+	}
+
+	tlsConfig, err := buildTLSConfig(
+		c.Settings.SectionWithEnvOverrides("operator").Key("tls_insecure").MustBool(false),
+		c.Settings.SectionWithEnvOverrides("operator").Key("tls_cert_file").String(),
+		c.Settings.SectionWithEnvOverrides("operator").Key("tls_key_file").String(),
+		c.Settings.SectionWithEnvOverrides("operator").Key("tls_ca_file").String(),
+	)
+
+	if err != nil {
+		return rest.TLSClientConfig{}, fmt.Errorf("failed to build TLS configuration: %w", err)
+	}
+
+	c.tlsConfig = tlsConfig
+
+	return tlsConfig, nil
+}
+
+func (c *ControllerConfig) RepositoryFactory() (repository.Factory, error) {
+	if c.repositoryFactory != nil {
+		return c.repositoryFactory, nil
+	}
+
+	if c.RepositoryFactoryFunc != nil {
+		repositoryFactory, err := c.RepositoryFactoryFunc()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get repository factory: %w", err)
+		}
+		c.repositoryFactory = repositoryFactory
+		return repositoryFactory, nil
+	}
+
+	decryptSvc, err := c.DecryptService()
+	if err != nil {
+		return nil, fmt.Errorf("setup decrypt service: %w", err)
+	}
+
+	repositoryFactory, err := setupRepoFactory(c.Settings, repository.ProvideDecrypter(decryptSvc), c.provisioningClient, c.Registry())
+	if err != nil {
+		return nil, fmt.Errorf("setup repository factory: %w", err)
+	}
+
+	c.repositoryFactory = repositoryFactory
+
+	return repositoryFactory, nil
+}
+
+func (c *ControllerConfig) ConnectionFactory() (connection.Factory, error) {
+	if c.connectionFactory != nil {
+		return c.connectionFactory, nil
+	}
+
+	if c.ConnectionFactoryFunc != nil {
+		connectionFactory, err := c.ConnectionFactoryFunc()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get connection factory: %w", err)
+		}
+		c.connectionFactory = connectionFactory
+		return connectionFactory, nil
+	}
+
+	decryptSvc, err := c.DecryptService()
+	if err != nil {
+		return nil, fmt.Errorf("setup decrypt service: %w", err)
+	}
+
+	connectionFactory, err := setupConnectionFactory(c.Settings, connection.ProvideDecrypter(decryptSvc))
+	if err != nil {
+		return nil, fmt.Errorf("setup connection factory: %w", err)
+	}
+
+	c.connectionFactory = connectionFactory
+
+	return connectionFactory, nil
+}
+
+func (c *ControllerConfig) HealthMetricsRecorder() (controller.HealthMetricsRecorder, error) {
+	if c.healthMetricsRecorder != nil {
+		return c.healthMetricsRecorder, nil
+	}
+
+	c.healthMetricsRecorder = controller.NewHealthMetricsRecorder(c.Registry())
+
+	return c.healthMetricsRecorder, nil
+}
+
+func (c *ControllerConfig) URLProvider() (func(ctx context.Context, namespace string) string, error) {
+	if c.urlProvider != nil {
+		return c.urlProvider, nil
+	}
+
+	if c.UrlProviderFunc != nil {
+		urlProvider, err := c.UrlProviderFunc()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get URL provider: %w", err)
+		}
+		c.urlProvider = urlProvider
+		return c.urlProvider, nil
+	}
+
+	c.urlProvider = func(ctx context.Context, namespace string) string {
+		return c.Settings.AppURL
+	}
+
+	return c.urlProvider, nil
 }
 
 func setupRepoFactory(
@@ -300,17 +525,6 @@ func setupConnectionFactory(
 	cfg *setting.Cfg,
 	decrypter connection.Decrypter,
 ) (connection.Factory, error) {
-	// Setup decrypt service for connections
-	secretsSec := cfg.SectionWithEnvOverrides("secrets_manager")
-	if secretsSec == nil {
-		return nil, fmt.Errorf("no [secrets_manager] section found in config")
-	}
-
-	address := secretsSec.Key("grpc_server_address").String()
-	if address == "" {
-		return nil, fmt.Errorf("grpc_server_address is required in [secrets_manager] section")
-	}
-
 	// For now, only support GitHub connections
 	// TODO: Add support for other connection types
 	extras := []connection.Extra{
