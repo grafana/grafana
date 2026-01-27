@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { logWarning } from '@grafana/runtime';
 import {
@@ -14,7 +15,6 @@ import {
 import { TabsLayoutTabKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
-import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { ShowConfirmModalEvent } from 'app/types/events';
 

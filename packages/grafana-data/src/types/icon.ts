@@ -86,6 +86,7 @@ export const availableIconsIndex = {
   'comments-alt': true,
   compass: true,
   'compress-arrows': true,
+  'compress-alt': true,
   copy: true,
   'corner-up-left': true,
   'corner-up-right': true,
@@ -116,6 +117,7 @@ export const availableIconsIndex = {
   eye: true,
   'eye-slash': true,
   'ellipsis-h': true,
+  'expand-alt': true,
   /* @deprecated, use 'spinner' instead */
   'fa fa-spinner': true,
   favorite: true,
@@ -143,6 +145,7 @@ export const availableIconsIndex = {
   'gf-bar-alignment-center': true,
   'gf-glue': true,
   'gf-grid': true,
+  'gf-grotfood': true,
   'gf-interpolation-linear': true,
   'gf-interpolation-smooth': true,
   'gf-interpolation-step-after': true,

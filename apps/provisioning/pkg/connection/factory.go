@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -15,6 +16,7 @@ type Extra interface {
 	Type() provisioning.ConnectionType
 	Build(ctx context.Context, r *provisioning.Connection) (Connection, error)
 	Mutate(ctx context.Context, obj runtime.Object) error
+	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
 
 //go:generate mockery --name=Factory --structname=MockFactory --inpackage --filename=factory_mock.go --with-expecter
@@ -22,6 +24,7 @@ type Factory interface {
 	Types() []provisioning.ConnectionType
 	Build(ctx context.Context, r *provisioning.Connection) (Connection, error)
 	Mutate(ctx context.Context, obj runtime.Object) error
+	Validate(ctx context.Context, obj runtime.Object) field.ErrorList
 }
 
 type factory struct {
@@ -81,6 +84,52 @@ func (f *factory) Mutate(ctx context.Context, obj runtime.Object) error {
 		}
 	}
 	return nil
+}
+
+func (f *factory) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	var list field.ErrorList
+
+	conn, ok := obj.(*provisioning.Connection)
+	if !ok {
+		return list
+	}
+
+	// Check if connection type is supported
+	var foundExtra Extra
+	for _, e := range f.extras {
+		if e.Type() == conn.Spec.Type {
+			foundExtra = e
+			break
+		}
+	}
+	if foundExtra == nil {
+		// Return error message matching Build() error format: "connection type %q is not supported"
+		list = append(list, field.Invalid(
+			field.NewPath("spec", "type"),
+			conn.Spec.Type,
+			fmt.Sprintf("connection type %q is not supported", conn.Spec.Type),
+		))
+		// Return early if type is not supported - no point validating further
+		return list
+	}
+
+	// Check if connection type is enabled
+	if _, enabled := f.enabled[conn.Spec.Type]; !enabled {
+		// Return error message matching Build() error format: "connection type %q is not enabled"
+		list = append(list, field.Invalid(
+			field.NewPath("spec", "type"),
+			conn.Spec.Type,
+			fmt.Sprintf("connection type %q is not enabled", conn.Spec.Type),
+		))
+		// Return early if type is not enabled - no point validating further
+		return list
+	}
+
+	// Validate using registered extras
+	for _, e := range f.extras {
+		list = append(list, e.Validate(ctx, obj)...)
+	}
+	return list
 }
 
 var (

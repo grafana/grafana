@@ -35,7 +35,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/plugins"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -57,7 +56,6 @@ func ProvideService(
 	dashboardService dashboardservice.DashboardService,
 	folderService folder.Service,
 	pluginSettings pluginsettings.Service,
-	searchService searchV2.SearchService,
 	quotaService quota.Service,
 	secrectService secrets.Service,
 	orgService org.Service,
@@ -84,7 +82,6 @@ func ProvideService(
 		datasourceService:            datasourceService,
 		correlationsService:          correlationsService,
 		pluginsSettings:              pluginSettings,
-		searchService:                searchService,
 		quotaService:                 quotaService,
 		secretService:                secrectService,
 		log:                          log.New("provisioning"),
@@ -137,9 +134,6 @@ func (ps *ProvisioningServiceImpl) starting(ctx context.Context) error {
 		if !errors.Is(err, dashboards.ErrGetOrCreateFolder) {
 			return err
 		}
-	}
-	if ps.dashboardProvisioner.HasDashboardSources() {
-		ps.searchService.TriggerReIndex()
 	}
 	return nil
 }
@@ -194,7 +188,6 @@ func newProvisioningServiceImpl(
 	provisionDatasources func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error,
 	provisionPlugins func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error,
 	migratePrometheusType func(context.Context) error,
-	searchService searchV2.SearchService,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
@@ -202,7 +195,6 @@ func newProvisioningServiceImpl(
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
 		Cfg:                     setting.NewCfg(),
-		searchService:           searchService,
 		migratePrometheusType:   migratePrometheusType,
 	}
 
@@ -238,7 +230,6 @@ type ProvisioningServiceImpl struct {
 	datasourceService            datasourceservice.DataSourceService
 	correlationsService          correlations.Service
 	pluginsSettings              pluginsettings.Service
-	searchService                searchV2.SearchService
 	quotaService                 quota.Service
 	secretService                secrets.Service
 	folderService                folder.Service
