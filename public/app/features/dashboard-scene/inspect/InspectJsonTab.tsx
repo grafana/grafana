@@ -230,7 +230,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
       panel_type_changed: panel.state.pluginId !== jsonObj.spec.vizConfig.group,
       panel_id_changed: getPanelIdForVizPanel(panel) !== jsonObj.spec.id,
-      panel_grid_pos_changed: false, // Grid cant be edited from inspect in v2 panels.
+      panel_grid_pos_changed: false,
       panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(vizPanel.state.$data)),
     });
 
