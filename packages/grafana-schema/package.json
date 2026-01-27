@@ -35,7 +35,7 @@
       "default": "./dist/esm/raw/dashboard/x/dashboard_types.gen.js"
     },
     "./raw/preferences": {
-      "@grafana-app/source": "./src/raw/composable/*/panelcfg/x/*panelcfg_types.gen.ts",
+      "@grafana-app/source": "./src/raw/preferences/x/preferences_types.gen.ts",
       "types": "./dist/esm/raw/preferences/x/preferences_types.gen.d.ts"
     },
     "./dist/esm/raw/composable/annotationslist/panelcfg/x/AnnotationsListPanelCfg_types.gen": {
