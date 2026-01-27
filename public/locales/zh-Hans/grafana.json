@@ -959,6 +959,13 @@
       "content-route-continue-matching-other-policies": "此路由将继续匹配其他策略"
     },
     "copy-to-clipboard": "将“{{label}}”复制到剪贴板",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "通知已发送到",
@@ -3631,7 +3638,10 @@
       "move-modal-title": "移动",
       "move-provisioned-folder": "",
       "moving": "正在移动...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "文件夹名称是必需项。",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "您已选择了已预置和未预置的资源。这些资源无法一起处理。请仅选择已预置的资源或未预置的资源，然后重试。",
       "selected-mix-resources-modal-title": "已选择混合资源类型"
     },
@@ -10895,7 +10905,9 @@
     "invite-user": {
       "invite-button": "邀请",
       "invite-new-user-button": "邀请新用户",
-      "invite-tooltip": "邀请用户"
+      "invite-tooltip": "邀请用户",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "添加到书签",
