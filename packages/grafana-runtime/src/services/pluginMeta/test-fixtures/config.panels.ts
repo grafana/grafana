@@ -1,0 +1,1185 @@
+/* eslint-disable @grafana/no-restricted-img-srcs */
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
+import {
+  type AngularMeta,
+  type PanelPluginMeta,
+  PluginLoadingStrategy,
+  PluginSignatureStatus,
+  PluginState,
+  PluginType,
+} from '@grafana/data';
+
+import type { PanelPluginMetas } from '../types';
+
+export const panel: PanelPluginMeta = structuredClone({
+  id: 'grafana-test-panel',
+  name: 'Test',
+  info: {
+    author: {
+      name: 'Grafana',
+      url: '',
+    },
+    description: '',
+    links: [],
+    logos: {
+      small: 'public/plugins/grafana-test-panel/img/logo.svg',
+      large: 'public/plugins/grafana-test-panel/img/logo.svg',
+    },
+    build: {},
+    screenshots: [],
+    version: '1.0.0',
+    updated: '2026-01-26',
+    keywords: ['panel'],
+  },
+  hideFromList: false,
+  sort: 100,
+  skipDataQuery: false,
+  baseUrl: 'public/plugins/grafana-test-panel',
+  signature: PluginSignatureStatus.valid,
+  module: 'public/plugins/grafana-test-panel/module.js',
+  angular: { detected: false } as AngularMeta,
+  loadingStrategy: PluginLoadingStrategy.script,
+  type: PluginType.panel,
+});
+
+export const clockPanel = {
+  id: 'grafana-clock-panel',
+  name: 'Clock',
+  info: {
+    author: {
+      name: 'Grafana Labs',
+      url: 'https://grafana.com',
+    },
+    description: 'Clock panel for grafana',
+    links: [
+      {
+        name: 'Project site',
+        url: 'https://github.com/grafana/clock-panel',
+      },
+      {
+        name: 'MIT License',
+        url: 'https://github.com/grafana/clock-panel/blob/master/LICENSE',
+      },
+    ],
+    logos: {
+      small:
+        'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/img/clock.svg',
+      large:
+        'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/img/clock.svg',
+    },
+    build: {},
+    screenshots: [
+      {
+        name: 'Showcase',
+        path: 'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/img/screenshot-showcase.png',
+      },
+      {
+        name: 'Options',
+        path: 'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/img/screenshot-clock-options.png',
+      },
+    ],
+    version: '3.2.1',
+    updated: '2026-01-12',
+    keywords: ['clock', 'panel'],
+  },
+  hideFromList: false,
+  sort: 100,
+  skipDataQuery: false,
+  baseUrl: 'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel',
+  signature: PluginSignatureStatus.valid,
+  module: 'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/module.js',
+  angular: { detected: false } as AngularMeta,
+  loadingStrategy: PluginLoadingStrategy.script,
+  translations: {
+    'cs-CZ':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/cs-CZ/grafana-clock-panel.json',
+    'de-DE':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/de-DE/grafana-clock-panel.json',
+    'en-US':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/en-US/grafana-clock-panel.json',
+    'es-ES':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/es-ES/grafana-clock-panel.json',
+    'fr-FR':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/fr-FR/grafana-clock-panel.json',
+    'hu-HU':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/hu-HU/grafana-clock-panel.json',
+    'id-ID':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/id-ID/grafana-clock-panel.json',
+    'it-IT':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/it-IT/grafana-clock-panel.json',
+    'ja-JP':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/ja-JP/grafana-clock-panel.json',
+    'ko-KR':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/ko-KR/grafana-clock-panel.json',
+    'nl-NL':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/nl-NL/grafana-clock-panel.json',
+    'pl-PL':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/pl-PL/grafana-clock-panel.json',
+    'pt-BR':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/pt-BR/grafana-clock-panel.json',
+    'pt-PT':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/pt-PT/grafana-clock-panel.json',
+    'ru-RU':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/ru-RU/grafana-clock-panel.json',
+    'sv-SE':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/sv-SE/grafana-clock-panel.json',
+    'tr-TR':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/tr-TR/grafana-clock-panel.json',
+    'zh-Hans':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/zh-Hans/grafana-clock-panel.json',
+    'zh-Hant':
+      'https://plugins-cdn.grafana-dev.net/grafana-clock-panel/3.2.1/public/plugins/grafana-clock-panel/locales/zh-Hant/grafana-clock-panel.json',
+  },
+  type: PluginType.panel,
+};
+
+export const panels: PanelPluginMetas = structuredClone({
+  alertlist: {
+    id: 'alertlist',
+    name: 'Alert list',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Shows list of alerts and their current status',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/alert-list/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/alertlist/img/icn-singlestat-panel.svg',
+        large: 'public/plugins/alertlist/img/icn-singlestat-panel.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 15,
+    skipDataQuery: true,
+    baseUrl: 'public/plugins/alertlist',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/alertlist',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  annolist: {
+    id: 'annolist',
+    name: 'Annotations list',
+    aliasIds: ['ryantxu-annolist-panel'],
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'List annotations',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/annotations/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/annolist/img/icn-annolist-panel.svg',
+        large: 'public/plugins/annolist/img/icn-annolist-panel.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 100,
+    skipDataQuery: true,
+    baseUrl: 'public/plugins/annolist',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/annolist',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  barchart: {
+    id: 'barchart',
+    name: 'Bar chart',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Categorical charts with group support',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/bar-chart/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/barchart/img/barchart.svg',
+        large: 'public/plugins/barchart/img/barchart.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 2,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/barchart',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/barchart',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  bargauge: {
+    id: 'bargauge',
+    name: 'Bar gauge',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Horizontal and vertical gauges',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/bar-gauge/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/bargauge/img/icon_bar_gauge.svg',
+        large: 'public/plugins/bargauge/img/icon_bar_gauge.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 5,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/bargauge',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/bargauge',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  candlestick: {
+    id: 'candlestick',
+    name: 'Candlestick',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Graphical representation of price movements of a security, derivative, or currency.',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/candlestick/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/candlestick/img/candlestick.svg',
+        large: 'public/plugins/candlestick/img/candlestick.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: ['financial', 'price', 'currency', 'k-line'],
+    },
+    hideFromList: false,
+    sort: 100,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/candlestick',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/candlestick',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  canvas: {
+    id: 'canvas',
+    name: 'Canvas',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Explicit element placement',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/canvas/img/icn-canvas.svg',
+        large: 'public/plugins/canvas/img/icn-canvas.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 100,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/canvas',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/canvas',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  dashlist: {
+    id: 'dashlist',
+    name: 'Dashboard list',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'List of dynamic links to other dashboards',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/dashboard-list/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/dashlist/img/icn-dashlist-panel.svg',
+        large: 'public/plugins/dashlist/img/icn-dashlist-panel.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 16,
+    skipDataQuery: true,
+    baseUrl: 'public/plugins/dashlist',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/dashlist',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  flamegraph: {
+    id: 'flamegraph',
+    name: 'Flame Graph',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: '',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/flame-graph/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/flamegraph/img/icn-flamegraph.svg',
+        large: 'public/plugins/flamegraph/img/icn-flamegraph.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 100,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/flamegraph',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/flamegraph',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  gauge: {
+    id: 'gauge',
+    name: 'Gauge',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Standard gauge visualization',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/gauge/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/gauge/img/icon_gauge.svg',
+        large: 'public/plugins/gauge/img/icon_gauge.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 4,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/gauge',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/gauge',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  geomap: {
+    id: 'geomap',
+    name: 'Geomap',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Geomap panel',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/geomap/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/geomap/img/icn-geomap.svg',
+        large: 'public/plugins/geomap/img/icn-geomap.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 100,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/geomap',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/geomap',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  gettingstarted: {
+    id: 'gettingstarted',
+    name: 'Getting Started',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: '',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/gettingstarted/img/icn-dashlist-panel.svg',
+        large: 'public/plugins/gettingstarted/img/icn-dashlist-panel.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: true,
+    sort: 100,
+    skipDataQuery: true,
+    baseUrl: 'public/plugins/gettingstarted',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/gettingstarted',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  heatmap: {
+    id: 'heatmap',
+    name: 'Heatmap',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Like a histogram over time',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/heatmap/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/heatmap/img/icn-heatmap-panel.svg',
+        large: 'public/plugins/heatmap/img/icn-heatmap-panel.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 10,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/heatmap',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/heatmap',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  histogram: {
+    id: 'histogram',
+    name: 'Histogram',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Distribution of values presented as a bar chart.',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/histogram/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/histogram/img/histogram.svg',
+        large: 'public/plugins/histogram/img/histogram.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: ['distribution', 'bar chart', 'frequency', 'proportional'],
+    },
+    hideFromList: false,
+    sort: 12,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/histogram',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/histogram',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  logs: {
+    id: 'logs',
+    name: 'Logs',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: '',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/logs/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/logs/img/icn-logs-panel.svg',
+        large: 'public/plugins/logs/img/icn-logs-panel.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 100,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/logs',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/logs',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  news: {
+    id: 'news',
+    name: 'News',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'RSS feed reader',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/news/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/news/img/news.svg',
+        large: 'public/plugins/news/img/news.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 17,
+    skipDataQuery: true,
+    state: PluginState.beta,
+    baseUrl: 'public/plugins/news',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/news',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  nodeGraph: {
+    id: 'nodeGraph',
+    name: 'Node Graph',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: '',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/node-graph/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/nodeGraph/img/icn-node-graph.svg',
+        large: 'public/plugins/nodeGraph/img/icn-node-graph.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 100,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/nodeGraph',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/nodeGraph',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  piechart: {
+    id: 'piechart',
+    name: 'Pie chart',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'The new core pie chart visualization',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/pie-chart/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/piechart/img/icon_piechart.svg',
+        large: 'public/plugins/piechart/img/icon_piechart.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 8,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/piechart',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/piechart',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  stat: {
+    id: 'stat',
+    name: 'Stat',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Big stat values & sparklines',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/stat/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/stat/img/icn-singlestat-panel.svg',
+        large: 'public/plugins/stat/img/icn-singlestat-panel.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 3,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/stat',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/stat',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  'state-timeline': {
+    id: 'state-timeline',
+    name: 'State timeline',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'State changes and durations',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/state-timeline/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/state-timeline/img/timeline.svg',
+        large: 'public/plugins/state-timeline/img/timeline.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 9,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/state-timeline',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/state-timeline',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  'status-history': {
+    id: 'status-history',
+    name: 'Status history',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Periodic status history',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/status-history/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/status-history/img/status.svg',
+        large: 'public/plugins/status-history/img/status.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 11,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/status-history',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/status-history',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  table: {
+    id: 'table',
+    name: 'Table',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Supports many column styles',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/table/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/table/img/icn-table-panel.svg',
+        large: 'public/plugins/table/img/icn-table-panel.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 6,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/table',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/table',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  text: {
+    id: 'text',
+    name: 'Text',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Supports markdown and html content',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/text/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/text/img/icn-text-panel.svg',
+        large: 'public/plugins/text/img/icn-text-panel.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 14,
+    skipDataQuery: true,
+    baseUrl: 'public/plugins/text',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/text',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  timeseries: {
+    id: 'timeseries',
+    name: 'Time series',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Time based line, area and bar charts',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/time-series/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/timeseries/img/icn-timeseries-panel.svg',
+        large: 'public/plugins/timeseries/img/icn-timeseries-panel.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 1,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/timeseries',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/timeseries',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  traces: {
+    id: 'traces',
+    name: 'Traces',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: '',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/traces/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/traces/img/traces-panel.svg',
+        large: 'public/plugins/traces/img/traces-panel.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 100,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/traces',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/traces',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  trend: {
+    id: 'trend',
+    name: 'Trend',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Like timeseries, but when x != time',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/trend/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/trend/img/trend.svg',
+        large: 'public/plugins/trend/img/trend.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: false,
+    sort: 100,
+    skipDataQuery: false,
+    state: PluginState.beta,
+    baseUrl: 'public/plugins/trend',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/trend',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  welcome: {
+    id: 'welcome',
+    name: 'Welcome',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: '',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/welcome/img/icn-dashlist-panel.svg',
+        large: 'public/plugins/welcome/img/icn-dashlist-panel.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: null,
+    },
+    hideFromList: true,
+    sort: 100,
+    skipDataQuery: true,
+    baseUrl: 'public/plugins/welcome',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/welcome',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+  xychart: {
+    id: 'xychart',
+    name: 'XY Chart',
+    info: {
+      author: {
+        name: 'Grafana Labs',
+        url: 'https://grafana.com',
+      },
+      description: 'Supports arbitrary X vs Y in a graph to visualize the relationship between two variables.',
+      links: [
+        {
+          name: 'Raise issue',
+          url: 'https://github.com/grafana/grafana/issues/new',
+        },
+        {
+          name: 'Documentation',
+          url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/xy-chart/',
+        },
+      ],
+      logos: {
+        small: 'public/plugins/xychart/img/icn-xychart.svg',
+        large: 'public/plugins/xychart/img/icn-xychart.svg',
+      },
+      build: {},
+      screenshots: [],
+      version: '',
+      updated: '',
+      keywords: ['scatter', 'plot'],
+    },
+    hideFromList: false,
+    sort: 100,
+    skipDataQuery: false,
+    baseUrl: 'public/plugins/xychart',
+    signature: PluginSignatureStatus.internal,
+    module: 'core:plugin/xychart',
+    angular: { detected: false } as AngularMeta,
+    loadingStrategy: PluginLoadingStrategy.script,
+    type: PluginType.panel,
+  },
+});

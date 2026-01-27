@@ -1,0 +1,60 @@
+import type { PanelPluginMeta } from '@grafana/data';
+
+import { config } from '../../config';
+import { evaluateBooleanFlag } from '../../internal/openFeature';
+
+import { getPanelPluginMapper } from './mappers/mappers';
+import { initPluginMetas } from './plugins';
+import type { PanelPluginMetas } from './types';
+
+let panels: PanelPluginMetas = {};
+
+function initialized(): boolean {
+  return Boolean(Object.keys(panels).length);
+}
+
+async function initPanelPluginMetas(): Promise<void> {
+  if (!evaluateBooleanFlag('useMTPlugins', false)) {
+    // eslint-disable-next-line no-restricted-syntax
+    panels = config.panels;
+    return;
+  }
+
+  const metas = await initPluginMetas();
+  const mapper = getPanelPluginMapper();
+  panels = mapper(metas);
+}
+
+export async function getPanelPluginMetas(): Promise<PanelPluginMeta[]> {
+  if (!initialized()) {
+    await initPanelPluginMetas();
+  }
+
+  return Object.values(structuredClone(panels));
+}
+
+export async function getPanelPluginMeta(pluginId: string): Promise<PanelPluginMeta | null> {
+  if (!initialized()) {
+    await initPanelPluginMetas();
+  }
+
+  const panel = panels[pluginId];
+  return panel ? structuredClone(panel) : null;
+}
+
+/**
+ * Get a list of panel plugin ids that are not hidden from list
+ * @returns an array of panel plugin ids that are not hidden from list
+ */
+export async function getListedPanelPluginIds(): Promise<string[]> {
+  const panels = await getPanelPluginMetas();
+  return panels.filter((p) => p.hideFromList === false).map((p) => p.id);
+}
+
+export function setPanelPluginMetas(override: PanelPluginMetas): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('setPanelPluginMetas() function can only be called from tests.');
+  }
+
+  panels = structuredClone(override);
+}

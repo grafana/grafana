@@ -1,9 +1,8 @@
-import { cloneDeep } from 'lodash';
-
+/* eslint-disable @grafana/no-restricted-img-srcs */
 import type { PluginMetasResponse } from '../types';
 import type { Meta } from '../types/meta_object_gen';
 
-export const v0alpha1Meta: Meta = cloneDeep({
+export const v0alpha1Meta: Meta = structuredClone({
   kind: 'Meta',
   apiVersion: 'plugins.grafana.app/v0alpha1',
   metadata: {
@@ -91,7 +90,7 @@ export const v0alpha1Meta: Meta = cloneDeep({
   status: {},
 });
 
-export const v0alpha1Response: PluginMetasResponse = cloneDeep({
+export const v0alpha1Response: PluginMetasResponse = structuredClone({
   items: [
     {
       kind: 'Meta',
@@ -835,115 +834,6 @@ export const v0alpha1Response: PluginMetasResponse = cloneDeep({
           loadingStrategy: 'script',
         },
         baseURL: 'public/plugins/dashlist',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
-        name: 'datagrid',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'datagrid',
-          type: 'panel',
-          name: 'Datagrid',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'public/plugins/datagrid/img/icn-table-panel.svg',
-              large: 'public/plugins/datagrid/img/icn-table-panel.svg',
-            },
-            updated: '',
-            version: '',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            links: [
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-              {
-                name: 'Documentation',
-                url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/datagrid/',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '',
-            grafanaVersion: '*',
-          },
-          state: 'beta',
-        },
-        class: 'core',
-        module: {
-          path: 'core:plugin/datagrid',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'public/plugins/datagrid',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
-        name: 'debug',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'debug',
-          type: 'panel',
-          name: 'Debug',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'public/plugins/debug/img/icn-debug.svg',
-              large: 'public/plugins/debug/img/icn-debug.svg',
-            },
-            updated: '',
-            version: '',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            description: 'Debug Panel for Grafana',
-            links: [
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '',
-            grafanaVersion: '*',
-          },
-          state: 'alpha',
-        },
-        class: 'core',
-        module: {
-          path: 'core:plugin/debug',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'public/plugins/debug',
         signature: {
           status: 'internal',
         },
@@ -2643,59 +2533,6 @@ export const v0alpha1Response: PluginMetasResponse = cloneDeep({
       kind: 'Meta',
       apiVersion: 'plugins.grafana.app/v0alpha1',
       metadata: {
-        name: 'live',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'live',
-          type: 'panel',
-          name: 'Live',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'public/plugins/live/img/live.svg',
-              large: 'public/plugins/live/img/live.svg',
-            },
-            updated: '',
-            version: '',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            links: [
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '',
-            grafanaVersion: '*',
-          },
-          skipDataQuery: true,
-          state: 'alpha',
-        },
-        class: 'core',
-        module: {
-          path: 'core:plugin/live',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'public/plugins/live',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
         name: 'logs',
         namespace: 'default',
       },
@@ -2969,7 +2806,6 @@ export const v0alpha1Response: PluginMetasResponse = cloneDeep({
       },
       status: {},
     },
-    v0alpha1Meta,
     {
       kind: 'Meta',
       apiVersion: 'plugins.grafana.app/v0alpha1',
@@ -3473,63 +3309,6 @@ export const v0alpha1Response: PluginMetasResponse = cloneDeep({
           loadingStrategy: 'script',
         },
         baseURL: 'public/plugins/prometheus',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
-        name: 'radialbar',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'radialbar',
-          type: 'panel',
-          name: 'New Gauge',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'public/plugins/radialbar/img/icon_gauge.svg',
-              large: 'public/plugins/radialbar/img/icon_gauge.svg',
-            },
-            updated: '',
-            version: '',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            description: 'Standard gauge visualization',
-            links: [
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-              {
-                name: 'Documentation',
-                url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/gauge/',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '',
-            grafanaVersion: '*',
-          },
-          state: 'alpha',
-        },
-        class: 'core',
-        module: {
-          path: 'core:plugin/radialbar',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'public/plugins/radialbar',
         signature: {
           status: 'internal',
         },

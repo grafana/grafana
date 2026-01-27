@@ -10,7 +10,7 @@ import {
 import type { AppPluginMetas, AppPluginMetasMapper, PluginMetasResponse } from '../types';
 import type { Spec as v0alpha1Spec } from '../types/types.spec.gen';
 
-function angularyMapper(spec: v0alpha1Spec): AngularMeta {
+function angularMapper(spec: v0alpha1Spec): AngularMeta {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return {} as AngularMeta;
 }
@@ -73,7 +73,7 @@ function loadingStrategyMapper(spec: v0alpha1Spec): PluginLoadingStrategy {
 
 function specMapper(spec: v0alpha1Spec): AppPluginConfig {
   const { id, info, preload = false } = spec.pluginJson;
-  const angular = angularyMapper(spec);
+  const angular = angularMapper(spec);
   const dependencies = dependenciesMapper(spec);
   const extensions = extensionsMapper(spec);
   const loadingStrategy = loadingStrategyMapper(spec);
