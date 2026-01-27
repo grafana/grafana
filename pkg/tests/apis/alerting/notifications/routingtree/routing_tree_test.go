@@ -19,6 +19,10 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1/fakes"
@@ -731,4 +735,273 @@ receivers:
 	// and try again
 	_, err = client.Update(ctx, updated, resource.UpdateOptions{})
 	require.NoError(t, err)
+}
+
+func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{featuremgmt.FlagAlertingMultiplePolicies},
+	})
+
+	org1 := helper.Org1
+	admin := org1.Admin
+	adminClient := common.NewRoutingTreeClient(t, admin)
+
+	env := helper.GetEnv()
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	require.NoError(t, err)
+
+	k8sRoute := func(t *testing.T, name string, r *definitions.Route) *v0alpha1.RoutingTree {
+		err := r.Validate()
+		require.NoError(t, err)
+		managedRoute := legacy_storage.NewManagedRoute(name, r)
+		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, func(int64) string { return "default" })
+		require.NoError(t, err)
+		v1Route.TypeMeta = v1.TypeMeta{
+			Kind:       v0alpha1.RoutingTreeKind().Kind(),
+			APIVersion: v0alpha1.GroupVersion.Identifier(),
+		}
+		return v1Route
+	}
+
+	// Prep config so that referenced receivers and time intervals exist.
+	cfg := policy_exports.Config()
+	receiverClient := common.NewReceiverClient(t, admin)
+	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
+		_, err := receiverClient.Create(ctx, &v0alpha1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec:       v0alpha1.ReceiverSpec{Title: receiver.Name, Integrations: []v0alpha1.ReceiverIntegration{}},
+		}, v1.CreateOptions{})
+		require.NoError(t, err)
+	}
+
+	timeIntervalClient := common.NewTimeIntervalClient(t, helper.Org1.Admin)
+	for _, ti := range cfg.AlertmanagerConfig.TimeIntervals {
+		interval, err := timeinterval.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval(ti)}, func(_ int64) string { return "default" })
+		require.NoError(t, err)
+		_, err = timeIntervalClient.Create(ctx, interval, v1.CreateOptions{})
+		require.NoError(t, err)
+	}
+
+	defaultPolicy := &definitions.Route{
+		Receiver:   "grafana-default-email",
+		GroupByStr: models.DefaultNotificationSettingsGroupBy,
+	}
+	_, err = adminClient.Update(ctx, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy), v1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// Sanity check there aren't any existing managed routes other than the default.
+	list, err := adminClient.List(ctx, v1.ListOptions{})
+	require.NoError(t, err)
+	require.Len(t, list.Items, 1)
+	require.Equal(t, v0alpha1.UserDefinedRoutingTreeName, list.Items[0].Name)
+
+	validateGetErr := func(t *testing.T, name string, expectedErrReason v1.StatusReason) {
+		t.Helper()
+		_, err := adminClient.Get(ctx, name, v1.GetOptions{})
+		require.Error(t, err)
+		require.Equal(t, expectedErrReason, errors.ReasonForError(err))
+	}
+
+	validateGetEqual := func(t *testing.T, name string, expectedRoute *v0alpha1.RoutingTree) {
+		t.Helper()
+		gotRoute, err := adminClient.Get(ctx, name, v1.GetOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, expectedRoute, gotRoute)
+	}
+
+	t.Run("Create", func(t *testing.T) {
+		// Create -> Get various pre-defined routes.
+		for name, route := range cfg.ManagedRoutes {
+			t.Run(fmt.Sprintf("Create policy %s", name), func(t *testing.T) {
+				createdRoute, err := adminClient.Create(ctx, k8sRoute(t, name, route), v1.CreateOptions{})
+				require.NoError(t, err)
+
+				validateGetEqual(t, name, createdRoute)
+			})
+		}
+
+		t.Run("Create default policy fails", func(t *testing.T) {
+			// Attempting to create a route with name UserDefinedRoutingTreeName fails.
+			_, err = adminClient.Create(ctx, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy), v1.CreateOptions{})
+			require.Error(t, err)
+		})
+
+		t.Run("Get Default Policy", func(t *testing.T) {
+			validateGetEqual(t, v0alpha1.UserDefinedRoutingTreeName, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy))
+		})
+	})
+
+	resetPolicies := func(t *testing.T) map[string]*v0alpha1.RoutingTree {
+		t.Helper()
+		// Delete/reset any remaining routes.
+		for name := range cfg.ManagedRoutes {
+			_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "") // Just in case it was provisioned.
+			_ = adminClient.Delete(ctx, name, v1.DeleteOptions{})
+		}
+		_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(v0alpha1.UserDefinedRoutingTreeName, &definitions.Route{}), org1.OrgID, "")
+		_ = adminClient.Delete(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.DeleteOptions{})
+
+		// Recreate them.
+		created := make(map[string]*v0alpha1.RoutingTree, len(cfg.ManagedRoutes))
+		for name, route := range cfg.ManagedRoutes {
+			c, err := adminClient.Create(ctx, k8sRoute(t, name, route), v1.CreateOptions{})
+			require.NoError(t, err)
+			created[name] = c
+		}
+		return created
+	}
+
+	t.Run("Provisioned Get should include provenance", func(t *testing.T) {
+		allCreatedRoutes := resetPolicies(t)
+		allCreatedRoutes[v0alpha1.UserDefinedRoutingTreeName] = k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy)
+
+		for name, route := range allCreatedRoutes {
+			require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
+
+			t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
+				got, err := adminClient.Get(ctx, name, v1.GetOptions{})
+				require.NoError(t, err)
+				expected := route.Copy().(*v0alpha1.RoutingTree)
+				expected.SetProvenanceStatus("API")
+				assert.Equal(t, expected, got)
+			})
+		}
+	})
+
+	t.Run("List", func(t *testing.T) {
+		allCreatedRoutes := resetPolicies(t)
+		// List all routes and validate again.
+		list, err = adminClient.List(ctx, v1.ListOptions{})
+		require.NoError(t, err)
+		assert.Len(t, list.Items, len(cfg.ManagedRoutes)+1)
+		t.Run("Includes all managed routes ", func(t *testing.T) {
+			expectedRoutes := make([]v0alpha1.RoutingTree, 0, len(cfg.ManagedRoutes)+1)
+			for _, route := range allCreatedRoutes {
+				expectedRoutes = append(expectedRoutes, *route)
+			}
+			expectedRoutes = append(expectedRoutes, *k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy))
+
+			assert.ElementsMatch(t, expectedRoutes, list.Items)
+		})
+		t.Run("Default policy last", func(t *testing.T) {
+			assert.Equal(t, v0alpha1.UserDefinedRoutingTreeName, list.Items[len(cfg.ManagedRoutes)].Name)
+		})
+	})
+
+	t.Run("Update", func(t *testing.T) {
+		policies := resetPolicies(t)
+		policies[v0alpha1.UserDefinedRoutingTreeName] = k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, policy_exports.Legacy())
+
+		// Update all policies to the same definition.
+		currentVersion := ""
+		t.Run("Empty ResourceVersion should succeed", func(t *testing.T) {
+			for name := range policies {
+				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
+					// Empty version should pass
+					u := k8sRoute(t, name, policy_exports.OverrideInherit())
+					u.ResourceVersion = ""
+					updatedRoute, err := adminClient.Update(ctx, u, v1.UpdateOptions{})
+					require.NoError(t, err)
+
+					validateGetEqual(t, name, updatedRoute)
+					currentVersion = updatedRoute.ResourceVersion
+				})
+			}
+		})
+
+		t.Run("Incorrect ResourceVersion should fail with conflict", func(t *testing.T) {
+			for name := range policies {
+				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
+					// Incorrect Version should throw conflict.
+					u := k8sRoute(t, name, policy_exports.DeeplyNested())
+					u.ResourceVersion = "incorrect-version"
+					_, err := adminClient.Update(ctx, u, v1.UpdateOptions{})
+					require.Truef(t, errors.IsConflict(err), "Should get Conflict error but got: %s", err)
+				})
+			}
+		})
+
+		// Update them back to their correct definitions.
+		t.Run("Correct ResourceVersion should succeed", func(t *testing.T) {
+			for name, route := range policies {
+				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
+					// Actual version.
+					u := route.Copy().(*v0alpha1.RoutingTree)
+					u.ResourceVersion = currentVersion
+					updatedRoute, err := adminClient.Update(ctx, u, v1.UpdateOptions{})
+					require.NoError(t, err)
+					policies[name] = updatedRoute
+
+					validateGetEqual(t, name, updatedRoute)
+				})
+			}
+		})
+
+		t.Run("Update on provisioned should fail", func(t *testing.T) {
+			for name := range policies {
+				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
+					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
+
+					u := k8sRoute(t, name, policy_exports.Empty())
+					u.ResourceVersion = "" // Bypass version check.
+					_, err := adminClient.Update(ctx, u, v1.UpdateOptions{})
+					require.Error(t, err)
+					require.ErrorContains(t, err, "provenance")
+				})
+			}
+		})
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		policies := resetPolicies(t)
+		policies[v0alpha1.UserDefinedRoutingTreeName] = k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy)
+
+		for name, route := range policies {
+			t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
+				t.Run("Incorrect ResourceVersion should fail with conflict", func(t *testing.T) {
+					// Incorrect Version should throw conflict.
+					err := adminClient.Delete(ctx, name, v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: util.Pointer("incorrect-version")}})
+					require.Truef(t, errors.IsConflict(err), "Should get Conflict error but got: %s", err)
+				})
+
+				t.Run("Delete provisioned should fail", func(t *testing.T) {
+					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
+
+					err := adminClient.Delete(ctx, name, v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: util.Pointer("")}})
+					assert.Error(t, err)
+					assert.ErrorContains(t, err, "provenance")
+
+					// Reset provenance.
+					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, ""))
+				})
+
+				t.Run("Correct ResourceVersion should succeed", func(t *testing.T) {
+					err := adminClient.Delete(ctx, name, v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: util.Pointer(route.ResourceVersion)}})
+					require.NoError(t, err)
+					if name == v0alpha1.UserDefinedRoutingTreeName {
+						validateGetEqual(t, name, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy)) // Default policy only resets, it doesn't delete.
+					} else {
+						validateGetErr(t, name, v1.StatusReasonNotFound)
+					}
+				})
+
+				// Recreate so we can delete again using the empty ResourceVersion.
+				_, _ = adminClient.Create(ctx, route, v1.CreateOptions{}) // Not necessary to check error here, downstream will catch.
+
+				t.Run("Empty ResourceVersion should succeed", func(t *testing.T) {
+					err := adminClient.Delete(ctx, name, v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: util.Pointer("")}})
+					require.NoError(t, err)
+					if name == v0alpha1.UserDefinedRoutingTreeName {
+						validateGetEqual(t, name, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy)) // Default policy only resets, it doesn't delete.
+					} else {
+						validateGetErr(t, name, v1.StatusReasonNotFound)
+					}
+				})
+			})
+		}
+	})
 }
