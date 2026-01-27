@@ -85,7 +85,7 @@ func setupBackendTest(t *testing.T) (testBackend, context.Context) {
 
 	ctx := testutil.NewDefaultTestContext(t)
 	dbp := test.NewDBProviderMatchWords(t)
-	b, err := NewBackend(BackendOptions{DBProvider: dbp})
+	b, err := NewBackend(BackendOptions{DBProvider: dbp, EnableStorage: true})
 	require.NoError(t, err)
 	require.NotNil(t, b)
 
@@ -144,6 +144,23 @@ func TestBackend_Init(t *testing.T) {
 		// expectation will fail
 		err = b.Init(ctx)
 		require.NoError(t, err, "should be idempotent")
+
+		err = b.Stop(ctx)
+		require.NoError(t, err)
+	})
+
+	t.Run("happy path storage enabled", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := testutil.NewDefaultTestContext(t)
+		dbp := test.NewDBProviderWithPing(t)
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, EnableStorage: true})
+		require.NoError(t, err)
+		require.NotNil(t, b)
+
+		dbp.SQLMock.ExpectPing().WillReturnError(nil)
+		err = b.Init(ctx)
+		require.NoError(t, err)
 
 		err = b.Stop(ctx)
 		require.NoError(t, err)

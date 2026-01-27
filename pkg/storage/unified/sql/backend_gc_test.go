@@ -392,6 +392,7 @@ func newTestBackend(t *testing.T, gcConfig GarbageCollectionConfig) (resource.St
 		IsHA:                 false,
 		LastImportTimeMaxAge: 24 * time.Hour,
 		GarbageCollection:    gcConfig,
+		EnableStorage:        true,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, backend)
