@@ -138,5 +138,3 @@ Dashboards
 - Grafana ignores files in other paths or at the repository root.
 - The folder name in Grafana comes from the repository name.
 - Dashboard titles come from the JSON file content, not the filename.
-
-
