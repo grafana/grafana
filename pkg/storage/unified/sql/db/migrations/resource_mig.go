@@ -1,10 +1,13 @@
 package migrations
 
 import (
+	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/bwmarrin/snowflake"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -231,6 +234,8 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Name: "IDX_resource_history_resource_action_version_name",
 	}))
 
+	mg.AddMigration("Fix resource dashboard variable quotes in PostgreSQL panels", &FixResourceDashboardVariableQuotesMigration{})
+
 	return marker
 }
 
@@ -367,4 +372,434 @@ func getResourceHistoryRows(sess *xorm.Session, mg *migrator.Migrator, continueR
 	}
 
 	return rows, nil
+}
+
+type FixResourceDashboardVariableQuotesMigration struct {
+	migrator.MigrationBase
+}
+
+func (m *FixResourceDashboardVariableQuotesMigration) SQL(dialect migrator.Dialect) string {
+	return "code migration"
+}
+
+func (m *FixResourceDashboardVariableQuotesMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	return RunFixResourceDashboardVariableQuotesMigration(sess, mg)
+	// return nil
+}
+
+// Resource wrapper structures for JSON unmarshaling (Kubernetes-style)
+type resourceWrapper struct {
+	Kind       string                 `json:"kind,omitempty"`
+	APIVersion string                 `json:"apiVersion,omitempty"`
+	Metadata   map[string]interface{} `json:"metadata,omitempty"`
+	Spec       resourceDashboardData  `json:"spec,omitempty"`
+	Status     map[string]interface{} `json:"status,omitempty"`
+}
+
+// Dashboard structures for JSON unmarshaling
+type resourceDashboardData struct {
+	Panels     []resourceDashboardPanel `json:"panels,omitempty"`
+	Templating *resourceTemplating      `json:"templating,omitempty"`
+}
+
+type resourceTemplating struct {
+	List []resourceTemplateVariable `json:"list,omitempty"`
+}
+
+type resourceTemplateVariable struct {
+	Name       string `json:"name,omitempty"`
+	IncludeAll bool   `json:"includeAll,omitempty"`
+	Multi      bool   `json:"multi,omitempty"`
+}
+
+type resourceDashboardPanel struct {
+	Datasource *resourceDatasource      `json:"datasource,omitempty"`
+	Repeat     string                   `json:"repeat,omitempty"`
+	Targets    []resourceTarget         `json:"targets,omitempty"`
+	Panels     []resourceDashboardPanel `json:"panels,omitempty"` // For row panels
+}
+
+type resourceDatasource struct {
+	Type string `json:"type,omitempty"`
+}
+
+type resourceTarget struct {
+	RawSql string `json:"rawSql,omitempty"`
+}
+
+// removeQuotesAroundResourceVariable removes one set of quotes around template variable references.
+// Handles both $var and ${var} formats.
+// Only removes one layer of quotes (either single or double).
+func removeQuotesAroundResourceVariable(sql, variableName string) string {
+	// Skip if the SQL uses any format option like ${var:csv}
+	formattedVarPattern := regexp.MustCompile(`\$\{` + regexp.QuoteMeta(variableName) + `:[^}]*\}`)
+	if formattedVarPattern.MatchString(sql) {
+		return sql
+	}
+
+	result := sql
+
+	// Pattern for single quotes around $var or ${var}
+	singleQuotePattern := regexp.MustCompile(`'(\$\{?` + regexp.QuoteMeta(variableName) + `\}?)'`)
+	result = singleQuotePattern.ReplaceAllString(result, "$1")
+
+	// Pattern for double quotes around $var or ${var}
+	doubleQuotePattern := regexp.MustCompile(`"(\$\{?` + regexp.QuoteMeta(variableName) + `\}?)"`)
+	result = doubleQuotePattern.ReplaceAllString(result, "$1")
+
+	return result
+}
+
+// processResourcePanel processes a single panel and modifies its targets if conditions are met
+func processResourcePanel(panel *resourceDashboardPanel, templatingList []resourceTemplateVariable) bool {
+	modified := false
+
+	// Check if panel meets the criteria
+	if panel.Datasource == nil || panel.Datasource.Type != "grafana-postgresql-datasource" || panel.Repeat == "" {
+		return modified
+	}
+
+	repeatVar := panel.Repeat
+
+	// Find the template variable in templating.list
+	var templateVar *resourceTemplateVariable
+	for i := range templatingList {
+		if templatingList[i].Name == repeatVar {
+			templateVar = &templatingList[i]
+			break
+		}
+	}
+
+	if templateVar == nil || (!templateVar.IncludeAll && !templateVar.Multi) {
+		return modified
+	}
+
+	// Modify the rawSql in all targets
+	for i := range panel.Targets {
+		if panel.Targets[i].RawSql != "" {
+			originalSql := panel.Targets[i].RawSql
+			panel.Targets[i].RawSql = removeQuotesAroundResourceVariable(originalSql, repeatVar)
+
+			if panel.Targets[i].RawSql != originalSql {
+				modified = true
+			}
+		}
+	}
+
+	return modified
+}
+
+// processResourcePanels recursively processes all panels including nested ones
+func processResourcePanels(panels []resourceDashboardPanel, templatingList []resourceTemplateVariable) bool {
+	modified := false
+
+	for i := range panels {
+		// Process the panel itself
+		if processResourcePanel(&panels[i], templatingList) {
+			modified = true
+		}
+
+		// Process nested panels (for row panels)
+		if len(panels[i].Panels) > 0 {
+			if processResourcePanels(panels[i].Panels, templatingList) {
+				modified = true
+			}
+		}
+	}
+
+	return modified
+}
+
+// updateRawSqlInPanels recursively updates rawSql fields in the original panel maps
+// This preserves all other fields that aren't in our struct
+func updateRawSqlInPanels(originalPanels interface{}, modifiedPanels []resourceDashboardPanel) {
+	panelsList, ok := originalPanels.([]interface{})
+	if !ok {
+		return
+	}
+
+	for i, panelInterface := range panelsList {
+		if i >= len(modifiedPanels) {
+			break
+		}
+
+		panelMap, ok := panelInterface.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		modifiedPanel := modifiedPanels[i]
+
+		// Update targets if they exist
+		if len(modifiedPanel.Targets) > 0 {
+			targetsInterface, ok := panelMap["targets"]
+			if ok {
+				targetsList, ok := targetsInterface.([]interface{})
+				if ok {
+					for j, targetInterface := range targetsList {
+						if j >= len(modifiedPanel.Targets) {
+							break
+						}
+						targetMap, ok := targetInterface.(map[string]interface{})
+						if ok && modifiedPanel.Targets[j].RawSql != "" {
+							targetMap["rawSql"] = modifiedPanel.Targets[j].RawSql
+						}
+					}
+				}
+			}
+		}
+
+		// Recursively update nested panels (for row panels)
+		if len(modifiedPanel.Panels) > 0 {
+			if nestedPanels, ok := panelMap["panels"]; ok {
+				updateRawSqlInPanels(nestedPanels, modifiedPanel.Panels)
+			}
+		}
+	}
+}
+
+// RunFixResourceDashboardVariableQuotesMigration performs the migration on resource and resource_history tables
+func RunFixResourceDashboardVariableQuotesMigration(sess *xorm.Session, mg *migrator.Migrator) error {
+	// Process resource table
+	if err := processResourceTable(sess, mg); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func processResourceTable(sess *xorm.Session, mg *migrator.Migrator) error {
+	type resource struct {
+		GUID  string `xorm:"guid"`
+		Value string `xorm:"value"`
+	}
+
+	var resources []resource
+	err := sess.Table("resource").
+		Where("\"group\" = ?", "dashboard.grafana.app").
+		Where("resource = ?", "dashboards").
+		Cols("guid", "value").
+		Find(&resources)
+
+	if err != nil {
+		return fmt.Errorf("failed to fetch resources: %w", err)
+	}
+
+	mg.Logger.Info("Starting resource dashboard variable quotes fix migration", "total_resources", len(resources))
+
+	modifiedCount := 0
+	errorCount := 0
+
+	for _, res := range resources {
+		// Skip empty value
+		if strings.TrimSpace(res.Value) == "" {
+			continue
+		}
+
+		// Parse resource wrapper as generic map to preserve all fields
+		var wrapperMap map[string]interface{}
+		if err := json.Unmarshal([]byte(res.Value), &wrapperMap); err != nil {
+			mg.Logger.Warn("Failed to parse resource wrapper JSON", "resource_guid", res.GUID, "error", err)
+			errorCount++
+			continue
+		}
+
+		// Get the spec field as a map
+		specInterface, ok := wrapperMap["spec"]
+		if !ok {
+			mg.Logger.Debug("Resource has no spec field, skipping", "resource_guid", res.GUID)
+			continue
+		}
+
+		specMap, ok := specInterface.(map[string]interface{})
+		if !ok {
+			mg.Logger.Warn("Spec field is not an object", "resource_guid", res.GUID)
+			errorCount++
+			continue
+		}
+
+		// Marshal spec to JSON then unmarshal to our struct to process it
+		specBytes, err := json.Marshal(specMap)
+		if err != nil {
+			mg.Logger.Warn("Failed to marshal spec", "resource_guid", res.GUID, "error", err)
+			errorCount++
+			continue
+		}
+
+		var dashData resourceDashboardData
+		if err := json.Unmarshal(specBytes, &dashData); err != nil {
+			mg.Logger.Debug("Failed to parse spec as dashboard (may not be a dashboard)", "resource_guid", res.GUID)
+			continue
+		}
+
+		// Get templating list
+		var templatingList []resourceTemplateVariable
+		if dashData.Templating != nil {
+			templatingList = dashData.Templating.List
+		}
+
+		// Process all panels
+		modified := false
+		if len(dashData.Panels) > 0 {
+			modified = processResourcePanels(dashData.Panels, templatingList)
+		}
+
+		// If modified, update the resource
+		if modified {
+			// Update only the rawSql fields in the original panels map
+			// This preserves all other fields that aren't in our struct
+			if originalPanels, ok := specMap["panels"]; ok {
+				updateRawSqlInPanels(originalPanels, dashData.Panels)
+			}
+
+			// Marshal the entire wrapper back to JSON
+			updatedValue, err := json.Marshal(wrapperMap)
+			if err != nil {
+				mg.Logger.Warn("Failed to marshal updated resource wrapper JSON", "resource_guid", res.GUID, "error", err)
+				errorCount++
+				continue
+			}
+
+			// Update the resource in the database
+			sqlUpdate := "UPDATE resource SET value = ? WHERE guid = ?"
+			if mg.Dialect.DriverName() == migrator.Postgres {
+				sqlUpdate = "UPDATE resource SET value = $1 WHERE guid = $2"
+			}
+
+			_, err = sess.Exec(sqlUpdate, string(updatedValue), res.GUID)
+			if err != nil {
+				mg.Logger.Warn("Failed to update resource", "resource_guid", res.GUID, "error", err)
+				errorCount++
+				continue
+			}
+
+			modifiedCount++
+			mg.Logger.Debug("Fixed resource dashboard variable quotes", "resource_guid", res.GUID)
+		}
+	}
+
+	mg.Logger.Info("Completed resource dashboard variable quotes fix migration",
+		"total_resources", len(resources),
+		"modified", modifiedCount,
+		"errors", errorCount)
+
+	return nil
+}
+
+func processResourceHistoryTable(sess *xorm.Session, mg *migrator.Migrator) error {
+	type resourceHistory struct {
+		GUID  string `xorm:"guid"`
+		Value string `xorm:"value"`
+	}
+
+	var resources []resourceHistory
+	err := sess.Table("resource_history").
+		Where("\"group\" = ?", "dashboard.grafana.app").
+		Where("resource = ?", "dashboards").
+		Cols("guid", "value").
+		Find(&resources)
+
+	if err != nil {
+		return fmt.Errorf("failed to fetch resource_history: %w", err)
+	}
+
+	mg.Logger.Info("Starting resource_history dashboard variable quotes fix migration", "total_resources", len(resources))
+
+	modifiedCount := 0
+	errorCount := 0
+
+	for _, res := range resources {
+		// Skip empty value
+		if strings.TrimSpace(res.Value) == "" {
+			continue
+		}
+
+		// Parse resource wrapper as generic map to preserve all fields
+		var wrapperMap map[string]interface{}
+		if err := json.Unmarshal([]byte(res.Value), &wrapperMap); err != nil {
+			mg.Logger.Warn("Failed to parse resource_history wrapper JSON", "resource_guid", res.GUID, "error", err)
+			errorCount++
+			continue
+		}
+
+		// Get the spec field as a map
+		specInterface, ok := wrapperMap["spec"]
+		if !ok {
+			mg.Logger.Debug("Resource history has no spec field, skipping", "resource_guid", res.GUID)
+			continue
+		}
+
+		specMap, ok := specInterface.(map[string]interface{})
+		if !ok {
+			mg.Logger.Warn("Spec field is not an object in resource_history", "resource_guid", res.GUID)
+			errorCount++
+			continue
+		}
+
+		// Marshal spec to JSON then unmarshal to our struct to process it
+		specBytes, err := json.Marshal(specMap)
+		if err != nil {
+			mg.Logger.Warn("Failed to marshal spec from resource_history", "resource_guid", res.GUID, "error", err)
+			errorCount++
+			continue
+		}
+
+		var dashData resourceDashboardData
+		if err := json.Unmarshal(specBytes, &dashData); err != nil {
+			mg.Logger.Debug("Failed to parse spec as dashboard from resource_history (may not be a dashboard)", "resource_guid", res.GUID)
+			continue
+		}
+
+		// Get templating list
+		var templatingList []resourceTemplateVariable
+		if dashData.Templating != nil {
+			templatingList = dashData.Templating.List
+		}
+
+		// Process all panels
+		modified := false
+		if len(dashData.Panels) > 0 {
+			modified = processResourcePanels(dashData.Panels, templatingList)
+		}
+
+		// If modified, update the resource_history
+		if modified {
+			// Update only the rawSql fields in the original panels map
+			// This preserves all other fields that aren't in our struct
+			if originalPanels, ok := specMap["panels"]; ok {
+				updateRawSqlInPanels(originalPanels, dashData.Panels)
+			}
+
+			// Marshal the entire wrapper back to JSON
+			updatedValue, err := json.Marshal(wrapperMap)
+			if err != nil {
+				mg.Logger.Warn("Failed to marshal updated resource_history wrapper JSON", "resource_guid", res.GUID, "error", err)
+				errorCount++
+				continue
+			}
+
+			// Update the resource_history in the database
+			sqlUpdate := "UPDATE resource_history SET value = ? WHERE guid = ?"
+			if mg.Dialect.DriverName() == migrator.Postgres {
+				sqlUpdate = "UPDATE resource_history SET value = $1 WHERE guid = $2"
+			}
+
+			_, err = sess.Exec(sqlUpdate, string(updatedValue), res.GUID)
+			if err != nil {
+				mg.Logger.Warn("Failed to update resource_history", "resource_guid", res.GUID, "error", err)
+				errorCount++
+				continue
+			}
+
+			modifiedCount++
+			mg.Logger.Debug("Fixed resource_history dashboard variable quotes", "resource_guid", res.GUID)
+		}
+	}
+
+	mg.Logger.Info("Completed resource_history dashboard variable quotes fix migration",
+		"total_resources", len(resources),
+		"modified", modifiedCount,
+		"errors", errorCount)
+
+	return nil
 }
