@@ -93,6 +93,7 @@ func TestNotificationPolicyExportSnapshots(t *testing.T) {
 
 					assert.Equal(t, policyName, policy.Name)
 					assert.Equal(t, policy.OrgID, int64(1))
+					assert.NoError(t, policy.Policy.Validate())
 
 					expected := config.ManagedRoutes[policyName]
 					if policyName == legacy_storage.UserDefinedRoutingTreeName {
