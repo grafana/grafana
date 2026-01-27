@@ -49,123 +49,160 @@ When you assign a user a basic organization role (Viewer, Editor, or Admin), the
 
 | Plugin                        | Viewer                                  | Editor                                                      | Admin                                         |
 | ----------------------------- | --------------------------------------- | ----------------------------------------------------------- | --------------------------------------------- |
-| **SLO**                       | Read SLOs                               | Create, edit, delete SLOs                                   | + Modify org preferences                      |
-| **OnCall**                    | Read all                                | + Write alert groups, schedules, maintenance, user settings | + Write integrations, escalation chains, etc. |
-| **IRM**                       | Read all                                | + Write alert groups, schedules, maintenance, user settings | + Write integrations, escalation chains, etc. |
-| **Synthetic Monitoring**      | Read checks, probes, alerts, thresholds | + Create, edit, delete checks, probes, alerts, thresholds   | + Manage access tokens                        |
-| **Frontend Observability**    | Read apps, sourcemaps                   | + Write apps, sourcemaps                                    | + Delete apps                                 |
-| **Kubernetes Monitoring**     | Read all                                | Read all                                                    | Admin access                                  |
-| **Application Observability** | View access                             | View access                                                 | Admin access                                  |
-| **Knowledge Graph**           | Read assertions                         | + Write config and rules                                    | + Full write access                           |
-| **Machine Learning**          | Read forecasting, outliers, sift        | + Write forecasting, outliers, sift                         | + Full write access                           |
-| **k6**                        | Read settings                           | + Write settings                                            | Admin access                                  |
-| **Labels**                    | Read labels                             | + Create, edit, delete labels                               | + Full write access                           |
 | **Adaptive Logs**             | Read exemptions                         | Read exemptions                                             | Admin access                                  |
+| **Application Observability** | View access                             | View access                                                 | Admin access                                  |
+| **Assistant**                 | Chat access, user rules/quickstarts     | + MCP servers, investigations                               | + Tenant-wide settings                        |
 | **Cloud Provider**            | Read access                             | Read access                                                 | Provider-specific write access                |
 | **Collector**                 | Read access                             | Read access                                                 | Full access                                   |
-| **Assistant**                 | Chat access, user rules/quickstarts     | + MCP servers, investigations                               | + Tenant-wide settings                        |
+| **Frontend Observability**    | Read apps, sourcemaps                   | + Write apps, sourcemaps                                    | + Delete apps                                 |
+| **IRM**                       | Read all                                | + Write alert groups, schedules, maintenance, user settings | + Write integrations, escalation chains, etc. |
+| **k6**                        | Read settings                           | + Write settings                                            | Admin access                                  |
+| **Knowledge Graph**           | Read assertions                         | + Write config and rules                                    | + Full write access                           |
+| **Kubernetes Monitoring**     | Read all                                | Read all                                                    | Admin access                                  |
+| **Labels**                    | Read labels                             | + Create, edit, delete labels                               | + Full write access                           |
+| **Machine Learning**          | Read forecasting, outliers, sift        | + Write forecasting, outliers, sift                         | + Full write access                           |
+| **OnCall**                    | Read all                                | + Write alert groups, schedules, maintenance, user settings | + Write integrations, escalation chains, etc. |
+| **SLO**                       | Read SLOs                               | Create, edit, delete SLOs                                   | + Modify org preferences                      |
+| **Synthetic Monitoring**      | Read checks, probes, alerts, thresholds | + Create, edit, delete checks, probes, alerts, thresholds   | + Manage access tokens                        |
 
 {{< admonition type="note" >}}
 The permissions above are automatically granted based on the user's organization role. You can assign additional plugin-specific roles (listed below) to grant more granular access.
 {{< /admonition >}}
 
-## SLO plugin
+## Adaptive Logs plugin
 
-Plugin ID: `grafana-slo-app`
+Plugin ID: `grafana-adaptivelogs-app`
 
-| Plugin role                          | Description                                                  |
-| ------------------------------------ | ------------------------------------------------------------ |
-| `plugins:grafana-slo-app:slo-reader` | View SLOs in folders where you have folder read permission   |
-| `plugins:grafana-slo-app:slo-writer` | Manage SLOs in folders where you have folder edit permission |
-| `plugins:grafana-slo-app:slo-admin`  | SLO Writer, plus the ability to modify org preferences       |
+| Plugin role                                                 | Description                                       |
+| ----------------------------------------------------------- | ------------------------------------------------- |
+| `plugins:grafana-adaptivelogs-app:admin`                    | Read/write access to everything in Adaptive Logs  |
+| `plugins:grafana-adaptivelogs-app:patterns-editor`          | Read/write access to recommendations and patterns |
+| `plugins:grafana-adaptivelogs-app:patterns-reader`          | Read access to recommendations and patterns       |
+| `plugins:grafana-adaptivelogs-app:segments-admin`           | Create and manipulate segments                    |
+| `plugins:grafana-adaptivelogs-app:expiring-exemptions-user` | Use the expiring exemptions button                |
+| `plugins:grafana-adaptivelogs-app:plugin-access`            | Access to the Adaptive Logs plugin                |
 
-## OnCall plugin
+## Adaptive Metrics plugin
 
-Plugin ID: `grafana-oncall-app`
+Plugin ID: `grafana-adaptive-metrics-app`
 
-### Core roles
+| Plugin role                                              | Description                                         |
+| -------------------------------------------------------- | --------------------------------------------------- |
+| `plugins:grafana-adaptive-metrics-app:admin`             | Read/write access to everything in Adaptive Metrics |
+| `plugins:grafana-adaptive-metrics-app:rules-editor`      | Read/write access to recommendations and rules      |
+| `plugins:grafana-adaptive-metrics-app:rules-reader`      | Read access to recommendations and rules            |
+| `plugins:grafana-adaptive-metrics-app:exemptions-editor` | Edit access to recommendation exemptions            |
+| `plugins:grafana-adaptive-metrics-app:exemptions-reader` | Read access to recommendation exemptions            |
+| `plugins:grafana-adaptive-metrics-app:segments-editor`   | Edit access to segments                             |
+| `plugins:grafana-adaptive-metrics-app:segments-reader`   | Read access to segments                             |
+| `plugins:grafana-adaptive-metrics-app:config-editor`     | Edit access to plugin config                        |
+| `plugins:grafana-adaptive-metrics-app:config-reader`     | Read access to plugin config                        |
+| `plugins:grafana-adaptive-metrics-app:plugin-access`     | Access to the Adaptive Metrics plugin               |
 
-| Plugin role                                         | Description                                                                                                                                                                                              |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `plugins:grafana-oncall-app:admin`                  | Read/write access to everything in OnCall                                                                                                                                                                |
-| `plugins:grafana-oncall-app:editor`                 | Similar to Admin, minus abilities to: create Integrations, create Escalation Chains, create Outgoing Webhooks, update ChatOps settings, update other user's settings, and update general OnCall settings |
-| `plugins:grafana-oncall-app:reader`                 | Read-only access to everything in OnCall                                                                                                                                                                 |
-| `plugins:grafana-oncall-app:oncaller`               | Read access to everything in OnCall, plus edit access to Alert Groups, Schedules, and own settings                                                                                                       |
-| `plugins:grafana-oncall-app:notifications-receiver` | Receive OnCall alert notifications, plus edit own OnCall settings                                                                                                                                        |
+## Adaptive Traces plugin
 
-### Alert groups
+Plugin ID: `grafana-adaptivetraces-app`
 
-| Plugin role                                             | Description                                                                             |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `plugins:grafana-oncall-app:alert-groups-reader`        | Read-only access to OnCall Alert Groups                                                 |
-| `plugins:grafana-oncall-app:alert-groups-editor`        | Read access to OnCall Alert Groups + ability to act on Alert Groups (ack, resolve, etc) |
-| `plugins:grafana-oncall-app:alert-groups-direct-paging` | Manually create new Alert Groups (Direct Paging)                                        |
+| Plugin role                                | Description                                        |
+| ------------------------------------------ | -------------------------------------------------- |
+| `plugins:grafana-adaptivetraces-app:admin` | Read/write access to everything in Adaptive Traces |
 
-### Integrations
+## Application Observability plugin
 
-| Plugin role                                      | Description                              |
-| ------------------------------------------------ | ---------------------------------------- |
-| `plugins:grafana-oncall-app:integrations-reader` | Read-only access to OnCall Integrations  |
-| `plugins:grafana-oncall-app:integrations-editor` | Read/write access to OnCall Integrations |
+Plugin ID: `grafana-app-observability-app`
 
-### Escalation chains
+| Plugin role                                    | Description                                                         |
+| ---------------------------------------------- | ------------------------------------------------------------------- |
+| `plugins:grafana-app-observability-app:admin`  | Read/write access to everything in Application Observability plugin |
+| `plugins:grafana-app-observability-app:viewer` | View access in Application Observability plugin                     |
 
-| Plugin role                                           | Description                                   |
-| ----------------------------------------------------- | --------------------------------------------- |
-| `plugins:grafana-oncall-app:escalation-chains-reader` | Read-only access to OnCall Escalation Chains  |
-| `plugins:grafana-oncall-app:escalation-chains-editor` | Read/write access to OnCall Escalation Chains |
+## Cloud Provider plugin
 
-### Schedules
+Plugin ID: `grafana-csp-app`
 
-| Plugin role                                   | Description                           |
-| --------------------------------------------- | ------------------------------------- |
-| `plugins:grafana-oncall-app:schedules-reader` | Read-only access to OnCall Schedules  |
-| `plugins:grafana-oncall-app:schedules-editor` | Read/write access to OnCall Schedules |
+| Plugin role                            | Description                                         |
+| -------------------------------------- | --------------------------------------------------- |
+| `plugins:grafana-csp-app:aws-writer`   | Read/Write access to AWS in Cloud provider plugin   |
+| `plugins:grafana-csp-app:azure-writer` | Read/Write access to Azure in Cloud provider plugin |
+| `plugins:grafana-csp-app:gcp-writer`   | Read/Write access to GCP in Cloud provider plugin   |
+| `plugins:grafana-csp-app:reader`       | Read access in Cloud provider plugin                |
 
-### ChatOps
+## Collector App
 
-| Plugin role                                 | Description                         |
-| ------------------------------------------- | ----------------------------------- |
-| `plugins:grafana-oncall-app:chatops-reader` | Read-only access to OnCall ChatOps  |
-| `plugins:grafana-oncall-app:chatops-editor` | Read/write access to OnCall ChatOps |
+Plugin ID: `grafana-collector-app`
 
-### Outgoing webhooks
+| Plugin role                                          | Description                               |
+| ---------------------------------------------------- | ----------------------------------------- |
+| `plugins:grafana-collector-app:collector-app-admin`  | Full access to the Collector App          |
+| `plugins:grafana-collector-app:collector-app-reader` | Read-only access to Grafana Collector App |
 
-| Plugin role                                           | Description                                   |
-| ----------------------------------------------------- | --------------------------------------------- |
-| `plugins:grafana-oncall-app:outgoing-webhooks-reader` | Read-only access to OnCall Outgoing Webhooks  |
-| `plugins:grafana-oncall-app:outgoing-webhooks-editor` | Read/write access to OnCall Outgoing Webhooks |
+## Cost Attributions plugin
 
-### Maintenance
+Plugin ID: `grafana-attributions-app`
 
-| Plugin role                                     | Description                             |
-| ----------------------------------------------- | --------------------------------------- |
-| `plugins:grafana-oncall-app:maintenance-reader` | Read-only access to OnCall Maintenance  |
-| `plugins:grafana-oncall-app:maintenance-editor` | Read/write access to OnCall Maintenance |
+| Plugin role                                                 | Description                                         |
+| ----------------------------------------------------------- | --------------------------------------------------- |
+| `plugins:grafana-attributions-app:cost-attributions-viewer` | View the Cost Attributions application and its data |
 
-### API keys
+## Cost Management and Billing plugin
 
-| Plugin role                                  | Description                                                       |
-| -------------------------------------------- | ----------------------------------------------------------------- |
-| `plugins:grafana-oncall-app:api-keys-reader` | Read-only access to OnCall API Keys                               |
-| `plugins:grafana-oncall-app:api-keys-editor` | Read/write access to OnCall API Keys + ability to consume the API |
+Plugin ID: `grafana-cmab-app`
 
-### User settings
+| Plugin role                                         | Description                                      |
+| --------------------------------------------------- | ------------------------------------------------ |
+| `plugins:grafana-cmab-app:full-admin`               | Full access to all features                      |
+| `plugins:grafana-cmab-app:billing-and-usage-reader` | Read-only access to billing and usage data       |
+| `plugins:grafana-cmab-app:invoice-reader`           | Read-only access to invoices, FOCUS & usage data |
+| `plugins:grafana-cmab-app:cost-attribution-admin`   | Full access to cost attributions                 |
+| `plugins:grafana-cmab-app:cost-attribution-reader`  | Read-only access to cost attributions            |
+| `plugins:grafana-cmab-app:usage-alerts-admin`       | Full access to usage alerts                      |
+| `plugins:grafana-cmab-app:usage-alerts-reader`      | Read-only access to usage alerts                 |
 
-| Plugin role                                       | Description                                                                              |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `plugins:grafana-oncall-app:user-settings-reader` | Read-only access to own OnCall User Settings                                             |
-| `plugins:grafana-oncall-app:user-settings-editor` | Read/write access to own OnCall User Settings + view basic info about other OnCall users |
-| `plugins:grafana-oncall-app:user-settings-admin`  | Read/write access to your own + other's OnCall User Settings                             |
+## Easystart / Integrations plugin
 
-### Notification and general settings
+Plugin ID: `grafana-easystart-app`
 
-| Plugin role                                               | Description                                       |
-| --------------------------------------------------------- | ------------------------------------------------- |
-| `plugins:grafana-oncall-app:notification-settings-reader` | Read-only access to OnCall Notification Settings  |
-| `plugins:grafana-oncall-app:notification-settings-editor` | Read/write access to OnCall Notification Settings |
-| `plugins:grafana-oncall-app:settings-reader`              | Read-only access to OnCall Settings               |
-| `plugins:grafana-oncall-app:settings-editor`              | Read/write access to OnCall Settings              |
+| Plugin role                                         | Description             |
+| --------------------------------------------------- | ----------------------- |
+| `plugins:grafana-easystart-app:integrations-writer` | Administer integrations |
+
+## Frontend Observability plugin
+
+Plugin ID: `grafana-kowalski-app`
+
+| Plugin role                                                              | Description                                                         |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `plugins:grafana-kowalski-app:frontend-observability-admin`              | Read/write access to everything in Frontend Observability plugin    |
+| `plugins:grafana-kowalski-app:frontend-observability-editor`             | Read/write access to everything but app deletion                    |
+| `plugins:grafana-kowalski-app:frontend-observability-viewer`             | View access only                                                    |
+| `plugins:grafana-kowalski-app:frontend-observability-sourcemap-uploader` | View access with the ability to read settings and upload sourcemaps |
+
+## Grafana Assistant plugin
+
+Plugin ID: `grafana-assistant-app`
+
+| Plugin role                                                  | Description                                                       |
+| ------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `plugins:grafana-assistant-app:assistant-admin`              | Manage both user and tenant-wide Assistant resources and settings |
+| `plugins:grafana-assistant-app:assistant-mcp-user`           | Use Grafana Assistant and add personal MCP servers                |
+| `plugins:grafana-assistant-app:assistant-user`               | Basic access to Grafana Assistant with read-only capabilities     |
+| `plugins:grafana-assistant-app:assistant-investigation-user` | Use Assistant Backend Investigations                              |
+
+## Grafana Auth plugin
+
+Plugin ID: `grafana-auth-app`
+
+| Plugin role                       | Description                                        |
+| --------------------------------- | -------------------------------------------------- |
+| `plugins:grafana-auth-app:writer` | Write and manage access policies for Grafana Cloud |
+
+## Incident plugin
+
+Plugin ID: `grafana-incident-app`
+
+| Plugin role                                    | Description                |
+| ---------------------------------------------- | -------------------------- |
+| `plugins:grafana-incident-app:incident-access` | Access to Grafana Incident |
 
 ## IRM plugin
 
@@ -256,14 +293,6 @@ Plugin ID: `grafana-irm-app`
 | `plugins:grafana-irm-app:settings-reader`              | Read-only access to IRM Settings               |
 | `plugins:grafana-irm-app:settings-editor`              | Read/write access to IRM Settings              |
 
-## Incident plugin
-
-Plugin ID: `grafana-incident-app`
-
-| Plugin role                                    | Description                |
-| ---------------------------------------------- | -------------------------- |
-| `plugins:grafana-incident-app:incident-access` | Access to Grafana Incident |
-
 ## k6 Cloud plugin
 
 Plugin ID: `k6-app`
@@ -273,6 +302,152 @@ Plugin ID: `k6-app`
 | `plugins:k6-app:admin`  | Admin access to everything in k6            |
 | `plugins:k6-app:editor` | Read/write access to k6 with limited scopes |
 | `plugins:k6-app:reader` | Read-only access to k6                      |
+
+## Knowledge Graph plugin
+
+Plugin ID: `grafana-asserts-app`
+
+| Plugin role                                          | Description                                       |
+| ---------------------------------------------------- | ------------------------------------------------- |
+| `plugins:grafana-asserts-app:knowledge-graph-writer` | Read/write/create in Knowledge Graph              |
+| `plugins:grafana-asserts-app:knowledge-graph-reader` | Read-only access to everything in Knowledge Graph |
+| `plugins:grafana-asserts-app:knowledge-graph-access` | Access to Knowledge Graph                         |
+
+## Kubernetes Monitoring plugin
+
+Plugin ID: `grafana-k8s-app`
+
+| Plugin role                      | Description                              |
+| -------------------------------- | ---------------------------------------- |
+| `plugins:grafana-k8s-app:admin`  | Admin access to everything in k8s plugin |
+| `plugins:grafana-k8s-app:reader` | Read-only access to k8s plugin           |
+
+## Labels plugin
+
+Plugin ID: `grafana-labels-app`
+
+| Plugin role                                | Description                     |
+| ------------------------------------------ | ------------------------------- |
+| `plugins:grafana-labels-app:labels-writer` | Read/write/create/delete Labels |
+| `plugins:grafana-labels-app:labels-reader` | Read-only access to Labels      |
+
+## Machine Learning plugin
+
+Plugin ID: `grafana-ml-app`
+
+| Plugin role                          | Description                            |
+| ------------------------------------ | -------------------------------------- |
+| `plugins:grafana-ml-app:ml-editor`   | Read and write access to ML features   |
+| `plugins:grafana-ml-app:ml-viewer`   | Read access to ML features             |
+| `plugins:grafana-ml-app:sift-editor` | Read and write access to Sift features |
+| `plugins:grafana-ml-app:sift-viewer` | Read access to Sift features           |
+
+## OnCall plugin
+
+Plugin ID: `grafana-oncall-app`
+
+### Core roles
+
+| Plugin role                                         | Description                                                                                                                                                                                              |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plugins:grafana-oncall-app:admin`                  | Read/write access to everything in OnCall                                                                                                                                                                |
+| `plugins:grafana-oncall-app:editor`                 | Similar to Admin, minus abilities to: create Integrations, create Escalation Chains, create Outgoing Webhooks, update ChatOps settings, update other user's settings, and update general OnCall settings |
+| `plugins:grafana-oncall-app:reader`                 | Read-only access to everything in OnCall                                                                                                                                                                 |
+| `plugins:grafana-oncall-app:oncaller`               | Read access to everything in OnCall, plus edit access to Alert Groups, Schedules, and own settings                                                                                                       |
+| `plugins:grafana-oncall-app:notifications-receiver` | Receive OnCall alert notifications, plus edit own OnCall settings                                                                                                                                        |
+
+### Alert groups
+
+| Plugin role                                             | Description                                                                             |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `plugins:grafana-oncall-app:alert-groups-reader`        | Read-only access to OnCall Alert Groups                                                 |
+| `plugins:grafana-oncall-app:alert-groups-editor`        | Read access to OnCall Alert Groups + ability to act on Alert Groups (ack, resolve, etc) |
+| `plugins:grafana-oncall-app:alert-groups-direct-paging` | Manually create new Alert Groups (Direct Paging)                                        |
+
+### Integrations
+
+| Plugin role                                      | Description                              |
+| ------------------------------------------------ | ---------------------------------------- |
+| `plugins:grafana-oncall-app:integrations-reader` | Read-only access to OnCall Integrations  |
+| `plugins:grafana-oncall-app:integrations-editor` | Read/write access to OnCall Integrations |
+
+### Escalation chains
+
+| Plugin role                                           | Description                                   |
+| ----------------------------------------------------- | --------------------------------------------- |
+| `plugins:grafana-oncall-app:escalation-chains-reader` | Read-only access to OnCall Escalation Chains  |
+| `plugins:grafana-oncall-app:escalation-chains-editor` | Read/write access to OnCall Escalation Chains |
+
+### Schedules
+
+| Plugin role                                   | Description                           |
+| --------------------------------------------- | ------------------------------------- |
+| `plugins:grafana-oncall-app:schedules-reader` | Read-only access to OnCall Schedules  |
+| `plugins:grafana-oncall-app:schedules-editor` | Read/write access to OnCall Schedules |
+
+### ChatOps
+
+| Plugin role                                 | Description                         |
+| ------------------------------------------- | ----------------------------------- |
+| `plugins:grafana-oncall-app:chatops-reader` | Read-only access to OnCall ChatOps  |
+| `plugins:grafana-oncall-app:chatops-editor` | Read/write access to OnCall ChatOps |
+
+### Outgoing webhooks
+
+| Plugin role                                           | Description                                   |
+| ----------------------------------------------------- | --------------------------------------------- |
+| `plugins:grafana-oncall-app:outgoing-webhooks-reader` | Read-only access to OnCall Outgoing Webhooks  |
+| `plugins:grafana-oncall-app:outgoing-webhooks-editor` | Read/write access to OnCall Outgoing Webhooks |
+
+### Maintenance
+
+| Plugin role                                     | Description                             |
+| ----------------------------------------------- | --------------------------------------- |
+| `plugins:grafana-oncall-app:maintenance-reader` | Read-only access to OnCall Maintenance  |
+| `plugins:grafana-oncall-app:maintenance-editor` | Read/write access to OnCall Maintenance |
+
+### API keys
+
+| Plugin role                                  | Description                                                       |
+| -------------------------------------------- | ----------------------------------------------------------------- |
+| `plugins:grafana-oncall-app:api-keys-reader` | Read-only access to OnCall API Keys                               |
+| `plugins:grafana-oncall-app:api-keys-editor` | Read/write access to OnCall API Keys + ability to consume the API |
+
+### User settings
+
+| Plugin role                                       | Description                                                                              |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `plugins:grafana-oncall-app:user-settings-reader` | Read-only access to own OnCall User Settings                                             |
+| `plugins:grafana-oncall-app:user-settings-editor` | Read/write access to own OnCall User Settings + view basic info about other OnCall users |
+| `plugins:grafana-oncall-app:user-settings-admin`  | Read/write access to your own + other's OnCall User Settings                             |
+
+### Notification and general settings
+
+| Plugin role                                               | Description                                       |
+| --------------------------------------------------------- | ------------------------------------------------- |
+| `plugins:grafana-oncall-app:notification-settings-reader` | Read-only access to OnCall Notification Settings  |
+| `plugins:grafana-oncall-app:notification-settings-editor` | Read/write access to OnCall Notification Settings |
+| `plugins:grafana-oncall-app:settings-reader`              | Read-only access to OnCall Settings               |
+| `plugins:grafana-oncall-app:settings-editor`              | Read/write access to OnCall Settings              |
+
+## Private Data Connect plugin
+
+Plugin ID: `grafana-pdc-app`
+
+| Plugin role                                      | Description           |
+| ------------------------------------------------ | --------------------- |
+| `plugins:grafana-pdc-app:private-networks-read`  | Read Private Networks |
+| `plugins:grafana-pdc-app:private-networks-write` | Edit Private Networks |
+
+## SLO plugin
+
+Plugin ID: `grafana-slo-app`
+
+| Plugin role                          | Description                                                  |
+| ------------------------------------ | ------------------------------------------------------------ |
+| `plugins:grafana-slo-app:slo-reader` | View SLOs in folders where you have folder read permission   |
+| `plugins:grafana-slo-app:slo-writer` | Manage SLOs in folders where you have folder edit permission |
+| `plugins:grafana-slo-app:slo-admin`  | SLO Writer, plus the ability to modify org preferences       |
 
 ## Synthetic Monitoring plugin
 
@@ -299,181 +474,6 @@ Plugin ID: `grafana-synthetic-monitoring-app`
 | `plugins:grafana-synthetic-monitoring-app:thresholds-reader`    | Read thresholds                 |
 | `plugins:grafana-synthetic-monitoring-app:thresholds-writer`    | Read and edit thresholds        |
 | `plugins:grafana-synthetic-monitoring-app:access-tokens-writer` | Create and delete access tokens |
-
-## Application Observability plugin
-
-Plugin ID: `grafana-app-observability-app`
-
-| Plugin role                                    | Description                                                         |
-| ---------------------------------------------- | ------------------------------------------------------------------- |
-| `plugins:grafana-app-observability-app:admin`  | Read/write access to everything in Application Observability plugin |
-| `plugins:grafana-app-observability-app:viewer` | View access in Application Observability plugin                     |
-
-## Frontend Observability plugin
-
-Plugin ID: `grafana-kowalski-app`
-
-| Plugin role                                                              | Description                                                         |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| `plugins:grafana-kowalski-app:frontend-observability-admin`              | Read/write access to everything in Frontend Observability plugin    |
-| `plugins:grafana-kowalski-app:frontend-observability-editor`             | Read/write access to everything but app deletion                    |
-| `plugins:grafana-kowalski-app:frontend-observability-viewer`             | View access only                                                    |
-| `plugins:grafana-kowalski-app:frontend-observability-sourcemap-uploader` | View access with the ability to read settings and upload sourcemaps |
-
-## Kubernetes Monitoring plugin
-
-Plugin ID: `grafana-k8s-app`
-
-| Plugin role                      | Description                              |
-| -------------------------------- | ---------------------------------------- |
-| `plugins:grafana-k8s-app:admin`  | Admin access to everything in k8s plugin |
-| `plugins:grafana-k8s-app:reader` | Read-only access to k8s plugin           |
-
-## Knowledge Graph plugin
-
-Plugin ID: `grafana-asserts-app`
-
-| Plugin role                                          | Description                                       |
-| ---------------------------------------------------- | ------------------------------------------------- |
-| `plugins:grafana-asserts-app:knowledge-graph-writer` | Read/write/create in Knowledge Graph              |
-| `plugins:grafana-asserts-app:knowledge-graph-reader` | Read-only access to everything in Knowledge Graph |
-| `plugins:grafana-asserts-app:knowledge-graph-access` | Access to Knowledge Graph                         |
-
-## Machine Learning plugin
-
-Plugin ID: `grafana-ml-app`
-
-| Plugin role                          | Description                            |
-| ------------------------------------ | -------------------------------------- |
-| `plugins:grafana-ml-app:ml-editor`   | Read and write access to ML features   |
-| `plugins:grafana-ml-app:ml-viewer`   | Read access to ML features             |
-| `plugins:grafana-ml-app:sift-editor` | Read and write access to Sift features |
-| `plugins:grafana-ml-app:sift-viewer` | Read access to Sift features           |
-
-## Adaptive Metrics plugin
-
-Plugin ID: `grafana-adaptive-metrics-app`
-
-| Plugin role                                              | Description                                         |
-| -------------------------------------------------------- | --------------------------------------------------- |
-| `plugins:grafana-adaptive-metrics-app:admin`             | Read/write access to everything in Adaptive Metrics |
-| `plugins:grafana-adaptive-metrics-app:rules-editor`      | Read/write access to recommendations and rules      |
-| `plugins:grafana-adaptive-metrics-app:rules-reader`      | Read access to recommendations and rules            |
-| `plugins:grafana-adaptive-metrics-app:exemptions-editor` | Edit access to recommendation exemptions            |
-| `plugins:grafana-adaptive-metrics-app:exemptions-reader` | Read access to recommendation exemptions            |
-| `plugins:grafana-adaptive-metrics-app:segments-editor`   | Edit access to segments                             |
-| `plugins:grafana-adaptive-metrics-app:segments-reader`   | Read access to segments                             |
-| `plugins:grafana-adaptive-metrics-app:config-editor`     | Edit access to plugin config                        |
-| `plugins:grafana-adaptive-metrics-app:config-reader`     | Read access to plugin config                        |
-| `plugins:grafana-adaptive-metrics-app:plugin-access`     | Access to the Adaptive Metrics plugin               |
-
-## Adaptive Logs plugin
-
-Plugin ID: `grafana-adaptivelogs-app`
-
-| Plugin role                                                 | Description                                       |
-| ----------------------------------------------------------- | ------------------------------------------------- |
-| `plugins:grafana-adaptivelogs-app:admin`                    | Read/write access to everything in Adaptive Logs  |
-| `plugins:grafana-adaptivelogs-app:patterns-editor`          | Read/write access to recommendations and patterns |
-| `plugins:grafana-adaptivelogs-app:patterns-reader`          | Read access to recommendations and patterns       |
-| `plugins:grafana-adaptivelogs-app:segments-admin`           | Create and manipulate segments                    |
-| `plugins:grafana-adaptivelogs-app:expiring-exemptions-user` | Use the expiring exemptions button                |
-| `plugins:grafana-adaptivelogs-app:plugin-access`            | Access to the Adaptive Logs plugin                |
-
-## Adaptive Traces plugin
-
-Plugin ID: `grafana-adaptivetraces-app`
-
-| Plugin role                                | Description                                        |
-| ------------------------------------------ | -------------------------------------------------- |
-| `plugins:grafana-adaptivetraces-app:admin` | Read/write access to everything in Adaptive Traces |
-
-## Labels plugin
-
-Plugin ID: `grafana-labels-app`
-
-| Plugin role                                | Description                     |
-| ------------------------------------------ | ------------------------------- |
-| `plugins:grafana-labels-app:labels-writer` | Read/write/create/delete Labels |
-| `plugins:grafana-labels-app:labels-reader` | Read-only access to Labels      |
-
-## Grafana Assistant plugin
-
-Plugin ID: `grafana-assistant-app`
-
-| Plugin role                                                  | Description                                                       |
-| ------------------------------------------------------------ | ----------------------------------------------------------------- |
-| `plugins:grafana-assistant-app:assistant-admin`              | Manage both user and tenant-wide Assistant resources and settings |
-| `plugins:grafana-assistant-app:assistant-mcp-user`           | Use Grafana Assistant and add personal MCP servers                |
-| `plugins:grafana-assistant-app:assistant-user`               | Basic access to Grafana Assistant with read-only capabilities     |
-| `plugins:grafana-assistant-app:assistant-investigation-user` | Use Assistant Backend Investigations                              |
-
-## Cloud Provider plugin
-
-Plugin ID: `grafana-csp-app`
-
-| Plugin role                            | Description                                         |
-| -------------------------------------- | --------------------------------------------------- |
-| `plugins:grafana-csp-app:aws-writer`   | Read/Write access to AWS in Cloud provider plugin   |
-| `plugins:grafana-csp-app:azure-writer` | Read/Write access to Azure in Cloud provider plugin |
-| `plugins:grafana-csp-app:gcp-writer`   | Read/Write access to GCP in Cloud provider plugin   |
-| `plugins:grafana-csp-app:reader`       | Read access in Cloud provider plugin                |
-
-## Cost Management and Billing plugin
-
-Plugin ID: `grafana-cmab-app`
-
-| Plugin role                                         | Description                                      |
-| --------------------------------------------------- | ------------------------------------------------ |
-| `plugins:grafana-cmab-app:full-admin`               | Full access to all features                      |
-| `plugins:grafana-cmab-app:billing-and-usage-reader` | Read-only access to billing and usage data       |
-| `plugins:grafana-cmab-app:invoice-reader`           | Read-only access to invoices, FOCUS & usage data |
-| `plugins:grafana-cmab-app:cost-attribution-admin`   | Full access to cost attributions                 |
-| `plugins:grafana-cmab-app:cost-attribution-reader`  | Read-only access to cost attributions            |
-| `plugins:grafana-cmab-app:usage-alerts-admin`       | Full access to usage alerts                      |
-| `plugins:grafana-cmab-app:usage-alerts-reader`      | Read-only access to usage alerts                 |
-
-## Cost Attributions plugin
-
-Plugin ID: `grafana-attributions-app`
-
-| Plugin role                                                 | Description                                         |
-| ----------------------------------------------------------- | --------------------------------------------------- |
-| `plugins:grafana-attributions-app:cost-attributions-viewer` | View the Cost Attributions application and its data |
-
-## Private Data Connect plugin
-
-Plugin ID: `grafana-pdc-app`
-
-| Plugin role                                      | Description           |
-| ------------------------------------------------ | --------------------- |
-| `plugins:grafana-pdc-app:private-networks-read`  | Read Private Networks |
-| `plugins:grafana-pdc-app:private-networks-write` | Edit Private Networks |
-
-## Grafana Auth plugin
-
-Plugin ID: `grafana-auth-app`
-
-| Plugin role                       | Description                                        |
-| --------------------------------- | -------------------------------------------------- |
-| `plugins:grafana-auth-app:writer` | Write and manage access policies for Grafana Cloud |
-
-## Easystart / Integrations plugin
-
-Plugin ID: `grafana-easystart-app`
-
-| Plugin role                                         | Description             |
-| --------------------------------------------------- | ----------------------- |
-| `plugins:grafana-easystart-app:integrations-writer` | Administer integrations |
-
-## Collector App
-
-Plugin ID: `grafana-collector-app`
-
-| Plugin role                                          | Description                               |
-| ---------------------------------------------------- | ----------------------------------------- |
-| `plugins:grafana-collector-app:collector-app-admin`  | Full access to the Collector App          |
-| `plugins:grafana-collector-app:collector-app-reader` | Read-only access to Grafana Collector App |
 
 ## Role assignment
 
