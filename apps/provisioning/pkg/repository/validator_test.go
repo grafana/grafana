@@ -69,24 +69,6 @@ func TestValidator_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "sync interval too low",
-			repository: func() *provisioning.Repository {
-				return &provisioning.Repository{
-					Spec: provisioning.RepositorySpec{
-						Title: "Test Repo",
-						Sync: provisioning.SyncOptions{
-							Enabled:         true,
-							Target:          provisioning.SyncTargetTypeFolder,
-							IntervalSeconds: 5,
-						}},
-				}
-			}(),
-			expectedErrs: 1,
-			validateError: func(t *testing.T, errors field.ErrorList) {
-				require.Contains(t, errors.ToAggregate().Error(), "spec.sync.intervalSeconds: Invalid value")
-			},
-		},
-		{
 			name: "reserved name",
 			repository: func() *provisioning.Repository {
 				return &provisioning.Repository{
@@ -183,14 +165,14 @@ func TestValidator_Validate(t *testing.T) {
 						Sync: provisioning.SyncOptions{
 							Enabled:         true,
 							IntervalSeconds: 5,
-							Target:          provisioning.SyncTargetTypeInstance,
+							Target:          "",
 						},
 					},
 				}
 			}(),
 			expectedErrs: 2,
 			// 1. reserved name
-			// 2. sync interval too low
+			// 2. Empty target
 			// Note: "sync target not supported" is now checked in AdmissionValidator, not RepositoryValidator
 		},
 		{

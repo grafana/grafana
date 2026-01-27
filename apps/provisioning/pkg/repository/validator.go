@@ -63,11 +63,6 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 			list = append(list, field.Required(field.NewPath("spec", "sync", "target"),
 				"The target type is required when sync is enabled"))
 		}
-
-		if cfg.Spec.Sync.IntervalSeconds < int64(v.minSyncInterval.Seconds()) {
-			list = append(list, field.Invalid(field.NewPath("spec", "sync", "intervalSeconds"),
-				cfg.Spec.Sync.IntervalSeconds, fmt.Sprintf("Interval must be at least %d seconds", int64(v.minSyncInterval.Seconds()))))
-		}
 	}
 
 	// Reserved names (for now)
