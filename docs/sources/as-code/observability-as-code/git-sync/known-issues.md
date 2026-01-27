@@ -51,7 +51,7 @@ Free-tier accounts are limited to 20 resources per synced folder.
 
 ### Synced resources
 
-- You can only sync dashboards and folders. Refer to [Supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/git-sync/#resource-support-and-compatibility) for more information.
+- You can only sync dashboards and folders. Refer to [Supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/#resource-support-and-compatibility) for more information.
 - If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and won't be synced.
 - Full-instance sync is not available in Grafana Cloud and is experimental in Grafana OSS and Grafana Enterprise. 
 - When migrating to full instance sync, during the synchronization process your resources will be temporarily unavailable. No one will be able to create, edit, or delete resources during this process.
