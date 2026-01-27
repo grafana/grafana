@@ -109,64 +109,90 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 	}
 
-	tokenExchangeClient, err := controllerCfg.TokenExchangeClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
+	for _, opt := range registeredConfigOptions {
+		if err := opt(context.Background(), controllerCfg); err != nil {
+			return nil, fmt.Errorf("failed to apply config option: %w", err)
+		}
 	}
 
-	tlsConfig, err := controllerCfg.TLSConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get TLS configuration: %w", err)
+	return controllerCfg, nil
+}
+
+func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {
+	tlsConfig := rest.TLSClientConfig{
+		Insecure: insecure,
 	}
 
-	// TODO: This should use also lazy loading.
-
-	// Provisioning API Server
-	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
-	if provisioningServerURL == "" {
-		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
-	}
-	config := &rest.Config{
-		APIPath: "/apis",
-		Host:    provisioningServerURL,
-		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
-			tokenExchangeClient,
-			provisioning.GROUP,
-			clientauth.WildcardNamespace,
-		),
-		TLSClientConfig: tlsConfig,
-		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
+	if certFile != "" && keyFile != "" {
+		tlsConfig.CertFile = certFile
+		tlsConfig.KeyFile = keyFile
 	}
 
-	provisioningClient, err := client.NewForConfig(config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
-	}
-	controllerCfg.provisioningClient = provisioningClient
+	if caFile != "" {
+		// caFile is set in operator.ini file
+		// nolint:gosec
+		caCert, err := os.ReadFile(caFile)
+		if err != nil {
+			return tlsConfig, fmt.Errorf("failed to read CA certificate file: %w", err)
+		}
 
-	// TODO: unified storage should use lazy loading.
-	// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
-	// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
-	// go through the api server. Once there is a global search endpoint, we will switch to that here as well.
-	tracer, err := controllerCfg.Tracer()
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return tlsConfig, fmt.Errorf("failed to parse CA certificate")
+		}
+
+		tlsConfig.CAData = caCert
+	}
+
+	return tlsConfig, nil
+}
+
+// Unified Storage Client
+// HACK: This logic directly connects to unified storage. We are doing this for now as there is no global
+// search endpoint. But controllers, in general, should not connect directly to unified storage and instead
+// go through the api server. Once there is a global search endpoint, we will switch to that here as well.
+func (c *ControllerConfig) UnifiedStorageClient() (resources.ResourceStore, error) {
+	if c.unified != nil {
+		return c.unified, nil
+	}
+
+	tracer, err := c.Tracer()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tracer: %w", err)
 	}
 
-	gRPCAuth := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+	gRPCAuth := c.Settings.SectionWithEnvOverrides("grpc_client_authentication")
 	resourceClientCfg := resource.RemoteResourceClientConfig{
 		Token:            gRPCAuth.Key("token").String(),
 		TokenExchangeURL: gRPCAuth.Key("token_exchange_url").String(),
 		Namespace:        gRPCAuth.Key("token_namespace").String(),
 	}
-	unified, err := setupUnifiedStorageClient(cfg, tracer, resourceClientCfg)
+	unified, err := setupUnifiedStorageClient(c.Settings, tracer, resourceClientCfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup unified storage: %w", err)
 	}
 
-	controllerCfg.unified = unified
+	c.unified = unified
+	return unified, nil
+}
 
-	// TODO: This should use also lazy loading.
+// Clients Clients are clients that are used to connect to the different API servers.
+func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
+	if c.clients != nil {
+		return c.clients, nil
+	}
+
+	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
+	tlsConfig, err := c.TLSConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get TLS configuration: %w", err)
+	}
+
+	tokenExchangeClient, err := c.TokenExchangeClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
+	}
+
 	dashboardsServerURL := operatorSec.Key("dashboards_server_url").String()
 	if dashboardsServerURL == "" {
 		return nil, fmt.Errorf("dashboards_server_url is required in [operator] section")
@@ -175,7 +201,7 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 	if foldersServerURL == "" {
 		return nil, fmt.Errorf("folders_server_url is required in [operator] section")
 	}
-
+	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
 	apiServerURLs := map[string]string{
 		resources.DashboardResource.Group: dashboardsServerURL,
 		resources.FolderResource.Group:    foldersServerURL,
@@ -215,44 +241,58 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 	}
 
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders)
-	controllerCfg.clients = clients
-
-	for _, opt := range registeredConfigOptions {
-		if err := opt(context.Background(), controllerCfg); err != nil {
-			return nil, fmt.Errorf("failed to apply config option: %w", err)
-		}
-	}
-
-	return controllerCfg, nil
+	c.clients = clients
+	return clients, nil
 }
 
-func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {
-	tlsConfig := rest.TLSClientConfig{
-		Insecure: insecure,
+func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
+	if c.provisioningClient != nil {
+		return c.provisioningClient, nil
 	}
 
-	if certFile != "" && keyFile != "" {
-		tlsConfig.CertFile = certFile
-		tlsConfig.KeyFile = keyFile
+	tokenExchangeClient, err := c.TokenExchangeClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 
-	if caFile != "" {
-		// caFile is set in operator.ini file
-		// nolint:gosec
-		caCert, err := os.ReadFile(caFile)
-		if err != nil {
-			return tlsConfig, fmt.Errorf("failed to read CA certificate file: %w", err)
-		}
-
-		caCertPool := x509.NewCertPool()
-		if !caCertPool.AppendCertsFromPEM(caCert) {
-			return tlsConfig, fmt.Errorf("failed to parse CA certificate")
-		}
-
-		tlsConfig.CAData = caCert
+	tlsConfig, err := c.TLSConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get TLS configuration: %w", err)
 	}
 
-	return tlsConfig, nil
+	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
+	provisioningServerURL := operatorSec.Key("provisioning_server_url").String()
+	if provisioningServerURL == "" {
+		return nil, fmt.Errorf("provisioning_server_url is required in [operator] section")
+	}
+	config := &rest.Config{
+		APIPath: "/apis",
+		Host:    provisioningServerURL,
+		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(
+			tokenExchangeClient,
+			provisioning.GROUP,
+			clientauth.WildcardNamespace,
+		),
+		TLSClientConfig: tlsConfig,
+		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
+	}
+
+	provisioningClient, err := client.NewForConfig(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
+	}
+
+	c.provisioningClient = provisioningClient
+
+	return provisioningClient, nil
+}
+
+func (c *ControllerConfig) ResyncInterval() time.Duration {
+	return c.resyncInterval
+}
+
+func (c *ControllerConfig) NumberOfWorkers() int {
+	return c.workerCount
 }
 
 func (c *ControllerConfig) DecryptService() (decrypt.DecryptService, error) {

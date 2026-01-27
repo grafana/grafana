@@ -44,13 +44,23 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		cancel()
 	}()
 
+	provisioningClient, err := controllerCfg.ProvisioningClient()
+	if err != nil {
+		return fmt.Errorf("failed to create provisioning client: %w", err)
+	}
+
 	informerFactory := informer.NewSharedInformerFactoryWithOptions(
-		controllerCfg.provisioningClient,
-		controllerCfg.resyncInterval,
+		provisioningClient,
+		controllerCfg.ResyncInterval(),
 	)
 
-	resourceLister := resources.NewResourceLister(controllerCfg.unified)
-	jobs, err := jobs.NewJobStore(controllerCfg.provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
+	unified, err := controllerCfg.UnifiedStorageClient()
+	if err != nil {
+		return fmt.Errorf("failed to get unified storage client: %w", err)
+	}
+
+	resourceLister := resources.NewResourceLister(unified)
+	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -64,7 +74,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	allowImageRendering := controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("allow_image_rendering").MustBool(false)
 
 	validator := repository.NewValidator(minSyncInterval, allowImageRendering, repoFactory)
-	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
+	statusPatcher := appcontroller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 	// Health checker uses basic validation only - no need to validate against existing repositories
 	// since the repository already passed admission validation when it was created/updated.
 	// TODO: Consider adding ExistingRepositoriesValidator for reconciliation to detect conflicts
@@ -92,20 +102,25 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	}
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
+	clients, err := controllerCfg.Clients()
+	if err != nil {
+		return fmt.Errorf("failed to get clients: %w", err)
+	}
+
 	controller, err := controller.NewRepositoryController(
-		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
+		provisioningClient.ProvisioningV0alpha1(),
 		repoInformer,
 		repoFactory,
 		connectionFactory,
 		resourceLister,
-		controllerCfg.clients,
+		clients,
 		jobs,
 		healthChecker,
 		statusPatcher,
 		deps.Registerer,
 		tracer,
 		controllerCfg.Settings.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
-		controllerCfg.resyncInterval,
+		controllerCfg.ResyncInterval(),
 		quotaGetter,
 	)
 	if err != nil {
@@ -117,6 +132,6 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("failed to sync informer cache")
 	}
 
-	controller.Run(ctx, controllerCfg.workerCount)
+	controller.Run(ctx, controllerCfg.NumberOfWorkers())
 	return nil
 }

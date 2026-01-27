@@ -60,10 +60,15 @@ func RunJobController(deps server.OperatorDependencies) error {
 		cancel()
 	}()
 
+	provisioningClient, err := controllerCfg.ProvisioningClient()
+	if err != nil {
+		return fmt.Errorf("failed to create provisioning client: %w", err)
+	}
+
 	// Jobs informer and controller (resync ~60s like in register.go)
 	jobInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-		controllerCfg.provisioningClient,
-		controllerCfg.resyncInterval,
+		provisioningClient,
+		controllerCfg.ResyncInterval(),
 	)
 	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
 	jobController, err := controller.NewJobController(jobInformer)
@@ -77,12 +82,12 @@ func RunJobController(deps server.OperatorDependencies) error {
 	if controllerCfg.historyExpiration > 0 {
 		// History jobs informer and controller (separate factory with resync == expiration)
 		historyInformerFactory := informer.NewSharedInformerFactoryWithOptions(
-			controllerCfg.provisioningClient,
+			provisioningClient,
 			controllerCfg.historyExpiration,
 		)
 		historyJobInformer := historyInformerFactory.Provisioning().V0alpha1().HistoricJobs()
 		_, err = controller.NewHistoryJobController(
-			controllerCfg.provisioningClient.ProvisioningV0alpha1(),
+			provisioningClient.ProvisioningV0alpha1(),
 			historyJobInformer,
 			controllerCfg.historyExpiration,
 		)
@@ -104,8 +109,8 @@ func RunJobController(deps server.OperatorDependencies) error {
 	// 	jobHistoryWriter = jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
 	// }
 
-	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(controllerCfg.provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(controllerCfg.provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
+	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -122,7 +127,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 
 	repoGetter := resources.NewRepositoryGetter(
 		repoFactory,
-		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
+		provisioningClient.ProvisioningV0alpha1(),
 	)
 	// This is basically our own JobQueue system
 	driver, err := jobs.NewConcurrentJobDriver(
@@ -204,11 +209,25 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 func setupWorkers(
 	cfg *setting.Cfg, controllerCfg *jobsControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer,
 ) ([]jobs.Worker, error) {
-	clients := controllerCfg.clients
+	clients, err := controllerCfg.Clients()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get clients: %w", err)
+	}
 	parsers := resources.NewParserFactory(clients)
-	resourceLister := resources.NewResourceLister(controllerCfg.unified)
+
+	unified, err := controllerCfg.UnifiedStorageClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get unified storage client: %w", err)
+	}
+	resourceLister := resources.NewResourceLister(unified)
+
+	provisioningClient, err := controllerCfg.ProvisioningClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
+	}
+
 	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
-	statusPatcher := controller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
+	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
 	workers := make([]jobs.Worker, 0)
 

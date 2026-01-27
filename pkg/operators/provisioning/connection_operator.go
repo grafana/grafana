@@ -41,12 +41,17 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 		cancel()
 	}()
 
+	provisioningClient, err := controllerCfg.ProvisioningClient()
+	if err != nil {
+		return fmt.Errorf("failed to create provisioning client: %w", err)
+	}
+
 	informerFactory := informer.NewSharedInformerFactoryWithOptions(
-		controllerCfg.provisioningClient,
-		controllerCfg.resyncInterval,
+		provisioningClient,
+		controllerCfg.ResyncInterval(),
 	)
 
-	statusPatcher := appcontroller.NewConnectionStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
+	statusPatcher := appcontroller.NewConnectionStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 	connInformer := informerFactory.Provisioning().V0alpha1().Connections()
 
 	// Setup connection factory and tester
@@ -61,7 +66,7 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 	}
 
 	connController, err := controller.NewConnectionController(
-		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
+		provisioningClient.ProvisioningV0alpha1(),
 		connInformer,
 		statusPatcher,
 		controller.NewConnectionHealthChecker(
@@ -69,7 +74,7 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 			healthMetricsRecorder,
 		),
 		connectionFactory,
-		controllerCfg.resyncInterval,
+		controllerCfg.ResyncInterval(),
 	)
 
 	if err != nil {
@@ -81,6 +86,6 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("failed to sync informer cache")
 	}
 
-	connController.Run(ctx, controllerCfg.workerCount)
+	connController.Run(ctx, controllerCfg.NumberOfWorkers())
 	return nil
 }
