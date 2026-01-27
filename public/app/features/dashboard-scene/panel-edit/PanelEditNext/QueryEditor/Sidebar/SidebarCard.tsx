@@ -25,7 +25,7 @@ const Header = ({ editorType, styles }: { editorType: QueryEditorType; styles: R
           {typeText}
         </Text>
       </Stack>
-      <Icon name="circle-mono" className={styles.statusIcon} />
+      <Icon name="circle-mono" className={styles.dsStatusIcon} />
     </div>
   );
 };
@@ -123,7 +123,7 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: 
       gap: theme.spacing(1),
       padding: theme.spacing(1),
     }),
-    statusIcon: css({
+    dsStatusIcon: css({
       color: hasError ? theme.colors.error.text : theme.colors.success.text,
       width: '6px',
       height: '6px',
