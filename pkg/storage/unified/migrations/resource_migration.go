@@ -34,13 +34,17 @@ type MigrationRunner struct {
 	cfg             *setting.Cfg
 	autoEnableMode5 bool
 	log             log.Logger
+	resources       []schema.GroupResource
+	validators      []Validator
 }
 
 // NewMigrationRunner creates a new migration runner.
-func NewMigrationRunner(unifiedMigrator UnifiedMigrator, migrationID string, opts ...MigrationRunnerOption) *MigrationRunner {
+func NewMigrationRunner(unifiedMigrator UnifiedMigrator, migrationID string, resources []schema.GroupResource, validators []Validator, opts ...MigrationRunnerOption) *MigrationRunner {
 	r := &MigrationRunner{
 		unifiedMigrator: unifiedMigrator,
 		log:             log.New("storage.unified.migration_runner." + migrationID),
+		resources:       resources,
+		validators:      validators,
 	}
 	for _, opt := range opts {
 		opt(r)
@@ -51,8 +55,6 @@ func NewMigrationRunner(unifiedMigrator UnifiedMigrator, migrationID string, opt
 // RunOptions configures a migration run.
 type RunOptions struct {
 	DriverName string
-	Resources  []schema.GroupResource
-	Validators []Validator
 }
 
 // Run executes the migration logic for all organizations.
@@ -68,7 +70,7 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, opts RunO
 		return nil
 	}
 
-	r.log.Info("Starting migration for all organizations", "org_count", len(orgs), "resources", opts.Resources)
+	r.log.Info("Starting migration for all organizations", "org_count", len(orgs), "resources", r.resources)
 
 	if opts.DriverName == migrator.SQLite {
 		// reuse transaction in SQLite to avoid "database is locked" errors
@@ -89,7 +91,7 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, opts RunO
 
 	// Auto-enable mode 5 for resources after successful migration
 	if r.autoEnableMode5 && r.cfg != nil {
-		for _, gr := range opts.Resources {
+		for _, gr := range r.resources {
 			r.log.Info("Auto-enabling mode 5 for resource", "resource", gr.Resource+"."+gr.Group)
 			r.cfg.EnableMode5(gr.Resource + "." + gr.Group)
 		}
@@ -112,7 +114,7 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, or
 
 	migrateOpts := legacy.MigrateOptions{
 		Namespace:   namespace,
-		Resources:   opts.Resources,
+		Resources:   r.resources,
 		WithHistory: true, // Migrate with full history
 		Progress: func(count int, msg string) {
 			r.log.Info("Migration progress", "org_id", org.ID, "count", count, "message", msg)
@@ -131,7 +133,7 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, or
 	}
 
 	// Validate the migration results
-	if err := r.validateMigration(ctx, sess, response, opts.Validators); err != nil {
+	if err := r.validateMigration(ctx, sess, response, r.validators); err != nil {
 		r.log.Error("Migration validation failed", "org_id", org.ID, "error", err, "duration", time.Since(startTime))
 		return fmt.Errorf("migration validation failed for org %d (%s): %w", org.ID, org.Name, err)
 	}
@@ -181,7 +183,6 @@ type ResourceMigration struct {
 	runner      *MigrationRunner
 	resources   []schema.GroupResource
 	migrationID string
-	validators  []Validator
 	autoMigrate bool // If true, auto-migrate resource if count is below threshold
 	hadErrors   bool // Tracks if errors occurred during migration (used with ignoreErrors)
 }
@@ -207,12 +208,11 @@ func NewResourceMigration(
 	validators []Validator,
 	opts ...ResourceMigrationOption,
 ) *ResourceMigration {
-	runner := NewMigrationRunner(unifiedMigrator, migrationID)
+	runner := NewMigrationRunner(unifiedMigrator, migrationID, resources, validators)
 	m := &ResourceMigration{
 		runner:      runner,
 		resources:   resources,
 		migrationID: migrationID,
-		validators:  validators,
 	}
 	for _, opt := range opts {
 		opt(m, runner)
@@ -255,8 +255,6 @@ Please investigate the failure and report it to the Grafana team so it can be ad
 
 	return m.runner.Run(ctx, sess, RunOptions{
 		DriverName: mg.Dialect.DriverName(),
-		Resources:  m.resources,
-		Validators: m.validators,
 	})
 }
 
