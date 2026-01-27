@@ -137,6 +137,13 @@ export function validatePanelKindV2(value: unknown): asserts value is PanelKind 
   }
 }
 
+function isElementReference(value: unknown): boolean {
+  if (!isObject(value)) {
+    return false;
+  }
+  return value.kind === 'ElementReference' && typeof value.name === 'string';
+}
+
 export function isGridLayoutItemKind(value: unknown): value is GridLayoutItemKind {
   if (!isObject(value)) {
     return false;
@@ -149,6 +156,7 @@ export function isGridLayoutItemKind(value: unknown): value is GridLayoutItemKin
     typeof spec.x === 'number' &&
     typeof spec.y === 'number' &&
     typeof spec.width === 'number' &&
-    typeof spec.height === 'number'
+    typeof spec.height === 'number' &&
+    isElementReference(spec.element)
   );
 }
