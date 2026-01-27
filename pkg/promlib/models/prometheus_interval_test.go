@@ -33,7 +33,24 @@ func TestCalculatePrometheusInterval(t *testing.T) {
 		wantErr          bool
 	}{
 		{
-			name:             "min step 2m with 300000 intervalMs",
+			name:             "use min step value when it's bigger than the calculated value",
+			queryInterval:    "10m",
+			dsScrapeInterval: "",
+			intervalMs:       300000,
+			intervalFactor:   1,
+			query: backend.DataQuery{
+				TimeRange: backend.TimeRange{
+					From: testNow,
+					To:   testNow.Add(48 * time.Hour),
+				},
+				Interval:      5 * time.Minute,
+				MaxDataPoints: 761,
+			},
+			want:    10 * time.Minute,
+			wantErr: false,
+		},
+		{
+			name:             "use calculated value when min step value is smaller",
 			queryInterval:    "2m",
 			dsScrapeInterval: "",
 			intervalMs:       300000,
