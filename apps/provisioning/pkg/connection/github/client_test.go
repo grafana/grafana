@@ -363,7 +363,8 @@ func TestGithubClient_ListInstallationRepositories(t *testing.T) {
 					mockhub.GetInstallationRepositories,
 					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						page := r.URL.Query().Get("page")
-						if page == "" || page == "1" {
+						switch page {
+						case "", "1":
 							// First page
 							response := &github.ListRepositories{
 								TotalCount: github.Ptr(3),
@@ -380,7 +381,7 @@ func TestGithubClient_ListInstallationRepositories(t *testing.T) {
 							w.Header().Set("Link", `<https://api.github.com/installation/repositories?page=2>; rel="next"`)
 							w.WriteHeader(http.StatusOK)
 							require.NoError(t, json.NewEncoder(w).Encode(response))
-						} else if page == "2" {
+						case "2":
 							// Second page
 							response := &github.ListRepositories{
 								TotalCount: github.Ptr(3),
