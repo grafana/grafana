@@ -12602,8 +12602,17 @@
       "title-data-source-help": "Data source help"
     }
   },
+  "query-editor": {
+    "action": {
+      "inspector": "Query inspector"
+    },
+    "edit-query-name": "Edit query name",
+    "validation": {
+      "duplicate-name": "Query name already exists",
+      "empty-name": "An empty query name is not allowed"
+    }
+  },
   "query-editor-next": {
-    "detail-placeholder": "Query/Transform detail view goes here",
     "sidebar": {
       "card-click": "Select query {{refId}}",
       "expression": "Expression",
