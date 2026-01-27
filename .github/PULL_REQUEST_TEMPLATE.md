@@ -46,5 +46,6 @@ Fixes #
 
 Please check that:
 - [ ] It works as expected from a user's perspective.
-- [ ] If this is a pre-GA feature, it is behind a feature toggle.
+- [ ] If this is a pre-GA feature, it is behind a feature flag.
 - [ ] The docs are updated, and if this is a [notable improvement](https://grafana.com/docs/writers-toolkit/contribute/release-notes/#how-to-determine-if-content-belongs-in-whats-new), it's added to our [What's New](https://grafana.com/docs/writers-toolkit/contribute/release-notes/) doc.
+- [ ] For changes that impact both frontend and backend: This PR follows the [decoupled deployment strategy](https://github.com/grafana/deployment_tools/pull/465700) - frontend and backend changes are separated, new features/APIs are feature-flagged, and the frontend gracefully handles missing backend capabilities.
