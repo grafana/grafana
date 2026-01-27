@@ -209,6 +209,20 @@
     },
     {
       "metadata": {
+        "name": "alertingDisableDMAinUI",
+        "resourceVersion": "1769428796156",
+        "creationTimestamp": "2026-01-26T11:59:56Z"
+      },
+      "spec": {
+        "description": "Disables the DMA feature in the UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingDisableSendAlertsExternal",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-05-23T12:29:19Z",
@@ -3006,6 +3020,7 @@
         "name": "mysqlAnsiQuotes",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-10-12T11:43:35Z",
+        "deletionTimestamp": "2026-01-27T13:45:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -4002,6 +4017,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "savedQueriesRBAC",
+        "resourceVersion": "1768828040599",
+        "creationTimestamp": "2026-01-19T13:07:20Z"
+      },
+      "spec": {
+        "description": "Enables Saved queries (query library) RBAC permissions",
+        "stage": "preview",
+        "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
     },

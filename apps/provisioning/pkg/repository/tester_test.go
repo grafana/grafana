@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -102,7 +101,7 @@ func TestTester_Test_Cases(t *testing.T) {
 
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-	validator := NewValidator(10*time.Second, true, mockFactory)
+	validator := NewValidator(true, mockFactory)
 	// Use basic RepositoryValidator since Tester is used for health checks
 	tester := NewTester(validator)
 	for _, tt := range tests {
@@ -144,7 +143,7 @@ func TestTester_Test(t *testing.T) {
 
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-	validator := NewValidator(10*time.Second, true, mockFactory)
+	validator := NewValidator(true, mockFactory)
 	// Use basic RepositoryValidator since Tester is used for health checks
 	tester := NewTester(validator)
 	results, err := tester.Test(context.Background(), repository)
