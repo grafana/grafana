@@ -594,21 +594,6 @@
                 }
               }
             ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "{instance=\"localhost:9090\",interval=\"5s\",job=\"${job}\"}"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "#F9BA8F",
-                  "mode": "fixed"
-                }
-              }
-            ]
           }
         ]
       },
