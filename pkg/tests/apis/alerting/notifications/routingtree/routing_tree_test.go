@@ -55,8 +55,6 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 }
 
 func TestIntegrationNotAllowedMethods(t *testing.T) {
-	// TODO: Add more tests.
-	t.Skip("No longer applies, need real tests.")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
@@ -71,8 +69,9 @@ func TestIntegrationNotAllowedMethods(t *testing.T) {
 		Spec: v0alpha1.RoutingTreeSpec{},
 	}
 	_, err = client.Create(ctx, route, resource.CreateOptions{})
-	assert.Error(t, err)
-	require.Truef(t, errors.IsMethodNotSupported(err), "Expected MethodNotSupported but got %s", err)
+	var statusErr *errors.StatusError
+	assert.ErrorAs(t, err, &statusErr)
+	require.Equalf(t, int32(501), statusErr.Status().Code, "Expected NotImplemented (501) but got %s (%d)", statusErr.Status().Status, statusErr.Status().Code)
 }
 
 func TestIntegrationAccessControl(t *testing.T) {

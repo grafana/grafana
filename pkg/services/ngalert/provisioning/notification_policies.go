@@ -236,7 +236,7 @@ func (nps *NotificationPolicyService) DeleteManagedRoute(ctx context.Context, or
 func (nps *NotificationPolicyService) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance) (*legacy_storage.ManagedRoute, error) {
 	// Backwards compatibility when managed routes FF is disabled. This is not allowed.
 	if !nps.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
-		return nil, fmt.Errorf("managed routes are not enabled, see feature toggle %s", featuremgmt.FlagAlertingMultiplePolicies)
+		return nil, ErrMultipleRoutesNotSupported.Errorf("")
 	}
 
 	err := subtree.Validate()
