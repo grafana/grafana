@@ -964,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Ez az útvonal továbbra is megfelel más házirendeknek"
     },
     "copy-to-clipboard": "„{{label}}” másolása a vágólapra",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Az értesítések a következő címre érkeznek:",
@@ -3642,7 +3649,10 @@
       "move-modal-title": "Áthelyezés",
       "move-provisioned-folder": "",
       "moving": "Áthelyezés...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "A mappa nevének megadása kötelező.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Kiépített és nem kiépített erőforrásokat is kijelölt. Ezeket nem lehet egyszerre feldolgozni. Kérjük, válasszon csak kiépített vagy csak nem kiépített erőforrásokat, majd próbálja újra.",
       "selected-mix-resources-modal-title": "Vegyes erőforrástípusok lettek kiválasztva"
     },
@@ -10939,7 +10949,9 @@
     "invite-user": {
       "invite-button": "Meghívás",
       "invite-new-user-button": "Új felhasználó meghívása",
-      "invite-tooltip": "Felhasználó meghívása"
+      "invite-tooltip": "Felhasználó meghívása",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Hozzáadás könyvjelzőkhöz",
