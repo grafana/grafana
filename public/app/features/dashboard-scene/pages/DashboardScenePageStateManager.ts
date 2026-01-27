@@ -1,6 +1,7 @@
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService, usePluginUserStorage } from '@grafana/runtime';
+import { UserStorage } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
@@ -218,15 +219,21 @@ abstract class DashboardScenePageStateManagerBase<T>
     }
   }
 
-  protected async loadAssistantPreviewDashboard(uid: string): Promise<DashboardDTO> {
-    const isValidUid = /^[a-zA-Z0-9_-]+$/.test(uid);
-    if (!isValidUid) {
-      throw new Error('Invalid dashboard UID');
+  protected async loadAssistantPreviewDashboard(base64EncodedKey: string): Promise<DashboardDTO> {
+    const decodedKey = atob(decodeURIComponent(base64EncodedKey));
+    const userStorage = new UserStorage('grafana-assistant-app')
+    const dashboard = await userStorage.getItem(decodedKey);
+    if (!dashboard) {
+      throw new Error('Dashboard not found');
     }
-    const urlEncodedUid = encodeURIComponent(uid);
-    const dashboard = await getBackendSrv().get<DashboardDataDTO>(`/api/plugins/grafana-assistant-app/resources/api/v1/ephemeral/${urlEncodedUid}/raw.json`);
+    let dashboardData: DashboardDataDTO;
+    try {
+      dashboardData = JSON.parse(dashboard);
+    } catch (err) {
+      throw new Error('Invalid dashboard data');
+    }
     return {
-      dashboard: dashboard,
+      dashboard: dashboardData,
       meta: {
         canStar: false,
         canShare: false,
