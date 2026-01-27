@@ -319,9 +319,7 @@ describe('LogContextProvider', () => {
     });
 
     it('should apply parsers and drop operations', async () => {
-      logContextProvider.cachedContextFilters = [
-        { value: 'info', enabled: true, nonIndexed: false, label: 'level' },
-      ];
+      logContextProvider.cachedContextFilters = [{ value: 'info', enabled: true, nonIndexed: false, label: 'level' }];
       const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
         defaultLogRow,
         10,
