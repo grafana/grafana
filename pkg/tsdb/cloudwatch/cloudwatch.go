@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -82,6 +83,18 @@ func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Conf
 	if ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && ds.Settings.SecureSocksProxyEnabled {
 		authSettings.ProxyOptions = ds.ProxyOpts
 	}
+
+	awsAuthSettings, hasSettings := awsds.ReadAuthSettingsFromContext(ctx)
+	if hasSettings {
+		backend.Logger.Warn("cloudwatch proxy enabled", "enabled", awsAuthSettings.PerDatasourceHTTPProxyEnabled)
+	}
+	authSettings.PerDatasourceProxySettings = &awsauth.PerDatasourceProxySettings{
+		ProxyType:     awsauth.ProxyType(ds.Settings.ProxyType),
+		ProxyUrl:      ds.Settings.ProxyUrl,
+		ProxyUsername: ds.Settings.ProxyUsername,
+		ProxyPassword: ds.Settings.ProxyPassword,
+	}
+
 	cfg, err := ds.AWSConfigProvider.GetConfig(ctx, authSettings)
 	if err != nil {
 		return aws.Config{}, err
