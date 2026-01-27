@@ -14,10 +14,6 @@ export function useRepositoryStatus(repoName?: string, options?: UseRepositorySt
 
   const [shouldEnablePolling, setShouldEnablePolling] = useState(true);
 
-  useEffect(() => {
-    setShouldEnablePolling(Boolean(repoName));
-  }, [repoName]);
-
   const query = useGetRepositoryStatusQuery(repoName ? { name: repoName } : skipToken, {
     pollingInterval: repoName && shouldEnablePolling ? pollIntervalMs : 0,
     skipPollingIfUnfocused: true,
@@ -39,7 +35,9 @@ export function useRepositoryStatus(repoName?: string, options?: UseRepositorySt
     }
     if (stopPollingWhenReady && isReady) {
       setShouldEnablePolling(false);
+      return;
     }
+    setShouldEnablePolling(true);
   }, [repoName, stopPollingWhenReady, isReady, query.isError]);
 
   return {

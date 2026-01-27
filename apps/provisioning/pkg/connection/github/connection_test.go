@@ -147,9 +147,15 @@ func TestConnection_Mutate(t *testing.T) {
 }
 
 func TestConnection_Test(t *testing.T) {
+	const appID = "123"
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	token, err := github.GenerateJWTToken(appID, common.RawSecureValue(privateKeyBase64))
+	require.NoError(t, err)
+
 	tests := []struct {
 		name           string
 		connection     *provisioning.Connection
+		secrets        github.ConnectionSecrets
 		setupMock      func(*github.MockGithubFactory, *github.MockClient)
 		expectedCode   int
 		expectedErrors []provisioning.ErrorDetails
@@ -162,10 +168,14 @@ func TestConnection_Test(t *testing.T) {
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
+						AppID:          appID,
 						InstallationID: "456",
 					},
 				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
@@ -176,16 +186,72 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: true,
 		},
 		{
+			name: "failure - privateKey is invalid",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: "invalidPrivateKey",
+				Token:      token,
+			},
+			expectedCode:  http.StatusUnauthorized,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "secure.privateKey",
+					Detail: "invalid private key",
+				},
+			},
+		},
+		{
+			name: "failure - token issuer is a differrent appID",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "678",
+						InstallationID: "456",
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
+			},
+			expectedCode:  http.StatusUnauthorized,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "spec.github.appID",
+					Detail: "invalid app ID: 678",
+				},
+			},
+		},
+		{
 			name: "failure - GetApp returns service unavailable",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
+						AppID:          appID,
 						InstallationID: "456",
 					},
 				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
@@ -195,8 +261,7 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: false,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.token",
+					Type:   metav1.CauseTypeInternal,
 					Detail: github.ErrServiceUnavailable.Error(),
 				},
 			},
@@ -208,10 +273,14 @@ func TestConnection_Test(t *testing.T) {
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
+						AppID:          appID,
 						InstallationID: "456",
 					},
 				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
@@ -222,8 +291,13 @@ func TestConnection_Test(t *testing.T) {
 			expectedErrors: []provisioning.ErrorDetails{
 				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.token",
-					Detail: "invalid token",
+					Field:  "spec.github.appID",
+					Detail: "verify appID is correct",
+				},
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "secure.privateKey",
+					Detail: "verify privateKey is correct",
 				},
 			},
 		},
@@ -234,10 +308,14 @@ func TestConnection_Test(t *testing.T) {
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
+						AppID:          appID,
 						InstallationID: "456",
 					},
 				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
@@ -248,7 +326,7 @@ func TestConnection_Test(t *testing.T) {
 			expectedErrors: []provisioning.ErrorDetails{
 				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.appID",
+					Field:  "spec.github.appID",
 					Detail: "appID mismatch: expected 123, got 999",
 				},
 			},
@@ -260,10 +338,14 @@ func TestConnection_Test(t *testing.T) {
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
+						AppID:          appID,
 						InstallationID: "456",
 					},
 				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
@@ -275,7 +357,7 @@ func TestConnection_Test(t *testing.T) {
 			expectedErrors: []provisioning.ErrorDetails{
 				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.installationID",
+					Field:  "spec.github.installationID",
 					Detail: github.ErrServiceUnavailable.Error(),
 				},
 			},
@@ -287,10 +369,14 @@ func TestConnection_Test(t *testing.T) {
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
+						AppID:          appID,
 						InstallationID: "456",
 					},
 				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
@@ -302,7 +388,7 @@ func TestConnection_Test(t *testing.T) {
 			expectedErrors: []provisioning.ErrorDetails{
 				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.installationID",
+					Field:  "spec.github.installationID",
 					Detail: "invalid installation ID: 456",
 				},
 			},
@@ -314,10 +400,14 @@ func TestConnection_Test(t *testing.T) {
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
+						AppID:          appID,
 						InstallationID: "456",
 					},
 				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
@@ -328,8 +418,13 @@ func TestConnection_Test(t *testing.T) {
 			expectedErrors: []provisioning.ErrorDetails{
 				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.token",
-					Detail: github.ErrAuthentication.Error(),
+					Field:  "spec.github.appID",
+					Detail: "verify appID is correct",
+				},
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "secure.privateKey",
+					Detail: "verify privateKey is correct",
 				},
 			},
 		},
@@ -340,10 +435,14 @@ func TestConnection_Test(t *testing.T) {
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
+						AppID:          appID,
 						InstallationID: "456",
 					},
 				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
@@ -354,7 +453,7 @@ func TestConnection_Test(t *testing.T) {
 			expectedErrors: []provisioning.ErrorDetails{
 				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.appID",
+					Field:  "spec.github.appID",
 					Detail: "app not found",
 				},
 			},
@@ -366,10 +465,14 @@ func TestConnection_Test(t *testing.T) {
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
+						AppID:          appID,
 						InstallationID: "456",
 					},
 				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+				Token:      token,
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
 				mockFactory.EXPECT().New(mock.Anything, mock.Anything).Return(mockClient)
@@ -381,7 +484,7 @@ func TestConnection_Test(t *testing.T) {
 			expectedErrors: []provisioning.ErrorDetails{
 				{
 					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  "spec.installationID",
+					Field:  "spec.github.installationID",
 					Detail: "installation not found",
 				},
 			},
@@ -396,9 +499,7 @@ func TestConnection_Test(t *testing.T) {
 				tt.setupMock(mockFactory, mockClient)
 			}
 
-			conn := github.NewConnection(tt.connection, mockFactory, github.ConnectionSecrets{
-				Token: common.RawSecureValue("test-token"),
-			})
+			conn := github.NewConnection(tt.connection, mockFactory, tt.secrets)
 			result, err := conn.Test(context.Background())
 
 			require.NoError(t, err)
@@ -981,8 +1082,15 @@ func TestConnection_ListRepositories(t *testing.T) {
 		mockFactory := github.NewMockGithubFactory(t)
 		mockClient := github.NewMockClient(t)
 
-		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
-		mockClient.EXPECT().ListInstallationRepositories(mock.Anything, "456").Return([]github.Repository{
+		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient).Once()
+		mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "").Return(github.InstallationToken{
+			Token:     "ghs_installation_token",
+			ExpiresAt: time.Now().Add(time.Hour),
+		}, nil)
+
+		mockInstallationClient := github.NewMockClient(t)
+		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("ghs_installation_token")).Return(mockInstallationClient)
+		mockInstallationClient.EXPECT().ListInstallationRepositories(mock.Anything).Return([]github.Repository{
 			{Name: "repo1", Owner: "owner1", URL: "https://github.com/owner1/repo1"},
 			{Name: "repo2", Owner: "owner2", URL: "https://github.com/owner2/repo2"},
 		}, nil)
@@ -1038,8 +1146,15 @@ func TestConnection_ListRepositories(t *testing.T) {
 		mockFactory := github.NewMockGithubFactory(t)
 		mockClient := github.NewMockClient(t)
 
-		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
-		mockClient.EXPECT().ListInstallationRepositories(mock.Anything, "456").Return(nil, assert.AnError)
+		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient).Once()
+		mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "").Return(github.InstallationToken{
+			Token:     "ghs_installation_token",
+			ExpiresAt: time.Now().Add(time.Hour),
+		}, nil)
+
+		mockInstallationClient := github.NewMockClient(t)
+		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("ghs_installation_token")).Return(mockInstallationClient)
+		mockInstallationClient.EXPECT().ListInstallationRepositories(mock.Anything).Return(nil, assert.AnError)
 
 		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{
 			Token: common.RawSecureValue("test-token"),
@@ -1048,6 +1163,70 @@ func TestConnection_ListRepositories(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "list installation repositories")
+	})
+
+	t.Run("should return error when creating installation token fails", func(t *testing.T) {
+		c := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+			Spec: provisioning.ConnectionSpec{
+				Type: provisioning.GithubConnectionType,
+				GitHub: &provisioning.GitHubConnectionConfig{
+					AppID:          "123",
+					InstallationID: "456",
+				},
+			},
+			Secure: provisioning.ConnectionSecure{
+				Token: common.InlineSecureValue{
+					Create: common.NewSecretValue("test-token"),
+				},
+			},
+		}
+
+		mockFactory := github.NewMockGithubFactory(t)
+		mockClient := github.NewMockClient(t)
+
+		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
+		mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "").Return(github.InstallationToken{}, assert.AnError)
+
+		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{
+			Token: common.RawSecureValue("test-token"),
+		})
+		_, err := conn.ListRepositories(context.Background())
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to create installation access token")
+	})
+
+	t.Run("should return error when service unavailable during token creation", func(t *testing.T) {
+		c := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+			Spec: provisioning.ConnectionSpec{
+				Type: provisioning.GithubConnectionType,
+				GitHub: &provisioning.GitHubConnectionConfig{
+					AppID:          "123",
+					InstallationID: "456",
+				},
+			},
+			Secure: provisioning.ConnectionSecure{
+				Token: common.InlineSecureValue{
+					Create: common.NewSecretValue("test-token"),
+				},
+			},
+		}
+
+		mockFactory := github.NewMockGithubFactory(t)
+		mockClient := github.NewMockClient(t)
+
+		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
+		mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "").Return(github.InstallationToken{}, github.ErrServiceUnavailable)
+
+		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{
+			Token: common.RawSecureValue("test-token"),
+		})
+		_, err := conn.ListRepositories(context.Background())
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to create installation access token")
 	})
 
 	t.Run("should return empty list when no repositories", func(t *testing.T) {
@@ -1070,8 +1249,15 @@ func TestConnection_ListRepositories(t *testing.T) {
 		mockFactory := github.NewMockGithubFactory(t)
 		mockClient := github.NewMockClient(t)
 
-		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient)
-		mockClient.EXPECT().ListInstallationRepositories(mock.Anything, "456").Return([]github.Repository{}, nil)
+		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("test-token")).Return(mockClient).Once()
+		mockClient.EXPECT().CreateInstallationAccessToken(mock.Anything, "456", "").Return(github.InstallationToken{
+			Token:     "ghs_installation_token",
+			ExpiresAt: time.Now().Add(time.Hour),
+		}, nil)
+
+		mockInstallationClient := github.NewMockClient(t)
+		mockFactory.EXPECT().New(mock.Anything, common.RawSecureValue("ghs_installation_token")).Return(mockInstallationClient)
+		mockInstallationClient.EXPECT().ListInstallationRepositories(mock.Anything).Return([]github.Repository{}, nil)
 
 		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{
 			Token: common.RawSecureValue("test-token"),

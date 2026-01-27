@@ -51,7 +51,10 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     resourceCountString,
     fileCountString,
     isLoading: isResourceStatsLoading,
-  } = useResourceStats(repoName, selectedTarget);
+  } = useResourceStats(repoName, selectedTarget, undefined, {
+    enableRepositoryStatus: false,
+    isHealthy: isRepositoryHealthy,
+  });
   const styles = useStyles2(getStyles);
 
   const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
@@ -87,15 +90,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     setValue('repository.sync.target', target);
   }, [target, setValue]);
 
-  if (repositoryStatusError || isRepositoryHealthy === false) {
-    // error message will be set in above step status
-    return (
-      <Button onClick={retryRepositoryStatus} disabled={isRepositoryStatusLoading}>
-        {t('provisioning.wizard.retry-status-button', 'Recheck repository status')}
-      </Button>
-    );
-  }
-
   if (isLoading) {
     return (
       <Box padding={4}>
@@ -103,6 +97,15 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           text={t('provisioning.bootstrap-step.text-loading-resource-information', 'Loading resource information...')}
         />
       </Box>
+    );
+  }
+
+  if (repositoryStatusError || isRepositoryHealthy === false) {
+    // error message will be set in above step status
+    return (
+      <Button onClick={retryRepositoryStatus} disabled={isRepositoryStatusLoading}>
+        {t('provisioning.wizard.retry-status-button', 'Recheck repository status')}
+      </Button>
     );
   }
 
