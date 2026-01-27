@@ -25,7 +25,7 @@ type CatalogPluginsManifest struct {
 
 var flagBundleCatalogPlugins = &cli.StringFlag{
 	Name:  "bundle-catalog-plugins",
-	Usage: "Comma-separated list of plugins to download from grafana.com catalog (format: id:version,id:version)",
+	Usage: "Comma-separated list of plugins to download from grafana.com catalog (format: id or id:version, version optional)",
 }
 
 var flagBundleCatalogPluginsFile = &cli.StringFlag{
@@ -74,7 +74,8 @@ func catalogPluginsValueFunc(ctx context.Context, opts *pipeline.ArgumentOpts) (
 	return plugins, nil
 }
 
-// ParseCatalogPluginsList parses a comma-separated list of plugins in the format "id:version,id:version".
+// ParseCatalogPluginsList parses a comma-separated list of plugins.
+// Format: "id" or "id:version" - version is optional and will resolve to latest compatible if omitted.
 func ParseCatalogPluginsList(list string) ([]CatalogPluginSpec, error) {
 	if list == "" {
 		return nil, nil
@@ -90,15 +91,14 @@ func ParseCatalogPluginsList(list string) ([]CatalogPluginSpec, error) {
 		}
 
 		parts := strings.SplitN(item, ":", 2)
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid plugin format %q, expected id:version", item)
+		id := strings.TrimSpace(parts[0])
+		if id == "" {
+			return nil, fmt.Errorf("invalid plugin format %q, id cannot be empty", item)
 		}
 
-		id := strings.TrimSpace(parts[0])
-		version := strings.TrimSpace(parts[1])
-
-		if id == "" || version == "" {
-			return nil, fmt.Errorf("invalid plugin format %q, id and version cannot be empty", item)
+		version := ""
+		if len(parts) == 2 {
+			version = strings.TrimSpace(parts[1])
 		}
 
 		plugins = append(plugins, CatalogPluginSpec{
@@ -123,12 +123,10 @@ func ParseCatalogPluginsFile(path string) ([]CatalogPluginSpec, error) {
 	}
 
 	// Validate all plugins have required fields
+	// Version is optional - empty version means "latest compatible"
 	for i, plugin := range manifest.Plugins {
 		if plugin.ID == "" {
 			return nil, fmt.Errorf("plugin at index %d is missing required 'id' field", i)
-		}
-		if plugin.Version == "" {
-			return nil, fmt.Errorf("plugin %q is missing required 'version' field", plugin.ID)
 		}
 	}
 

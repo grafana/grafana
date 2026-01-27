@@ -30,9 +30,10 @@ var CatalogPluginsInitializer = Initializer{
 
 // CatalogPlugins downloads plugins from the Grafana catalog (grafana.com).
 type CatalogPlugins struct {
-	Plugins        []arguments.CatalogPluginSpec
-	Distribution   backend.Distribution
-	GrafanaVersion string // Optional: used for API compatibility headers
+	// ResolvedPlugins contains plugins with resolved versions (after calling ResolvePluginVersions)
+	ResolvedPlugins []plugins.ResolvedPlugin
+	Distribution    backend.Distribution
+	GrafanaVersion  string // Optional: used for API compatibility headers
 }
 
 // Dependencies returns nil as catalog plugins have no dependencies.
@@ -54,10 +55,9 @@ func (c *CatalogPlugins) BuildFile(ctx context.Context, builder *dagger.Containe
 // BuildDir downloads the plugins and returns a directory containing them.
 func (c *CatalogPlugins) BuildDir(ctx context.Context, builder *dagger.Container, opts *pipeline.ArtifactContainerOpts) (*dagger.Directory, error) {
 	return plugins.DownloadPlugins(opts.Client, &plugins.DownloadOpts{
-		Plugins:        c.Plugins,
 		Distribution:   c.Distribution,
 		GrafanaVersion: c.GrafanaVersion,
-	}), nil
+	}, c.ResolvedPlugins), nil
 }
 
 // Publisher is not implemented.
@@ -83,7 +83,7 @@ func (c *CatalogPlugins) VerifyFile(ctx context.Context, client *dagger.Client, 
 // VerifyDirectory verifies the downloaded plugins directory.
 func (c *CatalogPlugins) VerifyDirectory(ctx context.Context, client *dagger.Client, dir *dagger.Directory) error {
 	// Verify that each expected plugin directory exists
-	for _, plugin := range c.Plugins {
+	for _, plugin := range c.ResolvedPlugins {
 		entries, err := dir.Entries(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to list plugin directory entries: %w", err)
@@ -108,7 +108,7 @@ func (c *CatalogPlugins) VerifyDirectory(ctx context.Context, client *dagger.Cli
 func (c *CatalogPlugins) Filename(ctx context.Context) (string, error) {
 	// Create a unique filename based on plugins and distribution
 	var pluginIDs []string
-	for _, p := range c.Plugins {
+	for _, p := range c.ResolvedPlugins {
 		pluginIDs = append(pluginIDs, fmt.Sprintf("%s-%s", p.ID, p.Version))
 	}
 
@@ -146,6 +146,7 @@ func NewCatalogPluginsFromString(ctx context.Context, log *slog.Logger, artifact
 }
 
 // NewCatalogPlugins creates a new CatalogPlugins artifact.
+// This resolves plugin versions for plugins that don't have a specific version specified.
 func NewCatalogPlugins(
 	ctx context.Context,
 	log *slog.Logger,
@@ -154,14 +155,20 @@ func NewCatalogPlugins(
 	distro backend.Distribution,
 	grafanaVersion string,
 ) (*pipeline.Artifact, error) {
+	// Resolve versions for plugins that don't have a specific version specified
+	resolvedPlugins, err := plugins.ResolvePluginVersions(ctx, log, pluginSpecs, grafanaVersion, distro)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve plugin versions: %w", err)
+	}
+
 	return pipeline.ArtifactWithLogging(ctx, log, &pipeline.Artifact{
 		ArtifactString: artifact,
 		Type:           pipeline.ArtifactTypeDirectory,
 		Flags:          CatalogPluginsFlags,
 		Handler: &CatalogPlugins{
-			Plugins:        pluginSpecs,
-			Distribution:   distro,
-			GrafanaVersion: grafanaVersion,
+			ResolvedPlugins: resolvedPlugins,
+			Distribution:    distro,
+			GrafanaVersion:  grafanaVersion,
 		},
 	})
 }
