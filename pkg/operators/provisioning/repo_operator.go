@@ -70,10 +70,8 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("failed to get repository factory: %w", err)
 	}
 
-	minSyncInterval := controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1 * time.Minute)
 	allowImageRendering := controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("allow_image_rendering").MustBool(false)
-
-	validator := repository.NewValidator(minSyncInterval, allowImageRendering, repoFactory)
+	validator := repository.NewValidator(allowImageRendering, repoFactory)
 	statusPatcher := appcontroller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 	// Health checker uses basic validation only - no need to validate against existing repositories
 	// since the repository already passed admission validation when it was created/updated.
