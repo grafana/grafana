@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"reflect"
 	"time"
 
 	"github.com/grafana/authlib/authn"
@@ -48,12 +47,13 @@ type ConfigOption func(ctx context.Context, cfg *ControllerConfig) error
 // ControllerConfig contains the configuration that overlaps for the jobs and repo controllers
 type ControllerConfig struct {
 	Settings              *setting.Cfg
-	provisioningClient    *client.Clientset
+	workerCount           int
 	resyncInterval        time.Duration
+	provisioningClient    *client.Clientset
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
 	tokenExchangeClient   *authn.TokenExchangeClient
-	tlsConfig             rest.TLSClientConfig
+	tlsConfig             *rest.TLSClientConfig
 	decryptService        decrypt.DecryptService
 	registry              prometheus.Registerer
 	repositoryFactory     repository.Factory
@@ -64,9 +64,8 @@ type ControllerConfig struct {
 	tracer                tracing.Tracer
 	quotaGetter           quotas.QuotaGetter
 	QuotaGetterFunc       func() (quotas.QuotaGetter, error)
-	workerCount           int
 	urlProvider           func(ctx context.Context, namespace string) string
-	UrlProviderFunc       func() (func(ctx context.Context, namespace string) string, error)
+	URLProviderFunc       func() (func(ctx context.Context, namespace string) string, error)
 }
 
 // expects:
@@ -105,6 +104,8 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 	controllerCfg := &ControllerConfig{
+		registry:       registry,
+		Settings:       cfg,
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
 	}
@@ -339,7 +340,9 @@ func (c *ControllerConfig) Registry() prometheus.Registerer {
 		return c.registry
 	}
 
-	return prometheus.NewPedanticRegistry()
+	c.registry = prometheus.NewPedanticRegistry()
+
+	return c.registry
 }
 
 func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
@@ -357,12 +360,14 @@ func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
 		return nil, fmt.Errorf("failed to provide tracing service: %w", err)
 	}
 
-	return tracer, nil
+	c.tracer = tracer
+
+	return c.tracer, nil
 }
 
 func (c *ControllerConfig) TokenExchangeClient() (*authn.TokenExchangeClient, error) {
-	if c.tokenExchangeClient == nil {
-		return nil, fmt.Errorf("token exchange client is not set")
+	if c.tokenExchangeClient != nil {
+		return c.tokenExchangeClient, nil
 	}
 
 	gRPCAuth := c.Settings.SectionWithEnvOverrides("grpc_client_authentication")
@@ -389,8 +394,8 @@ func (c *ControllerConfig) TokenExchangeClient() (*authn.TokenExchangeClient, er
 }
 
 func (c *ControllerConfig) TLSConfig() (rest.TLSClientConfig, error) {
-	if !reflect.ValueOf(c.tlsConfig).IsZero() {
-		return c.tlsConfig, nil
+	if c.tlsConfig != nil {
+		return *c.tlsConfig, nil
 	}
 
 	tlsConfig, err := buildTLSConfig(
@@ -404,7 +409,7 @@ func (c *ControllerConfig) TLSConfig() (rest.TLSClientConfig, error) {
 		return rest.TLSClientConfig{}, fmt.Errorf("failed to build TLS configuration: %w", err)
 	}
 
-	c.tlsConfig = tlsConfig
+	c.tlsConfig = &tlsConfig
 
 	return tlsConfig, nil
 }
@@ -482,8 +487,8 @@ func (c *ControllerConfig) URLProvider() (func(ctx context.Context, namespace st
 		return c.urlProvider, nil
 	}
 
-	if c.UrlProviderFunc != nil {
-		urlProvider, err := c.UrlProviderFunc()
+	if c.URLProviderFunc != nil {
+		urlProvider, err := c.URLProviderFunc()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get URL provider: %w", err)
 		}

@@ -76,8 +76,6 @@ func RunJobController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("failed to create job controller: %w", err)
 	}
 
-	logger.Info("jobs controller started")
-
 	var startHistoryInformers func()
 	if controllerCfg.historyExpiration > 0 {
 		// History jobs informer and controller (separate factory with resync == expiration)
