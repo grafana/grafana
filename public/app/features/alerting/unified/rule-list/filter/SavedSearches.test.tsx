@@ -87,10 +87,10 @@ describe('SavedSearches', () => {
 
       await user.click(ui.savedSearchesButton.get());
 
-      // Verify searches are displayed by checking for clickable name buttons
-      expect(await screen.findByRole('button', { name: 'Default Search' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Critical Alerts' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'My Firing Rules' })).toBeInTheDocument();
+      // Verify searches are displayed by checking for clickable name links
+      expect(await screen.findByRole('link', { name: 'Default Search' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Critical Alerts' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'My Firing Rules' })).toBeInTheDocument();
 
       // Verify the default search has a star icon
       expect(screen.getByTitle('Default search')).toBeInTheDocument();
@@ -177,8 +177,8 @@ describe('SavedSearches', () => {
       const { user } = render(<SavedSearches {...defaultProps} />);
 
       await user.click(ui.savedSearchesButton.get());
-      // Click directly on the search name "My Firing Rules"
-      await user.click(await screen.findByRole('button', { name: 'My Firing Rules' }));
+      // Click directly on the search name link "My Firing Rules"
+      await user.click(await screen.findByRole('link', { name: 'My Firing Rules' }));
 
       expect(defaultProps.onApply).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -190,9 +190,9 @@ test.describe(
       await ui.searchInput(page).clear();
       await ui.searchInput(page).press('Enter');
 
-      // Apply the saved search by clicking the search name
+      // Apply the saved search by clicking the search name link
       await ui.savedSearchesButton(page).click();
-      await page.getByRole('button', { name: 'Firing Rules' }).click();
+      await page.getByRole('link', { name: 'Firing Rules' }).click();
 
       // Verify the search input is updated
       await expect(ui.searchInput(page)).toHaveValue('state:firing');

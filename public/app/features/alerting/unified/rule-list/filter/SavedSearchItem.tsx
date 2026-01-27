@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Dropdown, Icon, IconButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, IconButton, Menu, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { InlineRenameInput } from './InlineRenameInput';
 import { SavedSearch } from './savedSearchesSchema';
@@ -13,6 +13,8 @@ import { SavedSearch } from './savedSearchesSchema';
 
 export interface SavedSearchItemProps {
   search: SavedSearch;
+  /** URL to navigate to when clicking the search name */
+  href: string;
   isRenaming: boolean;
   isDeleting: boolean;
   isDisabled: boolean;
@@ -31,6 +33,7 @@ export interface SavedSearchItemProps {
 
 export function SavedSearchItem({
   search,
+  href,
   isRenaming,
   isDeleting,
   isDisabled,
@@ -107,9 +110,15 @@ export function SavedSearchItem({
       <Stack direction="row" alignItems="center" gap={1} wrap={false}>
         {/* Name and default indicator */}
         <Stack direction="row" alignItems="center" gap={0.5} flex={1}>
-          <button type="button" className={styles.clickableName} onClick={onApply} disabled={isDisabled}>
-            <Text truncate>{search.name}</Text>
-          </button>
+          {isDisabled ? (
+            <Text truncate color="disabled">
+              {search.name}
+            </Text>
+          ) : (
+            <TextLink href={href} color="primary" inline={false} onClick={onApply}>
+              {search.name}
+            </TextLink>
+          )}
           {search.isDefault && (
             <Icon
               name="favorite"
@@ -210,27 +219,6 @@ function getStyles(theme: GrafanaTheme2) {
     actionMenuWrapper: css({
       display: 'flex',
       alignItems: 'center',
-    }),
-    clickableName: css({
-      // Reset button styles
-      background: 'none',
-      border: 'none',
-      padding: 0,
-      font: 'inherit',
-      color: 'inherit',
-      textAlign: 'left',
-      cursor: 'pointer',
-      // Truncation support
-      minWidth: 0,
-      maxWidth: '100%',
-      // Hover effect
-      '&:hover': {
-        textDecoration: 'underline',
-      },
-      '&:disabled': {
-        cursor: 'not-allowed',
-        opacity: 0.6,
-      },
     }),
   };
 }
