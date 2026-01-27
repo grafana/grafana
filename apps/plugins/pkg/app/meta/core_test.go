@@ -271,7 +271,6 @@ func TestNewCoreProviderWithTTL(t *testing.T) {
 	})
 }
 
-
 func pluginsPathFunc(path string) func() (string, error) {
 	return func() (string, error) {
 		return path, nil
