@@ -198,8 +198,12 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 	return b.search.ListModifiedSince(ctx, key, sinceRv)
 }
 
+var _ resource.StorageReader = (*baseBackend)(nil)
+var _ resource.StatsGetter = (*baseBackend)(nil)
+var _ resource.LifecycleHooks = (*baseBackend)(nil)
+var _ resourcepb.DiagnosticsServer = (*baseBackend)(nil)
+
 // baseBackend contains shared server lifecycle, database fields and access to read operations.
-// It implements resource.StorageReader and provides lifecycle management.
 type baseBackend struct {
 	// server lifecycle
 	done     <-chan struct{}
@@ -601,14 +605,6 @@ func (b *baseBackend) fetchLatestHistoryRV(ctx context.Context, x db.ContextExec
 	return res.ResourceVersion, nil
 }
 
-func (b *baseBackend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	return 0, fmt.Errorf("WriteEvent not supported on base backend")
-}
-
-func (b *baseBackend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
-	return nil, fmt.Errorf("WatchWriteEvents not supported on base backend")
-}
-
 func (b *baseBackend) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.GetResourceStats", trace.WithAttributes(
 		attribute.String("namespace", nsr.Namespace),
@@ -649,20 +645,11 @@ func (b *baseBackend) GetResourceStats(ctx context.Context, nsr resource.Namespa
 	return res, err
 }
 
-func (b *baseBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
-	return func(yield func(resource.ResourceLastImportTime, error) bool) {
-		yield(resource.ResourceLastImportTime{}, errors.New("GetResourceLastImportTimes not supported on base backend"))
-	}
-}
+var _ resource.StorageWriter = (*storageBackendImpl)(nil)
+var _ resource.StorageWatcher = (*storageBackendImpl)(nil)
+var _ resource.LifecycleHooks = (*storageBackendImpl)(nil)
 
-func (b *baseBackend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
-	return 0, func(yield func(*resource.ModifiedResource, error) bool) {
-		yield(nil, fmt.Errorf("ListModifiedSince not supported on base backend"))
-	}
-}
-
-// storageBackendImpl implements resource.StorageWriter and resource.StorageWatcher.
-// It embeds baseBackend to get StorageReader capabilities.
+// storageBackendImpl provides support for write/watch operations and garbage collection
 type storageBackendImpl struct {
 	*baseBackend // Embed base (provides StorageReader)
 
@@ -1231,6 +1218,8 @@ func (b *storageBackendImpl) listLatestRVs(ctx context.Context) (groupResourceRV
 // Don't run deletion of "last import times" more often than this duration.
 const limitLastImportTimesDeletion = 1 * time.Hour
 
+var _ resource.SearchSupport = (*searchBackendImpl)(nil)
+
 // searchBackendImpl implements resource.SearchSupport.
 type searchBackendImpl struct {
 	*baseBackend // Embed base (provides resource.StorageReader for index building)
@@ -1250,47 +1239,6 @@ func newSearchBackendWithBase(base *baseBackend, opts searchBackendOptions) (*se
 		baseBackend:          base,
 		lastImportTimeMaxAge: opts.LastImportTimeMaxAge,
 	}, nil
-}
-
-// GetResourceStats implements resource.SearchSupport.
-func (b *searchBackendImpl) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
-	ctx, span := tracer.Start(ctx, "sql.backend.GetResourceStats", trace.WithAttributes(
-		attribute.String("namespace", nsr.Namespace),
-		attribute.String("group", nsr.Group),
-		attribute.String("resource", nsr.Resource),
-	))
-	defer span.End()
-
-	req := &sqlStatsRequest{
-		SQLTemplate: sqltemplate.New(b.dialect),
-		Namespace:   nsr.Namespace,
-		Group:       nsr.Group,
-		Resource:    nsr.Resource,
-		MinCount:    minCount, // not used in query... yet?
-	}
-
-	res := make([]resource.ResourceStats, 0, 100)
-	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
-		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceStats, req)
-		if err != nil {
-			return err
-		}
-		for rows.Next() {
-			row := resource.ResourceStats{}
-			err = rows.Scan(&row.Namespace, &row.Group, &row.Resource, &row.Count, &row.ResourceVersion)
-			if err != nil {
-				return err
-			}
-			if row.Count > int64(minCount) {
-				res = append(res, row)
-			} else {
-				b.log.Debug("skipping stats for resource with count less than min count", "namespace", row.Namespace, "group", row.Group, "resource", row.Resource, "count", row.Count, "minCount", minCount)
-			}
-		}
-		return err
-	})
-
-	return res, err
 }
 
 // GetResourceLastImportTimes implements resource.SearchSupport.
