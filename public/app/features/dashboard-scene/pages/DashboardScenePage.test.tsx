@@ -8,7 +8,13 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { PanelProps, store, systemDateFormats, SystemDateFormatsState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { LocationServiceProvider, config, locationService, setPluginImportUtils } from '@grafana/runtime';
+import {
+  LocationServiceProvider,
+  config,
+  locationSearchToObject,
+  locationService,
+  setPluginImportUtils,
+} from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
@@ -16,6 +22,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types/dashboard';
 
+import { setPublicDashboardConfigFn } from '../../dashboard/components/PublicDashboard/usePublicDashboardConfig';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';
 
@@ -149,6 +156,13 @@ setDashboardLoaderSrv({
 
 describe('DashboardScenePage', () => {
   beforeEach(() => {
+    setPublicDashboardConfigFn({
+      footerHide: false,
+      footerText: 'Powered by',
+      footerLogo: 'grafana-logo',
+      footerLink: 'https://grafana.com/?src=grafananet&cnt=public-dashboards',
+      headerLogoHide: false,
+    });
     locationService.push('/d/my-dash-uid');
     getDashboardScenePageStateManager().clearDashboardCache();
     loadDashboardMock.mockClear();
@@ -171,6 +185,64 @@ describe('DashboardScenePage', () => {
 
     expect(await screen.findByTitle('Panel B')).toBeInTheDocument();
     expect(await screen.findByText('Content B')).toBeInTheDocument();
+  });
+
+  it('shows Powered by footer in kiosk mode', async () => {
+    setup({ routeProps: { queryParams: { kiosk: true } } });
+
+    await waitForDashboardToRender();
+
+    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
+  });
+
+  it('shows kiosk Powered by footer even when public dashboard footerHide is enabled', async () => {
+    setPublicDashboardConfigFn({
+      footerHide: true,
+      footerText: 'Powered by',
+      footerLogo: 'grafana-logo',
+      footerLink: 'https://grafana.com/?src=grafananet&cnt=public-dashboards',
+      headerLogoHide: false,
+    });
+
+    setup({ routeProps: { queryParams: { kiosk: true } } });
+
+    await waitForDashboardToRender();
+
+    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
+  });
+
+  it('shows Powered by footer when kiosk query param is present with no value (?kiosk)', async () => {
+    setup({ routeProps: { queryParams: locationSearchToObject('?kiosk') } });
+
+    await waitForDashboardToRender();
+
+    expect(await screen.findByTestId(selectors.pages.PublicDashboard.footer)).toBeInTheDocument();
+  });
+
+  it('does not show Powered by footer when kiosk=false', async () => {
+    setup({ routeProps: { queryParams: { kiosk: 'false' } } });
+
+    await waitForDashboardToRender();
+
+    expect(screen.queryByTestId(selectors.pages.PublicDashboard.footer)).not.toBeInTheDocument();
+  });
+
+  it('uses kiosk dashboard CTA url', async () => {
+    setup({ routeProps: { queryParams: { kiosk: true } } });
+
+    await waitForDashboardToRender();
+
+    const footer = await screen.findByTestId(selectors.pages.PublicDashboard.footer);
+    const link = footer.querySelector('a');
+    expect(link).toHaveAttribute('href', 'https://grafana.com/?src=grafananet&cnt=kiosk-dashboard');
+  });
+
+  it('hides Powered by footer in kiosk mode when hideLogo is present', async () => {
+    setup({ routeProps: { queryParams: { kiosk: true, hideLogo: true } } });
+
+    await waitForDashboardToRender();
+
+    expect(screen.queryByTestId(selectors.pages.PublicDashboard.footer)).not.toBeInTheDocument();
   });
 
   it('routeReloadCounter should trigger reload', async () => {
@@ -404,17 +476,22 @@ describe('DashboardScenePage', () => {
 
   describe('UnifiedDashboardScenePageStateManager', () => {
     it('should reset active manager when unmounting', async () => {
-      // This test is missing setup for v2 api so it erroring
-      jest.spyOn(console, 'error').mockImplementation(() => {});
-
       const manager = getDashboardScenePageStateManager();
       manager.setActiveManager('v2');
 
-      const { unmount } = setup();
+      // This test is only validating manager cleanup on unmount.
+      // Prevent the component from triggering a real v2 dashboard load (which requires extra setup).
+      const loadDashboardSpy = jest.spyOn(manager, 'loadDashboard').mockResolvedValue(undefined);
 
-      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
-      unmount();
-      expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+      try {
+        const { unmount } = setup();
+
+        expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+        unmount();
+        expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
+      } finally {
+        loadDashboardSpy.mockRestore();
+      }
     });
   });
 });

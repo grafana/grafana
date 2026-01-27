@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
-	index "github.com/blevesearch/bleve_index_api"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -51,7 +50,6 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-		ScoringModel:  index.BM25Scoring,
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -116,7 +114,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 							Labels: map[string]string{
 								utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
 							},
-							Tags: []string{"aa", "bb"},
+							Tags:            []string{"aa", "bb"},
+							OwnerReferences: []string{"iam.grafana.app/Team/engineering"},
 							Manager: &utils.ManagerProperties{
 								Kind:     utils.ManagerKindRepo,
 								Identity: "repo-1",
@@ -151,6 +150,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 								"region":                           "east",
 								utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
 							},
+							OwnerReferences: []string{"iam.grafana.app/Team/marketing", "iam.grafana.app/User/admin"},
 							Manager: &utils.ManagerProperties{
 								Kind:     utils.ManagerKindRepo,
 								Identity: "repo-1",
@@ -266,6 +266,55 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			rsp.Results.Rows[0].Key.Name,
 			rsp.Results.Rows[1].Key.Name,
 		})
+
+		// search by owner reference
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Operator: "=",
+					Values:   []string{"iam.grafana.app/Team/engineering"},
+				}},
+			},
+			Limit: 100000,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), rsp.TotalHits)
+		require.Equal(t, "aaa", rsp.Results.Rows[0].Key.Name)
+
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Operator: "=",
+					Values:   []string{"iam.grafana.app/Team/marketing"},
+				}},
+			},
+			Limit: 100000,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), rsp.TotalHits)
+		require.Equal(t, "bbb", rsp.Results.Rows[0].Key.Name)
+
+		// search by owner reference - multiple values (OR)
+		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Operator: "in",
+					Values:   []string{"iam.grafana.app/Team/engineering", "iam.grafana.app/User/admin"},
+				}},
+			},
+			Limit: 100000,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(2), rsp.TotalHits)
+		names := []string{rsp.Results.Rows[0].Key.Name, rsp.Results.Rows[1].Key.Name}
+		assert.Contains(t, names, "aaa")
+		assert.Contains(t, names, "bbb")
 
 		// can get sprinkles fields and sort by them
 		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
@@ -775,7 +824,6 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 		IndexCacheTTL: defaultIndexCacheTTL,
 		Logger:        log.NewNopLogger(),
 		BuildVersion:  buildVersion,
-		ScoringModel:  index.BM25Scoring,
 	}
 	for _, opt := range options {
 		opt(&opts)
