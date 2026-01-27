@@ -16,6 +16,37 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+// Registry is the public migration registry containing all migration definitions.
+// It can be used from other packages to access migrations without the SQL migration interface.
+var Registry = NewMigrationRegistry()
+
+func init() {
+	// Register folders and dashboards migration
+	folderGR := schema.GroupResource{Group: folders.GROUP, Resource: folders.RESOURCE}
+	dashboardGR := schema.GroupResource{Group: v1beta1.GROUP, Resource: v1beta1.DASHBOARD_RESOURCE}
+
+	Registry.Register(&MigrationDefinition{
+		ID:        "folders-dashboards",
+		Resources: []schema.GroupResource{folderGR, dashboardGR},
+		Validators: []ValidatorFactory{
+			CountValidation(folderGR, "dashboard", "org_id = ? and is_folder = true"),
+			CountValidation(dashboardGR, "dashboard", "org_id = ? and is_folder = false"),
+			FolderTreeValidation(folderGR),
+		},
+	})
+
+	// Register playlists migration
+	playlistGR := schema.GroupResource{Group: playlists.APIGroup, Resource: "playlists"}
+
+	Registry.Register(&MigrationDefinition{
+		ID:        "playlists",
+		Resources: []schema.GroupResource{playlistGR},
+		Validators: []ValidatorFactory{
+			CountValidation(playlistGR, "playlist", "org_id = ?"),
+		},
+	})
+}
+
 type resourceDefinition struct {
 	groupResource schema.GroupResource
 	migratorFunc  string // Name of the method: "MigrateFolders", "MigrateDashboards", etc.
@@ -93,36 +124,15 @@ func registerDashboardAndFolderMigration(mg *sqlstoremigrator.Migrator,
 	client resource.ResourceClient,
 	opts ...ResourceMigrationOption,
 ) {
-	foldersDef := getResourceDefinition("folder.grafana.app", "folders")
-	dashboardsDef := getResourceDefinition("dashboard.grafana.app", "dashboards")
-	driverName := mg.Dialect.DriverName()
+	def := Registry.Get("folders-dashboards")
+	if def == nil {
+		logger.Error("folders-dashboards migration definition not found in registry")
+		return
+	}
 
-	folderCountValidator := NewCountValidator(
-		client,
-		foldersDef.groupResource,
-		"dashboard",
-		"org_id = ? and is_folder = true",
-		driverName,
-	)
-
-	dashboardCountValidator := NewCountValidator(
-		client,
-		dashboardsDef.groupResource,
-		"dashboard",
-		"org_id = ? and is_folder = false",
-		driverName,
-	)
-
-	folderTreeValidator := NewFolderTreeValidator(client, foldersDef.groupResource, driverName)
-
-	dashboardsAndFolders := NewResourceMigration(
-		migrator,
-		[]schema.GroupResource{foldersDef.groupResource, dashboardsDef.groupResource},
-		"folders-dashboards",
-		[]Validator{folderCountValidator, dashboardCountValidator, folderTreeValidator},
-		opts...,
-	)
-	mg.AddMigration("folders and dashboards migration", dashboardsAndFolders)
+	validators := def.CreateValidators(client, mg.Dialect.DriverName())
+	migration := NewResourceMigration(migrator, def.Resources, def.ID, validators, opts...)
+	mg.AddMigration("folders and dashboards migration", migration)
 }
 
 func registerPlaylistMigration(mg *sqlstoremigrator.Migrator,
@@ -130,25 +140,15 @@ func registerPlaylistMigration(mg *sqlstoremigrator.Migrator,
 	client resource.ResourceClient,
 	opts ...ResourceMigrationOption,
 ) {
-	playlistsDef := getResourceDefinition("playlist.grafana.app", "playlists")
-	driverName := mg.Dialect.DriverName()
+	def := Registry.Get("playlists")
+	if def == nil {
+		logger.Error("playlists migration definition not found in registry")
+		return
+	}
 
-	playlistCountValidator := NewCountValidator(
-		client,
-		playlistsDef.groupResource,
-		"playlist",
-		"org_id = ?",
-		driverName,
-	)
-
-	playlistsMigration := NewResourceMigration(
-		migrator,
-		[]schema.GroupResource{playlistsDef.groupResource},
-		"playlists",
-		[]Validator{playlistCountValidator},
-		opts...,
-	)
-	mg.AddMigration("playlists migration", playlistsMigration)
+	validators := def.CreateValidators(client, mg.Dialect.DriverName())
+	migration := NewResourceMigration(migrator, def.Resources, def.ID, validators, opts...)
+	mg.AddMigration("playlists migration", migration)
 }
 
 // TODO: remove this before Grafana 13 GA: https://github.com/grafana/search-and-storage-team/issues/613

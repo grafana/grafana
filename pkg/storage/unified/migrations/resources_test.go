@@ -195,10 +195,11 @@ func TestResourceMigration_AutoMigrateEnablesMode5(t *testing.T) {
 			m := NewResourceMigration(nil, resources, "test-auto-migrate", nil, opts...)
 
 			// Simulate what happens at the end of a successful migration
-			// This is the logic from Exec() that we're testing
-			if m.autoMigrate && m.cfg != nil && m.cfg.UnifiedStorageType() == "unified" {
+			// This is the logic from MigrationRunner.Run() that we're testing
+			// Note: EnableMode5 should only be called for unified storage type
+			if m.runner.autoEnableMode5 && m.runner.cfg != nil && m.runner.cfg.UnifiedStorageType() == "unified" {
 				for _, gr := range m.resources {
-					m.cfg.EnableMode5(gr.Resource + "." + gr.Group)
+					m.runner.cfg.EnableMode5(gr.Resource + "." + gr.Group)
 				}
 			}
 
