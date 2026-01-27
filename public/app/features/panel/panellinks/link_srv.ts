@@ -80,23 +80,22 @@ const buildLabelPath = (label: string) => {
   return label.includes('.') || label.trim().includes(' ') ? `["${label}"]` : `.${label}`;
 };
 
+const isRecordOrArray = (value: unknown): value is Record<string, unknown> | unknown[] =>
+  typeof value === 'object' && value !== null;
+
 const getVariableValueProperties = (variable: TypedVariableModel): string[] => {
   if (!('options' in variable) || !variable.options[0].properties) {
     return [];
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function collectFieldPaths(properties: Record<string, any>, currentPath: string) {
+  function collectFieldPaths(properties: Record<string, unknown> | unknown[], currentPath: string) {
     let paths: string[] = [];
-    for (const field in properties) {
-      if (properties.hasOwnProperty(field)) {
-        const newPath = `${currentPath}.${field}`;
-        const value = properties[field];
-        if (typeof value === 'object' && value !== null) {
-          paths = [...paths, ...collectFieldPaths(value, newPath)];
-        }
-        paths.push(newPath);
+    for (const [field, value] of Object.entries(properties)) {
+      const newPath = `${currentPath}.${field}`;
+      if (isRecordOrArray(value)) {
+        paths = [...paths, ...collectFieldPaths(value, newPath)];
       }
+      paths.push(newPath);
     }
     return paths;
   }
