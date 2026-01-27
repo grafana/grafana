@@ -175,4 +175,3 @@ grafanactl resources get repositories
 # Check Grafana UI
 # Navigate to: Administration → Provisioning → Git Sync
 ```
-

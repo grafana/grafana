@@ -16,10 +16,10 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code
 aliases:
   - ../../../observability-as-code/provision-resources/git-sync-setup/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
   - ../provision-resources/git-sync-setup/
-  - ./git-sync-setup/ 
+  - ./git-sync-setup/
 ---
 
-# Set up Git Sync 
+# Set up Git Sync
 
 {{< admonition type="caution" >}}
 
@@ -57,8 +57,8 @@ Before you begin, ensure you have the following:
 
 Get acquainted with the following topics:
 
-- [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/intro-git-sync#known-limitations) 
-- [Supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/intro-git-sync#supported-resources) 
+- [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/intro-git-sync#known-limitations)
+- [Supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/intro-git-sync#supported-resources)
 
 For further details refer to [key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts)
 
@@ -68,9 +68,8 @@ To activate Git Sync in Grafana you need to set the `provisioning` and `kubernet
 
 - In Grafana Cloud, open a support ticket
 
-- In Grafana OSS/Enterprise: 
-
-  1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. 
+- In Grafana OSS/Enterprise:
+  1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
   1. Add this value:
 
      ```ini
@@ -132,7 +131,7 @@ Finally, install the app:
 1. At the top left of the page, click on **Install App**
 1. Choose for which user you need to install it, you’ll be redirected to the repo selection section
 1. Choose for which repos you want to install the app
-1. Click **Install**. 
+1. Click **Install**.
 1. On the installation page, copy the **installationID** from the page URL https://github.com/settings/installations/**<installationID>**
 
 ## Set up Git Sync using the UI
@@ -140,16 +139,16 @@ Finally, install the app:
 To set up Git Sync from the Grafana UI, follow these steps:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
-1. Select **Administration > General > Provisioning** in the left-side menu to access the Git Sync configuration screen. If you already have an active Git Sync connection, go to the **Getting Started** tab. 
-1. Select **Configure with GitHub**. 
-1. [Choose the connection type](#choose-the-connection-type). There's two methods to connect Git Sync: with a Personal Access Token or via GitHub App 
+1. Select **Administration > General > Provisioning** in the left-side menu to access the Git Sync configuration screen. If you already have an active Git Sync connection, go to the **Getting Started** tab.
+1. Select **Configure with GitHub**.
+1. [Choose the connection type](#choose-the-connection-type). There's two methods to connect Git Sync: with a Personal Access Token or via GitHub App
 1. [Choose what content to sync with Grafana](#choose-what-to-synchronize)
 1. [Synchronize with external storage](#synchronize-with-external-storage)
 1. [Choose additional settings](#choose-additional-settings)
 
 ### Choose the connection type
 
-On this screen you will configure your Git Sync connection, either using a **Personal Access Token** or with **GitHub App**. 
+On this screen you will configure your Git Sync connection, either using a **Personal Access Token** or with **GitHub App**.
 
 #### Connect with a Personal Access Token
 
@@ -161,7 +160,7 @@ Refer to [Create a GitHub access token](#create-a-github-access-token) for instr
 
 If you want to configure your connection with a Personal Access Token, select the option and follow these steps:
 
-1. Paste your GitHub personal access token into **Enter your access token**. 
+1. Paste your GitHub personal access token into **Enter your access token**.
 1. Paste the **Repository URL** for your GitHub repository into the text box.
 1. Enter a branch to use for provisioning. The default value is `main`.
 1. Optionally, you can add a **Path** to a subdirectory where your dashboards are stored. The default value is `grafana/`. If your dashboards are stored in the root of your repository, then remove the directory name.
@@ -176,7 +175,7 @@ Refer to [Create a GitHub App](#create-a-github-app) for instructions on how to 
 
 {{< /admonition >}}
 
-If you already have an existing GitHub App connected: 
+If you already have an existing GitHub App connected:
 
 1. Select **Choose an existing app**.
 1. Click on the existing connection you want to use, and click on **Configure repository** to proceed.
@@ -241,7 +240,7 @@ You connection is complete!
 
 In this last step, you can configure the **Sync interval (seconds)** to indicate how often you want your Grafana instance to pull updates from GitHub. The default value is 60 seconds.
 
-You can also select these optional settings: 
+You can also select these optional settings:
 
 - Check **Read only** to ensure resources can't be modified in Grafana.
 - Check **Enable pull request option when saving** to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.
@@ -259,25 +258,29 @@ Now that your dashboards have been synced from a repository, you can customize t
 
 Optionally, you can extend Git Sync by enabling pull request notifications and image previews of dashboard changes.
 
-| Capability             | Benefit             | Requires                  |
-| ------------------ | ---------------------------- | -------------------------- |
-| A table summarizing changes to your pull request | A convenient way to save changes back to GitHub                       | Webhooks configured                    |
-| A dashboard preview image to a PR                 | A snapshot of dashboard changes to a pull request outside Grafana | Image renderer and webhooks configured |
+| Capability                                       | Benefit                                                           | Requires                               |
+| ------------------------------------------------ | ----------------------------------------------------------------- | -------------------------------------- |
+| A table summarizing changes to your pull request | A convenient way to save changes back to GitHub                   | Webhooks configured                    |
+| A dashboard preview image to a PR                | A snapshot of dashboard changes to a pull request outside Grafana | Image renderer and webhooks configured |
 
 ### Set up webhooks for real-time notification and pull request integration
 
 Git Sync uses webhooks to enable real-time updates from GitHub public repositories, or to enable pull request integrations. Without webhooks the polling interval is set during configuration, and is 60 seconds by default. You can set up webhooks with whichever service or tooling you prefer: Cloudflare Tunnels with a Cloudflare-managed domain, port-forwarding and DNS options, or a tool such as `ngrok`.
 
-To set up webhooks: 
+To set up webhooks:
 
-1. Expose your Grafana instance to the public Internet. 
-  - Use port forwarding and DNS, a tool such as `ngrok`, or any other method you prefer. 
-  - The permissions set in your GitHub access token provide the authorization for this communication.
+1. Expose your Grafana instance to the public Internet.
+
+- Use port forwarding and DNS, a tool such as `ngrok`, or any other method you prefer.
+- The permissions set in your GitHub access token provide the authorization for this communication.
+
 1. After you have the public URL, add it to your Grafana configuration file:
-  ```ini
-  [server]
-  root_url = https://<PUBLIC_DOMAIN>
-  ```
+
+```ini
+[server]
+root_url = https://<PUBLIC_DOMAIN>
+```
+
 1. Replace _`<PUBLIC_DOMAIN>`_ with your public domain.
 
 To check the configured webhooks, go to **Administration > General > Provisioning** and click the **View** link for your GitHub repository.
@@ -296,15 +299,16 @@ Set up image rendering to add visual previews of dashboard updates directly in p
 
 To enable this capability, install the Grafana Image Renderer in your Grafana instance. For more information and installation instructions, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
 
-## Update or delete your Git Sync configuration  
+## Update or delete your Git Sync configuration
 
 To update or delete your repository configuration after you've completed setup:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
 1. Select **Administration > General > Provisioning**.
 1. Select **Settings** for the repository you wish to modify to access the **Configure repository** screen:
-  - To modify your configuration, update any of the settings and select **Save**.
-  - To delete the repository, click **Delete**. You can either keep the synced resources or delete them.
+
+- To modify your configuration, update any of the settings and select **Save**.
+- To delete the repository, click **Delete**. You can either keep the synced resources or delete them.
 
 ## Next steps
 
