@@ -62,7 +62,7 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
   };
 
   const onInputChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
-    const newName = event.currentTarget.value.trim();
+    const newName = event.currentTarget.value;
     const error = validateQueryName(newName);
     setValidationError(error);
   };
@@ -84,8 +84,6 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
   const onFocus = (event: React.FocusEvent<HTMLInputElement>) => {
     event.target.select();
   };
-
-  console.log({ query });
 
   if (isEditing) {
     return (
