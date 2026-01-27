@@ -118,7 +118,7 @@ To set up Git Sync from the Grafana UI, follow these steps:
 
 ### Choose the connection type
 
-On this screen you will configure your Git Sync connection, either using a **Personal Access Token** or with **GitHub App**. To create a GitHub App, 
+On this screen you will configure your Git Sync connection, either using a **Personal Access Token** or with **GitHub App**. 
 
 #### Connect with a Personal Access Token
 
@@ -156,13 +156,19 @@ If you already have an existing GitHub App connected:
 If you want to connect using a new GitHub App:
 
 1. Select **Connect to a new app**.
+
 1. Type in the following fields:
+
   - The ID of the GitHub App you want to use
   - The GitHub Installation ID
   - The Private Key
+
 1. Click on **Configure repository** to proceed.
+
 1. Paste the **Repository URL** for your GitHub repository into the text box.
+
 1. Enter a branch to use for provisioning. The default value is `main`.
+
 1. Optionally, you can add a **Path** to a subdirectory where your dashboards are stored. The default value is `grafana/`. If your dashboards are stored in the root of your repository, then remove the directory name.
 
 Select **Choose what to synchronize** to have the connection to your repository verified and continue setup.
