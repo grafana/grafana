@@ -162,7 +162,7 @@ To access your saved queries, click **+ Add from saved queries** or open the **S
 
 Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace query** in the **Saved queries** drop-down menu updates your existing query.
 
-#### RBAC roles and permissions
+#### Roles, permissions, and RBAC
 
 Saved queries support role-based access controls.
 By default, saved queries have two RBAC roles:
