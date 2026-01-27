@@ -118,10 +118,10 @@ To create the GitHub App, follow these steps:
 - Homepage URL: For example, your Grafana Cloud instance URL
 1. Uncheck the “active” check in the **Webhook** section
 1. Go to repository permissions section and set these parameters up:
-- Contents: Read and Write
-- Metadata: Read Only
-- Pull Requests: Read and Write
-- Webhooks: Read and Write
+   - **Contents**: Read and write permission
+   - **Metadata**: Read-only permission
+   - **Pull requests**: Read and write permission
+   - **Webhooks**: Read and write permission
 - In the **Where can this GitHub App be installed?** section, choose **Only this account**
 1. Click on **Create Github app** to complete the process. On the app page, copy the **AppID**
 
