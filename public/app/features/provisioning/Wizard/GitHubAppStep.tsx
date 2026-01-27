@@ -12,6 +12,7 @@ import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnectio
 import { ConnectionFormData } from '../types';
 
 import { SelectableConnectionCard } from './SelectableConnectionCard';
+import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
 import { ConnectionCreationResult, WizardFormData } from './types';
 
 export interface GitHubAppStepRef {
@@ -22,7 +23,7 @@ interface GitHubAppStepProps {
   onSubmit: (result: ConnectionCreationResult) => void;
 }
 
-export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(function GitHubAppStep(
+export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepProps>(function GitHubAppStep(
   { onSubmit },
   ref
 ) {
@@ -94,11 +95,13 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef, GitHubAppStepProps>(fu
 
   return (
     <Stack direction="column" gap={2}>
+      <GithubAppStepInstruction />
       <Field noMargin label={t('provisioning.wizard.github-app-mode-label', 'GitHub App configuration')}>
         <Controller
           name="githubAppMode"
           control={control}
-          render={({ field: { onChange, ...field } }) => (
+          // RadioButtonGroup doesn't support refs, so we need to remove it from fields
+          render={({ field: { ref, onChange, ...field } }) => (
             <RadioButtonGroup
               options={[
                 {

@@ -584,6 +584,11 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
+  * Enables Saved queries (query library) RBAC permissions
+  * @default false
+  */
+  savedQueriesRBAC?: boolean;
+  /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
   */
@@ -996,6 +1001,7 @@ export interface FeatureToggles {
   azureMonitorLogsBuilderEditor?: boolean;
   /**
   * Specifies the locale so the correct format for numbers and dates can be shown
+  * @deprecated
   * @default false
   */
   localeFormatPreference?: boolean;
@@ -1160,6 +1166,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerUI?: boolean;
+  /**
+  * Disables the DMA feature in the UI
+  * @default false
+  */
+  alertingDisableDMAinUI?: boolean;
   /**
   * Enables image sharing functionality for dashboards
   * @default true
@@ -1425,6 +1436,11 @@ export interface FeatureToggles {
   * @default false
   */
   queryWithAssistant?: boolean;
+  /**
+  * Enables next generation query editor experience
+  * @default false
+  */
+  queryEditorNext?: boolean;
   /**
   * Enables search for team bindings in the app platform API
   * @default false

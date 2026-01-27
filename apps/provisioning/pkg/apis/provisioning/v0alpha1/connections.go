@@ -106,6 +106,13 @@ type ConnectionStatus struct {
 	// +listType=atomic
 	FieldErrors []ErrorDetails `json:"fieldErrors,omitempty"`
 
+	// Conditions represent the latest available observations of the connection's state.
+	// +listType=map
+	// +listMapKey=type
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+
 	// Connection state
 	State ConnectionState `json:"state"`
 
