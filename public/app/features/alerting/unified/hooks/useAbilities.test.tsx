@@ -217,6 +217,28 @@ describe('AlertRule abilities', () => {
 
     expect(result.current).toMatchSnapshot();
   });
+
+  it('should allow editing/deleting rules with plugin origin label when plugin is not installed', async () => {
+    // Create a rule with a plugin origin label for a plugin that doesn't exist
+    const rule = getGrafanaRule({
+      labels: { __grafana_origin: 'plugin/non-existent-plugin' },
+    });
+
+    const { result } = renderHook(() => useAllAlertRuleAbilities(rule), { wrapper: wrapper() });
+
+    await waitFor(() => {
+      // Wait for the abilities to settle - update should be supported (not loading)
+      const [updateSupported] = result.current[AlertRuleAction.Update];
+      expect(updateSupported).toBe(true);
+    });
+
+    // When plugin is not installed, these actions should be supported
+    const [updateSupported] = result.current[AlertRuleAction.Update];
+    const [deleteSupported] = result.current[AlertRuleAction.Delete];
+
+    expect(updateSupported).toBe(true);
+    expect(deleteSupported).toBe(true);
+  });
 });
 
 describe('enrichment abilities', () => {
