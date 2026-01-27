@@ -1,3 +1,12 @@
+<!-- 12.3.1+security-01 START -->
+
+# 12.3.1+security-01 (2026-01-27)
+
+### Bug fixes
+
+- **Alerting:** Fix contact points issue [#115427](https://github.com/grafana/grafana/pull/115427), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+<!-- 12.3.1+security-01 END -->
 <!-- 12.2.3+security-01 START -->
 
 # 12.2.3+security-01 (2026-01-27)
