@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "Deprecated",
       "delete": "Delete",
       "duplicate": "Duplicate",
       "label-integration": "Integration",
       "label-notification-settings": "Notification settings",
       "label-section": "Optional {{name}} settings",
       "test": "Test",
+      "tooltip-deprecated": "This integration is deprecated and will be removed in a future release.",
       "tooltip-legacy-version": "This is a legacy integration (version: {{version}}). It cannot be modified."
     },
     "classic-condition-viewer": {
@@ -962,6 +964,13 @@
       "content-route-continue-matching-other-policies": "This route will continue matching other policies"
     },
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
+    "create-alert-from-panel": {
+      "description": "Open the alert creation form in the current tab or a new tab?",
+      "no-queries": "No alerting-capable queries found in this panel.",
+      "open": "Open",
+      "open-in-new-tab": "Open in new tab",
+      "title": "Create alert rule"
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Notifications are delivered to",
@@ -1018,10 +1027,6 @@
       "show-details": "Show details",
       "this-datasource-has-been-removed": "This datasource has been removed",
       "update-datasource": "Update datasource"
-    },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
-      "declare-incident": "Declare Incident"
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
@@ -1934,6 +1939,10 @@
       "select-group": "Select group",
       "select-namespace": "Select namespace"
     },
+    "navigation": {
+      "alert-rules": "Alert rules",
+      "recently-deleted": "Recently deleted"
+    },
     "need-help-info": {
       "need-help": "Need help?"
     },
@@ -2691,7 +2700,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
-      "apply-tooltip": "Apply search \"{{name}}\"",
       "button-label": "Saved searches",
       "cancel": "Cancel",
       "default-indicator": "Default search",
@@ -3636,7 +3644,10 @@
       "move-modal-title": "Move",
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
+      "new-folder-as-team-folder-checkbox-tooltip": "Team folders are folders owned by your team. Use them to keep your team’s content in one place—making it easier to find, organize, and manage access",
+      "new-folder-as-team-folder-label": "Team:",
       "new-folder-name-required-phrase": "Folder name is required.",
+      "new-folder-owner-selector-checkbox": "Assign an owner to the folder",
       "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
       "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
@@ -5164,6 +5175,9 @@
       "title": {
         "deleted": "deleted"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": "Powered by"
     },
     "layout": {
       "cancel": "Cancel",
@@ -9854,7 +9868,7 @@
     "loading-panel-text": "Loading library panel",
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
       "button-cancel": "Cancel",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
@@ -10967,7 +10981,9 @@
     "invite-user": {
       "invite-button": "Invite",
       "invite-new-user-button": "Invite new user",
-      "invite-tooltip": "Invite user"
+      "invite-tooltip": "Invite user",
+      "upgrade-button": "Upgrade",
+      "upgrade-tooltip": "Upgrade to add more users"
     },
     "item": {
       "add-bookmark": "Add to Bookmarks",
@@ -12382,6 +12398,8 @@
       "github-app-creation-failed": "Failed to create GitHub App connection",
       "github-app-error-loading": "Failed to load connections",
       "github-app-error-required": "Connection is required",
+      "github-app-help-instructions": "Create a GitHub App, generate a private key, install it, and paste the details below. <2>View step-by-step instructions</2>",
+      "github-app-help-title": "Need help creating a GitHub App?",
       "github-app-mode-existing": "Choose an existing app",
       "github-app-mode-label": "GitHub App configuration",
       "github-app-mode-new": "Connect to a new app",
@@ -12619,6 +12637,17 @@
       "query-inspector": "Query inspector",
       "query-tab-help-button-title-open-data-source-help": "Open data source help",
       "title-data-source-help": "Data source help"
+    }
+  },
+  "query-editor-next": {
+    "detail-placeholder": "Query/Transform detail view goes here",
+    "sidebar": {
+      "card-click": "Select query {{refId}}",
+      "expression": "Expression",
+      "queries-expressions": "Queries & Expressions",
+      "query": "Query",
+      "query-stack": "Query Stack",
+      "toggle-size": "Toggle sidebar size"
     }
   },
   "query-library": {
@@ -13346,6 +13375,7 @@
       "label-standard": "Standard"
     },
     "suggestions": {
+      "stat": "Stat",
       "stat-color-background": "Stat - color background",
       "stat-discrete-values": "Stat - discrete values",
       "stat-discrete-values-color-background": "Stat - discrete values - color background",
@@ -14956,6 +14986,9 @@
       "label-both": "Both",
       "label-lines": "Lines",
       "label-points": "Points"
+    },
+    "suggestions": {
+      "scatter-plot": "Scatter plot"
     }
   }
 }

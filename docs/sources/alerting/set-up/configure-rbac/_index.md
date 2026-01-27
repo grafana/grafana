@@ -47,6 +47,8 @@ The following table summarizes the default alerting permissions for each basic r
 | Create, edit, and delete policies         |   ✓   |   ✓    |        |
 | View mute timings                         |   ✓   |   ✓    |   ✓    |
 | Create, edit, and delete timing intervals |   ✓   |   ✓    |        |
+| View alert enrichments                    |   ✓   |   ✓    |   ✓    |
+| Create, edit, and delete enrichments      |   ✓   |   ✓    |        |
 | Access provisioning API                   |   ✓   |   ✓    |        |
 | Export with decrypted secrets             |   ✓   |        |        |
 
@@ -179,5 +181,14 @@ Permissions for managing alerting resources via the provisioning API.
 | `alert.notifications.provisioning:read`  | n/a              | Read notification resources (contact points, notification policies, templates, time intervals) via provisioning API. More specific than `alert.provisioning:read`. |
 | `alert.notifications.provisioning:write` | n/a              | Create, update, and delete notification resources via provisioning API. More specific than `alert.provisioning:write`.                                             |
 | `alert.provisioning.provenance:write`    | n/a              | Set provisioning status for alerting resources. Cannot be used alone. Requires user to have permissions to access resources.                                       |
+
+### Alert enrichments
+
+Permissions for managing alert enrichments.
+
+| Action                    | Applicable scope | Description                                                                             |
+| ------------------------- | ---------------- | --------------------------------------------------------------------------------------- |
+| `alert.enrichments:read`  | n/a              | Read alert enrichment configurations in the current organization.                       |
+| `alert.enrichments:write` | n/a              | Create, update, and delete alert enrichment configurations in the current organization. |
 
 To help plan your RBAC rollout strategy, refer to [Plan your RBAC rollout strategy](https://grafana.com/docs/grafana/next/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/).

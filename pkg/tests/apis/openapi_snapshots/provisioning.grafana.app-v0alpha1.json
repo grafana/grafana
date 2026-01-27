@@ -4336,6 +4336,24 @@
           "health"
         ],
         "properties": {
+          "conditions": {
+            "description": "Conditions represent the latest available observations of the connection's state.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Condition"
+                }
+              ]
+            },
+            "x-kubernetes-list-map-keys": [
+              "type"
+            ],
+            "x-kubernetes-list-type": "map",
+            "x-kubernetes-patch-merge-key": "type",
+            "x-kubernetes-patch-strategy": "merge"
+          },
           "fieldErrors": {
             "description": "FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec.",
             "type": "array",
@@ -5229,6 +5247,22 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.QuotaStatus": {
+        "description": "QuotaStatus represents the quota limits configured for this repository. These values come from static configuration and are read-only.",
+        "type": "object",
+        "properties": {
+          "maxRepositories": {
+            "description": "MaxRepositories is the maximum number of repositories allowed. 0 means unlimited.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "maxResourcesPerRepository": {
+            "description": "MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited.",
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RefItem": {
         "type": "object",
         "required": [
@@ -5500,6 +5534,24 @@
           "webhook"
         ],
         "properties": {
+          "conditions": {
+            "description": "Conditions represent the latest available observations of the repository's state.",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Condition"
+                }
+              ]
+            },
+            "x-kubernetes-list-map-keys": [
+              "type"
+            ],
+            "x-kubernetes-list-type": "map",
+            "x-kubernetes-patch-merge-key": "type",
+            "x-kubernetes-patch-strategy": "merge"
+          },
           "deleteError": {
             "description": "Error information during repository deletion (if any)",
             "type": "string"
@@ -5531,6 +5583,15 @@
             "type": "integer",
             "format": "int64",
             "default": 0
+          },
+          "quota": {
+            "description": "Quota contains the configured quota limits for this repository",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.QuotaStatus"
+              }
+            ]
           },
           "stats": {
             "description": "The object count when sync last ran",
@@ -5666,6 +5727,7 @@
         "type": "object",
         "required": [
           "allowImageRendering",
+          "maxRepositories",
           "items"
         ],
         "properties": {
@@ -5719,6 +5781,12 @@
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
+          },
+          "maxRepositories": {
+            "description": "MaxRepositories is the maximum number of repositories allowed per namespace (0 = unlimited)",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },
@@ -6155,7 +6223,7 @@
             "default": false
           },
           "intervalSeconds": {
-            "description": "When non-zero, the sync will run periodically",
+            "description": "The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one.",
             "type": "integer",
             "format": "int64"
           },
@@ -6496,6 +6564,52 @@
               ]
             },
             "x-kubernetes-list-type": "atomic"
+          }
+        }
+      },
+      "io.k8s.apimachinery.pkg.apis.meta.v1.Condition": {
+        "description": "Condition contains details for one aspect of the current state of this API Resource.",
+        "type": "object",
+        "required": [
+          "type",
+          "status",
+          "lastTransitionTime",
+          "reason",
+          "message"
+        ],
+        "properties": {
+          "lastTransitionTime": {
+            "description": "lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
+              }
+            ]
+          },
+          "message": {
+            "description": "message is a human readable message indicating details about the transition. This may be an empty string.",
+            "type": "string",
+            "default": ""
+          },
+          "observedGeneration": {
+            "description": "observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "description": "reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty.",
+            "type": "string",
+            "default": ""
+          },
+          "status": {
+            "description": "status of the condition, one of True, False, Unknown.",
+            "type": "string",
+            "default": ""
+          },
+          "type": {
+            "description": "type of condition in CamelCase or in foo.example.com/CamelCase.",
+            "type": "string",
+            "default": ""
           }
         }
       },

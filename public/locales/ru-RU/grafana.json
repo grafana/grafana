@@ -808,12 +808,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Удалить",
       "duplicate": "Дублировать",
       "label-integration": "Интеграция",
       "label-notification-settings": "Параметры уведомлений",
       "label-section": "Дополнительные параметры {{name}}",
       "test": "Тестирование",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -972,6 +974,13 @@
       "content-route-continue-matching-other-policies": "Сопоставление маршрута с другими политиками будет продолжено"
     },
     "copy-to-clipboard": "Копировать метку «{{label}}» в буфер обмена",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Точка контакта для доставки уведомлений",
@@ -1653,6 +1662,11 @@
       },
       "yaml-error": "Не удалось проанализировать YAML-файл: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Следите за состоянием своей системы",
       "monitor-status-system-tooltip": "Аналитика по оповещениям предлагает готовые дашборды для мониторинга данных оповещений.",
@@ -1940,6 +1954,10 @@
     "namespace-and-group-filter": {
       "select-group": "Выбрать группу",
       "select-namespace": "Выбрать пространство имен"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Нужна помощь?"
@@ -3653,7 +3671,10 @@
       "move-modal-title": "Перемещение",
       "move-provisioned-folder": "",
       "moving": "Перемещение...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Необходимо указать имя папки.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Вы выбрали как подготовленные, так и неподготовленные ресурсы. Совместная обработка невозможна. Выберите только подготовленные или неподготовленные ресурсы и повторите попытку.",
       "selected-mix-resources-modal-title": "Выбраны разные типы ресурсов"
     },
@@ -5197,6 +5218,9 @@
       "title": {
         "deleted": "удалено"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -11013,7 +11037,9 @@
     "invite-user": {
       "invite-button": "Пригласить",
       "invite-new-user-button": "Пригласить нового пользователя",
-      "invite-tooltip": "Пригласить пользователя"
+      "invite-tooltip": "Пригласить пользователя",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Добавить в закладки",
@@ -11963,10 +11989,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12159,6 +12182,8 @@
       "error-delete-all-repositories": "Не удалось удалить все репозитории",
       "subtitle": "Просмотр настроенных репозиториев и управление ими",
       "success-all-repositories-deleted": "Все настроенные репозитории удалены",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Начало работы",
       "tab-getting-started-title": "Начало работы",
       "tab-repositories": "Репозитории",
@@ -12222,6 +12247,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12242,7 +12270,6 @@
       "jobs": "Задания"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Параметры",
       "source-code": "Исходный код"
     },
@@ -12422,6 +12449,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Готово",
@@ -12434,15 +12466,30 @@
         "dismiss": "Продолжить работу",
         "title": "Отменить настройку репозитория?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Выберите, что синхронизировать",
+      "step-configure-repo": "",
       "step-connect": "Подключить",
       "step-finish": "Выберите дополнительные параметры",
+      "step-github-app": "",
       "step-synchronize": "Синхронизировать с внешним хранилищем",
       "sync-description": "Синхронизируйте ресурсы с внешним хранилищем. После этого разового шага все будущие обновления будут автоматически сохраняться в репозитории и загружаться обратно в экземпляр.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Выберите, что синхронизировать",
+      "title-configure-repo": "",
       "title-connect": "Подключение к внешнему хранилищу",
       "title-finish": "Выбор дополнительных параметров",
+      "title-github-app": "",
       "title-synchronize": "Синхронизировать с внешним хранилищем"
     },
     "wizard-content": {
@@ -12662,6 +12709,18 @@
       "query-inspector": "Инспектор запросов",
       "query-tab-help-button-title-open-data-source-help": "Открыть справку по источнику данных",
       "title-data-source-help": "Справка по источнику данных"
+    }
+  },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {
@@ -13390,6 +13449,7 @@
       "label-standard": "Стандартный"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -15002,6 +15062,9 @@
       "label-both": "Оба",
       "label-lines": "Линии",
       "label-points": "Точки"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

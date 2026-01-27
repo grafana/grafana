@@ -799,12 +799,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "削除",
       "duplicate": "複製",
       "label-integration": "統合",
       "label-notification-settings": "通知設定",
       "label-section": "{{name}}のオプション設定",
       "test": "テスト",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -957,6 +959,13 @@
       "content-route-continue-matching-other-policies": "このルートは他のポリシーとのマッチングを継続します"
     },
     "copy-to-clipboard": "「{{label}}」をクリップボードにコピー",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "通知の配信先",
@@ -1638,6 +1647,11 @@
       },
       "yaml-error": "YAMLファイルの解析に失敗しました: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "システムの状態を監視する",
       "monitor-status-system-tooltip": "アラートインサイトはアラートデータを監視するための既成ダッシュボードを提供します。",
@@ -1922,6 +1936,10 @@
     "namespace-and-group-filter": {
       "select-group": "グループを選択",
       "select-namespace": "名前空間を選択"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "サポートが必要ですか？"
@@ -3620,7 +3638,10 @@
       "move-modal-title": "移動",
       "move-provisioned-folder": "",
       "moving": "移動中…",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "フォルダ名が必要です。",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "プロビジョニング済みのリソースと未プロビジョニングのリソースの両方が選択されています。これらは同時に処理できません。プロビジョニングされたリソースのみまたはプロビジョニングされていないリソースのみを選択して、再試行してください。",
       "selected-mix-resources-modal-title": "混在したリソースタイプが選択されました"
     },
@@ -5140,6 +5161,9 @@
       "title": {
         "deleted": "削除済み"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -10881,7 +10905,9 @@
     "invite-user": {
       "invite-button": "招待",
       "invite-new-user-button": "新しいユーザーを招待する",
-      "invite-tooltip": "ユーザーを招待"
+      "invite-tooltip": "ユーザーを招待",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "ブックマークに追加",
@@ -11813,10 +11839,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12003,6 +12026,8 @@
       "error-delete-all-repositories": "すべてのリポジトリの削除に失敗しました",
       "subtitle": "設定済みのリポジトリを表示・管理",
       "success-all-repositories-deleted": "設定済みのリポジトリがすべて削除されました",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "はじめに",
       "tab-getting-started-title": "はじめに",
       "tab-repositories": "リポジトリ",
@@ -12066,6 +12091,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12086,7 +12114,6 @@
       "jobs": "ジョブ"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "設定",
       "source-code": "ソースコード"
     },
@@ -12266,6 +12293,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "完了",
@@ -12278,15 +12310,30 @@
         "dismiss": "作業を続ける",
         "title": "リポジトリの設定を破棄しますか？"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "同期する内容を選択",
+      "step-configure-repo": "",
       "step-connect": "接続",
       "step-finish": "追加設定を選択",
+      "step-github-app": "",
       "step-synchronize": "外部ストレージと同期",
       "sync-description": "リソースを外部ストレージと同期します。この一度限りの手順が完了すると、その後のすべての更新は自動的にリポジトリに保存され、インスタンスにプロビジョニングされます。",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "同期する内容を選択",
+      "title-configure-repo": "",
       "title-connect": "外部ストレージに接続",
       "title-finish": "追加設定を選択",
+      "title-github-app": "",
       "title-synchronize": "外部ストレージと同期"
     },
     "wizard-content": {
@@ -12503,6 +12550,18 @@
       "query-inspector": "クエリ検査",
       "query-tab-help-button-title-open-data-source-help": "データソースヘルプを開く",
       "title-data-source-help": "データソースヘルプ"
+    }
+  },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {
@@ -13222,6 +13281,7 @@
       "label-standard": "標準"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14831,6 +14891,9 @@
       "label-both": "両方",
       "label-lines": "線",
       "label-points": "ポイント"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }
