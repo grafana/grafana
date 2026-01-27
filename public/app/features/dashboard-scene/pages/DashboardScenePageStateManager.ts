@@ -140,8 +140,7 @@ export function getSceneCreationOptions(
 
 abstract class DashboardScenePageStateManagerBase<T>
   extends StateManagerBase<DashboardScenePageState>
-  implements DashboardScenePageStateManagerLike<T>
-{
+  implements DashboardScenePageStateManagerLike<T> {
   abstract fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
   abstract reloadDashboard(queryParams: UrlQueryMap): Promise<void>;
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
@@ -217,6 +216,25 @@ abstract class DashboardScenePageStateManagerBase<T>
         throw err;
       }
     }
+  }
+
+  protected async loadAssistantPreviewDashboard(uid: string): Promise<DashboardDTO> {
+    const isValidUid = /^[a-zA-Z0-9_-]+$/.test(uid);
+    if (!isValidUid) {
+      throw new Error('Invalid dashboard UID');
+    }
+    const urlEncodedUid = encodeURIComponent(uid);
+    const dashboard = await getBackendSrv().get<DashboardDataDTO>(`/api/plugins/grafana-assistant-app/resources/api/v1/ephemeral/${urlEncodedUid}/raw.json`);
+    return {
+      dashboard: dashboard,
+      meta: {
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+        canSave: false,
+        canEdit: false,
+      },
+    };
   }
 
   protected async loadProvisioningDashboard(repo: string, path: string): Promise<T> {
@@ -682,6 +700,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           break;
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);
+        case DashboardRoutes.AssistantPreview:
+          return this.loadAssistantPreviewDashboard(uid);
         case DashboardRoutes.Public: {
           const result = await dashboardLoaderSrv.loadDashboard('public', '', uid);
           // public dashboards use legacy API but can return V2 dashboards
