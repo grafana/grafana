@@ -1,3 +1,18 @@
+<!-- 12.0.9 START -->
+
+# 12.0.9 (2026-01-27)
+
+### Features and enhancements
+
+- **API:** Add missing scope check on dashboards [#116892](https://github.com/grafana/grafana/pull/116892), [@Proximyst](https://github.com/Proximyst)
+- **Avatar:** Require sign-in, remove queue, respect timeout [#116897](https://github.com/grafana/grafana/pull/116897), [@macabu](https://github.com/macabu)
+- **Go:** Update to 1.25.6 [#116401](https://github.com/grafana/grafana/pull/116401), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Alerting:** Fix a race condition panic in ResetStateByRuleUID [#115692](https://github.com/grafana/grafana/pull/115692), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+
+<!-- 12.0.9 END -->
 <!-- 11.6.10 START -->
 
 # 11.6.10 (2026-01-27)
