@@ -14,7 +14,7 @@ import { useMenuFocus } from './hooks';
 
 /** @internal */
 export interface SubMenuProps {
-  parentRef: React.RefObject<HTMLElement>;
+  parentItemRef: React.RefObject<HTMLElement>;
   /** List of menu items of the subMenu */
   items?: Array<ReactElement<MenuItemProps>>;
   /** Open */
@@ -28,7 +28,7 @@ export interface SubMenuProps {
 const SUBMENU_POSITION = 'right-start';
 
 /** @internal */
-export const SubMenu = memo(({ parentRef, items, isOpen, close, customStyle }: SubMenuProps) => {
+export const SubMenu = memo(({ parentItemRef, items, isOpen, close, customStyle }: SubMenuProps) => {
   const styles = useStyles2(getStyles);
   // the order of middleware is important!
   const middleware = [...getPositioningMiddleware(SUBMENU_POSITION)];
@@ -39,7 +39,7 @@ export const SubMenu = memo(({ parentRef, items, isOpen, close, customStyle }: S
     middleware,
     whileElementsMounted: autoUpdate,
     elements: {
-      reference: parentRef.current,
+      reference: parentItemRef.current,
     },
   });
 

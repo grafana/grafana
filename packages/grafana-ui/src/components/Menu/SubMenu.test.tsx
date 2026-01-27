@@ -12,9 +12,9 @@ describe('SubMenu', () => {
       <MenuItem key="subitem1" label="subitem1" icon="history" />,
       <MenuItem key="subitem2" label="subitem2" icon="apps" />,
     ];
-    const parentRef = createRef<HTMLElement>();
+    const parentItemRef = createRef<HTMLElement>();
 
-    render(<SubMenu parentRef={parentRef} items={items} isOpen={true} close={jest.fn()} />);
+    render(<SubMenu parentItemRef={parentItemRef} items={items} isOpen={true} close={jest.fn()} />);
 
     expect(screen.getByTestId(selectors.components.Menu.SubMenu.icon)).toBeInTheDocument();
 
