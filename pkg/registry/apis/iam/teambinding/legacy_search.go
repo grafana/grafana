@@ -103,6 +103,10 @@ func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourc
 		pageItems = res.Bindings
 		continueToken = res.Continue
 
+		if len(pageItems) > int(req.Limit) {
+			pageItems = pageItems[:req.Limit]
+		}
+
 		if p < req.Page && continueToken == 0 {
 			pageItems = nil
 			break
