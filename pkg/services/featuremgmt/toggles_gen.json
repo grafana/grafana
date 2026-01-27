@@ -3020,6 +3020,7 @@
         "name": "mysqlAnsiQuotes",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-10-12T11:43:35Z",
+        "deletionTimestamp": "2026-01-27T13:45:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
