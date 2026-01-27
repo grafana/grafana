@@ -103,9 +103,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       position: 'relative',
       boxSizing: 'border-box',
       paddingBottom: theme.spacing(2),
-      ...(sidebarSize === SidebarSize.Mini && {
-        paddingLeft: theme.spacing(2),
-      }),
+      paddingLeft: theme.spacing(2),
     }),
     viz: css({
       gridArea: 'viz',
