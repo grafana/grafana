@@ -246,7 +246,7 @@ func newBaseBackend(opts baseBackendOptions) (*baseBackend, error) {
 	}, nil
 }
 
-// Init initializes the base backend (database connection, dialect, RV manager).
+// Init initializes the base backend (database connection, dialect).
 func (b *baseBackend) Init(ctx context.Context) error {
 	b.initOnce.Do(func() {
 		b.initErr = b.initLocked(ctx)
@@ -709,7 +709,7 @@ func newStorageBackendWithBase(base *baseBackend, opts storageBackendOptions) (*
 	}, nil
 }
 
-// Init initializes the storage backend (base init + rvManager + notifier + pruner + GC).
+// Init initializes the storage backend (rvManager + notifier + pruner + GC).
 func (b *storageBackendImpl) Init(ctx context.Context) error {
 	b.initOnce.Do(func() {
 		b.initErr = b.initLocked(ctx)

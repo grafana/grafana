@@ -843,6 +843,95 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 	})
 }
 
+// setupBackendTestStorageDisabled creates a test backend with storage disabled (search-only/read-only mode)
+func setupBackendTestStorageDisabled(t *testing.T) (testBackend, context.Context) {
+	t.Helper()
+
+	ctx := testutil.NewDefaultTestContext(t)
+	dbp := test.NewDBProviderMatchWords(t)
+	b, err := NewBackend(BackendOptions{DBProvider: dbp, EnableStorage: false})
+	require.NoError(t, err)
+	require.NotNil(t, b)
+
+	err = b.Init(ctx)
+	require.NoError(t, err)
+
+	bb, ok := b.(*backend)
+	require.True(t, ok)
+	require.NotNil(t, bb)
+	require.Nil(t, bb.storage, "storage should be nil when EnableStorage is false")
+
+	return testBackend{
+		backend:        bb,
+		TestDBProvider: dbp,
+	}, ctx
+}
+
+func TestBackend_StorageDisabled(t *testing.T) {
+	t.Parallel()
+
+	t.Run("WriteEvent returns error when storage is disabled", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTestStorageDisabled(t)
+
+		meta, err := utils.MetaAccessor(&unstructured.Unstructured{
+			Object: map[string]any{},
+		})
+		require.NoError(t, err)
+		event := resource.WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    resKey,
+			Object: meta,
+		}
+
+		rv, err := b.WriteEvent(ctx, event)
+		require.Zero(t, rv)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "storage not enabled on this backend")
+	})
+
+	t.Run("ProcessBulk returns error when storage is disabled", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTestStorageDisabled(t)
+
+		// Create a minimal bulk request iterator
+		iter := &testBulkRequestIterator{done: true}
+		settings := resource.BulkSettings{}
+
+		resp := b.ProcessBulk(ctx, settings, iter)
+		require.NotNil(t, resp)
+		require.NotNil(t, resp.Error)
+		require.Contains(t, resp.Error.Message, "storage not enabled on this backend")
+	})
+
+	t.Run("WatchWriteEvents returns error when storage is disabled", func(t *testing.T) {
+		t.Parallel()
+		b, ctx := setupBackendTestStorageDisabled(t)
+
+		ch, err := b.WatchWriteEvents(ctx)
+		require.Nil(t, ch)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "storage not enabled on this backend")
+	})
+}
+
+// testBulkRequestIterator is a minimal implementation of resource.BulkRequestIterator for testing
+type testBulkRequestIterator struct {
+	done bool
+}
+
+func (t *testBulkRequestIterator) Next() bool {
+	return !t.done
+}
+
+func (t *testBulkRequestIterator) Request() *resourcepb.BulkRequest {
+	return nil
+}
+
+func (t *testBulkRequestIterator) RollbackRequested() bool {
+	return false
+}
+
 // setupHistoryTest creates the necessary mock expectations for a history test
 func setupHistoryTest(b testBackend, resourceVersions []int64, latestRV int64, expectedLatestDeletionAsMinRV4 bool) *sqlmock.Rows {
 	// Expect fetch latest RV call - set to the highest resource version
