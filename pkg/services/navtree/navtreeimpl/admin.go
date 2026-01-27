@@ -190,7 +190,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	configNode := &navtree.NavLink{
 		Id:         navtree.NavIDCfg,
 		Text:       "Administration",
-		SubTitle:   "Organization: " + c.GetOrgName(),
+		SubTitle:   "Organization: " + c.GetOrgName(), // HERE!
 		Icon:       "cog",
 		SortWeight: navtree.WeightConfig,
 		Children:   configNodes,
