@@ -301,7 +301,12 @@ func (c *ControllerConfig) DecryptService() (decrypt.DecryptService, error) {
 		return c.decryptService, nil
 	}
 
-	decryptSvc, err := setupDecryptService(c.Settings, tracing.NewNoopTracerService(), c.tokenExchangeClient)
+	tokenExchangeClient, err := c.TokenExchangeClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create token exchange client: %w", err)
+	}
+
+	decryptSvc, err := setupDecryptService(c.Settings, tracing.NewNoopTracerService(), tokenExchangeClient)
 	if err != nil {
 		return nil, fmt.Errorf("setup decrypt service: %w", err)
 	}
