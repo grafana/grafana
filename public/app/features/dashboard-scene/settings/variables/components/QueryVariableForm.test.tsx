@@ -358,7 +358,7 @@ describe('QueryVariableEditorForm', () => {
 
   it('should call onStaticOptionsChange when adding a static option', async () => {
     const {
-      renderer: { getByTestId, getAllByTestId },
+      renderer: { getByTestId, getByPlaceholderText },
     } = await setup();
 
     // First enable static options
@@ -371,8 +371,8 @@ describe('QueryVariableEditorForm', () => {
     await userEvent.click(addButton);
 
     // Enter label for the new option
-    await userEvent.type(getAllByTestId('static-option-input-text')[0], 'New Option Label[Tab]');
-    await userEvent.type(getAllByTestId('static-option-input-value')[0], 'new-option-value[Tab]');
+    await userEvent.type(getByPlaceholderText('text'), 'New Option Label[Tab]');
+    await userEvent.type(getByPlaceholderText('value'), 'new-option-value[Tab]');
     await screen.findByDisplayValue('new-option-value');
 
     expect(mockOnStaticOptionsChange).toHaveBeenCalled();
@@ -409,13 +409,13 @@ describe('QueryVariableEditorForm', () => {
 
   it('should call onStaticOptionsChange when editing a static option label', async () => {
     const {
-      renderer: { getAllByTestId },
+      renderer: { getByPlaceholderText },
     } = await setup({
       ...defaultProps,
       staticOptions: [{ value: 'test', label: 'Test Label', properties: { value: 'test', text: 'Test Label' } }],
     });
 
-    const labelInput = getAllByTestId('static-option-input-text')[0];
+    const labelInput = getByPlaceholderText('text');
     await userEvent.clear(labelInput);
     await userEvent.type(labelInput, 'Updated Label[Tab]');
 
@@ -426,7 +426,7 @@ describe('QueryVariableEditorForm', () => {
 
   it('should call onStaticOptionsChange when editing a static option value', async () => {
     const {
-      renderer: { getAllByTestId },
+      renderer: { getByPlaceholderText },
     } = await setup({
       ...defaultProps,
       staticOptions: [
@@ -434,10 +434,10 @@ describe('QueryVariableEditorForm', () => {
       ],
     });
 
-    const valueInputs = getAllByTestId('static-option-input-value');
+    const valueInput = getByPlaceholderText('value');
 
-    await userEvent.clear(valueInputs[0]);
-    await userEvent.type(valueInputs[0], 'new-value[Tab]');
+    await userEvent.clear(valueInput);
+    await userEvent.type(valueInput, 'new-value[Tab]');
 
     expect(mockOnStaticOptionsChange).toHaveBeenCalledWith([
       { value: 'new-value', label: 'Test Label', properties: { value: 'new-value', text: 'Test Label' } },

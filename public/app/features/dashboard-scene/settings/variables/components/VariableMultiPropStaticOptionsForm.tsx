@@ -227,7 +227,6 @@ function OptionRow({
                   }
                 }}
                 onKeyDown={i === properties.length - 1 ? onKeyDown : undefined}
-                data-testid={`static-option-input-${p}`}
               />
             </div>
           ))}
