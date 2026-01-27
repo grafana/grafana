@@ -9,6 +9,7 @@ import { BootstrapStep, Props } from './BootstrapStep';
 import { StepStatusProvider } from './StepStatusContext';
 import { useModeOptions } from './hooks/useModeOptions';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
+import { useResourceStats } from './hooks/useResourceStats';
 import { WizardFormData } from './types';
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
@@ -236,8 +237,10 @@ describe('BootstrapStep', () => {
     it('should use useResourceStats hook correctly', async () => {
       setup();
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', 'folder');
+      expect(useResourceStats).toHaveBeenCalledWith('test-repo', 'folder', undefined, {
+        enableRepositoryStatus: false,
+        isHealthy: true,
+      });
     });
 
     it('should use useResourceStats hook with settings data', async () => {
@@ -251,8 +254,10 @@ describe('BootstrapStep', () => {
         },
       });
 
-      const mockUseResourceStats = require('./hooks/useResourceStats').useResourceStats;
-      expect(mockUseResourceStats).toHaveBeenCalledWith('test-repo', 'folder');
+      expect(useResourceStats).toHaveBeenCalledWith('test-repo', 'folder', undefined, {
+        enableRepositoryStatus: false,
+        isHealthy: true,
+      });
     });
   });
 
