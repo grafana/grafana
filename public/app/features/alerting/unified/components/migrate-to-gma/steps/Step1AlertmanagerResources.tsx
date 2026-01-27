@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -12,13 +13,13 @@ import {
   Icon,
   Input,
   RadioButtonList,
+  Select,
   Stack,
   Text,
   useStyles2,
 } from '@grafana/ui';
-import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { isAlertmanagerDataSourceInstance } from '../../../utils/datasource';
+import { getAlertManagerDataSources } from '../../../utils/datasource';
 import { DEFAULT_MIGRATION_LABEL_NAME, MigrationFormValues } from '../MigrateToGMA';
 
 interface Step1Props {
@@ -210,32 +211,7 @@ export function Step1AlertmanagerResources({ onComplete, onSkip, canImport }: St
               </Field>
             )}
 
-            {notificationsSource === 'datasource' && (
-              <Field
-                label={t('alerting.migrate-to-gma.step1.datasource', 'Alertmanager data source')}
-                invalid={!!errors.notificationsDatasourceUID}
-                error={errors.notificationsDatasourceUID?.message}
-                noMargin
-              >
-                <Controller
-                  render={({ field: { ref, onChange, ...field } }) => (
-                    <DataSourcePicker
-                      {...field}
-                      filter={(ds: DataSourceInstanceSettings) => isAlertmanagerDataSourceInstance(ds)}
-                      current={field.value}
-                      onChange={(ds: DataSourceInstanceSettings) => {
-                        onChange(ds.uid);
-                        setValue('notificationsDatasourceName', ds.name);
-                      }}
-                      noDefault
-                      width={40}
-                    />
-                  )}
-                  control={control}
-                  name="notificationsDatasourceUID"
-                />
-              </Field>
-            )}
+            {notificationsSource === 'datasource' && <AlertmanagerDataSourceSelect />}
           </Box>
         </div>
       </div>
@@ -251,6 +227,59 @@ export function Step1AlertmanagerResources({ onComplete, onSkip, canImport }: St
         </Button>
       </Stack>
     </Stack>
+  );
+}
+
+/**
+ * Component to select an Alertmanager data source (excludes Grafana built-in)
+ */
+function AlertmanagerDataSourceSelect() {
+  const {
+    control,
+    setValue,
+    formState: { errors },
+  } = useFormContext<MigrationFormValues>();
+
+  // Get external Alertmanager data sources (same function used by AlertManagerPicker)
+  const alertmanagerOptions: Array<SelectableValue<string>> = useMemo(() => {
+    const alertmanagerDataSources = getAlertManagerDataSources();
+    return alertmanagerDataSources.map((ds) => ({
+      label: ds.name,
+      value: ds.uid,
+      imgUrl: ds.meta.info.logos.small,
+      description: ds.url || undefined,
+    }));
+  }, []);
+
+  return (
+    <Field
+      label={t('alerting.migrate-to-gma.step1.datasource', 'Alertmanager data source')}
+      invalid={!!errors.notificationsDatasourceUID}
+      error={errors.notificationsDatasourceUID?.message}
+      noMargin
+    >
+      <Controller
+        render={({ field: { ref, onChange, ...field } }) => (
+          <Select
+            {...field}
+            options={alertmanagerOptions}
+            onChange={(selected) => {
+              if (selected?.value) {
+                onChange(selected.value);
+                // Also set the name for API calls
+                const ds = getAlertManagerDataSources().find((d) => d.uid === selected.value);
+                setValue('notificationsDatasourceName', ds?.name ?? null);
+              }
+            }}
+            placeholder={t('alerting.migrate-to-gma.step1.select-datasource', 'Select data source')}
+            width={40}
+            noOptionsMessage={t('alerting.migrate-to-gma.step1.no-datasources', 'No Alertmanager data sources found')}
+          />
+        )}
+        control={control}
+        name="notificationsDatasourceUID"
+      />
+    </Field>
   );
 }
 
