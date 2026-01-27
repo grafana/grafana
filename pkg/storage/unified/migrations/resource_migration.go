@@ -3,7 +3,6 @@ package migrations
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/grafana/authlib/types"
@@ -17,70 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/xorm"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
-
-// Validator interface validates migration results.
-type Validator interface {
-	Name() string
-	Validate(ctx context.Context, sess *xorm.Session, response *resourcepb.BulkResponse, log log.Logger) error
-}
-
-// ValidatorFactory creates a validator with the given context.
-type ValidatorFactory func(client resourcepb.ResourceIndexClient, driverName string) Validator
-
-// MigrationDefinition defines a resource migration without implementing the SQL migration interface.
-// This is the public API for third-party packages to register migrations.
-type MigrationDefinition struct {
-	ID         string                 // Unique migration identifier
-	Resources  []schema.GroupResource // Resources to migrate together
-	Validators []ValidatorFactory     // Optional validator factories
-}
-
-// CreateValidators instantiates validators with the provided runtime dependencies.
-func (d *MigrationDefinition) CreateValidators(client resourcepb.ResourceIndexClient, driverName string) []Validator {
-	validators := make([]Validator, 0, len(d.Validators))
-	for _, factory := range d.Validators {
-		validators = append(validators, factory(client, driverName))
-	}
-	return validators
-}
-
-// MigrationRegistry is a thread-safe registry of migration definitions.
-type MigrationRegistry struct {
-	mu          sync.RWMutex
-	definitions map[string]*MigrationDefinition
-}
-
-// NewMigrationRegistry creates a new empty migration registry.
-func NewMigrationRegistry() *MigrationRegistry {
-	return &MigrationRegistry{
-		definitions: make(map[string]*MigrationDefinition),
-	}
-}
-
-// Register adds a migration definition to the registry.
-func (r *MigrationRegistry) Register(def *MigrationDefinition) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.definitions[def.ID] = def
-}
-
-// Get retrieves a migration definition by ID.
-func (r *MigrationRegistry) Get(id string) *MigrationDefinition {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	return r.definitions[id]
-}
-
-// All returns all registered migration definitions.
-func (r *MigrationRegistry) All() []*MigrationDefinition {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	result := make([]*MigrationDefinition, 0, len(r.definitions))
-	for _, def := range r.definitions {
-		result = append(result, def)
-	}
-	return result
-}
 
 // MigrationRunnerOption is a functional option for configuring MigrationRunner.
 type MigrationRunnerOption func(*MigrationRunner)
