@@ -61,7 +61,7 @@ type CountValidator struct {
 	driverName  string
 }
 
-func NewCountValidator(
+func newCountValidator(
 	client resourcepb.ResourceIndexClient,
 	resource schema.GroupResource,
 	table string,
@@ -182,7 +182,7 @@ type FolderTreeValidator struct {
 	driverName string
 }
 
-func NewFolderTreeValidator(
+func newFolderTreeValidator(
 	client resourcepb.ResourceIndexClient,
 	resource schema.GroupResource,
 	driverName string,
@@ -408,7 +408,7 @@ func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(sess *xorm.Sessi
 // It compares the count of resources in the legacy table with unified storage.
 func CountValidation(resource schema.GroupResource, table, whereClause string) ValidatorFactory {
 	return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
-		return NewCountValidator(client, resource, table, whereClause, driverName)
+		return newCountValidator(client, resource, table, whereClause, driverName)
 	}
 }
 
@@ -416,6 +416,6 @@ func CountValidation(resource schema.GroupResource, table, whereClause string) V
 // It validates that folder parent relationships are preserved after migration.
 func FolderTreeValidation(resource schema.GroupResource) ValidatorFactory {
 	return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
-		return NewFolderTreeValidator(client, resource, driverName)
+		return newFolderTreeValidator(client, resource, driverName)
 	}
 }

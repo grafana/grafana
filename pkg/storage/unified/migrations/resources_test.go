@@ -25,12 +25,12 @@ func TestIsMigrationEnabled(t *testing.T) {
 	folderGR := schema.GroupResource{Resource: "fake", Group: "folders.resource"}
 	dashboardGR := schema.GroupResource{Resource: "fake", Group: "dashboards.resource"}
 
-	playlistDef := &MigrationDefinition{
+	playlistDef := MigrationDefinition{
 		ID:          "test-playlists",
 		MigrationID: "playlists migration",
 		Resources:   []schema.GroupResource{playlistGR},
 	}
-	foldersDashboardsDef := &MigrationDefinition{
+	foldersDashboardsDef := MigrationDefinition{
 		ID:          "test-folders-dashboards",
 		MigrationID: "folders and dashboards migration",
 		Resources:   []schema.GroupResource{folderGR, dashboardGR},
@@ -50,7 +50,7 @@ func TestIsMigrationEnabled(t *testing.T) {
 	// Table of scenarios
 	tests := []struct {
 		name            string
-		def             *MigrationDefinition
+		def             MigrationDefinition
 		enablePlaylist  bool
 		enableFolder    bool
 		enableDashboard bool
@@ -105,7 +105,7 @@ func TestRegisterMigrations(t *testing.T) {
 
 	// helper to build a fake registry with test migration definitions
 	setupFakeRegistry := func() {
-		Registry.definitions = make(map[string]*MigrationDefinition)
+		Registry.definitions = make(map[string]MigrationDefinition)
 		Registry.order = make([]string, 0)
 
 		// Create fake GroupResources that map to our fake config resources
@@ -113,12 +113,12 @@ func TestRegisterMigrations(t *testing.T) {
 		folderGR := schema.GroupResource{Resource: "fake", Group: "folders.resource"}
 		dashboardGR := schema.GroupResource{Resource: "fake", Group: "dashboards.resource"}
 
-		Registry.Register(&MigrationDefinition{
+		Registry.Register(MigrationDefinition{
 			ID:          "test-playlists",
 			MigrationID: "playlists migration",
 			Resources:   []schema.GroupResource{playlistGR},
 		})
-		Registry.Register(&MigrationDefinition{
+		Registry.Register(MigrationDefinition{
 			ID:          "test-folders-dashboards",
 			MigrationID: "folders and dashboards migration",
 			Resources:   []schema.GroupResource{folderGR, dashboardGR},

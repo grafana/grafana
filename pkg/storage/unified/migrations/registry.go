@@ -43,7 +43,7 @@ type MigrationDefinition struct {
 
 // ConfigResources returns the resource identifiers in the format used by setting.UnifiedStorage config.
 // The format is "resource.group" (e.g., "dashboards.dashboard.grafana.app").
-func (d *MigrationDefinition) ConfigResources() []string {
+func (d MigrationDefinition) ConfigResources() []string {
 	result := make([]string, len(d.Resources))
 	for i, gr := range d.Resources {
 		result[i] = gr.Resource + "." + gr.Group
@@ -52,7 +52,7 @@ func (d *MigrationDefinition) ConfigResources() []string {
 }
 
 // CreateValidators instantiates validators with the provided runtime dependencies.
-func (d *MigrationDefinition) CreateValidators(client resourcepb.ResourceIndexClient, driverName string) []Validator {
+func (d MigrationDefinition) CreateValidators(client resourcepb.ResourceIndexClient, driverName string) []Validator {
 	validators := make([]Validator, 0, len(d.Validators))
 	for _, factory := range d.Validators {
 		validators = append(validators, factory(client, driverName))
@@ -61,7 +61,7 @@ func (d *MigrationDefinition) CreateValidators(client resourcepb.ResourceIndexCl
 }
 
 // GetMigratorFunc returns the migrator function for a given resource.
-func (d *MigrationDefinition) GetMigratorFunc(accessor legacy.MigrationDashboardAccessor, gr schema.GroupResource) MigratorFunc {
+func (d MigrationDefinition) GetMigratorFunc(accessor legacy.MigrationDashboardAccessor, gr schema.GroupResource) MigratorFunc {
 	if factory, ok := d.Migrators[gr]; ok {
 		return factory(accessor)
 	}
@@ -71,40 +71,43 @@ func (d *MigrationDefinition) GetMigratorFunc(accessor legacy.MigrationDashboard
 // MigrationRegistry is a thread-safe registry of migration definitions.
 type MigrationRegistry struct {
 	mu          sync.RWMutex
-	definitions map[string]*MigrationDefinition
+	definitions map[string]MigrationDefinition
 	order       []string // Maintains insertion order for iteration
 }
 
 // NewMigrationRegistry creates a new empty migration registry.
 func NewMigrationRegistry() *MigrationRegistry {
 	return &MigrationRegistry{
-		definitions: make(map[string]*MigrationDefinition),
+		definitions: make(map[string]MigrationDefinition),
 		order:       make([]string, 0),
 	}
 }
 
 // Register adds a migration definition to the registry.
-func (r *MigrationRegistry) Register(def *MigrationDefinition) {
+func (r *MigrationRegistry) Register(def MigrationDefinition) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, exists := r.definitions[def.ID]; !exists {
 		r.order = append(r.order, def.ID)
+	} else if exists {
+		panic("migration definition with ID " + def.ID + " is already registered")
 	}
 	r.definitions[def.ID] = def
 }
 
 // Get retrieves a migration definition by ID.
-func (r *MigrationRegistry) Get(id string) *MigrationDefinition {
+func (r *MigrationRegistry) Get(id string) (MigrationDefinition, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	return r.definitions[id]
+	def, ok := r.definitions[id]
+	return def, ok
 }
 
 // All returns all registered migration definitions in registration order.
-func (r *MigrationRegistry) All() []*MigrationDefinition {
+func (r *MigrationRegistry) All() []MigrationDefinition {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	result := make([]*MigrationDefinition, 0, len(r.order))
+	result := make([]MigrationDefinition, 0, len(r.order))
 	for _, id := range r.order {
 		if def, ok := r.definitions[id]; ok {
 			result = append(result, def)
@@ -146,7 +149,7 @@ func init() {
 	folderGR := schema.GroupResource{Group: folders.GROUP, Resource: folders.RESOURCE}
 	dashboardGR := schema.GroupResource{Group: v1beta1.GROUP, Resource: v1beta1.DASHBOARD_RESOURCE}
 
-	Registry.Register(&MigrationDefinition{
+	Registry.Register(MigrationDefinition{
 		ID:          "folders-dashboards",
 		MigrationID: "folders and dashboards migration",
 		Resources:   []schema.GroupResource{folderGR, dashboardGR},
@@ -164,7 +167,7 @@ func init() {
 	// Register playlists migration
 	playlistGR := schema.GroupResource{Group: playlists.APIGroup, Resource: "playlists"}
 
-	Registry.Register(&MigrationDefinition{
+	Registry.Register(MigrationDefinition{
 		ID:          "playlists",
 		MigrationID: "playlists migration",
 		Resources:   []schema.GroupResource{playlistGR},

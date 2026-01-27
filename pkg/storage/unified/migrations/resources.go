@@ -41,7 +41,7 @@ func registerMigrations(ctx context.Context,
 func registerMigration(mg *sqlstoremigrator.Migrator,
 	migrator UnifiedMigrator,
 	client resource.ResourceClient,
-	def *MigrationDefinition,
+	def MigrationDefinition,
 	opts ...ResourceMigrationOption,
 ) {
 	validators := def.CreateValidators(client, mg.Dialect.DriverName())
@@ -50,7 +50,7 @@ func registerMigration(mg *sqlstoremigrator.Migrator,
 }
 
 // TODO: remove this before Grafana 13 GA: https://github.com/grafana/search-and-storage-team/issues/613
-func shouldAutoMigrate(ctx context.Context, def *MigrationDefinition, cfg *setting.Cfg, sqlStore db.DB) bool {
+func shouldAutoMigrate(ctx context.Context, def MigrationDefinition, cfg *setting.Cfg, sqlStore db.DB) bool {
 	autoMigrate := false
 	configResources := def.ConfigResources()
 
@@ -100,7 +100,7 @@ func shouldAutoMigrate(ctx context.Context, def *MigrationDefinition, cfg *setti
 	return true
 }
 
-func checkIfAlreadyMigrated(ctx context.Context, def *MigrationDefinition, sqlStore db.DB) bool {
+func checkIfAlreadyMigrated(ctx context.Context, def MigrationDefinition, sqlStore db.DB) bool {
 	if def.MigrationID == "" {
 		return false
 	}
@@ -114,7 +114,7 @@ func checkIfAlreadyMigrated(ctx context.Context, def *MigrationDefinition, sqlSt
 	return exists
 }
 
-func isMigrationEnabled(def *MigrationDefinition, cfg *setting.Cfg) (bool, error) {
+func isMigrationEnabled(def MigrationDefinition, cfg *setting.Cfg) (bool, error) {
 	var (
 		hasValue   bool
 		allEnabled bool
