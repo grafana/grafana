@@ -4,7 +4,7 @@
   "colors": {
     "mode": "dark",
     "success": {
-      "main": "#3DFF9A"
+      "main": "#2ECC71"
     },
     "error": {
       "main": "#FF4D5E"
