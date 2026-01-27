@@ -206,6 +206,6 @@ export async function renderDashboard(
 export async function resetScenes(spies: jest.SpyInstance[] = []) {
   await jest.runOnlyPendingTimersAsync();
   jest.useRealTimers();
-  spies.forEach((spy) => spy.mockClear());
+  spies.filter(Boolean).forEach((spy) => spy.mockClear());
   cleanup();
 }

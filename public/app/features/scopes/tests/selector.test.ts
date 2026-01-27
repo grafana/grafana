@@ -102,8 +102,10 @@ describe('Selector', () => {
       state: null,
     };
 
-    jest.spyOn(locationService, 'getLocation').mockReturnValue(mockLocation);
-    jest.spyOn(locationService, 'getSearch').mockReturnValue(new URLSearchParams(mockLocation.search));
+    const getLocationSpy = jest.spyOn(locationService, 'getLocation').mockReturnValue(mockLocation);
+    const getSearchSpy = jest
+      .spyOn(locationService, 'getSearch')
+      .mockReturnValue(new URLSearchParams(mockLocation.search));
 
     await resetScenes([fetchSelectedScopesSpy, dashboardReloadSpy]);
     await renderDashboard();
@@ -112,8 +114,8 @@ describe('Selector', () => {
     await openSelector();
     expectResultApplicationsGrafanaSelected();
 
-    jest.spyOn(locationService, 'getLocation').mockRestore();
-    jest.spyOn(locationService, 'getSearch').mockRestore();
+    getLocationSpy.mockRestore();
+    getSearchSpy.mockRestore();
   });
 
   describe('Recent scopes', () => {
