@@ -162,12 +162,6 @@ To access your saved queries, click **+ Add from saved queries** or open the **S
 
 Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace query** in the **Saved queries** drop-down menu updates your existing query.
 
-{{< admonition type="note" >}}
-Users with Admin and Editor roles can create and save queries for reuse.
-While Admin users can edit or delete any saved queries, users with the Editor role can only edit or delete the queries they've saved.
-Viewers can only reuse queries.
-{{< /admonition >}}
-
 #### Save a query
 
 To save a query you've created:
@@ -187,6 +181,20 @@ To save a query you've created:
 - Saved queries are currently accessible from the query editors in Dashboards and Explore.
 - You can save a maximum of 1000 queries.
 - If you have multiple queries open in Explore and you edit one of them by way of the **Edit in Explore** function in the **Saved queries** drawer, the edited query replaces your open queries in Explore.
+
+#### Saved queries and RBAC
+
+Saved queries supports role-based access controls.
+By default, saved queries has two RBAC roles:
+
+- Writer: Create, update, and delete all saved queries.
+- Reader: Reuse saved queries.
+
+If you used saved queries prior to the addition of RBAC support, roles are mapped as follows:
+
+- Admin > Writer
+- Editor > Writer
+- Viewer > Reader
 
 ### Special data sources
 
