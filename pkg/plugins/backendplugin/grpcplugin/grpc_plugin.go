@@ -188,6 +188,15 @@ func (p *grpcPlugin) QueryData(ctx context.Context, req *backend.QueryDataReques
 	return pc.QueryData(ctx, req)
 }
 
+func (p *grpcPlugin) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	pc, ok := p.getPluginClient(ctx)
+	if !ok {
+		return plugins.ErrPluginUnavailable
+	}
+
+	return pc.QueryChunkedData(ctx, req, w)
+}
+
 func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	pc, ok := p.getPluginClient(ctx)
 	if !ok {
