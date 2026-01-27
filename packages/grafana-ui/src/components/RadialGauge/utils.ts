@@ -118,9 +118,13 @@ export function calculateDimensions(
 
   const barWidth = Math.max(barWidthFactor * (maxRadius / 3), 2);
 
-  // If rounded bars are enabled, they need a bit more vertical space
+  // When enabling stroke-linecap="round" on a path, the circular endcap is appended outside of the path.
+  // If you don't adjust the positioning or the path, then the endcaps will probably clip off the bottom
+  // of the panel. To account for this, the circular endcap radius (which is half the bar width) needs
+  // to be accounted for. To get the best visual result, we will take some off the radius of the visualization
+  // overall and some off of the vertical space by offsetting the centerY upwards.
   if (yMaxAngle < 180 && roundedBars) {
-    const radiusAdjustment = barWidth / 4;
+    const radiusAdjustment = barWidth / 4; // stroke-linecap="round" | half of the endcap radius.
     outerRadius -= radiusAdjustment;
     maxRadiusH -= radiusAdjustment;
     maxRadiusW -= radiusAdjustment;
@@ -173,7 +177,7 @@ export function calculateDimensions(
   let centerY = maxRadius + margin + rest / 2;
 
   if (yMaxAngle < 180 && roundedBars) {
-    centerY -= barWidth / 4;
+    centerY -= barWidth / 4; // stroke-linecap="round" | the other half of the endcap radius.
   }
 
   if (barIndex > 0) {
