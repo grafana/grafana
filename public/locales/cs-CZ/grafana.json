@@ -808,12 +808,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Odstranit",
       "duplicate": "Duplikovat",
       "label-integration": "Integrace",
       "label-notification-settings": "Nastavení oznámení",
       "label-section": "Nepovinné nastavení: {{name}}",
       "test": "Test",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -972,6 +974,13 @@
       "content-route-continue-matching-other-policies": "Tato cesta bude nadále odpovídat jiným zásadám"
     },
     "copy-to-clipboard": "Kopírovat „{{label}}“ do schránky",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Oznámení jsou doručována na",
@@ -1945,6 +1954,10 @@
     "namespace-and-group-filter": {
       "select-group": "Vybrat skupinu",
       "select-namespace": "Vyberte jmenný prostor"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Potřebujete pomoc?"
@@ -3658,7 +3671,10 @@
       "move-modal-title": "Přesunout",
       "move-provisioned-folder": "",
       "moving": "Probíhá přesouvání…",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Název složky je povinný.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Vybrali jste přidělené i nepřidělené zdroje. Tyto zdroje nelze zpracovat společně. Vyberte pouze přidělené nebo nepřidělené zdroje a zkuste to znovu.",
       "selected-mix-resources-modal-title": "Byly vybrány smíšené typy zdrojů"
     },
@@ -5202,6 +5218,9 @@
       "title": {
         "deleted": "odstraněno"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -11018,7 +11037,9 @@
     "invite-user": {
       "invite-button": "Pozvat",
       "invite-new-user-button": "Pozvat nového uživatele",
-      "invite-tooltip": "Pozvat uživatele"
+      "invite-tooltip": "Pozvat uživatele",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Přidat do záložek",
@@ -12690,6 +12711,13 @@
       "title-data-source-help": "Nápověda pro zdroj dat"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": ""
@@ -13460,6 +13488,7 @@
       "label-standard": "Standardní"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -15072,6 +15101,9 @@
       "label-both": "Oba",
       "label-lines": "Čáry",
       "label-points": "Body"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

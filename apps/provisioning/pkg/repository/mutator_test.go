@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -35,7 +36,7 @@ func newMutatorTestAttributes(obj, old runtime.Object, op admission.Operation) a
 
 func TestNewAdmissionMutator(t *testing.T) {
 	factory := NewMockFactory(t)
-	m := NewAdmissionMutator(factory)
+	m := NewAdmissionMutator(factory, 5*time.Second)
 	require.NotNil(t, m)
 	assert.Equal(t, factory, m.factory)
 }
@@ -46,6 +47,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 		obj             runtime.Object
 		operation       admission.Operation
 		factoryErr      error
+		minSyncInterval time.Duration
 		wantFinalizers  []string
 		wantInterval    int64
 		wantWorkflows   []provisioning.Workflow
@@ -58,11 +60,12 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec:       provisioning.RepositorySpec{},
 			},
-			operation:      admission.Create,
-			wantFinalizers: []string{RemoveOrphanResourcesFinalizer, CleanFinalizer},
-			wantInterval:   60,
-			wantWorkflows:  []provisioning.Workflow{},
-			wantErr:        false,
+			operation:       admission.Create,
+			minSyncInterval: 60 * time.Second,
+			wantFinalizers:  []string{RemoveOrphanResourcesFinalizer, CleanFinalizer},
+			wantInterval:    60,
+			wantWorkflows:   []provisioning.Workflow{},
+			wantErr:         false,
 		},
 		{
 			name: "does not overwrite existing finalizers on create",
@@ -73,11 +76,12 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				},
 				Spec: provisioning.RepositorySpec{},
 			},
-			operation:      admission.Create,
-			wantFinalizers: []string{"custom-finalizer"},
-			wantInterval:   60,
-			wantWorkflows:  []provisioning.Workflow{},
-			wantErr:        false,
+			operation:       admission.Create,
+			minSyncInterval: 60 * time.Second,
+			wantFinalizers:  []string{"custom-finalizer"},
+			wantInterval:    60,
+			wantWorkflows:   []provisioning.Workflow{},
+			wantErr:         false,
 		},
 		{
 			name: "does not add finalizers on update",
@@ -85,35 +89,51 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec:       provisioning.RepositorySpec{},
 			},
-			operation:      admission.Update,
-			wantFinalizers: nil,
-			wantInterval:   60,
-			wantWorkflows:  []provisioning.Workflow{},
-			wantErr:        false,
+			operation:       admission.Update,
+			minSyncInterval: 60 * time.Second,
+			wantFinalizers:  nil,
+			wantInterval:    60,
+			wantWorkflows:   []provisioning.Workflow{},
+			wantErr:         false,
 		},
 		{
-			name: "sets default sync interval",
+			name: "sets default sync interval when given one is 0",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.SyncOptions{IntervalSeconds: 0},
 				},
 			},
-			operation:    admission.Update,
-			wantInterval: 60,
-			wantErr:      false,
+			minSyncInterval: 60 * time.Second,
+			operation:       admission.Update,
+			wantInterval:    60,
+			wantErr:         false,
 		},
 		{
-			name: "preserves existing sync interval",
+			name: "sets default sync interval when given one is lower than min sync interval",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
+				Spec: provisioning.RepositorySpec{
+					Sync: provisioning.SyncOptions{IntervalSeconds: 20},
+				},
+			},
+			minSyncInterval: 60 * time.Second,
+			operation:       admission.Update,
+			wantInterval:    60,
+			wantErr:         false,
+		},
+		{
+			name: "preserves existing sync interval when greater than min sync interval",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.SyncOptions{IntervalSeconds: 120},
 				},
 			},
-			operation:    admission.Update,
-			wantInterval: 120,
-			wantErr:      false,
+			minSyncInterval: 60 * time.Second,
+			operation:       admission.Update,
+			wantInterval:    120,
+			wantErr:         false,
 		},
 		{
 			name: "initializes nil workflows",
@@ -176,7 +196,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				}
 			}
 
-			m := NewAdmissionMutator(factory)
+			m := NewAdmissionMutator(factory, tt.minSyncInterval)
 			attr := newMutatorTestAttributes(tt.obj, nil, tt.operation)
 
 			err := m.Mutate(context.Background(), attr, nil)

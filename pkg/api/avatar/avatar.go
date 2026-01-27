@@ -7,8 +7,7 @@
 package avatar
 
 import (
-	"bufio"
-	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	gocache "github.com/patrickmn/go-cache"
+	lru "github.com/hashicorp/golang-lru/v2/expirable"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -35,7 +34,7 @@ const (
 // Avatar represents the avatar object.
 type Avatar struct {
 	hash      string
-	data      *bytes.Buffer
+	data      []byte
 	notFound  bool
 	isCustom  bool
 	timestamp time.Time
@@ -67,13 +66,16 @@ func (a *Avatar) Expired() bool {
 }
 
 func (a *Avatar) Encode(wr io.Writer) error {
-	_, err := wr.Write(a.data.Bytes())
+	_, err := wr.Write(a.data)
 	return err
 }
 
-func (a *Avatar) update(baseUrl string) (err error) {
+func (a *Avatar) update(ctx context.Context, baseUrl string) (err error) {
 	customUrl := baseUrl + a.hash + "?"
-	select {
+	if true {
+		return avatarFetch(ctx, a, customUrl)
+	}
+	select { //nolint:govet
 	case <-time.After(time.Second * 3):
 		err = fmt.Errorf("get gravatar image %s timeout", a.hash)
 	case err = <-thunder.GoFetch(customUrl, a):
@@ -94,7 +96,7 @@ func (a *Avatar) setAvatarNotFound() {
 type AvatarCacheServer struct {
 	cfg      *setting.Cfg
 	notFound *Avatar
-	cache    *gocache.Cache
+	cache    *lru.LRU[string, *Avatar]
 }
 
 var validMD5 = regexp.MustCompile("^[a-fA-F0-9]{32}$")
@@ -107,12 +109,12 @@ func (a *AvatarCacheServer) Handler(ctx *contextmodel.ReqContext) {
 		return
 	}
 
-	avatar := a.GetAvatarForHash(a.cfg, hash)
+	avatar := a.GetAvatarForHashContext(ctx.Req.Context(), a.cfg, hash)
 
 	ctx.Resp.Header().Set("Content-Type", "image/jpeg")
 
 	if !a.cfg.EnableGzip {
-		ctx.Resp.Header().Set("Content-Length", strconv.Itoa(len(avatar.data.Bytes())))
+		ctx.Resp.Header().Set("Content-Length", strconv.Itoa(len(avatar.data)))
 	}
 
 	ctx.Resp.Header().Set("Cache-Control", "private, max-age=3600")
@@ -124,25 +126,33 @@ func (a *AvatarCacheServer) Handler(ctx *contextmodel.ReqContext) {
 }
 
 func (a *AvatarCacheServer) GetAvatarForHash(cfg *setting.Cfg, hash string) *Avatar {
+	return a.GetAvatarForHashContext(context.TODO(), cfg, hash)
+}
+
+func (a *AvatarCacheServer) GetAvatarForHashContext(ctx context.Context, cfg *setting.Cfg, hash string) *Avatar {
 	if cfg.DisableGravatar {
 		alog.Warn("'GetGravatarForHash' called despite gravatars being disabled; returning default profile image")
 		return a.notFound
 	}
-	return a.getAvatarForHash(hash, gravatarSource)
+	return a.getAvatarForHashContext(ctx, hash, gravatarSource)
 }
 
 func (a *AvatarCacheServer) getAvatarForHash(hash string, baseUrl string) *Avatar {
+	return a.getAvatarForHashContext(context.TODO(), hash, baseUrl)
+}
+
+func (a *AvatarCacheServer) getAvatarForHashContext(ctx context.Context, hash string, baseUrl string) *Avatar {
 	var avatar *Avatar
 	obj, exists := a.cache.Get(hash)
 	if exists {
-		avatar = obj.(*Avatar)
+		avatar = obj
 	} else {
 		avatar = New(hash)
 	}
 
-	if avatar.Expired() {
+	if !exists {
 		// The cache item is either expired or newly created, update it from the server
-		if err := avatar.update(baseUrl); err != nil {
+		if err := avatar.update(ctx, baseUrl); err != nil {
 			alog.Debug("avatar update", "err", err)
 			avatar = a.notFound
 		}
@@ -151,8 +161,8 @@ func (a *AvatarCacheServer) getAvatarForHash(hash string, baseUrl string) *Avata
 	if avatar.notFound {
 		avatar = a.notFound
 	} else if !exists {
-		if err := a.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil {
-			alog.Debug("add avatar to cache", "err", err)
+		if evicted := a.cache.Add(hash, avatar); evicted {
+			alog.Debug("add avatar to cache", "evicted", evicted)
 		}
 	}
 	return avatar
@@ -171,7 +181,7 @@ func newCacheServer(cfg *setting.Cfg) *AvatarCacheServer {
 	return &AvatarCacheServer{
 		cfg:      cfg,
 		notFound: newNotFound(cfg),
-		cache:    gocache.New(time.Hour, time.Hour*2),
+		cache:    lru.NewLRU[string, *Avatar](2000, nil, time.Hour),
 	}
 }
 
@@ -192,7 +202,7 @@ func newNotFound(cfg *setting.Cfg) *Avatar {
 	if data, err := os.ReadFile(path); err != nil {
 		alog.Error("Failed to read user_profile.png", "path", path)
 	} else {
-		avatar.data = bytes.NewBuffer(data)
+		avatar.data = data
 	}
 
 	return avatar
@@ -264,15 +274,18 @@ var client = &http.Client{
 // Break out the fetch function in a way that makes each
 // Portion highly reusable
 func (a *thunderTask) fetch() error {
-	a.Avatar.timestamp = time.Now()
+	return avatarFetch(context.TODO(), a.Avatar, a.BaseUrl)
+}
 
-	alog.Debug("avatar.fetch(fetch new avatar)", "url", a.BaseUrl)
+func avatarFetch(ctx context.Context, avatar *Avatar, baseURL string) error {
+	avatar.timestamp = time.Now()
+
+	alog.Debug("avatar.fetch(fetch new avatar)", "url", baseURL)
 	// First do the fetch to get the Gravatar with a retro icon fallback
-	err := performGet(a.BaseUrl+gravatarReqParams, a.Avatar, getGravatarHandler)
-
+	err := performGet(ctx, baseURL+gravatarReqParams, avatar, getGravatarHandler)
 	if err == nil {
 		// Next do a fetch with a 404 fallback to see if it's a custom gravatar
-		return performGet(a.BaseUrl+hasCustomReqParams, a.Avatar, checkIsCustomHandler)
+		return performGet(ctx, baseURL+hasCustomReqParams, avatar, checkIsCustomHandler)
 	}
 	return err
 }
@@ -286,11 +299,21 @@ func getGravatarHandler(av *Avatar, resp *http.Response) error {
 		return fmt.Errorf("status code: %d", resp.StatusCode)
 	}
 
-	av.data = &bytes.Buffer{}
-	writer := bufio.NewWriter(av.data)
-
-	_, err := io.Copy(writer, resp.Body)
-	return err
+	var (
+		data []byte
+		err  error
+	)
+	if resp.ContentLength > 0 {
+		data = make([]byte, resp.ContentLength)
+		_, err = io.ReadFull(resp.Body, data)
+	} else {
+		data, err = io.ReadAll(resp.Body)
+	}
+	if err != nil {
+		return err
+	}
+	av.data = data
+	return nil
 }
 
 // Uses the d=404 fallback to see if the gravatar we got back is custom
@@ -300,8 +323,8 @@ func checkIsCustomHandler(av *Avatar, resp *http.Response) error {
 }
 
 // Reusable Get helper that allows us to pass in custom handling depending on the endpoint
-func performGet(url string, av *Avatar, handler ResponseHandler) error {
-	req, err := http.NewRequest("GET", url, nil)
+func performGet(ctx context.Context, url string, av *Avatar, handler ResponseHandler) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return err
 	}

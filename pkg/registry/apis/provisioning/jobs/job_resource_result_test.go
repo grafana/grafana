@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/assert"
 )
@@ -137,6 +138,57 @@ func TestNewJobResourceResult_WithErrorAsWarning(t *testing.T) {
 
 	assert.Nil(t, result2.Error(), "Error wrapping ParseError should be stored as warning, not error")
 	assert.NotNil(t, result2.Warning(), "Error wrapping ParseError should be stored as warning")
+}
+
+func TestNewJobResourceResult_WithOwnershipConflictAsWarning(t *testing.T) {
+	name := "test-resource"
+	group := "test-group"
+	kind := "test-kind"
+	path := "/test/path"
+	action := repository.FileActionCreated
+
+	currentManager := utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: "repo-1",
+	}
+	requestingManager := utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: "repo-2",
+	}
+	ownershipErr := resources.NewResourceOwnershipConflictError("test-resource", currentManager, requestingManager)
+
+	// Test with ResourceOwnershipConflictError directly (a warning error)
+	result := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithError(ownershipErr).
+		Build()
+
+	assert.Equal(t, name, result.Name())
+	assert.Equal(t, group, result.Group())
+	assert.Equal(t, kind, result.Kind())
+	assert.Equal(t, path, result.Path())
+	assert.Equal(t, action, result.Action())
+	assert.Nil(t, result.Error(), "ResourceOwnershipConflictError should be stored as warning, not error")
+	assert.NotNil(t, result.Warning(), "ResourceOwnershipConflictError should be stored as warning")
+
+	// Test with an error that wraps ResourceOwnershipConflictError (should also be treated as warning)
+	wrappedErr := fmt.Errorf("writing resource from file: %w", ownershipErr)
+
+	result2 := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithError(wrappedErr).
+		Build()
+
+	assert.Nil(t, result2.Error(), "Error wrapping ResourceOwnershipConflictError should be stored as warning, not error")
+	assert.NotNil(t, result2.Warning(), "Error wrapping ResourceOwnershipConflictError should be stored as warning")
 }
 
 func TestNewJobResourceResult_WithErrorAsRegularError(t *testing.T) {

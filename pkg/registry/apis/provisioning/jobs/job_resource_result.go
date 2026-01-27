@@ -16,9 +16,12 @@ func isWarningError(err error) bool {
 	}
 
 	var validationErr *resources.ResourceValidationError
+	var ownershipErr *resources.ResourceOwnershipConflictError
 
 	switch {
 	case errors.As(err, &validationErr):
+		return true
+	case errors.As(err, &ownershipErr):
 		return true
 	default:
 		return false

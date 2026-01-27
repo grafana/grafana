@@ -5247,6 +5247,22 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.QuotaStatus": {
+        "description": "QuotaStatus represents the quota limits configured for this repository. These values come from static configuration and are read-only.",
+        "type": "object",
+        "properties": {
+          "maxRepositories": {
+            "description": "MaxRepositories is the maximum number of repositories allowed. 0 means unlimited.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "maxResourcesPerRepository": {
+            "description": "MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited.",
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RefItem": {
         "type": "object",
         "required": [
@@ -5567,6 +5583,15 @@
             "type": "integer",
             "format": "int64",
             "default": 0
+          },
+          "quota": {
+            "description": "Quota contains the configured quota limits for this repository",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.QuotaStatus"
+              }
+            ]
           },
           "stats": {
             "description": "The object count when sync last ran",
@@ -6198,7 +6223,7 @@
             "default": false
           },
           "intervalSeconds": {
-            "description": "When non-zero, the sync will run periodically",
+            "description": "The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one.",
             "type": "integer",
             "format": "int64"
           },

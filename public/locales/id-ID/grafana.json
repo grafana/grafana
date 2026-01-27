@@ -799,12 +799,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Hapus",
       "duplicate": "Duplikasikan",
       "label-integration": "Integrasi",
       "label-notification-settings": "Pengaturan notifikasi",
       "label-section": "Pengaturan {{name}} opsional",
       "test": "Tes",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -957,6 +959,13 @@
       "content-route-continue-matching-other-policies": "Rute ini akan terus mencocokkan dengan kebijakan lain"
     },
     "copy-to-clipboard": "Salin \"{{label}}\" ke papan klip",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Pemberitahuan dikirimkan ke",
@@ -1927,6 +1936,10 @@
     "namespace-and-group-filter": {
       "select-group": "Pilih grup",
       "select-namespace": "Pilih namespace"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Butuh bantuan?"
@@ -3625,7 +3638,10 @@
       "move-modal-title": "Pindahkan",
       "move-provisioned-folder": "",
       "moving": "Memindahkan...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Nama folder wajib diisi.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Anda telah memilih sumber daya yang disediakan dan tidak disediakan. Keduanya tidak dapat diproses sekaligus. Hanya pilih sumber daya yang disediakan atau hanya sumber daya yang tidak disediakan dan coba lagi.",
       "selected-mix-resources-modal-title": "Jenis sumber daya campuran dipilih"
     },
@@ -5145,6 +5161,9 @@
       "title": {
         "deleted": "dihapus"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -10886,7 +10905,9 @@
     "invite-user": {
       "invite-button": "Undang",
       "invite-new-user-button": "Undang pengguna baru",
-      "invite-tooltip": "Undang pengguna"
+      "invite-tooltip": "Undang pengguna",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Tambahkan ke Bookmark",
@@ -12531,6 +12552,13 @@
       "title-data-source-help": "Bantuan sumber data"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": ""
@@ -13292,6 +13320,7 @@
       "label-standard": "Standar"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14901,6 +14930,9 @@
       "label-both": "Keduanya",
       "label-lines": "Garis",
       "label-points": "Poin"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }
