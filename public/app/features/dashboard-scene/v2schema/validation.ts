@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import {
   GridLayoutItemKind,
   PanelKind,
@@ -137,26 +139,22 @@ export function validatePanelKindV2(value: unknown): asserts value is PanelKind 
   }
 }
 
-function isElementReference(value: unknown): boolean {
-  if (!isObject(value)) {
-    return false;
-  }
-  return value.kind === 'ElementReference' && typeof value.name === 'string';
-}
+const ElementReferenceSchema = z.object({
+  kind: z.literal('ElementReference'),
+  name: z.string(),
+});
+
+const GridLayoutItemKindSchema = z.object({
+  kind: z.literal('GridLayoutItem'),
+  spec: z.object({
+    x: z.number(),
+    y: z.number(),
+    width: z.number(),
+    height: z.number(),
+    element: ElementReferenceSchema,
+  }),
+}) satisfies z.ZodType<GridLayoutItemKind>;
 
 export function isGridLayoutItemKind(value: unknown): value is GridLayoutItemKind {
-  if (!isObject(value)) {
-    return false;
-  }
-  if (value.kind !== 'GridLayoutItem' || !isObject(value.spec)) {
-    return false;
-  }
-  const spec = value.spec;
-  return (
-    typeof spec.x === 'number' &&
-    typeof spec.y === 'number' &&
-    typeof spec.width === 'number' &&
-    typeof spec.height === 'number' &&
-    isElementReference(spec.element)
-  );
+  return GridLayoutItemKindSchema.safeParse(value).success;
 }
