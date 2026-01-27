@@ -9,8 +9,10 @@ import {
   PanelPluginMeta,
   PanelPluginVisualizationSuggestion,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { VizPanel } from '@grafana/scenes';
 import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
@@ -20,28 +22,52 @@ import { getAllSuggestions } from '../../suggestions/getAllSuggestions';
 import { hasData } from '../../suggestions/utils';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
+import { VizSuggestionsInteractions, PANEL_STATES, type PanelState } from './interactions';
 import { VizTypeChangeDetails } from './types';
 
 export interface Props {
-  onChange: (options: VizTypeChangeDetails) => void;
+  onChange: (options: VizTypeChangeDetails, panel?: VizPanel) => void;
+  editPreview?: VizPanel;
   data?: PanelData;
   panel?: PanelModel;
+  searchQuery?: string;
+  isNewPanel?: boolean;
 }
 
-const useSuggestions = (data: PanelData | undefined) => {
+const useSuggestions = (data: PanelData | undefined, searchQuery: string | undefined) => {
   const [hasFetched, setHasFetched] = useState(false);
   const { value, loading, error, retry } = useAsyncRetry(async () => {
     await new Promise((resolve) => setTimeout(resolve, hasFetched ? 75 : 0));
     setHasFetched(true);
     return await getAllSuggestions(data);
   }, [hasFetched, data]);
-  return { value, loading, error, retry };
+
+  const filteredValue = useMemo(() => {
+    if (!value || !searchQuery) {
+      return value;
+    }
+
+    const lowerCaseQuery = searchQuery.toLowerCase();
+    const filteredSuggestions = value.suggestions.filter(
+      (suggestion) =>
+        suggestion.name.toLowerCase().includes(lowerCaseQuery) ||
+        suggestion.pluginId.toLowerCase().includes(lowerCaseQuery) ||
+        suggestion.description?.toLowerCase().includes(lowerCaseQuery)
+    );
+
+    return {
+      ...value,
+      suggestions: filteredSuggestions,
+    };
+  }, [value, searchQuery]);
+
+  return { value: filteredValue, loading, error, retry };
 };
 
-export function VisualizationSuggestions({ onChange, data, panel }: Props) {
+export function VisualizationSuggestions({ onChange, editPreview, data, panel, searchQuery, isNewPanel }: Props) {
   const styles = useStyles2(getStyles);
 
-  const { value: result, loading, error, retry } = useSuggestions(data);
+  const { value: result, loading, error, retry } = useSuggestions(data, searchQuery);
 
   const suggestions = result?.suggestions;
   const hasLoadingErrors = result?.hasErrors ?? false;
@@ -50,6 +76,18 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
   const [firstCardHash, setFirstCardHash] = useState<string | null>(null);
   const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
   const isUnconfiguredPanel = panel?.type === UNCONFIGURED_PANEL_PLUGIN_ID;
+
+  const panelState = useMemo((): PanelState => {
+    if (isUnconfiguredPanel) {
+      return PANEL_STATES.UNCONFIGURED_PANEL;
+    }
+
+    if (isNewPanel) {
+      return PANEL_STATES.NEW_PANEL;
+    }
+
+    return PANEL_STATES.EXISTING_PANEL;
+  }, [isUnconfiguredPanel, isNewPanel]);
 
   const suggestionsByVizType = useMemo(() => {
     const meta = getAllPanelPluginMeta();
@@ -71,20 +109,51 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     return result;
   }, [suggestions]);
 
-  const applySuggestion = useCallback(
-    (suggestion: PanelPluginVisualizationSuggestion, isPreview?: boolean) => {
-      onChange({
-        pluginId: suggestion.pluginId,
-        options: suggestion.options,
-        fieldConfig: suggestion.fieldConfig,
-        withModKey: isPreview,
-      });
+  const suggestionIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    suggestions?.forEach((suggestion, index) => {
+      map.set(suggestion.hash, index);
+    });
+    return map;
+  }, [suggestions]);
 
+  const applySuggestion = useCallback(
+    (
+      suggestion: PanelPluginVisualizationSuggestion,
+      isPreview: boolean,
+      suggestionIndex: number,
+      isAutoSelected = false
+    ) => {
       if (isPreview) {
+        VizSuggestionsInteractions.suggestionPreviewed({
+          pluginId: suggestion.pluginId,
+          suggestionName: suggestion.name,
+          panelState,
+          isAutoSelected,
+        });
+
         setSuggestionHash(suggestion.hash);
+      } else {
+        VizSuggestionsInteractions.suggestionAccepted({
+          pluginId: suggestion.pluginId,
+          suggestionName: suggestion.name,
+          panelState,
+          suggestionIndex: suggestionIndex + 1,
+        });
       }
+
+      onChange(
+        {
+          pluginId: suggestion.pluginId,
+          options: suggestion.options,
+          fieldConfig: suggestion.fieldConfig,
+          withModKey: isPreview,
+          fromSuggestions: true,
+        },
+        isPreview ? editPreview : undefined
+      );
     },
-    [onChange]
+    [onChange, editPreview, panelState]
   );
 
   useEffect(() => {
@@ -97,7 +166,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
     // the previously selected suggestion is no longer present in the list.
     const newFirstCardHash = suggestions?.[0]?.hash ?? null;
     if (firstCardHash !== newFirstCardHash || suggestions.every((s) => s.hash !== suggestionHash)) {
-      applySuggestion(suggestions[0], true);
+      applySuggestion(suggestions[0], true, 0, true);
       setFirstCardHash(newFirstCardHash);
       return;
     }
@@ -163,6 +232,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                 </div>
                 {vizTypeSuggestions?.map((suggestion, index) => {
                   const isCardSelected = suggestionHash === suggestion.hash;
+                  const suggestionIndex = suggestionIndexMap.get(suggestion.hash) ?? -1;
                   return (
                     <div
                       key={suggestion.hash}
@@ -173,29 +243,25 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                       onKeyDown={(ev) => {
                         if (ev.key === 'Enter' || ev.key === ' ') {
                           ev.preventDefault();
-                          applySuggestion(suggestion, isNewVizSuggestionsEnabled && !isCardSelected);
+                          applySuggestion(suggestion, isNewVizSuggestionsEnabled && !isCardSelected, suggestionIndex);
                         }
                       }}
                       ref={index === 0 ? firstCardRef : undefined}
                     >
                       {isCardSelected && (
                         <Button
-                          // rather than allow direct focus, we handle ketboard events in the card.
+                          // rather than allow direct focus, we handle keyboard events in the card.
                           tabIndex={-1}
                           variant="primary"
                           size={'md'}
                           className={styles.applySuggestionButton}
+                          data-testid={selectors.components.VisualizationPreview.confirm(suggestion.name)}
                           aria-label={t(
                             'panel.visualization-suggestions.apply-suggestion-aria-label',
                             'Apply {{suggestionName}} visualization',
                             { suggestionName: suggestion.name }
                           )}
-                          onClick={() =>
-                            onChange({
-                              pluginId: suggestion.pluginId,
-                              withModKey: false,
-                            })
-                          }
+                          onClick={() => applySuggestion(suggestion, false, suggestionIndex)}
                         >
                           {t('panel.visualization-suggestions.use-this-suggestion', 'Use this suggestion')}
                         </Button>
@@ -205,7 +271,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                         suggestion={suggestion}
                         width={width}
                         isSelected={isCardSelected}
-                        onClick={() => applySuggestion(suggestion, true)}
+                        onClick={() => applySuggestion(suggestion, true, suggestionIndex)}
                       />
                     </div>
                   );
@@ -220,7 +286,7 @@ export function VisualizationSuggestions({ onChange, data, panel }: Props) {
                   suggestion={suggestion}
                   width={width}
                   tabIndex={index}
-                  onClick={() => applySuggestion(suggestion)}
+                  onClick={() => applySuggestion(suggestion, false, index)}
                 />
               </div>
             ))}

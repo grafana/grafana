@@ -8,9 +8,11 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/datasource/elasticsearch/dataquery.cue file.
+
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "12.4.0-pre";
+export const pluginVersion = "%VERSION%";
 
 export type BucketAggregation = (DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested);
 

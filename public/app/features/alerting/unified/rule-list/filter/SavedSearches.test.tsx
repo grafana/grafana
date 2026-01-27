@@ -19,7 +19,7 @@ const ui = {
   saveInput: byPlaceholderText(/enter a name/i),
   // Action buttons
   cancelButton: byRole('button', { name: /cancel/i }),
-  applyButtons: byRole('button', { name: /apply this search/i }),
+  applyButtons: byRole('button', { name: /apply search/i }),
   actionMenuButtons: byRole('button', { name: /actions/i }),
   deleteButton: byRole('button', { name: /delete/i }),
   // Menu items (using byRole for proper accessibility testing)

@@ -8,7 +8,7 @@ import {
   GrafanaTheme2,
   toDataFrame,
 } from '@grafana/data';
-import { FieldColorModeId } from '@grafana/schema';
+import { FieldColorModeId, FieldConfig, ThresholdsMode } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Stack } from '../Layout/Stack/Stack';
@@ -32,24 +32,6 @@ const meta: Meta<StoryProps> = {
     controls: {
       exclude: ['theme', 'values', 'vizCount'],
     },
-    a11y: {
-      config: {
-        rules: [
-          {
-            id: 'scrollable-region-focusable',
-            selector: 'body',
-            enabled: false,
-          },
-          // NOTE: this is necessary due to a false positive with the filered svg glow in one of the examples.
-          // The color-contrast in this component should be accessible!
-          {
-            id: 'color-contrast',
-            selector: 'text',
-            enabled: false,
-          },
-        ],
-      },
-    },
   },
   args: {
     barWidthFactor: 0.2,
@@ -68,6 +50,7 @@ const meta: Meta<StoryProps> = {
     thresholdsBar: false,
     colorScheme: FieldColorModeId.Thresholds,
     decimals: 0,
+    neutral: undefined,
   },
   argTypes: {
     barWidthFactor: { control: { type: 'range', min: 0.1, max: 1, step: 0.01 } },
@@ -93,6 +76,7 @@ const meta: Meta<StoryProps> = {
       ],
     },
     decimals: { control: { type: 'range', min: 0, max: 7 } },
+    neutral: { control: { type: 'number' } },
   },
 };
 
@@ -288,6 +272,23 @@ export const Examples: StoryFn<StoryProps> = (args) => {
           barWidthFactor={0.7}
         />
       </Stack>
+      <div>
+        Neutral <em>(range -50 to 50, neutral = 0)</em>
+      </div>
+      <Stack direction={'row'} gap={3}>
+        <RadialGaugeExample
+          min={-50}
+          max={50}
+          value={-20}
+          colorScheme={FieldColorModeId.Thresholds}
+          gradient
+          shape="gauge"
+          glowCenter={true}
+          roundedBars={false}
+          barWidthFactor={0.7}
+          neutral={0}
+        />
+      </Stack>
     </Stack>
   );
 };
@@ -343,12 +344,23 @@ interface ExampleProps {
   segmentCount?: number;
   segmentSpacing?: number;
   roundedBars?: boolean;
+  thresholds?: FieldConfig['thresholds'];
   thresholdsBar?: boolean;
   colorScheme?: FieldColorModeId;
   endpointMarker?: RadialGaugeProps['endpointMarker'];
   decimals?: number;
   showScaleLabels?: boolean;
+  neutral?: number;
 }
+
+const DEFAULT_THRESHOLDS: FieldConfig['thresholds'] = {
+  mode: ThresholdsMode.Absolute,
+  steps: [
+    { value: -Infinity, color: 'green' },
+    { value: 65, color: 'orange' },
+    { value: 85, color: 'red' },
+  ],
+};
 
 export function RadialGaugeExample({
   color,
@@ -370,11 +382,13 @@ export function RadialGaugeExample({
   segmentCount = 0,
   segmentSpacing = 0.1,
   roundedBars = false,
+  thresholds = DEFAULT_THRESHOLDS,
   thresholdsBar = false,
   colorScheme = FieldColorModeId.Thresholds,
   endpointMarker = 'glow',
   decimals = 0,
   showScaleLabels,
+  neutral,
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -405,14 +419,7 @@ export function RadialGaugeExample({
           unit: 'percent',
           decimals: decimals,
           color: { mode: colorScheme, fixedColor: color ? theme.visualization.getColorByName(color) : undefined },
-          thresholds: {
-            mode: 'absolute',
-            steps: [
-              { value: -Infinity, color: 'green' },
-              { value: 65, color: 'orange' },
-              { value: 85, color: 'red' },
-            ],
-          },
+          thresholds,
         },
         // Add state and getLinks
         state: {},
@@ -460,6 +467,7 @@ export function RadialGaugeExample({
       thresholdsBar={thresholdsBar}
       showScaleLabels={showScaleLabels}
       endpointMarker={endpointMarker}
+      neutral={neutral}
     />
   );
 }

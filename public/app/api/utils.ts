@@ -1,8 +1,8 @@
 import { normalizeError } from '@grafana/api-clients';
 import { ThunkDispatch } from 'app/types/store';
 
-import { notifyApp } from '../core/actions';
 import { createErrorNotification } from '../core/copy/appNotification';
+import { notifyApp } from '../core/reducers/appNotification';
 
 /**
  * Handle an error from a k8s API call

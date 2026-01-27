@@ -124,7 +124,7 @@
                         "value": [
                           {
                             "title": "filter",
-                            "url": "http://localhost:3000/d/-Y-tnEDWk/templating-nested-template-variables?var-datacenter=${__data.fields[datacenter]}﻿\u0026var-server=${__value.raw}"
+                            "url": "http://localhost:3000/d/-Y-tnEDWk/templating-nested-template-variables?var-datacenter=${__data.fields[datacenter]}\u0026var-server=${__value.raw}"
                           }
                         ]
                       }
@@ -481,7 +481,8 @@
                       "title": "Go to drilldown",
                       "url": "/d/O6GmNPvWk/dashboard-tests-nested-template-variables-drilldown?orgId=1\u0026${__all_variables}\u0026${__url_time_range}"
                     }
-                  ]
+                  ],
+                  "nullValueMode": "connected"
                 },
                 "overrides": []
               }
@@ -566,7 +567,8 @@
                       "title": "Go to drilldown",
                       "url": "/d/O6GmNPvWk/dashboard-tests-nested-template-variables-drilldown?orgId=1\u0026${__all_variables}\u0026${__url_time_range}"
                     }
-                  ]
+                  ],
+                  "nullValueMode": "connected"
                 },
                 "overrides": []
               }

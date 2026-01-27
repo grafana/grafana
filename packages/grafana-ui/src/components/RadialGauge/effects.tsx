@@ -1,14 +1,20 @@
-import { GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
 
 import { RadialGaugeDimensions } from './types';
+
+// some utility transparent white colors for gradients
+const TRANSPARENT_WHITE = '#ffffff00';
+const MOSTLY_TRANSPARENT_WHITE = '#ffffff88';
+const MOSTLY_OPAQUE_WHITE = '#ffffffbb';
+const OPAQUE_WHITE = '#ffffff';
+
+const MIN_GLOW_SIZE = 0.75;
+const GLOW_FACTOR = 0.08;
 
 export interface GlowGradientProps {
   id: string;
   barWidth: number;
 }
-
-const MIN_GLOW_SIZE = 0.75;
-const GLOW_FACTOR = 0.08;
 
 export function GlowGradient({ id, barWidth }: GlowGradientProps) {
   // 0.75 is the minimum glow size, and it scales with bar width
@@ -25,16 +31,7 @@ export function GlowGradient({ id, barWidth }: GlowGradientProps) {
   );
 }
 
-const CENTER_GLOW_OPACITY = 0.15;
-
-export function CenterGlowGradient({ gaugeId, color }: { gaugeId: string; color: string }) {
-  return (
-    <radialGradient id={`circle-glow-${gaugeId}`} r="50%" fr="0%">
-      <stop offset="0%" stopColor={color} stopOpacity={CENTER_GLOW_OPACITY} />
-      <stop offset="90%" stopColor={color} stopOpacity={0} />
-    </radialGradient>
-  );
-}
+const CENTER_GLOW_OPACITY = 0.25;
 
 export interface CenterGlowProps {
   dimensions: RadialGaugeDimensions;
@@ -44,13 +41,14 @@ export interface CenterGlowProps {
 
 export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps) {
   const gradientId = `circle-glow-${gaugeId}`;
+  const transparentColor = color ? colorManipulator.alpha(color, CENTER_GLOW_OPACITY) : color;
 
   return (
     <>
       <defs>
         <radialGradient id={gradientId} r="50%" fr="0%">
-          <stop offset="0%" stopColor={color} stopOpacity={CENTER_GLOW_OPACITY} />
-          <stop offset="90%" stopColor={color} stopOpacity={0} />
+          <stop offset="0%" stopColor={transparentColor} />
+          <stop offset="90%" stopColor={TRANSPARENT_WHITE} />
         </radialGradient>
       </defs>
       <g>
@@ -60,19 +58,15 @@ export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps
   );
 }
 
-export function SpotlightGradient({
-  id,
-  dimensions,
-  roundedBars,
-  angle,
-  theme,
-}: {
+interface SpotlightGradientProps {
   id: string;
   dimensions: RadialGaugeDimensions;
   angle: number;
   roundedBars: boolean;
   theme: GrafanaTheme2;
-}) {
+}
+
+export function SpotlightGradient({ id, dimensions, roundedBars, angle, theme }: SpotlightGradientProps) {
   if (theme.isLight) {
     return null;
   }
@@ -86,9 +80,9 @@ export function SpotlightGradient({
 
   return (
     <linearGradient x1={x1} y1={y1} x2={x2} y2={y2} id={id} gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stopColor={'white'} stopOpacity={0.0} />
-      <stop offset="95%" stopColor={'white'} stopOpacity={0.5} />
-      {roundedBars && <stop offset="100%" stopColor={'white'} stopOpacity={roundedBars ? 0.7 : 1} />}
+      <stop offset="0%" stopColor={TRANSPARENT_WHITE} />
+      <stop offset="95%" stopColor={MOSTLY_TRANSPARENT_WHITE} />
+      {roundedBars && <stop offset="100%" stopColor={roundedBars ? MOSTLY_OPAQUE_WHITE : OPAQUE_WHITE} />}
     </linearGradient>
   );
 }

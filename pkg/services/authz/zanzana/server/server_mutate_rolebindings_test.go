@@ -25,7 +25,7 @@ func testMutateRoleBindings(t *testing.T, srv *Server) {
 	setupMutateRoleBindings(t, srv)
 
 	t.Run("should update user role and delete old role", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{
@@ -75,7 +75,7 @@ func testMutateRoleBindings(t *testing.T, srv *Server) {
 	})
 
 	t.Run("should assign role to basic role", func(t *testing.T) {
-		_, err := srv.Mutate(newContextWithNamespace(), &v1.MutateRequest{
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
 			Namespace: "default",
 			Operations: []*v1.MutateOperation{
 				{

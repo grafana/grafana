@@ -5,13 +5,14 @@ import (
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
-
+	index "github.com/blevesearch/bleve_index_api"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func GetBleveMappings(fields resource.SearchableDocumentFields) (mapping.IndexMapping, error) {
 	mapper := bleve.NewIndexMapping()
+	mapper.ScoringModel = index.BM25Scoring
 
 	err := RegisterCustomAnalyzers(mapper)
 	if err != nil {
@@ -60,7 +61,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields) *mapping.Docu
 	}
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_DESCRIPTION, descriptionMapping)
 
-	tagsMapping := &mapping.FieldMapping{
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TAGS, &mapping.FieldMapping{
 		Name:               resource.SEARCH_FIELD_TAGS,
 		Type:               "text",
 		Analyzer:           keyword.Name,
@@ -69,8 +70,18 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields) *mapping.Docu
 		IncludeTermVectors: false,
 		IncludeInAll:       true,
 		DocValues:          false,
-	}
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TAGS, tagsMapping)
+	})
+
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_OWNER_REFERENCES, &mapping.FieldMapping{
+		Name:               resource.SEARCH_FIELD_OWNER_REFERENCES,
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              false,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       false,
+		DocValues:          false,
+	})
 
 	folderMapping := &mapping.FieldMapping{
 		Name:               resource.SEARCH_FIELD_FOLDER,

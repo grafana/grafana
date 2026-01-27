@@ -75,6 +75,7 @@ describe('paginationLimits', () => {
         { contactPoint: 'slack' },
         { dataSourceNames: ['prometheus'] },
         { labels: ['severity=critical'] },
+        { namespace: 'production' },
       ])(
         'should return rule limit for grafana + large limit for datasource when only backend filters are used: %p',
         (filterState) => {
@@ -84,16 +85,6 @@ describe('paginationLimits', () => {
           expect(datasourceManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
         }
       );
-
-      it.each<Partial<RulesFilter>>([
-        { namespace: 'production' },
-        { ruleState: PromAlertingRuleState.Firing, namespace: 'production' },
-      ])('should return large limits for both when frontend filters are used: %p', (filterState) => {
-        const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter(filterState));
-
-        expect(grafanaManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
-        expect(datasourceManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
-      });
     });
 
     describe('when alertingUIUseFullyCompatBackendFilters is enabled', () => {
@@ -158,22 +149,13 @@ describe('paginationLimits', () => {
         { contactPoint: 'slack' },
         { dataSourceNames: ['prometheus'] },
         { labels: ['severity=critical'] },
+        { namespace: 'production' },
       ])(
         'should return rule limit for grafana + large limit for datasource when only backend filters are used: %p',
         (filterState) => {
           const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter(filterState));
 
           expect(grafanaManagedLimit).toEqual({ ruleLimit: RULE_LIMIT_WITH_BACKEND_FILTERS });
-          expect(datasourceManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
-        }
-      );
-
-      it.each<Partial<RulesFilter>>([{ namespace: 'production' }])(
-        'should return large limits for both when frontend filters are used: %p',
-        (filterState) => {
-          const { grafanaManagedLimit, datasourceManagedLimit } = getFilteredRulesLimits(getFilter(filterState));
-
-          expect(grafanaManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
           expect(datasourceManagedLimit).toEqual({ groupLimit: FILTERED_GROUPS_LARGE_API_PAGE_SIZE });
         }
       );

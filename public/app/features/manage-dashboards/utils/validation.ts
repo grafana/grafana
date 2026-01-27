@@ -18,6 +18,10 @@ export const validateDashboardJson = (json: string) => {
       if (hasInvalidTag) {
         return t('dashboard.validation.tags-expected-strings', 'tags expected array of strings');
       }
+      const hasTooLongTag = dashboard.tags.some((tag: string) => tag.length > 50);
+      if (hasTooLongTag) {
+        return t('dashboard.validation.tag-too-long', 'Dashboard tag too long, max 50 characters');
+      }
     } else {
       return t('dashboard.validation.tags-expected-array', 'tags expected array');
     }

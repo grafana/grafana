@@ -61,11 +61,15 @@
           "x": 0,
           "y": 0
         },
-        "id": -1,
+        "id": 2,
         "title": "Conditional Row",
         "type": "row"
       },
       {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "gdev-prometheus"
+        },
         "description": "This panel demonstrates conditional rendering features",
         "fieldConfig": {
           "defaults": {

@@ -180,12 +180,15 @@ func countAnnotationsV0V1(spec map[string]interface{}) int {
 		return 0
 	}
 
-	annotationList, ok := annotations["list"].([]interface{})
-	if !ok {
-		return 0
+	// Handle both []interface{} (from JSON unmarshaling) and []map[string]interface{} (from programmatic creation)
+	if annotationList, ok := annotations["list"].([]interface{}); ok {
+		return len(annotationList)
+	}
+	if annotationList, ok := annotations["list"].([]map[string]interface{}); ok {
+		return len(annotationList)
 	}
 
-	return len(annotationList)
+	return 0
 }
 
 // countLinksV0V1 counts dashboard links in v0alpha1 or v1beta1 dashboard spec
@@ -194,12 +197,15 @@ func countLinksV0V1(spec map[string]interface{}) int {
 		return 0
 	}
 
-	links, ok := spec["links"].([]interface{})
-	if !ok {
-		return 0
+	// Handle both []interface{} (from JSON unmarshaling) and []map[string]interface{} (from programmatic creation)
+	if links, ok := spec["links"].([]interface{}); ok {
+		return len(links)
+	}
+	if links, ok := spec["links"].([]map[string]interface{}); ok {
+		return len(links)
 	}
 
-	return len(links)
+	return 0
 }
 
 // countVariablesV0V1 counts template variables in v0alpha1 or v1beta1 dashboard spec
@@ -213,12 +219,15 @@ func countVariablesV0V1(spec map[string]interface{}) int {
 		return 0
 	}
 
-	variableList, ok := templating["list"].([]interface{})
-	if !ok {
-		return 0
+	// Handle both []interface{} (from JSON unmarshaling) and []map[string]interface{} (from programmatic creation)
+	if variableList, ok := templating["list"].([]interface{}); ok {
+		return len(variableList)
+	}
+	if variableList, ok := templating["list"].([]map[string]interface{}); ok {
+		return len(variableList)
 	}
 
-	return len(variableList)
+	return 0
 }
 
 // collectStatsV0V1 collects statistics from v0alpha1 or v1beta1 dashboard

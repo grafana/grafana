@@ -1,6 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo } from 'react';
 
+import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import {
   useSearchTeamsQuery as useLegacySearchTeamsQuery,
   useCreateTeamMutation,
@@ -12,8 +13,8 @@ import {
   useUpdateTeamMutation,
   UpdateTeamCommand,
 } from 'app/api/clients/legacy';
-import { updateNavIndex } from 'app/core/actions';
 import { addFilteredDisplayName } from 'app/core/components/RolePicker/utils';
+import { updateNavIndex } from 'app/core/reducers/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role } from 'app/types/accessControl';
 import { useDispatch } from 'app/types/store';
@@ -127,14 +128,16 @@ export const useDeleteTeam = () => {
 export const useCreateTeam = () => {
   const [createTeam, response] = useCreateTeamMutation();
   const [setTeamRoles] = useSetTeamRolesMutation();
+  const [createFolder] = useCreateFolder();
 
-  const trigger = async (team: CreateTeamCommand, pendingRoles?: Role[]) => {
+  const trigger = async (team: CreateTeamCommand, pendingRoles?: Role[], createTeamFolder?: boolean) => {
     const mutationResult = await createTeam({
       createTeamCommand: team,
     });
 
     const { data } = mutationResult;
 
+    // Add any pending roles to the team
     if (data && data.teamId && pendingRoles && pendingRoles.length) {
       await contextSrv.fetchUserPermissions();
       if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles()) {
@@ -145,6 +148,13 @@ export const useCreateTeam = () => {
           },
         });
       }
+    }
+
+    if (data && data.uid && createTeamFolder) {
+      await createFolder({
+        title: team.name,
+        teamOwnerReferences: [{ uid: data.uid, name: team.name }],
+      });
     }
 
     return mutationResult;

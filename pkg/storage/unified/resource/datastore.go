@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"embed"
 	"errors"
 	"fmt"
 	"io"
@@ -9,11 +10,31 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	gocache "github.com/patrickmn/go-cache"
 )
+
+// Templates setup for backward-compatibility queries
+var (
+	//go:embed data/*.sql
+	sqlTemplatesFS embed.FS
+
+	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
+)
+
+func mustTemplate(filename string) *template.Template {
+	if t := sqlTemplates.Lookup(filename); t != nil {
+		return t
+	}
+	panic(fmt.Sprintf("template file not found: %s", filename))
+}
 
 const (
 	dataSection = "unified/data"
@@ -25,15 +46,22 @@ const (
 
 // dataStore is a data store that uses a KV store to store data.
 type dataStore struct {
-	kv    KV
-	cache *gocache.Cache
+	kv            KV
+	cache         *gocache.Cache
+	legacyDialect sqltemplate.Dialect // TODO: remove when backwards compatibility is no longer needed.
 }
 
 func newDataStore(kv KV) *dataStore {
-	return &dataStore{
+	ds := &dataStore{
 		kv:    kv,
 		cache: gocache.New(time.Hour, 10*time.Minute), // 1 hour expiration, 10 minute cleanup
 	}
+
+	if sqlkv, ok := kv.(*sqlKV); ok {
+		ds.legacyDialect = sqltemplate.DialectForDriver(sqlkv.driverName)
+	}
+
+	return ds
 }
 
 type DataObj struct {
@@ -304,10 +332,6 @@ func (d *dataStore) GetLatestResourceKey(ctx context.Context, key GetRequestKey)
 func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequestKey, rv int64) (DataKey, error) {
 	if err := key.Validate(); err != nil {
 		return DataKey{}, fmt.Errorf("invalid get request key: %w", err)
-	}
-
-	if rv == 0 {
-		rv = math.MaxInt64
 	}
 
 	listKey := ListRequestKey(key)
@@ -598,7 +622,7 @@ func ParseKey(key string) (DataKey, error) {
 	}, nil
 }
 
-// Temporary while we need to support unified/sql/backend compatibility
+// Temporary while we need to support unified/sql/backend compatibility.
 // Remove once we stop using RvManager in storage_backend.go
 func ParseKeyWithGUID(key string) (DataKey, error) {
 	parts := strings.Split(key, "/")
@@ -814,4 +838,150 @@ func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, err
 	d.cache.Set(groupResourcesCacheKey, results, gocache.DefaultExpiration)
 
 	return results, nil
+}
+
+// TODO: remove when backwards compatibility is no longer needed.
+var (
+	sqlKVUpdateLegacyResourceHistory = mustTemplate("sqlkv_update_legacy_resource_history.sql")
+	sqlKVInsertLegacyResource        = mustTemplate("sqlkv_insert_legacy_resource.sql")
+	sqlKVUpdateLegacyResource        = mustTemplate("sqlkv_update_legacy_resource.sql")
+	sqlKVDeleteLegacyResource        = mustTemplate("sqlkv_delete_legacy_resource.sql")
+)
+
+// TODO: remove when backwards compatibility is no longer needed.
+type sqlKVLegacySaveRequest struct {
+	sqltemplate.SQLTemplate
+	GUID       string
+	Group      string
+	Resource   string
+	Namespace  string
+	Name       string
+	Action     int64
+	Folder     string
+	PreviousRV int64
+}
+
+func (req sqlKVLegacySaveRequest) Validate() error {
+	return nil
+}
+
+// TODO: remove when backwards compatibility is no longer needed.
+type sqlKVLegacyUpdateHistoryRequest struct {
+	sqltemplate.SQLTemplate
+	GUID       string
+	PreviousRV int64
+	Generation int64
+}
+
+func (req sqlKVLegacyUpdateHistoryRequest) Validate() error {
+	return nil
+}
+
+// applyBackwardsCompatibleChanges updates the `resource` and `resource_history` tables
+// to make sure the sqlkv implementation is backwards-compatible with the existing sql backend.
+// Specifically, it will update the `resource_history` table to include the previous resource version
+// and generation, which come from the `WriteEvent`, and also make the corresponding change on the
+// `resource` table, no longer used in the storage backend.
+//
+// TODO: remove when backwards compatibility is no longer needed.
+func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.Tx, event WriteEvent, key DataKey) error {
+	_, isSQLKV := d.kv.(*sqlKV)
+	if !isSQLKV {
+		return nil
+	}
+
+	generation := event.Object.GetGeneration()
+	if key.Action == DataActionDeleted {
+		generation = 0
+	}
+
+	// In compatibility mode, the previous RV, when available, is saved as a microsecond
+	// timestamp, as is done in the SQL backend.
+	previousRV := event.PreviousRV
+	if event.PreviousRV > 0 && isSnowflake(event.PreviousRV) {
+		previousRV = rvmanager.RVFromSnowflake(event.PreviousRV)
+	}
+
+	// fill in remaining required fields for backwards compatibility: previous_resource_version and generation
+	_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResourceHistory, sqlKVLegacyUpdateHistoryRequest{
+		SQLTemplate: sqltemplate.New(d.legacyDialect),
+		GUID:        key.GUID,
+		PreviousRV:  previousRV,
+		Generation:  generation,
+	})
+
+	if err != nil {
+		return fmt.Errorf("compatibility layer: failed to update resource_history: %w", err)
+	}
+
+	var action int64
+	switch key.Action {
+	case DataActionCreated:
+		action = 1
+	case DataActionUpdated:
+		action = 2
+	case DataActionDeleted:
+		action = 3
+	}
+
+	switch key.Action {
+	case DataActionCreated:
+		_, err := dbutil.Exec(ctx, tx, sqlKVInsertLegacyResource, sqlKVLegacySaveRequest{
+			SQLTemplate: sqltemplate.New(d.legacyDialect),
+			GUID:        key.GUID,
+			Group:       key.Group,
+			Resource:    key.Resource,
+			Namespace:   key.Namespace,
+			Name:        key.Name,
+			Action:      action,
+			Folder:      key.Folder,
+			PreviousRV:  previousRV,
+		})
+
+		if err != nil {
+			return fmt.Errorf("compatibility layer: failed to insert to resource: %w", err)
+		}
+	case DataActionUpdated:
+		_, err := dbutil.Exec(ctx, tx, sqlKVUpdateLegacyResource, sqlKVLegacySaveRequest{
+			SQLTemplate: sqltemplate.New(d.legacyDialect),
+			GUID:        key.GUID,
+			Group:       key.Group,
+			Resource:    key.Resource,
+			Namespace:   key.Namespace,
+			Name:        key.Name,
+			Action:      action,
+			Folder:      key.Folder,
+			PreviousRV:  previousRV,
+		})
+
+		if err != nil {
+			return fmt.Errorf("compatibility layer: failed to update resource: %w", err)
+		}
+	case DataActionDeleted:
+		_, err := dbutil.Exec(ctx, tx, sqlKVDeleteLegacyResource, sqlKVLegacySaveRequest{
+			SQLTemplate: sqltemplate.New(d.legacyDialect),
+			Group:       key.Group,
+			Resource:    key.Resource,
+			Namespace:   key.Namespace,
+			Name:        key.Name,
+		})
+
+		if err != nil {
+			return fmt.Errorf("compatibility layer: failed to delete from resource: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// isSnowflake returns whether the argument passed is a snowflake ID (new) or a microsecond timestamp (old).
+// We try to interpret the number as a microsecond timestamp first. If it represents a time in the past,
+// it is considered a microsecond timestamp. Snowflake IDs are much larger integers and would lead
+// to dates in the future if interpreted as a microsecond timestamp.
+func isSnowflake(rv int64) bool {
+	ts := time.UnixMicro(rv)
+	oneHourFromNow := time.Now().Add(time.Hour)
+	isMicroSecRV := ts.Before(oneHourFromNow)
+
+	return !isMicroSecRV
 }

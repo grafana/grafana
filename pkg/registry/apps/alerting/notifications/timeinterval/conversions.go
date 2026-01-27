@@ -66,6 +66,9 @@ func buildTimeInterval(orgID int64, interval definitions.MuteTimeInterval, spec 
 	}
 	i.SetProvenanceStatus(string(interval.Provenance))
 	i.UID = gapiutil.CalculateClusterWideUID(&i)
+
+	i.SetCanUse(ngmodels.Provenance(interval.Provenance) != ngmodels.ProvenanceConvertedPrometheus)
+
 	return i
 }
 

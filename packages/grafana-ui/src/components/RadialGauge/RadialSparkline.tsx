@@ -67,7 +67,7 @@ export const RadialSparkline = memo(
 
     return (
       <div style={{ position: 'absolute', top: topPos }}>
-        <Sparkline height={height} width={width} sparkline={sparkline} theme={theme} config={config} />
+        <Sparkline height={height} width={width} sparkline={sparkline} theme={theme} config={config} showHighlights />
       </div>
     );
   }

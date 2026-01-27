@@ -5105,42 +5105,70 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 	return string(json), m
 }
 
-func createRule(t *testing.T, client apiClient, folder string) (apimodels.PostableRuleGroupConfig, string) {
+type ruleOption func(*ruleConfig)
+
+type ruleConfig struct {
+	rule      *apimodels.PostableExtendedRuleNode
+	groupName string
+}
+
+func withLabels(labels map[string]string) ruleOption {
+	return func(cfg *ruleConfig) {
+		cfg.rule.Labels = labels
+	}
+}
+
+func withRuleGroup(groupName string) ruleOption {
+	return func(cfg *ruleConfig) {
+		cfg.groupName = groupName
+	}
+}
+
+func createRule(t *testing.T, client apiClient, folder string, opts ...ruleOption) (apimodels.PostableRuleGroupConfig, string) {
 	t.Helper()
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
 	doubleInterval := 2 * interval
-	rules := apimodels.PostableRuleGroupConfig{
-		Name:     "arulegroup",
-		Interval: interval,
-		Rules: []apimodels.PostableExtendedRuleNode{
-			{
-				ApiRuleNode: &apimodels.ApiRuleNode{
-					For:         &doubleInterval,
-					Labels:      map[string]string{"label1": "val1"},
-					Annotations: map[string]string{"annotation1": "val1"},
-				},
-				GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-					Title:     fmt.Sprintf("rule under folder %s", folder),
-					Condition: "A",
-					Data: []apimodels.AlertQuery{
-						{
-							RefID: "A",
-							RelativeTimeRange: apimodels.RelativeTimeRange{
-								From: apimodels.Duration(time.Duration(5) * time.Hour),
-								To:   apimodels.Duration(time.Duration(3) * time.Hour),
-							},
-							DatasourceUID: expr.DatasourceUID,
-							Model: json.RawMessage(`{
-								"type": "math",
-								"expression": "2 + 3 > 1"
-								}`),
-						},
+
+	rule := apimodels.PostableExtendedRuleNode{
+		ApiRuleNode: &apimodels.ApiRuleNode{
+			For:         &doubleInterval,
+			Labels:      map[string]string{"label1": "val1"},
+			Annotations: map[string]string{"annotation1": "val1"},
+		},
+		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+			Title:     fmt.Sprintf("rule under folder %s", folder),
+			Condition: "A",
+			Data: []apimodels.AlertQuery{
+				{
+					RefID: "A",
+					RelativeTimeRange: apimodels.RelativeTimeRange{
+						From: apimodels.Duration(time.Duration(5) * time.Hour),
+						To:   apimodels.Duration(time.Duration(3) * time.Hour),
 					},
+					DatasourceUID: expr.DatasourceUID,
+					Model: json.RawMessage(`{
+						"type": "math",
+						"expression": "2 + 3 > 1"
+						}`),
 				},
 			},
 		},
+	}
+
+	cfg := &ruleConfig{
+		rule:      &rule,
+		groupName: "arulegroup",
+	}
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	rules := apimodels.PostableRuleGroupConfig{
+		Name:     cfg.groupName,
+		Interval: interval,
+		Rules:    []apimodels.PostableExtendedRuleNode{*cfg.rule},
 	}
 	resp, status, _ := client.PostRulesGroupWithStatus(t, folder, &rules, false)
 	require.Equal(t, http.StatusAccepted, status)

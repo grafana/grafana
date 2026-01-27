@@ -1,17 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for center x and y 1`] = `"M 150 110 A 90 90 0 1 1 149.98429203681178 110.00000137077838 A 10 10 0 0 1 149.98778269529805 130.00000106616096 A 70 70 0 1 0 150 130 A 10 10 0 0 1 150 110 Z"`;
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for center x and y 1`] = `"M 150 120 A 80 80 0 1 1 149.98603736605492 120.00000121846968"`;
 
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for half arc 1`] = `"M 100 10 A 90 90 0 0 1 100 190 L 100 170 A 70 70 0 0 0 100 30 L 100 10 Z"`;
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for half arc 1`] = `"M 100 20 A 80 80 0 0 1 100 180"`;
 
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for narrow bar width 1`] = `"M 100 17.5 A 82.5 82.5 0 0 1 100 182.5 L 100 177.5 A 77.5 77.5 0 0 0 100 22.5 L 100 17.5 Z"`;
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for narrow bar width 1`] = `"M 100 20 A 80 80 0 0 1 100 180"`;
 
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for narrow radius 1`] = `"M 100 40 A 60 60 0 0 1 100 160 L 100 140 A 40 40 0 0 0 100 60 L 100 40 Z"`;
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for narrow radius 1`] = `"M 100 50 A 50 50 0 0 1 100 150"`;
 
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for quarter arc 1`] = `"M 100 10 A 90 90 0 0 1 190 100 L 170 100 A 70 70 0 0 0 100 30 L 100 10 Z"`;
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for quarter arc 1`] = `"M 100 20 A 80 80 0 0 1 180 100"`;
 
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for rounded bars 1`] = `"M 100 10 A 90 90 0 1 1 10 100.00000000000001 A 10 10 0 0 1 30 100.00000000000001 A 70 70 0 1 0 100 30 A 10 10 0 0 1 100 10 Z"`;
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for rounded bars 1`] = `"M 100 20 A 80 80 0 1 1 20 100.00000000000001"`;
 
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for three quarter arc 1`] = `"M 100 10 A 90 90 0 1 1 10 100.00000000000001 L 30 100.00000000000001 A 70 70 0 1 0 100 30 L 100 10 Z"`;
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for three quarter arc 1`] = `"M 100 20 A 80 80 0 1 1 20 100.00000000000001"`;
 
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for wide bar width 1`] = `"M 100 -5 A 105 105 0 0 1 100 205 L 100 155 A 55 55 0 0 0 100 45 L 100 -5 Z"`;
+exports[`RadialGauge utils drawRadialArcPath should draw correct path for wide bar width 1`] = `"M 100 20 A 80 80 0 0 1 100 180"`;

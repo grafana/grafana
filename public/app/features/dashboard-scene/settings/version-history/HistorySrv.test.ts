@@ -6,9 +6,12 @@ import { restore, versions } from './mocks/dashboardHistoryMocks';
 const getMock = jest.fn().mockResolvedValue({});
 const postMock = jest.fn().mockResolvedValue({});
 
-jest.mock('app/core/store', () => ({
-  get: jest.fn(),
-  getObject: jest.fn((_a, b) => b),
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  store: {
+    get: jest.fn(),
+    getObject: jest.fn((_a, b) => b),
+  },
 }));
 
 jest.mock('@grafana/runtime', () => {
