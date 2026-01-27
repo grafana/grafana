@@ -12601,7 +12601,6 @@
     "sidebar": {
       "card-click": "Select query {{refId}}",
       "expression": "Expression",
-      "placeholder": "Sidebar content placeholder",
       "queries-expressions": "Queries & Expressions",
       "query": "Query",
       "query-stack": "Query Stack",
