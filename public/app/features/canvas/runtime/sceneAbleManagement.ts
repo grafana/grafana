@@ -227,18 +227,30 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     })
     .on('dragGroup', (e) => {
       let needsUpdate = false;
+      const movedElements: ElementState[] = [];
+      
       for (let event of e.events) {
         const targetedElement = findElementByTarget(event.target, scene.root.elements);
         if (targetedElement) {
           targetedElement.applyDrag(event);
+          movedElements.push(targetedElement);
           if (!needsUpdate) {
             needsUpdate = scene.connections.connectionsNeedUpdate(targetedElement);
           }
         }
       }
 
-      if (needsUpdate && scene.moveableActionCallback) {
-        scene.moveableActionCallback(true);
+      if (needsUpdate) {
+        // Update connection coordinates during group drag for real-time visual feedback
+        scene.connections.updateConnectionsAfterGroupMove?.(
+          movedElements,
+          scene.selecto?.getSelectedTargets() || []
+        );
+        scene.connections.updateState();
+        
+        if (scene.moveableActionCallback) {
+          scene.moveableActionCallback(true);
+        }
       }
     })
     .on('dragGroupEnd', (e) => {
