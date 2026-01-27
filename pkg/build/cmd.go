@@ -154,6 +154,10 @@ func setup(goos string) {
 }
 
 func doBuild(binaryName, pkg string, opts BuildOpts) error {
+	if opts.binarySuffix != "" {
+		binaryName += "-" + opts.binarySuffix
+	}
+
 	log.Println("building", binaryName, pkg)
 
 	if err := setBuildEnv(opts); err != nil {
