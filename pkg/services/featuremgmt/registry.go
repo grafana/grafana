@@ -1257,9 +1257,9 @@ var (
 		{
 			Name:        "enableSCIM",
 			Description: "Enables SCIM support for user and group management",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       identityAccessTeam,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:         "crashDetection",
