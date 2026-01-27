@@ -80,7 +80,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	healthChecker := controller.NewRepositoryHealthChecker(statusPatcher, repository.NewTester(validator), healthMetricsRecorder)
 
 	// Create quota getter from configuration.
-	// Defaults match pkg/setting/setting.go: max_resources_per_repository=0 (unlimited), max_repositories=10
+	// Defaults: max_resources_per_repository=0 (unlimited), max_repositories=10
 	// Note: This operator may need to move to enterprise repository to support
 	// enterprise-specific quota implementations and dependencies.
 	quotaLimits := quotas.QuotaLimits{
@@ -159,7 +159,6 @@ func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (
 		allowedTargets = []string{"folder"}
 	}
 
-	// Read config with defaults matching pkg/setting/setting.go
 	// Note: This operator may need to move to enterprise repository to support
 	// enterprise-specific quota implementations and dependencies.
 	return &repoControllerConfig{
@@ -169,7 +168,7 @@ func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (
 		allowedTargets:               allowedTargets,
 		workerCount:                  cfg.SectionWithEnvOverrides("operator").Key("worker_count").MustInt(1),
 		parallelOperations:           cfg.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
-		allowImageRendering:          cfg.SectionWithEnvOverrides("provisioning").Key("allow_image_rendering").MustBool(true),
-		minSyncInterval:              cfg.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second),
+		allowImageRendering:          cfg.SectionWithEnvOverrides("provisioning").Key("allow_image_rendering").MustBool(false),
+		minSyncInterval:              cfg.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1 * time.Minute),
 	}, nil
 }
