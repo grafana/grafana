@@ -330,7 +330,7 @@ describe('LogContextProvider', () => {
         }
       );
 
-      expect(contextQuery.query.expr).toEqual(`{level="info"} | drop __error__, __error_details__ | logfmt | json`);
+      expect(contextQuery.query.expr).toEqual(`{level="info"} | logfmt | json | drop __error__, __error_details__`);
     });
 
     it('should not apply line_format if flag is not set by default', async () => {
