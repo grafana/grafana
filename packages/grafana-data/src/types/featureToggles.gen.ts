@@ -771,7 +771,7 @@ export interface FeatureToggles {
   timeRangeProvider?: boolean;
   /**
   * Enables time range panning functionality
-  * @default false
+  * @default true
   */
   timeRangePan?: boolean;
   /**
