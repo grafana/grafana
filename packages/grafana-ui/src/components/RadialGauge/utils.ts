@@ -121,14 +121,17 @@ export function calculateDimensions(
   // When enabling stroke-linecap="round" on a path, the circular endcap is appended outside of the path.
   // If you don't adjust the positioning or the path, then the endcaps will probably clip off the bottom
   // of the panel. To account for this, the circular endcap radius (which is half the bar width) needs
-  // to be accounted for. To get the best visual result, we will take some off the radius of the visualization
-  // overall and some off of the vertical space by offsetting the centerY upwards.
-  if (yMaxAngle < 180 && roundedBars) {
-    const radiusAdjustment = barWidth / 4; // stroke-linecap="round" | half of the endcap radius.
-    outerRadius -= radiusAdjustment;
-    maxRadiusH -= radiusAdjustment;
-    maxRadiusW -= radiusAdjustment;
-  }
+  // to be accounted for. To get the best visual result, we will take some off the radius of the
+  // visualization overall and some off of the vertical space by offsetting the centerY upwards.
+  const totalEndcapAdjustment = yMaxAngle < 180 && roundedBars ? barWidth * 0.5 : 0;
+
+  // change the factor we multiply here to steal more or less from the size of the gauge vs. the centerY position.
+  // there's actually a range of values you could use here to make this work, the 50/50 split looks the best
+  // to me, because it handles use cases like bar glow well and avoids clipping on either vertical edge of the panel.
+  const radiusEndcapAdjustment = totalEndcapAdjustment * 0.5;
+  outerRadius -= radiusEndcapAdjustment;
+  maxRadiusH -= radiusEndcapAdjustment;
+  maxRadiusW -= radiusEndcapAdjustment;
 
   // Scale labels
   let scaleLabelsFontSize = 0;
@@ -174,11 +177,8 @@ export function calculateDimensions(
   const belowCenterY = maxRadius * Math.sin(toRad(yMaxAngle));
   const rest = height - belowCenterY - margin * 2 - maxRadius;
   const centerX = width / 2;
-  let centerY = maxRadius + margin + rest / 2;
-
-  if (yMaxAngle < 180 && roundedBars) {
-    centerY -= barWidth / 4; // stroke-linecap="round" | the other half of the endcap radius.
-  }
+  const centerYEndcapAdjustment = totalEndcapAdjustment - radiusEndcapAdjustment;
+  const centerY = maxRadius + margin + rest / 2 - centerYEndcapAdjustment;
 
   if (barIndex > 0) {
     innerRadius = innerRadius - (barWidth + 4) * barIndex;
