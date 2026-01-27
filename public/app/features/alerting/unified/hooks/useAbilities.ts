@@ -15,7 +15,7 @@ import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { CombinedRule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
-import { GrafanaPromRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleCompact, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
@@ -326,11 +326,11 @@ export function useAllRulerRuleAbilities(
 }
 
 /**
- * Hook for checking abilities on Grafana Prometheus rules (GrafanaPromRuleDTO)
- * This is the next version of useAllRulerRuleAbilities designed to work with GrafanaPromRuleDTO
+ * Hook for checking abilities on Grafana Prometheus rules (GrafanaPromRuleCompact)
+ * This is the next version of useAllRulerRuleAbilities designed to work with GrafanaPromRuleCompact
  */
-export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefined): Abilities<AlertRuleAction> {
-  // For GrafanaPromRuleDTO, we use useIsGrafanaPromRuleEditable instead
+export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleCompact | undefined): Abilities<AlertRuleAction> {
+  // For GrafanaPromRuleCompact, we use useIsGrafanaPromRuleEditable instead
   const { isEditable, isRemovable, loading } = useIsGrafanaPromRuleEditable(rule); // duplicate
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
 
@@ -343,14 +343,14 @@ export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefi
     // Note: Grafana managed rules can't be federated - this is strictly a Mimir feature
     // See: https://grafana.com/docs/mimir/latest/references/architecture/components/ruler/#federated-rule-groups
     const isFederated = false;
-    // All GrafanaPromRuleDTO rules are Grafana-managed by definition
+    // All GrafanaPromRuleCompact rules are Grafana-managed by definition
     const isAlertingRule = prometheusRuleType.grafana.alertingRule(rule);
     const isPluginProvided = isPluginProvidedRule(rule);
 
     // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
     const immutableRule = isProvisioned || isFederated || isPluginProvided;
 
-    // GrafanaPromRuleDTO rules are always supported (no loading state for ruler availability)
+    // GrafanaPromRuleCompact rules are always supported (no loading state for ruler availability)
     const MaybeSupported = loading ? NotSupported : AlwaysSupported;
     const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
 
@@ -388,10 +388,10 @@ interface IsGrafanaPromRuleEditableResult {
 }
 
 /**
- * Hook for checking if a GrafanaPromRuleDTO is editable
- * Adapted version of useIsRuleEditable for GrafanaPromRuleDTO
+ * Hook for checking if a GrafanaPromRuleCompact is editable
+ * Adapted version of useIsRuleEditable for GrafanaPromRuleCompact
  */
-function useIsGrafanaPromRuleEditable(rule?: GrafanaPromRuleDTO): IsGrafanaPromRuleEditableResult {
+function useIsGrafanaPromRuleEditable(rule?: GrafanaPromRuleCompact): IsGrafanaPromRuleEditableResult {
   const folderUID = rule?.folderUid;
   const { folder, loading } = useFolder(folderUID);
 
@@ -426,9 +426,9 @@ export const skipToken = Symbol('ability-skip-token');
 type SkipToken = typeof skipToken;
 
 /**
- * Hook for checking a single ability on a GrafanaPromRuleDTO
+ * Hook for checking a single ability on a GrafanaPromRuleCompact
  */
-export function useGrafanaPromRuleAbility(rule: GrafanaPromRuleDTO | SkipToken, action: AlertRuleAction): Ability {
+export function useGrafanaPromRuleAbility(rule: GrafanaPromRuleCompact | SkipToken, action: AlertRuleAction): Ability {
   const abilities = useAllGrafanaPromRuleAbilities(rule === skipToken ? undefined : rule);
 
   return useMemo(() => {
@@ -437,10 +437,10 @@ export function useGrafanaPromRuleAbility(rule: GrafanaPromRuleDTO | SkipToken, 
 }
 
 /**
- * Hook for checking multiple abilities on a GrafanaPromRuleDTO
+ * Hook for checking multiple abilities on a GrafanaPromRuleCompact
  */
 export function useGrafanaPromRuleAbilities(
-  rule: GrafanaPromRuleDTO | SkipToken,
+  rule: GrafanaPromRuleCompact | SkipToken,
   actions: AlertRuleAction[]
 ): Ability[] {
   const abilities = useAllGrafanaPromRuleAbilities(rule === skipToken ? undefined : rule);

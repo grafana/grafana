@@ -48,6 +48,7 @@ export type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'nam
   searchGroupName?: string;
   searchFolder?: string;
   type?: 'alerting' | 'recording';
+  compact?: boolean;
   ruleMatchers?: string[];
   plugins?: 'hide' | 'only';
 };
@@ -106,6 +107,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
         searchGroupName,
         searchFolder,
         dashboardUid,
+        compact,
         ruleMatchers,
         plugins,
       }) => ({
@@ -127,6 +129,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
           'search.rule_group': searchGroupName,
           'search.folder': searchFolder,
           dashboard_uid: dashboardUid,
+          compact: compact,
           rule_matcher: ruleMatchers,
           plugins: plugins,
         },
@@ -141,16 +144,26 @@ export const prometheusApi = alertingApi.injectEndpoints({
   }),
 });
 
+export interface PopulateCacheOptions {
+  limitAlerts?: number;
+  compact?: boolean;
+}
+
 export function usePopulateGrafanaPrometheusApiCache() {
   const dispatch = useDispatch();
 
   const populateGroupsResponseCache = useCallback(
-    (groups: GrafanaPromRuleGroupDTO[]) => {
+    (groups: GrafanaPromRuleGroupDTO[], options: PopulateCacheOptions = {}) => {
       dispatch(
         prometheusApi.util.upsertQueryEntries(
           groups.map((group) => ({
             endpointName: 'getGrafanaGroups',
-            arg: { folderUid: group.folderUid, groupName: group.name, limitAlerts: 0 },
+            arg: {
+              folderUid: group.folderUid,
+              groupName: group.name,
+              limitAlerts: options.limitAlerts ?? 0,
+              compact: options.compact,
+            },
             value: { data: { groups: [group] }, status: 'success' },
           }))
         )

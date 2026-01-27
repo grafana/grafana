@@ -4,10 +4,11 @@ import { useEffect, useMemo, useRef } from 'react';
 import { t } from '@grafana/i18n';
 import { Icon, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
-import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
+import { shouldUseCompactRulesResponse } from '../featureToggles';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { groups } from '../utils/navigation';
 import { isUngroupedRuleGroup } from '../utils/rules';
@@ -49,6 +50,7 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
   const grafanaGroupsGenerator = useGrafanaGroupsGenerator({
     populateCache: needsClientSideFiltering ? false : true,
     limitAlerts: 0,
+    compact: shouldUseCompactRulesResponse(),
   });
 
   // If there are no filters we can match one frontend page to one API page.
@@ -82,14 +84,11 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
       contactPoint: undefined,
       ruleSource: undefined,
     });
-    return (group: PromRuleGroupDTO) => frontendFilter.groupMatches(group);
+    return (group: GrafanaPromRuleGroupDTO) => frontendFilter.groupMatches(group);
   }, [namespaceFilter, groupFilter]);
 
-  const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
-    groupsGenerator.current,
-    FRONTED_GROUPED_PAGE_SIZE,
-    filterFn
-  );
+  const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } =
+    useLazyLoadPrometheusGroups<GrafanaPromRuleGroupDTO>(groupsGenerator.current, FRONTED_GROUPED_PAGE_SIZE, filterFn);
 
   const groupsByFolder = useMemo(() => groupBy(groups, 'folderUid'), [groups]);
   const hasNoRules = isEmpty(groups) && !isLoading;

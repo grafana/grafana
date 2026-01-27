@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { MergeExclusive } from 'type-fest';
 
 import { DataSourceRulesSourceIdentifier, RuleHealth } from 'app/types/unified-alerting';
-import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleGroupDTO, PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { PromRulesResponse, prometheusApi, usePopulateGrafanaPrometheusApiCache } from '../../api/prometheusApi';
 
@@ -15,6 +15,11 @@ interface UseGeneratorHookOptions {
    */
   populateCache?: boolean;
   limitAlerts?: number;
+  /**
+   * Whether to use compact response format from the API.
+   * Typically controlled by the alertingCompactRulesResponse feature toggle.
+   */
+  compact?: boolean;
 }
 
 export function usePrometheusGroupsGenerator() {
@@ -77,15 +82,25 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
         ...fetchOptions,
         limitAlerts: hookOptions.limitAlerts,
         ...fetchOptions.filter,
+        compact: hookOptions.compact,
       }).unwrap();
 
       if (hookOptions.populateCache) {
-        populateGroupsResponseCache(response.data.groups);
+        populateGroupsResponseCache(response.data.groups, {
+          limitAlerts: hookOptions.limitAlerts,
+          compact: hookOptions.compact,
+        });
       }
 
       return response;
     },
-    [getGrafanaGroups, hookOptions.limitAlerts, hookOptions.populateCache, populateGroupsResponseCache]
+    [
+      getGrafanaGroups,
+      hookOptions.limitAlerts,
+      hookOptions.compact,
+      hookOptions.populateCache,
+      populateGroupsResponseCache,
+    ]
   );
 
   return useCallback(
@@ -109,7 +124,7 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
  * @param generator - The paginated generator to convert
  * @returns A non-paginated generator that yields all groups from the original generator one by one
  */
-export function toIndividualRuleGroups<TGroup extends PromRuleGroupDTO>(
+export function toIndividualRuleGroups<TGroup extends PromRuleGroupDTO | GrafanaPromRuleGroupDTO>(
   generator: AsyncGenerator<TGroup[], void, unknown>
 ): AsyncGenerator<TGroup, void, unknown> {
   return (async function* () {

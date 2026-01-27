@@ -27,6 +27,8 @@ export const shouldUseBackendFilters = () => config.featureToggles.alertingUIUse
 export const shouldUseFullyCompatibleBackendFilters = () =>
   config.featureToggles.alertingUIUseFullyCompatBackendFilters ?? false;
 
+export const shouldUseCompactRulesResponse = () => config.featureToggles.alertingCompactRulesResponse ?? false;
+
 /**
  * Saved searches feature - allows users to save and apply search queries on the Alert Rules page.
  */

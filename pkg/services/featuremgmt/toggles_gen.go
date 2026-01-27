@@ -259,6 +259,10 @@ const (
 	// Optimizes eligible queries in order to reduce load on datasources
 	FlagAlertingQueryOptimization = "alertingQueryOptimization"
 
+	// FlagAlertingCompactRulesResponse
+	// Returns compact API responses for alert rules list, reducing payload size by omitting the query, notification settings, and metadata
+	FlagAlertingCompactRulesResponse = "alertingCompactRulesResponse"
+
 	// FlagJitterAlertRulesWithinGroups
 	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"

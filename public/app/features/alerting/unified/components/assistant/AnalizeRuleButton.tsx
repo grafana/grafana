@@ -4,13 +4,17 @@ import { OpenAssistantProps, createAssistantContextItem, useAssistant } from '@g
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
-import { GrafanaAlertingRule, GrafanaRecordingRule, GrafanaRule } from 'app/types/unified-alerting';
+import {
+  GrafanaPromAlertingRuleCompact,
+  GrafanaPromRecordingRuleCompact,
+  GrafanaPromRuleCompact,
+} from 'app/types/unified-alerting-dto';
 
 import { prometheusRuleType } from '../../utils/rules';
 
 interface AnalyzeRuleButtonProps {
   /** Alert rule to analyze */
-  rule: GrafanaRule;
+  rule: GrafanaPromRuleCompact;
 }
 
 /**
@@ -41,8 +45,6 @@ function AnalyzeRuleButtonView({
         rule: {
           name: rule.name,
           uid: rule.uid,
-          labels: rule.labels,
-          query: rule.query,
         },
       },
     });
@@ -81,23 +83,22 @@ function AnalyzeRuleButtonView({
  * Builds a prompt for analyzing a rule (alerting or recording).
  * Automatically detects the rule type and uses the appropriate prompt builder.
  */
-function buildAnalyzeRulePrompt(rule: GrafanaRule): string {
+function buildAnalyzeRulePrompt(rule: GrafanaPromRuleCompact): string {
   if (prometheusRuleType.grafana.alertingRule(rule)) {
     return buildAnalyzeAlertingRulePrompt(rule);
-  } else if (prometheusRuleType.grafana.recordingRule(rule)) {
-    return buildAnalyzeRecordingRulePrompt(rule);
   }
-  // Fallback (should not happen for GrafanaRule, but TypeScript requires it)
-  return `Analyze the rule "${rule.name}".`;
+  // Must be recording rule since GrafanaPromRuleCompact is alerting | recording
+  return buildAnalyzeRecordingRulePrompt(rule);
 }
 
 /**
  * Builds a prompt for analyzing an alerting rule.
  * Includes state, activeAt timestamp, annotations, and labels.
  */
-function buildAnalyzeAlertingRulePrompt(rule: GrafanaAlertingRule): string {
+function buildAnalyzeAlertingRulePrompt(rule: GrafanaPromAlertingRuleCompact): string {
   const state = rule.state || 'firing';
-  const timeInfo = rule.activeAt ? ` starting at ${new Date(rule.activeAt).toISOString()}` : '';
+  const activeAt = rule.alerts?.[0]?.activeAt;
+  const timeInfo = activeAt ? ` starting at ${new Date(activeAt).toISOString()}` : '';
   const alertsNavigationPrompt = config.featureToggles.alertingTriage
     ? '\n- Include navigation to the alerts page ONLY if the alert is firing or pending'
     : '';
@@ -128,9 +129,9 @@ function buildAnalyzeAlertingRulePrompt(rule: GrafanaAlertingRule): string {
 
 /**
  * Builds a prompt for analyzing a recording rule.
- * Includes name, query, and labels (no state or activeAt).
+ * Includes name and labels (no state or activeAt).
  */
-function buildAnalyzeRecordingRulePrompt(rule: GrafanaRecordingRule): string {
+function buildAnalyzeRecordingRulePrompt(rule: GrafanaPromRecordingRuleCompact): string {
   const labelsStr = rule.labels
     ? Object.entries(rule.labels)
         .map(([k, v]) => `${k}="${v}"`)

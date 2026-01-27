@@ -72,14 +72,16 @@ export interface RecordingRule extends RuleBase {
 
 export type Rule = AlertingRule | RecordingRule;
 
-export interface GrafanaAlertingRule extends AlertingRule {
+export interface GrafanaAlertingRule extends Omit<AlertingRule, 'query'> {
   uid: string;
   folderUid: string;
+  query?: string; // Optional for Grafana rules (can be omitted when compact=true)
 }
 
-export interface GrafanaRecordingRule extends RecordingRule {
+export interface GrafanaRecordingRule extends Omit<RecordingRule, 'query'> {
   uid: string;
   folderUid: string;
+  query?: string; // Optional for Grafana rules (can be omitted when compact=true)
 }
 
 export type GrafanaRule = GrafanaAlertingRule | GrafanaRecordingRule;
