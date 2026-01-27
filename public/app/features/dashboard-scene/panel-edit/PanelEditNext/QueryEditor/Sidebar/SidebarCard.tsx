@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
-import { Icon, Text, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -11,8 +11,7 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useQueryRunnerContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
-const Header = ({ editorType, hasError }: { editorType: QueryEditorType; hasError: boolean }) => {
-  const styles = useStyles2(getStyles, editorType, hasError);
+const Header = ({ editorType, styles }: { editorType: QueryEditorType; styles: ReturnType<typeof getStyles> }) => {
   const typeText =
     editorType === 'expression'
       ? t('query-editor-next.sidebar.expression', 'Expression')
@@ -20,12 +19,12 @@ const Header = ({ editorType, hasError }: { editorType: QueryEditorType; hasErro
 
   return (
     <div className={styles.cardHeader}>
-      <div className={styles.cardHeaderContent}>
+      <Stack direction="row" alignItems="center" gap={1}>
         <Icon name={QUERY_EDITOR_TYPE_CONFIG[editorType].icon} />
         <Text weight="light" variant="body">
           {typeText}
         </Text>
-      </div>
+      </Stack>
       <Icon name="circle-mono" className={styles.errorIcon} />
     </div>
   );
@@ -61,13 +60,12 @@ export const SidebarCard = ({ query }: SidebarCardProps) => {
   return (
     <button
       className={styles.card}
-      key={query.refId}
       onClick={handleClick}
       type="button"
       aria-label={t('query-editor-next.sidebar.card-click', 'Select query {{refId}}', { refId: query.refId })}
       aria-pressed={isSelected}
     >
-      <Header editorType={editorType} hasError={hasError} />
+      <Header editorType={editorType} styles={styles} />
       <div className={styles.cardContent}>
         <DataSourceLogo dataSource={queryDsSettings} />
         <Text weight="light" variant="body" color="secondary">
@@ -120,12 +118,6 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: 
       borderTopRightRadius: theme.shape.radius.default,
       borderTopLeftRadius: theme.shape.radius.default,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
-    }),
-    cardHeaderContent: css({
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: theme.spacing(0.5),
     }),
     cardContent: css({
       display: 'flex',
