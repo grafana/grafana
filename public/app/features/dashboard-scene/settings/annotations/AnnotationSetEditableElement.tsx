@@ -73,8 +73,7 @@ function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet 
 
   const onAddAnnotation = useCallback(() => {
     const defaultDatasource = getDataSourceSrv().getInstanceSettings(null);
-    const datasourceRef =
-      defaultDatasource?.meta.annotations ? getDataSourceRef(defaultDatasource) : undefined;
+    const datasourceRef = defaultDatasource?.meta.annotations ? getDataSourceRef(defaultDatasource) : undefined;
 
     const newAnnotationQuery: AnnotationQuery = {
       name: newAnnotationName,
