@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -322,6 +323,9 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 	if err := am.crypto.DecryptExtraConfigs(ctx, c); err != nil {
 		return remoteClient.UserGrafanaConfig{}, fmt.Errorf("unable to decrypt extra configs: %w", err)
 	}
+
+	// Add managed routes to the configuration.
+	c.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(c.AlertmanagerConfig.Route, c.ManagedRoutes)
 
 	mergeResult, err := c.GetMergedAlertmanagerConfig()
 	if err != nil {

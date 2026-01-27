@@ -37,6 +37,8 @@ type ManagedRoute struct {
 }
 
 func (r *ManagedRoute) AsRoute() definition.Route {
+	groupByAll, groupBy := ToGroupBy(r.GroupBy...)
+
 	// Only need to copy the fields that are valid for a root route.
 	return definition.Route{
 		Receiver:       r.Receiver,
@@ -46,6 +48,12 @@ func (r *ManagedRoute) AsRoute() definition.Route {
 		RepeatInterval: r.RepeatInterval,
 		Routes:         r.Routes,
 		Provenance:     definitions.Provenance(r.Provenance),
+
+		// These are deceptively necessary since they are normally generated during unmarshalling and assumed to be
+		// present in upstream alertmanager code. We can't assume we'll be unmarshalling the route again, so we need to
+		// set them here.
+		GroupBy:    groupBy,
+		GroupByAll: groupByAll,
 	}
 }
 
@@ -286,6 +294,19 @@ func (rev *ConfigRevision) validateTimeIntervalReferences(route definitions.Rout
 		timeIntervals[mt.Name] = struct{}{}
 	}
 	return route.ValidateTimeIntervals(timeIntervals)
+}
+
+// ToGroupBy converts the given label strings to (groupByAll, []model.LabelName) where groupByAll is true if the input
+// contains models.GroupByAll. This logic is in accordance with upstream Route.ValidateChild().
+func ToGroupBy(groupByStr ...string) (groupByAll bool, groupBy []model.LabelName) {
+	for _, l := range groupByStr {
+		if l == models.GroupByAll {
+			return true, nil
+		} else {
+			groupBy = append(groupBy, model.LabelName(l))
+		}
+	}
+	return false, groupBy
 }
 
 func CalculateRouteFingerprint(route definitions.Route) string {

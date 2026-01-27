@@ -60,7 +60,7 @@ var Config = func() *definitions.PostableUserConfig {
 }
 
 var Legacy = func() *definitions.Route {
-	return &definitions.Route{
+	r := &definitions.Route{
 		Receiver:       "default-receiver",
 		GroupByStr:     []string{"g1", "g2"},
 		GroupWait:      util.Pointer(model.Duration(time.Duration(30) * time.Second)),
@@ -85,16 +85,20 @@ var Legacy = func() *definitions.Route {
 			RepeatInterval:      util.Pointer(model.Duration(time.Duration(5) * time.Minute)),
 		}},
 	}
+	_ = r.Validate()
+	return r
 }
 
 var Empty = func() *definitions.Route {
-	return &definitions.Route{
+	r := &definitions.Route{
 		Receiver: "default-receiver",
 	}
+	_ = r.Validate()
+	return r
 }
 
 var OverrideInherit = func() *definitions.Route {
-	return &definitions.Route{
+	r := &definitions.Route{
 		Receiver:       "provisioned-contact-point",
 		GroupByStr:     []string{"alertname"},
 		GroupWait:      util.Pointer(model.Duration(time.Duration(1) * time.Second)),
@@ -159,10 +163,12 @@ var OverrideInherit = func() *definitions.Route {
 			},
 		},
 	}
+	_ = r.Validate()
+	return r
 }
 
 var MatcherVariety = func() *definitions.Route {
-	return &definitions.Route{
+	r := &definitions.Route{
 		Receiver:       "lotsa-emails",
 		GroupByStr:     []string{"alertname"},
 		GroupWait:      util.Pointer(model.Duration(time.Duration(2) * time.Second)),
@@ -191,10 +197,12 @@ var MatcherVariety = func() *definitions.Route {
 			},
 		},
 	}
+	_ = r.Validate()
+	return r
 }
 
 var SpecialCases = func() *definitions.Route {
-	return &definitions.Route{
+	r := &definitions.Route{
 		Receiver:   "default-receiver",
 		GroupByStr: []string{"..."}, // No Grouping.
 		Routes: []*definitions.Route{
@@ -216,10 +224,12 @@ var SpecialCases = func() *definitions.Route {
 			},
 		},
 	}
+	_ = r.Validate()
+	return r
 }
 
 var DeeplyNested = func() *definitions.Route {
-	return &definitions.Route{
+	r := &definitions.Route{
 		Receiver:       "slack-multi-channel",
 		GroupByStr:     []string{"alertname"},
 		GroupWait:      util.Pointer(model.Duration(time.Duration(3) * time.Second)),
@@ -251,4 +261,6 @@ var DeeplyNested = func() *definitions.Route {
 			},
 		},
 	}
+	_ = r.Validate()
+	return r
 }
