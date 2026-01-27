@@ -43,9 +43,9 @@ You can sign up to the private preview using the [Git Sync early access form](ht
 
 When Git Sync is enabled, the database load might increase, especially if your Grafana instance has many folders and nested folders. Evaluate the performance impact, if any, in a non-production environment.
 
-## Git Sync limits
+## Git Sync account limits
 
-TBC
+Free-tier accounts are limited to 20 resources per synced folder.
 
 ## Known issues
 
@@ -60,14 +60,14 @@ TBC
 
 ### Authentication
 
-- You can only authenticate in GitHub using your Personal Access Token token.
+- You can only authenticate in GitHub using your Personal Access Token token or a GitHub App.
 
 ### Permission management
 
 - You cannot modify the permissions of a provisioned folder after you've synced it.
 - Default permissions are: Admin = Admin, Editor = Editor, and Viewer = Viewer. Refer to [Roles and permissions](ref:roles-and-permissions) for more information.
 
-### Compatibility
+### Compatible services and providers
 
 - Support for native Git, Git app, and other providers, such as GitLab or Bitbucket, is on the roadmap.
 
