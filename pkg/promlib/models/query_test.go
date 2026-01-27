@@ -2,6 +2,7 @@ package models_test
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"testing"
 	"time"
@@ -996,29 +997,182 @@ func TestParseNumericFormatError(t *testing.T) {
 		To:   now.Add(12 * time.Hour),
 	}
 
-	// Test case where format is sent as a number instead of string
-	queryJson := `{
-		"expr": "up",
-		"format": 0,
-		"refId": "A"
-	}`
+	t.Run("format as number 0 should be handled gracefully", func(t *testing.T) {
+		queryJson := `{
+			"expr": "up",
+			"format": 0,
+			"refId": "A"
+		}`
 
-	q := backend.DataQuery{
-		JSON:      []byte(queryJson),
-		TimeRange: timeRange,
-		RefID:     "A",
-	}
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
 
-	res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.NotNil(t, res)
+		require.Equal(t, "up", res.Expr)
+	})
 
-	require.Error(t, err)
-	require.Nil(t, res)
+	t.Run("format as number 1 should default to time_series", func(t *testing.T) {
+		queryJson := `{
+			"expr": "up",
+			"format": 1,
+			"refId": "A"
+		}`
 
-	require.True(t, backend.IsDownstreamError(err))
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
 
-	// Error message should indicate unmarshaling issue
-	require.Contains(t, err.Error(), "error unmarshaling query")
-	require.Contains(t, err.Error(), "cannot unmarshal number")
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.NotNil(t, res)
+	})
+
+	t.Run("format as number 2 should map to table", func(t *testing.T) {
+		queryJson := `{
+			"expr": "up",
+			"format": 2,
+			"refId": "A"
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.NotNil(t, res)
+	})
+
+	t.Run("format as number 3 should map to heatmap", func(t *testing.T) {
+		queryJson := `{
+			"expr": "up",
+			"format": 3,
+			"refId": "A"
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.NotNil(t, res)
+	})
+
+	t.Run("format as unknown number should default to time_series", func(t *testing.T) {
+		queryJson := `{
+			"expr": "up",
+			"format": 999,
+			"refId": "A"
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.NotNil(t, res)
+	})
+
+	t.Run("format as float should be handled gracefully", func(t *testing.T) {
+		queryJson := `{
+			"expr": "up",
+			"format": 1.5,
+			"refId": "A"
+		}`
+
+		q := backend.DataQuery{
+			JSON:      []byte(queryJson),
+			TimeRange: timeRange,
+			RefID:     "A",
+		}
+
+		res, err := models.Parse(context.Background(), log.New(), span, q, "15s", intervalCalculator, false)
+		require.NoError(t, err)
+		require.NotNil(t, res)
+	})
+}
+
+func TestPromQueryFormatUnmarshalJSON(t *testing.T) {
+	t.Run("valid string format values", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			json     string
+			expected models.PromQueryFormat
+		}{
+			{
+				name:     "time_series format",
+				json:     `{"format": "time_series"}`,
+				expected: models.PromQueryFormatTimeSeries,
+			},
+			{
+				name:     "table format",
+				json:     `{"format": "table"}`,
+				expected: models.PromQueryFormatTable,
+			},
+			{
+				name:     "heatmap format",
+				json:     `{"format": "heatmap"}`,
+				expected: models.PromQueryFormatHeatmap,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				var props models.PrometheusQueryProperties
+				err := json.Unmarshal([]byte(tt.json), &props)
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, props.Format)
+			})
+		}
+	})
+
+	t.Run("invalid string format values default to time_series", func(t *testing.T) {
+		tests := []struct {
+			name string
+			json string
+		}{
+			{
+				name: "unknown format string",
+				json: `{"format": "invalid_format"}`,
+			},
+			{
+				name: "empty string",
+				json: `{"format": ""}`,
+			},
+			{
+				name: "random string",
+				json: `{"format": "foobar"}`,
+			},
+			{
+				name: "typo in format",
+				json: `{"format": "time_serie"}`,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				var props models.PrometheusQueryProperties
+				err := json.Unmarshal([]byte(tt.json), &props)
+				require.NoError(t, err)
+				require.Equal(t, models.PromQueryFormatTimeSeries, props.Format, "invalid format should default to time_series")
+			})
+		}
+	})
 }
 
 func TestQueryTypeDefinitions(t *testing.T) {

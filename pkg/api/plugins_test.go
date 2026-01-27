@@ -678,9 +678,10 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 
 func createPlugin(jd plugins.JSONData, class plugins.Class, files plugins.FS) *plugins.Plugin {
 	return &plugins.Plugin{
-		JSONData: jd,
-		Class:    class,
-		FS:       files,
+		JSONData:        jd,
+		Class:           class,
+		FS:              files,
+		LoadingStrategy: plugins.LoadingStrategyScript,
 	}
 }
 
@@ -851,7 +852,7 @@ func Test_PluginsSettings(t *testing.T) {
 				pluginCDN := pluginscdn.ProvideService(pCfg)
 				sig := signature.ProvideService(pCfg, statickey.New())
 				calc := modulehash.NewCalculator(pCfg, registry.NewInMemory(), pluginCDN, sig)
-				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, calc)
+				hs.pluginAssets = pluginassets.ProvideService(calc)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
 				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
 					hs.Cfg,

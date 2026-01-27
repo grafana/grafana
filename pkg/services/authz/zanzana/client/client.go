@@ -62,6 +62,16 @@ func (c *Client) Compile(ctx context.Context, id authlib.AuthInfo, req authlib.L
 	return c.authzlibclient.Compile(ctx, id, req)
 }
 
+func (c *Client) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.BatchCheck")
+	defer span.End()
+
+	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("BatchCheck", req.Checks[0].Namespace))
+	defer timer.ObserveDuration()
+
+	return c.authzlibclient.BatchCheck(ctx, id, req)
+}
+
 func (c *Client) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Read")
 	defer span.End()
@@ -78,16 +88,6 @@ func (c *Client) Write(ctx context.Context, req *authzextv1.WriteRequest) error 
 
 	_, err := c.authzext.Write(ctx, req)
 	return err
-}
-
-func (c *Client) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	ctx, span := tracer.Start(ctx, "authlib.zanzana.client.Check")
-	defer span.End()
-
-	timer := prometheus.NewTimer(c.metrics.requestDurationSeconds.WithLabelValues("BatchCheck", req.Namespace))
-	defer timer.ObserveDuration()
-
-	return c.authzext.BatchCheck(ctx, req)
 }
 
 func (c *Client) WriteNew(ctx context.Context, req *authzextv1.WriteRequest) error {

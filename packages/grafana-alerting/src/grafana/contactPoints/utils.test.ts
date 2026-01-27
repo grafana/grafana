@@ -1,11 +1,12 @@
 import {
   ContactPointFactory,
+  ContactPointMetadataAnnotationsFactory,
   EmailIntegrationFactory,
   GenericIntegrationFactory,
   SlackIntegrationFactory,
 } from '../api/notifications/v0alpha1/mocks/fakes/Receivers';
 
-import { getContactPointDescription } from './utils';
+import { getContactPointDescription, isUsableContactPoint } from './utils';
 
 describe('getContactPointDescription', () => {
   it('should show description for single integration', () => {
@@ -45,5 +46,36 @@ describe('getContactPointDescription', () => {
       spec: { integrations: [GenericIntegrationFactory.build({ type: 'generic' })] },
     });
     expect(getContactPointDescription(contactPoint)).toBe('generic');
+  });
+});
+
+describe('isUsableContactPoint', () => {
+  it('should return true when canUse annotation is true', () => {
+    const contactPoint = ContactPointFactory.build({
+      metadata: {
+        annotations: ContactPointMetadataAnnotationsFactory.build({
+          'grafana.com/canUse': 'true',
+        }),
+      },
+    });
+    expect(isUsableContactPoint(contactPoint)).toBe(true);
+  });
+
+  it('should return false when canUse annotation is false', () => {
+    const contactPoint = ContactPointFactory.build({
+      metadata: {
+        annotations: ContactPointMetadataAnnotationsFactory.build({
+          'grafana.com/canUse': 'false',
+        }),
+      },
+    });
+    expect(isUsableContactPoint(contactPoint)).toBe(false);
+  });
+
+  it('should return false when canUse annotation is missing', () => {
+    const contactPoint = ContactPointFactory.build();
+    // Remove the canUse annotation to simulate it being missing
+    delete contactPoint.metadata.annotations?.['grafana.com/canUse'];
+    expect(isUsableContactPoint(contactPoint)).toBe(false);
   });
 });

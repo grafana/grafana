@@ -1,6 +1,5 @@
 import { type DefaultBodyType, HttpResponse, HttpResponseResolver, PathParams, http } from 'msw';
 
-import { config } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
@@ -10,10 +9,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
-import {
-  getDisabledPluginHandler,
-  getPluginMissingHandler,
-} from 'app/features/alerting/unified/mocks/server/handlers/plugins';
+import { getDisabledPluginHandler } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import {
   ALERTING_API_SERVER_BASE_URL,
   getK8sResponse,
@@ -175,6 +171,36 @@ export const setTimeIntervalsListEmpty = () => {
   return handler;
 };
 
+interface TimeIntervalConfig {
+  name: string;
+  provenance?: string;
+}
+
+/**
+ * Makes the mock server respond with custom time intervals
+ */
+export const setTimeIntervalsList = (intervals: TimeIntervalConfig[]) => {
+  const listMuteTimingsPath = listNamespacedTimeIntervalHandler().info.path;
+  const handler = http.get(listMuteTimingsPath, () => {
+    const items = intervals.map((interval) => ({
+      metadata: {
+        annotations: {
+          'grafana.com/provenance': interval.provenance ?? 'none',
+        },
+        name: interval.name,
+        uid: `uid-${interval.name}`,
+        namespace: 'default',
+        resourceVersion: 'e0270bfced786660',
+      },
+      spec: { name: interval.name, time_intervals: [] },
+    }));
+    return HttpResponse.json(getK8sResponse('TimeIntervalList', items));
+  });
+
+  server.use(handler);
+  return handler;
+};
+
 export function mimirDataSource() {
   const dataSource = mockDataSource(
     {
@@ -211,12 +237,6 @@ export function setPrometheusRules(ds: DataSourceLike, groups: PromRuleGroupDTO[
 export function setGrafanaPromRules(groups: GrafanaPromRuleGroupDTO[]) {
   server.use(http.get(`/api/prometheus/grafana/api/v1/rules`, paginatedHandlerFor(groups)));
 }
-
-/** Make a given plugin ID respond with a 404, as if it isn't installed at all */
-export const removePlugin = (pluginId: string) => {
-  delete config.apps[pluginId];
-  server.use(getPluginMissingHandler(pluginId));
-};
 
 /** Make a plugin respond with `enabled: false`, as if its installed but disabled */
 export const disablePlugin = (pluginId: SupportedPlugin) => {

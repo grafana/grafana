@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
@@ -23,10 +25,6 @@ const connectionLoggerName = "provisioning-connection-controller"
 
 const (
 	connectionMaxAttempts = 3
-	// connectionHealthyDuration defines how recent a health check must be to be considered "recent" when healthy
-	connectionHealthyDuration = 5 * time.Minute
-	// connectionUnhealthyDuration defines how recent a health check must be to be considered "recent" when unhealthy
-	connectionUnhealthyDuration = 1 * time.Minute
 )
 
 type connectionQueueItem struct {
@@ -36,7 +34,7 @@ type connectionQueueItem struct {
 
 // ConnectionStatusPatcher defines the interface for updating connection status.
 //
-//go:generate mockery --name=ConnectionStatusPatcher
+//go:generate mockery --name=ConnectionStatusPatcher --structname=MockConnectionStatusPatcher --inpackage --filename=connection_status_patcher_mock.go --with-expecter
 type ConnectionStatusPatcher interface {
 	Patch(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) error
 }
@@ -48,9 +46,12 @@ type ConnectionController struct {
 	connSynced cache.InformerSynced
 	logger     logging.Logger
 
-	statusPatcher ConnectionStatusPatcher
+	statusPatcher     ConnectionStatusPatcher
+	healthChecker     ConnectionHealthCheckerInterface
+	connectionFactory connection.Factory
 
-	queue workqueue.TypedRateLimitingInterface[*connectionQueueItem]
+	queue          workqueue.TypedRateLimitingInterface[*connectionQueueItem]
+	resyncInterval time.Duration
 }
 
 // NewConnectionController creates a new ConnectionController.
@@ -58,6 +59,9 @@ func NewConnectionController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
 	connInformer informer.ConnectionInformer,
 	statusPatcher ConnectionStatusPatcher,
+	healthChecker *ConnectionHealthChecker,
+	connectionFactory connection.Factory,
+	resyncInterval time.Duration,
 ) (*ConnectionController, error) {
 	cc := &ConnectionController{
 		client:     provisioningClient,
@@ -69,8 +73,11 @@ func NewConnectionController(
 				Name: "provisioningConnectionController",
 			},
 		),
-		statusPatcher: statusPatcher,
-		logger:        logging.DefaultLogger.With("logger", connectionLoggerName),
+		statusPatcher:     statusPatcher,
+		healthChecker:     healthChecker,
+		connectionFactory: connectionFactory,
+		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
+		resyncInterval:    resyncInterval,
 	}
 
 	_, err := connInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -160,6 +167,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
 	if err != nil {
+		logger.Error("retrieving namespace and name from key", "error", err)
 		return err
 	}
 
@@ -168,8 +176,11 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	case apierrors.IsNotFound(err):
 		return errors.New("connection not found in cache")
 	case err != nil:
+		logger.Error("getting connection", "error", err)
 		return err
 	}
+
+	logger = logger.With("connection", conn.Name, "namespace", conn.Namespace)
 
 	// Skip if being deleted
 	if conn.DeletionTimestamp != nil {
@@ -178,7 +189,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
-	shouldCheckHealth := cc.shouldCheckHealth(conn)
+	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
 
 	// Determine the main triggering condition
 	switch {
@@ -191,11 +202,8 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return nil
 	}
 
-	// For now, just update the state to connected, health to healthy, and observed generation
-	// Future: Add credential validation logic here
-	patchOperations := []map[string]interface{}{}
+	var patchOperations []map[string]interface{}
 
-	// Only update observedGeneration when spec changes
 	if hasSpecChanged {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
@@ -204,51 +212,139 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		})
 	}
 
-	// Always update state and health
-	patchOperations = append(patchOperations,
-		map[string]interface{}{
+	c, err := cc.connectionFactory.Build(ctx, conn)
+	if err != nil {
+		logger.Error("failed to build connection", "error", err)
+		return err
+	}
+
+	tokenConn, ok := c.(connection.TokenConnection)
+	if ok {
+		refresh, err := cc.shouldGenerateToken(ctx, conn, tokenConn)
+		if err != nil {
+			logger.Error("failed to check if token needs to be generated", "error", err)
+			return err
+		}
+
+		if refresh {
+			logger.Info("generating connection token")
+
+			token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
+			if err != nil {
+				logger.Error("failed to generate connection token", "error", err)
+				return err
+			}
+			if len(tokenOps) > 0 {
+				patchOperations = append(patchOperations, tokenOps...)
+			}
+			// Substituting generated token for healthcheck
+			conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
+		}
+	}
+
+	// Handle health checks using the health checker
+	testResults, healthStatus, healthPatchOps, err := cc.healthChecker.RefreshHealthWithPatchOps(ctx, conn)
+	if err != nil {
+		logger.Error("failed to get updated health status", "error", err)
+		return fmt.Errorf("update health status: %w", err)
+	}
+	patchOperations = append(patchOperations, healthPatchOps...)
+
+	// Update state based on health status
+	if healthStatus.Healthy {
+		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/state",
 			"value": provisioning.ConnectionStateConnected,
-		},
-		map[string]interface{}{
-			"op":   "replace",
-			"path": "/status/health",
-			"value": provisioning.HealthStatus{
-				Healthy: true,
-				Checked: time.Now().UnixMilli(),
-			},
-		},
-	)
-
-	if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
-		return fmt.Errorf("failed to update connection status: %w", err)
+		})
+	} else {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/state",
+			"value": provisioning.ConnectionStateDisconnected,
+		})
 	}
 
-	logger.Info("connection reconciled successfully")
+	// Update fieldErrors from test results - ensure fieldErrors are cleared when there are no errors
+	fieldErrors := testResults.Errors
+	if fieldErrors == nil {
+		fieldErrors = []provisioning.ErrorDetails{}
+	}
+	patchOperations = append(patchOperations, map[string]interface{}{
+		"op":    "replace",
+		"path":  "/status/fieldErrors",
+		"value": fieldErrors,
+	})
+
+	if len(patchOperations) > 0 {
+		// Update fieldErrors from test results
+		if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
+			return fmt.Errorf("failed to update connection status: %w", err)
+		}
+	}
+
+	logger.Info("connection reconciled successfully", "healthy", healthStatus.Healthy)
 	return nil
 }
 
-// shouldCheckHealth determines if a connection health check should be performed.
-func (cc *ConnectionController) shouldCheckHealth(conn *provisioning.Connection) bool {
-	// If the connection has been updated, always check health
-	if conn.Generation != conn.Status.ObservedGeneration {
-		return true
+func (cc *ConnectionController) shouldGenerateToken(
+	ctx context.Context,
+	obj *provisioning.Connection,
+	c connection.TokenConnection,
+) (bool, error) {
+	// In case the token is not there, we should always generate it.
+	if obj.Secure.Token.IsZero() {
+		return true, nil
 	}
 
-	// Check if health check is stale
-	return !cc.hasRecentHealthCheck(conn.Status.Health)
+	// In case the current token is not valid, then generate a new one.
+	if !c.TokenValid(ctx) {
+		return true, nil
+	}
+
+	issuingTime, err := c.TokenCreationTime(ctx)
+	if err != nil {
+		return false, err
+	}
+	// If the token has been recently created, we should not refresh it.
+	if tokenRecentlyCreated(issuingTime) {
+		return false, nil
+	}
+
+	expiration, err := c.TokenExpiration(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return shouldRefreshBeforeExpiration(expiration, cc.resyncInterval), nil
 }
 
-// hasRecentHealthCheck checks if a health check was performed recently.
-func (cc *ConnectionController) hasRecentHealthCheck(healthStatus provisioning.HealthStatus) bool {
-	if healthStatus.Checked == 0 {
-		return false // Never checked
+// generateConnectionToken regenerates the connection token if the connection supports it.
+// Uses the TokenGenerator interface to generate tokens in a connection-type-agnostic way.
+// Returns patch operations to update the /secure/token field.
+func (cc *ConnectionController) generateConnectionToken(
+	ctx context.Context,
+	conn connection.TokenConnection,
+) (string, []map[string]interface{}, error) {
+	logger := logging.FromContext(ctx)
+
+	token, err := conn.GenerateConnectionToken(ctx)
+	if err != nil {
+		logger.Error("failed to generate connection token", "error", err)
+		return "", nil, nil // Non-blocking: return empty patches
 	}
 
-	age := time.Since(time.UnixMilli(healthStatus.Checked))
-	if healthStatus.Healthy {
-		return age <= connectionHealthyDuration
+	logger.Info("successfully generated new connection token")
+
+	patchOperations := []map[string]interface{}{
+		{
+			"op":   "replace",
+			"path": "/secure/token",
+			"value": map[string]string{
+				"create": string(token),
+			},
+		},
 	}
-	return age <= connectionUnhealthyDuration
+
+	return string(token), patchOperations, nil
 }

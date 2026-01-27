@@ -10,12 +10,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -69,19 +70,31 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	allowedTargets := []v0alpha1.SyncTargetType{}
-	for _, target := range controllerCfg.allowedTargets {
-		allowedTargets = append(allowedTargets, v0alpha1.SyncTargetType(target))
-	}
-	validator := repository.NewValidator(controllerCfg.minSyncInterval, allowedTargets, controllerCfg.allowImageRendering)
+	validator := repository.NewValidator(controllerCfg.allowImageRendering, controllerCfg.repoFactory)
 	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
-	healthChecker := controller.NewHealthChecker(statusPatcher, deps.Registerer, repository.NewSimpleRepositoryTester(validator))
+	// Health checker uses basic validation only - no need to validate against existing repositories
+	// since the repository already passed admission validation when it was created/updated.
+	// TODO: Consider adding ExistingRepositoriesValidator for reconciliation to detect conflicts
+	// that may arise from manual edits or migrations (e.g., duplicate paths, instance sync conflicts).
+	healthMetricsRecorder := controller.NewHealthMetricsRecorder(deps.Registerer)
+	healthChecker := controller.NewRepositoryHealthChecker(statusPatcher, repository.NewTester(validator), healthMetricsRecorder)
+
+	// Create quota getter from configuration.
+	// Defaults: max_resources_per_repository=0 (unlimited), max_repositories=10
+	// Note: This operator may need to move to enterprise repository to support
+	// enterprise-specific quota implementations and dependencies.
+	quotaLimits := quotas.QuotaLimits{
+		MaxResources:    deps.Config.SectionWithEnvOverrides("provisioning").Key("max_resources_per_repository").MustInt64(0),
+		MaxRepositories: deps.Config.SectionWithEnvOverrides("provisioning").Key("max_repositories").MustInt64(10),
+	}
+	quotaGetter := quotas.NewFixedQuotaGetter(quotaLimits)
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
 	controller, err := controller.NewRepositoryController(
 		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
 		repoInformer,
 		controllerCfg.repoFactory,
+		controllerCfg.connectionFactory,
 		resourceLister,
 		controllerCfg.clients,
 		jobs,
@@ -90,6 +103,8 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		deps.Registerer,
 		tracer,
 		controllerCfg.parallelOperations,
+		controllerCfg.resyncInterval,
+		quotaGetter,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)
@@ -107,6 +122,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 type repoControllerConfig struct {
 	provisioningControllerConfig
 	repoFactory         repository.Factory
+	connectionFactory   connection.Factory
 	workerCount         int
 	parallelOperations  int
 	allowedTargets      []string
@@ -120,15 +136,21 @@ func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (
 		return nil, err
 	}
 
-	// Setup repository factory for repo controller
-	decrypter, err := setupDecrypter(cfg, tracing.NewNoopTracerService(), controllerCfg.tokenExchangeClient)
+	decryptSvc, err := setupDecryptService(cfg, tracing.NewNoopTracerService(), controllerCfg.tokenExchangeClient)
 	if err != nil {
-		return nil, fmt.Errorf("failed to setup decrypter: %w", err)
+		return nil, fmt.Errorf("failed to setup decryptService: %w", err)
 	}
 
-	repoFactory, err := setupRepoFactory(cfg, decrypter, controllerCfg.provisioningClient, registry)
+	repoDecrypter := repository.ProvideDecrypter(decryptSvc)
+	repoFactory, err := setupRepoFactory(cfg, repoDecrypter, controllerCfg.provisioningClient, registry)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup repository factory: %w", err)
+	}
+
+	connectionDecrypter := connection.ProvideDecrypter(decryptSvc)
+	connectionFactory, err := setupConnectionFactory(cfg, connectionDecrypter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup connection factory: %w", err)
 	}
 
 	allowedTargets := []string{}
@@ -137,9 +159,12 @@ func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (
 		allowedTargets = []string{"folder"}
 	}
 
+	// Note: This operator may need to move to enterprise repository to support
+	// enterprise-specific quota implementations and dependencies.
 	return &repoControllerConfig{
 		provisioningControllerConfig: *controllerCfg,
 		repoFactory:                  repoFactory,
+		connectionFactory:            connectionFactory,
 		allowedTargets:               allowedTargets,
 		workerCount:                  cfg.SectionWithEnvOverrides("operator").Key("worker_count").MustInt(1),
 		parallelOperations:           cfg.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
