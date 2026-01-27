@@ -25,7 +25,7 @@ const Header = ({ editorType, styles }: { editorType: QueryEditorType; styles: R
           {typeText}
         </Text>
       </Stack>
-      <Icon name="circle-mono" className={styles.errorIcon} />
+      <Icon name="circle-mono" className={styles.statusIcon} />
     </div>
   );
 };
@@ -43,10 +43,7 @@ export const SidebarCard = ({ query }: SidebarCardProps) => {
   const { data } = useQueryRunnerContext();
   const { selectedCard, setSelectedCard } = useQueryEditorUIContext();
 
-  // Extract error for this specific query by matching refId
-  const queryError = data?.errors?.find((e) => e.refId === query.refId);
-
-  const hasError = Boolean(queryError);
+  const hasError = data?.errors?.some((e) => e.refId === query.refId) ?? false;
   const isSelected = selectedCard?.refId === query.refId;
   const styles = useStyles2(getStyles, editorType, hasError, isSelected);
 
@@ -126,7 +123,7 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: 
       gap: theme.spacing(1),
       padding: theme.spacing(1),
     }),
-    errorIcon: css({
+    statusIcon: css({
       color: hasError ? theme.colors.error.text : theme.colors.success.text,
       width: '6px',
       height: '6px',
