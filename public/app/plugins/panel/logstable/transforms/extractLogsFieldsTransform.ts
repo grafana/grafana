@@ -1,6 +1,6 @@
 import { DataFrame, DataFrameType, Field, FieldType } from '@grafana/data';
 
-export function getLogsExtractFields(dataFrame: DataFrame) {
+export function extractLogsFieldsTransform(dataFrame: DataFrame) {
   return dataFrame.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
       const isFieldLokiLabels =

@@ -28,7 +28,7 @@ interface Props extends CustomCellRendererProps {
  * @param props
  * @constructor
  */
-export function LogsNGTableRowActionButtons(props: Props) {
+export function LogsTableRowActionButtons(props: Props) {
   const { field, rowIndex, frame, buildLinkToLog, bodyFieldName, showInspectLogLine, logsFrame } = props;
   const theme = useTheme2();
   const [isInspecting, setIsInspecting] = useState(false);

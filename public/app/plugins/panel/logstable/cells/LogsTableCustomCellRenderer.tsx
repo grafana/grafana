@@ -6,7 +6,7 @@ import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { ROW_ACTION_BUTTON_WIDTH } from '../LogsTable';
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
-import { LogsNGTableRowActionButtons } from '../rows/LogsNGTableRowActionButtons';
+import { LogsTableRowActionButtons } from '../rows/LogsTableRowActionButtons';
 import { BuildLinkToLogLine } from '../types';
 
 export function LogsTableCustomCellRenderer(props: {
@@ -29,7 +29,7 @@ export function LogsTableCustomCellRenderer(props: {
 
   return (
     <>
-      <LogsNGTableRowActionButtons
+      <LogsTableRowActionButtons
         {...props.cellProps}
         logsFrame={logsFrame}
         bodyFieldName={bodyFieldName}

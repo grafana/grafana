@@ -85,6 +85,7 @@ const getStyles = (theme: GrafanaTheme2, sidebarWidth: number, height: number, w
       paddingLeft: sidebarWidth,
       height,
       width,
+      // @todo better row selection UI
       '[aria-selected=true]': {
         backgroundColor: theme.colors.background.secondary,
         outline: `solid 1px ${theme.colors.warning.border}`,

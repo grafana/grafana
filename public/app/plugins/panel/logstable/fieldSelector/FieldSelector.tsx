@@ -26,7 +26,7 @@ export interface FieldSelectorProps {
   toggle: (key: string) => void;
 }
 
-// Copy pasta from /app/features/logs/components/fieldSelector/FieldSelector.tsx (no changes)
+// Copy pasta from /app/features/logs/components/fieldSelector/FieldSelector.tsx
 // @todo centralize
 export const FieldSelector = ({
   activeFields,

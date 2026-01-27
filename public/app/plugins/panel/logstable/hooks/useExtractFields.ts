@@ -12,7 +12,8 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 import { replaceVariables } from '@grafana-plugins/loki/querybuilder/parsingUtils';
-import { getLogsExtractFields } from 'app/plugins/panel/logstable/transforms/extractLogsFields';
+
+import { extractLogsFieldsTransform } from '../transforms/extractLogsFieldsTransform';
 
 interface Props {
   rawTableFrame: DataFrame;
@@ -33,7 +34,7 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
 
     console.log('useExtractFields', { dataLinkPostProcessor, fieldConfig, rawTableFrame, theme, timeZone });
     const extractFields = async () => {
-      return await lastValueFrom(transformDataFrame(getLogsExtractFields(rawTableFrame), [rawTableFrame]));
+      return await lastValueFrom(transformDataFrame(extractLogsFieldsTransform(rawTableFrame), [rawTableFrame]));
     };
 
     extractFields().then((data) => {

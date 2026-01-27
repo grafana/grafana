@@ -5,10 +5,11 @@ import { DataFrame, transformDataFrame } from '@grafana/data';
 import { CustomCellRendererProps, TableCellDisplayMode } from '@grafana/ui';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
-import { LogsTableCustomCellRenderer } from '../cells/CustomCellRenderer';
-import { getFieldWidth } from '../fields/gets';
+import { LogsTableCustomCellRenderer } from '../cells/LogsTableCustomCellRenderer';
+import { getFieldWidth } from '../fields/getFieldWidth';
 import { doesFieldSupportAdHocFiltering, doesFieldSupportInspector } from '../fields/supports';
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
+import { organizeLogsFieldsTransform } from '../transforms/organizeLogsFieldsTransform';
 import { BuildLinkToLogLine, isBuildLinkToLogLine } from '../types';
 
 interface Props {
@@ -90,18 +91,7 @@ const organizeFields = async (
   }
 
   const organizedFrame = await lastValueFrom(
-    transformDataFrame(
-      [
-        {
-          id: 'organize',
-          options: {
-            indexByName,
-            includeByName,
-          },
-        },
-      ],
-      [extractedFrame]
-    )
+    transformDataFrame(organizeLogsFieldsTransform(indexByName, includeByName), [extractedFrame])
   );
 
   for (let frameIndex = 0; frameIndex < organizedFrame.length; frameIndex++) {
