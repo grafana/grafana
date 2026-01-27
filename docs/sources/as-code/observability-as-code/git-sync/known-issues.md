@@ -14,7 +14,7 @@ labels:
     - cloud
 title: Git Sync known issues and limitations
 menuTitle: Known issues and limits
-weight: 100
+weight: 125
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/known-issues/
 refs:
   roles-and-permissions:

@@ -48,7 +48,15 @@ Git Sync allows you to connect external resources with your Grafana instance. Af
 
 Git Sync is bidirectional. You can modify provisioned resources both from the Grafana UI or from the synced GitHub repository, and changes will be reflected in both places.
 
-Refer to [key concepts](key-concepts.md) for further details.
+Refer to [key concepts](key-concepts.md) and [known issues](known-issues.md) for further details.
+
+### Git Sync states
+
+Your Grafana instance can be in one of the following Git Sync states:
+
+- **Unprovisioned**: None of the instance's resources are being managed by Git Sync.
+- **Partially provisioned**: Some of the resources are controlled by Git Sync.
+- **Fully provisioned**: All supported resource types are managed by Git Sync. Unsupported resources are **not managed**.
 
 {{< admonition type="caution" >}}
 
@@ -79,14 +87,6 @@ A resource can be:
 | ---------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | **Supported**    | The resource can be managed with Git Sync.                                 | The resource is supported but has compatibility issues. It **cannot** be managed with Git Sync. |
 | **Unsupported**  | The resource is **not** supported and **cannot** be managed with Git Sync. | Not applicable.                                                                                 |
-
-## Grafana instance Git Sync states
-
-Your Grafana instance can be in one of the following Git Sync states:
-
-- **Unprovisioned**: None of the instance's resources are being managed by Git Sync.
-- **Partially provisioned**: Some of the resources are controlled by Git Sync.
-- **Fully provisioned**: All supported resource types are managed by Git Sync. Unsupported resources are **not managed**.
 
 ## Common use cases
 
