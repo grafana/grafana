@@ -10,6 +10,7 @@ package v0alpha1
 import (
 	datav0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -77,6 +78,13 @@ func (in *DashboardHit) DeepCopyInto(out *DashboardHit) {
 		copy(*out, *in)
 	}
 	out.ManagedBy = in.ManagedBy
+	if in.OwnerReferences != nil {
+		in, out := &in.OwnerReferences, &out.OwnerReferences
+		*out = make([]v1.OwnerReference, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.Field != nil {
 		in, out := &in.Field, &out.Field
 		*out = (*in).DeepCopy()
