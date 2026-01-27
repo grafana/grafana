@@ -47,6 +47,8 @@ The following table summarizes the default alerting permissions for each basic r
 | Create, edit, and delete policies         |   ✓   |   ✓    |        |
 | View mute timings                         |   ✓   |   ✓    |   ✓    |
 | Create, edit, and delete timing intervals |   ✓   |   ✓    |        |
+| View alert enrichments                    |   ✓   |   ✓    |   ✓    |
+| Create, edit, and delete enrichments      |   ✓   |   ✓    |        |
 | Access provisioning API                   |   ✓   |   ✓    |        |
 | Export with decrypted secrets             |   ✓   |        |        |
 
@@ -104,17 +106,18 @@ Permissions for managing alert instances in external data sources.
 
 Permissions for managing contact points (notification receivers).
 
-| Action                                       | Applicable scope                   | Description                                                                                                 |
-| -------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `alert.notifications.receivers:list`         | n/a                                | List contact points in the current organization.                                                            |
-| `alert.notifications.receivers:read`         | `receivers:*`<br>`receivers:uid:*` | Read contact points.                                                                                        |
-| `alert.notifications.receivers.secrets:read` | `receivers:*`<br>`receivers:uid:*` | Export contact points with decrypted secrets.                                                               |
-| `alert.notifications.receivers:create`       | n/a                                | Create a new contact points. The creator is automatically granted full access to the created contact point. |
-| `alert.notifications.receivers:write`        | `receivers:*`<br>`receivers:uid:*` | Update existing contact points.                                                                             |
-| `alert.notifications.receivers:delete`       | `receivers:*`<br>`receivers:uid:*` | Update and delete existing contact points.                                                                  |
-| `alert.notifications.receivers:test`         | `receivers:*`<br>`receivers:uid:*` | Test contact points to verify their configuration.                                                          |
-| `receivers.permissions:read`                 | `receivers:*`<br>`receivers:uid:*` | Read permissions for contact points.                                                                        |
-| `receivers.permissions:write`                | `receivers:*`<br>`receivers:uid:*` | Manage permissions for contact points.                                                                      |
+| Action                                       | Applicable scope                                           | Description                                                                                                                    |
+| -------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `alert.notifications.receivers:list`         | n/a                                                        | List contact points in the current organization.                                                                               |
+| `alert.notifications.receivers:read`         | `receivers:*`<br>`receivers:uid:*`                         | Read contact points.                                                                                                           |
+| `alert.notifications.receivers.secrets:read` | `receivers:*`<br>`receivers:uid:*`                         | Export contact points with decrypted secrets.                                                                                  |
+| `alert.notifications.receivers:create`       | n/a                                                        | Create a new contact points. The creator is automatically granted full access to the created contact point.                    |
+| `alert.notifications.receivers:write`        | `receivers:*`<br>`receivers:uid:*`                         | Update existing contact points.                                                                                                |
+| `alert.notifications.receivers:delete`       | `receivers:*`<br>`receivers:uid:*`                         | Update and delete existing contact points.                                                                                     |
+| `alert.notifications.receivers:test`         | n/a                                                        | Test contact points to verify their configuration. Deprecated. Use "alert.notifications.receivers.test:create"                 |
+| `alert.notifications.receivers.test:create`  | `receivers:*`<br>`receivers:uid:*`<br>`receivers:type:new` | Test contact points to verify their configuration. Use scope `receivers:type:new` to grant permission to test new integrations |
+| `receivers.permissions:read`                 | `receivers:*`<br>`receivers:uid:*`                         | Read permissions for contact points.                                                                                           |
+| `receivers.permissions:write`                | `receivers:*`<br>`receivers:uid:*`                         | Manage permissions for contact points.                                                                                         |
 
 ### Notification policies
 
@@ -178,5 +181,14 @@ Permissions for managing alerting resources via the provisioning API.
 | `alert.notifications.provisioning:read`  | n/a              | Read notification resources (contact points, notification policies, templates, time intervals) via provisioning API. More specific than `alert.provisioning:read`. |
 | `alert.notifications.provisioning:write` | n/a              | Create, update, and delete notification resources via provisioning API. More specific than `alert.provisioning:write`.                                             |
 | `alert.provisioning.provenance:write`    | n/a              | Set provisioning status for alerting resources. Cannot be used alone. Requires user to have permissions to access resources.                                       |
+
+### Alert enrichments
+
+Permissions for managing alert enrichments.
+
+| Action                    | Applicable scope | Description                                                                             |
+| ------------------------- | ---------------- | --------------------------------------------------------------------------------------- |
+| `alert.enrichments:read`  | n/a              | Read alert enrichment configurations in the current organization.                       |
+| `alert.enrichments:write` | n/a              | Create, update, and delete alert enrichment configurations in the current organization. |
 
 To help plan your RBAC rollout strategy, refer to [Plan your RBAC rollout strategy](https://grafana.com/docs/grafana/next/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/).

@@ -244,57 +244,65 @@ func GroupScopesByActionContext(ctx context.Context, permissions []Permission) m
 	))
 	defer span.End()
 
-	// Note: this has been optimized to improve memory usage in large instances
-	// where there are lots of permissions. This isn't quite as fast as it can
-	// be, but we should prioritize memory over speed in this case.
+	// Optimized for both memory efficiency and speed.
+	// Uses index caching to avoid map lookups in hot path, plus a single
+	// contiguous backing array to reduce allocations and GC pressure.
+	// Pre-sized for ~256 actions (typical max is ~500, uint16 supports up to 65535).
 
 	if len(permissions) == 0 {
 		return make(map[string][]string)
 	}
 
-	// Use index-based approach with cached lookups for better performance
-	// First pass: assign and cache indices for each permission
-	actionIndex := make(map[string]int)
-	indices := make([]int, len(permissions))
+	// First pass: assign indices and cache them to avoid repeated map lookups
+	// Using uint16 for indices (2 bytes vs 8) - supports up to 65535 unique actions
+	actionIndex := make(map[string]uint16, 256)
+	indices := make([]uint16, len(permissions))
 
 	for i := range permissions {
 		action := permissions[i].Action
 		if idx, ok := actionIndex[action]; ok {
 			indices[i] = idx
 		} else {
-			idx = len(actionIndex)
+			idx := uint16(len(actionIndex))
 			actionIndex[action] = idx
 			indices[i] = idx
 		}
 	}
 
-	// Count scopes per action using cached indices
-	actionCounts := make([]int, len(actionIndex))
-	for i := range indices {
-		actionCounts[indices[i]]++
+	numActions := len(actionIndex)
+
+	// Count scopes per action using cached indices (fast slice access, no map lookups)
+	actionCounts := make([]int, numActions)
+	for _, idx := range indices {
+		actionCounts[idx]++
 	}
 
-	// Preallocate slice array with exact capacities
-	scopes := make([][]string, len(actionCounts))
+	// Single contiguous backing array - much more memory-efficient than many small allocations
+	backingArray := make([]string, len(permissions))
+
+	// Create slices pointing into the backing array with exact capacities
+	scopes := make([][]string, numActions)
+	offset := 0
 	for i, count := range actionCounts {
-		scopes[i] = make([]string, 0, count)
+		scopes[i] = backingArray[offset : offset : offset+count]
+		offset += count
 	}
 
-	// Second pass: append scopes using cached indices (no map lookups!)
+	// Second pass: append scopes using cached indices (no map lookups in hot path!)
 	for i := range permissions {
 		idx := indices[i]
 		scopes[idx] = append(scopes[idx], permissions[i].Scope)
 	}
 
 	// Build result map
-	m := make(map[string][]string, len(actionIndex))
+	m := make(map[string][]string, numActions)
 	for action, idx := range actionIndex {
 		m[action] = scopes[idx]
 	}
 
 	span.SetAttributes(
-		attribute.Int("unique_actions", len(actionIndex)),
-		attribute.Float64("avg_scopes_per_action", float64(len(permissions))/float64(len(actionIndex))),
+		attribute.Int("unique_actions", numActions),
+		attribute.Float64("avg_scopes_per_action", float64(len(permissions))/float64(numActions)),
 	)
 
 	return m

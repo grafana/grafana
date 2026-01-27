@@ -9,7 +9,7 @@
     "@grafana/runtime": "12.4.0-pre",
     "@grafana/schema": "12.4.0-pre",
     "@grafana/ui": "12.4.0-pre",
-    "lodash": "4.17.23",
+    "lodash": "^4.17.23",
     "monaco-editor": "0.34.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
