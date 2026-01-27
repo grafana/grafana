@@ -152,18 +152,9 @@ function DashboardControl({ icon, label, description, tooltip, onClick }: Dashbo
 
   return (
     <div className={styles.control}>
-      <div>
-        <Button
-          variant="secondary"
-          fill="outline"
-          size="lg"
-          onClick={onClick}
-          className={styles.iconButton}
-          tooltip={tooltip}
-        >
-          <Icon name={icon} size="xl" />
-        </Button>
-      </div>
+      <Button variant="secondary" fill="outline" onClick={onClick} tooltip={tooltip} className={styles.iconButton}>
+        <Icon name={icon} size="xl" />
+      </Button>
       <div className={styles.labelContainer}>
         <Text weight="medium">{label}</Text>
         <Text element="p" variant="bodySmall" color="secondary">
@@ -208,7 +199,9 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
     }),
     iconButton: css({
-      padding: theme.spacing(0, 1.5),
+      height: '46px',
+      lineHeight: '46px',
+      padding: theme.spacing(0, 1),
       '& svg': {
         opacity: 0.6,
       },
