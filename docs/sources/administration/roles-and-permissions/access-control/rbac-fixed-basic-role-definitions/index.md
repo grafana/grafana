@@ -67,47 +67,36 @@ The following tables list permissions associated with basic and fixed roles. Thi
 Grafana Cloud stacks include additional plugin role assignments not shown here. Refer to [Grafana Cloud app plugin role definitions](ref:plugin-role-definitions) for a complete list.
 {{< /admonition >}}
 
-## View your role assignments
+## View basic role definitions
 
-You can view the roles assigned to a user through the UI or API.
-
-### Using the UI
-
-1. Navigate to **Administration > Users and access > Users**.
-1. Click on a user to view their profile.
-1. The **Organizations** section displays their assigned basic and fixed roles.
+You can retrieve the full definition of a basic role, including all associated permissions, using the API or by navigating directly to the endpoint URL in your browser while logged in as an Admin.
 
 ### Using the API
 
-To list roles assigned to a specific user:
+To get the definition of a basic role:
 
 ```bash
-GET /api/access-control/users/:userId/roles
+GET /api/access-control/roles/basic_<role>
 ```
 
-For example:
+Where `<role>` is one of: `viewer`, `editor`, `admin`, or `grafana_admin`.
+
+For example, to get the Viewer role definition:
 
 ```bash
-curl -X GET \
-  -H "Authorization: Bearer <service-account-token>" \
-  "https://<your-grafana-instance>/api/access-control/users/123/roles"
+curl --location 'https://<slug>.grafana.net/api/access-control/roles/basic_viewer' \
+  --header 'Authorization: Bearer <service-account-token>'
 ```
 
-{{< admonition type="note" >}}
-This endpoint returns directly assigned roles only. It does not include basic roles (Viewer, Editor, Admin) or roles inherited from team membership.
-{{< /admonition >}}
+### Using the browser
 
-To get all available role definitions in your organization:
+You can also view the role definition directly in your browser by navigating to:
 
-```bash
-GET /api/access-control/roles
+```
+https://<slug>.grafana.net/api/access-control/roles/basic_viewer
 ```
 
-To get the definition of a specific role by UID:
-
-```bash
-GET /api/access-control/roles/:uid
-```
+This works when logged in as an Admin user.
 
 For more information, refer to the [RBAC HTTP API](ref:rbac-http-api).
 
