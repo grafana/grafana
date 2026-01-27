@@ -79,7 +79,11 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	healthMetricsRecorder := controller.NewHealthMetricsRecorder(deps.Registerer)
 	healthChecker := controller.NewRepositoryHealthChecker(statusPatcher, repository.NewTester(validator), healthMetricsRecorder)
 
-	// Create quota getter from configuration
+	// Create quota getter from configuration.
+	// All configuration values are read from deps.Config (populated in pkg/setting/setting.go)
+	// to ensure consistent defaults across the codebase.
+	// TODO: This operator may need to move to the enterprise repository to support
+	// enterprise-specific quota implementations and dependencies.
 	quotaLimits := quotas.QuotaLimits{
 		MaxResources:    deps.Config.ProvisioningMaxResourcesPerRepository,
 		MaxRepositories: deps.Config.ProvisioningMaxRepositories,
@@ -150,20 +154,16 @@ func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (
 		return nil, fmt.Errorf("failed to setup connection factory: %w", err)
 	}
 
-	allowedTargets := []string{}
-	cfg.SectionWithEnvOverrides("provisioning").Key("allowed_targets").Strings("|")
-	if len(allowedTargets) == 0 {
-		allowedTargets = []string{"folder"}
-	}
-
+	// Use provisioning config values from cfg (populated in pkg/setting/setting.go)
+	// to ensure consistent defaults across the codebase.
 	return &repoControllerConfig{
 		provisioningControllerConfig: *controllerCfg,
 		repoFactory:                  repoFactory,
 		connectionFactory:            connectionFactory,
-		allowedTargets:               allowedTargets,
+		allowedTargets:               cfg.ProvisioningAllowedTargets,
 		workerCount:                  cfg.SectionWithEnvOverrides("operator").Key("worker_count").MustInt(1),
 		parallelOperations:           cfg.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
-		allowImageRendering:          cfg.SectionWithEnvOverrides("provisioning").Key("allow_image_rendering").MustBool(false),
-		minSyncInterval:              cfg.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1 * time.Minute),
+		allowImageRendering:          cfg.ProvisioningAllowImageRendering,
+		minSyncInterval:              cfg.ProvisioningMinSyncInterval,
 	}, nil
 }
