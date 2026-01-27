@@ -101,6 +101,10 @@ type IndexableDocument struct {
 	// metadata, annotations, or external data linked at index time
 	Fields map[string]any `json:"fields,omitempty"`
 
+	// Selectable fields used for field-based filtering when listing.
+	// Standard document builder automatically adds all selectable fields from document here.
+	SelectableFields map[string]string `json:"selectable_fields,omitempty"`
+
 	// The list of owner references,
 	// each value is of the form {group}/{kind}/{name}
 	// ex: iam.grafana.app/Team/abc-engineering
