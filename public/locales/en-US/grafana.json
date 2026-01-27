@@ -3792,7 +3792,7 @@
       "all-failed_one": "Failed to restore {{count}} dashboard.",
       "all-failed_other": "Failed to restore {{count}} dashboard.",
       "failed-count_one": "{{count}} dashboard failed",
-      "failed-count_other": "{{count}} dashboard failed",
+      "failed-count_other": "{{count}} dashboards failed",
       "success-count_one": "{{count}} dashboard restored successfully",
       "success-count_other": "{{count}} dashboard restored successfully"
     },
