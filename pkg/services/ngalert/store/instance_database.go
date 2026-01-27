@@ -90,6 +90,54 @@ func (st InstanceDBStore) ListAlertInstances(ctx context.Context, cmd *models.Li
 	return result, err
 }
 
+// GetDistinctRuleUIDsByState returns distinct rule UIDs that have alert instances
+// matching any of the given states. This is used for pre-filtering rules when
+// querying with state or health filters.
+// Uses the existing index on (rule_org_id, current_state) for fast lookups.
+func (st InstanceDBStore) GetDistinctRuleUIDsByState(ctx context.Context, orgID int64, states []string) ([]string, error) {
+	if len(states) == 0 {
+		return nil, nil
+	}
+
+	var result []string
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		// Build IN clause placeholders
+		placeholders := make([]string, len(states))
+		params := make([]any, 0, len(states)+1)
+		params = append(params, orgID)
+
+		for i, state := range states {
+			placeholders[i] = "?"
+			params = append(params, state)
+		}
+
+		query := fmt.Sprintf(
+			"SELECT DISTINCT rule_uid FROM alert_instance WHERE rule_org_id = ? AND current_state IN (%s)",
+			strings.Join(placeholders, ", "),
+		)
+
+		// Define a temporary struct to hold the result rows
+		type ruleUID struct {
+			RuleUID string `xorm:"rule_uid"`
+		}
+
+		rows := make([]ruleUID, 0)
+		if err := sess.SQL(query, params...).Find(&rows); err != nil {
+			return err
+		}
+
+		// Extract UIDs from the result
+		result = make([]string, len(rows))
+		for i, row := range rows {
+			result[i] = row.RuleUID
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
 // SaveAlertInstance is a handler for saving a new alert instance.
 func (st InstanceDBStore) SaveAlertInstance(ctx context.Context, alertInstance models.AlertInstance) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {

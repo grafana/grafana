@@ -60,6 +60,7 @@ type API struct {
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            RuleStore
+	InstanceStore        state.InstanceStore
 	AlertingStore        store.AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
@@ -129,10 +130,17 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.FeatureManager,
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
+	// Try to use InstanceStore as InstanceStateQuerier for pre-filtering.
+	// If the type assertion fails, we'll pass nil and skip pre-filtering optimization.
+	var instanceQuerier apiprometheus.InstanceStateQuerier
+	if api.InstanceStore != nil {
+		instanceQuerier, _ = api.InstanceStore.(apiprometheus.InstanceStateQuerier)
+	}
+
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.RuleStatusReader, api.RuleStore, ruleAuthzService, api.ProvenanceStore),
+		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.RuleStatusReader, api.RuleStore, instanceQuerier, ruleAuthzService, api.ProvenanceStore),
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(

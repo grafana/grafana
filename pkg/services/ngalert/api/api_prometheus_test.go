@@ -792,6 +792,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				fakeAIM,
 				fakeSch,
 				ruleStore,
+				nil, // instanceQuerier
 				&fakeRuleAccessControlService{},
 				fakes.NewFakeProvisioningStore(),
 			)
@@ -866,6 +867,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			fakeAIM,
 			newFakeSchedulerReader(t).setupStates(fakeAIM),
 			ruleStore,
+			nil, // instanceQuerier
 			accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 			fakes.NewFakeProvisioningStore(),
 		)
@@ -1088,6 +1090,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			fakeAIM,
 			newFakeSchedulerReader(t).setupStates(fakeAIM),
 			ruleStore,
+			nil, // instanceQuerier
 			accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 			fakes.NewFakeProvisioningStore(),
 		)
@@ -1243,6 +1246,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			fakeAIM,
 			newFakeSchedulerReader(t).setupStates(fakeAIM),
 			ruleStore,
+			nil, // instanceQuerier
 			accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 			fakes.NewFakeProvisioningStore(),
 		)
@@ -1381,6 +1385,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				fakeAIM,
 				newFakeSchedulerReader(t).setupStates(fakeAIM),
 				ruleStore,
+				nil, // instanceQuerier
 				accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 				fakes.NewFakeProvisioningStore(),
 			)
@@ -3387,6 +3392,7 @@ func setupAPIFull(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, Pr
 		fakeAIM,
 		fakeSch,
 		fakeStore,
+		nil, // instanceQuerier
 		fakeAuthz,
 		fakeProvisioning,
 	)

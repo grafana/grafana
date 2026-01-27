@@ -57,11 +57,17 @@ type ProvenanceStore interface {
 	GetProvenancesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]ngmodels.Provenance, error)
 }
 
+// InstanceStateQuerier provides methods to query alert instances by state for pre-filtering.
+type InstanceStateQuerier interface {
+	GetDistinctRuleUIDsByState(ctx context.Context, orgID int64, states []string) ([]string, error)
+}
+
 type PrometheusSrv struct {
 	log             log.Logger
 	manager         state.AlertInstanceManager
 	status          StatusReader
 	store           RuleStoreReader
+	instanceQuerier InstanceStateQuerier
 	authz           RuleGroupAccessControlService
 	provenanceStore ProvenanceStore
 }
@@ -83,14 +89,15 @@ func badRequestError(err error) apimodels.RuleResponse {
 	}
 }
 
-func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store RuleStoreReader, authz RuleGroupAccessControlService, provenanceStore ProvenanceStore) *PrometheusSrv {
+func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store RuleStoreReader, instanceQuerier InstanceStateQuerier, authz RuleGroupAccessControlService, provenanceStore ProvenanceStore) *PrometheusSrv {
 	return &PrometheusSrv{
-		log,
-		manager,
-		status,
-		store,
-		authz,
-		provenanceStore,
+		log:             log,
+		manager:         manager,
+		status:          status,
+		store:           store,
+		instanceQuerier: instanceQuerier,
+		authz:           authz,
+		provenanceStore: provenanceStore,
 	}
 }
 
@@ -332,6 +339,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	ruleResponse = PrepareRuleGroupStatusesV2(
 		srv.log,
 		srv.store,
+		srv.instanceQuerier,
 		RuleGroupStatusesOptions{
 			Ctx:               c.Req.Context(),
 			OrgID:             orgID,
@@ -443,6 +451,143 @@ func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAler
 	}
 }
 
+// stateFilterToInstanceStates converts eval.State filter values to alert instance state strings.
+func stateFilterToInstanceStates(states map[eval.State]struct{}) []string {
+	result := make([]string, 0, len(states))
+	for state := range states {
+		switch state {
+		case eval.Alerting:
+			result = append(result, "Alerting")
+		case eval.Pending:
+			result = append(result, "Pending")
+		case eval.Normal:
+			result = append(result, "Normal")
+		case eval.Error:
+			result = append(result, "Error")
+		case eval.NoData:
+			result = append(result, "NoData")
+		case eval.Recovering:
+			result = append(result, "Recovering")
+		}
+	}
+	return result
+}
+
+// healthToInstanceStates converts health filter values to alert instance state strings.
+func healthToInstanceStates(health string) []string {
+	switch health {
+	case "error":
+		return []string{"Error"}
+	case "nodata":
+		return []string{"NoData"}
+	case "ok":
+		// health=ok is not pre-filtered as it would return most rules in most cases.
+		return nil
+	default:
+		return nil
+	}
+}
+
+// intersectUIDs returns the intersection of two UID slices.
+func intersectUIDs(a, b []string) []string {
+	if len(a) == 0 {
+		return b
+	}
+	if len(b) == 0 {
+		return a
+	}
+
+	setA := make(map[string]struct{}, len(a))
+	for _, uid := range a {
+		setA[uid] = struct{}{}
+	}
+
+	result := make([]string, 0)
+	for _, uid := range b {
+		if _, ok := setA[uid]; ok {
+			result = append(result, uid)
+		}
+	}
+	return result
+}
+
+// prefilterRuleUIDsByInstanceState queries the alert_instance table to get rule UIDs
+// that match the given state or health filters. This allows database-level filtering
+// using existing indexes instead of fetching and processing all rules.
+// Returns nil if no pre-filtering is needed, empty slice if no rules match,
+// or a list of matching rule UIDs.
+func prefilterRuleUIDsByInstanceState(
+	ctx context.Context,
+	instanceQuerier InstanceStateQuerier,
+	orgID int64,
+	stateFilter map[eval.State]struct{},
+	healthFilter map[string]struct{},
+) ([]string, error) {
+	if len(stateFilter) == 0 && len(healthFilter) == 0 {
+		return nil, nil
+	}
+
+	var allMatchingUIDs []string
+
+	// Handle state filters
+	if len(stateFilter) > 0 {
+		states := stateFilterToInstanceStates(stateFilter)
+		if len(states) > 0 {
+			uids, err := instanceQuerier.GetDistinctRuleUIDsByState(ctx, orgID, states)
+			if err != nil {
+				return nil, fmt.Errorf("failed to pre-filter by state: %w", err)
+			}
+			allMatchingUIDs = uids
+		}
+	}
+
+	// Handle health filters
+	if len(healthFilter) > 0 {
+		// Skip pre-filtering if health=ok is present, as it would return most rules
+		// and defeat the purpose of optimization
+		if _, hasHealthOk := healthFilter["ok"]; hasHealthOk {
+			return nil, nil
+		}
+
+		var healthUIDs []string
+
+		for health := range healthFilter {
+			states := healthToInstanceStates(health)
+			if len(states) > 0 {
+				uids, err := instanceQuerier.GetDistinctRuleUIDsByState(ctx, orgID, states)
+				if err != nil {
+					return nil, fmt.Errorf("failed to pre-filter by health=%s: %w", health, err)
+				}
+				if healthUIDs == nil {
+					healthUIDs = uids
+				} else {
+					// Union: combine with previous health filter results
+					uidSet := make(map[string]struct{}, len(healthUIDs))
+					for _, uid := range healthUIDs {
+						uidSet[uid] = struct{}{}
+					}
+					for _, uid := range uids {
+						uidSet[uid] = struct{}{}
+					}
+					healthUIDs = make([]string, 0, len(uidSet))
+					for uid := range uidSet {
+						healthUIDs = append(healthUIDs, uid)
+					}
+				}
+			}
+		}
+
+		// Intersect state and health filters if both are present
+		if len(allMatchingUIDs) > 0 && len(healthUIDs) > 0 {
+			allMatchingUIDs = intersectUIDs(allMatchingUIDs, healthUIDs)
+		} else if len(healthUIDs) > 0 {
+			allMatchingUIDs = healthUIDs
+		}
+	}
+
+	return allMatchingUIDs, nil
+}
+
 // paginationContext holds limits and filters for filter-aware pagination
 type paginationContext struct {
 	opts              RuleGroupStatusesOptions
@@ -450,6 +595,7 @@ type paginationContext struct {
 	provenanceStore   ProvenanceStore
 	ruleStatusMutator RuleStatusMutator
 	alertStateMutator RuleAlertStateMutator
+	instanceQuerier   InstanceStateQuerier
 
 	// Query parameters
 	namespaceUIDs      []string
@@ -671,7 +817,7 @@ func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *pagina
 }
 
 // nolint:gocyclo
-func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceStore ProvenanceStore) apimodels.RuleResponse {
+func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, instanceQuerier InstanceStateQuerier, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceStore ProvenanceStore) apimodels.RuleResponse {
 	ctx, span := tracer.Start(opts.Ctx, "api.prometheus.PrepareRuleGroupStatusesV2")
 	defer span.End()
 	opts.Ctx = ctx
@@ -876,6 +1022,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		provenanceStore:    provenanceStore,
 		ruleStatusMutator:  ruleStatusMutator,
 		alertStateMutator:  alertStateMutator,
+		instanceQuerier:    instanceQuerier,
 		namespaceUIDs:      namespaceUIDs,
 		ruleUIDs:           ruleUIDs,
 		dashboardUID:       dashboardUID,
@@ -896,6 +1043,41 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		limitAlertsPerRule: limitAlertsPerRule,
 		limitRulesPerGroup: limitRulesPerGroup,
 		compact:            compact,
+	}
+
+	// Apply pre-filtering by querying alert_instance table if state/health filters are present.
+	// This uses existing database indexes for fast filtering instead of fetching all rules.
+	if instanceQuerier != nil && (len(stateFilterSet) > 0 || len(healthFilterSet) > 0) {
+		prefilterCtx, prefilterSpan := tracer.Start(opts.Ctx, "prefilterRuleUIDsByInstanceState")
+		matchingUIDs, err := prefilterRuleUIDsByInstanceState(prefilterCtx, instanceQuerier, opts.OrgID, stateFilterSet, healthFilterSet)
+		prefilterSpan.End()
+
+		if err != nil {
+			ruleResponse.Status = "error"
+			ruleResponse.Error = fmt.Sprintf("failed to pre-filter rules: %s", err.Error())
+			ruleResponse.ErrorType = apiv1.ErrServer
+			return ruleResponse
+		}
+
+		// If pre-filter returns empty list, no rules match - return early
+		if matchingUIDs != nil && len(matchingUIDs) == 0 {
+			span.SetAttributes(attribute.Int("prefilter_matched_rules", 0))
+			span.AddEvent("Pre-filter returned no matching rules")
+			return ruleResponse
+		}
+
+		// If pre-filter returns a list, merge with existing rule UID filters
+		if matchingUIDs != nil {
+			if len(pagCtx.ruleUIDs) > 0 {
+				// Intersect: only keep rules that match both filters
+				pagCtx.ruleUIDs = intersectUIDs(pagCtx.ruleUIDs, matchingUIDs)
+			} else {
+				// Use pre-filtered UIDs as the filter
+				pagCtx.ruleUIDs = matchingUIDs
+			}
+			span.SetAttributes(attribute.Int("prefilter_matched_rules", len(pagCtx.ruleUIDs)))
+			span.AddEvent("Pre-filter applied successfully")
+		}
 	}
 
 	groups, rulesTotals, continueToken, err := paginateRuleGroups(log, store, pagCtx, span, maxGroups, maxRules, nextToken)
