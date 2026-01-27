@@ -1,6 +1,7 @@
 package quotas
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -69,33 +70,35 @@ func calculateTotalResources(stats []provisioning.ResourceCount) int64 {
 	return total
 }
 
-// QuotaSetter sets quota information on repository status.
-type QuotaSetter interface {
+// QuotaGetter retrieves quota information for repositories.
+type QuotaGetter interface {
 	// GetQuotaStatus returns the quota status to be set on repositories.
-	GetQuotaStatus() provisioning.QuotaStatus
+	// It takes a context and namespace to allow for future implementations
+	// that may need to fetch quota information dynamically.
+	GetQuotaStatus(ctx context.Context, namespace string) provisioning.QuotaStatus
 }
 
-// FixedQuotaSetter returns fixed quota values from static configuration.
-type FixedQuotaSetter struct {
+// FixedQuotaGetter returns fixed quota values from static configuration.
+type FixedQuotaGetter struct {
 	maxRepositories           int64
 	maxResourcesPerRepository int64
 }
 
-// NewFixedQuotaSetter creates a new FixedQuotaSetter from QuotaLimits.
-func NewFixedQuotaSetter(limits QuotaLimits) *FixedQuotaSetter {
-	return &FixedQuotaSetter{
+// NewFixedQuotaGetter creates a new FixedQuotaGetter from QuotaLimits.
+func NewFixedQuotaGetter(limits QuotaLimits) *FixedQuotaGetter {
+	return &FixedQuotaGetter{
 		maxRepositories:           limits.MaxRepositories,
 		maxResourcesPerRepository: limits.MaxResources,
 	}
 }
 
 // GetQuotaStatus returns the configured quota limits as a QuotaStatus.
-func (f *FixedQuotaSetter) GetQuotaStatus() provisioning.QuotaStatus {
+func (f *FixedQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string) provisioning.QuotaStatus {
 	return provisioning.QuotaStatus{
 		MaxRepositories:           f.maxRepositories,
 		MaxResourcesPerRepository: f.maxResourcesPerRepository,
 	}
 }
 
-// Ensure FixedQuotaSetter implements QuotaSetter interface.
-var _ QuotaSetter = (*FixedQuotaSetter)(nil)
+// Ensure FixedQuotaGetter implements QuotaGetter interface.
+var _ QuotaGetter = (*FixedQuotaGetter)(nil)

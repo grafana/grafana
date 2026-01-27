@@ -1,6 +1,7 @@
 package quotas
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -132,7 +133,7 @@ func TestCalculateTotalResources(t *testing.T) {
 	}
 }
 
-func TestFixedQuotaSetter(t *testing.T) {
+func TestFixedQuotaGetter(t *testing.T) {
 	tests := []struct {
 		name                              string
 		limits                            QuotaLimits
@@ -170,8 +171,9 @@ func TestFixedQuotaSetter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setter := NewFixedQuotaSetter(tt.limits)
-			status := setter.GetQuotaStatus()
+			ctx := context.Background()
+			getter := NewFixedQuotaGetter(tt.limits)
+			status := getter.GetQuotaStatus(ctx, "test-namespace")
 
 			assert.Equal(t, tt.expectedMaxRepositories, status.MaxRepositories)
 			assert.Equal(t, tt.expectedMaxResourcesPerRepository, status.MaxResourcesPerRepository)
@@ -179,17 +181,18 @@ func TestFixedQuotaSetter(t *testing.T) {
 	}
 }
 
-func TestFixedQuotaSetter_ImplementsInterface(t *testing.T) {
-	// Verify that FixedQuotaSetter implements QuotaSetter interface
-	var _ QuotaSetter = (*FixedQuotaSetter)(nil)
+func TestFixedQuotaGetter_ImplementsInterface(t *testing.T) {
+	// Verify that FixedQuotaGetter implements QuotaGetter interface
+	var _ QuotaGetter = (*FixedQuotaGetter)(nil)
 
 	// Also verify it works when used through the interface
-	var setter QuotaSetter = NewFixedQuotaSetter(QuotaLimits{
+	var getter QuotaGetter = NewFixedQuotaGetter(QuotaLimits{
 		MaxResources:    25,
 		MaxRepositories: 5,
 	})
 
-	status := setter.GetQuotaStatus()
+	ctx := context.Background()
+	status := getter.GetQuotaStatus(ctx, "test-namespace")
 	assert.Equal(t, int64(5), status.MaxRepositories)
 	assert.Equal(t, int64(25), status.MaxResourcesPerRepository)
 }

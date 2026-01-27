@@ -75,7 +75,7 @@ type RepositoryController struct {
 
 	registry    prometheus.Registerer
 	tracer      tracing.Tracer
-	quotaSetter quotas.QuotaSetter
+	quotaGetter quotas.QuotaGetter
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -96,7 +96,7 @@ func NewRepositoryController(
 	tracer tracing.Tracer,
 	parallelOperations int,
 	resyncInterval time.Duration,
-	quotaSetter quotas.QuotaSetter,
+	quotaGetter quotas.QuotaGetter,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 
@@ -125,7 +125,7 @@ func NewRepositoryController(
 		registry:       registry,
 		tracer:         tracer,
 		resyncInterval: resyncInterval,
-		quotaSetter:    quotaSetter,
+		quotaGetter:    quotaGetter,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -614,12 +614,15 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		})
 	}
 
-	// Set quota information from configuration
-	if rc.quotaSetter != nil {
+	// Set quota information from configuration (only if changed)
+	newQuota := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
+	// Only update if the quota has changed
+	if obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
+		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/quota",
-			"value": rc.quotaSetter.GetQuotaStatus(),
+			"value": newQuota,
 		})
 	}
 

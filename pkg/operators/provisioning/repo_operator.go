@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
@@ -78,6 +79,13 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	healthMetricsRecorder := controller.NewHealthMetricsRecorder(deps.Registerer)
 	healthChecker := controller.NewRepositoryHealthChecker(statusPatcher, repository.NewTester(validator), healthMetricsRecorder)
 
+	// Create quota getter from configuration
+	quotaLimits := quotas.QuotaLimits{
+		MaxResources:    deps.Config.ProvisioningMaxResourcesPerRepository,
+		MaxRepositories: deps.Config.ProvisioningMaxRepositories,
+	}
+	quotaGetter := quotas.NewFixedQuotaGetter(quotaLimits)
+
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
 	controller, err := controller.NewRepositoryController(
 		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
@@ -93,6 +101,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		tracer,
 		controllerCfg.parallelOperations,
 		controllerCfg.resyncInterval,
+		quotaGetter,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)
