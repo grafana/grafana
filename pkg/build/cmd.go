@@ -213,6 +213,11 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 	args = append(args, pkg)
 
 	runPrint("go", args...)
+
+	if opts.isDev {
+		return nil
+	}
+
 	runPrint("go", "version")
 	libcPart = ""
 	if opts.libc != "" {

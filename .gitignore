@@ -264,3 +264,4 @@ public/mockServiceWorker.js
 .hippo
 
 coverage-summary.json
+devenv/blocks/auth/signer/keys/ec_private_key.pem
