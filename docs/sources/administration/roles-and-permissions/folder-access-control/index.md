@@ -21,6 +21,13 @@ This page explains how folder permissions work and how to use them effectively t
 - To create folders, you need the Folder Creator role or appropriate organization permissions
 - Folder permissions are available in all Grafana editions (OSS, Enterprise, and Cloud)
 
+## Folder limitations
+
+- Folders can be nested up to **4 levels deep**
+- Folder names cannot contain underscores (`_`) or percent signs (`%`)
+- The **General** folder cannot have its permissions modified through RBAC
+- You cannot set permissions on individual dashboards if the user already has folder-level access
+
 ## How folder permissions work
 
 Folder permissions follow a simple principle: **a user's effective access to a resource is determined by their folder permission level**.
@@ -35,11 +42,11 @@ When you grant a user or team permission on a folder:
 
 Folders support three permission levels. Each level includes all capabilities of the levels below it.
 
-| Permission | Folder capabilities                     | Resource capabilities                                                                                                                         |
-| ---------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| **View**   | View folder and navigate its contents   | View dashboards, read alert rules, read silences, read annotations, read library panels                                                       |
+| Permission | Folder capabilities                         | Resource capabilities                                                                                                                               |
+| ---------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **View**   | View folder and navigate its contents       | View dashboards, read alert rules, read silences, read annotations, read library panels                                                             |
 | **Edit**   | Create subfolders, modify folder properties | Create and edit dashboards, create and write alert rules, create and write silences, create and write annotations, create and manage library panels |
-| **Admin**  | Delete folder, manage folder permissions | All Edit capabilities plus manage dashboard permissions                                                                                        |
+| **Admin**  | Delete folder, manage folder permissions    | All Edit capabilities plus manage dashboard permissions                                                                                             |
 
 #### Detailed action breakdown
 
@@ -98,15 +105,15 @@ You cannot grant a user lower permissions on a subfolder than they have on a par
 
 The following resources are stored in folders and respect folder permissions:
 
-| Resource           | How folder permissions apply                                                                       |
-| ------------------ | -------------------------------------------------------------------------------------------------- |
-| **Dashboards**     | View/Edit/Admin directly controlled by folder permission                                           |
-| **Subfolders**     | Inherit parent folder permissions, can add additional permissions                                  |
-| **Alert rules**    | View/Edit controlled by folder permission                                                          |
-| **Alert silences** | View/Create/Edit controlled by folder permission                                                   |
-| **Library panels** | View/Create/Edit/Delete controlled by folder permission                                            |
+| Resource           | How folder permissions apply                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------------------- |
+| **Dashboards**     | View/Edit/Admin directly controlled by folder permission                                                      |
+| **Subfolders**     | Inherit parent folder permissions, can add additional permissions                                             |
+| **Alert rules**    | View/Edit controlled by folder permission                                                                     |
+| **Alert silences** | View/Create/Edit controlled by folder permission                                                              |
+| **Library panels** | View/Create/Edit/Delete controlled by folder permission                                                       |
 | **SLOs**           | Folder permission + SLO role determines effective access (refer to [Plugin permissions](#plugin-permissions)) |
-| **Annotations**    | Stored on dashboards; inherit permissions from the dashboard's parent folder                       |
+| **Annotations**    | Stored on dashboards; inherit permissions from the dashboard's parent folder                                  |
 
 ### Plugin permissions
 
@@ -166,7 +173,7 @@ The permissions dialog shows all users, teams, and roles with access to this fol
 Removing a permission removes access to the folder and all its contents. The user or team will no longer see dashboards, alert rules, or other resources in that folder.
 {{< /admonition >}}
 
-## Design folder structures for teams
+## Design your folder structure to manage permissions
 
 A well-designed folder structure makes permission management simpler. The recommended pattern is to create top-level folders for each team, with subfolders for organizing content:
 
@@ -195,13 +202,6 @@ For detailed guidance on folder organization patterns, including automation with
 
 - [Configure multi-team access]({{< relref "../../../setup-grafana/configure-access/multi-team-access" >}})
 - [Managing access in Grafana: A single-stack journey with teams, roles, and real-world patterns](https://grafana.com/blog/managing-access-in-grafana-a-single-stack-journey-with-teams-roles-and-real-world-patterns/)
-
-## Folder limitations
-
-- Folders can be nested up to **4 levels deep**
-- Folder names cannot contain underscores (`_`) or percent signs (`%`)
-- The **General** folder cannot have its permissions modified through RBAC
-- You cannot set permissions on individual dashboards if the user already has folder-level access
 
 ## Related documentation
 
