@@ -220,6 +220,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 			return fmt.Errorf("failed to initialize garbage collection: %w", err)
 		}
 	}
+
 	return nil
 }
 
