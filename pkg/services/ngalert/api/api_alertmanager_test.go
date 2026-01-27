@@ -582,7 +582,7 @@ func createSut(t *testing.T) AlertmanagerSrv {
 		ac:             ac,
 		log:            log,
 		featureManager: featuremgmt.WithFeatures(),
-		silenceSvc:     notifier.NewSilenceService(accesscontrol.NewSilenceService(ac, ruleStore), ruleStore, log, mam, ruleStore, ruleAuthzService),
+		silenceSvc:     notifier.NewSilenceService(accesscontrol.NewSilenceService(ac, ruleStore), ruleStore, log, mam, ruleStore, ruleAuthzService, nil),
 	}
 }
 

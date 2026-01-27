@@ -334,7 +334,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
 		ps.alertingStore, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
 	mutetimingsService := provisioning.NewMuteTimingService(configStore, ps.alertingStore, ps.alertingStore, ps.log, ps.alertingStore)
-	templateService := provisioning.NewTemplateService(configStore, ps.alertingStore, ps.alertingStore, ps.log)
+	templateService := provisioning.NewTemplateService(configStore, ps.alertingStore, ps.alertingStore, ps.log, nil)
 	cfg := prov_alerting.ProvisionerConfig{
 		Path:                       alertingPath,
 		RuleService:                *ruleService,

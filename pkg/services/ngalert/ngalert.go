@@ -451,7 +451,40 @@ func (ng *AlertNG) init() error {
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
 	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
-	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
+
+	// Create limits provider based on alertmanager mode.
+	// The provider is used for both template and silence limit validation.
+	// Both provisioning.LimitsProvider and notifier.LimitsProvider interfaces have identical
+	// signatures, so NoopLimitsProvider and RemoteLimitsProvider satisfy both via structural typing.
+	var limitsProvider provisioning.LimitsProvider
+	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
+		// For remote alertmanager, create a MimirClient to fetch limits
+		remoteURL, err := url.Parse(ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL)
+		if err != nil {
+			ng.Log.Warn("Failed to parse remote alertmanager URL for limits provider, using noop limits", "error", err)
+			limitsProvider = &provisioning.NoopLimitsProvider{}
+		} else {
+			mimirCfg := &remoteClient.Config{
+				URL:      remoteURL,
+				TenantID: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+				Password: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
+				Logger:   log.New("ngalert.remote.limits"),
+				Timeout:  ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
+			}
+			mimirClient, err := remoteClient.New(mimirCfg, ng.Metrics.GetRemoteAlertmanagerMetrics(), ng.tracer)
+			if err != nil {
+				ng.Log.Warn("Failed to create MimirClient for limits provider, using noop limits", "error", err)
+				limitsProvider = &provisioning.NoopLimitsProvider{}
+			} else {
+				limitsProvider = provisioning.NewRemoteLimitsProvider(mimirClient)
+			}
+		}
+	} else {
+		// For local alertmanager, skip limit validation (limits are enforced at runtime by the alerting library)
+		limitsProvider = &provisioning.NoopLimitsProvider{}
+	}
+
+	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log, limitsProvider)
 	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
@@ -460,36 +493,37 @@ func (ng *AlertNG) init() error {
 		ac.NewRuleService(ng.accesscontrol))
 
 	ng.Api = &api.API{
-		Cfg:                  ng.Cfg,
-		DatasourceCache:      ng.DataSourceCache,
-		DatasourceService:    ng.DataSourceService,
-		RouteRegister:        ng.RouteRegister,
-		DataProxy:            ng.DataProxy,
-		QuotaService:         ng.QuotaService,
-		TransactionManager:   ng.store,
-		RuleStore:            ng.store,
-		AlertingStore:        ng.store,
-		AdminConfigStore:     ng.store,
-		ProvenanceStore:      ng.store,
-		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
-		StateManager:         apiStateManager,
-		RuleStatusReader:     apiStatusReader,
-		AccessControl:        ng.accesscontrol,
-		Policies:             policyService,
-		ReceiverService:      receiverService,
-		ContactPointService:  contactPointService,
-		Templates:            templateService,
-		MuteTimings:          muteTimingService,
-		AlertRules:           alertRuleService,
-		AlertsRouter:         alertsRouter,
-		EvaluatorFactory:     evalFactory,
-		ConditionValidator:   conditionValidator,
-		FeatureManager:       ng.FeatureToggles,
-		AppUrl:               appUrl,
-		Historian:            history,
-		Hooks:                api.NewHooks(ng.Log),
-		Tracer:               ng.tracer,
-		UserService:          ng.userService,
+		Cfg:                   ng.Cfg,
+		DatasourceCache:       ng.DataSourceCache,
+		DatasourceService:     ng.DataSourceService,
+		RouteRegister:         ng.RouteRegister,
+		DataProxy:             ng.DataProxy,
+		QuotaService:          ng.QuotaService,
+		TransactionManager:    ng.store,
+		RuleStore:             ng.store,
+		AlertingStore:         ng.store,
+		AdminConfigStore:      ng.store,
+		ProvenanceStore:       ng.store,
+		MultiOrgAlertmanager:  ng.MultiOrgAlertmanager,
+		StateManager:          apiStateManager,
+		RuleStatusReader:      apiStatusReader,
+		AccessControl:         ng.accesscontrol,
+		Policies:              policyService,
+		ReceiverService:       receiverService,
+		ContactPointService:   contactPointService,
+		Templates:             templateService,
+		MuteTimings:           muteTimingService,
+		AlertRules:            alertRuleService,
+		AlertsRouter:          alertsRouter,
+		EvaluatorFactory:      evalFactory,
+		ConditionValidator:    conditionValidator,
+		FeatureManager:        ng.FeatureToggles,
+		AppUrl:                appUrl,
+		Historian:             history,
+		Hooks:                 api.NewHooks(ng.Log),
+		Tracer:                ng.tracer,
+		UserService:           ng.userService,
+		SilenceLimitsProvider: limitsProvider,
 	}
 	ng.Api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 

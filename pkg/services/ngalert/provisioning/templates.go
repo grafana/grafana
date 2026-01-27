@@ -25,16 +25,18 @@ type TemplateService struct {
 	xact            TransactionManager
 	log             log.Logger
 	validator       validation.ProvenanceStatusTransitionValidator
+	limitsProvider  LimitsProvider
 	includeImported bool
 }
 
-func NewTemplateService(config alertmanagerConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *TemplateService {
+func NewTemplateService(config alertmanagerConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger, limits LimitsProvider) *TemplateService {
 	return &TemplateService{
 		configStore:     config,
 		provenanceStore: prov,
 		xact:            xact,
 		validator:       validation.ValidateProvenanceRelaxed,
 		log:             log,
+		limitsProvider:  limits,
 		includeImported: false,
 	}
 }
@@ -46,6 +48,7 @@ func (t *TemplateService) WithIncludeImported() *TemplateService {
 		xact:            t.xact,
 		validator:       t.validator,
 		log:             t.log,
+		limitsProvider:  t.limitsProvider,
 		includeImported: true,
 	}
 }
@@ -170,6 +173,11 @@ func (t *TemplateService) createTemplate(ctx context.Context, revision *legacy_s
 		return definitions.NotificationTemplate{}, ErrTemplateExists.Errorf("")
 	}
 
+	// Validate template limits before creating (check both count and size)
+	if err := t.validateTemplateLimits(ctx, len(revision.Config.TemplateFiles), len(tmpl.Template), true); err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
+
 	revision.Config.TemplateFiles[tmpl.Name] = tmpl.Template
 
 	err := t.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -238,6 +246,11 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 
 	err = t.checkOptimisticConcurrency(existing.Name, existing.Template, models.Provenance(tmpl.Provenance), tmpl.ResourceVersion, "update")
 	if err != nil {
+		return definitions.NotificationTemplate{}, err
+	}
+
+	// Validate size limits before updating (count validation not needed for updates)
+	if err := t.validateTemplateLimits(ctx, 0, len(tmpl.Template), false); err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
 
@@ -381,4 +394,35 @@ func (t *TemplateService) getTemplateByUID(ctx context.Context, revision *legacy
 
 func templateUID(kind definition.TemplateKind, name string) string {
 	return legacy_storage.NameToUid(fmt.Sprintf("%s|%s", string(kind), name))
+}
+
+// validateTemplateLimits checks if creating or updating a template would exceed configured limits.
+// currentCount is the number of existing templates, templateSize is the size of the new template in bytes.
+// checkCount indicates whether to validate the template count limit (should be true for create, false for update).
+// Returns nil if limits are not configured, provider returns an error (fail-open), or the template is within limits.
+func (t *TemplateService) validateTemplateLimits(ctx context.Context, currentCount int, templateSize int, checkCount bool) error {
+	if t.limitsProvider == nil {
+		return nil
+	}
+
+	limits, err := t.limitsProvider.GetLimits(ctx)
+	if err != nil {
+		t.log.Warn("Failed to fetch limits, skipping limit validation", "error", err)
+		return nil
+	}
+	if limits == nil || limits.Templates == nil {
+		return nil
+	}
+
+	// Check template count limit (0 means unlimited)
+	if checkCount && limits.Templates.MaxTemplatesCount > 0 && currentCount >= limits.Templates.MaxTemplatesCount {
+		return ErrTemplateLimitExceeded.Errorf("")
+	}
+
+	// Check template size limit (0 means unlimited)
+	if limits.Templates.MaxTemplateSizeBytes > 0 && templateSize > limits.Templates.MaxTemplateSizeBytes {
+		return ErrTemplateSizeExceeded.Errorf("")
+	}
+
+	return nil
 }

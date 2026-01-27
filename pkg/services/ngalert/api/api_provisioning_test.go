@@ -2230,7 +2230,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(),
 		contactPointService: provisioning.NewContactPointService(configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService()),
-		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log),
+		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log, nil),
 		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz),
 		folderSvc:           env.folderService,

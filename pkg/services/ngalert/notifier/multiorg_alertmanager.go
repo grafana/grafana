@@ -41,9 +41,11 @@ var (
 	ErrAlertmanagerNotFound = errutil.NotFound("alerting.notifications.alertmanager.notFound")
 	ErrAlertmanagerConflict = errutil.Conflict("alerting.notifications.alertmanager.conflict")
 
-	ErrSilenceNotFound    = errutil.NotFound("alerting.notifications.silences.notFound")
-	ErrSilencesBadRequest = errutil.BadRequest("alerting.notifications.silences.badRequest")
-	ErrSilenceInternal    = errutil.Internal("alerting.notifications.silences.internal")
+	ErrSilenceNotFound      = errutil.NotFound("alerting.notifications.silences.notFound")
+	ErrSilencesBadRequest   = errutil.BadRequest("alerting.notifications.silences.badRequest")
+	ErrSilenceInternal      = errutil.Internal("alerting.notifications.silences.internal")
+	ErrSilenceLimitExceeded = errutil.TooManyRequests("alerting.notifications.silences.limitExceeded", errutil.WithPublicMessage("Maximum number of silences has been reached. Delete some silences before creating new ones."))
+	ErrSilenceSizeExceeded  = errutil.BadRequest("alerting.notifications.silences.sizeExceeded", errutil.WithPublicMessage("Silence size exceeds the maximum allowed size."))
 )
 
 //go:generate mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mock
