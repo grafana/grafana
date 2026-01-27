@@ -114,8 +114,8 @@ To create the GitHub App, follow these steps:
 
 1. Go to https://github.com/settings/apps and click on **New Github App** ”, or navigate directly to https://github.com/settings/apps/new
 1. Fill in the following fields:
-  - Name: Must be unique
-  - Homepage URL: For example, your Grafana Cloud instance URL
+   - Name: Must be unique
+   - Homepage URL: For example, your Grafana Cloud instance URL
 1. Uncheck the “active” check in the **Webhook** section
 1. Go to repository permissions section and set these parameters up:
    - **Contents**: Read and write permission
@@ -133,7 +133,7 @@ Finally, install the app:
 1. Choose for which user you need to install it, you’ll be redirected to the repo selection section
 1. Choose for which repos you want to install the app
 1. Click **Install**. 
-1. On the installation page, copy the **installationID** from the page URL https://github.com/settings/installations/<installationID>
+1. On the installation page, copy the **installationID** from the page URL https://github.com/settings/installations/**<installationID>**
 
 ## Set up Git Sync using the UI
 
