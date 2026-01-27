@@ -37,6 +37,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plugin-role-definitions/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plugin-role-definitions/
+  rbac-http-api:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/
 ---
 
 # Grafana RBAC role definitions
@@ -61,6 +66,50 @@ The following tables list permissions associated with basic and fixed roles. Thi
 {{< admonition type="note" >}}
 Grafana Cloud stacks include additional plugin role assignments not shown here. Refer to [Grafana Cloud app plugin role definitions](ref:plugin-role-definitions) for a complete list.
 {{< /admonition >}}
+
+## View your role assignments
+
+You can view the roles assigned to a user through the UI or API.
+
+### Using the UI
+
+1. Navigate to **Administration > Users and access > Users**.
+1. Click on a user to view their profile.
+1. The **Organizations** section displays their assigned basic and fixed roles.
+
+### Using the API
+
+To list roles assigned to a specific user:
+
+```bash
+GET /api/access-control/users/:userId/roles
+```
+
+For example:
+
+```bash
+curl -X GET \
+  -H "Authorization: Bearer <service-account-token>" \
+  "https://<your-grafana-instance>/api/access-control/users/123/roles"
+```
+
+{{< admonition type="note" >}}
+This endpoint returns directly assigned roles only. It does not include basic roles (Viewer, Editor, Admin) or roles inherited from team membership.
+{{< /admonition >}}
+
+To get all available role definitions in your organization:
+
+```bash
+GET /api/access-control/roles
+```
+
+To get the definition of a specific role by UID:
+
+```bash
+GET /api/access-control/roles/:uid
+```
+
+For more information, refer to the [RBAC HTTP API](ref:rbac-http-api).
 
 ## Fixed role definitions
 
