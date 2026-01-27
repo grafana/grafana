@@ -7,9 +7,13 @@ import (
 )
 
 var (
-	errAlertRuleConflictMsg         = "Failed to save alert rule '{{ .Public.RuleUID }}' in organization {{ .Public.OrgID }} due to conflict: {{ .Public.Error }}"
-	ErrAlertRuleConflictBase        = errutil.Conflict("alerting.alert-rule.conflict").MustTemplate(errAlertRuleConflictMsg, errutil.WithPublic(errAlertRuleConflictMsg))
-	ErrAlertRuleGroupNotFound       = errutil.NotFound("alerting.alert-rule.notFound")
+	errAlertRuleConflictMsg                = "Failed to save alert rule '{{ .Public.RuleUID }}' in organization {{ .Public.OrgID }} due to conflict: {{ .Public.Error }}"
+	ErrAlertRuleConflictBase               = errutil.Conflict("alerting.alert-rule.conflict").MustTemplate(errAlertRuleConflictMsg, errutil.WithPublic(errAlertRuleConflictMsg))
+	ErrAlertRuleGroupNotFound              = errutil.NotFound("alerting.alert-rule.notFound")
+	ErrGrafanaManagedAlertCreationDisabled = errutil.Forbidden(
+		"alerting.grafanaManagedAlertsCreationDisabled",
+		errutil.WithPublicMessage("Grafana-managed alert rule creation is disabled."),
+	)
 	ErrInvalidRelativeTimeRangeBase = errutil.BadRequest("alerting.alert-rule.invalidRelativeTime").MustTemplate("Invalid alert rule query {{ .Public.RefID }}: invalid relative time range [From: {{ .Public.From }}, To: {{ .Public.To }}]")
 	ErrConditionNotExistBase        = errutil.BadRequest("alerting.alert-rule.conditionNotExist").MustTemplate("Condition {{ .Public.Given }} does not exist, must be one of {{ .Public.Existing }}")
 )

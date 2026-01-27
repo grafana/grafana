@@ -129,8 +129,10 @@ export function evaluateAccess(actions: AccessControlAction[]) {
 }
 
 export function getRulesAccess() {
+  const grafanaManagedAlertsEnabled = isGrafanaManagedAlertsCreationEnabled();
   return {
     canCreateGrafanaRules:
+      grafanaManagedAlertsEnabled &&
       contextSrv.hasPermission(AccessControlAction.FoldersRead) &&
       contextSrv.hasPermission(rulesPermissions.create.grafana),
     canCreateCloudRules:
@@ -144,9 +146,15 @@ export function getRulesAccess() {
 
 export function getCreateAlertInMenuAvailability() {
   const { unifiedAlertingEnabled } = getConfig();
+  const grafanaManagedAlertsEnabled = isGrafanaManagedAlertsCreationEnabled();
   const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
   const hasRuleUpdatePermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).update);
   const isAlertingAvailableForRead = unifiedAlertingEnabled && hasRuleReadPermissions;
 
-  return isAlertingAvailableForRead && hasRuleUpdatePermissions;
+  return isAlertingAvailableForRead && grafanaManagedAlertsEnabled && hasRuleUpdatePermissions;
+}
+
+export function isGrafanaManagedAlertsCreationEnabled() {
+  const { unifiedAlerting } = getConfig();
+  return unifiedAlerting?.grafanaManagedAlertsEnabled ?? true;
 }

@@ -510,6 +510,10 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 			return err
 		}
 
+		if !srv.cfg.GrafanaManagedAlertsEnabled && len(groupChanges.New) > 0 {
+			return ngmodels.ErrGrafanaManagedAlertCreationDisabled
+		}
+
 		if groupChanges.IsEmpty() {
 			finalChanges = groupChanges
 			logger.Info("No changes detected in the request. Do nothing")

@@ -94,6 +94,10 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
   const groupsByFolder = useMemo(() => groupBy(groups, 'folderUid'), [groups]);
   const hasNoRules = isEmpty(groups) && !isLoading;
 
+  if (hasNoRules && !hasFilters && !error) {
+    return null;
+  }
+
   return (
     <DataSourceSection
       name="Grafana-managed"

@@ -41,17 +41,18 @@ type NotificationSettingsValidatorProvider interface {
 }
 
 type AlertRuleService struct {
-	defaultIntervalSeconds int64
-	baseIntervalSeconds    int64
-	rulesPerRuleGroupLimit int64
-	ruleStore              RuleStore
-	provenanceStore        ProvisioningStore
-	folderService          folder.Service
-	quotas                 QuotaChecker
-	xact                   TransactionManager
-	log                    log.Logger
-	nsValidatorProvider    NotificationSettingsValidatorProvider
-	authz                  ruleAccessControlService
+	defaultIntervalSeconds      int64
+	baseIntervalSeconds         int64
+	rulesPerRuleGroupLimit      int64
+	ruleStore                   RuleStore
+	provenanceStore             ProvisioningStore
+	folderService               folder.Service
+	quotas                      QuotaChecker
+	xact                        TransactionManager
+	log                         log.Logger
+	nsValidatorProvider         NotificationSettingsValidatorProvider
+	authz                       ruleAccessControlService
+	grafanaManagedAlertsEnabled bool
 }
 
 func NewAlertRuleService(ruleStore RuleStore,
@@ -61,23 +62,25 @@ func NewAlertRuleService(ruleStore RuleStore,
 	xact TransactionManager,
 	defaultIntervalSeconds int64,
 	baseIntervalSeconds int64,
+	grafanaManagedAlertsEnabled bool,
 	rulesPerRuleGroupLimit int64,
 	log log.Logger,
 	ns NotificationSettingsValidatorProvider,
 	authz RuleAccessControlService,
 ) *AlertRuleService {
 	return &AlertRuleService{
-		defaultIntervalSeconds: defaultIntervalSeconds,
-		baseIntervalSeconds:    baseIntervalSeconds,
-		rulesPerRuleGroupLimit: rulesPerRuleGroupLimit,
-		ruleStore:              ruleStore,
-		provenanceStore:        provenanceStore,
-		folderService:          folderService,
-		quotas:                 quotas,
-		xact:                   xact,
-		log:                    log,
-		nsValidatorProvider:    ns,
-		authz:                  newRuleAccessControlService(authz),
+		defaultIntervalSeconds:      defaultIntervalSeconds,
+		baseIntervalSeconds:         baseIntervalSeconds,
+		grafanaManagedAlertsEnabled: grafanaManagedAlertsEnabled,
+		rulesPerRuleGroupLimit:      rulesPerRuleGroupLimit,
+		ruleStore:                   ruleStore,
+		provenanceStore:             provenanceStore,
+		folderService:               folderService,
+		quotas:                      quotas,
+		xact:                        xact,
+		log:                         log,
+		nsValidatorProvider:         ns,
+		authz:                       newRuleAccessControlService(authz),
 	}
 }
 
@@ -245,6 +248,9 @@ func (service *AlertRuleService) GetAlertRuleWithFolderFullpath(ctx context.Cont
 // CreateAlertRule creates a new alert rule. For normal rule groups, this function will ignore any
 // interval that is set in the rule struct and use the already existing group interval or the default one.
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
+	if !service.grafanaManagedAlertsEnabled {
+		return models.AlertRule{}, models.ErrGrafanaManagedAlertCreationDisabled
+	}
 	if models.IsNoGroupRuleGroup(rule.RuleGroup) {
 		return models.AlertRule{}, fmt.Errorf("%w: rules must have a valid group", models.ErrAlertRuleFailedValidation)
 	}

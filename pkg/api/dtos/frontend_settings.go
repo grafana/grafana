@@ -105,6 +105,7 @@ type FrontendSettingsUnifiedAlertingDTO struct {
 	MinInterval                              string                                          `json:"minInterval"`
 	StateHistory                             *FrontendSettingsUnifiedAlertingStateHistoryDTO `json:"stateHistory,omitempty"`
 	RecordingRulesEnabled                    bool                                            `json:"recordingRulesEnabled"`
+	GrafanaManagedAlertsEnabled              bool                                            `json:"grafanaManagedAlertsEnabled"`
 	DefaultRecordingRulesTargetDatasourceUID string                                          `json:"defaultRecordingRulesTargetDatasourceUID,omitempty"`
 
 	// Backward compatibility fields - deprecated

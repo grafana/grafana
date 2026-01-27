@@ -29,7 +29,9 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
   });
 
   const permissions = getRulesPermissions('grafana');
-  const canCreateRules = config.unifiedAlertingEnabled && contextSrv.hasPermission(permissions.create);
+  const grafanaManagedAlertsEnabled = config.unifiedAlerting?.grafanaManagedAlertsEnabled ?? true;
+  const canCreateRules =
+    config.unifiedAlertingEnabled && grafanaManagedAlertsEnabled && contextSrv.hasPermission(permissions.create);
 
   const alert = errors.length ? (
     <Alert

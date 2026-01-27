@@ -56,6 +56,11 @@ function CreateAlertButtons() {
 }
 
 function ExportNewRuleButton() {
+  const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+  if (!createRuleSupported || !createRuleAllowed) {
+    return null;
+  }
+
   const returnTo = createReturnTo();
   const url = createRelativeUrl(`/alerting/export-new-rule`, {
     returnTo,

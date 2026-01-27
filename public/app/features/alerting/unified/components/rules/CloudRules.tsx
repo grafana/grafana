@@ -44,6 +44,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
   const hasDataSourcesLoading = dataSourcesLoading.length > 0;
   const hasNamespaces = namespaces.length > 0;
 
+  const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const { numberOfPages, onPageChange, page, pageItems } = usePagination(
     groupsWithNamespaces,
     1,
@@ -53,7 +54,8 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
   const canMigrateToGMA =
     hasDataSourcesConfigured &&
     config.featureToggles.alertingMigrationUI &&
-    contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
+    createGrafanaRuleSupported &&
+    createGrafanaRuleAllowed &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
   return (

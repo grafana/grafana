@@ -110,6 +110,7 @@ type UnifiedAlertingSettings struct {
 	EvaluationResultLimit           int
 	DisableJitter                   bool
 	ExecuteAlerts                   bool
+	GrafanaManagedAlertsEnabled     bool
 	DefaultConfiguration            string
 	Enabled                         *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
 	DisabledOrgs                    map[int64]struct{}
@@ -357,6 +358,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		uaExecuteAlerts = legacyExecuteAlerts
 	}
 	uaCfg.ExecuteAlerts = uaExecuteAlerts
+	uaCfg.GrafanaManagedAlertsEnabled = ua.Key("grafana_managed_alerts_enabled").MustBool(true)
 
 	// if the unified alerting options equal the defaults, apply the respective legacy one
 	uaEvaluationTimeout, err := gtime.ParseDuration(valueAsString(ua, "evaluation_timeout", evaluatorDefaultEvaluationTimeout.String()))

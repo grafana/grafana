@@ -359,6 +359,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *contextmodel.ReqContext, promNamespaces map[string][]apimodels.PrometheusRuleGroup) response.Response {
 	logger := srv.logger.FromContext(c.Req.Context())
+	if !srv.cfg.GrafanaManagedAlertsEnabled {
+		return errorToResponse(models.ErrGrafanaManagedAlertCreationDisabled)
+	}
 
 	// 1. Parse the appropriate headers
 	workingFolderUID := getWorkingFolderUID(c)

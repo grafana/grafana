@@ -2541,16 +2541,17 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 	}
 
 	return AlertRuleService{
-		ruleStore:              store,
-		provenanceStore:        store,
-		quotas:                 &quotas,
-		xact:                   sqlStore,
-		log:                    log.New("testing"),
-		baseIntervalSeconds:    10,
-		defaultIntervalSeconds: 60,
-		folderService:          folderService,
-		authz:                  &fakeRuleAccessControlService{},
-		nsValidatorProvider:    &NotificationSettingsValidatorProviderFake{},
+		ruleStore:                   store,
+		provenanceStore:             store,
+		quotas:                      &quotas,
+		xact:                        sqlStore,
+		log:                         log.New("testing"),
+		baseIntervalSeconds:         10,
+		defaultIntervalSeconds:      60,
+		folderService:               folderService,
+		authz:                       &fakeRuleAccessControlService{},
+		nsValidatorProvider:         &NotificationSettingsValidatorProviderFake{},
+		grafanaManagedAlertsEnabled: true,
 	}
 }
 
@@ -2657,16 +2658,17 @@ func initService(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.Fake
 	quotas.EXPECT().LimitOK()
 
 	service := &AlertRuleService{
-		folderService:          folderService,
-		ruleStore:              ruleStore,
-		provenanceStore:        provenanceStore,
-		quotas:                 &quotas,
-		xact:                   newNopTransactionManager(),
-		log:                    log.New("testing"),
-		baseIntervalSeconds:    10,
-		defaultIntervalSeconds: 60,
-		authz:                  ac,
-		nsValidatorProvider:    &NotificationSettingsValidatorProviderFake{},
+		folderService:               folderService,
+		ruleStore:                   ruleStore,
+		provenanceStore:             provenanceStore,
+		quotas:                      &quotas,
+		xact:                        newNopTransactionManager(),
+		log:                         log.New("testing"),
+		baseIntervalSeconds:         10,
+		defaultIntervalSeconds:      60,
+		authz:                       ac,
+		nsValidatorProvider:         &NotificationSettingsValidatorProviderFake{},
+		grafanaManagedAlertsEnabled: true,
 	}
 
 	return service, ruleStore, provenanceStore, ac

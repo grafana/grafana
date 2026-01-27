@@ -119,6 +119,7 @@ export interface UnifiedAlertingConfig {
   minInterval: string;
   stateHistory?: UnifiedAlertingStateHistoryConfig;
   recordingRulesEnabled?: boolean;
+  grafanaManagedAlertsEnabled?: boolean;
   defaultRecordingRulesTargetDatasourceUID?: string;
 
   // Backward compatibility aliases - deprecated
