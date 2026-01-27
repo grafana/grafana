@@ -24,7 +24,7 @@ export const VariableValuesPreview = ({ options }: Props) => {
   const styles = useStyles2(getStyles);
   const hasOptions = options.length > 0;
   const displayMultiPropsPreview =
-    config.featureToggles.multiPropsVariables && hasOptions && getPropertiesFromOptions(options).length > 0;
+    config.featureToggles.multiPropsVariables && hasOptions && getPropertiesFromOptions(options).length > 2;
 
   return (
     <div className={styles.previewContainer} style={{ gap: '8px' }}>
