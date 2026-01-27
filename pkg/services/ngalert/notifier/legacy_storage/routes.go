@@ -296,6 +296,76 @@ func (rev *ConfigRevision) validateTimeIntervalReferences(route definitions.Rout
 	return route.ValidateTimeIntervals(timeIntervals)
 }
 
+// RenameReceiverInRoutes renames all references to a receiver in all routes. Returns number of routes that were updated
+func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string) map[*definitions.Route]int {
+	res := make(map[*definitions.Route]int)
+	if cnt := renameReceiverInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route); cnt > 0 {
+		res[rev.Config.AlertmanagerConfig.Route] = cnt
+	}
+	for _, r := range rev.Config.ManagedRoutes {
+		// Still attempt to rename receivers in any managed routes if not supported for data consistency, but
+		// don't return them int he results.
+		if cnt := renameReceiverInRoute(oldName, newName, r); rev.managedRoutesSupported && cnt > 0 {
+			res[r] = cnt
+		}
+	}
+	return res
+}
+
+func renameReceiverInRoute(oldName, newName string, routes ...*definitions.Route) int {
+	if len(routes) == 0 {
+		return 0
+	}
+	updated := 0
+	for _, route := range routes {
+		if route.Receiver == oldName {
+			route.Receiver = newName
+			updated++
+		}
+		updated += renameReceiverInRoute(oldName, newName, route.Routes...)
+	}
+	return updated
+}
+
+// RenameTimeIntervalInRoutes renames all references to a time interval in all routes. Returns number of routes that were updated
+func (rev *ConfigRevision) RenameTimeIntervalInRoutes(oldName, newName string) map[*definitions.Route]int {
+	res := make(map[*definitions.Route]int)
+	if cnt := renameTimeIntervalInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route); cnt > 0 {
+		res[rev.Config.AlertmanagerConfig.Route] = cnt
+	}
+	for _, r := range rev.Config.ManagedRoutes {
+		// Still attempt to rename time intervals in any managed routes if not supported for data consistency, but
+		// don't return them int he results.
+		if cnt := renameTimeIntervalInRoute(oldName, newName, r); rev.managedRoutesSupported && cnt > 0 {
+			res[r] = cnt
+		}
+	}
+	return res
+}
+
+func renameTimeIntervalInRoute(oldName, newName string, routes ...*definitions.Route) int {
+	if len(routes) == 0 {
+		return 0
+	}
+	updated := 0
+	for _, route := range routes {
+		for idx := range route.MuteTimeIntervals {
+			if route.MuteTimeIntervals[idx] == oldName {
+				route.MuteTimeIntervals[idx] = newName
+				updated++
+			}
+		}
+		for idx := range route.ActiveTimeIntervals {
+			if route.ActiveTimeIntervals[idx] == oldName {
+				route.ActiveTimeIntervals[idx] = newName
+				updated++
+			}
+		}
+		updated += renameTimeIntervalInRoute(oldName, newName, route.Routes...)
+	}
+	return updated
+}
+
 // ToGroupBy converts the given label strings to (groupByAll, []model.LabelName) where groupByAll is true if the input
 // contains models.GroupByAll. This logic is in accordance with upstream Route.ValidateChild().
 func ToGroupBy(groupByStr ...string) (groupByAll bool, groupBy []model.LabelName) {

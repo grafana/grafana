@@ -19,7 +19,6 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -769,7 +768,8 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 	// Prep config so that referenced receivers and time intervals exist.
 	cfg := policy_exports.Config()
-	createRoutingReferences(t, admin, cfg.AlertmanagerConfig.Receivers, cfg.AlertmanagerConfig.TimeIntervals)
+	createReceiverStubs(t, admin, cfg.AlertmanagerConfig.Receivers)
+	createTimeIntervalStubs(t, admin, cfg.AlertmanagerConfig.TimeIntervals)
 
 	// Sanity check there aren't any existing managed routes other than the default.
 	list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
@@ -979,6 +979,112 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 	})
 }
 
+func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{featuremgmt.FlagAlertingMultiplePolicies},
+	})
+
+	org1 := helper.Org1
+	admin := org1.Admin
+	adminClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	// Prep config so that referenced receivers and time intervals exist.
+	cfg := policy_exports.Config()
+	receivers := createReceiverStubs(t, admin, cfg.AlertmanagerConfig.Receivers)
+	timeIntervals := createTimeIntervalStubs(t, admin, cfg.AlertmanagerConfig.TimeIntervals)
+
+	recv0 := cfg.AlertmanagerConfig.Receivers[0].Name
+	recv1 := cfg.AlertmanagerConfig.Receivers[1].Name
+	ti0 := cfg.AlertmanagerConfig.TimeIntervals[0].Name
+	ti1 := cfg.AlertmanagerConfig.TimeIntervals[1].Name
+
+	// Create routes that reference the receivers and time intervals.
+	routeDef := definitions.Route{
+		Receiver: recv0,
+		Routes: []*definitions.Route{{
+			Receiver:            recv1,
+			MuteTimeIntervals:   []string{ti0},
+			ActiveTimeIntervals: []string{ti1},
+		}},
+	}
+	// Default route.
+	_, err = adminClient.Update(ctx, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &routeDef), resource.UpdateOptions{})
+	require.NoError(t, err)
+
+	// Named route.
+	_, err = adminClient.Create(ctx, k8sRoute(t, "named route", &routeDef), resource.CreateOptions{})
+	require.NoError(t, err)
+
+	// Update the receivers, then ensure the references are updated.
+	t.Run("Update receivers references", func(t *testing.T) {
+		recvClient, err := v0alpha1.NewReceiverClientFromGenerator(admin.GetClientRegistry())
+		require.NoError(t, err)
+		updatedName := func(name string) string {
+			return fmt.Sprintf("%s-updatedbytest", name)
+		}
+		for oldName, recv := range receivers {
+			assert.Equal(t, oldName, recv.Spec.Title)
+
+			cp := recv.Copy().(*v0alpha1.Receiver)
+			cp.Spec.Title = updatedName(oldName)
+			updatedRecv, err := recvClient.Update(ctx, cp, resource.UpdateOptions{})
+			require.NoError(t, err)
+
+			// Validate that the receiver name actually updated.
+			got, err := recvClient.Get(ctx, updatedRecv.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			assert.Equalf(t, updatedName(oldName), got.Spec.Title, "expected receiver name to be updated")
+		}
+
+		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+		require.NoError(t, err)
+
+		assert.Len(t, list.Items, 2)
+		for _, route := range list.Items {
+			// Ensure receivers are updated according to spec.
+			assert.Equal(t, updatedName(recv0), route.Spec.Defaults.Receiver)
+			assert.Equal(t, updatedName(recv1), *route.Spec.Routes[0].Receiver)
+		}
+	})
+
+	// Update the time intervals, then ensure the references are updated.
+	t.Run("Update time interval references", func(t *testing.T) {
+		timeIntervalClient, err := v0alpha1.NewTimeIntervalClientFromGenerator(admin.GetClientRegistry())
+		require.NoError(t, err)
+
+		updatedName := func(name string) string {
+			return fmt.Sprintf("%s-updatedbytest", name)
+		}
+		for oldName, ti := range timeIntervals {
+			assert.Equal(t, oldName, ti.Spec.Name)
+
+			cp := ti.Copy().(*v0alpha1.TimeInterval)
+			cp.Spec.Name = updatedName(oldName)
+			updatedTi, err := timeIntervalClient.Update(ctx, cp, resource.UpdateOptions{})
+			require.NoError(t, err)
+
+			// Validate that the time interval name actually updated.
+			got, err := timeIntervalClient.Get(ctx, updatedTi.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			assert.Equalf(t, updatedName(oldName), got.Spec.Name, "expected time interval name to be updated")
+		}
+
+		list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
+		require.NoError(t, err)
+
+		assert.Len(t, list.Items, 2)
+		for _, route := range list.Items {
+			// Ensure receivers are updated according to spec.
+			assert.Equal(t, updatedName(ti0), route.Spec.Routes[0].MuteTimeIntervals[0])
+			assert.Equal(t, updatedName(ti1), route.Spec.Routes[0].ActiveTimeIntervals[0])
+		}
+	})
+}
+
 func k8sRoute(t *testing.T, name string, r *definitions.Route) *v0alpha1.RoutingTree {
 	err := r.Validate()
 	require.NoError(t, err)
@@ -992,23 +1098,34 @@ func k8sRoute(t *testing.T, name string, r *definitions.Route) *v0alpha1.Routing
 	return v1Route
 }
 
-func createRoutingReferences(t *testing.T, user apis.User, receivers []*definitions.PostableApiReceiver, timeIntervals []config.TimeInterval) {
+func createReceiverStubs(t *testing.T, user apis.User, receivers []*definitions.PostableApiReceiver) map[string]*v0alpha1.Receiver {
 	receiverClient, err := v0alpha1.NewReceiverClientFromGenerator(user.GetClientRegistry())
 	require.NoError(t, err)
+
+	res := make(map[string]*v0alpha1.Receiver, len(receivers))
 	for _, receiver := range receivers {
-		_, err := receiverClient.Create(context.Background(), &v0alpha1.Receiver{
-			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+		created, err := receiverClient.Create(context.Background(), &v0alpha1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: apis.DefaultNamespace},
 			Spec:       v0alpha1.ReceiverSpec{Title: receiver.Name, Integrations: []v0alpha1.ReceiverIntegration{}},
 		}, resource.CreateOptions{})
 		require.NoError(t, err)
+		res[receiver.Name] = created
 	}
+	return res
+}
 
+func createTimeIntervalStubs(t *testing.T, user apis.User, timeIntervals []config.TimeInterval) map[string]*v0alpha1.TimeInterval {
 	timeIntervalClient, err := v0alpha1.NewTimeIntervalClientFromGenerator(user.GetClientRegistry())
 	require.NoError(t, err)
+
+	res := make(map[string]*v0alpha1.TimeInterval, len(timeIntervals))
 	for _, ti := range timeIntervals {
-		interval, err := timeinterval.ConvertToK8sResource(user.Identity.GetOrgID(), definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval(ti)}, func(_ int64) string { return "default" })
+		created, err := timeIntervalClient.Create(context.Background(), &v0alpha1.TimeInterval{
+			ObjectMeta: v1.ObjectMeta{Namespace: apis.DefaultNamespace},
+			Spec:       v0alpha1.TimeIntervalSpec{Name: ti.Name},
+		}, resource.CreateOptions{})
 		require.NoError(t, err)
-		_, err = timeIntervalClient.Create(context.Background(), interval, resource.CreateOptions{})
-		require.NoError(t, err)
+		res[ti.Name] = created
 	}
+	return res
 }
