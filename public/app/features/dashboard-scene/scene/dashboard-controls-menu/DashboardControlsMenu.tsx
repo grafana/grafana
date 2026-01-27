@@ -14,9 +14,16 @@ interface DashboardControlsMenuProps {
   links: DashboardLink[];
   annotations: SceneDataLayerProvider[];
   dashboardUID?: string;
+  isEditingNewLayouts?: boolean;
 }
 
-export function DashboardControlsMenu({ variables, links, annotations, dashboardUID }: DashboardControlsMenuProps) {
+export function DashboardControlsMenu({
+  variables,
+  links,
+  annotations,
+  dashboardUID,
+  isEditingNewLayouts,
+}: DashboardControlsMenuProps) {
   return (
     <Box
       minWidth={32}
@@ -38,7 +45,7 @@ export function DashboardControlsMenu({ variables, links, annotations, dashboard
       {/* Variables */}
       {variables.map((variable, index) => (
         <div key={variable.state.key}>
-          <VariableValueSelectWrapper variable={variable} inMenu />
+          <VariableValueSelectWrapper variable={variable} inMenu isEditingNewLayouts={isEditingNewLayouts} />
         </div>
       ))}
 
@@ -46,7 +53,7 @@ export function DashboardControlsMenu({ variables, links, annotations, dashboard
       {annotations.length > 0 &&
         annotations.map((layer, index) => (
           <div key={layer.state.key}>
-            <DataLayerControl layer={layer} inMenu />
+            <DataLayerControl layer={layer} inMenu isEditingNewLayouts={isEditingNewLayouts} />
           </div>
         ))}
 

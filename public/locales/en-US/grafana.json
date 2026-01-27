@@ -4884,7 +4884,40 @@
       "tab-title": "Change tab title"
     },
     "edit-pane": {
+      "annotation": {
+        "choose-panels": "Choose panels",
+        "color": "Color",
+        "color-description": "Color to use for the annotation event markers",
+        "data-source": "Data source",
+        "display": "Show annotation controls in",
+        "display-options": {
+          "above-dashboard": "Above dashboard",
+          "controls-menu": "Controls menu",
+          "controls-menu-description": "Can be accessed when the controls menu is open",
+          "hidden": "Hidden",
+          "hidden-description": "Hides the toggle for turning this annotation on or off"
+        },
+        "enabled": "Enabled",
+        "enabled-description": "When enabled the annotation query is issued every dashboard refresh",
+        "name": "Name",
+        "panel-filter": {
+          "all-panels": "All panels",
+          "all-panels-description": "Send the annotation data to all panels that support annotations",
+          "all-panels-except": "All panels except",
+          "all-panels-except-description": "Do not send annotation data to the following panels",
+          "selected-panels": "Selected panels",
+          "selected-panels-description": "Send the annotations to the explicitly listed panels"
+        },
+        "query": "Query",
+        "show-in": "Show in"
+      },
+      "annotations": {
+        "add-annotation": "Add annotation",
+        "select-annotation": "Select"
+      },
       "elements": {
+        "annotation": "Annotation",
+        "annotation-set": "Annotations & Alerts",
         "dashboard": "Dashboard",
         "element": "Element",
         "local-variable": "Local variable",
@@ -5930,6 +5963,11 @@
         "new-panel": "New panel"
       }
     },
+    "annotation-control": {
+      "description-add-event-data-to-graphs": "Add event data to graphs",
+      "label-annotation-query": "Annotation query",
+      "tooltip-add-new-annotation-query": "Add new annotation query"
+    },
     "annotation-settings-edit": {
       "back-to-list": "Back to list",
       "control-display-options": {
@@ -6083,6 +6121,9 @@
       "message": {
         "dashboard-not-found": "Dashboard not found"
       }
+    },
+    "dashboard-side-pane-new": {
+      "dashboard-controls": "Dashboard controls"
     },
     "data-source-variable-form": {
       "data-source-options": "Data source options",

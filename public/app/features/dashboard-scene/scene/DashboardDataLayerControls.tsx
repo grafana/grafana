@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 
+import { config } from '@grafana/runtime';
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
@@ -13,18 +14,21 @@ export function DashboardDataLayerControls({ dashboard }: { dashboard: Dashboard
   // We are not using the default renderer of the data objects here, because the information of where the controls
   // should be rendered (`.placement`) are set on the underlying annotation layer objects.
   const state = sceneGraph.getData(dashboard).useState();
+  const { isEditing } = dashboard.useState();
+  const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
   // It is possible to render the controls for the annotation data layers in separate places using the `placement` property.
   // In case it's not specified, we are rendering the controls here (default).
-  const isDefaultPlacementAndNotHidden = (layer: SceneDataLayerProvider) =>
-    layer.state.placement === undefined && !layer.state.isHidden;
+  // In edit mode, we also show hidden annotations with strikethrough styling.
+  const shouldShowLayer = (layer: SceneDataLayerProvider) =>
+    layer.state.placement === undefined && (!layer.state.isHidden || isEditingNewLayouts);
   const styles = useStyles2(getStyles);
 
   if (isDashboardDataLayerSetState(state)) {
     return (
       <>
-        {state.annotationLayers.filter(isDefaultPlacementAndNotHidden).map((layer) => (
+        {state.annotationLayers.filter(shouldShowLayer).map((layer) => (
           <div key={layer.state.key} className={styles.container}>
-            <DataLayerControl layer={layer} />
+            <DataLayerControl layer={layer} isEditingNewLayouts={isEditingNewLayouts} />
           </div>
         ))}
       </>
