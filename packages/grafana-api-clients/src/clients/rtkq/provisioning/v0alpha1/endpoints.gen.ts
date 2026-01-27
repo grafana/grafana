@@ -1856,6 +1856,12 @@ export type RepositorySpec = {
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
 };
+export type QuotaStatus = {
+  /** MaxRepositories is the maximum number of repositories allowed. 0 means unlimited. */
+  maxRepositories?: number;
+  /** MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited. */
+  maxResourcesPerRepository?: number;
+};
 export type ResourceCount = {
   count: number;
   group: string;
@@ -1907,6 +1913,8 @@ export type RepositoryStatus = {
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
+  /** Quota contains the configured quota limits for this repository */
+  quota?: QuotaStatus;
   /** The object count when sync last ran */
   stats?: ResourceCount[];
   /** Sync information with the last sync information */
