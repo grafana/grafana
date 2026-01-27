@@ -1,4 +1,5 @@
 import {
+  GridLayoutItemKind,
   PanelKind,
   QueryGroupKind,
   VizConfigKind,
@@ -134,4 +135,20 @@ export function validatePanelKindV2(value: unknown): asserts value is PanelKind 
   if (!isPanelKindV2(value)) {
     throw new Error('Provided JSON is not a valid v2 Panel spec');
   }
+}
+
+export function isGridLayoutItemKind(value: unknown): value is GridLayoutItemKind {
+  if (!isObject(value)) {
+    return false;
+  }
+  if (value.kind !== 'GridLayoutItem' || !isObject(value.spec)) {
+    return false;
+  }
+  const spec = value.spec;
+  return (
+    typeof spec.x === 'number' &&
+    typeof spec.y === 'number' &&
+    typeof spec.width === 'number' &&
+    typeof spec.height === 'number'
+  );
 }
