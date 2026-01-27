@@ -3,6 +3,7 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -203,13 +204,12 @@ func validateRegisteredResources() error {
 func parseConfigResource(configResource string) schema.GroupResource {
 	// Format is "resource.group" e.g. "dashboards.dashboard.grafana.app"
 	// Find the first dot to split resource from group
-	for i, c := range configResource {
-		if c == '.' {
-			return schema.GroupResource{
-				Resource: configResource[:i],
-				Group:    configResource[i+1:],
-			}
-		}
+	resource, group, found := strings.Cut(configResource, ".")
+	if !found {
+		return schema.GroupResource{Resource: configResource}
 	}
-	return schema.GroupResource{Resource: configResource}
+	return schema.GroupResource{
+		Resource: resource,
+		Group:    group,
+	}
 }
