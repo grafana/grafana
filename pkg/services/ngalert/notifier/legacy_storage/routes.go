@@ -337,10 +337,6 @@ func writeToHash(sum hash.Hash, r *definitions.Route) {
 	for _, s := range r.GroupByStr {
 		writeString(s)
 	}
-	for _, labelName := range r.GroupBy {
-		writeString(string(labelName))
-	}
-	writeBool(r.GroupByAll)
 	if len(r.Match) > 0 {
 		for _, key := range slices.Sorted(maps.Keys(r.Match)) {
 			writeString(key)
