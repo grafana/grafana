@@ -50,6 +50,11 @@ var defaultTreeIdentifier = resource.Identifier{
 	Name:      v0alpha1.UserDefinedRoutingTreeName,
 }
 
+var defaultPolicy = definitions.Route{
+	Receiver:   "empty",
+	GroupByStr: models.DefaultNotificationSettingsGroupBy,
+}
+
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
@@ -762,44 +767,9 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		}
 	}
 
-	k8sRoute := func(t *testing.T, name string, r *definitions.Route) *v0alpha1.RoutingTree {
-		err := r.Validate()
-		require.NoError(t, err)
-		managedRoute := legacy_storage.NewManagedRoute(name, r)
-		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, func(int64) string { return "default" })
-		require.NoError(t, err)
-		v1Route.TypeMeta = v1.TypeMeta{
-			Kind:       v0alpha1.RoutingTreeKind().Kind(),
-			APIVersion: v0alpha1.GroupVersion.Identifier(),
-		}
-		return v1Route
-	}
-
 	// Prep config so that referenced receivers and time intervals exist.
 	cfg := policy_exports.Config()
-	receiverClient := common.NewReceiverClient(t, admin)
-	for _, receiver := range cfg.AlertmanagerConfig.Receivers {
-		_, err := receiverClient.Create(ctx, &v0alpha1.Receiver{
-			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
-			Spec:       v0alpha1.ReceiverSpec{Title: receiver.Name, Integrations: []v0alpha1.ReceiverIntegration{}},
-		}, v1.CreateOptions{})
-		require.NoError(t, err)
-	}
-
-	timeIntervalClient := common.NewTimeIntervalClient(t, helper.Org1.Admin)
-	for _, ti := range cfg.AlertmanagerConfig.TimeIntervals {
-		interval, err := timeinterval.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval(ti)}, func(_ int64) string { return "default" })
-		require.NoError(t, err)
-		_, err = timeIntervalClient.Create(ctx, interval, v1.CreateOptions{})
-		require.NoError(t, err)
-	}
-
-	defaultPolicy := &definitions.Route{
-		Receiver:   "grafana-default-email",
-		GroupByStr: models.DefaultNotificationSettingsGroupBy,
-	}
-	_, err = adminClient.Update(ctx, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy), resource.UpdateOptions{})
-	require.NoError(t, err)
+	createRoutingReferences(t, admin, cfg.AlertmanagerConfig.Receivers, cfg.AlertmanagerConfig.TimeIntervals)
 
 	// Sanity check there aren't any existing managed routes other than the default.
 	list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
@@ -834,12 +804,12 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 		t.Run("Create default policy fails", func(t *testing.T) {
 			// Attempting to create a route with name UserDefinedRoutingTreeName fails.
-			_, err = adminClient.Create(ctx, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy), resource.CreateOptions{})
+			_, err = adminClient.Create(ctx, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &defaultPolicy), resource.CreateOptions{})
 			require.Error(t, err)
 		})
 
 		t.Run("Get Default Policy", func(t *testing.T) {
-			validateGetEqual(t, v0alpha1.UserDefinedRoutingTreeName, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy))
+			validateGetEqual(t, v0alpha1.UserDefinedRoutingTreeName, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &defaultPolicy))
 		})
 	})
 
@@ -865,7 +835,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 	t.Run("Provisioned Get should include provenance", func(t *testing.T) {
 		allCreatedRoutes := resetPolicies(t)
-		allCreatedRoutes[v0alpha1.UserDefinedRoutingTreeName] = k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy)
+		allCreatedRoutes[v0alpha1.UserDefinedRoutingTreeName] = k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &defaultPolicy)
 
 		for name, route := range allCreatedRoutes {
 			require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
@@ -891,7 +861,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			for _, route := range allCreatedRoutes {
 				expectedRoutes = append(expectedRoutes, *route)
 			}
-			expectedRoutes = append(expectedRoutes, *k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy))
+			expectedRoutes = append(expectedRoutes, *k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &defaultPolicy))
 
 			for i := range expectedRoutes {
 				expectedRoutes[i].TypeMeta = v1.TypeMeta{} // List does not include this information.
@@ -961,7 +931,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 	t.Run("Delete", func(t *testing.T) {
 		policies := resetPolicies(t)
-		policies[v0alpha1.UserDefinedRoutingTreeName] = k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy)
+		policies[v0alpha1.UserDefinedRoutingTreeName] = k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &defaultPolicy)
 
 		for name, route := range policies {
 			t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
@@ -986,7 +956,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: route.ResourceVersion}})
 					require.NoError(t, err)
 					if name == v0alpha1.UserDefinedRoutingTreeName {
-						validateGetEqual(t, name, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy)) // Default policy only resets, it doesn't delete.
+						validateGetEqual(t, name, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &defaultPolicy)) // Default policy only resets, it doesn't delete.
 					} else {
 						validateGetErr(t, name, v1.StatusReasonNotFound)
 					}
@@ -999,7 +969,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: ""}})
 					require.NoError(t, err)
 					if name == v0alpha1.UserDefinedRoutingTreeName {
-						validateGetEqual(t, name, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy)) // Default policy only resets, it doesn't delete.
+						validateGetEqual(t, name, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &defaultPolicy)) // Default policy only resets, it doesn't delete.
 					} else {
 						validateGetErr(t, name, v1.StatusReasonNotFound)
 					}
@@ -1007,4 +977,38 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			})
 		}
 	})
+}
+
+func k8sRoute(t *testing.T, name string, r *definitions.Route) *v0alpha1.RoutingTree {
+	err := r.Validate()
+	require.NoError(t, err)
+	managedRoute := legacy_storage.NewManagedRoute(name, r)
+	v1Route, err := routingtree.ConvertToK8sResource(-1, managedRoute, func(int64) string { return apis.DefaultNamespace })
+	require.NoError(t, err)
+	v1Route.TypeMeta = v1.TypeMeta{
+		Kind:       v0alpha1.RoutingTreeKind().Kind(),
+		APIVersion: v0alpha1.GroupVersion.Identifier(),
+	}
+	return v1Route
+}
+
+func createRoutingReferences(t *testing.T, user apis.User, receivers []*definitions.PostableApiReceiver, timeIntervals []config.TimeInterval) {
+	receiverClient, err := v0alpha1.NewReceiverClientFromGenerator(user.GetClientRegistry())
+	require.NoError(t, err)
+	for _, receiver := range receivers {
+		_, err := receiverClient.Create(context.Background(), &v0alpha1.Receiver{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec:       v0alpha1.ReceiverSpec{Title: receiver.Name, Integrations: []v0alpha1.ReceiverIntegration{}},
+		}, resource.CreateOptions{})
+		require.NoError(t, err)
+	}
+
+	timeIntervalClient, err := v0alpha1.NewTimeIntervalClientFromGenerator(user.GetClientRegistry())
+	require.NoError(t, err)
+	for _, ti := range timeIntervals {
+		interval, err := timeinterval.ConvertToK8sResource(user.Identity.GetOrgID(), definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval(ti)}, func(_ int64) string { return "default" })
+		require.NoError(t, err)
+		_, err = timeIntervalClient.Create(context.Background(), interval, resource.CreateOptions{})
+		require.NoError(t, err)
+	}
 }
