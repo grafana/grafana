@@ -22,6 +22,9 @@ type SecretsManagerSettings struct {
 	DataKeysCacheCautionPeriod time.Duration
 	// Whether to use a Redis cache for data keys instead of the in-memory cache
 	DataKeysCacheUseRedis bool
+	// DataKeysCacheEncryptionKey is used to encrypt data keys before storing them in the cache.
+	// If empty, a random key will be generated for each Grafana process at startup.
+	DataKeysCacheEncryptionKey string
 
 	// ConfiguredKMSProviders is a map of KMS providers found in the config file. The keys are in the format of <provider>.<keyName>, and the values are a map of the properties in that section
 	// In OSS, the provider type can only be "secret_key". In Enterprise, it can additionally be one of: "aws_kms", "azure_keyvault", "google_kms", "hashicorp_vault"
@@ -88,6 +91,8 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.DataKeysCacheCleanupInterval = secretsMgmt.Key("data_keys_cache_cleanup_interval").MustDuration(1 * time.Minute)
 	// We consider a "caution period" of 10m to be long enough for any database transaction that implied a data key creation to have finished successfully.
 	cfg.SecretsManagement.DataKeysCacheCautionPeriod = secretsMgmt.Key("data_keys_cache_caution_period").MustDuration(10 * time.Minute)
+	// If empty, a random key will be generated at startup for encrypting cached data keys.
+	cfg.SecretsManagement.DataKeysCacheEncryptionKey = secretsMgmt.Key("data_keys_cache_encryption_key").MustString("")
 
 	// Extract available KMS providers from configuration sections
 	providers := make(map[string]map[string]string)

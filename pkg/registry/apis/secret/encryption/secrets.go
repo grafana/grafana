@@ -51,12 +51,12 @@ type DataKeyCache interface {
 }
 
 type DataKeyCacheEntry struct {
-	Namespace  string
-	Id         string
-	Label      string
-	DataKey    []byte
-	Active     bool
-	Expiration time.Time
+	Namespace        string
+	Id               string
+	Label            string
+	EncryptedDataKey []byte
+	Active           bool
+	Expiration       time.Time
 }
 
 func (e DataKeyCacheEntry) IsExpired() bool {
