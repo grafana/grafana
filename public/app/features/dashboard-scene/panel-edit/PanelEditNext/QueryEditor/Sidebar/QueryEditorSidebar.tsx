@@ -3,7 +3,7 @@ import { memo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, CollapsableSection, IconButton, Text, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, IconButton, Text, useStyles2 } from '@grafana/ui';
 
 import { useQueryRunnerContext } from '../QueryEditorContext';
 
