@@ -3,8 +3,10 @@ package test
 import (
 	"context"
 	"fmt"
+	"os"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -26,13 +28,25 @@ type BenchmarkOptions struct {
 }
 
 // DefaultBenchmarkOptions returns the default benchmark options
-func DefaultBenchmarkOptions() *BenchmarkOptions {
+func DefaultBenchmarkOptions(t *testing.T) *BenchmarkOptions {
+	envOrDefault := func(name string, defaultVal int) int {
+		envVar := fmt.Sprintf("US_BACKEND_BENCH_%s", name)
+		if str := os.Getenv(envVar); str != "" {
+			n, err := strconv.ParseInt(str, 10, 64)
+			require.NoError(t, err)
+
+			return int(n)
+		}
+
+		return defaultVal
+	}
+
 	return &BenchmarkOptions{
-		NumResources:     1000,
-		Concurrency:      50,
-		NumNamespaces:    1,
-		NumGroups:        1,
-		NumResourceTypes: 1,
+		NumResources:     envOrDefault("RESOURCES", 1000),
+		Concurrency:      envOrDefault("CONCURRENCY", 50),
+		NumNamespaces:    envOrDefault("NAMESPACES", 1),
+		NumGroups:        envOrDefault("GROUPS", 1),
+		NumResourceTypes: envOrDefault("RESOURCE_TYPES", 1),
 	}
 }
 
@@ -172,9 +186,9 @@ func BenchmarkStorageBackend(b testing.TB, backend resource.StorageBackend, opts
 
 // runSearchBackendBenchmarkWriteThroughput runs a write throughput benchmark for search backend
 // This is a simple benchmark that writes a single resource/group/namespace because indices are per-tenant/group/resource.
-func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resource.SearchBackend, opts *BenchmarkOptions) (*BenchmarkResult, error) {
+func runSearchBackendBenchmarkWriteThroughput(t *testing.T, ctx context.Context, backend resource.SearchBackend, opts *BenchmarkOptions) (*BenchmarkResult, error) {
 	if opts == nil {
-		opts = DefaultBenchmarkOptions()
+		opts = DefaultBenchmarkOptions(t)
 	}
 
 	// Create channels for workers
@@ -294,20 +308,20 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 }
 
 // BenchmarkSearchBackend runs a benchmark test for a search backend implementation
-func BenchmarkSearchBackend(tb testing.TB, backend resource.SearchBackend, opts *BenchmarkOptions) {
+func BenchmarkSearchBackend(t *testing.T, backend resource.SearchBackend, opts *BenchmarkOptions) {
 	ctx := context.Background()
 
-	result, err := runSearchBackendBenchmarkWriteThroughput(ctx, backend, opts)
-	require.NoError(tb, err)
+	result, err := runSearchBackendBenchmarkWriteThroughput(t, ctx, backend, opts)
+	require.NoError(t, err)
 
-	// Also log the results for better visibility
-	tb.Logf("Benchmark Configuration: %s", opts)
-	tb.Logf("")
-	tb.Logf("Benchmark Results:")
-	tb.Logf("Total Duration: %v", result.TotalDuration)
-	tb.Logf("Write Count: %d", result.WriteCount)
-	tb.Logf("Throughput: %.2f writes/sec", result.Throughput)
-	tb.Logf("P50 Latency: %v", result.P50Latency)
-	tb.Logf("P90 Latency: %v", result.P90Latency)
-	tb.Logf("P99 Latency: %v", result.P99Latency)
+	// Log the results for better visibility
+	t.Logf("Benchmark Configuration: %s", opts)
+	t.Logf("")
+	t.Logf("Benchmark Results:")
+	t.Logf("Total Duration: %v", result.TotalDuration)
+	t.Logf("Write Count: %d", result.WriteCount)
+	t.Logf("Throughput: %.2f writes/sec", result.Throughput)
+	t.Logf("P50 Latency: %v", result.P50Latency)
+	t.Logf("P90 Latency: %v", result.P90Latency)
+	t.Logf("P99 Latency: %v", result.P99Latency)
 }
