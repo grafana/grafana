@@ -32,7 +32,10 @@ func extractPluginSettings(sections []*ini.Section) config.PluginSettings {
 }
 
 var (
-	defaultPreinstallPlugins = map[string]InstallPlugin{
+	// DefaultPreinstallPlugins contains the list of plugins that are preinstalled by default.
+	// These plugins can be loaded from the bundled plugins directory as a fallback
+	// when network installation fails.
+	DefaultPreinstallPlugins = map[string]InstallPlugin{
 		// Default preinstalled plugins
 		"grafana-lokiexplore-app":      {ID: "grafana-lokiexplore-app"},
 		"grafana-pyroscope-app":        {ID: "grafana-pyroscope-app"},
@@ -40,6 +43,12 @@ var (
 		"grafana-metricsdrilldown-app": {ID: "grafana-metricsdrilldown-app"},
 	}
 )
+
+// IsDefaultPreinstallPlugin returns true if the plugin is in the default preinstall list.
+func IsDefaultPreinstallPlugin(pluginID string) bool {
+	_, exists := DefaultPreinstallPlugins[pluginID]
+	return exists
+}
 
 func (cfg *Cfg) migrateInstallPluginsToPreinstallPluginsSync(rawInstallPlugins, installPluginsForce string, preinstallPluginsSync map[string]InstallPlugin) {
 	if strings.ToLower(installPluginsForce) == "true" || rawInstallPlugins == "" {
@@ -145,7 +154,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		rawInstallPluginsAsync := util.SplitString(pluginsSection.Key("preinstall").MustString(""))
 		preinstallPluginsAsync := make(map[string]InstallPlugin)
 		// Add the default preinstalled plugins to pre install plugins async list
-		for _, plugin := range defaultPreinstallPlugins {
+		for _, plugin := range DefaultPreinstallPlugins {
 			preinstallPluginsAsync[plugin.ID] = plugin
 		}
 		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
@@ -186,6 +195,9 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 
 		cfg.PreinstallAutoUpdate = pluginsSection.Key("preinstall_auto_update").MustBool(true)
 	}
+
+	// Path to bundled plugins (pre-installed in image)
+	cfg.BundledPluginsPath = pluginsSection.Key("bundled_plugins_path").MustString("/usr/share/grafana/plugins-bundled")
 
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(true)

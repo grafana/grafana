@@ -30,6 +30,7 @@ func TestService_IsDisabled(t *testing.T) {
 		&pluginfakes.FakePluginInstaller{},
 		prometheus.NewRegistry(),
 		&pluginfakes.FakePluginRepo{},
+		&pluginfakes.FakeLoader{},
 		&pluginchecker.FakePluginUpdateChecker{},
 	)
 	require.NoError(t, err)
@@ -198,6 +199,7 @@ func TestService_Run(t *testing.T) {
 						return tt.latestPlugin, nil
 					},
 				},
+				&pluginfakes.FakeLoader{},
 				pluginchecker.ProvideService(
 					managedplugins.NewNoop(),
 					provisionedplugins.NewNoop(),

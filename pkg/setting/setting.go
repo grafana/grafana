@@ -224,6 +224,7 @@ type Cfg struct {
 	PreinstallPluginsAsync           []InstallPlugin
 	PreinstallPluginsSync            []InstallPlugin
 	PreinstallAutoUpdate             bool
+	BundledPluginsPath               string
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool

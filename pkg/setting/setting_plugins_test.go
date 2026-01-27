@@ -144,11 +144,11 @@ func Test_readPluginSettings(t *testing.T) {
 	})
 
 	t.Run("when plugins.preinstall is defined", func(t *testing.T) {
-		defaultPreinstallPluginsList := make([]InstallPlugin, 0, len(defaultPreinstallPlugins))
-		defaultPreinstallPluginsIDs := []string{}
-		for _, p := range defaultPreinstallPlugins {
-			defaultPreinstallPluginsList = append(defaultPreinstallPluginsList, p)
-			defaultPreinstallPluginsIDs = append(defaultPreinstallPluginsIDs, p.ID)
+		DefaultPreinstallPluginsList := make([]InstallPlugin, 0, len(DefaultPreinstallPlugins))
+		DefaultPreinstallPluginsIDs := []string{}
+		for _, p := range DefaultPreinstallPlugins {
+			DefaultPreinstallPluginsList = append(DefaultPreinstallPluginsList, p)
+			DefaultPreinstallPluginsIDs = append(DefaultPreinstallPluginsIDs, p.ID)
 		}
 		tests := []struct {
 			name              string
@@ -163,28 +163,28 @@ func Test_readPluginSettings(t *testing.T) {
 			{
 				name:     "should add the default preinstalled plugin",
 				rawInput: "",
-				expected: defaultPreinstallPluginsList,
+				expected: DefaultPreinstallPluginsList,
 			},
 			{
 				name:     "should add the default preinstalled plugin and the one defined",
 				rawInput: "plugin1",
-				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "", URL: ""}),
+				expected: append(DefaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "", URL: ""}),
 			},
 			{
 				name:     "should add the default preinstalled plugin and the one defined with version",
 				rawInput: "plugin1@1.0.0",
-				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "1.0.0", URL: ""}),
+				expected: append(DefaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "1.0.0", URL: ""}),
 			},
 			{
 				name:           "it should remove the disabled plugin",
 				rawInput:       "plugin1",
 				disablePlugins: "plugin1",
-				expected:       defaultPreinstallPluginsList,
+				expected:       DefaultPreinstallPluginsList,
 			},
 			{
 				name:           "it should remove default plugins",
 				rawInput:       "",
-				disablePlugins: strings.Join(defaultPreinstallPluginsIDs, ","),
+				disablePlugins: strings.Join(DefaultPreinstallPluginsIDs, ","),
 				expected:       nil,
 			},
 			{
@@ -198,22 +198,22 @@ func Test_readPluginSettings(t *testing.T) {
 				rawInput:     "plugin1",
 				disableAsync: true,
 				expected:     nil,
-				expectedSync: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", ""}),
+				expectedSync: append(DefaultPreinstallPluginsList, InstallPlugin{"plugin1", "", ""}),
 			},
 			{
 				name:     "should parse a plugin with version and URL",
 				rawInput: "plugin1@1.0.1@https://example.com/plugin1.tar.gz",
-				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "1.0.1", URL: "https://example.com/plugin1.tar.gz"}),
+				expected: append(DefaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "1.0.1", URL: "https://example.com/plugin1.tar.gz"}),
 			},
 			{
 				name:     "should parse a plugin with URL",
 				rawInput: "plugin1@@https://example.com/plugin1.tar.gz",
-				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "", URL: "https://example.com/plugin1.tar.gz"}),
+				expected: append(DefaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "", URL: "https://example.com/plugin1.tar.gz"}),
 			},
 			{
 				name:     "should parse a plugin with credentials in the URL",
 				rawInput: "plugin1@@https://username:password@example.com/plugin1.tar.gz",
-				expected: append(defaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "", URL: "https://username:password@example.com/plugin1.tar.gz"}),
+				expected: append(DefaultPreinstallPluginsList, InstallPlugin{ID: "plugin1", Version: "", URL: "https://username:password@example.com/plugin1.tar.gz"}),
 			},
 			{
 				name:         "when preinstall_async is false, should add all plugins to preinstall_sync",
@@ -221,14 +221,14 @@ func Test_readPluginSettings(t *testing.T) {
 				rawInputSync: "plugin2",
 				disableAsync: true,
 				expected:     nil,
-				expectedSync: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", ""}, InstallPlugin{"plugin2", "", ""}),
+				expectedSync: append(DefaultPreinstallPluginsList, InstallPlugin{"plugin1", "", ""}, InstallPlugin{"plugin2", "", ""}),
 			},
 			{
 				name:     "should overwrite default when user pins a version",
 				rawInput: "grafana-pyroscope-app@4.0.0",
 				expected: func() []InstallPlugin {
 					var plugins []InstallPlugin
-					for _, p := range defaultPreinstallPlugins {
+					for _, p := range DefaultPreinstallPlugins {
 						if p.ID == "grafana-pyroscope-app" {
 							plugins = append(plugins, InstallPlugin{"grafana-pyroscope-app", "4.0.0", ""})
 						} else {
@@ -242,7 +242,7 @@ func Test_readPluginSettings(t *testing.T) {
 				name:         "when same plugin is defined in preinstall and preinstall_sync, should be only in preinstallSync",
 				rawInput:     "plugin1",
 				rawInputSync: "plugin1",
-				expected:     defaultPreinstallPluginsList,
+				expected:     DefaultPreinstallPluginsList,
 				expectedSync: []InstallPlugin{{ID: "plugin1"}},
 			},
 		}

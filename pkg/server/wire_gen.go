@@ -851,7 +851,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	plugininstallerService, err := plugininstaller.ProvideService(cfg, pluginstoreService, pluginInstaller, registerer, repoManager, plugincheckerService)
+	plugininstallerService, err := plugininstaller.ProvideService(cfg, pluginstoreService, pluginInstaller, registerer, repoManager, loaderLoader, plugincheckerService)
 	if err != nil {
 		return nil, err
 	}
@@ -1529,7 +1529,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	plugininstallerService, err := plugininstaller.ProvideService(cfg, pluginstoreService, pluginInstaller, registerer, repoManager, plugincheckerService)
+	plugininstallerService, err := plugininstaller.ProvideService(cfg, pluginstoreService, pluginInstaller, registerer, repoManager, loaderLoader, plugincheckerService)
 	if err != nil {
 		return nil, err
 	}

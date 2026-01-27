@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
 	"sync"
 	"time"
@@ -11,6 +13,8 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -44,6 +48,7 @@ type Service struct {
 	pluginInstaller plugins.Installer
 	pluginStore     pluginstore.Store
 	pluginRepo      repo.Service
+	pluginLoader    loader.Service
 	updateChecker   pluginchecker.PluginUpdateChecker
 	installComplete chan struct{} // closed when all plugins are installed (used for testing)
 }
@@ -54,6 +59,7 @@ func ProvideService(
 	pluginInstaller plugins.Installer,
 	promReg prometheus.Registerer,
 	pluginRepo repo.Service,
+	pluginLoader loader.Service,
 	updateChecker pluginchecker.PluginUpdateChecker,
 ) (*Service, error) {
 	once.Do(func() {
@@ -67,6 +73,7 @@ func ProvideService(
 		pluginInstaller: pluginInstaller,
 		pluginStore:     pluginStore,
 		pluginRepo:      pluginRepo,
+		pluginLoader:    pluginLoader,
 		updateChecker:   updateChecker,
 		installComplete: make(chan struct{}),
 	}
@@ -130,6 +137,13 @@ func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting
 				s.log.Debug("Plugin already installed", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 				continue
 			}
+
+			// Try to load from bundled plugins directory as a fallback for default preinstall plugins
+			if setting.IsDefaultPreinstallPlugin(installPlugin.ID) && s.tryLoadFromBundled(ctx, installPlugin.ID) {
+				s.log.Info("Plugin loaded from bundled directory", "pluginId", installPlugin.ID)
+				continue
+			}
+
 			if failOnErr {
 				// Halt execution in the synchronous scenario
 				return fmt.Errorf("failed to install plugin %s@%s: %w", installPlugin.ID, installPlugin.Version, err)
@@ -144,6 +158,29 @@ func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting
 	}
 
 	return nil
+}
+
+// tryLoadFromBundled attempts to load a plugin from the bundled plugins directory.
+// Returns true if the plugin was successfully loaded, false otherwise.
+func (s *Service) tryLoadFromBundled(ctx context.Context, pluginID string) bool {
+	if s.cfg.BundledPluginsPath == "" {
+		return false
+	}
+
+	bundledPath := filepath.Join(s.cfg.BundledPluginsPath, pluginID)
+	if _, err := os.Stat(bundledPath); os.IsNotExist(err) {
+		s.log.Debug("Plugin not found in bundled directory", "pluginId", pluginID, "path", bundledPath)
+		return false
+	}
+
+	s.log.Info("Attempting to load plugin from bundled directory", "pluginId", pluginID, "path", bundledPath)
+	loadedPlugins, err := s.pluginLoader.Load(ctx, sources.NewLocalSource(plugins.ClassExternal, []string{bundledPath}))
+	if err != nil {
+		s.log.Error("Failed to load plugin from bundled directory", "pluginId", pluginID, "path", bundledPath, "error", err)
+		return false
+	}
+
+	return len(loadedPlugins) > 0
 }
 
 func (s *Service) starting(ctx context.Context) error {

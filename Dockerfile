@@ -239,10 +239,11 @@ COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
 COPY --from=js-src /tmp/grafana/LICENSE ./
 
-# Copy external catalog plugins to the plugins directory
+# Copy external catalog plugins to the bundled plugins directory
 # These are pre-downloaded plugins bundled with --bundle-catalog-plugins
-# The directory always exists in the tarball (may be empty)
-COPY --from=go-src /tmp/grafana/plugins-external/. "$GF_PATHS_PLUGINS"/
+# Using a separate directory (/usr/share/grafana/plugins-bundled) prevents conflicts
+# with user-mounted /var/lib/grafana/plugins and allows fallback loading
+COPY --from=go-src /tmp/grafana/plugins-external/. /usr/share/grafana/plugins-bundled/
 
 EXPOSE 3000
 

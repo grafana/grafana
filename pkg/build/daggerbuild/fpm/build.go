@@ -130,9 +130,10 @@ func Build(builder *dagger.Container, opts BuildOpts, targz *dagger.File) *dagge
 		// the "wrappers" scripts are the same as grafana-cli/grafana-server but with some extra shell commands before/after execution.
 		WithExec([]string{"cp", "/src/packaging/wrappers/grafana-server", "/src/packaging/wrappers/grafana-cli", "/pkg/usr/sbin"}).
 		WithExec([]string{"cp", "-r", "/src", "/pkg/usr/share/grafana"}).
-		// Copy external catalog plugins to /var/lib/grafana/plugins if they exist
-		// This is the default plugin directory where Grafana loads plugins from
-		WithExec([]string{"/bin/sh", "-c", "if [ -d /src/plugins-external ] && [ \"$(ls -A /src/plugins-external 2>/dev/null)\" ]; then mkdir -p /pkg/var/lib/grafana/plugins && cp -r /src/plugins-external/* /pkg/var/lib/grafana/plugins/; fi"})
+		// Copy external catalog plugins to /usr/share/grafana/plugins-bundled if they exist
+		// This directory is used as a fallback when preinstall fails for defaultPreinstallPlugins.
+		// Using a separate directory prevents conflicts with user-mounted /var/lib/grafana/plugins.
+		WithExec([]string{"/bin/sh", "-c", "if [ -d /src/plugins-external ] && [ \"$(ls -A /src/plugins-external 2>/dev/null)\" ]; then mkdir -p /pkg/usr/share/grafana/plugins-bundled && cp -r /src/plugins-external/* /pkg/usr/share/grafana/plugins-bundled/; fi"})
 
 	for _, conf := range opts.ConfigFiles {
 		container = container.WithExec(append([]string{"cp", "-r"}, conf...))
