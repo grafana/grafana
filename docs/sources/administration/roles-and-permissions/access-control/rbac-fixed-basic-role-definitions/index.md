@@ -84,7 +84,7 @@ Where `<role>` is one of: `viewer`, `editor`, `admin`, or `grafana_admin`.
 For example, to get the Viewer role definition:
 
 ```bash
-curl --location 'https://<slug>.grafana.net/api/access-control/roles/basic_viewer' \
+curl --location 'https://<your-stack-name>.grafana.net/api/access-control/roles/basic_viewer' \
   --header 'Authorization: Bearer <service-account-token>'
 ```
 
@@ -93,7 +93,7 @@ curl --location 'https://<slug>.grafana.net/api/access-control/roles/basic_viewe
 You can also view the role definition directly in your browser by navigating to:
 
 ```
-https://<slug>.grafana.net/api/access-control/roles/basic_viewer
+https://<your-stack-name>.grafana.net/api/access-control/roles/basic_viewer
 ```
 
 This works when logged in as an Admin user.
