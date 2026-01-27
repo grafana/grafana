@@ -32,16 +32,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/#create-a-custom-role-to-access-alerts-in-a-folder
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plan-rbac-rollout-strategy/#create-a-custom-role-to-access-alerts-in-a-folder
-  oncall:
-    - pattern: /docs/grafana/
-      destination: /docs/oncall/<GRAFANA_VERSION>/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/oncall/
-  available-grafana-oncall-rbac-roles--granted-actions:
-    - pattern: /docs/grafana/
-      destination: /docs/oncall/<GRAFANA_VERSION>/user-and-team-management/#available-grafana-oncall-rbac-roles--granted-actions
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/oncall/user-and-team-management/#available-grafana-oncall-rbac-roles--granted-actions
   plugin-role-definitions:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plugin-role-definitions/
@@ -188,29 +178,3 @@ The following table lists the default RBAC alerting role assignments to the basi
 | Admin      | `fixed:alerting:writer`<br>`fixed:alerting.provisioning.secrets:reader`<br>`fixed:alerting.provisioning:writer` | Default [Grafana organization administrator](ref:rbac-basic-roles) assignments. |
 | Editor     | `fixed:alerting:writer`<br>`fixed:alerting.provisioning.provenance:writer`                                      | Default [Editor](ref:rbac-basic-roles) assignments.                             |
 | Viewer     | `fixed:alerting:reader`                                                                                         | Default [Viewer](ref:rbac-basic-roles) assignments.                             |
-
-### Grafana OnCall roles
-
-If you are using [Grafana OnCall](ref:oncall), you can try out the integration between Grafana OnCall and RBAC.
-For a detailed list of the available OnCall RBAC roles, refer to the table in [Available Grafana OnCall RBAC roles and granted actions](ref:available-grafana-oncall-rbac-roles--granted-actions).
-
-The following table lists the default RBAC OnCall role assignments to the basic roles:
-
-| Basic role    | Associated fixed roles              | Description                                                                                                                                              |
-| ------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Grafana Admin | `plugins:grafana-oncall-app:admin`  | Default [Grafana server administrator](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) assignments. |
-| Admin         | `plugins:grafana-oncall-app:admin`  | Default [Grafana organization administrator](ref:rbac-basic-roles) assignments.                                                                          |
-| Editor        | `plugins:grafana-oncall-app:editor` | Default [Editor](ref:rbac-basic-roles) assignments.                                                                                                      |
-| Viewer        | `plugins:grafana-oncall-app:reader` | Default [Viewer](ref:rbac-basic-roles) assignments.                                                                                                      |
-
-### Private data source connect roles
-
-The following table lists how private data source connect fixed roles are assigned to the basic roles:
-
-| Basic role    | Associated fixed roles                                                                            | Description                                                                                                                                              |
-| ------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Grafana Admin | `plugins:grafana-pdc-app.private-networks:write`, `plugins:grafana-pdc-app.private-networks:read` | Default [Grafana server administrator](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) assignments. |
-
-{{< admonition type="note" >}}
-These private data source connect fixed roles must be granted alongside the `fixed:datasources:writer` role for the permissions to take effect.
-{{< /admonition >}}
