@@ -118,11 +118,12 @@ export function calculateDimensions(
 
   const barWidth = Math.max(barWidthFactor * (maxRadius / 3), 2);
 
-  // If rounded bars is enabled they need a bit more vertical space
+  // If rounded bars are enabled, they need a bit more vertical space
   if (yMaxAngle < 180 && roundedBars) {
-    outerRadius -= barWidth / 4;
-    maxRadiusH -= barWidth / 4;
-    maxRadiusW -= barWidth / 4;
+    const radiusAdjustment = barWidth / 4;
+    outerRadius -= radiusAdjustment;
+    maxRadiusH -= radiusAdjustment;
+    maxRadiusW -= radiusAdjustment;
   }
 
   // Scale labels
