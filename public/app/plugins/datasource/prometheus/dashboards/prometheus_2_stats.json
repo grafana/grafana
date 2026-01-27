@@ -241,7 +241,7 @@
               }
             ]
           },
-          "unit": "cps"
+          "unit": "s"
         },
         "overrides": []
       },
