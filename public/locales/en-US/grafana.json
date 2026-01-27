@@ -964,6 +964,13 @@
       "content-route-continue-matching-other-policies": "This route will continue matching other policies"
     },
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
+    "create-alert-from-panel": {
+      "description": "Open the alert creation form in the current tab or a new tab?",
+      "no-queries": "No alerting-capable queries found in this panel.",
+      "open": "Open",
+      "open-in-new-tab": "Open in new tab",
+      "title": "Create alert rule"
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Notifications are delivered to",
@@ -10947,7 +10954,9 @@
     "invite-user": {
       "invite-button": "Invite",
       "invite-new-user-button": "Invite new user",
-      "invite-tooltip": "Invite user"
+      "invite-tooltip": "Invite user",
+      "upgrade-button": "Upgrade",
+      "upgrade-tooltip": "Upgrade to add more users"
     },
     "item": {
       "add-bookmark": "Add to Bookmarks",

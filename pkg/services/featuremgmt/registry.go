@@ -1821,6 +1821,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingDisableDMAinUI",
+			Description:  "Disables the DMA feature in the UI",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "sharingDashboardImage",
 			Description:  "Enables image sharing functionality for dashboards",
 			Stage:        FeatureStageGeneralAvailability,
