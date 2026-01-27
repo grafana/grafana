@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
-	cdnFS "github.com/grafana/grafana/pkg/extensions/pluginsintegration/cdn"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginsLoader "github.com/grafana/grafana/pkg/plugins/manager/loader"
@@ -22,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
+	"github.com/grafana/grafana/pkg/plugins/pluginfs"
 )
 
 const (
@@ -212,7 +212,7 @@ func (c *catalogSource) Discover(ctx context.Context) ([]*plugins.FoundBundle, e
 		{
 			Primary: plugins.FoundPlugin{
 				JSONData: metaJSONDataToJSONData(gcomMeta.JSON),
-				FS:       cdnFS.NewFS(gcomMeta.CDNURL, c.httpClient),
+				FS:       pluginfs.NewCDNFS(gcomMeta.CDNURL, c.httpClient),
 			},
 		},
 	}
@@ -225,7 +225,7 @@ func (c *catalogSource) Discover(ctx context.Context) ([]*plugins.FoundBundle, e
 
 		bundles[0].Children = append(bundles[0].Children, &plugins.FoundPlugin{
 			JSONData: metaJSONDataToJSONData(child.JSON),
-			FS:       cdnFS.NewFS(childPath, c.httpClient),
+			FS:       pluginfs.NewCDNFS(childPath, c.httpClient),
 		})
 	}
 
