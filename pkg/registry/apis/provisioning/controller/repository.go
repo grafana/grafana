@@ -22,6 +22,7 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -72,8 +73,9 @@ type RepositoryController struct {
 	queue          workqueue.TypedRateLimitingInterface[*queueItem]
 	resyncInterval time.Duration
 
-	registry prometheus.Registerer
-	tracer   tracing.Tracer
+	registry    prometheus.Registerer
+	tracer      tracing.Tracer
+	quotaGetter quotas.QuotaGetter
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -94,6 +96,7 @@ func NewRepositoryController(
 	tracer tracing.Tracer,
 	parallelOperations int,
 	resyncInterval time.Duration,
+	quotaGetter quotas.QuotaGetter,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 
@@ -122,6 +125,7 @@ func NewRepositoryController(
 		registry:       registry,
 		tracer:         tracer,
 		resyncInterval: resyncInterval,
+		quotaGetter:    quotaGetter,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -607,6 +611,18 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"op":    "replace",
 			"path":  "/status/fieldErrors",
 			"value": fieldErrors,
+		})
+	}
+
+	// Set quota information from configuration (only if changed)
+	newQuota := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
+	// Only update if the quota has changed
+	if obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
+		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/quota",
+			"value": newQuota,
 		})
 	}
 
