@@ -51,7 +51,7 @@ Before you begin, ensure you have the following:
 - A Grafana instance (Cloud, OSS, or Enterprise)
 - If you're [using webhooks or image rendering](#extend-git-sync-for-real-time-notification-and-image-rendering), a public instance with external access
 - Administration rights in your Grafana organization
-- An authentication method for your connection: a [GitHub private access token](#create-a-github-access-token) or a [GitHub App](#create-a-github-app)
+- An authentication method for your connection: either a [GitHub private access token](#create-a-github-access-token) or a [GitHub App](#create-a-github-app)
 - A GitHub repository to store your dashboards in
 - Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs
 
@@ -100,9 +100,36 @@ To create a GitHub access token:
 
 ### Create a GitHub App
 
-If you chose to authenticate with a GitHub App, 
+GitHub Apps are tools that extend GitHub's functionality. They use fine-grained permissions and short-lived tokens, giving you more control over which repositories are being accessed. Find out more in the [GitHub Apps official documentation](https://docs.github.com/en/apps/overview).
 
-TBC
+If you chose to authenticate with a newly created GitHub App, you'll need the following parameters:
+
+- appID
+- PrivateKey
+- installationID
+
+There are many ways to create a GitHub App. The following steps are orientative:
+
+1. Go to https://github.com/settings/apps and click on **New Github App** ”, or navigate directly to https://github.com/settings/apps/new
+1. Fill in the following fields:
+- Name: Must be unique
+- Homepage URL: For example, your Grafana Cloud instance URL
+1. Uncheck the “active” check in the **Webhook** section
+1. Go to repository permissions section and set these parameters up:
+- Contents: Read and Write
+- Metadata: Read Only
+- Pull Requests: Read and Write
+- Webhooks: Read and Write
+- In the **Where can this GitHub App be installed?** section, choose **Only this account**
+1. Click on **Create Github app** to complete the process. On the app page, copy the **AppID**
+1. Go to the **Private Keys** section, generate one, and copy it
+
+Next, install the app:
+
+1. At the top left of the page, click on **Install App**
+1. Choose for which user you need to install it, you’ll be redirected to the repo selection section
+1. Choose for which repos you want to install the app
+1. Click **Install**. On the installation page, copy the **installationID** from the page URL https://github.com/settings/installations/<installationID>
 
 ## Set up Git Sync using the UI
 
@@ -156,19 +183,13 @@ If you already have an existing GitHub App connected:
 If you want to connect using a new GitHub App:
 
 1. Select **Connect to a new app**.
-
 1. Type in the following fields:
-
-  - The ID of the GitHub App you want to use
-  - The GitHub Installation ID
-  - The Private Key
-
+- The ID of the GitHub App you want to use
+- The GitHub Installation ID
+- The Private Key
 1. Click on **Configure repository** to proceed.
-
 1. Paste the **Repository URL** for your GitHub repository into the text box.
-
 1. Enter a branch to use for provisioning. The default value is `main`.
-
 1. Optionally, you can add a **Path** to a subdirectory where your dashboards are stored. The default value is `grafana/`. If your dashboards are stored in the root of your repository, then remove the directory name.
 
 Select **Choose what to synchronize** to have the connection to your repository verified and continue setup.
