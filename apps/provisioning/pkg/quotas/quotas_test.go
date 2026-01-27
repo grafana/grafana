@@ -131,3 +131,65 @@ func TestCalculateTotalResources(t *testing.T) {
 		})
 	}
 }
+
+func TestFixedQuotaSetter(t *testing.T) {
+	tests := []struct {
+		name                              string
+		limits                            QuotaLimits
+		expectedMaxRepositories           int64
+		expectedMaxResourcesPerRepository int64
+	}{
+		{
+			name: "maps QuotaLimits to QuotaStatus correctly",
+			limits: QuotaLimits{
+				MaxResources:    100,
+				MaxRepositories: 10,
+			},
+			expectedMaxRepositories:           10,
+			expectedMaxResourcesPerRepository: 100,
+		},
+		{
+			name: "handles zero values (unlimited)",
+			limits: QuotaLimits{
+				MaxResources:    0,
+				MaxRepositories: 0,
+			},
+			expectedMaxRepositories:           0,
+			expectedMaxResourcesPerRepository: 0,
+		},
+		{
+			name: "handles mixed values",
+			limits: QuotaLimits{
+				MaxResources:    50,
+				MaxRepositories: 0,
+			},
+			expectedMaxRepositories:           0,
+			expectedMaxResourcesPerRepository: 50,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setter := NewFixedQuotaSetter(tt.limits)
+			status := setter.GetQuotaStatus()
+
+			assert.Equal(t, tt.expectedMaxRepositories, status.MaxRepositories)
+			assert.Equal(t, tt.expectedMaxResourcesPerRepository, status.MaxResourcesPerRepository)
+		})
+	}
+}
+
+func TestFixedQuotaSetter_ImplementsInterface(t *testing.T) {
+	// Verify that FixedQuotaSetter implements QuotaSetter interface
+	var _ QuotaSetter = (*FixedQuotaSetter)(nil)
+
+	// Also verify it works when used through the interface
+	var setter QuotaSetter = NewFixedQuotaSetter(QuotaLimits{
+		MaxResources:    25,
+		MaxRepositories: 5,
+	})
+
+	status := setter.GetQuotaStatus()
+	assert.Equal(t, int64(5), status.MaxRepositories)
+	assert.Equal(t, int64(25), status.MaxResourcesPerRepository)
+}

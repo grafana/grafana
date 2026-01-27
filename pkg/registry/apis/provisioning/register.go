@@ -884,6 +884,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
+			quotaSetter := quotas.NewFixedQuotaSetter(b.quotaLimits)
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
@@ -898,6 +899,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.tracer,
 				10,
 				informerFactoryResyncInterval,
+				quotaSetter,
 			)
 			if err != nil {
 				return err

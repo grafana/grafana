@@ -68,3 +68,34 @@ func calculateTotalResources(stats []provisioning.ResourceCount) int64 {
 	}
 	return total
 }
+
+// QuotaSetter sets quota information on repository status.
+type QuotaSetter interface {
+	// GetQuotaStatus returns the quota status to be set on repositories.
+	GetQuotaStatus() provisioning.QuotaStatus
+}
+
+// FixedQuotaSetter returns fixed quota values from static configuration.
+type FixedQuotaSetter struct {
+	maxRepositories           int64
+	maxResourcesPerRepository int64
+}
+
+// NewFixedQuotaSetter creates a new FixedQuotaSetter from QuotaLimits.
+func NewFixedQuotaSetter(limits QuotaLimits) *FixedQuotaSetter {
+	return &FixedQuotaSetter{
+		maxRepositories:           limits.MaxRepositories,
+		maxResourcesPerRepository: limits.MaxResources,
+	}
+}
+
+// GetQuotaStatus returns the configured quota limits as a QuotaStatus.
+func (f *FixedQuotaSetter) GetQuotaStatus() provisioning.QuotaStatus {
+	return provisioning.QuotaStatus{
+		MaxRepositories:           f.maxRepositories,
+		MaxResourcesPerRepository: f.maxResourcesPerRepository,
+	}
+}
+
+// Ensure FixedQuotaSetter implements QuotaSetter interface.
+var _ QuotaSetter = (*FixedQuotaSetter)(nil)
