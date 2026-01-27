@@ -776,7 +776,7 @@ export interface FeatureToggles {
   timeRangePan?: boolean;
   /**
   * Enables new keyboard shortcuts for time range zoom operations
-  * @default false
+  * @default true
   */
   newTimeRangeZoomShortcuts?: boolean;
   /**
