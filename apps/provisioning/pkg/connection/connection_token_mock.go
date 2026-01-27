@@ -80,6 +80,62 @@ func (_c *MockTokenConnection_GenerateConnectionToken_Call) RunAndReturn(run fun
 	return _c
 }
 
+// TokenCreationTime provides a mock function with given fields: ctx
+func (_m *MockTokenConnection) TokenCreationTime(ctx context.Context) (time.Time, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TokenCreationTime")
+	}
+
+	var r0 time.Time
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (time.Time, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) time.Time); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(time.Time)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockTokenConnection_TokenCreationTime_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TokenCreationTime'
+type MockTokenConnection_TokenCreationTime_Call struct {
+	*mock.Call
+}
+
+// TokenCreationTime is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockTokenConnection_Expecter) TokenCreationTime(ctx interface{}) *MockTokenConnection_TokenCreationTime_Call {
+	return &MockTokenConnection_TokenCreationTime_Call{Call: _e.mock.On("TokenCreationTime", ctx)}
+}
+
+func (_c *MockTokenConnection_TokenCreationTime_Call) Run(run func(ctx context.Context)) *MockTokenConnection_TokenCreationTime_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockTokenConnection_TokenCreationTime_Call) Return(_a0 time.Time, _a1 error) *MockTokenConnection_TokenCreationTime_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockTokenConnection_TokenCreationTime_Call) RunAndReturn(run func(context.Context) (time.Time, error)) *MockTokenConnection_TokenCreationTime_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // TokenExpiration provides a mock function with given fields: ctx
 func (_m *MockTokenConnection) TokenExpiration(ctx context.Context) (time.Time, error) {
 	ret := _m.Called(ctx)
@@ -132,6 +188,52 @@ func (_c *MockTokenConnection_TokenExpiration_Call) Return(_a0 time.Time, _a1 er
 }
 
 func (_c *MockTokenConnection_TokenExpiration_Call) RunAndReturn(run func(context.Context) (time.Time, error)) *MockTokenConnection_TokenExpiration_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TokenValid provides a mock function with given fields: ctx
+func (_m *MockTokenConnection) TokenValid(ctx context.Context) bool {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TokenValid")
+	}
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context) bool); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// MockTokenConnection_TokenValid_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TokenValid'
+type MockTokenConnection_TokenValid_Call struct {
+	*mock.Call
+}
+
+// TokenValid is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockTokenConnection_Expecter) TokenValid(ctx interface{}) *MockTokenConnection_TokenValid_Call {
+	return &MockTokenConnection_TokenValid_Call{Call: _e.mock.On("TokenValid", ctx)}
+}
+
+func (_c *MockTokenConnection_TokenValid_Call) Run(run func(ctx context.Context)) *MockTokenConnection_TokenValid_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockTokenConnection_TokenValid_Call) Return(_a0 bool) *MockTokenConnection_TokenValid_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockTokenConnection_TokenValid_Call) RunAndReturn(run func(context.Context) bool) *MockTokenConnection_TokenValid_Call {
 	_c.Call.Return(run)
 	return _c
 }

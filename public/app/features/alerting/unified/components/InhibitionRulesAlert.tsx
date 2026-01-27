@@ -4,9 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, TextLink } from '@grafana/ui';
 
 import { useHasInhibitionRules } from '../hooks/useHasInhibitionRules';
-
-const INHIBITION_RULES_DOCS_URL =
-  'https://grafana.com/docs/grafana/latest/alerting/configure-notifications/create-silence/#inhibition-rules';
+import { DOCS_URL_INHIBITION_RULES } from '../utils/docs';
 
 type ExtraAlertProps = Omit<ComponentPropsWithoutRef<typeof Alert>, 'title' | 'severity'>;
 
@@ -27,7 +25,7 @@ export function InhibitionRulesAlert({ alertmanagerSourceName, ...rest }: Inhibi
         This Alertmanager has inhibition rules configured. Some alerts may be suppressed when matching alerts are
         firing.
       </Trans>{' '}
-      <TextLink href={INHIBITION_RULES_DOCS_URL} external>
+      <TextLink href={DOCS_URL_INHIBITION_RULES} external>
         <Trans i18nKey="alerting.inhibition-rules.learn-more">Learn more about inhibition rules</Trans>
       </TextLink>
     </Alert>
