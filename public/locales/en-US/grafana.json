@@ -1028,10 +1028,6 @@
       "this-datasource-has-been-removed": "This datasource has been removed",
       "update-datasource": "Update datasource"
     },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
-      "declare-incident": "Declare Incident"
-    },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
       "label-declare-incident": "Declare incident"
