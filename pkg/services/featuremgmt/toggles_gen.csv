@@ -112,6 +112,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-04-16,disableNumericMetricsSortingInExpressions,experimental,@grafana/oss-big-tent,false,true,false
 2024-04-22,grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 2022-10-07,queryLibrary,preview,@grafana/sharing-squad,false,false,false
+2026-01-19,savedQueriesRBAC,preview,@grafana/sharing-squad,false,false,false
 2025-08-29,dashboardLibrary,experimental,@grafana/sharing-squad,false,false,false
 2025-11-07,suggestedDashboards,experimental,@grafana/sharing-squad,false,false,false
 2026-01-21,dashboardValidatorApp,experimental,@grafana/sharing-squad,false,false,false
