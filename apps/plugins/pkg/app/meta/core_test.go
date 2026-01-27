@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
-	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func TestCoreProvider_GetMeta(t *testing.T) {
@@ -272,52 +271,6 @@ func TestNewCoreProviderWithTTL(t *testing.T) {
 	})
 }
 
-func TestJsonDataToMeta(t *testing.T) {
-	t.Run("converts basic plugin JSON data", func(t *testing.T) {
-		jsonData := plugins.JSONData{
-			ID:   "test-plugin",
-			Name: "Test Plugin",
-			Type: plugins.TypeDataSource,
-			Info: plugins.Info{
-				Version:     "1.0.0",
-				Description: "Test description",
-				Keywords:    []string{"test", "plugin"},
-				Logos: plugins.Logos{
-					Small: "small.png",
-					Large: "large.png",
-				},
-			},
-		}
-
-		meta := jsonDataToMetaJSONData(jsonData)
-
-		assert.Equal(t, "test-plugin", meta.Id)
-		assert.Equal(t, "Test Plugin", meta.Name)
-		assert.Equal(t, pluginsv0alpha1.MetaJSONDataTypeDatasource, meta.Type)
-		assert.Equal(t, "1.0.0", meta.Info.Version)
-		assert.Equal(t, "Test description", *meta.Info.Description)
-		assert.Equal(t, []string{"test", "plugin"}, meta.Info.Keywords)
-		assert.Equal(t, "small.png", meta.Info.Logos.Small)
-		assert.Equal(t, "large.png", meta.Info.Logos.Large)
-	})
-
-	t.Run("handles optional fields", func(t *testing.T) {
-		jsonData := plugins.JSONData{
-			ID:   "test-plugin",
-			Name: "Test Plugin",
-			Type: plugins.TypePanel,
-			Info: plugins.Info{
-				Version: "1.0.0",
-			},
-		}
-
-		meta := jsonDataToMetaJSONData(jsonData)
-
-		assert.Nil(t, meta.Info.Description)
-		assert.Nil(t, meta.Info.Author)
-		assert.Empty(t, meta.Info.Keywords)
-	})
-}
 
 func pluginsPathFunc(path string) func() (string, error) {
 	return func() (string, error) {

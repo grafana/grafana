@@ -7,6 +7,7 @@ import (
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
@@ -506,6 +507,465 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 	return meta
 }
 
+// metaJSONDataToJSONData converts a pluginsv0alpha1.MetaJSONData to a plugins.JSONData.
+// This is the reverse of jsonDataToMetaJSONData.
+// nolint:gocyclo
+func metaJSONDataToJSONData(meta pluginsv0alpha1.MetaJSONData) plugins.JSONData {
+	jsonData := plugins.JSONData{
+		ID:   meta.Id,
+		Name: meta.Name,
+	}
+
+	// Map plugin type
+	switch meta.Type {
+	case pluginsv0alpha1.MetaJSONDataTypeApp:
+		jsonData.Type = plugins.TypeApp
+	case pluginsv0alpha1.MetaJSONDataTypeDatasource:
+		jsonData.Type = plugins.TypeDataSource
+	case pluginsv0alpha1.MetaJSONDataTypePanel:
+		jsonData.Type = plugins.TypePanel
+	case pluginsv0alpha1.MetaJSONDataTypeRenderer:
+		jsonData.Type = plugins.TypeRenderer
+	}
+
+	// Map Info
+	jsonData.Info = plugins.Info{
+		Keywords: meta.Info.Keywords,
+		Logos: plugins.Logos{
+			Small: meta.Info.Logos.Small,
+			Large: meta.Info.Logos.Large,
+		},
+		Updated: meta.Info.Updated,
+		Version: meta.Info.Version,
+	}
+
+	if meta.Info.Description != nil {
+		jsonData.Info.Description = *meta.Info.Description
+	}
+
+	if meta.Info.Author != nil {
+		jsonData.Info.Author = plugins.InfoLink{}
+		if meta.Info.Author.Name != nil {
+			jsonData.Info.Author.Name = *meta.Info.Author.Name
+		}
+		if meta.Info.Author.Url != nil {
+			jsonData.Info.Author.URL = *meta.Info.Author.Url
+		}
+	}
+
+	if len(meta.Info.Links) > 0 {
+		jsonData.Info.Links = make([]plugins.InfoLink, 0, len(meta.Info.Links))
+		for _, link := range meta.Info.Links {
+			infoLink := plugins.InfoLink{}
+			if link.Name != nil {
+				infoLink.Name = *link.Name
+			}
+			if link.Url != nil {
+				infoLink.URL = *link.Url
+			}
+			jsonData.Info.Links = append(jsonData.Info.Links, infoLink)
+		}
+	}
+
+	if len(meta.Info.Screenshots) > 0 {
+		jsonData.Info.Screenshots = make([]plugins.Screenshots, 0, len(meta.Info.Screenshots))
+		for _, screenshot := range meta.Info.Screenshots {
+			sc := plugins.Screenshots{}
+			if screenshot.Name != nil {
+				sc.Name = *screenshot.Name
+			}
+			if screenshot.Path != nil {
+				sc.Path = *screenshot.Path
+			}
+			jsonData.Info.Screenshots = append(jsonData.Info.Screenshots, sc)
+		}
+	}
+
+	// Map Dependencies
+	jsonData.Dependencies = plugins.Dependencies{
+		GrafanaDependency: meta.Dependencies.GrafanaDependency,
+	}
+	if meta.Dependencies.GrafanaVersion != nil {
+		jsonData.Dependencies.GrafanaVersion = *meta.Dependencies.GrafanaVersion
+	}
+
+	if len(meta.Dependencies.Plugins) > 0 {
+		jsonData.Dependencies.Plugins = make([]plugins.Dependency, 0, len(meta.Dependencies.Plugins))
+		for _, dep := range meta.Dependencies.Plugins {
+			var depType string
+			switch dep.Type {
+			case pluginsv0alpha1.MetaV0alpha1DependenciesPluginsTypeApp:
+				depType = string(plugins.TypeApp)
+			case pluginsv0alpha1.MetaV0alpha1DependenciesPluginsTypeDatasource:
+				depType = string(plugins.TypeDataSource)
+			case pluginsv0alpha1.MetaV0alpha1DependenciesPluginsTypePanel:
+				depType = string(plugins.TypePanel)
+			}
+			jsonData.Dependencies.Plugins = append(jsonData.Dependencies.Plugins, plugins.Dependency{
+				ID:   dep.Id,
+				Type: depType,
+				Name: dep.Name,
+			})
+		}
+	}
+
+	if meta.Dependencies.Extensions != nil && len(meta.Dependencies.Extensions.ExposedComponents) > 0 {
+		jsonData.Dependencies.Extensions = plugins.ExtensionsDependencies{
+			ExposedComponents: meta.Dependencies.Extensions.ExposedComponents,
+		}
+	}
+
+	// Map optional boolean fields
+	if meta.Alerting != nil {
+		jsonData.Alerting = *meta.Alerting
+	}
+	if meta.Annotations != nil {
+		jsonData.Annotations = *meta.Annotations
+	}
+	if meta.AutoEnabled != nil {
+		jsonData.AutoEnabled = *meta.AutoEnabled
+	}
+	if meta.Backend != nil {
+		jsonData.Backend = *meta.Backend
+	}
+	if meta.BuiltIn != nil {
+		jsonData.BuiltIn = *meta.BuiltIn
+	}
+	if meta.HideFromList != nil {
+		jsonData.HideFromList = *meta.HideFromList
+	}
+	if meta.Logs != nil {
+		jsonData.Logs = *meta.Logs
+	}
+	if meta.Metrics != nil {
+		jsonData.Metrics = *meta.Metrics
+	}
+	if meta.MultiValueFilterOperators != nil {
+		jsonData.MultiValueFilterOperators = *meta.MultiValueFilterOperators
+	}
+	if meta.Preload != nil {
+		jsonData.Preload = *meta.Preload
+	}
+	if meta.SkipDataQuery != nil {
+		jsonData.SkipDataQuery = *meta.SkipDataQuery
+	}
+	if meta.Streaming != nil {
+		jsonData.Streaming = *meta.Streaming
+	}
+	if meta.Tracing != nil {
+		jsonData.Tracing = *meta.Tracing
+	}
+
+	// Map category
+	if meta.Category != nil {
+		switch *meta.Category {
+		case pluginsv0alpha1.MetaJSONDataCategoryTsdb:
+			jsonData.Category = "tsdb"
+		case pluginsv0alpha1.MetaJSONDataCategoryLogging:
+			jsonData.Category = "logging"
+		case pluginsv0alpha1.MetaJSONDataCategoryCloud:
+			jsonData.Category = "cloud"
+		case pluginsv0alpha1.MetaJSONDataCategoryTracing:
+			jsonData.Category = "tracing"
+		case pluginsv0alpha1.MetaJSONDataCategoryProfiling:
+			jsonData.Category = "profiling"
+		case pluginsv0alpha1.MetaJSONDataCategorySql:
+			jsonData.Category = "sql"
+		case pluginsv0alpha1.MetaJSONDataCategoryEnterprise:
+			jsonData.Category = "enterprise"
+		case pluginsv0alpha1.MetaJSONDataCategoryIot:
+			jsonData.Category = "iot"
+		case pluginsv0alpha1.MetaJSONDataCategoryOther:
+			jsonData.Category = "other"
+		}
+	}
+
+	// Map state
+	if meta.State != nil {
+		switch *meta.State {
+		case pluginsv0alpha1.MetaJSONDataStateAlpha:
+			jsonData.State = plugins.ReleaseStateAlpha
+		case pluginsv0alpha1.MetaJSONDataStateBeta:
+			jsonData.State = plugins.ReleaseStateBeta
+		}
+	}
+
+	// Map executable
+	if meta.Executable != nil {
+		jsonData.Executable = *meta.Executable
+	}
+
+	// Map QueryOptions
+	if meta.QueryOptions != nil {
+		jsonData.QueryOptions = make(map[string]bool)
+		if meta.QueryOptions.MaxDataPoints != nil {
+			jsonData.QueryOptions["maxDataPoints"] = *meta.QueryOptions.MaxDataPoints
+		}
+		if meta.QueryOptions.MinInterval != nil {
+			jsonData.QueryOptions["minInterval"] = *meta.QueryOptions.MinInterval
+		}
+		if meta.QueryOptions.CacheTimeout != nil {
+			jsonData.QueryOptions["cacheTimeout"] = *meta.QueryOptions.CacheTimeout
+		}
+	}
+
+	// Map Includes
+	if len(meta.Includes) > 0 {
+		jsonData.Includes = make([]*plugins.Includes, 0, len(meta.Includes))
+		for _, inc := range meta.Includes {
+			var incType string
+			if inc.Type != nil {
+				incType = string(*inc.Type)
+			}
+			includes := &plugins.Includes{
+				Type: incType,
+			}
+			if inc.Name != nil {
+				includes.Name = *inc.Name
+			}
+			if inc.Path != nil {
+				includes.Path = *inc.Path
+			}
+			if inc.Icon != nil {
+				includes.Icon = *inc.Icon
+			}
+			if inc.Role != nil {
+				includes.Role = identity.RoleType(*inc.Role)
+			}
+			if inc.Component != nil {
+				includes.Component = *inc.Component
+			}
+			if inc.Uid != nil {
+				includes.UID = *inc.Uid
+			}
+			if inc.Action != nil {
+				includes.Action = *inc.Action
+			}
+			if inc.AddToNav != nil {
+				includes.AddToNav = *inc.AddToNav
+			}
+			if inc.DefaultNav != nil {
+				includes.DefaultNav = *inc.DefaultNav
+			}
+			jsonData.Includes = append(jsonData.Includes, includes)
+		}
+	}
+
+	// Map Routes
+	if len(meta.Routes) > 0 {
+		jsonData.Routes = make([]*plugins.Route, 0, len(meta.Routes))
+		for _, route := range meta.Routes {
+			r := &plugins.Route{}
+			if route.Path != nil {
+				r.Path = *route.Path
+			}
+			if route.Method != nil {
+				r.Method = *route.Method
+			}
+			if route.Url != nil {
+				r.URL = *route.Url
+			}
+			if route.ReqRole != nil {
+				r.ReqRole = identity.RoleType(*route.ReqRole)
+			}
+			if route.ReqAction != nil {
+				r.ReqAction = *route.ReqAction
+			}
+			if len(route.Headers) > 0 {
+				r.Headers = make([]plugins.Header, 0, len(route.Headers))
+				for _, header := range route.Headers {
+					r.Headers = append(r.Headers, plugins.Header{
+						Name:    header.Name,
+						Content: header.Content,
+					})
+				}
+			}
+			if len(route.UrlParams) > 0 {
+				r.URLParams = make([]plugins.URLParam, 0, len(route.UrlParams))
+				for _, param := range route.UrlParams {
+					p := plugins.URLParam{}
+					if param.Name != nil {
+						p.Name = *param.Name
+					}
+					if param.Content != nil {
+						p.Content = *param.Content
+					}
+					r.URLParams = append(r.URLParams, p)
+				}
+			}
+			if route.TokenAuth != nil {
+				r.TokenAuth = &plugins.JWTTokenAuth{}
+				if route.TokenAuth.Url != nil {
+					r.TokenAuth.Url = *route.TokenAuth.Url
+				}
+				if len(route.TokenAuth.Scopes) > 0 {
+					r.TokenAuth.Scopes = route.TokenAuth.Scopes
+				}
+				if len(route.TokenAuth.Params) > 0 {
+					r.TokenAuth.Params = make(map[string]string)
+					for k, v := range route.TokenAuth.Params {
+						if strVal, ok := v.(string); ok {
+							r.TokenAuth.Params[k] = strVal
+						}
+					}
+				}
+			}
+			if route.JwtTokenAuth != nil {
+				r.JwtTokenAuth = &plugins.JWTTokenAuth{}
+				if route.JwtTokenAuth.Url != nil {
+					r.JwtTokenAuth.Url = *route.JwtTokenAuth.Url
+				}
+				if len(route.JwtTokenAuth.Scopes) > 0 {
+					r.JwtTokenAuth.Scopes = route.JwtTokenAuth.Scopes
+				}
+				if len(route.JwtTokenAuth.Params) > 0 {
+					r.JwtTokenAuth.Params = make(map[string]string)
+					for k, v := range route.JwtTokenAuth.Params {
+						if strVal, ok := v.(string); ok {
+							r.JwtTokenAuth.Params[k] = strVal
+						}
+					}
+				}
+			}
+			if len(route.Body) > 0 {
+				bodyBytes, err := json.Marshal(route.Body)
+				if err == nil {
+					r.Body = bodyBytes
+				}
+			}
+			jsonData.Routes = append(jsonData.Routes, r)
+		}
+	}
+
+	// Map Extensions
+	if meta.Extensions != nil {
+		extensions := plugins.Extensions{}
+		if len(meta.Extensions.AddedLinks) > 0 {
+			extensions.AddedLinks = make([]plugins.AddedLink, 0, len(meta.Extensions.AddedLinks))
+			for _, link := range meta.Extensions.AddedLinks {
+				extLink := plugins.AddedLink{
+					Targets: link.Targets,
+					Title:   link.Title,
+				}
+				if link.Description != nil {
+					extLink.Description = *link.Description
+				}
+				extensions.AddedLinks = append(extensions.AddedLinks, extLink)
+			}
+		}
+		if len(meta.Extensions.AddedComponents) > 0 {
+			extensions.AddedComponents = make([]plugins.AddedComponent, 0, len(meta.Extensions.AddedComponents))
+			for _, comp := range meta.Extensions.AddedComponents {
+				extComp := plugins.AddedComponent{
+					Targets: comp.Targets,
+					Title:   comp.Title,
+				}
+				if comp.Description != nil {
+					extComp.Description = *comp.Description
+				}
+				extensions.AddedComponents = append(extensions.AddedComponents, extComp)
+			}
+		}
+		if len(meta.Extensions.AddedFunctions) > 0 {
+			extensions.AddedFunctions = make([]plugins.AddedFunction, 0, len(meta.Extensions.AddedFunctions))
+			for _, fn := range meta.Extensions.AddedFunctions {
+				extFn := plugins.AddedFunction{
+					Targets: fn.Targets,
+					Title:   fn.Title,
+				}
+				if fn.Description != nil {
+					extFn.Description = *fn.Description
+				}
+				extensions.AddedFunctions = append(extensions.AddedFunctions, extFn)
+			}
+		}
+		if len(meta.Extensions.ExposedComponents) > 0 {
+			extensions.ExposedComponents = make([]plugins.ExposedComponent, 0, len(meta.Extensions.ExposedComponents))
+			for _, comp := range meta.Extensions.ExposedComponents {
+				extComp := plugins.ExposedComponent{
+					Id: comp.Id,
+				}
+				if comp.Title != nil {
+					extComp.Title = *comp.Title
+				}
+				if comp.Description != nil {
+					extComp.Description = *comp.Description
+				}
+				extensions.ExposedComponents = append(extensions.ExposedComponents, extComp)
+			}
+		}
+		if len(meta.Extensions.ExtensionPoints) > 0 {
+			extensions.ExtensionPoints = make([]plugins.ExtensionPoint, 0, len(meta.Extensions.ExtensionPoints))
+			for _, point := range meta.Extensions.ExtensionPoints {
+				extPoint := plugins.ExtensionPoint{
+					Id: point.Id,
+				}
+				if point.Title != nil {
+					extPoint.Title = *point.Title
+				}
+				if point.Description != nil {
+					extPoint.Description = *point.Description
+				}
+				extensions.ExtensionPoints = append(extensions.ExtensionPoints, extPoint)
+			}
+		}
+		jsonData.Extensions = extensions
+	}
+
+	// Map IAM
+	if meta.Iam != nil && len(meta.Iam.Permissions) > 0 {
+		iam := &auth.IAM{
+			Permissions: make([]auth.Permission, 0, len(meta.Iam.Permissions)),
+		}
+		for _, perm := range meta.Iam.Permissions {
+			p := auth.Permission{}
+			if perm.Action != nil {
+				p.Action = *perm.Action
+			}
+			if perm.Scope != nil {
+				p.Scope = *perm.Scope
+			}
+			iam.Permissions = append(iam.Permissions, p)
+		}
+		jsonData.IAM = iam
+	}
+
+	// Map Roles
+	if len(meta.Roles) > 0 {
+		jsonData.Roles = make([]plugins.RoleRegistration, 0, len(meta.Roles))
+		for _, role := range meta.Roles {
+			reg := plugins.RoleRegistration{
+				Grants: role.Grants,
+			}
+			if role.Role != nil {
+				reg.Role = plugins.Role{}
+				if role.Role.Name != nil {
+					reg.Role.Name = *role.Role.Name
+				}
+				if role.Role.Description != nil {
+					reg.Role.Description = *role.Role.Description
+				}
+				if len(role.Role.Permissions) > 0 {
+					reg.Role.Permissions = make([]plugins.Permission, 0, len(role.Role.Permissions))
+					for _, perm := range role.Role.Permissions {
+						p := plugins.Permission{}
+						if perm.Action != nil {
+							p.Action = *perm.Action
+						}
+						if perm.Scope != nil {
+							p.Scope = *perm.Scope
+						}
+						reg.Role.Permissions = append(reg.Role.Permissions, p)
+					}
+				}
+			}
+			jsonData.Roles = append(jsonData.Roles, reg)
+		}
+	}
+
+	return jsonData
+}
+
 // pluginStorePluginToMeta converts a pluginstore.Plugin to a pluginsv0alpha1.MetaSpec.
 // This is similar to pluginToPluginMetaSpec but works with the plugin store DTO.
 // loadingStrategy and moduleHash are optional calculated values that can be provided.
@@ -707,45 +1167,14 @@ type grafanaComPluginVersionMeta struct {
 		Rel  string `json:"rel"`
 		Href string `json:"href"`
 	} `json:"links"`
-	Scopes []string `json:"scopes"`
+	Scopes   []string                           `json:"scopes"`
+	CDNURL   string                             `json:"cdnUrl"`
+	Children []grafanaComChildPluginVersionMeta `json:"children"`
 }
 
-// grafanaComPluginVersionMetaToMetaSpec converts a grafanaComPluginVersionMeta to a pluginsv0alpha1.MetaSpec.
-func grafanaComPluginVersionMetaToMetaSpec(gcomMeta grafanaComPluginVersionMeta) pluginsv0alpha1.MetaSpec {
-	metaSpec := pluginsv0alpha1.MetaSpec{
-		PluginJson: gcomMeta.JSON,
-		Class:      pluginsv0alpha1.MetaSpecClassExternal,
-	}
-
-	if gcomMeta.SignatureType != "" {
-		signature := &pluginsv0alpha1.MetaV0alpha1SpecSignature{
-			Status: pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid,
-		}
-
-		switch gcomMeta.SignatureType {
-		case "grafana":
-			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeGrafana
-			signature.Type = &sigType
-		case "commercial":
-			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommercial
-			signature.Type = &sigType
-		case "community":
-			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommunity
-			signature.Type = &sigType
-		case "private":
-			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypePrivate
-			signature.Type = &sigType
-		case "private-glob":
-			sigType := pluginsv0alpha1.MetaV0alpha1SpecSignatureTypePrivateGlob
-			signature.Type = &sigType
-		}
-
-		if gcomMeta.SignedByOrg != "" {
-			signature.Org = &gcomMeta.SignedByOrg
-		}
-
-		metaSpec.Signature = signature
-	}
-
-	return metaSpec
+type grafanaComChildPluginVersionMeta struct {
+	ID   int                          `json:"id"`
+	Path string                       `json:"path"`
+	Slug string                       `json:"slug"`
+	JSON pluginsv0alpha1.MetaJSONData `json:"json"`
 }
