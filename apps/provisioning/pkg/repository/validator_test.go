@@ -249,7 +249,7 @@ func TestValidator_Validate(t *testing.T) {
 
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-	validator := NewValidator(10*time.Second, false, mockFactory)
+	validator := NewValidator(false, mockFactory)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Tests validate new configurations, so always pass isCreate=true
@@ -405,7 +405,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			mockFactory := NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-			validator := NewValidator(10*time.Second, false, mockFactory)
+			validator := NewValidator(false, mockFactory)
 
 			admissionValidator := NewAdmissionValidator(
 				[]provisioning.SyncTargetType{
@@ -436,7 +436,7 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	validator := NewValidator(10*time.Second, false, mockFactory)
+	validator := NewValidator(false, mockFactory)
 	admissionValidator := NewAdmissionValidator(
 		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
 		validator,
@@ -490,7 +490,7 @@ func TestAdmissionValidator_CallsMultipleValidators(t *testing.T) {
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	baseValidator := NewValidator(10*time.Second, false, mockFactory)
+	baseValidator := NewValidator(false, mockFactory)
 	additionalValidator := &mockValidator{}
 
 	admissionValidator := NewAdmissionValidator(
@@ -519,7 +519,7 @@ func TestAdmissionValidator_ValidatorError(t *testing.T) {
 	mockFactory := NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	baseValidator := NewValidator(10*time.Second, false, mockFactory)
+	baseValidator := NewValidator(false, mockFactory)
 	additionalValidator := &mockValidator{
 		errors: field.ErrorList{field.Forbidden(field.NewPath("spec"), "duplicate repository")},
 	}
