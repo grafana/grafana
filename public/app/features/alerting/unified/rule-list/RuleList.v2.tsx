@@ -57,6 +57,13 @@ export function RuleListActions() {
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
+  // Migration Wizard UI requires either notifications or rules import permission (user can skip one step)
+  const canAccessMigrationWizardUI =
+    config.featureToggles.alertingMigrationWizardUI &&
+    (contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite) ||
+      (contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
+        contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus)));
+
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
   const moreActionsMenu = useMemo(
@@ -82,6 +89,13 @@ export function RuleListActions() {
               url="/alerting/import-datasource-managed-rules"
             />
           )}
+          {canAccessMigrationWizardUI && (
+            <Menu.Item
+              label={t('alerting.rule-list-v2.migrate-to-gma', 'Migrate to Grafana Alerting')}
+              icon="exchange-alt"
+              url="/alerting/migrate-to-gma"
+            />
+          )}
         </Menu.Group>
         <Menu.Group label={t('alerting.rule-list.recording-rules', 'Recording rules')}>
           {canCreateGrafanaRules && (
@@ -101,7 +115,14 @@ export function RuleListActions() {
         </Menu.Group>
       </Menu>
     ),
-    [canCreateGrafanaRules, canCreateCloudRules, canImportRulesToGMA, canExportRules, toggleShowExportDrawer]
+    [
+      canCreateGrafanaRules,
+      canCreateCloudRules,
+      canImportRulesToGMA,
+      canAccessMigrationWizardUI,
+      canExportRules,
+      toggleShowExportDrawer,
+    ]
   );
 
   return (
