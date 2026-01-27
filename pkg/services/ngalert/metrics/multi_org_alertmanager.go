@@ -18,6 +18,12 @@ type MultiOrgAlertmanager struct {
 	ActiveConfigurations     prometheus.Gauge
 	DiscoveredConfigurations prometheus.Gauge
 
+	// Alert broadcast metrics (for HA single-node evaluation mode)
+	AlertBroadcastAlertsSent     prometheus.Counter
+	AlertBroadcastSendErrors     prometheus.Counter
+	AlertBroadcastAlertsReceived prometheus.Counter
+	AlertBroadcastReceiveErrors  *prometheus.CounterVec
+
 	aggregatedMetrics *AlertmanagerAggregatedMetrics
 }
 
@@ -38,6 +44,31 @@ func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanag
 			Name:      "active_configurations",
 			Help:      "The number of active Alertmanager configurations.",
 		}),
+		// Alert broadcast metrics
+		AlertBroadcastAlertsSent: promauto.With(r).NewCounter(prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "alert_broadcast_alerts_sent_total",
+			Help:      "Total number of alerts sent via HA broadcast to peers.",
+		}),
+		AlertBroadcastSendErrors: promauto.With(r).NewCounter(prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "alert_broadcast_send_errors_total",
+			Help:      "Total number of errors when sending alert broadcasts.",
+		}),
+		AlertBroadcastAlertsReceived: promauto.With(r).NewCounter(prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "alert_broadcast_alerts_received_total",
+			Help:      "Total number of alerts received via HA broadcast from peers.",
+		}),
+		AlertBroadcastReceiveErrors: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "alert_broadcast_receive_errors_total",
+			Help:      "Total number of errors while receiving alert broadcasts.",
+		}, []string{"reason"}),
 		aggregatedMetrics: NewAlertmanagerAggregatedMetrics(registries),
 	}
 
