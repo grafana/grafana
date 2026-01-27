@@ -3,6 +3,15 @@
   "id": "deuteranopia_protanopia_light",
   "colors": {
     "mode": "light",
+    "success": {
+      "main": "#006B5B"
+    },
+    "error": {
+      "main": "#B0004B"
+    },
+    "warning": {
+      "main": "#B45300"
+    },
     "contrastThreshold": 4.5
   }
 }

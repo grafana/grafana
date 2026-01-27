@@ -3,6 +3,15 @@
   "id": "tritanopia_light",
   "colors": {
     "mode": "light",
+    "success": {
+      "main": "#007A3D"
+    },
+    "error": {
+      "main": "#C4161C"
+    },
+    "warning": {
+      "main": "#A14F00"
+    },
     "contrastThreshold": 4.5
   }
 }
