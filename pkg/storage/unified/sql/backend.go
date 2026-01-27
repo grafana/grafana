@@ -653,6 +653,10 @@ var _ resource.LifecycleHooks = (*storageBackendImpl)(nil)
 type storageBackendImpl struct {
 	*baseBackend // Embed base (provides StorageReader)
 
+	// wraps init
+	initOnce sync.Once
+	initErr  error
+
 	// resource version manager (only needed for write operations)
 	rvManager *rvmanager.ResourceVersionManager
 
@@ -707,6 +711,13 @@ func newStorageBackendWithBase(base *baseBackend, opts storageBackendOptions) (*
 
 // Init initializes the storage backend (base init + rvManager + notifier + pruner + GC).
 func (b *storageBackendImpl) Init(ctx context.Context) error {
+	b.initOnce.Do(func() {
+		b.initErr = b.initLocked(ctx)
+	})
+	return b.initErr
+}
+
+func (b *storageBackendImpl) initLocked(ctx context.Context) error {
 	// Initialize ResourceVersionManager (only needed for storage/write operations)
 	rvMgr, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
 		Dialect: b.dialect,
