@@ -806,7 +806,7 @@ export interface FeatureToggles {
   enableExtensionsAdminPage?: boolean;
   /**
   * Enables SCIM support for user and group management
-  * @default false
+  * @default true
   */
   enableSCIM?: boolean;
   /**
