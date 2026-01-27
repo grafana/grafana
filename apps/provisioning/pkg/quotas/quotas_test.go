@@ -1,6 +1,7 @@
 package quotas
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -130,4 +131,68 @@ func TestCalculateTotalResources(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestFixedQuotaGetter(t *testing.T) {
+	tests := []struct {
+		name                              string
+		limits                            QuotaLimits
+		expectedMaxRepositories           int64
+		expectedMaxResourcesPerRepository int64
+	}{
+		{
+			name: "maps QuotaLimits to QuotaStatus correctly",
+			limits: QuotaLimits{
+				MaxResources:    100,
+				MaxRepositories: 10,
+			},
+			expectedMaxRepositories:           10,
+			expectedMaxResourcesPerRepository: 100,
+		},
+		{
+			name: "handles zero values (unlimited)",
+			limits: QuotaLimits{
+				MaxResources:    0,
+				MaxRepositories: 0,
+			},
+			expectedMaxRepositories:           0,
+			expectedMaxResourcesPerRepository: 0,
+		},
+		{
+			name: "handles mixed values",
+			limits: QuotaLimits{
+				MaxResources:    50,
+				MaxRepositories: 0,
+			},
+			expectedMaxRepositories:           0,
+			expectedMaxResourcesPerRepository: 50,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			getter := NewFixedQuotaGetter(tt.limits)
+			status := getter.GetQuotaStatus(ctx, "test-namespace")
+
+			assert.Equal(t, tt.expectedMaxRepositories, status.MaxRepositories)
+			assert.Equal(t, tt.expectedMaxResourcesPerRepository, status.MaxResourcesPerRepository)
+		})
+	}
+}
+
+func TestFixedQuotaGetter_ImplementsInterface(t *testing.T) {
+	// Verify that FixedQuotaGetter implements QuotaGetter interface
+	var _ QuotaGetter = (*FixedQuotaGetter)(nil)
+
+	// Also verify it works when used through the interface
+	var getter QuotaGetter = NewFixedQuotaGetter(QuotaLimits{
+		MaxResources:    25,
+		MaxRepositories: 5,
+	})
+
+	ctx := context.Background()
+	status := getter.GetQuotaStatus(ctx, "test-namespace")
+	assert.Equal(t, int64(5), status.MaxRepositories)
+	assert.Equal(t, int64(25), status.MaxResourcesPerRepository)
 }

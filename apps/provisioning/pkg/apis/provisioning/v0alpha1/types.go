@@ -295,7 +295,9 @@ type SyncOptions struct {
 	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace
 	// Folder string `json:"folder,omitempty"`
 
-	// When non-zero, the sync will run periodically
+	// The interval between sync runs.
+	// The system defines a default value for this field, which will overwrite the
+	// user-defined one in case the latter is zero or lower than the system-defined one.
 	IntervalSeconds int64 `json:"intervalSeconds,omitempty"`
 }
 
@@ -336,6 +338,9 @@ type RepositoryStatus struct {
 
 	// Error information during repository deletion (if any)
 	DeleteError string `json:"deleteError,omitempty"`
+
+	// Quota contains the configured quota limits for this repository
+	Quota QuotaStatus `json:"quota,omitempty"`
 }
 
 type SyncStatus struct {
@@ -375,6 +380,18 @@ type WebhookStatus struct {
 type TokenStatus struct {
 	LastUpdated int64 `json:"lastUpdated,omitempty"`
 	Expiration  int64 `json:"expiration,omitempty"`
+}
+
+// QuotaStatus represents the quota limits configured for this repository.
+// These values come from static configuration and are read-only.
+type QuotaStatus struct {
+	// MaxRepositories is the maximum number of repositories allowed.
+	// 0 means unlimited.
+	MaxRepositories int64 `json:"maxRepositories,omitempty"`
+
+	// MaxResourcesPerRepository is the maximum number of resources allowed per repository.
+	// 0 means unlimited.
+	MaxResourcesPerRepository int64 `json:"maxResourcesPerRepository,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

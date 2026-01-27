@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/datasource/parca/dataquery.cue file.
+
 import * as common from '@grafana/schema';
 
 export type ParcaQueryType = ('metrics' | 'profile' | 'both');

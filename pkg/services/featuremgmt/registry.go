@@ -98,13 +98,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "mysqlAnsiQuotes",
-			Description: "Use double quotes to escape keyword in a MySQL query",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,
@@ -909,6 +902,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "savedQueriesRBAC",
+			Description:  "Enables Saved queries (query library) RBAC permissions",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardLibrary",
 			Description:  "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:        FeatureStageExperimental,
@@ -1256,9 +1257,9 @@ var (
 		{
 			Name:        "enableSCIM",
 			Description: "Enables SCIM support for user and group management",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       identityAccessTeam,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:         "crashDetection",
@@ -1815,6 +1816,14 @@ var (
 		{
 			Name:         "alertingImportAlertmanagerUI",
 			Description:  "Enables the UI to see imported Alertmanager configuration",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingDisableDMAinUI",
+			Description:  "Disables the DMA feature in the UI",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,

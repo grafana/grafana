@@ -1322,11 +1322,6 @@
       "count": 2
     }
   },
-  "public/app/features/alerting/unified/api/onCallApi.test.ts": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/components/AnnotationDetailsField.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -1363,11 +1358,6 @@
     }
   },
   "public/app/features/alerting/unified/components/create-folder/CreateNewFolder.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/import-to-gma/ConfirmConvertModal.test.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
@@ -1602,29 +1592,9 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/mocks/server/configure.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/mocks/server/handlers/plugins.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/rule-editor/clone.utils.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/rule-editor/formDefaults.ts": {
     "no-restricted-syntax": {
       "count": 6
-    }
-  },
-  "public/app/features/alerting/unified/rule-list/hooks/grafanaFilter.test.ts": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/types/alerting.ts": {
@@ -1634,16 +1604,6 @@
   },
   "public/app/features/alerting/unified/types/receiver-form.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/utils/config.test.ts": {
-    "no-restricted-syntax": {
-      "count": 6
-    }
-  },
-  "public/app/features/alerting/unified/utils/config.ts": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -1678,19 +1638,11 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/utils/rules.test.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/utils/rules.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 3
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -2058,11 +2010,6 @@
   },
   "public/app/features/dashboard/components/DashboardSettings/VersionsSettings.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/GenAI/utils.ts": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
