@@ -17,7 +17,7 @@ var _ resourcepb.ResourceIndexServer = &backend{}
 
 // GetStats implements resource.ResourceIndexServer.
 // This will use the SQL index to count values
-func (b *baseBackend) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
+func (b *backend) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.GetStats")
 	defer span.End()
 
@@ -55,7 +55,7 @@ func (b *baseBackend) GetStats(ctx context.Context, req *resourcepb.ResourceStat
 }
 
 // Search is not supported by the SQL backend.
-func (b *baseBackend) Search(context.Context, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+func (b *backend) Search(context.Context, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	return &resourcepb.ResourceSearchResponse{
 		Error: &resourcepb.ErrorResult{
 			Code:    http.StatusNotImplemented,
@@ -65,6 +65,6 @@ func (b *baseBackend) Search(context.Context, *resourcepb.ResourceSearchRequest)
 }
 
 // RebuildIndexes is not supported by the SQL backend.
-func (b *baseBackend) RebuildIndexes(context.Context, *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+func (b *backend) RebuildIndexes(context.Context, *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
 	return nil, fmt.Errorf("rebuild indexes not supported by unistore sql backend")
 }

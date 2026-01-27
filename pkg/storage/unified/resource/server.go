@@ -373,6 +373,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
 		overridesService: opts.OverridesService,
+		storageEnabled:   true,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
@@ -430,6 +431,7 @@ type server struct {
 	// write operations to make sure that subsequent search by the same client will return up-to-date results.
 	// Set from SearchOptions.IndexMinUpdateInterval.
 	artificialSuccessfulWriteDelay time.Duration
+	storageEnabled                 bool
 }
 
 // Init implements ResourceServer.
@@ -454,7 +456,7 @@ func (s *server) Init(ctx context.Context) error {
 		}
 
 		// Start watching for changes
-		if s.initErr == nil {
+		if s.initErr == nil && s.storageEnabled {
 			s.initErr = s.initWatcher()
 		}
 

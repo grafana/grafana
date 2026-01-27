@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -27,7 +28,7 @@ import (
 )
 
 var (
-	_ resource.BulkProcessingBackend = (*storageBackendImpl)(nil)
+	_ resource.BulkProcessingBackend = (*backend)(nil)
 )
 
 type bulkRV struct {
@@ -104,7 +105,12 @@ func (x *bulkLock) Active() bool {
 	return len(x.running) > 0
 }
 
-func (b *storageBackendImpl) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
+	if !b.storageEnabled {
+		return &resourcepb.BulkResponse{
+			Error: resource.AsErrorResult(errors.New("storage backend is not enabled")),
+		}
+	}
 	err := b.bulkLock.Start(setting.Collection)
 	if err != nil {
 		return &resourcepb.BulkResponse{
@@ -163,7 +169,7 @@ func (b *storageBackendImpl) ProcessBulk(ctx context.Context, setting resource.B
 }
 
 // internal bulk process
-func (b *storageBackendImpl) processBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
+func (b *backend) processBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
 	rsp := &resourcepb.BulkResponse{}
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		return b.processBulkWithTx(ctx, tx, setting, iter, rsp)
@@ -176,7 +182,7 @@ func (b *storageBackendImpl) processBulk(ctx context.Context, setting resource.B
 
 // processBulkWithTx performs the bulk operation using the provided transaction.
 // This is used both when creating our own transaction and when reusing an external one.
-func (b *storageBackendImpl) processBulkWithTx(ctx context.Context, tx db.Tx, setting resource.BulkSettings, iter resource.BulkRequestIterator, rsp *resourcepb.BulkResponse) error {
+func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resource.BulkSettings, iter resource.BulkRequestIterator, rsp *resourcepb.BulkResponse) error {
 	rollbackWithError := func(err error) error {
 		txerr := tx.Rollback()
 		if txerr != nil {
@@ -312,7 +318,7 @@ func (b *storageBackendImpl) processBulkWithTx(ctx context.Context, tx db.Tx, se
 	return nil
 }
 
-func (b *storageBackendImpl) updateLastImportTime(ctx context.Context, tx db.Tx, key *resourcepb.ResourceKey, now time.Time) error {
+func (b *backend) updateLastImportTime(ctx context.Context, tx db.Tx, key *resourcepb.ResourceKey, now time.Time) error {
 	if _, err := dbutil.Exec(ctx, tx, sqlResourceLastImportTimeInsert, sqlResourceLastImportTimeInsertRequest{
 		SQLTemplate:    sqltemplate.New(b.dialect),
 		Namespace:      key.Namespace,
