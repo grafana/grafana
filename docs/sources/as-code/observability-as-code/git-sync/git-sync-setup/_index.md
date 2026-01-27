@@ -51,16 +51,16 @@ Before you begin, ensure you have the following:
 - A Grafana instance (Cloud, OSS, or Enterprise)
 - If you're [using webhooks or image rendering](#extend-git-sync-for-real-time-notification-and-image-rendering), a public instance with external access
 - Administration rights in your Grafana organization
-- An authentication method for your connection: either a [GitHub private access token](#create-a-github-access-token) or a [GitHub App](#create-a-github-app)
+- An **authentication method** for your connection: either a [GitHub private access token](#create-a-github-access-token) or a [GitHub App](#create-a-github-app)
 - A GitHub repository to store your dashboards in
 - Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs
 
 Get acquainted with the following topics:
 
-- [Known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/intro-git-sync#known-limitations)
 - [Supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/intro-git-sync#supported-resources)
+- [Known issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/known-issues)
 
-For further details refer to [key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts)
+For further details on how Git Sync operates refer to [key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts).
 
 ### Enable required feature toggles
 
