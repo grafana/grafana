@@ -79,11 +79,9 @@ export const LogLineContext = memo(
     getRowContextQuery,
     onClose,
     getRowContext,
-    displayedFields = [],
+    displayedFields: displayedFieldsProp = [],
     logLineMenuCustomItems,
     onPermalinkClick,
-    onClickShowField,
-    onClickHideField,
   }: LogLineContextProps) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const [contextQuery, setContextQuery] = useState<DataQuery | null>(null);
@@ -101,6 +99,7 @@ export const LogLineContext = memo(
       ? (store.get(`${logOptionsStorageKey}.contextTimeWindow`) ?? DEFAULT_TIME_WINDOW.toString())
       : DEFAULT_TIME_WINDOW.toString();
     const [timeWindow, setTimeWindow] = useState(parseInt(defaultTimeWindow, 10));
+    const [displayedFields, setDisplayedFields] = useState<string[]>(displayedFieldsProp);
 
     const eventBusRef = useRef(new EventBusSrv());
 
@@ -287,6 +286,33 @@ export const LogLineContext = memo(
       setInitialized(false);
     }, [updateContextQuery]);
 
+    const resetFields = useCallback(() => {
+      setDisplayedFields([]);
+    }, []);
+
+    const showField = useCallback(
+      (key: string) => {
+        const index = displayedFields.indexOf(key);
+
+        if (index === -1) {
+          const updatedDisplayedFields = displayedFields.concat(key);
+          setDisplayedFields(updatedDisplayedFields);
+        }
+      },
+      [displayedFields]
+    );
+
+    const hideField = useCallback(
+      (key: string) => {
+        const index = displayedFields.indexOf(key);
+        if (index > -1) {
+          const updatedDisplayedFields = displayedFields.filter((k) => key !== k);
+          setDisplayedFields(updatedDisplayedFields);
+        }
+      },
+      [displayedFields]
+    );
+
     const wrapLogMessage = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.wrapLogMessage`, true) : true;
     const syntaxHighlighting = logOptionsStorageKey
       ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true)
@@ -359,6 +385,18 @@ export const LogLineContext = memo(
               />
             </Stack>
           )}
+          {displayedFields.length > 0 && (
+            <Button
+              variant="secondary"
+              onClick={resetFields}
+              tooltip={t(
+                'logs.log-line-context.show-original-log-tooltip',
+                'Clear displayed fields and show the original log line message'
+              )}
+            >
+              <Trans i18nKey="logs.log-line-context.show-original-log">Show original logs</Trans>
+            </Button>
+          )}
           <Button variant="secondary" onClick={onScrollCenterClick}>
             <Trans i18nKey="logs.log-line-context.center-matched-line">Center matched line</Trans>
           </Button>
@@ -402,8 +440,9 @@ export const LogLineContext = memo(
                 loading={aboveState === LoadingState.Loading || belowState === LoadingState.Loading}
                 permalinkedLogId={log.uid}
                 onPermalinkClick={onPermalinkClick}
-                onClickHideField={onClickHideField}
-                onClickShowField={onClickShowField}
+                onClickHideField={hideField}
+                onClickShowField={showField}
+                setDisplayedFields={setDisplayedFields}
                 showControls
                 showFieldSelector={false}
                 showTime={logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.showTime`, true) : true}
