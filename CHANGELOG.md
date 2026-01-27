@@ -1,3 +1,21 @@
+<!-- 12.3.2 START -->
+
+# 12.3.2 (2026-01-27)
+
+### Features and enhancements
+
+- **API:** Add missing scope check on dashboards [#116888](https://github.com/grafana/grafana/pull/116888), [@Proximyst](https://github.com/Proximyst)
+- **Avatar:** Require sign-in, remove queue, respect timeout [#116893](https://github.com/grafana/grafana/pull/116893), [@macabu](https://github.com/macabu)
+- **ElasticSearch:** Update annotation time-range properties [#115566](https://github.com/grafana/grafana/pull/115566), [@aangelisc](https://github.com/aangelisc)
+- **Explore:** Reset legend when a new query is run [#116590](https://github.com/grafana/grafana/pull/116590), [@ifrost](https://github.com/ifrost)
+- **Go:** Update to 1.25.6 [#116396](https://github.com/grafana/grafana/pull/116396), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Alerting:** Fix a race condition panic in ResetStateByRuleUID [#115680](https://github.com/grafana/grafana/pull/115680), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+- **Alerting:** Fix data source recording rules editor [#116303](https://github.com/grafana/grafana/pull/116303), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+
+<!-- 12.3.2 END -->
 <!-- 12.3.1 START -->
 
 # 12.3.1 (2025-12-16)
