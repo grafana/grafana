@@ -67,6 +67,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   }, [getValues, setValue]);
 
   useEffect(() => {
+    // TODO: improve error handling base on BE response, leverage "fieldErrors" when available
     if (repositoryStatusError) {
       setStepStatusInfo({
         status: 'error',
