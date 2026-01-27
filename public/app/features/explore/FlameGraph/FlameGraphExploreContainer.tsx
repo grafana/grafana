@@ -30,6 +30,7 @@ export const FlameGraphExploreContainer = (props: Props) => {
         onViewSelected={(view: string) => interaction('view_selected', { view })}
         onTextAlignSelected={(align: string) => interaction('text_align_selected', { align })}
         onTableSort={(sort: string) => interaction('table_sort_selected', { sort })}
+        enableNewUI={config.featureToggles.flameGraphWithCallTree}
       />
     </div>
   );

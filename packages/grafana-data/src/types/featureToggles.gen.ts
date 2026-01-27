@@ -1436,4 +1436,9 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesTeamBindings?: boolean;
+  /**
+  * Enables the new Flame Graph UI containing the Call Tree view
+  * @default false
+  */
+  flameGraphWithCallTree?: boolean;
 }

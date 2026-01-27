@@ -1828,6 +1828,20 @@
     },
     {
       "metadata": {
+        "name": "flameGraphWithCallTree",
+        "resourceVersion": "1769113143324",
+        "creationTimestamp": "2026-01-22T20:19:03Z"
+      },
+      "spec": {
+        "description": "Enables the new Flame Graph UI containing the Call Tree view",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "foldersAppPlatformAPI",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2025-07-03T14:15:23Z"
