@@ -18,8 +18,8 @@ export default [
     output: [
       // Schema still uses publishConfig to define output directory.
       // TODO: Migrate this package to use exports.
-      cjsOutput(pkg, 'grafana-schema', { dir: path.dirname(pkg.publishConfig.main) }),
-      esmOutput(pkg, 'grafana-schema', { dir: path.dirname(pkg.publishConfig.module) }),
+      cjsOutput(pkg, 'grafana-schema', { dir: path.dirname(pkg.main) }),
+      esmOutput(pkg, 'grafana-schema', { dir: path.dirname(pkg.module) }),
     ],
     treeshake: false,
   },
@@ -49,7 +49,7 @@ export default [
     ],
     output: {
       format: 'esm',
-      dir: path.dirname(pkg.publishConfig.module),
+      dir: path.dirname(pkg.module),
     },
     treeshake: false,
   },
