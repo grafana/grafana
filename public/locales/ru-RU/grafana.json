@@ -808,12 +808,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Удалить",
       "duplicate": "Дублировать",
       "label-integration": "Интеграция",
       "label-notification-settings": "Параметры уведомлений",
       "label-section": "Дополнительные параметры {{name}}",
       "test": "Тестирование",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -972,6 +974,13 @@
       "content-route-continue-matching-other-policies": "Сопоставление маршрута с другими политиками будет продолжено"
     },
     "copy-to-clipboard": "Копировать метку «{{label}}» в буфер обмена",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Точка контакта для доставки уведомлений",
@@ -1945,6 +1954,10 @@
     "namespace-and-group-filter": {
       "select-group": "Выбрать группу",
       "select-namespace": "Выбрать пространство имен"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Нужна помощь?"
@@ -3658,7 +3671,10 @@
       "move-modal-title": "Перемещение",
       "move-provisioned-folder": "",
       "moving": "Перемещение...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Необходимо указать имя папки.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Вы выбрали как подготовленные, так и неподготовленные ресурсы. Совместная обработка невозможна. Выберите только подготовленные или неподготовленные ресурсы и повторите попытку.",
       "selected-mix-resources-modal-title": "Выбраны разные типы ресурсов"
     },
@@ -5202,6 +5218,9 @@
       "title": {
         "deleted": "удалено"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -11018,7 +11037,9 @@
     "invite-user": {
       "invite-button": "Пригласить",
       "invite-new-user-button": "Пригласить нового пользователя",
-      "invite-tooltip": "Пригласить пользователя"
+      "invite-tooltip": "Пригласить пользователя",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Добавить в закладки",
@@ -12690,6 +12711,13 @@
       "title-data-source-help": "Справка по источнику данных"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": ""
@@ -13460,6 +13488,7 @@
       "label-standard": "Стандартный"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -15072,6 +15101,9 @@
       "label-both": "Оба",
       "label-lines": "Линии",
       "label-points": "Точки"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

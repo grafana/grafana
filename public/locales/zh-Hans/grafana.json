@@ -799,12 +799,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "删除",
       "duplicate": "复制",
       "label-integration": "集成",
       "label-notification-settings": "通知设置",
       "label-section": "可选{{name}}设置",
       "test": "测试",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -957,6 +959,13 @@
       "content-route-continue-matching-other-policies": "此路由将继续匹配其他策略"
     },
     "copy-to-clipboard": "将“{{label}}”复制到剪贴板",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "通知已发送到",
@@ -1927,6 +1936,10 @@
     "namespace-and-group-filter": {
       "select-group": "选择组",
       "select-namespace": "选择命名空间"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "需要帮助吗？"
@@ -3625,7 +3638,10 @@
       "move-modal-title": "移动",
       "move-provisioned-folder": "",
       "moving": "正在移动...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "文件夹名称是必需项。",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "您已选择了已预置和未预置的资源。这些资源无法一起处理。请仅选择已预置的资源或未预置的资源，然后重试。",
       "selected-mix-resources-modal-title": "已选择混合资源类型"
     },
@@ -5145,6 +5161,9 @@
       "title": {
         "deleted": "已删除"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -10886,7 +10905,9 @@
     "invite-user": {
       "invite-button": "邀请",
       "invite-new-user-button": "邀请新用户",
-      "invite-tooltip": "邀请用户"
+      "invite-tooltip": "邀请用户",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "添加到书签",
@@ -12531,6 +12552,13 @@
       "title-data-source-help": "数据源帮助"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": ""
@@ -13292,6 +13320,7 @@
       "label-standard": "标准"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14901,6 +14930,9 @@
       "label-both": "两个",
       "label-lines": "线",
       "label-points": "点"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

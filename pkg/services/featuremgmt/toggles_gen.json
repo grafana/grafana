@@ -209,6 +209,20 @@
     },
     {
       "metadata": {
+        "name": "alertingDisableDMAinUI",
+        "resourceVersion": "1769428796156",
+        "creationTimestamp": "2026-01-26T11:59:56Z"
+      },
+      "spec": {
+        "description": "Disables the DMA feature in the UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingDisableSendAlertsExternal",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-05-23T12:29:19Z",
@@ -2702,15 +2716,15 @@
     {
       "metadata": {
         "name": "localeFormatPreference",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1769012601213",
         "creationTimestamp": "2025-03-31T13:59:07Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-01-21 16:23:21.21319 +0000 UTC"
         }
       },
       "spec": {
         "description": "Specifies the locale so the correct format for numbers and dates can be shown",
-        "stage": "preview",
+        "stage": "deprecated",
         "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "false"
       }
@@ -3006,6 +3020,7 @@
         "name": "mysqlAnsiQuotes",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-10-12T11:43:35Z",
+        "deletionTimestamp": "2026-01-27T13:45:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -3679,6 +3694,23 @@
     },
     {
       "metadata": {
+        "name": "queryEditorNext",
+        "resourceVersion": "1768869177305",
+        "creationTimestamp": "2026-01-13T18:26:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-20 00:32:57.305391 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables next generation query editor experience",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryLibrary",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-10-07T18:31:45Z",
@@ -3985,6 +4017,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "savedQueriesRBAC",
+        "resourceVersion": "1768828040599",
+        "creationTimestamp": "2026-01-19T13:07:20Z"
+      },
+      "spec": {
+        "description": "Enables Saved queries (query library) RBAC permissions",
+        "stage": "preview",
+        "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
     },

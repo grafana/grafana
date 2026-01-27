@@ -799,12 +799,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "削除",
       "duplicate": "複製",
       "label-integration": "統合",
       "label-notification-settings": "通知設定",
       "label-section": "{{name}}のオプション設定",
       "test": "テスト",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -957,6 +959,13 @@
       "content-route-continue-matching-other-policies": "このルートは他のポリシーとのマッチングを継続します"
     },
     "copy-to-clipboard": "「{{label}}」をクリップボードにコピー",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "通知の配信先",
@@ -1927,6 +1936,10 @@
     "namespace-and-group-filter": {
       "select-group": "グループを選択",
       "select-namespace": "名前空間を選択"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "サポートが必要ですか？"
@@ -3625,7 +3638,10 @@
       "move-modal-title": "移動",
       "move-provisioned-folder": "",
       "moving": "移動中…",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "フォルダ名が必要です。",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "プロビジョニング済みのリソースと未プロビジョニングのリソースの両方が選択されています。これらは同時に処理できません。プロビジョニングされたリソースのみまたはプロビジョニングされていないリソースのみを選択して、再試行してください。",
       "selected-mix-resources-modal-title": "混在したリソースタイプが選択されました"
     },
@@ -5145,6 +5161,9 @@
       "title": {
         "deleted": "削除済み"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -10886,7 +10905,9 @@
     "invite-user": {
       "invite-button": "招待",
       "invite-new-user-button": "新しいユーザーを招待する",
-      "invite-tooltip": "ユーザーを招待"
+      "invite-tooltip": "ユーザーを招待",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "ブックマークに追加",
@@ -12531,6 +12552,13 @@
       "title-data-source-help": "データソースヘルプ"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": ""
@@ -13292,6 +13320,7 @@
       "label-standard": "標準"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14901,6 +14930,9 @@
       "label-both": "両方",
       "label-lines": "線",
       "label-points": "ポイント"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Sil",
       "duplicate": "Çoğalt",
       "label-integration": "Entegrasyon",
       "label-notification-settings": "Bildirim ayarları",
       "label-section": "İsteğe bağlı {{name}} ayarları",
       "test": "Test",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -962,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Bu yönlendirme diğer politikalarla eşleşmeye devam edecek"
     },
     "copy-to-clipboard": "\"{{label}}\" metnini panoya kopyala",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Bildirimler şuraya iletilir:",
@@ -1933,6 +1942,10 @@
     "namespace-and-group-filter": {
       "select-group": "Grup seç",
       "select-namespace": "Ad alanı seç"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Yardıma mı ihtiyacınız var?"
@@ -3636,7 +3649,10 @@
       "move-modal-title": "Taşı",
       "move-provisioned-folder": "",
       "moving": "Taşınıyor...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Klasör adı gereklidir.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Hem sağlanmış hem de sağlanmamış kaynakları seçtiniz. Bunlar birlikte işlenemez. Lütfen yalnızca sağlanmış kaynakları veya yalnızca sağlanmamış kaynakları seçin ve tekrar deneyin.",
       "selected-mix-resources-modal-title": "Karışık kaynak türleri seçildi"
     },
@@ -5164,6 +5180,9 @@
       "title": {
         "deleted": "silindi"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -10930,7 +10949,9 @@
     "invite-user": {
       "invite-button": "Davet et",
       "invite-new-user-button": "",
-      "invite-tooltip": "Kullanıcı davet et"
+      "invite-tooltip": "Kullanıcı davet et",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Yer imlerine ekle",
@@ -12584,6 +12605,13 @@
       "title-data-source-help": "Veri kaynağı yardımı"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": ""
@@ -13348,6 +13376,7 @@
       "label-standard": "Standart"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14958,6 +14987,9 @@
       "label-both": "Her ikisi de",
       "label-lines": "Çizgiler",
       "label-points": "Noktalar"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

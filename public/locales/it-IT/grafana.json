@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Elimina",
       "duplicate": "Duplica",
       "label-integration": "Integrazione",
       "label-notification-settings": "Impostazioni delle notifiche",
       "label-section": "Impostazioni {{name}} facoltative",
       "test": "Prova",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -962,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Questo percorso continuerà a corrispondere ad altri criteri"
     },
     "copy-to-clipboard": "Copia \"{{label}}\" negli appunti",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Le notifiche vengono inviate a",
@@ -1933,6 +1942,10 @@
     "namespace-and-group-filter": {
       "select-group": "Seleziona gruppo",
       "select-namespace": "Seleziona spazio di nomi"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Hai bisogno di aiuto?"
@@ -3636,7 +3649,10 @@
       "move-modal-title": "Sposta",
       "move-provisioned-folder": "",
       "moving": "Spostamento in corso...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Il nome della cartella è obbligatorio.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Hai selezionato sia risorse sottoposte a provisioning che risorse non sottoposte a provisioning. Non possono essere elaborate insieme. Seleziona solo risorse sottoposte a provisioning o solo risorse non sottoposte a provisioning e riprova.",
       "selected-mix-resources-modal-title": "Tipi di risorse miste selezionati"
     },
@@ -5164,6 +5180,9 @@
       "title": {
         "deleted": "eliminato"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -10930,7 +10949,9 @@
     "invite-user": {
       "invite-button": "Invito",
       "invite-new-user-button": "Invita nuovo utente",
-      "invite-tooltip": "Invita utente"
+      "invite-tooltip": "Invita utente",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Aggiungi a Segnalibri",
@@ -12584,6 +12605,13 @@
       "title-data-source-help": "Guida dell'origine dei dati"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": ""
@@ -13348,6 +13376,7 @@
       "label-standard": "Standard"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14958,6 +14987,9 @@
       "label-both": "Entrambi",
       "label-lines": "Linee",
       "label-points": "Punti"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

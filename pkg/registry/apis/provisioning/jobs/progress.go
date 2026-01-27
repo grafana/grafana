@@ -306,11 +306,10 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	if len(jobStatus.Errors) > 0 && jobStatus.State != provisioning.JobStateError {
 		if tooManyErrors {
 			jobStatus.Message = "completed with too many errors"
-			jobStatus.State = provisioning.JobStateError
 		} else {
 			jobStatus.Message = "completed with errors"
-			jobStatus.State = provisioning.JobStateWarning
 		}
+		jobStatus.State = provisioning.JobStateError
 	} else if len(jobStatus.Warnings) > 0 {
 		jobStatus.State = provisioning.JobStateWarning
 		jobStatus.Message = "completed with warnings"

@@ -7652,27 +7652,30 @@
         "type": "object",
         "required": [
           "datasource_uid",
-          "team_uid",
-          "filters"
+          "datasource_type",
+          "team_filters"
         ],
         "properties": {
+          "datasource_type": {
+            "description": "Data source type that this TeamLBAC Rule applies to",
+            "type": "string",
+            "default": ""
+          },
           "datasource_uid": {
             "description": "Data source UID that this TeamLBAC Rule applies to",
             "type": "string",
             "default": ""
           },
-          "filters": {
-            "description": "Filters for the TeamLBAC Rule",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
+          "team_filters": {
+            "description": "Map of team UIDs to their filter lists Each team can have multiple filters",
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "default": ""
+              }
             }
-          },
-          "team_uid": {
-            "description": "Team UID that this TeamLBAC Rule applies to",
-            "type": "string",
-            "default": ""
           }
         }
       },
