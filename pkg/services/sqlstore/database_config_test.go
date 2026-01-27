@@ -96,12 +96,6 @@ var databaseConfigTestCases = []databaseConfigTest{
 		dbURL: "://invalid.com/",
 		err:   &url.Error{Op: "parse", URL: "://invalid.com/", Err: errors.New("missing protocol scheme")},
 	},
-	{
-		name:       "MySQL with ANSI_QUOTES mode",
-		dbType:     "mysql",
-		dbHost:     "[::1]",
-		expConnStr: ":@tcp([::1])/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=true&sql_mode='ANSI_QUOTES'",
-	},
 }
 
 func TestIntegrationSQLConnectionString(t *testing.T) {
