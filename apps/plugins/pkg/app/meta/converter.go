@@ -1092,8 +1092,16 @@ func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
 			Path: plugin.Module,
 		}
 
-		loadingStrategy := pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript
-		module.LoadingStrategy = &loadingStrategy
+		if plugin.LoadingStrategy != "" {
+			var ls pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategy
+			switch plugin.LoadingStrategy {
+			case plugins.LoadingStrategyFetch:
+				ls = pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyFetch
+			case plugins.LoadingStrategyScript:
+				ls = pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript
+			}
+			module.LoadingStrategy = &ls
+		}
 
 		metaSpec.Module = module
 	}

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -302,4 +303,156 @@ func testJSONData() plugins.JSONData {
 		Backend:     true,
 		Streaming:   true,
 	}
+}
+
+func TestPluginToMetaSpec(t *testing.T) {
+	t.Run("comprehensive conversion with all fields populated", func(t *testing.T) {
+		plugin := &plugins.Plugin{
+			JSONData:        testJSONData(),
+			Class:           plugins.ClassExternal,
+			Module:          "module.js",
+			LoadingStrategy: plugins.LoadingStrategyFetch,
+			BaseURL:         "https://example.com/plugin",
+			Signature:       plugins.SignatureStatusValid,
+			SignatureType:   plugins.SignatureTypeCommercial,
+			SignatureOrg:    "example-org",
+			Children: []*plugins.Plugin{
+				{JSONData: plugins.JSONData{ID: "child1"}},
+				{JSONData: plugins.JSONData{ID: "child2"}},
+			},
+			Translations: map[string]string{
+				"en": "en.json",
+				"fr": "fr.json",
+			},
+		}
+
+		metaSpec := pluginToMetaSpec(plugin)
+
+		assert.Equal(t, "test-plugin", metaSpec.PluginJson.Id)
+		assert.Equal(t, "Test Plugin", metaSpec.PluginJson.Name)
+		assert.Equal(t, pluginsv0alpha1.MetaJSONDataTypeApp, metaSpec.PluginJson.Type)
+		assert.Equal(t, pluginsv0alpha1.MetaSpecClassExternal, metaSpec.Class)
+		require.NotNil(t, metaSpec.Module)
+		assert.Equal(t, "module.js", metaSpec.Module.Path)
+		require.NotNil(t, metaSpec.Module.LoadingStrategy)
+		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyFetch, *metaSpec.Module.LoadingStrategy)
+		require.NotNil(t, metaSpec.BaseURL)
+		assert.Equal(t, "https://example.com/plugin", *metaSpec.BaseURL)
+		require.NotNil(t, metaSpec.Signature)
+		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid, metaSpec.Signature.Status)
+		require.NotNil(t, metaSpec.Signature.Type)
+		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommercial, *metaSpec.Signature.Type)
+		require.NotNil(t, metaSpec.Signature.Org)
+		assert.Equal(t, "example-org", *metaSpec.Signature.Org)
+		require.Len(t, metaSpec.Children, 2)
+		assert.Equal(t, "child1", metaSpec.Children[0])
+		assert.Equal(t, "child2", metaSpec.Children[1])
+		require.Len(t, metaSpec.Translations, 2)
+		assert.Equal(t, "en.json", metaSpec.Translations["en"])
+		assert.Equal(t, "fr.json", metaSpec.Translations["fr"])
+	})
+
+	t.Run("converts all Class, LoadingStrategy, SignatureType, and SignatureStatus variants", func(t *testing.T) {
+		testCases := []struct {
+			name            string
+			class           plugins.Class
+			loadingStrategy plugins.LoadingStrategy
+			signatureType   plugins.SignatureType
+			signatureStatus plugins.SignatureStatus
+			expectedClass   pluginsv0alpha1.MetaSpecClass
+			expectedLS      *pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategy
+			expectedSigType *pluginsv0alpha1.MetaV0alpha1SpecSignatureType
+			expectedSigStat pluginsv0alpha1.MetaV0alpha1SpecSignatureStatus
+		}{
+			{
+				name:            "Core plugin with Fetch and Grafana signature",
+				class:           plugins.ClassCore,
+				loadingStrategy: plugins.LoadingStrategyFetch,
+				signatureType:   plugins.SignatureTypeGrafana,
+				signatureStatus: plugins.SignatureStatusValid,
+				expectedClass:   pluginsv0alpha1.MetaSpecClassCore,
+				expectedLS:      ptr(pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyFetch),
+				expectedSigType: ptr(pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeGrafana),
+				expectedSigStat: pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid,
+			},
+			{
+				name:            "External plugin with Script and Commercial signature",
+				class:           plugins.ClassExternal,
+				loadingStrategy: plugins.LoadingStrategyScript,
+				signatureType:   plugins.SignatureTypeCommercial,
+				signatureStatus: plugins.SignatureStatusInvalid,
+				expectedClass:   pluginsv0alpha1.MetaSpecClassExternal,
+				expectedLS:      ptr(pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript),
+				expectedSigType: ptr(pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommercial),
+				expectedSigStat: pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusInvalid,
+			},
+			{
+				name:            "External plugin with Community signature and Modified status",
+				class:           plugins.ClassExternal,
+				loadingStrategy: plugins.LoadingStrategyFetch,
+				signatureType:   plugins.SignatureTypeCommunity,
+				signatureStatus: plugins.SignatureStatusModified,
+				expectedClass:   pluginsv0alpha1.MetaSpecClassExternal,
+				expectedLS:      ptr(pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyFetch),
+				expectedSigType: ptr(pluginsv0alpha1.MetaV0alpha1SpecSignatureTypeCommunity),
+				expectedSigStat: pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusModified,
+			},
+			{
+				name:            "External plugin with Private signature and Unsigned status",
+				class:           plugins.ClassExternal,
+				loadingStrategy: plugins.LoadingStrategyScript,
+				signatureType:   plugins.SignatureTypePrivate,
+				signatureStatus: plugins.SignatureStatusUnsigned,
+				expectedClass:   pluginsv0alpha1.MetaSpecClassExternal,
+				expectedLS:      ptr(pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript),
+				expectedSigType: ptr(pluginsv0alpha1.MetaV0alpha1SpecSignatureTypePrivate),
+				expectedSigStat: pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusUnsigned,
+			},
+			{
+				name:            "External plugin with PrivateGlob signature and Internal status",
+				class:           plugins.ClassExternal,
+				loadingStrategy: plugins.LoadingStrategyFetch,
+				signatureType:   plugins.SignatureTypePrivateGlob,
+				signatureStatus: plugins.SignatureStatusInternal,
+				expectedClass:   pluginsv0alpha1.MetaSpecClassExternal,
+				expectedLS:      ptr(pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyFetch),
+				expectedSigType: ptr(pluginsv0alpha1.MetaV0alpha1SpecSignatureTypePrivateGlob),
+				expectedSigStat: pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusInternal,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				plugin := &plugins.Plugin{
+					JSONData:        plugins.JSONData{ID: "test-plugin", Name: "Test Plugin", Type: plugins.TypeDataSource},
+					Class:           tc.class,
+					Module:          "module.js",
+					LoadingStrategy: tc.loadingStrategy,
+					BaseURL:         "https://example.com/plugin",
+					Signature:       tc.signatureStatus,
+					SignatureType:   tc.signatureType,
+					SignatureOrg:    "test-org",
+				}
+
+				metaSpec := pluginToMetaSpec(plugin)
+
+				assert.Equal(t, tc.expectedClass, metaSpec.Class)
+				require.NotNil(t, metaSpec.Module)
+				if tc.expectedLS != nil {
+					require.NotNil(t, metaSpec.Module.LoadingStrategy)
+					assert.Equal(t, *tc.expectedLS, *metaSpec.Module.LoadingStrategy)
+				}
+				require.NotNil(t, metaSpec.Signature)
+				assert.Equal(t, tc.expectedSigStat, metaSpec.Signature.Status)
+				if tc.expectedSigType != nil {
+					require.NotNil(t, metaSpec.Signature.Type)
+					assert.Equal(t, *tc.expectedSigType, *metaSpec.Signature.Type)
+				}
+			})
+		}
+	})
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }
