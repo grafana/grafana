@@ -19,18 +19,42 @@ func TestParseCatalogPluginsList(t *testing.T) {
 			want:  nil,
 		},
 		{
-			name:  "single plugin",
+			name:  "single plugin with version",
 			input: "grafana-clock-panel:1.3.1",
 			want: []CatalogPluginSpec{
 				{ID: "grafana-clock-panel", Version: "1.3.1"},
 			},
 		},
 		{
-			name:  "multiple plugins",
+			name:  "single plugin without version (latest compatible)",
+			input: "grafana-lokiexplore-app",
+			want: []CatalogPluginSpec{
+				{ID: "grafana-lokiexplore-app", Version: ""},
+			},
+		},
+		{
+			name:  "multiple plugins with versions",
 			input: "grafana-clock-panel:1.3.1,grafana-worldmap-panel:1.0.6",
 			want: []CatalogPluginSpec{
 				{ID: "grafana-clock-panel", Version: "1.3.1"},
 				{ID: "grafana-worldmap-panel", Version: "1.0.6"},
+			},
+		},
+		{
+			name:  "multiple plugins without versions (latest compatible)",
+			input: "grafana-lokiexplore-app,grafana-pyroscope-app",
+			want: []CatalogPluginSpec{
+				{ID: "grafana-lokiexplore-app", Version: ""},
+				{ID: "grafana-pyroscope-app", Version: ""},
+			},
+		},
+		{
+			name:  "mixed - some with version, some without",
+			input: "grafana-lokiexplore-app,grafana-pyroscope-app:1.5.0,grafana-exploretraces-app",
+			want: []CatalogPluginSpec{
+				{ID: "grafana-lokiexplore-app", Version: ""},
+				{ID: "grafana-pyroscope-app", Version: "1.5.0"},
+				{ID: "grafana-exploretraces-app", Version: ""},
 			},
 		},
 		{
@@ -49,19 +73,16 @@ func TestParseCatalogPluginsList(t *testing.T) {
 			},
 		},
 		{
-			name:    "missing version",
-			input:   "grafana-clock-panel",
-			wantErr: true,
-		},
-		{
-			name:    "empty id",
+			name:    "empty id with colon",
 			input:   ":1.3.1",
 			wantErr: true,
 		},
 		{
-			name:    "empty version",
-			input:   "grafana-clock-panel:",
-			wantErr: true,
+			name:  "id with empty version after colon",
+			input: "grafana-clock-panel:",
+			want: []CatalogPluginSpec{
+				{ID: "grafana-clock-panel", Version: ""},
+			},
 		},
 	}
 
@@ -100,7 +121,7 @@ func TestParseCatalogPluginsFile(t *testing.T) {
 			want:    []CatalogPluginSpec{},
 		},
 		{
-			name: "single plugin",
+			name: "single plugin with version",
 			content: `{
 				"plugins": [
 					{"id": "grafana-clock-panel", "version": "1.3.1"}
@@ -108,6 +129,17 @@ func TestParseCatalogPluginsFile(t *testing.T) {
 			}`,
 			want: []CatalogPluginSpec{
 				{ID: "grafana-clock-panel", Version: "1.3.1"},
+			},
+		},
+		{
+			name: "single plugin without version (latest compatible)",
+			content: `{
+				"plugins": [
+					{"id": "grafana-lokiexplore-app"}
+				]
+			}`,
+			want: []CatalogPluginSpec{
+				{ID: "grafana-lokiexplore-app", Version: ""},
 			},
 		},
 		{
@@ -124,19 +156,25 @@ func TestParseCatalogPluginsFile(t *testing.T) {
 			},
 		},
 		{
+			name: "mixed - some with version, some without",
+			content: `{
+				"plugins": [
+					{"id": "grafana-lokiexplore-app"},
+					{"id": "grafana-pyroscope-app", "version": "1.5.0"},
+					{"id": "grafana-exploretraces-app", "checksum": "sha256:def456"}
+				]
+			}`,
+			want: []CatalogPluginSpec{
+				{ID: "grafana-lokiexplore-app", Version: ""},
+				{ID: "grafana-pyroscope-app", Version: "1.5.0"},
+				{ID: "grafana-exploretraces-app", Version: "", Checksum: "sha256:def456"},
+			},
+		},
+		{
 			name: "missing id",
 			content: `{
 				"plugins": [
 					{"version": "1.3.1"}
-				]
-			}`,
-			wantErr: true,
-		},
-		{
-			name: "missing version",
-			content: `{
-				"plugins": [
-					{"id": "grafana-clock-panel"}
 				]
 			}`,
 			wantErr: true,

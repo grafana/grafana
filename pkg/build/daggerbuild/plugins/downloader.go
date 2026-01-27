@@ -1,7 +1,9 @@
 package plugins
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"dagger.io/dagger"
@@ -27,11 +29,74 @@ type DownloadOpts struct {
 	GrafanaVersion string
 }
 
+// ResolvedPlugin contains a plugin with resolved version information.
+type ResolvedPlugin struct {
+	ID       string
+	Version  string
+	Checksum string
+	URL      string
+}
+
+// ResolvePluginVersions resolves versions for plugins that don't have a specific version specified.
+// For plugins without a version, it queries grafana.com API to find the latest compatible version.
+// This happens in Go code before the Dagger container starts.
+func ResolvePluginVersions(ctx context.Context, log *slog.Logger, plugins []arguments.CatalogPluginSpec, grafanaVersion string, distro backend.Distribution) ([]ResolvedPlugin, error) {
+	if len(plugins) == 0 {
+		return nil, nil
+	}
+
+	os, arch := backend.OSAndArch(distro)
+	repoManager := repo.NewManager(repo.ManagerCfg{
+		BaseURL: GrafanaComAPIURL,
+	})
+
+	resolved := make([]ResolvedPlugin, 0, len(plugins))
+
+	for _, plugin := range plugins {
+		if plugin.Version != "" {
+			// Version is specified, use it directly
+			log.Info("Using specified plugin version", "plugin", plugin.ID, "version", plugin.Version)
+			resolved = append(resolved, ResolvedPlugin{
+				ID:       plugin.ID,
+				Version:  plugin.Version,
+				Checksum: plugin.Checksum,
+				URL:      BuildPluginDownloadURL(plugin.ID, plugin.Version),
+			})
+			continue
+		}
+
+		// Version not specified, resolve to latest compatible
+		log.Info("Resolving latest compatible version", "plugin", plugin.ID, "grafanaVersion", grafanaVersion, "os", os, "arch", arch)
+
+		compatOpts := NewCompatOpts(grafanaVersion, os, arch)
+		archiveInfo, err := repoManager.GetPluginArchiveInfo(ctx, plugin.ID, "", compatOpts)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve version for plugin %s: %w", plugin.ID, err)
+		}
+
+		log.Info("Resolved plugin version", "plugin", plugin.ID, "version", archiveInfo.Version, "checksum", archiveInfo.Checksum)
+
+		checksum := plugin.Checksum
+		if checksum == "" {
+			checksum = archiveInfo.Checksum
+		}
+
+		resolved = append(resolved, ResolvedPlugin{
+			ID:       plugin.ID,
+			Version:  archiveInfo.Version,
+			Checksum: checksum,
+			URL:      archiveInfo.URL,
+		})
+	}
+
+	return resolved, nil
+}
+
 // DownloadPlugins creates a Dagger container that downloads the specified plugins
 // and returns a directory containing the extracted plugins.
 // This reuses URL construction logic compatible with pkg/plugins/repo.
-func DownloadPlugins(client *dagger.Client, opts *DownloadOpts) *dagger.Directory {
-	if len(opts.Plugins) == 0 {
+func DownloadPlugins(client *dagger.Client, opts *DownloadOpts, resolvedPlugins []ResolvedPlugin) *dagger.Directory {
+	if len(resolvedPlugins) == 0 {
 		// Return an empty directory if no plugins specified
 		return client.Directory()
 	}
@@ -43,8 +108,7 @@ func DownloadPlugins(client *dagger.Client, opts *DownloadOpts) *dagger.Director
 		WithExec([]string{"apk", "add", "--no-cache", "curl", "unzip"}).
 		WithWorkdir("/plugins")
 
-	for _, plugin := range opts.Plugins {
-		downloadURL := BuildPluginDownloadURL(plugin.ID, plugin.Version)
+	for _, plugin := range resolvedPlugins {
 		zipFile := fmt.Sprintf("/tmp/%s-%s.zip", plugin.ID, plugin.Version)
 		pluginDir := fmt.Sprintf("/plugins/%s", plugin.ID)
 
@@ -62,7 +126,7 @@ func DownloadPlugins(client *dagger.Client, opts *DownloadOpts) *dagger.Director
 			curlCmd = append(curlCmd, "-H", fmt.Sprintf("grafana-version: %s", opts.GrafanaVersion))
 		}
 
-		curlCmd = append(curlCmd, "-o", zipFile, downloadURL)
+		curlCmd = append(curlCmd, "-o", zipFile, plugin.URL)
 
 		// Download the plugin zip
 		container = container.WithExec(curlCmd)
@@ -117,13 +181,13 @@ type PluginDownloadInfo struct {
 }
 
 // GetPluginDownloadInfos returns download information for the specified plugins.
-func GetPluginDownloadInfos(plugins []arguments.CatalogPluginSpec, distro backend.Distribution) []PluginDownloadInfo {
-	infos := make([]PluginDownloadInfo, len(plugins))
-	for i, plugin := range plugins {
+func GetPluginDownloadInfos(resolved []ResolvedPlugin) []PluginDownloadInfo {
+	infos := make([]PluginDownloadInfo, len(resolved))
+	for i, plugin := range resolved {
 		infos[i] = PluginDownloadInfo{
 			ID:      plugin.ID,
 			Version: plugin.Version,
-			URL:     BuildPluginDownloadURL(plugin.ID, plugin.Version),
+			URL:     plugin.URL,
 		}
 	}
 	return infos
