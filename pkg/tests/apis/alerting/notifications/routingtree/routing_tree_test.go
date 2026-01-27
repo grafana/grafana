@@ -747,12 +747,20 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 	org1 := helper.Org1
 	admin := org1.Admin
-	adminClient := common.NewRoutingTreeClient(t, admin)
+	adminClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
+	require.NoError(t, err)
 
 	env := helper.GetEnv()
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
+
+	nameToIdentifier := func(name string) resource.Identifier {
+		return resource.Identifier{
+			Namespace: apis.DefaultNamespace,
+			Name:      name,
+		}
+	}
 
 	k8sRoute := func(t *testing.T, name string, r *definitions.Route) *v0alpha1.RoutingTree {
 		err := r.Validate()
@@ -790,25 +798,25 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		Receiver:   "grafana-default-email",
 		GroupByStr: models.DefaultNotificationSettingsGroupBy,
 	}
-	_, err = adminClient.Update(ctx, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy), v1.UpdateOptions{})
+	_, err = adminClient.Update(ctx, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy), resource.UpdateOptions{})
 	require.NoError(t, err)
 
 	// Sanity check there aren't any existing managed routes other than the default.
-	list, err := adminClient.List(ctx, v1.ListOptions{})
+	list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, list.Items, 1)
 	require.Equal(t, v0alpha1.UserDefinedRoutingTreeName, list.Items[0].Name)
 
 	validateGetErr := func(t *testing.T, name string, expectedErrReason v1.StatusReason) {
 		t.Helper()
-		_, err := adminClient.Get(ctx, name, v1.GetOptions{})
+		_, err := adminClient.Get(ctx, nameToIdentifier(name))
 		require.Error(t, err)
 		require.Equal(t, expectedErrReason, errors.ReasonForError(err))
 	}
 
 	validateGetEqual := func(t *testing.T, name string, expectedRoute *v0alpha1.RoutingTree) {
 		t.Helper()
-		gotRoute, err := adminClient.Get(ctx, name, v1.GetOptions{})
+		gotRoute, err := adminClient.Get(ctx, nameToIdentifier(name))
 		require.NoError(t, err)
 		assert.Equal(t, expectedRoute, gotRoute)
 	}
@@ -817,7 +825,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		// Create -> Get various pre-defined routes.
 		for name, route := range cfg.ManagedRoutes {
 			t.Run(fmt.Sprintf("Create policy %s", name), func(t *testing.T) {
-				createdRoute, err := adminClient.Create(ctx, k8sRoute(t, name, route), v1.CreateOptions{})
+				createdRoute, err := adminClient.Create(ctx, k8sRoute(t, name, route), resource.CreateOptions{})
 				require.NoError(t, err)
 
 				validateGetEqual(t, name, createdRoute)
@@ -826,7 +834,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 		t.Run("Create default policy fails", func(t *testing.T) {
 			// Attempting to create a route with name UserDefinedRoutingTreeName fails.
-			_, err = adminClient.Create(ctx, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy), v1.CreateOptions{})
+			_, err = adminClient.Create(ctx, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy), resource.CreateOptions{})
 			require.Error(t, err)
 		})
 
@@ -840,15 +848,15 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		// Delete/reset any remaining routes.
 		for name := range cfg.ManagedRoutes {
 			_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "") // Just in case it was provisioned.
-			_ = adminClient.Delete(ctx, name, v1.DeleteOptions{})
+			_ = adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{})
 		}
 		_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(v0alpha1.UserDefinedRoutingTreeName, &definitions.Route{}), org1.OrgID, "")
-		_ = adminClient.Delete(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.DeleteOptions{})
+		_ = adminClient.Delete(ctx, nameToIdentifier(v0alpha1.UserDefinedRoutingTreeName), resource.DeleteOptions{})
 
 		// Recreate them.
 		created := make(map[string]*v0alpha1.RoutingTree, len(cfg.ManagedRoutes))
 		for name, route := range cfg.ManagedRoutes {
-			c, err := adminClient.Create(ctx, k8sRoute(t, name, route), v1.CreateOptions{})
+			c, err := adminClient.Create(ctx, k8sRoute(t, name, route), resource.CreateOptions{})
 			require.NoError(t, err)
 			created[name] = c
 		}
@@ -863,7 +871,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
 
 			t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
-				got, err := adminClient.Get(ctx, name, v1.GetOptions{})
+				got, err := adminClient.Get(ctx, nameToIdentifier(name))
 				require.NoError(t, err)
 				expected := route.Copy().(*v0alpha1.RoutingTree)
 				expected.SetProvenanceStatus("API")
@@ -875,7 +883,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		allCreatedRoutes := resetPolicies(t)
 		// List all routes and validate again.
-		list, err = adminClient.List(ctx, v1.ListOptions{})
+		list, err = adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 		require.NoError(t, err)
 		assert.Len(t, list.Items, len(cfg.ManagedRoutes)+1)
 		t.Run("Includes all managed routes ", func(t *testing.T) {
@@ -885,6 +893,9 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			}
 			expectedRoutes = append(expectedRoutes, *k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy))
 
+			for i := range expectedRoutes {
+				expectedRoutes[i].TypeMeta = v1.TypeMeta{} // List does not include this information.
+			}
 			assert.ElementsMatch(t, expectedRoutes, list.Items)
 		})
 		t.Run("Default policy last", func(t *testing.T) {
@@ -902,9 +913,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			for name := range policies {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 					// Empty version should pass
-					u := k8sRoute(t, name, policy_exports.OverrideInherit())
-					u.ResourceVersion = ""
-					updatedRoute, err := adminClient.Update(ctx, u, v1.UpdateOptions{})
+					updatedRoute, err := adminClient.Update(ctx, k8sRoute(t, name, policy_exports.OverrideInherit()), resource.UpdateOptions{ResourceVersion: ""})
 					require.NoError(t, err)
 
 					validateGetEqual(t, name, updatedRoute)
@@ -917,9 +926,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			for name := range policies {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 					// Incorrect Version should throw conflict.
-					u := k8sRoute(t, name, policy_exports.DeeplyNested())
-					u.ResourceVersion = "incorrect-version"
-					_, err := adminClient.Update(ctx, u, v1.UpdateOptions{})
+					_, err := adminClient.Update(ctx, k8sRoute(t, name, policy_exports.DeeplyNested()), resource.UpdateOptions{ResourceVersion: "incorrect-version"})
 					require.Truef(t, errors.IsConflict(err), "Should get Conflict error but got: %s", err)
 				})
 			}
@@ -930,9 +937,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			for name, route := range policies {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 					// Actual version.
-					u := route.Copy().(*v0alpha1.RoutingTree)
-					u.ResourceVersion = currentVersion
-					updatedRoute, err := adminClient.Update(ctx, u, v1.UpdateOptions{})
+					updatedRoute, err := adminClient.Update(ctx, route.Copy().(*v0alpha1.RoutingTree), resource.UpdateOptions{ResourceVersion: currentVersion})
 					require.NoError(t, err)
 					policies[name] = updatedRoute
 
@@ -946,9 +951,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
 
-					u := k8sRoute(t, name, policy_exports.Empty())
-					u.ResourceVersion = "" // Bypass version check.
-					_, err := adminClient.Update(ctx, u, v1.UpdateOptions{})
+					_, err := adminClient.Update(ctx, k8sRoute(t, name, policy_exports.Empty()), resource.UpdateOptions{ResourceVersion: ""}) // Bypass version check.
 					require.Error(t, err)
 					require.ErrorContains(t, err, "provenance")
 				})
@@ -964,14 +967,14 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 				t.Run("Incorrect ResourceVersion should fail with conflict", func(t *testing.T) {
 					// Incorrect Version should throw conflict.
-					err := adminClient.Delete(ctx, name, v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: util.Pointer("incorrect-version")}})
+					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: "incorrect-version"}})
 					require.Truef(t, errors.IsConflict(err), "Should get Conflict error but got: %s", err)
 				})
 
 				t.Run("Delete provisioned should fail", func(t *testing.T) {
 					require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
 
-					err := adminClient.Delete(ctx, name, v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: util.Pointer("")}})
+					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: ""}})
 					assert.Error(t, err)
 					assert.ErrorContains(t, err, "provenance")
 
@@ -980,7 +983,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 				})
 
 				t.Run("Correct ResourceVersion should succeed", func(t *testing.T) {
-					err := adminClient.Delete(ctx, name, v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: util.Pointer(route.ResourceVersion)}})
+					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: route.ResourceVersion}})
 					require.NoError(t, err)
 					if name == v0alpha1.UserDefinedRoutingTreeName {
 						validateGetEqual(t, name, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy)) // Default policy only resets, it doesn't delete.
@@ -990,10 +993,10 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 				})
 
 				// Recreate so we can delete again using the empty ResourceVersion.
-				_, _ = adminClient.Create(ctx, route, v1.CreateOptions{}) // Not necessary to check error here, downstream will catch.
+				_, _ = adminClient.Create(ctx, route, resource.CreateOptions{}) // Not necessary to check error here, downstream will catch.
 
 				t.Run("Empty ResourceVersion should succeed", func(t *testing.T) {
-					err := adminClient.Delete(ctx, name, v1.DeleteOptions{Preconditions: &v1.Preconditions{ResourceVersion: util.Pointer("")}})
+					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: ""}})
 					require.NoError(t, err)
 					if name == v0alpha1.UserDefinedRoutingTreeName {
 						validateGetEqual(t, name, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, defaultPolicy)) // Default policy only resets, it doesn't delete.
