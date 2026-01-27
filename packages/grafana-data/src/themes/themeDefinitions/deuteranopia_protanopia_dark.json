@@ -11,6 +11,7 @@
     },
     "warning": {
       "main": "#F2B800"
-    }
+    },
+    "contrastThreshold": 4.5
   }
 }

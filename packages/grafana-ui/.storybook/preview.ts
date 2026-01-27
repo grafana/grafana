@@ -33,7 +33,12 @@ const handleThemeChange = (theme: GrafanaTheme2) => {
   }
 };
 
-const allowedExtraThemes: string[] = [];
+const allowedExtraThemes: string[] = [
+  'deuteranopia_protanopia_dark',
+  'deuteranopia_protanopia_light',
+  'tritanopia_dark',
+  'tritanopia_light',
+];
 
 if (process.env.NODE_ENV === 'development') {
   allowedExtraThemes.push('debug');

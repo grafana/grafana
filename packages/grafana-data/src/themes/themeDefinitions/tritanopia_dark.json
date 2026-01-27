@@ -2,6 +2,7 @@
   "name": "Tritanopia (Dark)",
   "id": "tritanopia_dark",
   "colors": {
-    "mode": "dark"
+    "mode": "dark",
+    "contrastThreshold": 4.5
   }
 }

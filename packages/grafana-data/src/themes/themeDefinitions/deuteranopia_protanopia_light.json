@@ -2,6 +2,7 @@
   "name": "Deuteranopia/Protanopia (Light)",
   "id": "deuteranopia_protanopia_light",
   "colors": {
-    "mode": "light"
+    "mode": "light",
+    "contrastThreshold": 4.5
   }
 }
