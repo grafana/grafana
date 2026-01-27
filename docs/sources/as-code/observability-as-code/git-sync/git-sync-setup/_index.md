@@ -91,10 +91,10 @@ To create a GitHub access token:
 
 1. [Create a new fine-grained personal access token](https://github.com/settings/personal-access-tokens/new). Refer to [Managing your personal access tokens](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) for instructions.
 1. Under **Permissions**, click **Select permissions** and select the following:
-  - **Contents**: Read and write permission
-  - **Metadata**: Read-only permission
-  - **Pull requests**: Read and write permission
-  - **Webhooks**: Read and write permission
+   - **Contents**: Read and write permission
+   - **Metadata**: Read-only permission
+   - **Pull requests**: Read and write permission
+   - **Webhooks**: Read and write permission
 1. Select any additional options and then press **Generate token**.
 1. Copy the access token. Leave the browser window available with the token until you've completed configuration.
 
@@ -108,7 +108,9 @@ If you chose to authenticate with a newly created GitHub App, you'll need the fo
 - PrivateKey
 - installationID
 
-There are many ways to create a GitHub App. The following steps are orientative:
+There are many ways to create a GitHub App. The following instructions are orientative, always refer to official GitHub documentation for more details.
+
+To create the GitHub App, follow these steps:
 
 1. Go to https://github.com/settings/apps and click on **New Github App** ”, or navigate directly to https://github.com/settings/apps/new
 1. Fill in the following fields:
@@ -122,14 +124,16 @@ There are many ways to create a GitHub App. The following steps are orientative:
 - Webhooks: Read and Write
 - In the **Where can this GitHub App be installed?** section, choose **Only this account**
 1. Click on **Create Github app** to complete the process. On the app page, copy the **AppID**
-1. Go to the **Private Keys** section, generate one, and copy it
 
-Next, install the app:
+Next, go to the **Private Keys** section, generate one, and copy it.
+
+Finally, install the app:
 
 1. At the top left of the page, click on **Install App**
 1. Choose for which user you need to install it, you’ll be redirected to the repo selection section
 1. Choose for which repos you want to install the app
-1. Click **Install**. On the installation page, copy the **installationID** from the page URL https://github.com/settings/installations/<installationID>
+1. Click **Install**. 
+1. On the installation page, copy the **installationID** from the page URL https://github.com/settings/installations/<installationID>
 
 ## Set up Git Sync using the UI
 
