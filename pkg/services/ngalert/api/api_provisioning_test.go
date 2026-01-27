@@ -2075,7 +2075,6 @@ type testEnvironment struct {
 	configs          legacy_storage.AMConfigStore
 	xact             provisioning.TransactionManager
 	quotas           provisioning.QuotaChecker
-	prov             provisioning.ProvisioningStore
 	ac               *recordingAccessControlFake
 	user             *user.SignedInUser
 	rulesAuthz       *fakes.FakeRuleService
@@ -2190,7 +2189,6 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		folderService:    folderService,
 		dashboardService: dashboardService,
 		xact:             xact,
-		prov:             store,
 		quotas:           quotas,
 		ac:               ac,
 		user:             user,
@@ -2214,7 +2212,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	receiverSvc := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
 		configStore,
-		env.prov,
+		env.store,
 		env.store,
 		env.secrets,
 		env.xact,
@@ -2226,10 +2224,10 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(),
-		contactPointService: provisioning.NewContactPointService(configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService()),
-		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log),
-		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store),
-		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz),
+		contactPointService: provisioning.NewContactPointService(configStore, env.secrets, env.store, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService()),
+		templates:           provisioning.NewTemplateService(configStore, env.store, env.xact, env.log),
+		muteTimings:         provisioning.NewMuteTimingService(configStore, env.store, env.xact, env.log, env.store),
+		alertRules:          provisioning.NewAlertRuleService(env.store, env.store, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz),
 		folderSvc:           env.folderService,
 		featureManager:      env.features,
 	}
