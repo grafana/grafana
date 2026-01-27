@@ -74,11 +74,6 @@ export interface FeatureToggles {
   */
   showDashboardValidationWarnings?: boolean;
   /**
-  * Use double quotes to escape keyword in a MySQL query
-  * @default false
-  */
-  mysqlAnsiQuotes?: boolean;
-  /**
   * Rule backtesting API for alerting
   * @default false
   */
@@ -583,6 +578,11 @@ export interface FeatureToggles {
   * @default false
   */
   queryLibrary?: boolean;
+  /**
+  * Enables Saved queries (query library) RBAC permissions
+  * @default false
+  */
+  savedQueriesRBAC?: boolean;
   /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
@@ -1161,6 +1161,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerUI?: boolean;
+  /**
+  * Disables the DMA feature in the UI
+  * @default false
+  */
+  alertingDisableDMAinUI?: boolean;
   /**
   * Enables image sharing functionality for dashboards
   * @default true

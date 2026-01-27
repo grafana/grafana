@@ -98,13 +98,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "mysqlAnsiQuotes",
-			Description: "Use double quotes to escape keyword in a MySQL query",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,
@@ -903,6 +896,14 @@ var (
 		{
 			Name:         "queryLibrary",
 			Description:  "Enables Saved queries (query library) feature",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
+		{
+			Name:         "savedQueriesRBAC",
+			Description:  "Enables Saved queries (query library) RBAC permissions",
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
@@ -1815,6 +1816,14 @@ var (
 		{
 			Name:         "alertingImportAlertmanagerUI",
 			Description:  "Enables the UI to see imported Alertmanager configuration",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingDisableDMAinUI",
+			Description:  "Disables the DMA feature in the UI",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,

@@ -964,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Diese Route wird weiterhin mit anderen Richtlinien übereinstimmen"
     },
     "copy-to-clipboard": "„{{label}}“ in die Zwischenablage kopieren",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Benachrichtigungen werden übermittelt an",
@@ -3642,7 +3649,10 @@
       "move-modal-title": "Verschieben",
       "move-provisioned-folder": "",
       "moving": "Verschieben...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Ordnername ist erforderlich.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Sie haben sowohl bereitgestellte als auch nicht bereitgestellte Ressourcen ausgewählt. Diese können nicht zusammen verarbeitet werden. Bitte wählen Sie nur bereitgestellte Ressourcen oder nur nicht bereitgestellte Ressourcen aus und versuchen Sie es dann erneut.",
       "selected-mix-resources-modal-title": "Gemischte Ressourcentypen ausgewählt"
     },
@@ -10939,7 +10949,9 @@
     "invite-user": {
       "invite-button": "Einladen",
       "invite-new-user-button": "Neuen Nutzer einladen",
-      "invite-tooltip": "Nutzer einladen"
+      "invite-tooltip": "Nutzer einladen",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Zu Lesezeichen hinzufügen",

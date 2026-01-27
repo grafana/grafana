@@ -1,5 +1,6 @@
 import { PluginExtensionExposedComponents } from '@grafana/data';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
+import { CreateAlertFromPanelExposedComponent } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponent';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
@@ -50,6 +51,12 @@ exposedComponentsRegistry.register({
       title: 'Prometheus query results',
       description: 'Display Prometheus query results with Table/Raw toggle',
       component: PrometheusQueryResultsContainer,
+    },
+    {
+      id: PluginExtensionExposedComponents.CreateAlertFromPanelV1,
+      title: 'Create alert from panel',
+      description: 'Modal to create an alert rule from panel data',
+      component: CreateAlertFromPanelExposedComponent,
     },
     {
       id: PluginExtensionExposedComponents.OpenQueryLibraryV1,
