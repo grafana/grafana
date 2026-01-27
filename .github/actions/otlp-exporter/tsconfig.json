@@ -1,0 +1,18 @@
+{
+  
+    "compilerOptions": {
+      "module": "NodeNext",
+      "moduleResolution": "NodeNext",
+      "outDir": "dist",
+      "target": "ES2020",
+      "esModuleInterop": true,
+      "forceConsistentCasingInFileNames": true,
+      "strict": true,
+      "skipLibCheck": true,
+      "resolveJsonModule": true,
+      "importsNotUsedAsValues": "remove",
+      "allowSyntheticDefaultImports": true
+    },
+    
+  "include": ["src/**/*.ts"]
+}
