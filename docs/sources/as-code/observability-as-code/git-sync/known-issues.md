@@ -37,17 +37,17 @@ You can sign up to the private preview using the [Git Sync early access form](ht
 
 {{< /admonition >}}
 
+**Git Sync is under development and the following applies.**
+
 ## Performance considerations
 
 When Git Sync is enabled, the database load might increase, especially if your Grafana instance has many folders and nested folders. Evaluate the performance impact, if any, in a non-production environment.
 
 ## Git Sync limits
 
-TBD
+TBC
 
 ## Known issues
-
-**Git Sync is under development and the following applies.**
 
 ### Synced resources
 
