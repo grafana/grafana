@@ -68,6 +68,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		m.GetRemoteAlertmanagerMetrics(),
 		tracing.InitializeTracerForTest(),
 		false,
+		featuremgmt.WithFeatures(),
 	)
 
 	cfg := &setting.Cfg{

@@ -377,7 +377,9 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 	}
 
 	// Add managed routes to the configuration.
-	cfg.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(cfg.AlertmanagerConfig.Route, cfg.ManagedRoutes)
+	if am.features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
+		cfg.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(cfg.AlertmanagerConfig.Route, cfg.ManagedRoutes)
+	}
 
 	mergeResult, err := cfg.GetMergedAlertmanagerConfig()
 	if err != nil {
