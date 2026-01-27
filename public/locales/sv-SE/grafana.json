@@ -964,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Den här vägen kommer att fortsätta att matcha andra policyer"
     },
     "copy-to-clipboard": "Kopiera ”{{label}}” till klippbordet",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Aviseringar levereras till",
@@ -3642,7 +3649,10 @@
       "move-modal-title": "Flytta",
       "move-provisioned-folder": "",
       "moving": "Flyttar ...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Mappnamn krävs.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Du har valt både provisionerade och icke-provisionerade resurser. Dessa kan inte hanteras tillsammans. Välj enbart provisionerade eller enbart icke-provisionerade resurser och försök igen.",
       "selected-mix-resources-modal-title": "Blandade resurstyper valda"
     },
@@ -10939,7 +10949,9 @@
     "invite-user": {
       "invite-button": "Bjud in",
       "invite-new-user-button": "Bjud in ny användare",
-      "invite-tooltip": "Bjud in användare"
+      "invite-tooltip": "Bjud in användare",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Lägg till bokmärken",

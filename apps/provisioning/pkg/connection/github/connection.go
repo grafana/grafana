@@ -314,7 +314,14 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 	// Create the GitHub client with the JWT token
 	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
 
-	repos, err := ghClient.ListInstallationRepositories(ctx, c.obj.Spec.GitHub.InstallationID)
+	token, err := ghClient.CreateInstallationAccessToken(ctx, c.obj.Spec.GitHub.InstallationID, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create installation access token: %w", err)
+	}
+
+	installationGhClient := c.ghFactory.New(ctx, common.RawSecureValue(token.Token))
+
+	repos, err := installationGhClient.ListInstallationRepositories(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list installation repositories: %w", err)
 	}

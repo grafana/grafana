@@ -209,6 +209,20 @@
     },
     {
       "metadata": {
+        "name": "alertingDisableDMAinUI",
+        "resourceVersion": "1769428796156",
+        "creationTimestamp": "2026-01-26T11:59:56Z"
+      },
+      "spec": {
+        "description": "Disables the DMA feature in the UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingDisableSendAlertsExternal",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-05-23T12:29:19Z",
