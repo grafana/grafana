@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 
 import { NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Field, Input, FieldSet, Stack, Checkbox, Alert } from '@grafana/ui';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
@@ -44,6 +44,9 @@ export const CreateTeam = (): JSX.Element => {
   } = useForm<NewTeamForm>();
 
   const createTeam = async (formModel: NewTeamForm) => {
+    if (formModel.createTeamFolder) {
+      reportInteraction('team_pages_create_new_team_with_owner');
+    }
     try {
       const { data, error } = await createTeamTrigger(
         {
