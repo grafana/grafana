@@ -124,12 +124,6 @@ export const DashboardInteractions = {
     reportDashboardInteraction('edit_action_clicked', { item: 'remove_tab' });
   },
 
-  // grafana_dashboards_panel_configure_menu_opened
-  // when user opens the dropdown for the Configure button in a new panel
-  trackConfigurePanelMenuOpened() {
-    reportDashboardInteraction('panel_configure_menu_opened');
-  },
-
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
   },
