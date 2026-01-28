@@ -161,27 +161,25 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 	}, nil
 }
 
-// BenchmarkStorageBackend runs a benchmark test for a storage backend implementation
-func BenchmarkStorageBackend(b testing.TB, backend resource.StorageBackend, opts *BenchmarkOptions) {
-	ctx := context.Background()
-
+// RunStorageBackendBenchmark runs a benchmark test for a storage backend implementation
+func RunStorageBackendBenchmark(t *testing.T, backend resource.StorageBackend, opts *BenchmarkOptions) {
 	// Initialize the backend
-	require.NoError(b, initializeBackend(ctx, backend, opts))
+	require.NoError(t, initializeBackend(t.Context(), backend, opts))
 
 	// Run the benchmark
-	result, err := runStorageBackendBenchmark(ctx, backend, opts)
-	require.NoError(b, err)
+	result, err := runStorageBackendBenchmark(t.Context(), backend, opts)
+	require.NoError(t, err)
 
 	// Log the results for better visibility.
-	b.Logf("Benchmark Configuration: %s", opts)
-	b.Logf("")
-	b.Logf("Benchmark Results:")
-	b.Logf("Total Duration: %v", result.TotalDuration)
-	b.Logf("Write Count: %d", result.WriteCount)
-	b.Logf("Throughput: %.2f writes/sec", result.Throughput)
-	b.Logf("P50 Latency: %v", result.P50Latency)
-	b.Logf("P90 Latency: %v", result.P90Latency)
-	b.Logf("P99 Latency: %v", result.P99Latency)
+	t.Logf("Benchmark Configuration: %s", opts)
+	t.Logf("")
+	t.Logf("Benchmark Results:")
+	t.Logf("Total Duration: %v", result.TotalDuration)
+	t.Logf("Write Count: %d", result.WriteCount)
+	t.Logf("Throughput: %.2f writes/sec", result.Throughput)
+	t.Logf("P50 Latency: %v", result.P50Latency)
+	t.Logf("P90 Latency: %v", result.P90Latency)
+	t.Logf("P99 Latency: %v", result.P99Latency)
 }
 
 // runSearchBackendBenchmarkWriteThroughput runs a write throughput benchmark for search backend
@@ -307,11 +305,9 @@ func runSearchBackendBenchmarkWriteThroughput(t *testing.T, ctx context.Context,
 	}, nil
 }
 
-// BenchmarkSearchBackend runs a benchmark test for a search backend implementation
-func BenchmarkSearchBackend(t *testing.T, backend resource.SearchBackend, opts *BenchmarkOptions) {
-	ctx := context.Background()
-
-	result, err := runSearchBackendBenchmarkWriteThroughput(t, ctx, backend, opts)
+// RunSearchBackendBenchmark runs a benchmark test for a search backend implementation
+func RunSearchBackendBenchmark(t *testing.T, backend resource.SearchBackend, opts *BenchmarkOptions) {
+	result, err := runSearchBackendBenchmarkWriteThroughput(t, t.Context(), backend, opts)
 	require.NoError(t, err)
 
 	// Log the results for better visibility

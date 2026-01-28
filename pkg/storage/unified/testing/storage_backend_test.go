@@ -49,7 +49,7 @@ func TestIntegrationBenchmarkSQLKVStorageBackend(t *testing.T) {
 			}
 			backend, dbConn := NewTestSqlKvBackend(t, t.Context(), withRvManager)
 			dbConn.SqlDB().SetMaxOpenConns(min(max(10, opts.Concurrency), 100))
-			BenchmarkStorageBackend(t, backend, opts)
+			RunStorageBackendBenchmark(t, backend, opts)
 		})
 	}
 }

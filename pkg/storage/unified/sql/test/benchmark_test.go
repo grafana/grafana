@@ -17,5 +17,5 @@ func TestIntegrationBenchmarkSQLStorageBackend(t *testing.T) {
 	}
 	backend, dbConn := newTestBackend(t, true, 2*time.Millisecond)
 	dbConn.SqlDB().SetMaxOpenConns(min(max(10, opts.Concurrency), 100))
-	test.BenchmarkStorageBackend(t, backend, opts)
+	test.RunStorageBackendBenchmark(t, backend, opts)
 }
