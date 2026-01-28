@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import { CSSProperties, type JSX } from 'react';
-import * as React from 'react';
 
 import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { linkModelToContextMenuItems } from '../../utils/dataLinks';
-import { WithContextMenu } from '../ContextMenu/WithContextMenu';
+import { WithContextMenu, OpenMenuFunction } from '../ContextMenu/WithContextMenu';
 import { MenuGroup, MenuItemsGroup } from '../Menu/MenuGroup';
 import { MenuItem } from '../Menu/MenuItem';
 
@@ -22,7 +21,7 @@ export interface DataLinksContextMenuProps {
 }
 
 export interface DataLinksContextMenuApi {
-  openMenu?: React.MouseEventHandler<HTMLOrSVGElement>;
+  openMenu?: OpenMenuFunction;
   targetClassName?: string;
 }
 
@@ -66,7 +65,7 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
         }}
       </WithContextMenu>
     );
-  } else {
+  } else if (linksCounter === 1) {
     const linkModel = links()[0];
     return (
       <a
@@ -80,6 +79,8 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
         {children({})}
       </a>
     );
+  } else {
+    return <>{children({})}</>;
   }
 };
 
