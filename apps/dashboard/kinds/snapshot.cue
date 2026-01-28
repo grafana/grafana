@@ -23,6 +23,9 @@ snapshotV0alpha1: {
 			// Snapshot creation timestamp
 			timestamp?: string
 
+			// Snapshot delete key
+			deleteKey?: string
+
 			// The raw dashboard (unstructured for now)
 			dashboard?: [string]: _
 		}

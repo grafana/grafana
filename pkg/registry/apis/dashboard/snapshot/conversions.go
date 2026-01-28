@@ -60,7 +60,9 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 			Namespace:         namespacer(v.OrgID),
 		},
 		Spec: dashV0.SnapshotSpec{
-			Title: &v.Name,
+			Title:     &v.Name,
+			DeleteKey: &v.DeleteKey,
+			Dashboard: v.Dashboard.MustMap(),
 		},
 	}
 
@@ -85,6 +87,14 @@ func convertK8sResourceToCreateCommand(snap *dashV0.Snapshot, orgID int64, userI
 	cmd := &dashboardsnapshots.CreateDashboardSnapshotCommand{
 		OrgID:  orgID,
 		UserID: userID,
+	}
+
+	if snap.ObjectMeta.Name != "" {
+		cmd.Key = snap.ObjectMeta.Name
+	}
+
+	if snap.Spec.DeleteKey != nil {
+		cmd.DeleteKey = *snap.Spec.DeleteKey
 	}
 
 	// Map title
@@ -140,6 +150,14 @@ func convertCreateCmdToK8sSnapshot(cmd *dashboardsnapshots.CreateDashboardSnapsh
 		if cmd.ExternalURL != "" {
 			snap.Spec.ExternalUrl = &cmd.ExternalURL
 		}
+	}
+
+	if cmd.Key != "" {
+		snap.ObjectMeta.Name = cmd.Key
+	}
+
+	if cmd.DeleteKey != "" {
+		snap.Spec.DeleteKey = &cmd.DeleteKey
 	}
 
 	return snap

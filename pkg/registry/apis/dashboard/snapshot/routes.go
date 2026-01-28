@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/grafana/grafana/pkg/setting"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -17,10 +16,11 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
@@ -142,14 +142,8 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						return
 					}
 
-					// fill cmd data
-					if cmd.Name == "" {
-						cmd.Name = "Unnamed snapshot"
-					}
 					cmd.OrgID = user.GetOrgID()
 					cmd.UserID, _ = identity.UserIdentifier(user.GetID())
-
-					//originalDashboardURL, err := dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
 
 					// TODO: add logic for external and internal snapshots
 					if cmd.External {
@@ -160,11 +154,25 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 
 					// TODO: validate dashboard exists. Need to call dashboards api, Maybe in a validation hook?
 
+					// Handle local snapshot creation
+					originalDashboardURL, err := dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
+					if err != nil {
+						errhttp.Write(ctx, fmt.Errorf("invalid app url: %w", err), w)
+						return
+					}
+
+					snapshotURL, err := dashboardsnapshots.PrepareLocalSnapshot(&cmd, originalDashboardURL)
+					if err != nil {
+						errhttp.Write(ctx, fmt.Errorf("could not generate random string: %w", err), w)
+						return
+					}
+
 					storage := storageGetter()
 					if storage == nil {
 						errhttp.Write(ctx, fmt.Errorf("snapshot storage not available"), w)
 						return
 					}
+
 					creater, ok := storage.(rest.Creater)
 					if !ok {
 						errhttp.Write(ctx, fmt.Errorf("snapshot storage does not support create"), w)
@@ -180,36 +188,20 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 					ctx = k8srequest.WithNamespace(ctx, namespace)
 
 					// Create via storage (dual-write mode decides legacy, unified, or both)
-					result, err := creater.Create(ctx, snapshot, nil, &metav1.CreateOptions{})
+					_, err = creater.Create(ctx, snapshot, nil, &metav1.CreateOptions{})
 					if err != nil {
 						errhttp.Write(ctx, err, w)
 						return
 					}
 
-					// Extract key and deleteKey from result
-					accessor, err := utils.MetaAccessor(result)
-					if err != nil {
-						errhttp.Write(ctx, fmt.Errorf("failed to access result metadata: %w", err), w)
-						return
-					}
-
-					deleteKey, err := util.GetRandomString(32)
-					if err != nil {
-						errhttp.Write(ctx, fmt.Errorf("failed to generate delete key: %w", err), w)
-					}
-
-					key := accessor.GetName()
-					//deleteKey := ""
-					//if annotations := accessor.GetAnnotations(); annotations != nil {
-					//	deleteKey = annotations["grafana.app/delete-key"]
-					//}
+					metrics.MApiDashboardSnapshotCreate.Inc()
 
 					// Build response
 					response := dashv0.DashboardCreateResponse{
-						Key:       key,
-						DeleteKey: deleteKey,
-						URL:       setting.ToAbsUrl("dashboard/snapshot/" + key),
-						DeleteURL: setting.ToAbsUrl("api/snapshots-delete/" + deleteKey),
+						Key:       snapshot.Name,
+						DeleteKey: *snapshot.Spec.DeleteKey,
+						URL:       snapshotURL,
+						DeleteURL: setting.ToAbsUrl("api/snapshots-delete/" + cmd.DeleteKey),
 					}
 
 					wrap.JSON(http.StatusOK, response)
