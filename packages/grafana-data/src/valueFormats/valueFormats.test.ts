@@ -76,6 +76,7 @@ describe('valueFormats', () => {
     ${'dateTimeAsSystem'}              | ${0}         | ${dateTime(new Date(2010, 6, 2)).valueOf()} | ${'2010-07-02 00:00:00'}
     ${'dtdurationms'}                  | ${undefined} | ${100000}                                   | ${'1 minute'}
     ${'dtdurationms'}                  | ${undefined} | ${150000}                                   | ${'2 minutes'}
+    ${'bytes'}                         | ${undefined} | ${23000000000000000}                        | ${'20.4 PiB'}
   `(
     'With format=$format decimals=$decimals and value=$value then result should be = $expected',
     async ({ format, value, decimals, expected }) => {
