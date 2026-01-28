@@ -133,7 +133,6 @@ profile.cov
 
 # Enterprise operators
 /pkg/operators/enterprise_*
-/pkg/operators/**/enterprise_*
 
 debug.test
 /examples/*/dist
