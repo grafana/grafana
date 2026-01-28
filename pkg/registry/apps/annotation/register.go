@@ -257,7 +257,39 @@ func (s *legacyStorage) Update(ctx context.Context,
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	return nil, false, errors.New("not implemented")
+	namespace := request.NamespaceValue(ctx)
+
+	// Get the existing object
+	existing, err := s.store.Get(ctx, namespace, name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Apply the update
+	updated, err := objInfo.UpdatedObject(ctx, existing)
+	if err != nil {
+		return nil, false, err
+	}
+
+	resource, ok := updated.(*annotationV0.Annotation)
+	if !ok {
+		return nil, false, errors.New("expected annotation")
+	}
+
+	// Validate the update if a validation function is provided
+	if updateValidation != nil {
+		if err := updateValidation(ctx, resource, existing); err != nil {
+			return nil, false, err
+		}
+	}
+
+	// Perform the update
+	result, err := s.store.Update(ctx, resource)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return result, false, nil
 }
 
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
