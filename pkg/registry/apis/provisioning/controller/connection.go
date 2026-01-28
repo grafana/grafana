@@ -191,12 +191,30 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
 	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
 
+	c, err := cc.connectionFactory.Build(ctx, conn)
+	if err != nil {
+		logger.Error("failed to build connection", "error", err)
+		return err
+	}
+
+	tokenConn, isTokenConnection := c.(connection.TokenConnection)
+	var shouldRefreshToken bool
+	if isTokenConnection {
+		shouldRefreshToken, err = cc.shouldGenerateToken(ctx, conn, tokenConn)
+		if err != nil {
+			logger.Error("failed to check if token needs to be generated", "error", err)
+			return err
+		}
+	}
+
 	// Determine the main triggering condition
 	switch {
 	case hasSpecChanged:
 		logger.Info("spec changed, reconciling", "generation", conn.Generation, "observedGeneration", conn.Status.ObservedGeneration)
 	case shouldCheckHealth:
 		logger.Info("health is stale, refreshing", "lastChecked", conn.Status.Health.Checked, "healthy", conn.Status.Health.Healthy)
+	case shouldRefreshToken:
+		logger.Info("token must be refreshed or generated")
 	default:
 		logger.Debug("skipping as conditions are not met", "generation", conn.Generation, "observedGeneration", conn.Status.ObservedGeneration)
 		return nil
@@ -212,34 +230,20 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		})
 	}
 
-	c, err := cc.connectionFactory.Build(ctx, conn)
-	if err != nil {
-		logger.Error("failed to build connection", "error", err)
-		return err
-	}
+	if isTokenConnection && shouldRefreshToken {
+		logger.Info("generating connection token")
 
-	tokenConn, ok := c.(connection.TokenConnection)
-	if ok {
-		refresh, err := cc.shouldGenerateToken(ctx, conn, tokenConn)
+		token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
 		if err != nil {
-			logger.Error("failed to check if token needs to be generated", "error", err)
+			logger.Error("failed to generate connection token", "error", err)
 			return err
 		}
 
-		if refresh {
-			logger.Info("generating connection token")
-
-			token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
-			if err != nil {
-				logger.Error("failed to generate connection token", "error", err)
-				return err
-			}
-			if len(tokenOps) > 0 {
-				patchOperations = append(patchOperations, tokenOps...)
-			}
-			// Substituting generated token for healthcheck
-			conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
+		if len(tokenOps) > 0 {
+			patchOperations = append(patchOperations, tokenOps...)
 		}
+		// Substituting generated token for healthcheck
+		conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
 	}
 
 	// Handle health checks using the health checker
@@ -306,6 +310,7 @@ func (cc *ConnectionController) shouldGenerateToken(
 	if err != nil {
 		return false, err
 	}
+
 	// If the token has been recently created, we should not refresh it.
 	if tokenRecentlyCreated(issuingTime) {
 		return false, nil
