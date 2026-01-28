@@ -31,7 +31,8 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 			"namespace": "default",
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "454545",
@@ -144,7 +145,8 @@ func TestIntegrationProvisioning_ConnectionRepositoriesResponseType(t *testing.T
 			"namespace": "default",
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "454545",

@@ -32,16 +32,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/#create-a-custom-role-to-access-alerts-in-a-folder
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plan-rbac-rollout-strategy/#create-a-custom-role-to-access-alerts-in-a-folder
-  oncall:
+  plugin-role-definitions:
     - pattern: /docs/grafana/
-      destination: /docs/oncall/<GRAFANA_VERSION>/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plugin-role-definitions/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/oncall/
-  available-grafana-oncall-rbac-roles--granted-actions:
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plugin-role-definitions/
+  rbac-http-api:
     - pattern: /docs/grafana/
-      destination: /docs/oncall/<GRAFANA_VERSION>/user-and-team-management/#available-grafana-oncall-rbac-roles--granted-actions
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/oncall/user-and-team-management/#available-grafana-oncall-rbac-roles--granted-actions
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/
 ---
 
 # Grafana RBAC role definitions
@@ -62,6 +62,43 @@ The following tables list permissions associated with basic and fixed roles. Thi
 | Editor                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `basic_editor`                                                                                                                                           | All roles assigned to Viewer and `fixed:datasources:explorer` <br>`fixed:dashboards:creator`<br>`fixed:folders:creator`<br>`fixed:annotations:writer`<br>`fixed:alerting:writer`<br>`fixed:library.panels:creator`<br>`fixed:library.panels:general.writer`<br>`fixed:alerting.provisioning.provenance:writer`<br>`fixed:queries:writer`                                                                                                                                                                                                                                              | Default [Editor](ref:rbac-basic-roles) assignments.                             |
 | Viewer                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `basic_viewer`                                                                                                                                           | `fixed:datasources.id:reader`<br>`fixed:organization:reader`<br>`fixed:annotations:reader`<br>`fixed:annotations.dashboard:writer`<br>`fixed:alerting:reader`<br>`fixed:plugins.app:reader`<br>`fixed:dashboards.insights:reader`<br>`fixed:datasources.insights:reader`<br>`fixed:library.panels:general.reader`<br>`fixed:folders.general:reader`<br>`fixed:datasources.builtin:reader`<br>`fixed:queries:reader`                                                                                                                                                                   | Default [Viewer](ref:rbac-basic-roles) assignments.                             |
 | No Basic Role                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | n/a                                                                                                                                                      |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Default [No Basic Role](ref:rbac-basic-roles)                                   |
+
+{{< admonition type="note" >}}
+Grafana Cloud stacks include additional plugin role assignments not shown here. Refer to [Grafana Cloud app plugin role definitions](ref:plugin-role-definitions) for a complete list.
+{{< /admonition >}}
+
+## View basic role definitions
+
+You can retrieve the full definition of a basic role, including all associated permissions, using the API or by navigating directly to the endpoint URL in your browser while logged in as an Admin.
+
+### Using the API
+
+To get the definition of a basic role:
+
+```bash
+GET /api/access-control/roles/basic_<role>
+```
+
+Where `<role>` is one of: `viewer`, `editor`, `admin`, or `grafana_admin`.
+
+For example, to get the Viewer role definition:
+
+```bash
+curl --location 'https://<your-stack-name>.grafana.net/api/access-control/roles/basic_viewer' \
+  --header 'Authorization: Bearer <service-account-token>'
+```
+
+### Using the browser
+
+You can also view the role definition directly in your browser by navigating to:
+
+```
+https://<your-stack-name>.grafana.net/api/access-control/roles/basic_viewer
+```
+
+This works when logged in as an Admin user.
+
+For more information, refer to the [RBAC HTTP API](ref:rbac-http-api).
 
 ## Fixed role definitions
 
@@ -179,29 +216,3 @@ The following table lists the default RBAC alerting role assignments to the basi
 | Admin      | `fixed:alerting:writer`<br>`fixed:alerting.provisioning.secrets:reader`<br>`fixed:alerting.provisioning:writer` | Default [Grafana organization administrator](ref:rbac-basic-roles) assignments. |
 | Editor     | `fixed:alerting:writer`<br>`fixed:alerting.provisioning.provenance:writer`                                      | Default [Editor](ref:rbac-basic-roles) assignments.                             |
 | Viewer     | `fixed:alerting:reader`                                                                                         | Default [Viewer](ref:rbac-basic-roles) assignments.                             |
-
-### Grafana OnCall roles
-
-If you are using [Grafana OnCall](ref:oncall), you can try out the integration between Grafana OnCall and RBAC.
-For a detailed list of the available OnCall RBAC roles, refer to the table in [Available Grafana OnCall RBAC roles and granted actions](ref:available-grafana-oncall-rbac-roles--granted-actions).
-
-The following table lists the default RBAC OnCall role assignments to the basic roles:
-
-| Basic role    | Associated fixed roles              | Description                                                                                                                                              |
-| ------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Grafana Admin | `plugins:grafana-oncall-app:admin`  | Default [Grafana server administrator](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) assignments. |
-| Admin         | `plugins:grafana-oncall-app:admin`  | Default [Grafana organization administrator](ref:rbac-basic-roles) assignments.                                                                          |
-| Editor        | `plugins:grafana-oncall-app:editor` | Default [Editor](ref:rbac-basic-roles) assignments.                                                                                                      |
-| Viewer        | `plugins:grafana-oncall-app:reader` | Default [Viewer](ref:rbac-basic-roles) assignments.                                                                                                      |
-
-### Private data source connect roles
-
-The following table lists how private data source connect fixed roles are assigned to the basic roles:
-
-| Basic role    | Associated fixed roles                                                                            | Description                                                                                                                                              |
-| ------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Grafana Admin | `plugins:grafana-pdc-app.private-networks:write`, `plugins:grafana-pdc-app.private-networks:read` | Default [Grafana server administrator](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) assignments. |
-
-{{< admonition type="note" >}}
-These private data source connect fixed roles must be granted alongside the `fixed:datasources:writer` role for the permissions to take effect.
-{{< /admonition >}}

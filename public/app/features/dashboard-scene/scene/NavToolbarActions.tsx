@@ -66,8 +66,18 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanel, isDirty, uid, meta, editview, editPanel, editable, title } = dashboard.useState();
-
+  const {
+    isEditing,
+    viewPanel,
+    isDirty,
+    uid,
+    meta,
+    editview,
+    editPanel,
+    editable,
+    title,
+    meta: { isEmbedded, isSnapshot, canEdit, canMakeEditable, canStar, canSave, folderUid },
+  } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
 
@@ -85,11 +95,11 @@ export function ToolbarActions({ dashboard }: Props) {
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
-  const folderRepo = useSelector((state) => selectFolderRepository()(state, meta.folderUid));
+  const folderRepo = useSelector((state) => selectFolderRepository()(state, folderUid));
   const isManaged = Boolean(dashboard.isManagedRepository() || folderRepo);
   // Get the repository for the dashboard's folder
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
-    folderName: meta.folderUid,
+    folderName: folderUid,
   });
 
   if (!isEditingPanel) {
@@ -99,7 +109,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
+    condition: uid && Boolean(canStar) && isShowingDashboard && !isEditing,
     render: () => {
       if (!uid) {
         return null;
@@ -118,7 +128,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
+    condition: uid && Boolean(canStar) && isShowingDashboard && !isEditing,
     render: () => {
       return <PublicDashboardBadge key="public-dashboard-badge" dashboard={dashboard} />;
     },
@@ -140,7 +150,7 @@ export function ToolbarActions({ dashboard }: Props) {
     });
   }
 
-  if (dashboard.isManaged() && meta.canEdit) {
+  if (dashboard.isManaged() && canEdit) {
     toolbarActions.push({
       group: 'icon-actions',
       condition: true,
@@ -152,7 +162,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: meta.isSnapshot && !isEditing,
+    condition: isSnapshot && !isEditing && !isEmbedded,
     render: () => <GoToSnapshotOriginButton key="go-to-snapshot-origin" originalURL={dashboard.getSnapshotUrl()} />,
   });
 
@@ -315,7 +325,7 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
-  const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying;
+  const showShareButton = uid && !isEditing && !isSnapshot && !isPlaying && !isEmbedded;
 
   toolbarActions.push({
     group: 'main-buttons',
@@ -501,7 +511,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && !isEditingLibraryPanel && (meta.canSave || canSaveAs),
+    condition: isEditing && !isEditingLibraryPanel && (canSave || canSaveAs),
     render: () => {
       // if we  only can save
       if (isNew) {
@@ -523,7 +533,7 @@ export function ToolbarActions({ dashboard }: Props) {
       }
 
       // If we only can save as copy
-      if (canSaveAs && !meta.canSave && !meta.canMakeEditable && !isManaged) {
+      if (canSaveAs && !canSave && !canMakeEditable && !isManaged) {
         return (
           <Button
             onClick={() => {
