@@ -9,15 +9,23 @@ import (
 
 type Config struct {
 	ReceiverTestingHandler ReceiverTestingHandler
+	ReceiverSchemasHandler ReceiverSchemasHandler
 }
 
 func (c *Config) Validate() error {
 	if c.ReceiverTestingHandler == nil {
 		return errors.New("receiver testing handler is required")
 	}
+	if c.ReceiverSchemasHandler == nil {
+		return errors.New("receiver schemas handler is required")
+	}
 	return nil
 }
 
 type ReceiverTestingHandler interface {
 	HandleReceiverTestingRequest(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error
+}
+
+type ReceiverSchemasHandler interface {
+	HandleGetSchemas(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error
 }

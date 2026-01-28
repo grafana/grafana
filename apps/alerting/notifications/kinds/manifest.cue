@@ -15,6 +15,18 @@ manifest: {
 				templatev0alpha1,
 				timeIntervalv0alpha1,
 			]
+			routes: {
+				namespaced: {
+					"/receivers/schema": {
+						"GET": {
+							response: {
+								body: [...]
+							}
+							responseMetadata: typeMeta: false
+						}
+					}
+				}
+			}
 		}
 	}
 }

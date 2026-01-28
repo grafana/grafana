@@ -3,7 +3,7 @@
 // DO NOT EDIT
 //
 
-package apis
+package manifestdata
 
 import (
 	"encoding/json"
@@ -179,11 +179,11 @@ var appManifestData = app.ManifestData{
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
-					"/receivers/schema": {
+					"/receiverschemas": {
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
-								OperationId: "getReceiversschema",
+								OperationId: "getReceiverschemas",
 
 								Responses: &spec3.Responses{
 									ResponsesProps: spec3.ResponsesProps{
@@ -259,7 +259,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 var customRouteToGoResponseType = map[string]any{
 	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTest{},
 
-	"v0alpha1||<namespace>/receivers/schema|GET": v0alpha1.GetReceiversschema{},
+	"v0alpha1||<namespace>/receiverschemas|GET": v0alpha1.GetReceiverschemas{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
