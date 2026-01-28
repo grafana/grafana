@@ -10,7 +10,6 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -20,27 +19,22 @@ var ErrRepositoryDuplicatePath = fmt.Errorf("duplicate repository path")
 // ErrRepositoryParentFolderConflict is returned when a repository path conflicts with a parent folder
 var ErrRepositoryParentFolderConflict = fmt.Errorf("repository path conflicts with existing repository")
 
+// QuotaLimitsProvider provides quota limits for a given namespace.
+// This interface is defined here to avoid import cycles with the quotas package.
+type QuotaLimitsProvider interface {
+	// GetQuotaStatus returns the quota status for the given namespace.
+	GetQuotaStatus(ctx context.Context, namespace string) (provisioning.QuotaStatus, error)
+}
+
 type VerifyAgainstExistingRepositoriesValidator struct {
-	lister RepositoryLister
-	limits quotas.QuotaLimits
+	lister         RepositoryLister
+	statusProvider QuotaLimitsProvider
 }
 
-func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister) Validator {
-	// Default to 10 repositories for backward compatibility when using the old constructor
+func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister, statusProvider QuotaLimitsProvider) Validator {
 	return &VerifyAgainstExistingRepositoriesValidator{
-		lister: lister,
-		limits: quotas.QuotaLimits{MaxRepositories: 10},
-	}
-}
-
-// NewVerifyAgainstExistingRepositoriesValidatorWithQuotas creates a validator with quota limits.
-// HACK: This is a workaround to avoid changing NewVerifyAgainstExistingRepositoriesValidator signature which would require
-// changes in the enterprise repository. This should be merged into NewVerifyAgainstExistingRepositoriesValidator parameters
-// once we can coordinate the change across repositories.
-func NewVerifyAgainstExistingRepositoriesValidatorWithQuotas(lister RepositoryLister, limits quotas.QuotaLimits) Validator {
-	return &VerifyAgainstExistingRepositoriesValidator{
-		lister: lister,
-		limits: limits,
+		lister:         lister,
+		statusProvider: statusProvider,
 	}
 }
 
@@ -109,8 +103,14 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
+	// Get quota status for the namespace
+	quotaStatus, err := v.statusProvider.GetQuotaStatus(ctx, cfg.Namespace)
+	if err != nil {
+		return field.ErrorList{field.InternalError(field.NewPath(""), fmt.Errorf("failed to get quota status: %w", err))}
+	}
+
 	// Check repository limit (0 = unlimited, > 0 = use value)
-	maxRepos := v.limits.MaxRepositories
+	maxRepos := quotaStatus.MaxRepositories
 	// Early return if unlimited (0) to avoid unnecessary counting.
 	if maxRepos == 0 {
 		return nil
