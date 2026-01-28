@@ -694,8 +694,6 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-require github.com/grafana/grafana/apps/dashvalidator v0.0.0-20260126132456-51d2b15aaef9
-
 require github.com/prometheus/otlptranslator v1.0.0 // indirect
 
 replace (
