@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
-import { camelCase, groupBy } from 'lodash';
+import { camelCase, Dictionary, groupBy } from 'lodash';
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   DataFrameType,
+  DataSourceWithLogsLabelTypesSupport,
   GrafanaTheme2,
+  hasLogsLabelTypesSupport,
   store,
   TimeRange,
-  DataSourceWithLogsLabelTypesSupport,
-  hasLogsLabelTypesSupport,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
@@ -81,19 +81,14 @@ export const LogLineDetailsComponent = memo(
 
     const trace = useMemo(() => getTempoTraceFromLinks(fieldsWithLinks.links), [fieldsWithLinks.links]);
 
-    const groupedLabels = useMemo(
-      () =>
-        groupBy(labelsWithLinks, (label) => {
-          // @matias
-          if (ds) {
-            return ds.getLabelTypeFromFrame(label.key, log.dataFrame, log.rowIndex);
-          } else {
-            return getLabelTypeFromRow(label.key, log, true) ?? '';
-          }
-        }),
-      [labelsWithLinks, log, ds]
-    );
-    const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
+    const [groupedLabels, setGroupedLabels] = useState<Dictionary<LabelWithLinks[]> | null>(null);
+
+    const labelGroups = useMemo(() => {
+      if (groupedLabels === null) {
+        return null;
+      }
+      return Object.keys(groupedLabels);
+    }, [groupedLabels]);
 
     const logLineOpen = logOptionsStorageKey
       ? store.getBool(`${logOptionsStorageKey}.log-details.logLineOpen`, false)
@@ -134,7 +129,7 @@ export const LogLineDetailsComponent = memo(
     const noDetails =
       !fieldsWithLinks.links.length &&
       !fieldsWithLinks.linksFromVariableMap.length &&
-      !labelGroups.length &&
+      !labelGroups?.length &&
       !fieldsWithoutLinks.length;
 
     const allLinks = useMemo(
@@ -151,7 +146,7 @@ export const LogLineDetailsComponent = memo(
         trace: trace !== undefined,
         fields: fieldsWithoutLinks.length,
         labels: labelsWithLinks.length,
-        labelGroups: labelGroups.join(', '),
+        labelGroups: labelGroups?.join(', '),
       });
       // Once
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -168,6 +163,20 @@ export const LogLineDetailsComponent = memo(
 
       setDatasource();
     }, [log.datasourceUid]);
+
+    useEffect(() => {
+      const grouped = groupBy(labelsWithLinks, (label) => {
+        if (ds) {
+          return ds.getLabelTypeFromFrame(label.key, log.dataFrame, log.rowIndex);
+        }
+        return getLabelTypeFromRow(label.key, log, true) ?? '';
+      });
+      setGroupedLabels(grouped);
+    }, [ds, labelsWithLinks, log, setGroupedLabels]);
+
+    if (!groupedLabels || !labelGroups) {
+      return;
+    }
 
     return (
       <>

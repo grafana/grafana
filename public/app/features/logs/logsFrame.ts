@@ -2,8 +2,6 @@ import { DataFrame, FieldCache, FieldType, FieldWithIndex, DataFrameType, Labels
 
 import { parseLegacyLogsFrame } from './legacyLogsFrame';
 
-// @todo cannot use exports in plugins and packages, this needs to be externalized!
-
 // these are like Labels, but their values can be
 // arbitrary structures, not just strings
 export type LogFrameLabels = Record<string, unknown>;
@@ -35,7 +33,7 @@ const DATAPLANE_TIMESTAMP_NAME = 'timestamp';
 const DATAPLANE_BODY_NAME = 'body';
 const DATAPLANE_SEVERITY_NAME = 'severity';
 export const DATAPLANE_ID_NAME = 'id';
-const DATAPLANE_LABELS_NAME = 'labels';
+export const DATAPLANE_LABELS_NAME = 'labels';
 export const DATAPLANE_LABEL_TYPES_NAME = 'labelTypes';
 
 // NOTE: this is a hot fn, we need to avoid allocating new objects here

@@ -695,7 +695,7 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 					t,
 					message,
 					nanos,
-					json.RawMessage(fmt.Sprintf(`{"container_id":"Indexed label","hostname":"Parsed field","level":"Metadata"}`)),
+					json.RawMessage(`{"container_id":"Indexed label","hostname":"Parsed field","level":"Metadata"}`),
 				)
 			} else {
 				frame.AppendRow(
@@ -703,7 +703,7 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 					t,
 					message,
 					nanos,
-					json.RawMessage(fmt.Sprintf(`{"container_id":"Indexed label","hostname":"Parsed field","level":"Metadata"}`)),
+					json.RawMessage(`{"container_id":"Indexed label","hostname":"Parsed field","level":"Metadata"}`),
 				)
 			}
 

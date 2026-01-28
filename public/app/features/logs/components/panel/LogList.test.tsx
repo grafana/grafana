@@ -13,6 +13,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
@@ -33,9 +34,11 @@ jest.mock('@grafana/runtime', () => {
     ...jest.requireActual('@grafana/runtime'),
     usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
     reportInteraction: jest.fn(),
+    getDataSourceSrv: () => ({
+      get: (uid: string) => Promise.resolve(createTempoDatasource()),
+    }),
   };
 });
-
 jest.mock('../../utils', () => ({
   ...jest.requireActual('../../utils'),
   isPopoverMenuDisabled: jest.fn(),

@@ -19,6 +19,7 @@ import {
 import { setPluginLinksHook } from '@grafana/runtime';
 import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
+import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { getFieldSelectorWidth } from '../fieldSelector/FieldSelector';
 import { createLogLine } from '../mocks/logRow';
@@ -424,12 +425,12 @@ describe('LogLineDetails', () => {
         { name: 'body', type: FieldType.string, values: [entry] },
         { name: 'id', type: FieldType.string, values: ['1'] },
         {
-          name: 'labels',
+          name: DATAPLANE_LABELS_NAME,
           type: FieldType.other,
           values: [labels],
         },
         {
-          name: 'labelTypes',
+          name: DATAPLANE_LABEL_TYPES_NAME,
           type: FieldType.other,
           values: [
             {

@@ -33,12 +33,14 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getConfig } from 'app/core/config';
+import { DATAPLANE_LABEL_TYPES_NAME } from 'app/plugins/datasource/loki/types';
 
 import { getLogsExtractFields } from '../explore/Logs/LogsTable';
 import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/utils/download';
 
 import { getDataframeFields } from './components/logParser';
 import { GetRowContextQueryFn } from './components/panel/LogLineMenu';
+import { DATAPLANE_LABELS_NAME } from './logsFrame';
 
 /**
  * Returns the log level of a log line.
@@ -400,6 +402,12 @@ function getLabelTypeFromFrame(labelKey: string, frame: DataFrame, index: number
   return typeField[labelKey] ?? null;
 }
 
+/**
+ * @deprecated, use datasource.getLabelTypeFromFrame instead
+ * @param label
+ * @param row
+ * @param plural
+ */
 export function getLabelTypeFromRow(label: string, row: LogRowModel, plural = false) {
   if (!row.datasourceType) {
     return null;
@@ -411,10 +419,13 @@ export function getLabelTypeFromRow(label: string, row: LogRowModel, plural = fa
   return getDataSourceLabelType(labelType, row.datasourceType, plural);
 }
 
+/**
+ * @deprecated
+ * @param labelType
+ * @param datasourceType
+ * @param plural
+ */
 function getDataSourceLabelType(labelType: string, datasourceType: string, plural: boolean) {
-  // @todo generalize
-
-  // datasource.getLabelTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null)
   switch (datasourceType) {
     case 'loki':
       switch (labelType) {
@@ -493,8 +504,8 @@ export const downloadLogs = async (
               id: 'organize',
               options: {
                 excludeByName: {
-                  ['labels']: true,
-                  ['labelTypes']: true,
+                  [DATAPLANE_LABELS_NAME]: true,
+                  [DATAPLANE_LABEL_TYPES_NAME]: true,
                 },
               },
             },
