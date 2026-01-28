@@ -35,6 +35,7 @@ import { buildVizPanel } from '../serialization/layoutSerializers/utils';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { vizPanelToSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import {
   getDashboardSceneFor,
   getLibraryPanelBehavior,
@@ -77,7 +78,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
     const options: Array<SelectableValue<ShowContent>> = [
       {
-        label: t('dashboard.inspect-json.panel-json-label', 'Panel JSON'),
+        label: t('dashboard.inspect-json.panel-spec-label', 'Panel Spec'),
         description: t(
           'dashboard.inspect-json.panel-json-description',
           'The model saved in the dashboard JSON that configures how everything works.'
@@ -162,6 +163,17 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
     if (!(gridItem instanceof DashboardGridItem)) {
       console.error('Cannot update layout: panel parent is not a DashboardGridItem');
+      return;
+    }
+
+    const originalElementName = dashboardSceneGraph.getElementIdentifierForVizPanel(panel);
+    if (jsonObj.spec.element.name !== originalElementName) {
+      this.setState({
+        error: t(
+          'dashboard-scene.inspect-json-tab.error-element-changed',
+          'Cannot change the element reference. Only layout properties (x, y, width, height) can be modified.'
+        ),
+      });
       return;
     }
 
