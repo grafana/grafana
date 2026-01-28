@@ -382,6 +382,9 @@ func (s *EncryptionManager) GetProviders() encryption.ProviderConfig {
 	return s.providerConfig
 }
 
+// TODO: This is called repeatedly during consolidation and could perform poorly due to the mutex lock contention.
+// We may want to consider an approach where we temporarily disable the cache during consolidation then flush it all at once.
+// Do some benchmarking and revisit.
 func (s *EncryptionManager) FlushCache(namespace xkube.Namespace) {
 	s.dataKeyCache.Flush(namespace.String())
 }

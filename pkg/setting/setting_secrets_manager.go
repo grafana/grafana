@@ -24,6 +24,7 @@ type SecretsManagerSettings struct {
 	DataKeysCacheUseRedis bool
 	// DataKeysCacheEncryptionKey is used to encrypt data keys before storing them in the cache.
 	// If empty, a random key will be generated for each Grafana process at startup.
+	// If running in MT mode (i.e. with Redis cache enabled), this value must be set to the same value for all Grafana processes.
 	DataKeysCacheEncryptionKey string
 
 	// ConfiguredKMSProviders is a map of KMS providers found in the config file. The keys are in the format of <provider>.<keyName>, and the values are a map of the properties in that section
