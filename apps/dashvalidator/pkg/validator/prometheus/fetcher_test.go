@@ -171,6 +171,35 @@ func TestFetchMetrics_ContextCancelled_ReturnsError(t *testing.T) {
 // Category 4: Timeout Errors
 // ============================================================================
 
+func TestFetchMetrics_HTTPClientTimeout_ReturnsTimeoutError(t *testing.T) {
+	// This test verifies that the HTTP client-level timeout works correctly.
+	// Unlike context deadline, this tests the http.Client.Timeout field.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Wait longer than the client timeout
+		time.Sleep(100 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	// Create HTTP client with a very short timeout
+	client := &http.Client{
+		Timeout: 10 * time.Millisecond,
+	}
+
+	fetcher := NewFetcher()
+	metrics, err := fetcher.FetchMetrics(context.Background(), server.URL, client)
+
+	// Verify timeout error is returned
+	require.Error(t, err)
+	require.Nil(t, metrics)
+	require.True(t, validator.IsValidationError(err))
+
+	validationErr := validator.GetValidationError(err)
+	// HTTP client timeout returns a timeout error which is detected as ErrCodeAPITimeout
+	require.Equal(t, validator.ErrCodeAPITimeout, validationErr.Code)
+	require.Equal(t, http.StatusGatewayTimeout, validator.GetHTTPStatusCode(err))
+}
+
 func TestFetchMetrics_DeadlineExceeded_ReturnsTimeoutError(t *testing.T) {
 	// Create a server that delays response longer than the context deadline
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

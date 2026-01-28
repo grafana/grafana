@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type DashValidatorConfig struct {
@@ -127,6 +129,12 @@ func handleCheckRoute(
 	validators map[string]validator.DatasourceValidator,
 ) func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error {
 	return func(ctx context.Context, w app.CustomRouteResponseWriter, r *app.CustomRouteRequest) error {
+		// Set a timeout for the entire request processing
+		// This prevents the handler from hanging indefinitely on slow external services
+		const requestTimeout = 30 * time.Second
+		ctx, cancel := context.WithTimeout(ctx, requestTimeout)
+		defer cancel()
+
 		logger := log.WithContext(ctx)
 		logger.Info("Received compatibility check request")
 
@@ -157,6 +165,33 @@ func handleCheckRoute(
 				"error": fmt.Sprintf("MVP only supports single datasource validation, got %d datasources", len(req.DatasourceMappings)),
 				"code":  "invalid_request",
 			})
+		}
+
+		// Validate datasource mapping fields
+		for i, dsMapping := range req.DatasourceMappings {
+			// Validate UID using Grafana's standard validation
+			// Checks: not empty, max 40 chars, valid characters (a-zA-Z0-9-_)
+			if err := util.ValidateUID(dsMapping.UID); err != nil {
+				logger.Error("Datasource UID validation failed",
+					"index", i,
+					"uid", dsMapping.UID,
+					"error", err)
+				w.WriteHeader(http.StatusBadRequest)
+				return json.NewEncoder(w).Encode(map[string]string{
+					"error": fmt.Sprintf("invalid datasource UID: %v", err),
+					"code":  "invalid_datasource_uid",
+				})
+			}
+
+			// Validate type is not empty
+			if len(dsMapping.Type) == 0 {
+				logger.Error("Datasource type is empty", "index", i)
+				w.WriteHeader(http.StatusBadRequest)
+				return json.NewEncoder(w).Encode(map[string]string{
+					"error": "datasource type cannot be empty",
+					"code":  "invalid_datasource_type",
+				})
+			}
 		}
 
 		// Step 2: Build validator request
@@ -244,9 +279,11 @@ func handleCheckRoute(
 				})
 			}
 
-			// Create HTTP client with authenticated transport
+			// Create HTTP client with authenticated transport and timeout
+			// The timeout acts as a safety net if context timeout isn't propagated
 			httpClient := &http.Client{
 				Transport: transport,
+				Timeout:   30 * time.Second,
 			}
 
 			validatorReq.DatasourceMappings = append(validatorReq.DatasourceMappings, validator.DatasourceMapping{
