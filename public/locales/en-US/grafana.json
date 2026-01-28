@@ -12375,7 +12375,6 @@
       "github-app-mode-new": "Connect to a new app",
       "github-app-no-connections": "No GitHub connections found",
       "github-app-no-connections-message": "You don't have any existing GitHub app connections. Please select \"Connect to a new app\" to create one.",
-      "retry-status-button": "Recheck repository status",
       "step-auth-type": "Choose connection type",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",
@@ -12405,6 +12404,9 @@
       "push-to-a-new-branch": "Push to a new branch",
       "push-to-existing-branch": "Push to an existing branch"
     }
+  },
+  "provisioning-alert": {
+    "retry": "Retry"
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
