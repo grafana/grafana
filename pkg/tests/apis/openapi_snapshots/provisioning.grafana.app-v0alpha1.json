@@ -4284,6 +4284,7 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionSpec": {
         "type": "object",
         "required": [
+          "title",
           "type"
         ],
         "properties": {
@@ -4317,7 +4318,8 @@
           },
           "title": {
             "description": "The connection display name (shown in the UI)",
-            "type": "string"
+            "type": "string",
+            "default": ""
           },
           "type": {
             "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
@@ -4340,7 +4342,6 @@
         "type": "object",
         "required": [
           "observedGeneration",
-          "state",
           "health"
         ],
         "properties": {
@@ -4389,15 +4390,6 @@
             "type": "integer",
             "format": "int64",
             "default": 0
-          },
-          "state": {
-            "description": "Connection state\n\nPossible enum values:\n - `\"connected\"`\n - `\"disconnected\"`",
-            "type": "string",
-            "default": "",
-            "enum": [
-              "connected",
-              "disconnected"
-            ]
           }
         }
       },

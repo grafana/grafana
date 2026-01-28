@@ -42,6 +42,7 @@ const createMockRequestState = (overrides: Partial<MockRequestState> = {}): Mock
 const createMockConnection = (overrides: Partial<Connection> = {}): Connection => ({
   metadata: { name: 'test-connection' },
   spec: {
+    title: 'Test Connection',
     type: 'github',
     url: 'https://github.com/settings/installations/12345678',
     github: {
@@ -55,7 +56,6 @@ const createMockConnection = (overrides: Partial<Connection> = {}): Connection =
   status: {
     health: { healthy: true },
     observedGeneration: 1,
-    state: 'connected',
     conditions: [
       {
         type: 'Ready',
@@ -174,6 +174,7 @@ describe('ConnectionForm', () => {
       await waitFor(() => {
         expect(mockSubmitData).toHaveBeenCalledWith(
           {
+            title: 'GitHub Connection',
             type: 'github',
             github: {
               appID: '123456',
@@ -196,6 +197,7 @@ describe('ConnectionForm', () => {
       await waitFor(() => {
         expect(mockSubmitData).toHaveBeenCalledWith(
           {
+            title: 'Test Connection',
             type: 'github',
             github: {
               appID: '123456',

@@ -346,6 +346,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 					"title": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The connection display name (shown in the UI)",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -392,7 +393,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 						},
 					},
 				},
-				Required: []string{"type"},
+				Required: []string{"title", "type"},
 			},
 		},
 		Dependencies: []string{
@@ -458,15 +459,6 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 							},
 						},
 					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Connection state\n\nPossible enum values:\n - `\"connected\"`\n - `\"disconnected\"`",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"connected", "disconnected"},
-						},
-					},
 					"health": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The connection health status",
@@ -475,7 +467,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 						},
 					},
 				},
-				Required: []string{"observedGeneration", "state", "health"},
+				Required: []string{"observedGeneration", "health"},
 			},
 		},
 		Dependencies: []string{
