@@ -77,28 +77,17 @@ func (c *ossDataKeyCache) GetByLabel(namespace, label string) (_ encryption.Data
 	return entry, true
 }
 
-func (c *ossDataKeyCache) AddById(namespace string, entry encryption.DataKeyCacheEntry) {
+func (c *ossDataKeyCache) Set(namespace string, entry encryption.DataKeyCacheEntry) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
 	entry.Expiration = time.Now().Add(c.cacheTTL)
 	entry.Namespace = namespace
 
-	entry, exists := c.byId[namespacedKey{namespace, entry.Id}]
-	if !exists {
+	if _, exists := c.byId[namespacedKey{namespace, entry.Id}]; !exists {
 		c.byId[namespacedKey{namespace, entry.Id}] = entry
 	}
-}
-
-func (c *ossDataKeyCache) AddByLabel(namespace string, entry encryption.DataKeyCacheEntry) {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
-
-	entry.Expiration = time.Now().Add(c.cacheTTL)
-	entry.Namespace = namespace
-
-	entry, exists := c.byLabel[namespacedKey{namespace, entry.Label}]
-	if !exists {
+	if _, exists := c.byLabel[namespacedKey{namespace, entry.Label}]; !exists {
 		c.byLabel[namespacedKey{namespace, entry.Label}] = entry
 	}
 }

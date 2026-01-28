@@ -67,10 +67,7 @@ func (c *NoopDataKeyCache) GetByLabel(namespace, label string) (encryption.DataK
 	return encryption.DataKeyCacheEntry{}, false
 }
 
-func (c *NoopDataKeyCache) AddById(namespace string, entry encryption.DataKeyCacheEntry) {
-}
-
-func (c *NoopDataKeyCache) AddByLabel(namespace string, entry encryption.DataKeyCacheEntry) {
+func (c *NoopDataKeyCache) Set(namespace string, entry encryption.DataKeyCacheEntry) {
 }
 
 func (c *NoopDataKeyCache) RemoveExpired() {

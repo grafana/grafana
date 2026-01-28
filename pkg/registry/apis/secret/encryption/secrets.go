@@ -44,10 +44,12 @@ func KeyLabel(providerID ProviderID) string {
 // DataKeyCache is a multi-tenant cache used by the EncryptionManager to avoid expensive database lookups during repeated secret decryption operations.
 // Per AppSec, data keys in this cache must be encrypted at-rest.
 type DataKeyCache interface {
+	// The implementation of Set must ensure the key is retrievable by both key and label
+	Set(namespace string, entry DataKeyCacheEntry)
+
 	GetById(namespace, id string) (DataKeyCacheEntry, bool)
 	GetByLabel(namespace, label string) (DataKeyCacheEntry, bool)
-	AddById(namespace string, entry DataKeyCacheEntry)
-	AddByLabel(namespace string, entry DataKeyCacheEntry)
+
 	RemoveExpired()
 	Flush(namespace string)
 }

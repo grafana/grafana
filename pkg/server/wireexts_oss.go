@@ -153,8 +153,7 @@ var wireExtsBasicSet = wire.NewSet(
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
 	gsmKMSProviders.ProvideOSSKMSProviders,
-	//gsmEncryptionManager.ProvideOSSDataKeyCache, // Temporarily use noop cache
-	gsmEncryptionManager.ProvideNoopDataKeyCache,
+	gsmEncryptionManager.ProvideOSSDataKeyCache,
 	secret.ProvideSecureValueClient,
 	provisioningExtras,
 	configProviderExtras,

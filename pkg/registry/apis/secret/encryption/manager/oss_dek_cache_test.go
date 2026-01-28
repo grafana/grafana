@@ -27,8 +27,8 @@ func TestOSSDataKeyCache(t *testing.T) {
 		Active:           true,
 	}
 
-	t.Run("AddById and GetById", func(t *testing.T) {
-		cache.AddById(namespace, entry)
+	t.Run("Set and GetById and GetByLabel", func(t *testing.T) {
+		cache.Set(namespace, entry)
 
 		retrieved, exists := cache.GetById(namespace, entry.Id)
 		require.True(t, exists, "entry should exist after adding")
@@ -38,12 +38,8 @@ func TestOSSDataKeyCache(t *testing.T) {
 		assert.Equal(t, entry.Active, retrieved.Active)
 		assert.Equal(t, namespace, retrieved.Namespace)
 		assert.True(t, retrieved.Expiration.After(time.Now()), "expiration should be in the future")
-	})
 
-	t.Run("AddByLabel and GetByLabel", func(t *testing.T) {
-		cache.AddByLabel(namespace, entry)
-
-		retrieved, exists := cache.GetByLabel(namespace, entry.Label)
+		retrieved, exists = cache.GetByLabel(namespace, entry.Label)
 		require.True(t, exists, "entry should exist after adding")
 		assert.Equal(t, entry.Id, retrieved.Id)
 		assert.Equal(t, entry.Label, retrieved.Label)
@@ -53,42 +49,6 @@ func TestOSSDataKeyCache(t *testing.T) {
 		assert.True(t, retrieved.Expiration.After(time.Now()), "expiration should be in the future")
 	})
 
-	t.Run("GetById and GetByLabel are independent", func(t *testing.T) {
-		cache2 := ProvideOSSDataKeyCache(settings)
-		ns := "independent-test"
-
-		entryById := encryption.DataKeyCacheEntry{
-			Id:               "id-only-key",
-			Label:            "label1",
-			EncryptedDataKey: []byte("data1"),
-		}
-		entryByLabel := encryption.DataKeyCacheEntry{
-			Id:               "id2",
-			Label:            "label-only-key",
-			EncryptedDataKey: []byte("data2"),
-		}
-
-		cache2.AddById(ns, entryById)
-		cache2.AddByLabel(ns, entryByLabel)
-
-		// Should find by ID
-		retrieved, exists := cache2.GetById(ns, entryById.Id)
-		require.True(t, exists)
-		assert.Equal(t, entryById.Id, retrieved.Id)
-
-		// Should not find by label that wasn't added via AddByLabel
-		_, exists = cache2.GetByLabel(ns, entryById.Label)
-		assert.False(t, exists)
-
-		// Should find by label
-		retrieved, exists = cache2.GetByLabel(ns, entryByLabel.Label)
-		require.True(t, exists)
-		assert.Equal(t, entryByLabel.Label, retrieved.Label)
-
-		// Should not find by ID that wasn't added via AddById
-		_, exists = cache2.GetById(ns, entryByLabel.Id)
-		assert.False(t, exists)
-	})
 }
 
 func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
@@ -108,29 +68,25 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 		Active:           true,
 	}
 
-	t.Run("GetById returns false for non-existent namespace", func(t *testing.T) {
+	t.Run("GetById and GetByLabel return false for non-existent namespace", func(t *testing.T) {
 		_, exists := cache.GetById("non-existent-namespace", "any-id")
 		assert.False(t, exists)
+
+		_, exists = cache.GetByLabel("non-existent-namespace", "any-label")
+		assert.False(t, exists)
 	})
 
-	t.Run("GetById returns false for non-existent id", func(t *testing.T) {
-		cache.AddById(namespace, entry)
+	t.Run("GetById and GetByLabel return false for non-existent id/label", func(t *testing.T) {
+		cache.Set(namespace, entry)
+
 		_, exists := cache.GetById(namespace, "non-existent-id")
 		assert.False(t, exists)
-	})
 
-	t.Run("GetByLabel returns false for non-existent namespace", func(t *testing.T) {
-		_, exists := cache.GetByLabel("non-existent-namespace", "any-label")
+		_, exists = cache.GetByLabel(namespace, "non-existent-label")
 		assert.False(t, exists)
 	})
 
-	t.Run("GetByLabel returns false for non-existent label", func(t *testing.T) {
-		cache.AddByLabel(namespace, entry)
-		_, exists := cache.GetByLabel(namespace, "non-existent-label")
-		assert.False(t, exists)
-	})
-
-	t.Run("GetById returns false for expired entry", func(t *testing.T) {
+	t.Run("GetById and GetByLabel return false for expired entry", func(t *testing.T) {
 		shortTTLSettings := setting.NewCfg()
 		shortTTLSettings.SecretsManagement = setting.SecretsManagerSettings{
 			DataKeysCacheTTL: 1 * time.Millisecond,
@@ -143,38 +99,20 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 			Label:            "expired-label",
 			EncryptedDataKey: []byte("expired-data"),
 		}
-		shortCache.AddById(namespace, expiredEntry)
+		shortCache.Set(namespace, expiredEntry)
 
 		time.Sleep(10 * time.Millisecond)
 
 		_, exists := shortCache.GetById(namespace, expiredEntry.Id)
 		assert.False(t, exists, "should return false for expired entry")
-	})
 
-	t.Run("GetByLabel returns false for expired entry", func(t *testing.T) {
-		shortTTLSettings := setting.NewCfg()
-		shortTTLSettings.SecretsManagement = setting.SecretsManagerSettings{
-			DataKeysCacheTTL: 1 * time.Millisecond,
-		}
-		shortCache := ProvideOSSDataKeyCache(shortTTLSettings)
-
-		namespace := "test-ns"
-		expiredEntry := encryption.DataKeyCacheEntry{
-			Id:               "expired-key",
-			Label:            "expired-label",
-			EncryptedDataKey: []byte("expired-data"),
-		}
-		shortCache.AddByLabel(namespace, expiredEntry)
-
-		time.Sleep(10 * time.Millisecond)
-
-		_, exists := shortCache.GetByLabel(namespace, expiredEntry.Label)
+		_, exists = shortCache.GetByLabel(namespace, expiredEntry.Label)
 		assert.False(t, exists, "should return false for expired entry")
 	})
 
-	t.Run("GetById returns false when entry namespace doesn't match", func(t *testing.T) {
-		// This tests the entry.Namespace != namespace check in GetById
-		// This is a defensive check that shouldn't normally happen if AddById works correctly
+	t.Run("GetById and GetByLabel return false when entry namespace doesn't match", func(t *testing.T) {
+		// This tests the entry.Namespace != namespace check in GetById/GetByLabel
+		// This is a defensive check that shouldn't normally happen if Set works correctly
 		testCache := ProvideOSSDataKeyCache(settings).(*ossDataKeyCache)
 
 		// Manually insert an entry with mismatched namespace to test the defensive check
@@ -188,30 +126,13 @@ func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
 
 		testCache.mtx.Lock()
 		testCache.byId[namespacedKey{namespace: "correct-namespace", value: mismatchedEntry.Id}] = mismatchedEntry
+		testCache.byLabel[namespacedKey{namespace: "correct-namespace", value: mismatchedEntry.Label}] = mismatchedEntry
 		testCache.mtx.Unlock()
 
 		_, exists := testCache.GetById("correct-namespace", mismatchedEntry.Id)
 		assert.False(t, exists, "should return false when entry namespace doesn't match lookup namespace")
-	})
 
-	t.Run("GetByLabel returns false when entry namespace doesn't match", func(t *testing.T) {
-		// This tests the entry.Namespace != namespace check in GetByLabel
-		testCache := ProvideOSSDataKeyCache(settings).(*ossDataKeyCache)
-
-		// Manually insert an entry with mismatched namespace to test the defensive check
-		mismatchedEntry := encryption.DataKeyCacheEntry{
-			Id:               "test-id",
-			Label:            "test-label",
-			EncryptedDataKey: []byte("test-data"),
-			Namespace:        "wrong-namespace",
-			Expiration:       time.Now().Add(999 * time.Hour),
-		}
-
-		testCache.mtx.Lock()
-		testCache.byLabel[namespacedKey{namespace: "correct-namespace", value: mismatchedEntry.Label}] = mismatchedEntry
-		testCache.mtx.Unlock()
-
-		_, exists := testCache.GetByLabel("correct-namespace", mismatchedEntry.Label)
+		_, exists = testCache.GetByLabel("correct-namespace", mismatchedEntry.Label)
 		assert.False(t, exists, "should return false when entry namespace doesn't match lookup namespace")
 	})
 }
@@ -243,9 +164,9 @@ func TestOSSDataKeyCache_NamespaceIsolation(t *testing.T) {
 		Active:           false,
 	}
 
-	t.Run("entries with same ID in different namespaces are isolated", func(t *testing.T) {
-		cache.AddById(namespace1, entry1)
-		cache.AddById(namespace2, entry2)
+	t.Run("entries with same ID and label in different namespaces are isolated", func(t *testing.T) {
+		cache.Set(namespace1, entry1)
+		cache.Set(namespace2, entry2)
 
 		retrieved1, exists := cache.GetById(namespace1, entry1.Id)
 		require.True(t, exists)
@@ -258,19 +179,14 @@ func TestOSSDataKeyCache_NamespaceIsolation(t *testing.T) {
 		assert.Equal(t, entry2.EncryptedDataKey, retrieved2.EncryptedDataKey)
 		assert.Equal(t, namespace2, retrieved2.Namespace)
 		assert.False(t, retrieved2.Active)
-	})
 
-	t.Run("entries with same label in different namespaces are isolated", func(t *testing.T) {
-		cache.AddByLabel(namespace1, entry1)
-		cache.AddByLabel(namespace2, entry2)
-
-		retrieved1, exists := cache.GetByLabel(namespace1, entry1.Label)
+		retrieved1, exists = cache.GetByLabel(namespace1, entry1.Label)
 		require.True(t, exists)
 		assert.Equal(t, entry1.EncryptedDataKey, retrieved1.EncryptedDataKey)
 		assert.Equal(t, namespace1, retrieved1.Namespace)
 		assert.True(t, retrieved1.Active)
 
-		retrieved2, exists := cache.GetByLabel(namespace2, entry2.Label)
+		retrieved2, exists = cache.GetByLabel(namespace2, entry2.Label)
 		require.True(t, exists)
 		assert.Equal(t, entry2.EncryptedDataKey, retrieved2.EncryptedDataKey)
 		assert.Equal(t, namespace2, retrieved2.Namespace)
@@ -282,12 +198,10 @@ func TestOSSDataKeyCache_NamespaceIsolation(t *testing.T) {
 		cache.Flush(namespace1)
 		cache.Flush(namespace2)
 
-		cache.AddById(namespace1, entry1)
+		cache.Set(namespace1, entry1)
 
 		_, exists := cache.GetById(namespace2, entry1.Id)
 		assert.False(t, exists, "should not find entry from different namespace")
-
-		cache.AddByLabel(namespace1, entry1)
 
 		_, exists = cache.GetByLabel(namespace2, entry1.Label)
 		assert.False(t, exists, "should not find entry from different namespace")
@@ -310,8 +224,7 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 			EncryptedDataKey: []byte("expiring-data"),
 		}
 
-		cache.AddById(namespace, entry)
-		cache.AddByLabel(namespace, entry)
+		cache.Set(namespace, entry)
 
 		// Should exist immediately
 		_, exists := cache.GetById(namespace, entry.Id)
@@ -340,38 +253,26 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 
 		namespace := "test-ns"
 
-		// Add entries that will expire
-		expiredEntry1 := encryption.DataKeyCacheEntry{
+		// Add entry that will expire
+		expiredEntry := encryption.DataKeyCacheEntry{
 			Id:               "expired-1",
 			Label:            "expired-label-1",
 			EncryptedDataKey: []byte("expired-data-1"),
 		}
-		expiredEntry2 := encryption.DataKeyCacheEntry{
-			Id:               "expired-2",
-			Label:            "expired-label-2",
-			EncryptedDataKey: []byte("expired-data-2"),
-		}
 
-		cache.AddById(namespace, expiredEntry1)
-		cache.AddByLabel(namespace, expiredEntry2)
+		cache.Set(namespace, expiredEntry)
 
 		// Wait for expiration
 		time.Sleep(100 * time.Millisecond)
 
-		// Add fresh entries
-		freshEntry1 := encryption.DataKeyCacheEntry{
+		// Add fresh entry
+		freshEntry := encryption.DataKeyCacheEntry{
 			Id:               "fresh-1",
 			Label:            "fresh-label-1",
 			EncryptedDataKey: []byte("fresh-data-1"),
 		}
-		freshEntry2 := encryption.DataKeyCacheEntry{
-			Id:               "fresh-2",
-			Label:            "fresh-label-2",
-			EncryptedDataKey: []byte("fresh-data-2"),
-		}
 
-		cache.AddById(namespace, freshEntry1)
-		cache.AddByLabel(namespace, freshEntry2)
+		cache.Set(namespace, freshEntry)
 
 		// Before RemoveExpired, expired entries still exist in the map
 		// but GetById/GetByLabel return false due to IsExpired() check
@@ -379,19 +280,19 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 		// Call RemoveExpired
 		cache.RemoveExpired()
 
-		// Fresh entries should still exist
-		_, exists := cache.GetById(namespace, freshEntry1.Id)
+		// Fresh entry should still exist
+		_, exists := cache.GetById(namespace, freshEntry.Id)
 		assert.True(t, exists, "fresh entry should still exist after RemoveExpired")
 
-		_, exists = cache.GetByLabel(namespace, freshEntry2.Label)
+		_, exists = cache.GetByLabel(namespace, freshEntry.Label)
 		assert.True(t, exists, "fresh entry should still exist after RemoveExpired")
 
-		// Expired entries should not exist
+		// Expired entry should not exist
 		ossCache := cache.(*ossDataKeyCache)
-		_, exists = ossCache.byId[namespacedKey{namespace: namespace, value: expiredEntry1.Id}]
+		_, exists = ossCache.byId[namespacedKey{namespace: namespace, value: expiredEntry.Id}]
 		assert.False(t, exists, "expired entry should not exist after RemoveExpired")
 
-		_, exists = ossCache.byLabel[namespacedKey{namespace: namespace, value: expiredEntry2.Label}]
+		_, exists = ossCache.byLabel[namespacedKey{namespace: namespace, value: expiredEntry.Label}]
 		assert.False(t, exists, "expired entry should not exist after RemoveExpired")
 	})
 
@@ -416,10 +317,8 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 			EncryptedDataKey: []byte("expired-data"),
 		}
 
-		cache.AddById(ns1, ns1ExpiredEntry)
-		cache.AddByLabel(ns1, ns1ExpiredEntry)
-		cache.AddById(ns2, ns2ExpiredEntry)
-		cache.AddByLabel(ns2, ns2ExpiredEntry)
+		cache.Set(ns1, ns1ExpiredEntry)
+		cache.Set(ns2, ns2ExpiredEntry)
 
 		time.Sleep(100 * time.Millisecond)
 
@@ -434,10 +333,8 @@ func TestOSSDataKeyCache_Expiration(t *testing.T) {
 			EncryptedDataKey: []byte("fresh-data-ns2"),
 		}
 
-		cache.AddById(ns1, ns1FreshEntry)
-		cache.AddByLabel(ns1, ns1FreshEntry)
-		cache.AddById(ns2, ns2FreshEntry)
-		cache.AddByLabel(ns2, ns2FreshEntry)
+		cache.Set(ns1, ns1FreshEntry)
+		cache.Set(ns2, ns2FreshEntry)
 
 		cache.RemoveExpired()
 
@@ -496,8 +393,7 @@ func TestOSSDataKeyCache_Flush(t *testing.T) {
 	}
 
 	t.Run("Flush removes all entries from specified namespace", func(t *testing.T) {
-		cache.AddById(namespace1, entry1)
-		cache.AddByLabel(namespace1, entry1)
+		cache.Set(namespace1, entry1)
 
 		// Verify entries exist
 		_, exists := cache.GetById(namespace1, entry1.Id)
@@ -518,10 +414,8 @@ func TestOSSDataKeyCache_Flush(t *testing.T) {
 	})
 
 	t.Run("Flush only affects specified namespace", func(t *testing.T) {
-		cache.AddById(namespace1, entry1)
-		cache.AddByLabel(namespace1, entry1)
-		cache.AddById(namespace2, entry2)
-		cache.AddByLabel(namespace2, entry2)
+		cache.Set(namespace1, entry1)
+		cache.Set(namespace2, entry2)
 
 		// Flush only namespace1
 		cache.Flush(namespace1)
@@ -548,7 +442,7 @@ func TestOSSDataKeyCache_Flush(t *testing.T) {
 	})
 
 	t.Run("can add entries after flush", func(t *testing.T) {
-		cache.AddById(namespace1, entry1)
+		cache.Set(namespace1, entry1)
 		cache.Flush(namespace1)
 
 		// Add new entry after flush
@@ -557,10 +451,13 @@ func TestOSSDataKeyCache_Flush(t *testing.T) {
 			Label:            "new-label",
 			EncryptedDataKey: []byte("new-data"),
 		}
-		cache.AddById(namespace1, newEntry)
+		cache.Set(namespace1, newEntry)
 
 		// New entry should exist
 		_, exists := cache.GetById(namespace1, "new-key")
+		assert.True(t, exists, "should be able to add entries after flush")
+
+		_, exists = cache.GetByLabel(namespace1, "new-label")
 		assert.True(t, exists, "should be able to add entries after flush")
 	})
 }

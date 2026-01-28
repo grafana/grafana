@@ -529,7 +529,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	dataKeyCache := manager3.ProvideNoopDataKeyCache()
+	dataKeyCache := manager3.ProvideOSSDataKeyCache(cfg)
 	encryptionManager, err := manager3.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig, dataKeyCache, cfg)
 	if err != nil {
 		return nil, err
@@ -1206,7 +1206,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	dataKeyCache := manager3.ProvideNoopDataKeyCache()
+	dataKeyCache := manager3.ProvideOSSDataKeyCache(cfg)
 	encryptionManager, err := manager3.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig, dataKeyCache, cfg)
 	if err != nil {
 		return nil, err
@@ -1739,7 +1739,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 	if err != nil {
 		return Runner{}, err
 	}
-	dataKeyCache := manager3.ProvideNoopDataKeyCache()
+	dataKeyCache := manager3.ProvideOSSDataKeyCache(cfg)
 	encryptionManager, err := manager3.ProvideEncryptionManager(tracer, dataKeyStorage, usageStats, cipher, providerConfig, dataKeyCache, cfg)
 	if err != nil {
 		return Runner{}, err

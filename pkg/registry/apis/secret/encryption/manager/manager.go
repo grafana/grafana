@@ -442,17 +442,7 @@ func (s *EncryptionManager) cacheDataKey(namespace string, dataKey *contracts.Se
 		EncryptedDataKey: encryptedForCache,
 		Active:           dataKey.Active,
 	}
-
-	s.dataKeyCache.AddById(namespace, entry)
-
-	// Then, we cache the data key by label, ONLY if data key's lifetime
-	// is longer than a certain "caution period", because cache "by label"
-	// is used (only) by encrypt operations, and we want to ensure that
-	// no data key is cached for encryption ops before being persisted.
-	nowMinusCautionPeriod := time.Now().Add(-s.cfg.SecretsManagement.DataKeysCacheCautionPeriod)
-	if dataKey.Created.Before(nowMinusCautionPeriod) {
-		s.dataKeyCache.AddByLabel(namespace, entry)
-	}
+	s.dataKeyCache.Set(namespace, entry)
 }
 
 // decryptCachedDataKey decrypts a data key retrieved from the cache.
