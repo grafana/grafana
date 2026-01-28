@@ -11795,6 +11795,8 @@
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
+      "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
+      "error-repository-status-unhealthy-title": "Repository status unhealthy",
       "external-storage-label": "External storage",
       "files-count_one": "{{count}} files",
       "files-count_other": "{{count}} files",
@@ -11819,13 +11821,16 @@
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
+      "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-title": "A human-readable name for the config",
+      "error-connection-required": "Connection is required",
       "error-fetch-branches": "Failed to fetch branches",
       "error-required": "This field is required.",
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
+      "label-connection": "GitHub App connection",
       "label-enabled": "Enabled",
       "label-interval-seconds": "Interval (seconds)",
       "label-repository-type": "Repository type",
@@ -11858,26 +11863,37 @@
       "back-to-connections": "Back to connections",
       "button-save": "Save",
       "button-saving": "Saving...",
-      "default-title": "GitHub Connection",
       "description-app-id": "The ID of your GitHub App",
+      "description-description": "Optional description for this connection",
       "description-installation-id": "The installation ID of your GitHub App",
       "description-private-key": "The private key for your GitHub App in PEM format",
       "description-provider": "Select the provider type",
+      "description-title": "A human-readable name for this connection",
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
       "error-save-connection": "Failed to save connection",
       "label-app-id": "GitHub App ID",
+      "label-description": "Description",
       "label-installation-id": "GitHub Installation ID",
       "label-private-key": "Private Key (PEM)",
       "label-provider": "Provider",
+      "label-title": "Title",
       "not-found": "Connection not found",
       "not-found-description": "The connection you are looking for does not exist.",
       "page-subtitle": "Configure a connection to authenticate with external providers",
       "page-title-create": "Create connection",
       "page-title-edit": "Edit connection",
       "placeholder-app-id": "123456",
+      "placeholder-description": "Optional description",
       "placeholder-installation-id": "12345678",
-      "placeholder-private-key": "-----BEGIN RSA PRIVATE KEY-----..."
+      "placeholder-private-key": "-----BEGIN RSA PRIVATE KEY-----...",
+      "placeholder-title": "My GitHub App"
+    },
+    "connection-options": {
+      "loading": "Loading...",
+      "no-repos": "No repositories",
+      "repos-truncated_one": "{{shown}} +{{count}} more",
+      "repos-truncated_other": "{{shown}} +{{count}} more"
     },
     "connections": {
       "add-connection": "Add connection",
@@ -12355,7 +12371,6 @@
       "button-start": "Begin synchronization",
       "check-status-button": "Check repository status",
       "check-status-message": "Repository connecting, synchronize will be ready soon.",
-      "default-connection-title": "GitHub Connection",
       "discard-modal": {
         "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
         "confirm": "Yes, discard",
@@ -12402,6 +12417,9 @@
       "push-to-a-new-branch": "Push to a new branch",
       "push-to-existing-branch": "Push to an existing branch"
     }
+  },
+  "provisioning-alert": {
+    "retry": "Retry"
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -12607,8 +12625,17 @@
       "title-data-source-help": "Data source help"
     }
   },
+  "query-editor": {
+    "action": {
+      "inspector": "Query inspector"
+    },
+    "edit-query-name": "Edit query name",
+    "validation": {
+      "duplicate-name": "Query name already exists",
+      "empty-name": "An empty query name is not allowed"
+    }
+  },
   "query-editor-next": {
-    "detail-placeholder": "Query/Transform detail view goes here",
     "sidebar": {
       "card-click": "Select query {{refId}}",
       "expression": "Expression",

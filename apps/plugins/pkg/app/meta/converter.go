@@ -740,7 +740,32 @@ type grafanaComPluginVersionMeta struct {
 		Rel  string `json:"rel"`
 		Href string `json:"href"`
 	} `json:"links"`
-	Scopes []string `json:"scopes"`
+	Scopes   []string                       `json:"scopes"`
+	Children []grafanaComChildPluginVersion `json:"children,omitempty"`
+}
+
+// grafanaComChildPluginVersion represents a child plugin in the parent's version response.
+type grafanaComChildPluginVersion struct {
+	ID              int                          `json:"id"`
+	PluginID        int                          `json:"pluginId"`
+	PluginVersionID int                          `json:"pluginVersionId"`
+	Path            string                       `json:"path"`
+	Slug            string                       `json:"slug"`
+	JSON            pluginsv0alpha1.MetaJSONData `json:"json"`
+	CreatedAt       time.Time                    `json:"createdAt"`
+	UpdatedAt       *time.Time                   `json:"updatedAt"`
+}
+
+// grafanaComChildPluginVersionToMetaSpec converts a child plugin version to a MetaSpec.
+// It inherits signature information from the parent plugin.
+func grafanaComChildPluginVersionToMetaSpec(child grafanaComChildPluginVersion, parent grafanaComPluginVersionMeta) pluginsv0alpha1.MetaSpec {
+	// Create a synthetic parent meta with child's JSON but parent's signature info
+	childMeta := grafanaComPluginVersionMeta{
+		JSON:          child.JSON,
+		SignatureType: parent.SignatureType,
+		SignedByOrg:   parent.SignedByOrg,
+	}
+	return grafanaComPluginVersionMetaToMetaSpec(childMeta)
 }
 
 // grafanaComPluginVersionMetaToMetaSpec converts a grafanaComPluginVersionMeta to a pluginsv0alpha1.MetaSpec.

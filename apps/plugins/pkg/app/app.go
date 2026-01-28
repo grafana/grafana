@@ -19,6 +19,7 @@ import (
 
 	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 )
 
@@ -26,6 +27,19 @@ func New(cfg app.Config) (app.App, error) {
 	specificConfig, ok := cfg.SpecificConfig.(*PluginAppConfig)
 	if !ok {
 		return nil, fmt.Errorf("invalid config type")
+	}
+
+	metaKind := simple.AppManagedKind{
+		Kind: pluginsv0alpha1.MetaKind(),
+	}
+	pluginKind := simple.AppManagedKind{
+		Kind: pluginsv0alpha1.PluginKind(),
+	}
+
+	if specificConfig.EnableChildReconciler {
+		clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig())
+		registrar := install.NewInstallRegistrar(clientGenerator)
+		pluginKind.Reconciler = install.NewChildPluginReconciler(specificConfig.MetaProviderManager, registrar)
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -38,14 +52,7 @@ func New(cfg app.Config) (app.App, error) {
 				},
 			},
 		},
-		ManagedKinds: []simple.AppManagedKind{
-			{
-				Kind: pluginsv0alpha1.PluginKind(),
-			},
-			{
-				Kind: pluginsv0alpha1.MetaKind(),
-			},
-		},
+		ManagedKinds: []simple.AppManagedKind{metaKind, pluginKind},
 	}
 
 	a, err := simple.NewApp(simpleConfig)
@@ -65,15 +72,18 @@ func New(cfg app.Config) (app.App, error) {
 }
 
 type PluginAppConfig struct {
-	MetaProviderManager *meta.ProviderManager
+	MetaProviderManager   *meta.ProviderManager
+	EnableChildReconciler bool
 }
 
 func ProvideAppInstaller(
 	authorizer authorizer.Authorizer,
 	metaProviderManager *meta.ProviderManager,
+	enableChildReconciler bool,
 ) (*PluginAppInstaller, error) {
 	specificConfig := &PluginAppConfig{
-		MetaProviderManager: metaProviderManager,
+		MetaProviderManager:   metaProviderManager,
+		EnableChildReconciler: enableChildReconciler,
 	}
 	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, New)
 	appConfig := app.Config{
