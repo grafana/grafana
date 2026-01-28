@@ -4285,7 +4285,7 @@
     "error-title": "Error checking compatibility",
     "parse-errors-note": "Note: Some queries failed to parse. Check browser console for details.",
     "retry": "Retry",
-    "score-title": "Compatibility Score: {{value}}%",
+    "score-title": "Compatibility Score: {{score}}%",
     "title": "Dashboard Compatibility Check for {{dashboardName}}",
     "v2-not-supported": "Dashboard v2 schema is not yet supported. Compatibility checking is currently only available for v1 dashboards. Support for v2 dashboards is coming soon."
   },

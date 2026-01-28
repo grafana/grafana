@@ -121,8 +121,11 @@ export const CompatibilityModal = ({ isOpen, onDismiss, dashboardJson, datasourc
           <Stack direction="column" gap={3}>
             <div>
               <Text element="h2">
-                <Trans i18nKey="compatibility-modal.score-title">
-                  Compatibility Score: {(result.compatibilityScore * 100).toFixed(0)}%
+                <Trans
+                  i18nKey="compatibility-modal.score-title"
+                  values={{ score: (result.compatibilityScore * 100).toFixed(0) }}
+                >
+                  Compatibility Score: {'{{score}}'}%
                 </Trans>
               </Text>
 
