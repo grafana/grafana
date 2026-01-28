@@ -39,7 +39,7 @@ func NewChildPluginReconciler(metaManager *meta.ProviderManager, registrar Regis
 func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.TypedReconcileRequest[*pluginsv0alpha1.Plugin]) (operator.ReconcileResult, error) {
 	plugin := req.Object
 	logger := logging.FromContext(ctx).With(
-		"id", plugin.Spec.Id,
+		"pluginId", plugin.Spec.Id,
 		"namespace", plugin.Namespace,
 		"version", plugin.Spec.Version,
 		"action", req.Action,
