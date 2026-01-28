@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -56,26 +57,12 @@ exECgYBFAGKYTIeGAvhIvD5TphLpbCyeVLBIq5hRyrdRY+6Iwqdr5PGvLPKwin5+
 u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
 -----END RSA PRIVATE KEY-----`
 
-//nolint:gosec // Test RSA public key (generated for testing purposes only)
-const testPublicKeyPem = `-----BEGIN PUBLIC KEY-----
-MIIBITANBgkqhkiG9w0BAQEFAAOCAQ4AMIIBCQKCAQBn1MuM5hIfH6d3TNStI1of
-Wv/gcjQ4joi9cFijEwVLuPYkF1nDKkSbaMGFUWiOTaB/H9fxmd/V2u04NlBY3av6
-m5T/sHfVSiEWAEUblh3cA34HVCmDcqyyVty5HLGJJlSs2C7W2x7yUc9ImzyDBsyj
-pKOXuojJ9wN9a17D2cYU5WkXjoDC4BHid61jn9WBTtPZXSgOdirwahNzxZQSIP7D
-A9T8yiZwIWPp5YesgsAPyQLCFPgMs77xz/CEUnEYQ35zI/k/mQrwKdQ/ZP8xLwQo
-hUID0BIxE7G5quL069RuuCZWZkoFoPiZbp7HSryz1+19jD3rFT7eHGUYvAyCnXmX
-AgMBAAE=
------END PUBLIC KEY-----`
-
 func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
-
-	decryptService := helper.GetEnv().DecryptService
-	require.NotNil(t, decryptService, "decrypt service not wired properly")
 
 	t.Run("should perform CRUDL requests on connection", func(t *testing.T) {
 		connection := &unstructured.Unstructured{Object: map[string]any{
@@ -86,7 +73,8 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -117,22 +105,6 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 		require.Contains(t, output.Object, "secure", "object should contain secure")
 		assert.Contains(t, output.Object["secure"], "privateKey", "secure should contain PrivateKey")
 
-		// Verifying token
-		assert.Contains(t, output.Object["secure"], "token", "token should be created")
-		secretName, found, err := unstructured.NestedString(output.Object, "secure", "token", "name")
-		require.NoError(t, err, "error getting secret name")
-		require.True(t, found, "secret name should exist: %v", output.Object)
-		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", output.GetNamespace(), secretName)
-		require.NoError(t, err, "decryption error")
-		require.Len(t, decrypted, 1)
-
-		val := decrypted[secretName].Value()
-		require.NotNil(t, val)
-		k := val.DangerouslyExposeAndConsumeValue()
-		valid, err := verifyToken(t, "123456", testPublicKeyPem, k)
-		require.NoError(t, err, "error verifying token: %s", k)
-		require.True(t, valid, "token should be valid: %s", k)
-
 		// LIST
 		list, err := helper.Connections.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err, "failed to list resource")
@@ -148,7 +120,8 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454546",
@@ -199,7 +172,8 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -256,7 +230,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "",
+				"title": "Test Connection",
+				"type":  "",
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
@@ -278,7 +253,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "some-invalid-type",
+				"title": "Test Connection",
+				"type":  "some-invalid-type",
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
@@ -300,7 +276,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "git",
+				"title": "Test Connection",
+				"type":  "git",
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
@@ -322,7 +299,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "local",
+				"title": "Test Connection",
+				"type":  "local",
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
@@ -344,7 +322,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
@@ -366,7 +345,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -387,7 +367,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -433,7 +414,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -476,7 +458,9 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
-		assert.Equal(t, provisioning.ConnectionStateDisconnected, conn.Status.State, "connection should be disconnected")
+		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		require.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "connection should be disconnected")
 		// Check that error message mentions API unavailable
 		hasUnavailableError := false
 		for _, msg := range conn.Status.Health.Message {
@@ -493,11 +477,26 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		appSlug := "appSlug"
 		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
 		connectionFactory.Client = ghmock.NewMockedHTTPClient(
-			ghmock.WithRequestMatch(
-				ghmock.GetApp, github.App{
-					ID:   &appID,
-					Slug: &appSlug,
-				},
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(github.App{
+						ID:   &appID,
+						Slug: &appSlug,
+					}))
+				}),
+			),
+			ghmock.WithRequestMatchHandler(
+				ghmock.PostAppInstallationsAccessTokensByInstallationId,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					installation := github.InstallationToken{
+						Token:     github.Ptr("someToken"),
+						ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour * 2)},
+					}
+					_, _ = w.Write(ghmock.MustMarshal(installation))
+				}),
 			),
 		)
 		helper.SetGithubConnectionFactory(connectionFactory)
@@ -510,7 +509,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -544,16 +544,20 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				return false
 			}
 			// Connection should be unhealthy with error message about app ID mismatch
-			return !conn.Status.Health.Healthy &&
+			return !conn.Secure.Token.IsZero() &&
+				conn.Generation == conn.Status.ObservedGeneration &&
+				!conn.Status.Health.Healthy &&
 				conn.Status.Health.Checked > 0 &&
 				len(conn.Status.Health.Message) > 0
-		}, 10*time.Second, 500*time.Millisecond, "connection should be marked unhealthy")
+		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
 
 		// Verify the error message contains information about app ID mismatch
 		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
-		assert.Equal(t, provisioning.ConnectionStateDisconnected, conn.Status.State, "connection should be disconnected")
+		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		require.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "connection should be disconnected")
 		// Check that error message mentions app ID mismatch
 		hasMismatchError := false
 		for _, msg := range conn.Status.Health.Message {
@@ -562,7 +566,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				break
 			}
 		}
-		assert.True(t, hasMismatchError, "error message should mention appID mismatch")
+		assert.True(t, hasMismatchError, "error message should mention appID mismatch", conn.Status.Health.Message)
 		// Verify fieldErrors are populated when connection is unhealthy
 		if len(conn.Status.FieldErrors) > 0 {
 			// Check that fieldErrors contain relevant error details
@@ -598,7 +602,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "bitbucket",
+				"title": "Test Connection",
+				"type":  "bitbucket",
 			},
 			"secure": map[string]any{
 				"clientSecret": map[string]any{
@@ -620,7 +625,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "bitbucket",
+				"title": "Test Connection",
+				"type":  "bitbucket",
 				"bitbucket": map[string]any{
 					"clientID": "123456",
 				},
@@ -640,7 +646,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "bitbucket",
+				"title": "Test Connection",
+				"type":  "bitbucket",
 				"bitbucket": map[string]any{
 					"clientID": "123456",
 				},
@@ -668,7 +675,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "gitlab",
+				"title": "Test Connection",
+				"type":  "gitlab",
 			},
 			"secure": map[string]any{
 				"clientSecret": map[string]any{
@@ -690,7 +698,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "gitlab",
+				"title": "Test Connection",
+				"type":  "gitlab",
 				"gitlab": map[string]any{
 					"clientID": "123456",
 				},
@@ -710,7 +719,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "gitlab",
+				"title": "Test Connection",
+				"type":  "gitlab",
 				"gitlab": map[string]any{
 					"clientID": "123456",
 				},
@@ -730,7 +740,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 	})
 }
 
-func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
+func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafana(t)
@@ -744,7 +754,10 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
-	t.Run("health check gets updated after initial creation", func(t *testing.T) {
+	decryptService := helper.GetEnv().DecryptService
+	require.NotNil(t, decryptService, "decrypt service not wired properly")
+
+	t.Run("token gets created", func(t *testing.T) {
 		// Create a connection using unstructured (like other connection tests)
 		connUnstructured := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
@@ -754,7 +767,8 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "12345",
 					"installationID": "67890",
@@ -783,9 +797,216 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 			if err != nil {
 				return false
 			}
+			readyCondition := meta.FindStatusCondition(updated.Status.Conditions, provisioning.ConditionTypeReady)
 			return updated.Status.ObservedGeneration == updated.Generation &&
 				updated.Status.Health.Checked > 0 &&
-				updated.Status.State == provisioning.ConnectionStateConnected &&
+				readyCondition != nil && readyCondition.Status == metav1.ConditionTrue &&
+				updated.Status.Health.Healthy
+		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled")
+
+		// Verify initial health check was set
+		initial, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, initial)
+		require.False(t, initial.Secure.Token.IsZero())
+
+		// Verifying token
+		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", initial.Namespace, initial.Secure.Token.Name)
+		require.NoError(t, err, "decryption error")
+		require.Len(t, decrypted, 1)
+
+		val := decrypted[initial.Secure.Token.Name].Value()
+		require.NotNil(t, val)
+		k := val.DangerouslyExposeAndConsumeValue()
+		valid, err := verifyToken(t, "12345", k)
+		require.NoError(t, err, "error verifying token: %s", k)
+		require.True(t, valid, "token should be valid: %s", k)
+	})
+
+	t.Run("token gets updated if appID changes", func(t *testing.T) {
+		// Create a connection using unstructured (like other connection tests)
+		connUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-health",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  "github",
+				"github": map[string]any{
+					"appID":          "12345",
+					"installationID": "67890",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		connName := createdUnstructured.GetName()
+
+		t.Cleanup(func() {
+			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+		})
+
+		// Wait for initial reconciliation - controller should update status
+		require.Eventually(t, func() bool {
+			updated, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			readyCondition := meta.FindStatusCondition(updated.Status.Conditions, provisioning.ConditionTypeReady)
+			return updated.Status.ObservedGeneration == updated.Generation &&
+				updated.Status.Health.Checked > 0 &&
+				readyCondition != nil && readyCondition.Status == metav1.ConditionTrue &&
+				updated.Status.Health.Healthy
+		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled")
+
+		// Verify initial health check was set
+		initial, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, initial)
+		require.False(t, initial.Secure.Token.IsZero())
+
+		// Verifying token
+		decrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", initial.Namespace, initial.Secure.Token.Name)
+		require.NoError(t, err, "decryption error")
+		require.Len(t, decrypted, 1)
+
+		val := decrypted[initial.Secure.Token.Name].Value()
+		require.NotNil(t, val)
+		k := val.DangerouslyExposeAndConsumeValue()
+		valid, err := verifyToken(t, "12345", k)
+		require.NoError(t, err, "error verifying token: %s", k)
+		require.True(t, valid, "token should be valid: %s", k)
+
+		// Create a connection using unstructured (like other connection tests)
+		updated := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      connName,
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  "github",
+				"github": map[string]any{
+					"appID":          "54321",
+					"installationID": "67890",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		updatedUnstructured, err := helper.UpdateGithubConnection(t, ctx, updated)
+		require.NoError(t, err)
+		require.NotNil(t, updatedUnstructured)
+
+		// Wait for initial reconciliation - controller should update status
+		require.Eventually(t, func() bool {
+			updated, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			readyCondition := meta.FindStatusCondition(updated.Status.Conditions, provisioning.ConditionTypeReady)
+			return updated.Status.ObservedGeneration == updated.Generation &&
+				updated.Status.Health.Checked > 0 &&
+				readyCondition != nil && readyCondition.Status == metav1.ConditionTrue &&
+				updated.Status.Health.Healthy
+		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled again")
+
+		c, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, c)
+		// Verify secret got updated
+		require.NotEqual(t, c.Secure.Token.Name, initial.Secure.Token.Name)
+
+		// Verifying token
+		newSecretDecrypted, err := decryptService.Decrypt(ctx, "provisioning.grafana.app", c.Namespace, c.Secure.Token.Name)
+		require.NoError(t, err, "decryption error")
+		require.Len(t, decrypted, 1)
+
+		newVal := newSecretDecrypted[c.Secure.Token.Name].Value()
+		require.NotNil(t, newVal)
+		newK := newVal.DangerouslyExposeAndConsumeValue()
+		require.NotEqual(t, k, newK)
+		valid, err = verifyToken(t, "54321", newK)
+		require.NoError(t, err, "error verifying token: %s", newK)
+		require.True(t, valid, "token should be valid: %s", newK)
+	})
+}
+
+func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	namespace := "default"
+
+	// Create typed client from REST config
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	t.Run("health check gets updated after initial creation", func(t *testing.T) {
+		// Create a connection using unstructured (like other connection tests)
+		connUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-health",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  "github",
+				"github": map[string]any{
+					"appID":          "12345",
+					"installationID": "67890",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		connName := createdUnstructured.GetName()
+
+		t.Cleanup(func() {
+			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+		})
+
+		// Wait for initial reconciliation - controller should update status
+		require.Eventually(t, func() bool {
+			updated, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			readyCondition := meta.FindStatusCondition(updated.Status.Conditions, provisioning.ConditionTypeReady)
+			return updated.Status.ObservedGeneration == updated.Generation &&
+				updated.Status.Health.Checked > 0 &&
+				readyCondition != nil && readyCondition.Status == metav1.ConditionTrue &&
 				updated.Status.Health.Healthy
 		}, 10*time.Second, 500*time.Millisecond, "connection should be initially reconciled with health status")
 
@@ -793,11 +1014,18 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		initial, err := connClient.Get(ctx, connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.True(t, initial.Status.Health.Healthy, "connection should be healthy")
-		assert.Equal(t, provisioning.ConnectionStateConnected, initial.Status.State, "connection should be connected")
+		readyCondition := meta.FindStatusCondition(initial.Status.Conditions, provisioning.ConditionTypeReady)
+		require.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "connection should be connected")
 		assert.Greater(t, initial.Status.Health.Checked, int64(0), "health check timestamp should be set")
 		assert.Equal(t, initial.Generation, initial.Status.ObservedGeneration, "observed generation should match")
 		// When healthy, fieldErrors should be empty
 		assert.Empty(t, initial.Status.FieldErrors, "fieldErrors should be empty when connection is healthy")
+		// Verify Ready condition is set
+		assert.NotEmpty(t, initial.Status.Conditions, "conditions should be set")
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
+		assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
 	})
 
 	t.Run("health check updates when spec changes", func(t *testing.T) {
@@ -810,7 +1038,8 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "11111",
 					"installationID": "22222",
@@ -882,6 +1111,12 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 		assert.True(t, final.Status.Health.Healthy, "connection should remain healthy")
 		// When healthy after spec change, fieldErrors should be empty
 		assert.Empty(t, final.Status.FieldErrors, "fieldErrors should be empty when connection is healthy after spec change")
+		// Verify Ready condition is still set correctly
+		assert.NotEmpty(t, final.Status.Conditions, "conditions should be set")
+		readyCondition := meta.FindStatusCondition(final.Status.Conditions, provisioning.ConditionTypeReady)
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True")
+		assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
 	})
 }
 
@@ -909,7 +1144,8 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "999999999", // Invalid installation ID that doesn't exist
@@ -931,11 +1167,15 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		appSlug := "appSlug"
 		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
 		connectionFactory.Client = ghmock.NewMockedHTTPClient(
-			ghmock.WithRequestMatch(
-				ghmock.GetApp, github.App{
-					ID:   &appID,
-					Slug: &appSlug,
-				},
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(github.App{
+						ID:   &appID,
+						Slug: &appSlug,
+					}))
+				}),
 			),
 			ghmock.WithRequestMatchHandler(
 				ghmock.GetAppInstallationsByInstallationId,
@@ -975,9 +1215,16 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
-		assert.Equal(t, provisioning.ConnectionStateDisconnected, conn.Status.State, "connection should be disconnected")
+		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		require.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "connection should be disconnected")
 		assert.Equal(t, conn.Generation, conn.Status.ObservedGeneration, "connection should be reconciled")
 		assert.Greater(t, conn.Status.Health.Checked, int64(0), "health check timestamp should be set")
+		// Verify Ready condition reflects unhealthy state
+		assert.NotEmpty(t, conn.Status.Conditions, "conditions should be set")
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False for unhealthy connection")
+		assert.Equal(t, provisioning.ReasonInvalidSpec, readyCondition.Reason, "Ready condition should have InvalidConfiguration reason for invalid installation ID")
 
 		// Verify fieldErrors are populated with validation errors - be strict and explicit
 		require.Len(t, conn.Status.FieldErrors, 1, "fieldErrors should contain exactly one error for invalid installation ID")
@@ -986,8 +1233,8 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 
 		// Verify all fields explicitly
 		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, installationIDError.Type, "Type must be FieldValueInvalid")
-		assert.Equal(t, "spec.installationID", installationIDError.Field, "Field must be spec.installationID")
-		assert.Equal(t, "invalid installation ID: 999999999", installationIDError.Detail, "Detail must match expected error message")
+		assert.Equal(t, "spec.github.installationID", installationIDError.Field, "Field must be spec.installationID")
+		assert.Equal(t, "installation not found", installationIDError.Detail, "Detail must match expected error message")
 		assert.Empty(t, installationIDError.Origin, "Origin should be empty")
 
 		t.Logf("Verified installationID fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
@@ -1004,7 +1251,8 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456", // This will mismatch with the returned app ID
 					"installationID": "789012",
@@ -1027,16 +1275,24 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		var installationID int64 = 789012
 		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
 		connectionFactory.Client = ghmock.NewMockedHTTPClient(
-			ghmock.WithRequestMatch(
-				ghmock.GetApp, github.App{
-					ID:   &appID,
-					Slug: &appSlug,
-				},
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(github.App{
+						ID:   &appID,
+						Slug: &appSlug,
+					}))
+				}),
 			),
-			ghmock.WithRequestMatch(
-				ghmock.GetAppInstallationsByInstallationId, github.Installation{
-					ID: &installationID,
-				},
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetAppInstallationsByInstallationId,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write(ghmock.MustMarshal(github.Installation{
+						ID: &installationID,
+					}))
+				}),
 			),
 		)
 		helper.SetGithubConnectionFactory(connectionFactory)
@@ -1063,9 +1319,16 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
-		assert.Equal(t, provisioning.ConnectionStateDisconnected, conn.Status.State, "connection should be disconnected")
+		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		require.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "connection should be disconnected")
 		assert.Equal(t, conn.Generation, conn.Status.ObservedGeneration, "connection should be reconciled")
 		assert.Greater(t, conn.Status.Health.Checked, int64(0), "health check timestamp should be set")
+		// Verify Ready condition reflects unhealthy state
+		assert.NotEmpty(t, conn.Status.Conditions, "conditions should be set")
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False for unhealthy connection")
+		assert.Equal(t, provisioning.ReasonInvalidSpec, readyCondition.Reason, "Ready condition should have InvalidConfiguration reason for app ID mismatch")
 
 		// Verify fieldErrors are populated with validation errors - be strict and explicit
 		require.Len(t, conn.Status.FieldErrors, 1, "fieldErrors should contain exactly one error for app ID mismatch")
@@ -1074,7 +1337,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 
 		// Verify all fields explicitly
 		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, appIDError.Type, "Type must be FieldValueInvalid")
-		assert.Equal(t, "spec.appID", appIDError.Field, "Field must be spec.appID")
+		assert.Equal(t, "spec.github.appID", appIDError.Field, "Field must be spec.appID")
 		assert.Equal(t, "appID mismatch: expected 123456, got 999999", appIDError.Detail, "Detail must match expected error message")
 		assert.Empty(t, appIDError.Origin, "Origin should be empty")
 
@@ -1107,7 +1370,8 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "999999999", // Invalid installation ID
@@ -1217,8 +1481,13 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 		connHealthy, err := connClient.Get(ctx, connName, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.True(t, connHealthy.Status.Health.Healthy, "connection should be healthy")
-		assert.Equal(t, provisioning.ConnectionStateConnected, connHealthy.Status.State, "connection should be connected")
 		assert.Empty(t, connHealthy.Status.FieldErrors, "fieldErrors should be cleared when connection becomes healthy")
+		// Verify Ready condition is now True
+		assert.NotEmpty(t, connHealthy.Status.Conditions, "conditions should be set")
+		readyCondition := meta.FindStatusCondition(connHealthy.Status.Conditions, provisioning.ConditionTypeReady)
+		assert.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "Ready condition should be True when connection becomes healthy")
+		assert.Equal(t, provisioning.ReasonAvailable, readyCondition.Reason, "Ready condition should have Available reason")
 	})
 }
 
@@ -1239,7 +1508,8 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 			"namespace": "default",
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "789012",
@@ -1413,7 +1683,8 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 			"namespace": "default",
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "454545",
@@ -1478,12 +1749,16 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 		}, 30*time.Second, 100*time.Millisecond, "repository should be deleted")
 
 		// Now deletion should succeed
-		err = helper.Connections.Resource.Delete(ctx, "test-conn-delete-blocked", deleteOptions)
-		require.NoError(t, err, "expected deletion to succeed after repository deletion")
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			err := helper.Connections.Resource.Delete(ctx, "test-conn-delete-blocked", deleteOptions)
+			require.NoError(collect, err, "failed to delete connection")
+		}, 10*time.Second, 100*time.Millisecond, "deletion should succeed")
 
 		// Verify connection is actually deleted
-		_, err = helper.Connections.Resource.Get(ctx, "test-conn-delete-blocked", metav1.GetOptions{})
-		assert.True(t, k8serrors.IsNotFound(err), "connection should be deleted")
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			_, err = helper.Connections.Resource.Get(ctx, "test-conn-delete-blocked", metav1.GetOptions{})
+			require.True(collect, k8serrors.IsNotFound(err), "connection should be deleted")
+		}, 10*time.Second, 100*time.Millisecond, "connection should be deleted")
 	})
 }
 
@@ -1505,7 +1780,8 @@ func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) 
 			"namespace": "default",
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "789012",
 				"installationID": "121212",
@@ -1531,17 +1807,113 @@ func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) 
 	})
 }
 
-func verifyToken(t *testing.T, appID, publicKey, token string) (bool, error) {
+func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+	namespace := "default"
+
+	// Create typed client from REST config
+	restConfig := helper.Org1.Admin.NewRestConfig()
+	provisioningClient, err := clientset.NewForConfig(restConfig)
+	require.NoError(t, err)
+	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	t.Run("ServiceUnavailable reason when GitHub API returns 503", func(t *testing.T) {
+		// Create a connection
+		connUnstructured := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-connection-service-unavailable",
+				"namespace": namespace,
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  "github",
+				"github": map[string]any{
+					"appID":          "123456",
+					"installationID": "789012",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		createdUnstructured, err := helper.CreateGithubConnection(t, ctx, connUnstructured)
+		require.NoError(t, err)
+		require.NotNil(t, createdUnstructured)
+
+		// Set up mock to return 503 Service Unavailable
+		connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+		connectionFactory.Client = ghmock.NewMockedHTTPClient(
+			ghmock.WithRequestMatchHandler(
+				ghmock.GetApp,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					// Return 503 Service Unavailable
+					w.WriteHeader(http.StatusServiceUnavailable)
+					_, _ = w.Write(ghmock.MustMarshal(github.ErrorResponse{
+						Response: &http.Response{
+							StatusCode: http.StatusServiceUnavailable,
+						},
+						Message: "Service temporarily unavailable",
+					}))
+				}),
+			),
+		)
+		helper.SetGithubConnectionFactory(connectionFactory)
+
+		connName := createdUnstructured.GetName()
+
+		t.Cleanup(func() {
+			_ = helper.Connections.Resource.Delete(ctx, connName, metav1.DeleteOptions{})
+		})
+
+		// Wait for reconciliation - connection should become unhealthy with ServiceUnavailable reason
+		require.Eventually(t, func() bool {
+			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			return conn.Status.ObservedGeneration == conn.Generation &&
+				conn.Status.Health.Checked > 0 &&
+				!conn.Status.Health.Healthy
+		}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled and marked unhealthy")
+
+		// Verify the connection has ServiceUnavailable reason
+		conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
+		require.NoError(t, err)
+		assert.False(t, conn.Status.Health.Healthy, "connection should be unhealthy")
+		readyCondition := meta.FindStatusCondition(conn.Status.Conditions, provisioning.ConditionTypeReady)
+		require.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "connection should be disconnected")
+
+		// Verify Ready condition has ServiceUnavailable reason
+		assert.NotEmpty(t, conn.Status.Conditions, "conditions should be set")
+		require.NotNil(t, readyCondition, "Ready condition should exist")
+		assert.Equal(t, metav1.ConditionFalse, readyCondition.Status, "Ready condition should be False")
+		assert.Equal(t, provisioning.ReasonServiceUnavailable, readyCondition.Reason, "Ready condition should have ServiceUnavailable reason for 503 errors")
+		// Verify message contains the actual error returned by the GitHub client
+		assert.Contains(t, readyCondition.Message, "github is unavailable", "condition message should contain the actual error text")
+	})
+}
+
+func verifyToken(t *testing.T, appID, token string) (bool, error) {
 	t.Helper()
 
 	// Parse the private key
-	key, err := jwt.ParseRSAPublicKeyFromPEM([]byte(publicKey))
+	key, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(testPrivateKeyPEM))
 	if err != nil {
 		return false, err
 	}
 
 	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
-		return key, nil
+		return &key.PublicKey, nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
 	if err != nil {
 		return false, err

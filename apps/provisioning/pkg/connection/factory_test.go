@@ -473,7 +473,8 @@ func TestFactory_Validate(t *testing.T) {
 			name: "should return no errors for valid enabled connection type",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
 						AppID:          "123456",
 						InstallationID: "454545",
@@ -506,11 +507,13 @@ func TestFactory_Validate(t *testing.T) {
 			enabled: map[provisioning.ConnectionType]struct{}{
 				provisioning.GithubConnectionType: {},
 			},
-			expectedErrs: 1,
+			expectedErrs: 2,
 			validateError: func(t *testing.T, errs []*field.Error) {
-				require.Len(t, errs, 1)
-				assert.Equal(t, "spec.type", errs[0].Field)
-				assert.Contains(t, errs[0].Detail, "connection type \"gitlab\" is not supported")
+				require.Len(t, errs, 2)
+				assert.Equal(t, "spec.title", errs[0].Field)
+				assert.Contains(t, errs[0].Detail, "title is required")
+				assert.Equal(t, "spec.type", errs[1].Field)
+				assert.Contains(t, errs[1].Detail, "connection type \"gitlab\" is not supported")
 			},
 		},
 		{
@@ -528,11 +531,13 @@ func TestFactory_Validate(t *testing.T) {
 			enabled: map[provisioning.ConnectionType]struct{}{
 				provisioning.GithubConnectionType: {},
 			},
-			expectedErrs: 1,
+			expectedErrs: 2,
 			validateError: func(t *testing.T, errs []*field.Error) {
-				require.Len(t, errs, 1)
-				assert.Equal(t, "spec.type", errs[0].Field)
-				assert.Contains(t, errs[0].Detail, "connection type \"\" is not supported")
+				require.Len(t, errs, 2)
+				assert.Equal(t, "spec.title", errs[0].Field)
+				assert.Contains(t, errs[0].Detail, "title is required")
+				assert.Equal(t, "spec.type", errs[1].Field)
+				assert.Contains(t, errs[1].Detail, "connection type \"\" is not supported")
 			},
 		},
 		{
@@ -550,11 +555,13 @@ func TestFactory_Validate(t *testing.T) {
 			enabled: map[provisioning.ConnectionType]struct{}{
 				provisioning.GithubConnectionType: {},
 			},
-			expectedErrs: 1,
+			expectedErrs: 2,
 			validateError: func(t *testing.T, errs []*field.Error) {
-				require.Len(t, errs, 1)
-				assert.Equal(t, "spec.type", errs[0].Field)
-				assert.Contains(t, errs[0].Detail, "connection type \"gitlab\" is not enabled")
+				require.Len(t, errs, 2)
+				assert.Equal(t, "spec.title", errs[0].Field)
+				assert.Contains(t, errs[0].Detail, "title is required")
+				assert.Equal(t, "spec.type", errs[1].Field)
+				assert.Contains(t, errs[1].Detail, "connection type \"gitlab\" is not enabled")
 			},
 		},
 		{
@@ -579,11 +586,13 @@ func TestFactory_Validate(t *testing.T) {
 			enabled: map[provisioning.ConnectionType]struct{}{
 				provisioning.GithubConnectionType: {},
 			},
-			expectedErrs: 2,
+			expectedErrs: 3,
 			validateError: func(t *testing.T, errs []*field.Error) {
-				require.Len(t, errs, 2)
-				assert.Equal(t, "spec.github.appID", errs[0].Field)
-				assert.Equal(t, "spec.github.installationID", errs[1].Field)
+				require.Len(t, errs, 3)
+				assert.Equal(t, "spec.title", errs[0].Field)
+				assert.Contains(t, errs[0].Detail, "title is required")
+				assert.Equal(t, "spec.github.appID", errs[1].Field)
+				assert.Equal(t, "spec.github.installationID", errs[2].Field)
 			},
 		},
 		{
@@ -603,7 +612,8 @@ func TestFactory_Validate(t *testing.T) {
 			name: "should validate with multiple extras registered",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
 						AppID:          "123456",
 						InstallationID: "454545",
@@ -643,11 +653,13 @@ func TestFactory_Validate(t *testing.T) {
 				provisioning.GithubConnectionType:    {},
 				provisioning.BitbucketConnectionType: {}, // Even if enabled, not supported
 			},
-			expectedErrs: 1,
+			expectedErrs: 2,
 			validateError: func(t *testing.T, errs []*field.Error) {
-				require.Len(t, errs, 1)
-				assert.Equal(t, "spec.type", errs[0].Field)
-				assert.Contains(t, errs[0].Detail, "connection type \"bitbucket\" is not supported")
+				require.Len(t, errs, 2)
+				assert.Equal(t, "spec.title", errs[0].Field)
+				assert.Contains(t, errs[0].Detail, "title is required")
+				assert.Equal(t, "spec.type", errs[1].Field)
+				assert.Contains(t, errs[1].Detail, "connection type \"bitbucket\" is not supported")
 			},
 		},
 	}

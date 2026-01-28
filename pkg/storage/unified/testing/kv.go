@@ -30,6 +30,7 @@ const (
 	TestKVUnixTimestamp  = "unix timestamp"
 	TestKVBatchGet       = "batch get operations"
 	TestKVBatchDelete    = "batch delete operations"
+	TestKVBatch          = "batch operations"
 
 	// Use `eventsSection` as the section for the tests, as the sqlkv implementation
 	// needs a real section to determine which table to use.
@@ -76,6 +77,7 @@ func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
 		{TestKVUnixTimestamp, runTestKVUnixTimestamp},
 		{TestKVBatchGet, runTestKVBatchGet},
 		{TestKVBatchDelete, runTestKVBatchDelete},
+		{TestKVBatch, runTestKVBatch},
 	}
 
 	for _, tc := range cases {
@@ -276,8 +278,7 @@ func runTestKVDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("delete non-existent key", func(t *testing.T) {
 		err := kv.Delete(ctx, testSection, namespacedKey(nsPrefix, "non-existent-delete-key"))
-		assert.Error(t, err)
-		assert.Equal(t, resource.ErrNotFound, err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("delete with empty section", func(t *testing.T) {
@@ -948,4 +949,322 @@ func saveKVHelper(t *testing.T, kv resource.KV, ctx context.Context, section, ke
 	require.NoError(t, err)
 	err = writer.Close()
 	require.NoError(t, err)
+}
+
+func runTestKVBatch(t *testing.T, kv resource.KV, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+	section := nsPrefix + "-batch"
+
+	t.Run("batch with empty section", func(t *testing.T) {
+		err := kv.Batch(ctx, "", nil)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "section is required")
+	})
+
+	t.Run("batch with empty ops succeeds", func(t *testing.T) {
+		err := kv.Batch(ctx, section, nil)
+		require.NoError(t, err)
+	})
+
+	t.Run("batch put creates new key", func(t *testing.T) {
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpPut, Key: "put-key", Value: []byte("put-value")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err)
+
+		// Verify the key was created
+		reader, err := kv.Get(ctx, section, "put-key")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "put-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("batch put updates existing key", func(t *testing.T) {
+		// First create a key
+		saveKVHelper(t, kv, ctx, section, "put-update-key", strings.NewReader("original-value"))
+
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpPut, Key: "put-update-key", Value: []byte("updated-value")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err)
+
+		// Verify the key was updated
+		reader, err := kv.Get(ctx, section, "put-update-key")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "updated-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("batch create succeeds for new key", func(t *testing.T) {
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpCreate, Key: "create-new-key", Value: []byte("new-value")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err)
+
+		// Verify the key was created
+		reader, err := kv.Get(ctx, section, "create-new-key")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "new-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("batch create fails for existing key", func(t *testing.T) {
+		// First create a key
+		saveKVHelper(t, kv, ctx, section, "create-exists-key", strings.NewReader("existing-value"))
+
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpCreate, Key: "create-exists-key", Value: []byte("new-value")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		assert.ErrorIs(t, err, resource.ErrKeyAlreadyExists)
+
+		// Verify BatchError fields
+		var batchErr *resource.BatchError
+		if assert.ErrorAs(t, err, &batchErr) {
+			assert.Equal(t, 0, batchErr.Index, "failed operation index should be 0")
+			assert.Equal(t, "create-exists-key", batchErr.Op.Key, "failed operation key should match")
+			assert.Equal(t, resource.BatchOpCreate, batchErr.Op.Mode, "failed operation mode should be Create")
+		}
+
+		// Verify the original value is unchanged
+		reader, err := kv.Get(ctx, section, "create-exists-key")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "existing-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("batch update succeeds for existing key", func(t *testing.T) {
+		// First create a key
+		saveKVHelper(t, kv, ctx, section, "update-exists-key", strings.NewReader("original-value"))
+
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpUpdate, Key: "update-exists-key", Value: []byte("updated-value")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err)
+
+		// Verify the key was updated
+		reader, err := kv.Get(ctx, section, "update-exists-key")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "updated-value", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("batch update fails for non-existent key", func(t *testing.T) {
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpUpdate, Key: "update-nonexistent-key", Value: []byte("new-value")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		assert.ErrorIs(t, err, resource.ErrNotFound)
+
+		// Verify BatchError fields
+		var batchErr *resource.BatchError
+		if assert.ErrorAs(t, err, &batchErr) {
+			assert.Equal(t, 0, batchErr.Index, "failed operation index should be 0")
+			assert.Equal(t, "update-nonexistent-key", batchErr.Op.Key, "failed operation key should match")
+			assert.Equal(t, resource.BatchOpUpdate, batchErr.Op.Mode, "failed operation mode should be Update")
+		}
+
+		// Verify the key was not created
+		_, err = kv.Get(ctx, section, "update-nonexistent-key")
+		assert.ErrorIs(t, err, resource.ErrNotFound)
+	})
+
+	t.Run("batch delete removes existing key", func(t *testing.T) {
+		// First create a key
+		saveKVHelper(t, kv, ctx, section, "delete-exists-key", strings.NewReader("to-be-deleted"))
+
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpDelete, Key: "delete-exists-key"},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err)
+
+		// Verify the key was deleted
+		_, err = kv.Get(ctx, section, "delete-exists-key")
+		assert.ErrorIs(t, err, resource.ErrNotFound)
+	})
+
+	t.Run("batch delete is idempotent for non-existent key", func(t *testing.T) {
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpDelete, Key: "delete-nonexistent-key"},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err) // Should succeed even though key doesn't exist
+	})
+
+	t.Run("batch multiple operations atomic success", func(t *testing.T) {
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpPut, Key: "multi-key1", Value: []byte("value1")},
+			{Mode: resource.BatchOpPut, Key: "multi-key2", Value: []byte("value2")},
+			{Mode: resource.BatchOpPut, Key: "multi-key3", Value: []byte("value3")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err)
+
+		// Verify all keys were created
+		for i := 1; i <= 3; i++ {
+			key := fmt.Sprintf("multi-key%d", i)
+			reader, err := kv.Get(ctx, section, key)
+			require.NoError(t, err)
+			value, err := io.ReadAll(reader)
+			require.NoError(t, err)
+			assert.Equal(t, fmt.Sprintf("value%d", i), string(value))
+			err = reader.Close()
+			require.NoError(t, err)
+		}
+	})
+
+	t.Run("batch multiple operations atomic rollback on failure", func(t *testing.T) {
+		// First create a key that will cause the batch to fail
+		saveKVHelper(t, kv, ctx, section, "rollback-exists", strings.NewReader("existing"))
+
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpPut, Key: "rollback-new1", Value: []byte("value1")},
+			{Mode: resource.BatchOpCreate, Key: "rollback-exists", Value: []byte("should-fail")}, // This will fail
+			{Mode: resource.BatchOpPut, Key: "rollback-new2", Value: []byte("value2")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		assert.ErrorIs(t, err, resource.ErrKeyAlreadyExists)
+
+		// Verify BatchError identifies the correct operation
+		var batchErr *resource.BatchError
+		if assert.ErrorAs(t, err, &batchErr) {
+			assert.Equal(t, 1, batchErr.Index, "failed operation index should be 1 (second operation)")
+			assert.Equal(t, "rollback-exists", batchErr.Op.Key, "failed operation key should match")
+			assert.Equal(t, resource.BatchOpCreate, batchErr.Op.Mode, "failed operation mode should be Create")
+		}
+
+		// Verify rollback: the first operation should NOT have persisted
+		_, err = kv.Get(ctx, section, "rollback-new1")
+		assert.ErrorIs(t, err, resource.ErrNotFound)
+
+		// Verify the third operation was not executed
+		_, err = kv.Get(ctx, section, "rollback-new2")
+		assert.ErrorIs(t, err, resource.ErrNotFound)
+	})
+
+	t.Run("batch mixed operations", func(t *testing.T) {
+		// Setup: create a key to update and one to delete
+		saveKVHelper(t, kv, ctx, section, "mixed-update", strings.NewReader("original"))
+		saveKVHelper(t, kv, ctx, section, "mixed-delete", strings.NewReader("to-delete"))
+
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpCreate, Key: "mixed-create", Value: []byte("created")},
+			{Mode: resource.BatchOpUpdate, Key: "mixed-update", Value: []byte("updated")},
+			{Mode: resource.BatchOpDelete, Key: "mixed-delete"},
+			{Mode: resource.BatchOpPut, Key: "mixed-put", Value: []byte("put")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.NoError(t, err)
+
+		// Verify create
+		reader, err := kv.Get(ctx, section, "mixed-create")
+		require.NoError(t, err)
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "created", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+
+		// Verify update
+		reader, err = kv.Get(ctx, section, "mixed-update")
+		require.NoError(t, err)
+		value, err = io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "updated", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+
+		// Verify delete
+		_, err = kv.Get(ctx, section, "mixed-delete")
+		assert.ErrorIs(t, err, resource.ErrNotFound)
+
+		// Verify put
+		reader, err = kv.Get(ctx, section, "mixed-put")
+		require.NoError(t, err)
+		value, err = io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "put", string(value))
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("batch too many operations", func(t *testing.T) {
+		ops := make([]resource.BatchOp, resource.MaxBatchOps+1)
+		for i := range ops {
+			ops[i] = resource.BatchOp{Mode: resource.BatchOpPut, Key: fmt.Sprintf("key-%d", i), Value: []byte("value")}
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "too many operations")
+	})
+
+	t.Run("batch error context with later operation failure", func(t *testing.T) {
+		// Create some keys first
+		saveKVHelper(t, kv, ctx, section, "error-context-key2", strings.NewReader("existing"))
+
+		ops := []resource.BatchOp{
+			{Mode: resource.BatchOpPut, Key: "error-context-key0", Value: []byte("value0")},
+			{Mode: resource.BatchOpPut, Key: "error-context-key1", Value: []byte("value1")},
+			{Mode: resource.BatchOpUpdate, Key: "error-context-nonexistent", Value: []byte("should-fail")}, // This will fail at index 2
+			{Mode: resource.BatchOpPut, Key: "error-context-key3", Value: []byte("value3")},
+		}
+
+		err := kv.Batch(ctx, section, ops)
+		require.Error(t, err)
+
+		// Verify BatchError provides correct context
+		var batchErr *resource.BatchError
+		require.ErrorAs(t, err, &batchErr, "error should be a BatchError")
+		assert.Equal(t, 2, batchErr.Index, "failed operation index should be 2")
+		assert.Equal(t, "error-context-nonexistent", batchErr.Op.Key, "failed operation key should match")
+		assert.Equal(t, resource.BatchOpUpdate, batchErr.Op.Mode, "failed operation mode should be Update")
+		assert.ErrorIs(t, batchErr.Err, resource.ErrNotFound, "underlying error should be ErrNotFound")
+
+		// Verify error message contains useful information
+		errMsg := err.Error()
+		assert.Contains(t, errMsg, "batch operation 2", "error message should contain operation index")
+		assert.Contains(t, errMsg, "error-context-nonexistent", "error message should contain key")
+
+		// Verify atomic rollback - no keys should have been created
+		_, err = kv.Get(ctx, section, "error-context-key0")
+		assert.ErrorIs(t, err, resource.ErrNotFound, "first operation should have been rolled back")
+
+		_, err = kv.Get(ctx, section, "error-context-key1")
+		assert.ErrorIs(t, err, resource.ErrNotFound, "second operation should have been rolled back")
+
+		_, err = kv.Get(ctx, section, "error-context-key3")
+		assert.ErrorIs(t, err, resource.ErrNotFound, "fourth operation should not have been executed")
+	})
 }

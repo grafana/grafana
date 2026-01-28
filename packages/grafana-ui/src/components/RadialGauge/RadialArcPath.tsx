@@ -55,7 +55,7 @@ export const RadialArcPath = memo(
     const boxY = Math.round(centerY - radius - barWidth - pad);
     const boxSize = Math.round((radius + barWidth) * 2 + pad * 2);
 
-    const path = drawRadialArcPath(angle, arcLengthDeg, dimensions, roundedBars);
+    const path = drawRadialArcPath(angle, arcLengthDeg, dimensions);
 
     const startRadians = toRad(angle);
     const endRadians = toRad(angle + arcLengthDeg);

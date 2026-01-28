@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/datasource/cloudwatch/dataquery.cue file.
+
 import * as common from '@grafana/schema';
 
 export const pluginVersion = "12.4.0-pre";

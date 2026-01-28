@@ -1471,10 +1471,14 @@ export type GitlabConnectionConfig = {
 export type ConnectionSpec = {
   /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
   bitbucket?: BitbucketConnectionConfig;
+  /** The connection description */
+  description?: string;
   /** GitHub connection configuration Only applicable when provider is "github" */
   github?: GitHubConnectionConfig;
   /** Gitlab connection configuration Only applicable when provider is "gitlab" */
   gitlab?: GitlabConnectionConfig;
+  /** The connection display name (shown in the UI) */
+  title: string;
   /** The connection provider type
     
     Possible enum values:
@@ -1484,6 +1488,20 @@ export type ConnectionSpec = {
   type: 'bitbucket' | 'github' | 'gitlab';
   /** The connection URL */
   url?: string;
+};
+export type Condition = {
+  /** lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable. */
+  lastTransitionTime: Time;
+  /** message is a human readable message indicating details about the transition. This may be an empty string. */
+  message: string;
+  /** observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance. */
+  observedGeneration?: number;
+  /** reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty. */
+  reason: string;
+  /** status of the condition, one of True, False, Unknown. */
+  status: string;
+  /** type of condition in CamelCase or in foo.example.com/CamelCase. */
+  type: string;
 };
 export type ErrorDetails = {
   /** Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable. */
@@ -1510,18 +1528,14 @@ export type HealthStatus = {
   message?: string[];
 };
 export type ConnectionStatus = {
+  /** Conditions represent the latest available observations of the connection's state. */
+  conditions?: Condition[];
   /** FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec. */
   fieldErrors?: ErrorDetails[];
   /** The connection health status */
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
-  /** Connection state
-    
-    Possible enum values:
-     - `"connected"`
-     - `"disconnected"` */
-  state: 'connected' | 'disconnected';
 };
 export type Connection = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1800,7 +1814,7 @@ export type LocalRepositoryConfig = {
 export type SyncOptions = {
   /** Enabled must be saved as true before any sync job will run */
   enabled: boolean;
-  /** When non-zero, the sync will run periodically */
+  /** The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one. */
   intervalSeconds?: number;
   /** Where values should be saved
     
@@ -1839,6 +1853,12 @@ export type RepositorySpec = {
   type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
+};
+export type QuotaStatus = {
+  /** MaxRepositories is the maximum number of repositories allowed. 0 means unlimited. */
+  maxRepositories?: number;
+  /** MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited. */
+  maxResourcesPerRepository?: number;
 };
 export type ResourceCount = {
   count: number;
@@ -1881,6 +1901,8 @@ export type WebhookStatus = {
   url?: string;
 };
 export type RepositoryStatus = {
+  /** Conditions represent the latest available observations of the repository's state. */
+  conditions?: Condition[];
   /** Error information during repository deletion (if any) */
   deleteError?: string;
   /** FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec. */
@@ -1889,6 +1911,8 @@ export type RepositoryStatus = {
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
+  /** Quota contains the configured quota limits for this repository */
+  quota?: QuotaStatus;
   /** The object count when sync last ran */
   stats?: ResourceCount[];
   /** Sync information with the last sync information */
@@ -2076,6 +2100,8 @@ export type RepositoryViewList = {
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
+  /** MaxRepositories is the maximum number of repositories allowed per namespace (0 = unlimited) */
+  maxRepositories: number;
 };
 export type ManagerStats = {
   /** Manager identity */

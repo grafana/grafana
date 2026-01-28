@@ -50,7 +50,8 @@ type ConnectionController struct {
 	healthChecker     ConnectionHealthCheckerInterface
 	connectionFactory connection.Factory
 
-	queue workqueue.TypedRateLimitingInterface[*connectionQueueItem]
+	queue          workqueue.TypedRateLimitingInterface[*connectionQueueItem]
+	resyncInterval time.Duration
 }
 
 // NewConnectionController creates a new ConnectionController.
@@ -60,6 +61,7 @@ func NewConnectionController(
 	statusPatcher ConnectionStatusPatcher,
 	healthChecker *ConnectionHealthChecker,
 	connectionFactory connection.Factory,
+	resyncInterval time.Duration,
 ) (*ConnectionController, error) {
 	cc := &ConnectionController{
 		client:     provisioningClient,
@@ -75,6 +77,7 @@ func NewConnectionController(
 		healthChecker:     healthChecker,
 		connectionFactory: connectionFactory,
 		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
+		resyncInterval:    resyncInterval,
 	}
 
 	_, err := connInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -188,12 +191,30 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
 	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
 
+	c, err := cc.connectionFactory.Build(ctx, conn)
+	if err != nil {
+		logger.Error("failed to build connection", "error", err)
+		return err
+	}
+
+	tokenConn, isTokenConnection := c.(connection.TokenConnection)
+	var shouldRefreshToken bool
+	if isTokenConnection {
+		shouldRefreshToken, err = cc.shouldGenerateToken(ctx, conn, tokenConn)
+		if err != nil {
+			logger.Error("failed to check if token needs to be generated", "error", err)
+			return err
+		}
+	}
+
 	// Determine the main triggering condition
 	switch {
 	case hasSpecChanged:
 		logger.Info("spec changed, reconciling", "generation", conn.Generation, "observedGeneration", conn.Status.ObservedGeneration)
 	case shouldCheckHealth:
 		logger.Info("health is stale, refreshing", "lastChecked", conn.Status.Health.Checked, "healthy", conn.Status.Health.Healthy)
+	case shouldRefreshToken:
+		logger.Info("token must be refreshed or generated")
 	default:
 		logger.Debug("skipping as conditions are not met", "generation", conn.Generation, "observedGeneration", conn.Status.ObservedGeneration)
 		return nil
@@ -209,33 +230,20 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		})
 	}
 
-	c, err := cc.connectionFactory.Build(ctx, conn)
-	if err != nil {
-		logger.Error("failed to build connection", "error", err)
-		return err
-	}
+	if isTokenConnection && shouldRefreshToken {
+		logger.Info("generating connection token")
 
-	tokenConn, ok := c.(connection.TokenConnection)
-	if ok {
-		expiration, err := tokenConn.TokenExpiration(ctx)
+		token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
 		if err != nil {
-			logger.Error("failed to check if token expired", "error", err)
+			logger.Error("failed to generate connection token", "error", err)
 			return err
 		}
 
-		if cc.shouldRefreshToken(expiration) {
-			logger.Info("regenerating connection token")
-
-			token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
-			if err != nil {
-				// Log error but continue - health check will surface the issue
-				logger.Error("failed to generate connection token", "error", err)
-			} else if len(tokenOps) > 0 {
-				patchOperations = append(patchOperations, tokenOps...)
-			}
-			// Substituting generated token for healthcheck
-			conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
+		if len(tokenOps) > 0 {
+			patchOperations = append(patchOperations, tokenOps...)
 		}
+		// Substituting generated token for healthcheck
+		conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
 	}
 
 	// Handle health checks using the health checker
@@ -245,21 +253,6 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return fmt.Errorf("update health status: %w", err)
 	}
 	patchOperations = append(patchOperations, healthPatchOps...)
-
-	// Update state based on health status
-	if healthStatus.Healthy {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/state",
-			"value": provisioning.ConnectionStateConnected,
-		})
-	} else {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/state",
-			"value": provisioning.ConnectionStateDisconnected,
-		})
-	}
 
 	// Update fieldErrors from test results - ensure fieldErrors are cleared when there are no errors
 	fieldErrors := testResults.Errors
@@ -283,12 +276,37 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	return nil
 }
 
-func (cc *ConnectionController) shouldRefreshToken(expiration time.Time) bool {
-	const (
-		maxTokenAge = time.Minute * 5
-	)
+func (cc *ConnectionController) shouldGenerateToken(
+	ctx context.Context,
+	obj *provisioning.Connection,
+	c connection.TokenConnection,
+) (bool, error) {
+	// In case the token is not there, we should always generate it.
+	if obj.Secure.Token.IsZero() {
+		return true, nil
+	}
 
-	return expiration.Before(time.Now().Add(maxTokenAge))
+	// In case the current token is not valid, then generate a new one.
+	if !c.TokenValid(ctx) {
+		return true, nil
+	}
+
+	issuingTime, err := c.TokenCreationTime(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	// If the token has been recently created, we should not refresh it.
+	if tokenRecentlyCreated(issuingTime) {
+		return false, nil
+	}
+
+	expiration, err := c.TokenExpiration(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return shouldRefreshBeforeExpiration(expiration, cc.resyncInterval), nil
 }
 
 // generateConnectionToken regenerates the connection token if the connection supports it.
