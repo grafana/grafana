@@ -108,7 +108,7 @@ export function ImportSourceForm({ onFileUpload, onGcomSubmit, onJsonSubmit }: P
       <div className={styles.option}>
         <Form onSubmit={onJsonSubmit} defaultValues={{ dashboardJson: '' }}>
           {({ register, errors }) => (
-            <>
+            <Stack direction="column" gap={2}>
               <Field
                 label={t('dashboard-import.json-field.label', 'Import via dashboard JSON model')}
                 invalid={!!errors.dashboardJson}
@@ -134,7 +134,7 @@ export function ImportSourceForm({ onFileUpload, onGcomSubmit, onJsonSubmit }: P
                   <Trans i18nKey="dashboard-import.form-actions.cancel">Cancel</Trans>
                 </LinkButton>
               </Stack>
-            </>
+            </Stack>
           )}
         </Form>
       </div>
