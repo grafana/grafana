@@ -3,10 +3,11 @@ import * as React from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { IconName, Menu, ModalsContext } from '@grafana/ui';
+import { Alert, IconName, LinkButton, Menu, ModalsContext } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
@@ -119,8 +120,38 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
     }));
   }, [menuItems, onClick]);
 
+  const canInviteUsers = config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd);
+
+  const inviteUrl = canInviteUsers ? getExternalUserMngLinkUrl('share_menu') : '';
+
   return (
     <Menu data-testid={newShareButtonSelector.container}>
+      {canInviteUsers && (
+        <div style={{ padding: '8px', maxWidth: '300px' }}>
+          <Alert
+            title={t('share-dashboard.menu.invite-team-title', 'Invite your team')}
+            severity="info"
+            bottomSpacing={0}
+          >
+            {t('share-dashboard.menu.invite-team-description', 'Share this dashboard with collaborators')}
+            <div style={{ marginTop: '8px' }}>
+              <LinkButton
+                fullWidth
+                size="sm"
+                href={inviteUrl}
+                target="_blank"
+                onClick={() =>
+                  reportInteraction('invite_user_button_clicked', {
+                    placement: 'share_menu',
+                  })
+                }
+              >
+                {t('share-dashboard.menu.invite-team-button', 'Invite team')}
+              </LinkButton>
+            </div>
+          </Alert>
+        </div>
+      )}
       {menuItemsWithHandlers.map((item) => (
         <React.Fragment key={item.shareId}>
           {item.renderDividerAbove && <Menu.Divider />}
