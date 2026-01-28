@@ -7,7 +7,7 @@ import { Field, Input, SecretTextArea, Stack } from '@grafana/ui';
 import { ConnectionFormData } from '../../types';
 
 export interface GitHubConnectionFieldsProps {
-  /** Whether fields are required */
+  /** Whether fields are required. Depends if we are in edit mode or not. */
   required?: boolean;
   /** Initial value for whether private key is configured (edit mode) */
   privateKeyConfigured?: boolean;
@@ -35,7 +35,7 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
           description={t('provisioning.connection-form.description-title', 'A human-readable name for this connection')}
           error={errors?.title?.message}
           invalid={!!errors.title}
-          required
+          required={required}
         >
           <Input
             id="title"

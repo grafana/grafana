@@ -1,3 +1,4 @@
+import { textUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
 import { Connection } from 'app/api/clients/provisioning/v0alpha1';
@@ -38,7 +39,7 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
           <Stack direction="column">
             {description && <Text color="secondary">{description}</Text>}
             {url && (
-              <TextLink external href={url}>
+              <TextLink external href={textUtil.sanitizeUrl(url)}>
                 {url}
               </TextLink>
             )}

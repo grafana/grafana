@@ -27,13 +27,11 @@ export function useConnectionOptions(enabled: boolean) {
   const [fetchRepos] = useLazyGetConnectionRepositoriesQuery();
 
   const { value: reposByConnection, loading: reposLoading } = useAsync(async () => {
-    const result: Record<string, string[]> = {};
-
-    for (const name of connectionNames) {
-      try {
+    const results = await Promise.allSettled(
+      connectionNames.map(async (name) => {
         const response = await fetchRepos({ name }).unwrap();
         const items: ExternalRepository[] = response.items ?? [];
-        result[name] = items
+        const repos = items
           .map((item) => {
             const formattedUrl = formatRepoUrl(item.url);
             if (formattedUrl) {
@@ -46,11 +44,16 @@ export function useConnectionOptions(enabled: boolean) {
             return item.name ?? '';
           })
           .filter(Boolean);
-      } catch {
-        result[name] = [];
+        return { name, repos };
+      })
+    );
+
+    const result: Record<string, string[]> = {};
+    for (const settledResult of results) {
+      if (settledResult.status === 'fulfilled') {
+        result[settledResult.value.name] = settledResult.value.repos;
       }
     }
-
     return result;
   }, [connectionNames, fetchRepos]);
 

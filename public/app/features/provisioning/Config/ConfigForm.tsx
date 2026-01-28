@@ -84,6 +84,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const isGitBased = isGitProvider(type);
 
   // Detect if repository uses GitHub App authentication
+  // Repositories using GitHub App have a connection reference in their spec,
+  // whereas PAT-based repositories store credentials directly
   const connectionName = data?.spec?.connection?.name;
   const usesGitHubApp = Boolean(connectionName && type === 'github');
 
