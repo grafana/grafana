@@ -89,16 +89,6 @@ type ConnectionSpec struct {
 	Gitlab *GitlabConnectionConfig `json:"gitlab,omitempty"`
 }
 
-// ConnectionState defines the state of a Connection
-// +enum
-type ConnectionState string
-
-// ConnectionState values
-const (
-	ConnectionStateConnected    ConnectionState = "connected"
-	ConnectionStateDisconnected ConnectionState = "disconnected"
-)
-
 // The status of a Connection.
 // This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
 type ConnectionStatus struct {
@@ -116,9 +106,6 @@ type ConnectionStatus struct {
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
-
-	// Connection state
-	State ConnectionState `json:"state"`
 
 	// The connection health status
 	Health HealthStatus `json:"health"`

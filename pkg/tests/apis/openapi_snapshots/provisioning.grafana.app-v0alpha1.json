@@ -4340,7 +4340,6 @@
         "type": "object",
         "required": [
           "observedGeneration",
-          "state",
           "health"
         ],
         "properties": {
@@ -4389,15 +4388,6 @@
             "type": "integer",
             "format": "int64",
             "default": 0
-          },
-          "state": {
-            "description": "Connection state\n\nPossible enum values:\n - `\"connected\"`\n - `\"disconnected\"`",
-            "type": "string",
-            "default": "",
-            "enum": [
-              "connected",
-              "disconnected"
-            ]
           }
         }
       },
