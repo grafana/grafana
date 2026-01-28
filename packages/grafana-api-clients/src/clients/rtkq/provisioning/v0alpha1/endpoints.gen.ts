@@ -1816,7 +1816,7 @@ export type LocalRepositoryConfig = {
 export type SyncOptions = {
   /** Enabled must be saved as true before any sync job will run */
   enabled: boolean;
-  /** When non-zero, the sync will run periodically */
+  /** The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one. */
   intervalSeconds?: number;
   /** Where values should be saved
     

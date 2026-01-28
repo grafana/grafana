@@ -98,13 +98,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "mysqlAnsiQuotes",
-			Description: "Use double quotes to escape keyword in a MySQL query",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,
@@ -1264,9 +1257,9 @@ var (
 		{
 			Name:        "enableSCIM",
 			Description: "Enables SCIM support for user and group management",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       identityAccessTeam,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:         "crashDetection",
