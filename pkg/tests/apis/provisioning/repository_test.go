@@ -1124,7 +1124,8 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 			"namespace": "default",
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "789012",
@@ -1223,7 +1224,8 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 			"namespace": namespace,
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "789012",
