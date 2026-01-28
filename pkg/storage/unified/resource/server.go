@@ -1174,6 +1174,7 @@ func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, t
 	return obj.GetUpdatedBy() == user.GetUID() || trashChecker(iter.Name(), iter.Folder())
 }
 
+// Start the server.broadcaster (requires that the backend storage services are enabled)
 func (s *server) initWatcher() error {
 	var err error
 	s.broadcaster, err = NewBroadcaster(s.ctx, func(out chan<- *WrittenEvent) error {
