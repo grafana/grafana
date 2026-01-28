@@ -322,7 +322,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
   return (
     <Modal
       isOpen={true}
-      title={t('alerting.migrate-to-gma.preview.title', 'Migration Preview')}
+      title={t('alerting.migrate-to-gma.preview.title', 'Confirm Migration')}
       onDismiss={onDismiss}
       className={styles.modal}
     >
@@ -413,6 +413,17 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                                 {notificationsPreview.timeIntervals.length}
                               </Text>
                             )}
+
+                            {/* Validation status indicator */}
+                            <Stack direction="row" gap={1} alignItems="center">
+                              <Icon name="check-circle" className={styles.successIcon} />
+                              <Text color="success">
+                                {t(
+                                  'alerting.migrate-to-gma.preview.no-conflicts',
+                                  'No conflicts found. Configuration is ready to import.'
+                                )}
+                              </Text>
+                            </Stack>
                           </Stack>
                         ) : (
                           <Text color="secondary">
@@ -634,5 +645,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '& li': {
       marginBottom: theme.spacing(0.5),
     },
+  }),
+  successIcon: css({
+    color: theme.colors.success.main,
   }),
 });

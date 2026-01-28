@@ -1,5 +1,7 @@
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import type { DryRunValidationResult } from '../components/migrate-to-gma/DryRunValidationModal';
+
 import { alertingApi } from './alertingApi';
 
 export const convertToGMAApi = alertingApi.injectEndpoints({
@@ -76,6 +78,45 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           'X-Grafana-Alerting-Config-Identifier': 'default',
           // We use __grafana_managed_route__ as the label name in X-Grafana-Alerting-Merge-Matchers.
           // The value is the policy tree name chosen by the user.
+          'X-Grafana-Alerting-Merge-Matchers': mergeMatchers,
+        },
+      }),
+    }),
+
+    /**
+     * Dry-run validation for Alertmanager config import.
+     * Validates the config, checks for conflicts, and returns info about resources that would be renamed.
+     *
+     * TODO: This endpoint doesn't exist yet. See https://github.com/grafana/alerting-squad/issues/1378
+     * When implemented, it should:
+     * - Validate the Alertmanager config
+     * - Merge into current config (without persisting)
+     * - Check for conflicts
+     * - Return list of receivers/time intervals that would be renamed
+     *
+     * POST /api/convert/api/v1/alerts/dry-run (proposed endpoint)
+     */
+    dryRunAlertmanagerConfig: build.mutation<
+      DryRunValidationResult,
+      {
+        /** Alertmanager config as JSON string or YAML string */
+        alertmanagerConfig: string;
+        /** Template files map */
+        templateFiles?: Record<string, string>;
+        /** Merge matchers - label=value pairs (e.g., "__grafana_managed_route__=my-policy") */
+        mergeMatchers: string;
+      }
+    >({
+      query: ({ alertmanagerConfig, templateFiles = {}, mergeMatchers }) => ({
+        // TODO: Update URL once the backend endpoint is implemented
+        url: `/api/convert/api/v1/alerts/dry-run`,
+        method: 'POST',
+        body: {
+          alertmanager_config: alertmanagerConfig,
+          template_files: templateFiles,
+        },
+        headers: {
+          'X-Grafana-Alerting-Config-Identifier': 'default',
           'X-Grafana-Alerting-Merge-Matchers': mergeMatchers,
         },
       }),

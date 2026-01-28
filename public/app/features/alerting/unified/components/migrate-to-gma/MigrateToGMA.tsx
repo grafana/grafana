@@ -13,9 +13,11 @@ import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 
+import { DryRunValidationModal, DryRunValidationResult } from './DryRunValidationModal';
 import { MigrationPreviewModal } from './MigrationPreviewModal';
 import { Step1AlertmanagerResources } from './steps/Step1AlertmanagerResources';
 import { Step2AlertRules } from './steps/Step2AlertRules';
+import { useDryRunNotifications } from './useMigration';
 
 /**
  * Label name used in X-Grafana-Alerting-Merge-Matchers header.
@@ -68,6 +70,11 @@ const MigrateToGMA = () => {
   const styles = useStyles2(getStyles);
   const [currentStep, setCurrentStep] = useState(0);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showDryRunModal, setShowDryRunModal] = useState(false);
+  const [dryRunState, setDryRunState] = useState<'loading' | 'success' | 'warning' | 'error'>('loading');
+  const [dryRunResult, setDryRunResult] = useState<DryRunValidationResult | undefined>();
+
+  const { runDryRun, reset: resetDryRun } = useDryRunNotifications();
 
   const formAPI = useForm<MigrationFormValues>({
     defaultValues: {
@@ -165,10 +172,61 @@ const MigrateToGMA = () => {
     return 'pending';
   };
 
-  const handleStep1Complete = () => {
+  const handleStep1Complete = async () => {
+    // Get current form values for dry-run
+    const formValues = formAPI.getValues();
+    const mergeMatchers = `${MERGE_MATCHERS_LABEL_NAME}=${formValues.policyTreeName}`;
+
+    // Show the dry-run modal and start validation
+    setShowDryRunModal(true);
+    setDryRunState('loading');
+    setDryRunResult(undefined);
+
+    try {
+      const result = await runDryRun(
+        {
+          source: formValues.notificationsSource,
+          datasourceName: formValues.notificationsDatasourceName ?? undefined,
+          yamlFile: formValues.notificationsYamlFile,
+          mergeMatchers,
+        },
+        // TODO: Set skipValidation to false once the backend endpoint is implemented
+        { skipValidation: true }
+      );
+
+      setDryRunResult(result);
+
+      if (!result.valid) {
+        setDryRunState('error');
+      } else if (result.renamedReceivers.length > 0 || result.renamedTimeIntervals.length > 0) {
+        setDryRunState('warning');
+      } else {
+        setDryRunState('success');
+      }
+    } catch (err) {
+      setDryRunState('error');
+      setDryRunResult({
+        valid: false,
+        error: err instanceof Error ? err.message : String(err),
+        renamedReceivers: [],
+        renamedTimeIntervals: [],
+      });
+    }
+  };
+
+  const handleDryRunConfirm = () => {
+    // Dry-run passed or user accepted warnings, proceed to step 2
     setValue('step1Completed', true);
     setValue('step1Skipped', false);
+    setShowDryRunModal(false);
+    resetDryRun();
     setCurrentStep(1);
+  };
+
+  const handleDryRunDismiss = () => {
+    // User cancelled, stay on step 1
+    setShowDryRunModal(false);
+    resetDryRun();
   };
 
   const handleStep1Skip = () => {
@@ -296,6 +354,7 @@ const MigrateToGMA = () => {
                 formData={formAPI.getValues()}
                 onBack={handleBackToStep2}
                 onStartMigration={handleStartMigration}
+                dryRunResult={dryRunResult}
               />
             )}
           </FormProvider>
@@ -313,6 +372,15 @@ const MigrateToGMA = () => {
       {showPreviewModal && (
         <MigrationPreviewModal formData={formAPI.getValues()} onDismiss={() => setShowPreviewModal(false)} />
       )}
+
+      {/* Dry-run Validation Modal - shown when completing Step 1 */}
+      <DryRunValidationModal
+        isOpen={showDryRunModal}
+        onDismiss={handleDryRunDismiss}
+        onConfirm={handleDryRunConfirm}
+        state={dryRunState}
+        result={dryRunResult}
+      />
     </AlertingPageWrapper>
   );
 };
@@ -331,14 +399,79 @@ function getPauseRulesLabel(pauseAlertingRules: boolean, pauseRecordingRules: bo
   return t('alerting.migrate-to-gma.review.pause-none', 'No rules paused');
 }
 
+// Validation Status Indicator Component
+interface ValidationStatusIndicatorProps {
+  result: DryRunValidationResult;
+  styles: ReturnType<typeof getStyles>;
+}
+
+function ValidationStatusIndicator({ result, styles }: ValidationStatusIndicatorProps) {
+  const hasRenames = result.renamedReceivers.length > 0 || result.renamedTimeIntervals.length > 0;
+  const isSuccess = result.valid && !hasRenames;
+  const isWarning = result.valid && hasRenames;
+
+  if (isSuccess) {
+    return (
+      <Stack direction="row" gap={1} alignItems="center">
+        <Icon name="check-circle" className={styles.successIcon} />
+        <Text color="success">
+          {t('alerting.migrate-to-gma.review.validation-ok', 'No conflicts found. Ready to import.')}
+        </Text>
+      </Stack>
+    );
+  }
+
+  if (isWarning) {
+    return (
+      <Stack direction="column" gap={1}>
+        <Stack direction="row" gap={1} alignItems="center">
+          <Icon name="exclamation-triangle" className={styles.warningIcon} />
+          <Text color="warning">
+            {t(
+              'alerting.migrate-to-gma.review.validation-warning',
+              'Some resources will be renamed to avoid conflicts.'
+            )}
+          </Text>
+        </Stack>
+        {result.renamedReceivers.length > 0 && (
+          <Text color="secondary" variant="bodySmall">
+            {t('alerting.migrate-to-gma.review.renamed-receivers', 'Receivers renamed: {{count}}', {
+              count: result.renamedReceivers.length,
+            })}
+          </Text>
+        )}
+        {result.renamedTimeIntervals.length > 0 && (
+          <Text color="secondary" variant="bodySmall">
+            {t('alerting.migrate-to-gma.review.renamed-intervals', 'Time intervals renamed: {{count}}', {
+              count: result.renamedTimeIntervals.length,
+            })}
+          </Text>
+        )}
+      </Stack>
+    );
+  }
+
+  // Error case
+  return (
+    <Stack direction="row" gap={1} alignItems="center">
+      <Icon name="exclamation-circle" className={styles.errorIcon} />
+      <Text color="error">
+        {result.error || t('alerting.migrate-to-gma.review.validation-error', 'Validation failed.')}
+      </Text>
+    </Stack>
+  );
+}
+
 // Review Step Component
 interface ReviewStepProps {
   formData: MigrationFormValues;
   onBack: () => void;
   onStartMigration: () => void;
+  /** Result from the dry-run validation (only available if step 1 was completed) */
+  dryRunResult?: DryRunValidationResult;
 }
 
-function ReviewStep({ formData, onBack, onStartMigration }: ReviewStepProps) {
+function ReviewStep({ formData, onBack, onStartMigration, dryRunResult }: ReviewStepProps) {
   const styles = useStyles2(getStyles);
 
   const willMigrateNotifications = formData.step1Completed && !formData.step1Skipped;
@@ -396,6 +529,12 @@ function ReviewStep({ formData, onBack, onStartMigration }: ReviewStepProps) {
                       {MERGE_MATCHERS_LABEL_NAME}={formData.policyTreeName}
                     </Text>
                   </div>
+                  {/* Validation status from dry-run */}
+                  {dryRunResult && (
+                    <Box marginTop={1}>
+                      <ValidationStatusIndicator result={dryRunResult} styles={styles} />
+                    </Box>
+                  )}
                 </Stack>
               ) : (
                 <Text color="secondary">
@@ -654,6 +793,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       backgroundColor: theme.colors.action.hover,
     },
+  }),
+  successIcon: css({
+    color: theme.colors.success.main,
+  }),
+  warningIcon: css({
+    color: theme.colors.warning.main,
+  }),
+  errorIcon: css({
+    color: theme.colors.error.main,
   }),
 });
 

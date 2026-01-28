@@ -1,9 +1,11 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
+
+import type { DryRunValidationResult } from './DryRunValidationModal';
 
 interface MigrateNotificationsParams {
   source: 'datasource' | 'yaml';
@@ -163,4 +165,138 @@ function isRuleManagedByExternalSystem(rule: { labels?: Record<string, string> }
   }
 
   return false;
+}
+
+interface DryRunNotificationsParams {
+  source: 'datasource' | 'yaml';
+  /** Datasource name (not UID) - required when source is 'datasource' */
+  datasourceName?: string;
+  yamlFile: File | null;
+  mergeMatchers: string;
+}
+
+/**
+ * Hook to perform dry-run validation for Alertmanager config import.
+ * This validates the config and checks for conflicts before actually importing.
+ *
+ * TODO: The backend endpoint doesn't exist yet. See https://github.com/grafana/alerting-squad/issues/1378
+ * For now, this hook provides a way to:
+ * 1. Skip validation entirely (when skipValidation=true or endpoint not available)
+ * 2. Mock the response for UI development/testing
+ *
+ * When the endpoint is ready:
+ * - Remove the mock logic
+ * - Remove the skipValidation option (or keep it for testing)
+ * - The endpoint should return: { valid: boolean, error?: string, renamedReceivers: [], renamedTimeIntervals: [] }
+ */
+export function useDryRunNotifications() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [result, setResult] = useState<DryRunValidationResult | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+
+  // TODO: Uncomment when the backend endpoint is implemented
+  // const [dryRunAlertmanagerConfig] = convertToGMAApi.useDryRunAlertmanagerConfigMutation();
+
+  const runDryRun = useCallback(
+    async (
+      params: DryRunNotificationsParams,
+      options: { skipValidation?: boolean } = {}
+    ): Promise<DryRunValidationResult> => {
+      const { source, datasourceName, yamlFile, mergeMatchers } = params;
+      const { skipValidation = false } = options;
+
+      // If skipValidation is true, return a success result immediately
+      // This allows the UI to proceed without validation when the endpoint doesn't exist
+      if (skipValidation) {
+        const successResult: DryRunValidationResult = {
+          valid: true,
+          renamedReceivers: [],
+          renamedTimeIntervals: [],
+        };
+        setResult(successResult);
+        return successResult;
+      }
+
+      setIsLoading(true);
+      setError(null);
+      setResult(null);
+
+      try {
+        let alertmanagerConfig: string;
+        let templateFiles: Record<string, string> = {};
+
+        if (source === 'yaml' && yamlFile) {
+          alertmanagerConfig = await yamlFile.text();
+        } else if (source === 'datasource' && datasourceName) {
+          const config = await fetchAlertManagerConfig(datasourceName);
+          alertmanagerConfig = JSON.stringify(config.alertmanager_config);
+          templateFiles = config.template_files ?? {};
+        } else {
+          throw new Error('Invalid migration source configuration');
+        }
+
+        // TODO: Uncomment when the backend endpoint is implemented
+        // const response = await dryRunAlertmanagerConfig({
+        //   alertmanagerConfig,
+        //   templateFiles,
+        //   mergeMatchers,
+        // }).unwrap();
+        // setResult(response);
+        // return response;
+
+        // MOCK: For now, simulate a successful dry-run
+        // This allows UI development to continue while waiting for the backend
+        // Remove this mock once the endpoint is ready
+        console.warn('[useDryRunNotifications] Backend endpoint not implemented yet. Using mock response.', {
+          alertmanagerConfig: alertmanagerConfig.substring(0, 100) + '...',
+          templateFiles,
+          mergeMatchers,
+        });
+
+        // Simulate a small delay to show loading state
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Mock response - always returns success with no renames
+        // In real implementation, the backend would analyze the config and return actual renames
+        const mockResult: DryRunValidationResult = {
+          valid: true,
+          renamedReceivers: [],
+          renamedTimeIntervals: [],
+        };
+
+        setResult(mockResult);
+        return mockResult;
+      } catch (err) {
+        const errorObj = err instanceof Error ? err : new Error(String(err));
+        setError(errorObj);
+
+        // Return an error result
+        const errorResult: DryRunValidationResult = {
+          valid: false,
+          error: errorObj.message,
+          renamedReceivers: [],
+          renamedTimeIntervals: [],
+        };
+        setResult(errorResult);
+        return errorResult;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  const reset = useCallback(() => {
+    setIsLoading(false);
+    setResult(null);
+    setError(null);
+  }, []);
+
+  return {
+    runDryRun,
+    isLoading,
+    result,
+    error,
+    reset,
+  };
 }
