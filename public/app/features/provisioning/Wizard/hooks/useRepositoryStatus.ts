@@ -42,7 +42,7 @@ export function useRepositoryStatus(repoName?: string, options?: UseRepositorySt
 
   return {
     isReady,
-    isHealthy,
+    isHealthy: isReady ? isHealthy : undefined,
     healthMessage,
     checked,
     healthStatusNotReady,
