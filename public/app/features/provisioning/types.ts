@@ -25,6 +25,8 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySp
     enablePushToConfiguredBranch: boolean;
     // top-level inline secure value
     token?: string;
+    // GitHub App connection name (when using app-based auth instead of PAT)
+    connectionName?: string;
   };
 
 export type RepositorySettingsField = Path<RepositoryFormData>;
