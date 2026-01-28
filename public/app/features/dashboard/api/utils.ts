@@ -4,6 +4,7 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 import { Status } from '@grafana/schema/src/schema/dashboard/v2';
 import { isRecord } from 'app/core/utils/isRecord';
 import { Resource } from 'app/features/apiserver/types';
+import { isDashboardSceneEnabled } from 'app/features/dashboard-scene/utils/utils';
 import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -19,14 +20,13 @@ export function isV0V1StoredVersion(version: string | undefined): boolean {
 }
 
 export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
-  const isDashboardSceneEnabled = config.featureToggles.dashboardScene;
   const isKubernetesDashboardsEnabled = config.featureToggles.kubernetesDashboards;
   const isDashboardNewLayoutsEnabled = config.featureToggles.dashboardNewLayouts;
 
   const forcingOldDashboardArch = locationService.getSearch().get('scenes') === 'false';
 
   // Force legacy API when dashboard scene is disabled or explicitly forced
-  if (!isDashboardSceneEnabled || forcingOldDashboardArch) {
+  if (!isDashboardSceneEnabled() || forcingOldDashboardArch) {
     if (responseFormat === 'v2') {
       throw new Error('v2 is not supported for legacy architecture');
     }

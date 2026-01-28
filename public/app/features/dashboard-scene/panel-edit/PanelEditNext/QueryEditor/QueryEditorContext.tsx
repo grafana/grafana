@@ -28,11 +28,12 @@ export interface QueryEditorUIState {
 
 export interface QueryEditorActions {
   updateQueries: (queries: DataQuery[]) => void;
+  updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   addQuery: (query?: Partial<DataQuery>) => void;
   deleteQuery: (index: number) => void;
   duplicateQuery: (index: number) => void;
   runQueries: () => void;
-  changeDataSource: (settings: DataSourceInstanceSettings) => void;
+  changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
 }
 
 const DatasourceContext = createContext<DatasourceState | null>(null);

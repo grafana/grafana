@@ -51,41 +51,68 @@ const (
 
 // Test validates the appID and installationID against the given github token.
 func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	claims, err := parseJWTToken(c.secrets.Token, c.secrets.PrivateKey)
-	if err != nil {
-		// Error parsing JWT token means the given private key is invalid
-		return &provisioning.TestResults{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: provisioning.APIVERSION,
-				Kind:       "TestResults",
-			},
-			Code:    http.StatusUnauthorized,
-			Success: false,
-			Errors: []provisioning.ErrorDetails{
-				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  field.NewPath("secure", "privateKey").String(),
-					Detail: "invalid private key",
+	if c.secrets.Token.IsZero() {
+		// In case the token is not generated, we create one on the fly
+		// to testing that the other fields are valid.
+		token, err := GenerateJWTToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
+		if err != nil {
+			// Error generating JWT token means the privateKey is not valid.
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
 				},
-			},
-		}, nil
-	}
-	if claims.Issuer != c.obj.Spec.GitHub.AppID {
-		return &provisioning.TestResults{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: provisioning.APIVERSION,
-				Kind:       "TestResults",
-			},
-			Code:    http.StatusUnauthorized,
-			Success: false,
-			Errors: []provisioning.ErrorDetails{
-				{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  field.NewPath("spec", "github", "appID").String(),
-					Detail: fmt.Sprintf("invalid app ID: %s", c.obj.Spec.GitHub.AppID),
+				Code:    http.StatusUnauthorized,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "privateKey").String(),
+						Detail: "invalid private key",
+					},
 				},
-			},
-		}, nil
+			}, nil
+		}
+		c.obj.Secure.Token.Create = token
+		c.secrets.Token = token
+	} else {
+		// In case the token is there, we verify it's correct.
+		claims, err := parseJWTToken(c.secrets.Token, c.secrets.PrivateKey)
+		if err != nil {
+			// Error parsing JWT token means the given private key is invalid
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
+				},
+				Code:    http.StatusUnauthorized,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "privateKey").String(),
+						Detail: "invalid private key",
+					},
+				},
+			}, nil
+		}
+		if claims.Issuer != c.obj.Spec.GitHub.AppID {
+			return &provisioning.TestResults{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: provisioning.APIVERSION,
+					Kind:       "TestResults",
+				},
+				Code:    http.StatusUnauthorized,
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "github", "appID").String(),
+						Detail: fmt.Sprintf("invalid app ID: %s", c.obj.Spec.GitHub.AppID),
+					},
+				},
+			}, nil
+		}
 	}
 
 	ghClient := c.ghFactory.New(ctx, c.secrets.Token)

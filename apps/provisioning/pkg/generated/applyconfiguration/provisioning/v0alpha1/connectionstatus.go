@@ -5,18 +5,16 @@
 package v0alpha1
 
 import (
-	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
 // ConnectionStatusApplyConfiguration represents a declarative configuration of the ConnectionStatus type for use
 // with apply.
 type ConnectionStatusApplyConfiguration struct {
-	ObservedGeneration *int64                                `json:"observedGeneration,omitempty"`
-	FieldErrors        []ErrorDetailsApplyConfiguration      `json:"fieldErrors,omitempty"`
-	Conditions         []v1.ConditionApplyConfiguration      `json:"conditions,omitempty"`
-	State              *provisioningv0alpha1.ConnectionState `json:"state,omitempty"`
-	Health             *HealthStatusApplyConfiguration       `json:"health,omitempty"`
+	ObservedGeneration *int64                           `json:"observedGeneration,omitempty"`
+	FieldErrors        []ErrorDetailsApplyConfiguration `json:"fieldErrors,omitempty"`
+	Conditions         []v1.ConditionApplyConfiguration `json:"conditions,omitempty"`
+	Health             *HealthStatusApplyConfiguration  `json:"health,omitempty"`
 }
 
 // ConnectionStatusApplyConfiguration constructs a declarative configuration of the ConnectionStatus type for use with
@@ -56,14 +54,6 @@ func (b *ConnectionStatusApplyConfiguration) WithConditions(values ...*v1.Condit
 		}
 		b.Conditions = append(b.Conditions, *values[i])
 	}
-	return b
-}
-
-// WithState sets the State field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the State field is set to the value of the last call.
-func (b *ConnectionStatusApplyConfiguration) WithState(value provisioningv0alpha1.ConnectionState) *ConnectionStatusApplyConfiguration {
-	b.State = &value
 	return b
 }
 

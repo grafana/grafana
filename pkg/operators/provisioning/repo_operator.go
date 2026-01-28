@@ -10,19 +10,14 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/setting"
 
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 )
@@ -33,19 +28,9 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	})).With("logger", "provisioning-repo-controller")
 	logger.Info("Starting provisioning repo controller")
 
-	controllerCfg, err := getRepoControllerConfig(deps.Config, deps.Registerer)
+	controllerCfg, err := setupFromConfig(deps.Config, deps.Registerer)
 	if err != nil {
-		return fmt.Errorf("failed to setup operator: %w", err)
-	}
-
-	tracingConfig, err := tracing.ProvideTracingConfig(deps.Config)
-	if err != nil {
-		return fmt.Errorf("failed to provide tracing config: %w", err)
-	}
-
-	tracer, err := tracing.ProvideService(tracingConfig)
-	if err != nil {
-		return fmt.Errorf("failed to provide tracing service: %w", err)
+		return fmt.Errorf("failed to setup provisioning controller: %w", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -59,51 +44,81 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		cancel()
 	}()
 
+	provisioningClient, err := controllerCfg.ProvisioningClient()
+	if err != nil {
+		return fmt.Errorf("failed to create provisioning client: %w", err)
+	}
+
 	informerFactory := informer.NewSharedInformerFactoryWithOptions(
-		controllerCfg.provisioningClient,
-		controllerCfg.resyncInterval,
+		provisioningClient,
+		controllerCfg.ResyncInterval(),
 	)
 
-	resourceLister := resources.NewResourceLister(controllerCfg.unified)
-	jobs, err := jobs.NewJobStore(controllerCfg.provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
+	unified, err := controllerCfg.UnifiedStorageClient()
+	if err != nil {
+		return fmt.Errorf("failed to get unified storage client: %w", err)
+	}
+
+	resourceLister := resources.NewResourceLister(unified)
+	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	validator := repository.NewValidator(controllerCfg.allowImageRendering, controllerCfg.repoFactory)
-	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
+	repoFactory, err := controllerCfg.RepositoryFactory()
+	if err != nil {
+		return fmt.Errorf("failed to get repository factory: %w", err)
+	}
+
+	allowImageRendering := controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("allow_image_rendering").MustBool(false)
+	validator := repository.NewValidator(allowImageRendering, repoFactory)
+	statusPatcher := appcontroller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 	// Health checker uses basic validation only - no need to validate against existing repositories
 	// since the repository already passed admission validation when it was created/updated.
 	// TODO: Consider adding ExistingRepositoriesValidator for reconciliation to detect conflicts
 	// that may arise from manual edits or migrations (e.g., duplicate paths, instance sync conflicts).
-	healthMetricsRecorder := controller.NewHealthMetricsRecorder(deps.Registerer)
+	healthMetricsRecorder, err := controllerCfg.HealthMetricsRecorder()
+	if err != nil {
+		return fmt.Errorf("failed to get health metrics recorder: %w", err)
+	}
+
 	healthChecker := controller.NewRepositoryHealthChecker(statusPatcher, repository.NewTester(validator), healthMetricsRecorder)
 
-	// Create quota getter from configuration.
-	// Defaults: max_resources_per_repository=0 (unlimited), max_repositories=10
-	// Note: This operator may need to move to enterprise repository to support
-	// enterprise-specific quota implementations and dependencies.
-	quotaLimits := quotas.QuotaLimits{
-		MaxResources:    deps.Config.SectionWithEnvOverrides("provisioning").Key("max_resources_per_repository").MustInt64(0),
-		MaxRepositories: deps.Config.SectionWithEnvOverrides("provisioning").Key("max_repositories").MustInt64(10),
+	connectionFactory, err := controllerCfg.ConnectionFactory()
+	if err != nil {
+		return fmt.Errorf("failed to get connection factory: %w", err)
 	}
-	quotaGetter := quotas.NewFixedQuotaGetter(quotaLimits)
+
+	tracer, err := controllerCfg.Tracer()
+	if err != nil {
+		return fmt.Errorf("failed to get tracer: %w", err)
+	}
+
+	quotaGetter, err := controllerCfg.QuotaGetter()
+	if err != nil {
+		return fmt.Errorf("failed to get quota getter: %w", err)
+	}
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
+	clients, err := controllerCfg.Clients()
+	if err != nil {
+		return fmt.Errorf("failed to get clients: %w", err)
+	}
+
 	controller, err := controller.NewRepositoryController(
-		controllerCfg.provisioningClient.ProvisioningV0alpha1(),
+		provisioningClient.ProvisioningV0alpha1(),
 		repoInformer,
-		controllerCfg.repoFactory,
-		controllerCfg.connectionFactory,
+		repoFactory,
+		connectionFactory,
 		resourceLister,
-		controllerCfg.clients,
+		clients,
 		jobs,
 		healthChecker,
 		statusPatcher,
 		deps.Registerer,
 		tracer,
-		controllerCfg.parallelOperations,
-		controllerCfg.resyncInterval,
+		controllerCfg.Settings.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
+		controllerCfg.ResyncInterval(),
 		quotaGetter,
 	)
 	if err != nil {
@@ -115,60 +130,6 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("failed to sync informer cache")
 	}
 
-	controller.Run(ctx, controllerCfg.workerCount)
+	controller.Run(ctx, controllerCfg.NumberOfWorkers())
 	return nil
-}
-
-type repoControllerConfig struct {
-	provisioningControllerConfig
-	repoFactory         repository.Factory
-	connectionFactory   connection.Factory
-	workerCount         int
-	parallelOperations  int
-	allowedTargets      []string
-	allowImageRendering bool
-	minSyncInterval     time.Duration
-}
-
-func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*repoControllerConfig, error) {
-	controllerCfg, err := setupFromConfig(cfg, registry)
-	if err != nil {
-		return nil, err
-	}
-
-	decryptSvc, err := setupDecryptService(cfg, tracing.NewNoopTracerService(), controllerCfg.tokenExchangeClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup decryptService: %w", err)
-	}
-
-	repoDecrypter := repository.ProvideDecrypter(decryptSvc)
-	repoFactory, err := setupRepoFactory(cfg, repoDecrypter, controllerCfg.provisioningClient, registry)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup repository factory: %w", err)
-	}
-
-	connectionDecrypter := connection.ProvideDecrypter(decryptSvc)
-	connectionFactory, err := setupConnectionFactory(cfg, connectionDecrypter)
-	if err != nil {
-		return nil, fmt.Errorf("failed to setup connection factory: %w", err)
-	}
-
-	allowedTargets := []string{}
-	cfg.SectionWithEnvOverrides("provisioning").Key("allowed_targets").Strings("|")
-	if len(allowedTargets) == 0 {
-		allowedTargets = []string{"folder"}
-	}
-
-	// Note: This operator may need to move to enterprise repository to support
-	// enterprise-specific quota implementations and dependencies.
-	return &repoControllerConfig{
-		provisioningControllerConfig: *controllerCfg,
-		repoFactory:                  repoFactory,
-		connectionFactory:            connectionFactory,
-		allowedTargets:               allowedTargets,
-		workerCount:                  cfg.SectionWithEnvOverrides("operator").Key("worker_count").MustInt(1),
-		parallelOperations:           cfg.SectionWithEnvOverrides("operator").Key("parallel_operations").MustInt(10),
-		allowImageRendering:          cfg.SectionWithEnvOverrides("provisioning").Key("allow_image_rendering").MustBool(false),
-		minSyncInterval:              cfg.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1 * time.Minute),
-	}, nil
 }

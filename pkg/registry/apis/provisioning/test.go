@@ -175,7 +175,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 								Status:  metav1.StatusFailure,
 								Code:    http.StatusInternalServerError,
 								Reason:  "InternalServerError",
-								Message: "failed to generate repository token from connection",
+								Message: fmt.Sprintf("failed to generate repository token from connection: %v", err),
 							},
 						})
 						return
