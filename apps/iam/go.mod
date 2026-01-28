@@ -156,7 +156,7 @@ require (
 	github.com/dlmiddlecote/sqlstats v1.0.2 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2 // indirect
-	github.com/dolthub/go-icu-regex v0.0.0-20250327004329-6799764f2dad // indirect
+	github.com/dolthub/go-icu-regex v0.0.0-20250916051405-78a38d478790 // indirect
 	github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e // indirect
 	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
 	github.com/dolthub/vitess v0.0.0-20250930230441-70c2c6a98e33 // indirect
@@ -374,7 +374,6 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/tetratelabs/wazero v1.8.2 // indirect
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // indirect
 	github.com/tjhop/slog-gokit v0.1.5 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
