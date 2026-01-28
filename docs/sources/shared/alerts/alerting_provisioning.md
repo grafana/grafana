@@ -213,6 +213,106 @@ Content-Type: application/json
 }
 ```
 
+#### Recording rules
+
+Recording rules allow you to pre-compute frequently used or computationally expensive queries and save the results as a new time series metric. The same alert rule provisioning endpoints support creating recording rules by including the `record` field instead of alert-specific fields like `condition`, `noDataState`, or `execErrState`.
+
+**Example request for new recording rule:**
+
+```http
+POST /api/v1/provisioning/alert-rules
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "title": "my_recording_rule",
+  "ruleGroup": "recording_rules_group",
+  "folderUID": "SET_FOLDER_UID",
+  "for": "0s",
+  "orgId": 1,
+  "uid": "",
+  "labels": {
+    "team": "backend"
+  },
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0
+      },
+      "datasourceUid": "PROMETHEUS_DATASOURCE_UID",
+      "model": {
+        "expr": "sum(rate(http_requests_total[5m]))",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "A"
+      }
+    }
+  ],
+  "record": {
+    "metric": "http_requests:rate5m:sum",
+    "from": "A",
+    "target_datasource_uid": "TARGET_PROMETHEUS_UID"
+  }
+}
+```
+
+**Example response:**
+
+```http
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "id": 2,
+  "uid": "YYYYYYYYY",
+  "orgID": 1,
+  "folderUID": "SET_FOLDER_UID",
+  "ruleGroup": "recording_rules_group",
+  "title": "my_recording_rule",
+  "for": "0s",
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0
+      },
+      "datasourceUid": "PROMETHEUS_DATASOURCE_UID",
+      "model": {
+        "expr": "sum(rate(http_requests_total[5m]))",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "A"
+      }
+    }
+  ],
+  "updated": "2024-08-02T14:30:15.123456789Z",
+  "labels": {
+    "team": "backend"
+  },
+  "provenance": "api",
+  "isPaused": false,
+  "record": {
+    "metric": "http_requests:rate5m:sum",
+    "from": "A",
+    "target_datasource_uid": "TARGET_PROMETHEUS_UID"
+  }
+}
+```
+
+**Important notes for recording rules:**
+
+- The `metric` field must be a valid Prometheus metric name and contain no whitespace.
+- The `from` field specifies which query reference (refId) to use as the source for the recorded metric.
+- The `target_datasource_uid` specifies which Prometheus-compatible data source to write the results to. If not specified, the default data source configured in `[recording_rules].default_datasource_uid` is used.
+- Recording rules do not support `condition`, `noDataState`, `execErrState`, or `notification_settings` fields.
+- Set `for` to `0s` for recording rules as they do not have a pending state.
+
 ### Contact points
 
 | Method | URI                                        | Name                                                              | Summary                                                |
@@ -250,6 +350,94 @@ Content-Type: application/json
   }
 ]
 ```
+
+### Receiver permissions
+
+The receiver permissions endpoints manage access control for contact point receivers. These endpoints require Grafana Enterprise and allow you to assign permissions to users, teams, or built-in roles for specific receivers.
+
+| Method | URI                                                           | Name                                                                          | Summary                                                  |
+| ------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------- |
+| POST   | /api/access-control/receivers/:uid/users/:userID              | [route set user receiver permission](#route-set-user-receiver-permission)     | Set permissions for a user on a specific receiver.       |
+| POST   | /api/access-control/receivers/:uid/teams/:teamID              | [route set team receiver permission](#route-set-team-receiver-permission)     | Set permissions for a team on a specific receiver.       |
+| POST   | /api/access-control/receivers/:uid/builtInRoles/:builtInRole  | [route set builtin receiver permission](#route-set-builtin-receiver-permission) | Set permissions for a built-in role on a specific receiver. |
+
+**Example Request to assign permissions to a user:**
+
+```http
+POST /api/access-control/receivers/abc123/users/5
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "permission": "Edit"
+}
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "message": "Permission updated"
+}
+```
+
+**Example Request to remove permissions from a team:**
+
+```http
+POST /api/access-control/receivers/abc123/teams/3
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "permission": ""
+}
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "message": "Permission removed"
+}
+```
+
+**Example Request to assign permissions to a built-in role:**
+
+```http
+POST /api/access-control/receivers/abc123/builtInRoles/Viewer
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "permission": "View"
+}
+```
+
+**Example Response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "message": "Permission updated"
+}
+```
+
+**Available Permissions:**
+- `View` - Read-only access to the receiver
+- `Edit` - Ability to update the receiver
+- `Admin` - Full access including managing permissions
+- Empty string (`""`) - Removes the permission
 
 ### Notification policies
 
@@ -813,6 +1001,174 @@ Status: OK
 Status: Forbidden
 
 ###### <span id="route-get-contactpoints-export-403-schema"></span> Schema
+
+[PermissionDenied](#permission-denied)
+
+### <span id="route-set-user-receiver-permission"></span> Set permissions for a user on a specific receiver. (_RouteSetUserReceiverPermission_)
+
+```
+POST /api/access-control/receivers/:uid/users/:userID
+```
+
+This endpoint sets or removes permissions for a specific user on a receiver. To remove a permission, send an empty string as the permission value.
+
+{{< admonition type="note" >}}
+This endpoint requires Grafana Enterprise and the user must have the `receivers.permissions:write` permission for the specified receiver.
+{{< /admonition >}}
+
+#### Parameters
+
+| Name     | Source | Type   | Go type | Required | Default | Description                                                        |
+| -------- | ------ | ------ | ------- | :------: | ------- | ------------------------------------------------------------------ |
+| `uid`    | path   | string | string  |    ✓     |         | UID of the receiver                                                |
+| `userID` | path   | int64  | int64   |    ✓     |         | ID of the user to assign permissions to                            |
+| `body`   | body   | object | object  |    ✓     |         | JSON body with `permission` field: `View`, `Edit`, `Admin`, or `""` (empty to remove) |
+
+#### All responses
+
+| Code                                              | Status | Description        | Has headers | Schema                                                      |
+| ------------------------------------------------- | ------ | ------------------ | :---------: | ----------------------------------------------------------- |
+| [200](#route-set-user-receiver-permission-200)    | OK     | Permission updated |             | [schema](#route-set-user-receiver-permission-200-schema)    |
+| [400](#route-set-user-receiver-permission-400)    | Bad Request | Invalid request    |             | [schema](#route-set-user-receiver-permission-400-schema) |
+| [403](#route-set-user-receiver-permission-403)    | Forbidden | Permission denied  |             | [schema](#route-set-user-receiver-permission-403-schema)    |
+
+#### Responses
+
+##### <span id="route-set-user-receiver-permission-200"></span> 200 - Permission updated
+
+Status: OK
+
+###### <span id="route-set-user-receiver-permission-200-schema"></span> Schema
+
+```json
+{
+  "message": "Permission updated"
+}
+```
+
+##### <span id="route-set-user-receiver-permission-400"></span> 400 - Invalid request
+
+Status: Bad Request
+
+###### <span id="route-set-user-receiver-permission-400-schema"></span> Schema
+
+##### <span id="route-set-user-receiver-permission-403"></span> 403 - Permission denied
+
+Status: Forbidden
+
+###### <span id="route-set-user-receiver-permission-403-schema"></span> Schema
+
+[PermissionDenied](#permission-denied)
+
+### <span id="route-set-team-receiver-permission"></span> Set permissions for a team on a specific receiver. (_RouteSetTeamReceiverPermission_)
+
+```
+POST /api/access-control/receivers/:uid/teams/:teamID
+```
+
+This endpoint sets or removes permissions for a specific team on a receiver. To remove a permission, send an empty string as the permission value.
+
+{{< admonition type="note" >}}
+This endpoint requires Grafana Enterprise and the user must have the `receivers.permissions:write` permission for the specified receiver.
+{{< /admonition >}}
+
+#### Parameters
+
+| Name     | Source | Type   | Go type | Required | Default | Description                                                        |
+| -------- | ------ | ------ | ------- | :------: | ------- | ------------------------------------------------------------------ |
+| `uid`    | path   | string | string  |    ✓     |         | UID of the receiver                                                |
+| `teamID` | path   | int64  | int64   |    ✓     |         | ID of the team to assign permissions to                            |
+| `body`   | body   | object | object  |    ✓     |         | JSON body with `permission` field: `View`, `Edit`, `Admin`, or `""` (empty to remove) |
+
+#### All responses
+
+| Code                                              | Status | Description        | Has headers | Schema                                                      |
+| ------------------------------------------------- | ------ | ------------------ | :---------: | ----------------------------------------------------------- |
+| [200](#route-set-team-receiver-permission-200)    | OK     | Permission updated |             | [schema](#route-set-team-receiver-permission-200-schema)    |
+| [400](#route-set-team-receiver-permission-400)    | Bad Request | Invalid request    |             | [schema](#route-set-team-receiver-permission-400-schema) |
+| [403](#route-set-team-receiver-permission-403)    | Forbidden | Permission denied  |             | [schema](#route-set-team-receiver-permission-403-schema)    |
+
+#### Responses
+
+##### <span id="route-set-team-receiver-permission-200"></span> 200 - Permission updated
+
+Status: OK
+
+###### <span id="route-set-team-receiver-permission-200-schema"></span> Schema
+
+```json
+{
+  "message": "Permission updated"
+}
+```
+
+##### <span id="route-set-team-receiver-permission-400"></span> 400 - Invalid request
+
+Status: Bad Request
+
+###### <span id="route-set-team-receiver-permission-400-schema"></span> Schema
+
+##### <span id="route-set-team-receiver-permission-403"></span> 403 - Permission denied
+
+Status: Forbidden
+
+###### <span id="route-set-team-receiver-permission-403-schema"></span> Schema
+
+[PermissionDenied](#permission-denied)
+
+### <span id="route-set-builtin-receiver-permission"></span> Set permissions for a built-in role on a specific receiver. (_RouteSetBuiltinReceiverPermission_)
+
+```
+POST /api/access-control/receivers/:uid/builtInRoles/:builtInRole
+```
+
+This endpoint sets or removes permissions for a built-in role on a receiver. To remove a permission, send an empty string as the permission value.
+
+{{< admonition type="note" >}}
+This endpoint requires Grafana Enterprise and the user must have the `receivers.permissions:write` permission for the specified receiver.
+{{< /admonition >}}
+
+#### Parameters
+
+| Name          | Source | Type   | Go type | Required | Default | Description                                                        |
+| ------------- | ------ | ------ | ------- | :------: | ------- | ------------------------------------------------------------------ |
+| `uid`         | path   | string | string  |    ✓     |         | UID of the receiver                                                |
+| `builtInRole` | path   | string | string  |    ✓     |         | Built-in role name: `Viewer`, `Editor`, or `Admin`                 |
+| `body`        | body   | object | object  |    ✓     |         | JSON body with `permission` field: `View`, `Edit`, `Admin`, or `""` (empty to remove) |
+
+#### All responses
+
+| Code                                                 | Status | Description        | Has headers | Schema                                                         |
+| ---------------------------------------------------- | ------ | ------------------ | :---------: | -------------------------------------------------------------- |
+| [200](#route-set-builtin-receiver-permission-200)    | OK     | Permission updated |             | [schema](#route-set-builtin-receiver-permission-200-schema)    |
+| [400](#route-set-builtin-receiver-permission-400)    | Bad Request | Invalid request    |             | [schema](#route-set-builtin-receiver-permission-400-schema) |
+| [403](#route-set-builtin-receiver-permission-403)    | Forbidden | Permission denied  |             | [schema](#route-set-builtin-receiver-permission-403-schema)    |
+
+#### Responses
+
+##### <span id="route-set-builtin-receiver-permission-200"></span> 200 - Permission updated
+
+Status: OK
+
+###### <span id="route-set-builtin-receiver-permission-200-schema"></span> Schema
+
+```json
+{
+  "message": "Permission updated"
+}
+```
+
+##### <span id="route-set-builtin-receiver-permission-400"></span> 400 - Invalid request
+
+Status: Bad Request
+
+###### <span id="route-set-builtin-receiver-permission-400-schema"></span> Schema
+
+##### <span id="route-set-builtin-receiver-permission-403"></span> 403 - Permission denied
+
+Status: Forbidden
+
+###### <span id="route-set-builtin-receiver-permission-403-schema"></span> Schema
 
 [PermissionDenied](#permission-denied)
 
@@ -1798,6 +2154,7 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 | `noDataState` | string                       | string                    |    ✓     |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `orgID`       | int64 (formatted integer)    | `int64                    |    ✓     |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `provenance`  | [Provenance](#provenance)    | [Provenance](#provenance) |          |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `record`      | [Record](#record)            | [Record](#record)         |          |         | Recording rule configuration. If present, this is a recording rule instead of an alert rule.                              | `{"metric":"http_requests:rate5m:sum","from":"A","target_datasource_uid":"my-prom"}`                                                                                                                                                                                                                                                                                                                                             |
 | `ruleGroup`   | string                       | string                    |    ✓     |         |                                                                                                                           | `eval_group_1`                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `title`       | string                       | string                    |    ✓     |         |                                                                                                                           | `Always firing`                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `uid`         | string                       | string                    |          |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -1812,6 +2169,22 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 ### <span id="raw-message"></span> RawMessage
 
 [interface{}](#interface)
+
+### <span id="record"></span> Record
+
+> Record defines the configuration for a recording rule, which pre-computes query results and saves them as a new time series metric.
+
+**Properties**
+
+{{% responsive-table %}}
+
+| Name                  | Type   | Go type | Required | Default | Description                                                                                              | Example                       |
+| --------------------- | ------ | ------- | :------: | ------- | -------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| `metric`              | string | string  |    ✓     |         | The name of the new metric to create. Must be a valid Prometheus metric name with no whitespace.        | `http_requests:rate5m:sum`    |
+| `from`                | string | string  |    ✓     |         | The query reference ID (refId) to use as the source for the recorded metric.                             | `A`                           |
+| `target_datasource_uid` | string | string  |          |         | UID of the Prometheus-compatible data source to write results to. Falls back to configured default if not specified. | `my-prometheus-datasource-uid` |
+
+{{% /responsive-table %}}
 
 ### <span id="receiver-export"></span> ReceiverExport
 
