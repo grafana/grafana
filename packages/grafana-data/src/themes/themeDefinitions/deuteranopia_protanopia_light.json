@@ -4,13 +4,15 @@
   "colors": {
     "mode": "light",
     "success": {
-      "main": "#007A63"
+      "main": "#006F7A"
     },
     "error": {
-      "main": "#D85C00"
+      "main": "#FF9900",
+      "text": "#B5510D"
     },
     "warning": {
-      "main": "#B38600"
+      "main": "#FFEE52",
+      "text": "#756600"
     },
     "contrastThreshold": 4.5
   }
