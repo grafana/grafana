@@ -1,12 +1,23 @@
-import { useCallback, useId, useMemo, useRef } from 'react';
+import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { dataLayers, VizPanel } from '@grafana/scenes';
 import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
-import { Checkbox, Combobox, ComboboxOption, Field, Input, MultiCombobox, Stack } from '@grafana/ui';
+import {
+  Box,
+  Button,
+  Checkbox,
+  Combobox,
+  ComboboxOption,
+  Field,
+  Input,
+  Modal,
+  MultiCombobox,
+  Stack,
+} from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -79,7 +90,6 @@ function getSelectablePanels(panels: VizPanel[]): Array<ComboboxOption<number>> 
 function useEditPaneOptions(this: AnnotationEditableElement): OptionsPaneCategoryDescriptor[] {
   const annotationCategoryId = useId();
   const annotationNameId = useId();
-  const dataSourceId = useId();
   const enabledId = useId();
   const colorId = useId();
   const displayId = useId();
@@ -93,13 +103,6 @@ function useEditPaneOptions(this: AnnotationEditableElement): OptionsPaneCategor
           title: '',
           id: annotationNameId,
           render: () => <AnnotationNameInput layer={this.layer} />,
-        })
-      )
-      .addItem(
-        new OptionsPaneItemDescriptor({
-          title: '',
-          id: dataSourceId,
-          render: () => <AnnotationDataSourcePicker layer={this.layer} />,
         })
       )
       .addItem(
@@ -130,7 +133,7 @@ function useEditPaneOptions(this: AnnotationEditableElement): OptionsPaneCategor
           render: () => <AnnotationPanelFilterPicker layer={this.layer} />,
         })
       );
-  }, [annotationCategoryId, annotationNameId, dataSourceId, enabledId, colorId, displayId, showInId]);
+  }, [annotationCategoryId, annotationNameId, enabledId, colorId, displayId, showInId]);
 
   const queryEditorId = useId();
 
@@ -142,7 +145,7 @@ function useEditPaneOptions(this: AnnotationEditableElement): OptionsPaneCategor
       new OptionsPaneItemDescriptor({
         title: '',
         id: queryEditorId,
-        render: () => <AnnotationQueryEditor layer={this.layer} />,
+        render: () => <AnnotationQueryEditorButton layer={this.layer} />,
       })
     );
   }, [queryCategoryId, queryEditorId]);
@@ -198,22 +201,32 @@ function AnnotationDataSourcePicker({ layer }: { layer: AnnotationLayer }) {
   const onDataSourceChange = useCallback(
     (ds: DataSourceInstanceSettings) => {
       const dsRef = getDataSourceRef(ds);
+      const oldQuery = query;
 
       // If the data source type changed, reset the query to defaults
-      if (query?.datasource?.type !== dsRef.type) {
-        layer.setState({
-          query: {
-            name: query?.name,
-            enable: query?.enable,
-            iconColor: query?.iconColor,
-            hide: query?.hide,
-            datasource: dsRef,
-          },
-        });
-        layer.runLayer();
-      } else {
-        updateLayerQuery(layer, { datasource: dsRef }, true);
-      }
+      const newQuery =
+        query?.datasource?.type !== dsRef.type
+          ? {
+              name: query?.name,
+              enable: query?.enable,
+              iconColor: query?.iconColor,
+              hide: query?.hide,
+              datasource: dsRef,
+            }
+          : { ...query, datasource: dsRef };
+
+      dashboardEditActions.edit({
+        description: t('dashboard.edit-pane.annotation.change-data-source', 'Change annotation data source'),
+        source: layer,
+        perform: () => {
+          layer.setState({ query: newQuery });
+          layer.runLayer();
+        },
+        undo: () => {
+          layer.setState({ query: oldQuery });
+          layer.runLayer();
+        },
+      });
     },
     [layer, query]
   );
@@ -423,6 +436,43 @@ function AnnotationPanelFilterPicker({ layer }: { layer: AnnotationLayer }) {
         )}
       </Stack>
     </Field>
+  );
+}
+
+function AnnotationQueryEditorButton({ layer }: { layer: AnnotationLayer }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  return (
+    <>
+      <Box display={'flex'} direction={'column'} paddingBottom={1}>
+        <Button
+          tooltip={t(
+            'dashboard.edit-pane.annotation.open-query-editor-tooltip',
+            'Open the query editor to configure the annotation query'
+          )}
+          onClick={() => setIsModalOpen(true)}
+          size="sm"
+          fullWidth
+        >
+          <Trans i18nKey="dashboard.edit-pane.annotation.open-query-editor">Open query editor</Trans>
+        </Button>
+      </Box>
+      <Modal
+        title={t('dashboard.edit-pane.annotation.query-editor-modal-title', 'Annotation Query')}
+        isOpen={isModalOpen}
+        onDismiss={() => setIsModalOpen(false)}
+      >
+        <Stack direction="column" gap={2}>
+          <AnnotationDataSourcePicker layer={layer} />
+          <AnnotationQueryEditor layer={layer} />
+        </Stack>
+        <Modal.ButtonRow>
+          <Button variant="secondary" fill="outline" onClick={() => setIsModalOpen(false)}>
+            <Trans i18nKey="dashboard.edit-pane.annotation.query-editor-close">Close</Trans>
+          </Button>
+        </Modal.ButtonRow>
+      </Modal>
+    </>
   );
 }
 

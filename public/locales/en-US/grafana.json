@@ -4900,6 +4900,8 @@
         "enabled": "Enabled",
         "enabled-description": "When enabled the annotation query is issued every dashboard refresh",
         "name": "Name",
+        "open-query-editor": "Open query editor",
+        "open-query-editor-tooltip": "Open the query editor to configure the annotation query",
         "panel-filter": {
           "all-panels": "All panels",
           "all-panels-description": "Send the annotation data to all panels that support annotations",
@@ -4909,6 +4911,8 @@
           "selected-panels-description": "Send the annotations to the explicitly listed panels"
         },
         "query": "Query",
+        "query-editor-close": "Close",
+        "query-editor-modal-title": "Annotation Query",
         "show-in": "Show in"
       },
       "annotations": {

@@ -12,7 +12,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
-import { Alert, AlertVariant, Button, Space, Spinner } from '@grafana/ui';
+import { Alert, AlertVariant, Button, Spinner } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -49,6 +49,10 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   componentDidUpdate(oldProps: Props) {
     if (this.props.annotation !== oldProps.annotation && !shouldUseLegacyRunner(this.props.datasource)) {
       this.verifyDataSource();
+    }
+
+    if (this.props.datasource.uid !== oldProps.datasource.uid) {
+      this.setState({ response: undefined, showResults: false });
     }
   }
 
@@ -214,7 +218,6 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
     return (
       <>
-        <Space v={2} />
         <div>
           {running ? (
             <Spinner />
@@ -231,12 +234,12 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
             </Button>
           )}
         </div>
-        <Space v={2} layout="block" />
         {showResults && response && (
           <Alert
             data-testid={selectors.components.Annotations.editor.resultContainer}
             severity={this.getStatusSeverity(response)}
             title={t('annotations.standard-annotation-query-editor.title-query-result', 'Query result')}
+            onRemove={() => this.setState({ showResults: false })}
           >
             {this.renderStatusText(response, running)}
           </Alert>
