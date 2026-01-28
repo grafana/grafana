@@ -1,0 +1,89 @@
+{
+  "kind": "CustomResourceDefinition",
+  "apiVersion": "apiextensions.k8s.io/v1",
+  "metadata": {
+    "name": "timeintervals.notifications.alerting.grafana.app"
+  },
+  "spec": {
+    "group": "notifications.alerting.grafana.app",
+    "versions": [
+      {
+        "name": "v0alpha1",
+        "served": true,
+        "storage": true,
+        "schema": {
+          "openAPIV3Schema": {
+            "properties": {
+              "spec": {
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "time_intervals": {
+                    "items": {
+                      "properties": {
+                        "days_of_month": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "location": {
+                          "type": "string"
+                        },
+                        "months": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "times": {
+                          "items": {
+                            "properties": {
+                              "end_time": {
+                                "type": "string"
+                              },
+                              "start_time": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["start_time", "end_time"],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "weekdays": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "years": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["name", "time_intervals"],
+                "type": "object"
+              }
+            },
+            "required": ["spec"],
+            "type": "object"
+          }
+        }
+      }
+    ],
+    "names": {
+      "kind": "TimeInterval",
+      "plural": "timeintervals"
+    },
+    "scope": "Namespaced"
+  }
+}

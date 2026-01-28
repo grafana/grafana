@@ -1,0 +1,625 @@
+{
+  "apiVersion": "apps.grafana.com/v1alpha2",
+  "kind": "AppManifest",
+  "metadata": {
+    "name": "alerting-notifications"
+  },
+  "spec": {
+    "appName": "alerting-notifications",
+    "group": "notifications.alerting.grafana.app",
+    "versions": [
+      {
+        "name": "v0alpha1",
+        "served": true,
+        "kinds": [
+          {
+            "kind": "Receiver",
+            "plural": "Receivers",
+            "scope": "Namespaced",
+            "schemas": {
+              "Integration": {
+                "additionalProperties": false,
+                "properties": {
+                  "disableResolveMessage": {
+                    "type": "boolean"
+                  },
+                  "secureFields": {
+                    "additionalProperties": {
+                      "type": "boolean"
+                    },
+                    "type": "object"
+                  },
+                  "settings": {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string"
+                  }
+                },
+                "required": ["type", "version", "settings"],
+                "type": "object"
+              },
+              "Receiver": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/spec"
+                  }
+                },
+                "required": ["spec"]
+              },
+              "createReceiverIntegrationTestAlert": {
+                "type": "object",
+                "required": ["labels", "annotations"],
+                "properties": {
+                  "annotations": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              "createReceiverIntegrationTestIntegration": {
+                "type": "object",
+                "required": ["type", "version", "settings"],
+                "properties": {
+                  "disableResolveMessage": {
+                    "type": "boolean"
+                  },
+                  "secureFields": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "boolean"
+                    }
+                  },
+                  "settings": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "spec": {
+                "additionalProperties": false,
+                "properties": {
+                  "integrations": {
+                    "items": {
+                      "$ref": "#/components/schemas/Integration"
+                    },
+                    "type": "array"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "required": ["title", "integrations"],
+                "type": "object"
+              }
+            },
+            "selectableFields": ["spec.title"],
+            "conversion": false,
+            "routes": {
+              "test": {
+                "post": {
+                  "operationId": "createReceiverIntegrationTest",
+                  "requestBody": {
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "required": ["integration", "alert"],
+                          "properties": {
+                            "alert": {
+                              "$ref": "#/components/schemas/createReceiverIntegrationTestAlert"
+                            },
+                            "integration": {
+                              "$ref": "#/components/schemas/createReceiverIntegrationTestIntegration"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": true
+                  },
+                  "responses": {
+                    "default": {
+                      "description": "Default OK response",
+                      "content": {
+                        "application/json": {
+                          "schema": {
+                            "type": "object",
+                            "required": ["status", "duration", "apiVersion", "kind"],
+                            "properties": {
+                              "apiVersion": {
+                                "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                                "type": "string"
+                              },
+                              "duration": {
+                                "type": "string"
+                              },
+                              "error": {
+                                "type": "string"
+                              },
+                              "kind": {
+                                "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": ["success", "failure"]
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "kind": "RoutingTree",
+            "plural": "RoutingTrees",
+            "scope": "Namespaced",
+            "schemas": {
+              "Matcher": {
+                "additionalProperties": false,
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "enum": ["=", "!=", "=~", "!~"],
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": ["type", "label", "value"],
+                "type": "object"
+              },
+              "Route": {
+                "additionalProperties": false,
+                "properties": {
+                  "active_time_intervals": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "continue": {
+                    "type": "boolean"
+                  },
+                  "group_by": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "group_interval": {
+                    "type": "string"
+                  },
+                  "group_wait": {
+                    "type": "string"
+                  },
+                  "matchers": {
+                    "items": {
+                      "$ref": "#/components/schemas/Matcher"
+                    },
+                    "type": "array"
+                  },
+                  "mute_time_intervals": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "receiver": {
+                    "type": "string"
+                  },
+                  "repeat_interval": {
+                    "type": "string"
+                  },
+                  "routes": {
+                    "items": {
+                      "$ref": "#/components/schemas/Route"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["continue"],
+                "type": "object"
+              },
+              "RouteDefaults": {
+                "additionalProperties": false,
+                "properties": {
+                  "group_by": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "group_interval": {
+                    "type": "string"
+                  },
+                  "group_wait": {
+                    "type": "string"
+                  },
+                  "receiver": {
+                    "type": "string"
+                  },
+                  "repeat_interval": {
+                    "type": "string"
+                  }
+                },
+                "required": ["receiver"],
+                "type": "object"
+              },
+              "RoutingTree": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/spec"
+                  }
+                },
+                "required": ["spec"]
+              },
+              "spec": {
+                "additionalProperties": false,
+                "properties": {
+                  "defaults": {
+                    "$ref": "#/components/schemas/RouteDefaults"
+                  },
+                  "routes": {
+                    "items": {
+                      "$ref": "#/components/schemas/Route"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["defaults", "routes"],
+                "type": "object"
+              }
+            },
+            "conversion": false
+          },
+          {
+            "kind": "TemplateGroup",
+            "plural": "TemplateGroups",
+            "scope": "Namespaced",
+            "schemas": {
+              "TemplateGroup": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/spec"
+                  }
+                },
+                "required": ["spec"]
+              },
+              "TemplateKind": {
+                "enum": ["grafana", "mimir"],
+                "type": "string"
+              },
+              "spec": {
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "$ref": "#/components/schemas/TemplateKind",
+                    "default": "grafana"
+                  },
+                  "title": {
+                    "type": "string"
+                  }
+                },
+                "required": ["title", "content", "kind"],
+                "type": "object"
+              }
+            },
+            "conversion": false
+          },
+          {
+            "kind": "TimeInterval",
+            "plural": "TimeIntervals",
+            "scope": "Namespaced",
+            "schemas": {
+              "Interval": {
+                "additionalProperties": false,
+                "properties": {
+                  "days_of_month": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "location": {
+                    "type": "string"
+                  },
+                  "months": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "times": {
+                    "items": {
+                      "$ref": "#/components/schemas/TimeRange"
+                    },
+                    "type": "array"
+                  },
+                  "weekdays": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "years": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              },
+              "TimeInterval": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/spec"
+                  }
+                },
+                "required": ["spec"]
+              },
+              "TimeRange": {
+                "additionalProperties": false,
+                "properties": {
+                  "end_time": {
+                    "type": "string"
+                  },
+                  "start_time": {
+                    "type": "string"
+                  }
+                },
+                "required": ["start_time", "end_time"],
+                "type": "object"
+              },
+              "spec": {
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "time_intervals": {
+                    "items": {
+                      "$ref": "#/components/schemas/Interval"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["name", "time_intervals"],
+                "type": "object"
+              }
+            },
+            "conversion": false
+          },
+          {
+            "kind": "ReceiverSchema",
+            "plural": "ReceiverSchemas",
+            "scope": "Namespaced",
+            "schemas": {
+              "Field": {
+                "additionalProperties": false,
+                "properties": {
+                  "dependsOn": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "element": {
+                    "type": "string"
+                  },
+                  "inputType": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "placeholder": {
+                    "type": "string"
+                  },
+                  "propertyName": {
+                    "type": "string"
+                  },
+                  "protected": {
+                    "type": "boolean"
+                  },
+                  "required": {
+                    "type": "boolean"
+                  },
+                  "secure": {
+                    "type": "boolean"
+                  },
+                  "selectOptions": {
+                    "items": {
+                      "$ref": "#/components/schemas/SelectOption"
+                    },
+                    "type": "array"
+                  },
+                  "showWhen": {
+                    "$ref": "#/components/schemas/ShowWhen"
+                  },
+                  "subformOptions": {
+                    "items": {
+                      "$ref": "#/components/schemas/Field"
+                    },
+                    "type": "array"
+                  },
+                  "validationRule": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "element",
+                  "inputType",
+                  "label",
+                  "description",
+                  "placeholder",
+                  "propertyName",
+                  "showWhen",
+                  "required",
+                  "validationRule",
+                  "secure",
+                  "dependsOn"
+                ],
+                "type": "object"
+              },
+              "IntegrationSchemaVersion": {
+                "additionalProperties": false,
+                "properties": {
+                  "canCreate": {
+                    "type": "boolean"
+                  },
+                  "deprecated": {
+                    "type": "boolean"
+                  },
+                  "info": {
+                    "type": "string"
+                  },
+                  "options": {
+                    "items": {
+                      "$ref": "#/components/schemas/Field"
+                    },
+                    "type": "array"
+                  },
+                  "typeAlias": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string"
+                  }
+                },
+                "required": ["version", "canCreate", "options"],
+                "type": "object"
+              },
+              "ReceiverSchema": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/spec"
+                  }
+                },
+                "required": ["spec"]
+              },
+              "SelectOption": {
+                "additionalProperties": false,
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  }
+                },
+                "required": ["label", "value", "description"],
+                "type": "object"
+              },
+              "ShowWhen": {
+                "additionalProperties": false,
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "is": {
+                    "type": "string"
+                  }
+                },
+                "required": ["field", "is"],
+                "type": "object"
+              },
+              "spec": {
+                "additionalProperties": false,
+                "properties": {
+                  "currentVersion": {
+                    "type": "string"
+                  },
+                  "deprecated": {
+                    "type": "boolean"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "heading": {
+                    "type": "string"
+                  },
+                  "info": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "versions": {
+                    "items": {
+                      "$ref": "#/components/schemas/IntegrationSchemaVersion"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["type", "currentVersion", "name", "versions"],
+                "type": "object"
+              }
+            },
+            "conversion": false
+          }
+        ]
+      }
+    ],
+    "preferredVersion": "v0alpha1"
+  }
+}

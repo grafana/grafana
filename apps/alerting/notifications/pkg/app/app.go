@@ -45,6 +45,7 @@ func New(cfg app.Config) (app.App, error) {
 			{Kind: v0alpha1.RoutingTreeKind()},
 			{Kind: v0alpha1.TemplateGroupKind()},
 			{Kind: v0alpha1.TimeIntervalKind()},
+			{Kind: v0alpha1.IntegrationTypeSchemaKind()},
 		},
 	}
 
