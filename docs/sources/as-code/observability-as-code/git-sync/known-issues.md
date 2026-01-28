@@ -41,6 +41,10 @@ You can sign up to the private preview using the [Git Sync early access form](ht
 
 When Git Sync is enabled, the database load might increase, especially if your Grafana instance has many folders and nested folders. Evaluate the performance impact, if any, in a non-production environment.
 
+## Compatible services and providers
+
+At the moment Git Sync is available for GitHub only. Support for native Git and other providers, such as GitLab or Bitbucket, is on the roadmap.
+
 ## Git Sync account limits
 
 The following Git Sync per-tier limits apply:
@@ -77,8 +81,5 @@ The default permissions are:
 
 Refer to [Roles and permissions](ref:roles-and-permissions) for more information.
 
-### Compatible services and providers
-
-Git Sync is available for GitHub only. Support for native Git, Git app, and other providers, such as GitLab or Bitbucket, is on the roadmap.
 
 
