@@ -80,3 +80,7 @@ export function isDashboardDataLayerSetState(data: unknown): data is DashboardDa
 
   return false;
 }
+
+export function isDashboardDataLayerSet(obj: unknown): obj is DashboardDataLayerSet {
+  return obj instanceof DashboardDataLayerSet;
+}

@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
+import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 
 import { LoadingState, GrafanaTheme2 } from '@grafana/data';
 import { ControlsLabel, SceneDataLayerProvider } from '@grafana/scenes';
-import { InlineSwitch, useElementSelection, useStyles2 } from '@grafana/ui';
+import { Icon, InlineSwitch, useElementSelection, useStyles2 } from '@grafana/ui';
 
 export type Props = {
   layer: SceneDataLayerProvider;
@@ -10,10 +11,12 @@ export type Props = {
   inMenu?: boolean;
   // Set to true when editing with new layouts enabled - shows hidden controls with strikethrough
   isEditingNewLayouts?: boolean;
+  // Drag handle props from react-beautiful-dnd/hello-pangea for drag and drop reordering
+  dragHandleProps?: DraggableProvidedDragHandleProps | null;
 };
 
 // Renders the controls for a single data layer
-export function DataLayerControl({ layer, inMenu, isEditingNewLayouts }: Props) {
+export function DataLayerControl({ layer, inMenu, isEditingNewLayouts, dragHandleProps }: Props) {
   const elementId = `data-layer-${layer.state.key}`;
   const { data, isHidden, isEnabled } = layer.useState();
   const { isSelected, onSelect, isSelectable } = useElementSelection(layer.state.key);
@@ -95,6 +98,11 @@ export function DataLayerControl({ layer, inMenu, isEditingNewLayouts }: Props) 
       )}
       onPointerDown={onPointerDown}
     >
+      {dragHandleProps && (
+        <div {...dragHandleProps} className={styles.dragHandle}>
+          <Icon name="draggabledots" />
+        </div>
+      )}
       <ControlsLabel
         htmlFor={isSelectable ? undefined : elementId}
         isLoading={showLoading}
@@ -112,6 +120,7 @@ export function DataLayerControl({ layer, inMenu, isEditingNewLayouts }: Props) 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     display: 'flex',
+    alignItems: 'center',
   }),
   menuContainer: css({
     display: 'flex',
@@ -151,5 +160,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   switch: css({
     borderBottomLeftRadius: 'unset',
     borderTopLeftRadius: 'unset',
+  }),
+  dragHandle: css({
+    cursor: 'grab',
+    display: 'flex',
+    alignItems: 'center',
+    marginRight: theme.spacing(0.5),
+    color: theme.colors.text.secondary,
+    '&:hover': {
+      color: theme.colors.text.primary,
+    },
   }),
 });
