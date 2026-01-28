@@ -5,7 +5,6 @@ import { MuteTiming, useMuteTimings } from 'app/features/alerting/unified/compon
 import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
 import { timeIntervalToString } from 'app/features/alerting/unified/utils/alertmanager';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
-import { isImportedResource } from 'app/features/alerting/unified/utils/k8s/utils';
 
 const mapTimeInterval = ({ name, time_intervals }: MuteTiming): SelectableValue<string> => ({
   value: name,
@@ -13,10 +12,10 @@ const mapTimeInterval = ({ name, time_intervals }: MuteTiming): SelectableValue<
   description: time_intervals.map((interval) => timeIntervalToString(interval)).join(', AND '),
 });
 
-/** Check if a time interval was imported from an external Alertmanager */
-const isImportedTimeInterval = (timing: MuteTiming): boolean => {
-  const provenance = timing.metadata?.annotations?.[K8sAnnotations.Provenance];
-  return isImportedResource(provenance);
+/** Check if a time interval can be used in routes and rules */
+const isUsableTimeInterval = (timing: MuteTiming): boolean => {
+  const canUse = timing.metadata?.annotations?.[K8sAnnotations.CanUse];
+  return canUse !== 'false';
 };
 
 /** Provides a MultiSelect with available time intervals for the given alertmanager */
@@ -26,8 +25,8 @@ const TimeIntervalSelector = ({
 }: BaseAlertmanagerArgs & { selectProps: MultiSelectCommonProps<string> }) => {
   const { data } = useMuteTimings({ alertmanager, skip: selectProps.disabled });
 
-  // Filter out imported time intervals (provenance === 'prometheus_convert')
-  const availableTimings = data?.filter((timing) => !isImportedTimeInterval(timing)) || [];
+  // Filter to only show usable time intervals (canUse !== 'false')
+  const availableTimings = data?.filter(isUsableTimeInterval) || [];
   const timeIntervalOptions = availableTimings.map((value) => mapTimeInterval(value));
 
   return (
