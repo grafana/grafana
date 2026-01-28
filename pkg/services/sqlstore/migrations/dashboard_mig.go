@@ -1,7 +1,9 @@
 package migrations
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
 
@@ -29,7 +31,7 @@ func addDashboardMigration(mg *Migrator) {
 
 	mg.AddMigration("create dashboard table", NewAddTableMigration(dashboardV1))
 
-	//-------  indexes ------------------
+	// -------  indexes ------------------
 	mg.AddMigration("add index dashboard.account_id", NewAddIndexMigration(dashboardV1, dashboardV1.Indices[0]))
 	mg.AddMigration("add unique index dashboard_account_id_slug", NewAddIndexMigration(dashboardV1, dashboardV1.Indices[1]))
 
@@ -51,9 +53,9 @@ func addDashboardMigration(mg *Migrator) {
 	// ---------------------
 	// account -> org changes
 
-	//-------  drop dashboard indexes ------------------
+	// -------  drop dashboard indexes ------------------
 	addDropAllIndicesMigrations(mg, "v1", dashboardTagV1)
-	//------- rename table ------------------
+	// ------- rename table ------------------
 	addTableRenameMigration(mg, "dashboard", "dashboard_v1", "v1")
 
 	// dashboard v2
@@ -266,6 +268,8 @@ func addDashboardMigration(mg *Migrator) {
 		Cols: []string{"dashboard_uid"},
 		Type: IndexType,
 	}))
+
+	mg.AddMigration("Fix dashboard variable quotes in PostgreSQL panels", &FixDashboardVariableQuotesMigration{})
 }
 
 type FillDashbordUIDAndOrgIDMigration struct {
@@ -308,6 +312,233 @@ func RunDashboardTagMigrations(sess *xorm.Session, driverName string) error {
 	if _, err := sess.Exec(sql); err != nil {
 		return fmt.Errorf("failed to set dashboard_uid and org_id in dashboard_tag: %w", err)
 	}
+
+	return nil
+}
+
+type FixDashboardVariableQuotesMigration struct {
+	MigrationBase
+}
+
+func (m *FixDashboardVariableQuotesMigration) SQL(dialect Dialect) string {
+	return "code migration"
+}
+
+func (m *FixDashboardVariableQuotesMigration) Exec(sess *xorm.Session, mg *Migrator) error {
+	return RunFixDashboardVariableQuotesMigration(sess, mg)
+	// fmt.Println("FixDashboardVariableQuotesMigration will run")
+	// return nil
+}
+
+// Dashboard structures for JSON unmarshaling
+type dashboardData struct {
+	Panels     []dashboardPanel `json:"panels,omitempty"`
+	Templating *templating      `json:"templating,omitempty"`
+}
+
+type templating struct {
+	List []templateVariable `json:"list,omitempty"`
+}
+
+type templateVariable struct {
+	Name       string `json:"name,omitempty"`
+	IncludeAll bool   `json:"includeAll,omitempty"`
+	Multi      bool   `json:"multi,omitempty"`
+}
+
+type dashboardPanel struct {
+	Datasource *datasource      `json:"datasource,omitempty"`
+	Repeat     string           `json:"repeat,omitempty"`
+	Targets    []target         `json:"targets,omitempty"`
+	Panels     []dashboardPanel `json:"panels,omitempty"` // For row panels
+}
+
+type datasource struct {
+	Type string `json:"type,omitempty"`
+}
+
+type target struct {
+	RawSql string `json:"rawSql,omitempty"`
+}
+
+// removeQuotesAroundVariable is a wrapper for the shared implementation.
+func removeQuotesAroundVariable(sql, variableName string) string {
+	return removeQuotesAroundVariableShared(sql, variableName)
+}
+
+// processPanel processes a single panel and modifies its targets if conditions are met.
+// This is a wrapper around the shared logic for backward compatibility with tests.
+func processPanel(panel *dashboardPanel, templatingList []templateVariable) bool {
+	// Convert to map for shared processing
+	panelBytes, _ := json.Marshal(panel)
+	var panelMap map[string]any
+	json.Unmarshal(panelBytes, &panelMap)
+
+	// Convert templating list to maps
+	templatingMaps := make([]map[string]any, len(templatingList))
+	for i, tv := range templatingList {
+		tvBytes, _ := json.Marshal(tv)
+		var tvMap map[string]any
+		json.Unmarshal(tvBytes, &tvMap)
+		templatingMaps[i] = tvMap
+	}
+
+	// Process using shared logic
+	modified := processPanelMapShared(panelMap, templatingMaps)
+
+	if modified {
+		// Convert back to struct
+		panelBytes, _ = json.Marshal(panelMap)
+		json.Unmarshal(panelBytes, panel)
+	}
+
+	return modified
+}
+
+// processPanels recursively processes all panels including nested ones.
+// This is a wrapper around the shared logic for backward compatibility with tests.
+func processPanels(panels []dashboardPanel, templatingList []templateVariable) bool {
+	// Convert to maps for shared processing
+	panelsBytes, _ := json.Marshal(panels)
+	var panelsList []any
+	json.Unmarshal(panelsBytes, &panelsList)
+
+	// Convert templating list to maps
+	templatingMaps := make([]map[string]any, len(templatingList))
+	for i, tv := range templatingList {
+		tvBytes, _ := json.Marshal(tv)
+		var tvMap map[string]any
+		json.Unmarshal(tvBytes, &tvMap)
+		templatingMaps[i] = tvMap
+	}
+
+	// Process using shared logic
+	modified := processPanelMapsShared(panelsList, templatingMaps)
+
+	if modified {
+		// Convert back to structs
+		panelsBytes, _ = json.Marshal(panelsList)
+		json.Unmarshal(panelsBytes, &panels)
+	}
+
+	return modified
+}
+
+// updateRawSqlInPanels recursively updates rawSql fields in the original panel maps
+// This preserves all other fields that aren't in our struct
+func updateRawSqlInPanels(originalPanels any, modifiedPanels []dashboardPanel) {
+	panelsList, ok := originalPanels.([]any)
+	if !ok {
+		return
+	}
+
+	for i, panelInterface := range panelsList {
+		if i >= len(modifiedPanels) {
+			break
+		}
+
+		panelMap, ok := panelInterface.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		modifiedPanel := modifiedPanels[i]
+
+		// Update targets if they exist
+		if len(modifiedPanel.Targets) > 0 {
+			targetsInterface, ok := panelMap["targets"]
+			if ok {
+				targetsList, ok := targetsInterface.([]any)
+				if ok {
+					for j, targetInterface := range targetsList {
+						if j >= len(modifiedPanel.Targets) {
+							break
+						}
+						targetMap, ok := targetInterface.(map[string]any)
+						if ok && modifiedPanel.Targets[j].RawSql != "" {
+							targetMap["rawSql"] = modifiedPanel.Targets[j].RawSql
+						}
+					}
+				}
+			}
+		}
+
+		// Recursively update nested panels (for row panels)
+		if len(modifiedPanel.Panels) > 0 {
+			if nestedPanels, ok := panelMap["panels"]; ok {
+				updateRawSqlInPanels(nestedPanels, modifiedPanel.Panels)
+			}
+		}
+	}
+}
+
+// RunFixDashboardVariableQuotesMigration performs the migration
+func RunFixDashboardVariableQuotesMigration(sess *xorm.Session, mg *Migrator) error {
+	type dashboard struct {
+		ID   int64  `xorm:"id"`
+		Data string `xorm:"data"`
+	}
+
+	var dashboards []dashboard
+	if err := sess.Table("dashboard").Cols("id", "data").Find(&dashboards); err != nil {
+		return fmt.Errorf("failed to fetch dashboards: %w", err)
+	}
+
+	mg.Logger.Info("Starting dashboard variable quotes fix migration", "total_dashboards", len(dashboards))
+
+	modifiedCount := 0
+	errorCount := 0
+
+	for _, dash := range dashboards {
+		// Skip empty data
+		if strings.TrimSpace(dash.Data) == "" {
+			continue
+		}
+
+		// Parse dashboard as generic map to preserve all fields
+		var dashboardMap map[string]any
+		if err := json.Unmarshal([]byte(dash.Data), &dashboardMap); err != nil {
+			mg.Logger.Warn("Failed to parse dashboard JSON", "dashboard_id", dash.ID, "error", err)
+			errorCount++
+			continue
+		}
+
+		// Process dashboard using shared logic
+		// This directly modifies the dashboardMap in place
+		modified := processDashboardOrResourceSpecShared(dashboardMap)
+
+		// If modified, update the dashboard
+		if modified {
+			// Marshal the entire map back to JSON
+			updatedData, err := json.Marshal(dashboardMap)
+			if err != nil {
+				mg.Logger.Warn("Failed to marshal updated dashboard JSON", "dashboard_id", dash.ID, "error", err)
+				errorCount++
+				continue
+			}
+
+			// Update the dashboard in the database
+			sqlUpdate := "UPDATE dashboard SET data = ? WHERE id = ?"
+			if mg.Dialect.DriverName() == Postgres {
+				sqlUpdate = "UPDATE dashboard SET data = $1 WHERE id = $2"
+			}
+
+			_, err = sess.Exec(sqlUpdate, string(updatedData), dash.ID)
+			if err != nil {
+				mg.Logger.Warn("Failed to update dashboard", "dashboard_id", dash.ID, "error", err)
+				errorCount++
+				continue
+			}
+
+			modifiedCount++
+			mg.Logger.Debug("Fixed dashboard variable quotes", "dashboard_id", dash.ID)
+		}
+	}
+
+	mg.Logger.Info("Completed dashboard variable quotes fix migration",
+		"total_dashboards", len(dashboards),
+		"modified", modifiedCount,
+		"errors", errorCount)
 
 	return nil
 }

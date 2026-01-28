@@ -3,7 +3,6 @@ package migrations
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/bwmarrin/snowflake"
@@ -427,27 +426,9 @@ type resourceTarget struct {
 	RawSql string `json:"rawSql,omitempty"`
 }
 
-// removeQuotesAroundResourceVariable removes one set of quotes around template variable references.
-// Handles both $var and ${var} formats.
-// Only removes one layer of quotes (either single or double).
+// removeQuotesAroundResourceVariable is a wrapper for the shared implementation.
 func removeQuotesAroundResourceVariable(sql, variableName string) string {
-	// Skip if the SQL uses any format option like ${var:csv}
-	formattedVarPattern := regexp.MustCompile(`\$\{` + regexp.QuoteMeta(variableName) + `:[^}]*\}`)
-	if formattedVarPattern.MatchString(sql) {
-		return sql
-	}
-
-	result := sql
-
-	// Pattern for single quotes around $var or ${var}
-	singleQuotePattern := regexp.MustCompile(`'(\$\{?` + regexp.QuoteMeta(variableName) + `\}?)'`)
-	result = singleQuotePattern.ReplaceAllString(result, "$1")
-
-	// Pattern for double quotes around $var or ${var}
-	doubleQuotePattern := regexp.MustCompile(`"(\$\{?` + regexp.QuoteMeta(variableName) + `\}?)"`)
-	result = doubleQuotePattern.ReplaceAllString(result, "$1")
-
-	return result
+	return removeQuotesAroundVariableShared(sql, variableName)
 }
 
 // processResourcePanel processes a single panel and modifies its targets if conditions are met
@@ -597,7 +578,7 @@ func processResourceTable(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 
 		// Parse resource wrapper as generic map to preserve all fields
-		var wrapperMap map[string]interface{}
+		var wrapperMap map[string]any
 		if err := json.Unmarshal([]byte(res.Value), &wrapperMap); err != nil {
 			mg.Logger.Warn("Failed to parse resource wrapper JSON", "resource_guid", res.GUID, "error", err)
 			errorCount++
@@ -611,47 +592,19 @@ func processResourceTable(sess *xorm.Session, mg *migrator.Migrator) error {
 			continue
 		}
 
-		specMap, ok := specInterface.(map[string]interface{})
+		specMap, ok := specInterface.(map[string]any)
 		if !ok {
 			mg.Logger.Warn("Spec field is not an object", "resource_guid", res.GUID)
 			errorCount++
 			continue
 		}
 
-		// Marshal spec to JSON then unmarshal to our struct to process it
-		specBytes, err := json.Marshal(specMap)
-		if err != nil {
-			mg.Logger.Warn("Failed to marshal spec", "resource_guid", res.GUID, "error", err)
-			errorCount++
-			continue
-		}
-
-		var dashData resourceDashboardData
-		if err := json.Unmarshal(specBytes, &dashData); err != nil {
-			mg.Logger.Debug("Failed to parse spec as dashboard (may not be a dashboard)", "resource_guid", res.GUID)
-			continue
-		}
-
-		// Get templating list
-		var templatingList []resourceTemplateVariable
-		if dashData.Templating != nil {
-			templatingList = dashData.Templating.List
-		}
-
-		// Process all panels
-		modified := false
-		if len(dashData.Panels) > 0 {
-			modified = processResourcePanels(dashData.Panels, templatingList)
-		}
+		// Process the spec (dashboard) using shared logic
+		// This directly modifies the specMap in place
+		modified := processDashboardOrResourceSpecShared(specMap)
 
 		// If modified, update the resource
 		if modified {
-			// Update only the rawSql fields in the original panels map
-			// This preserves all other fields that aren't in our struct
-			if originalPanels, ok := specMap["panels"]; ok {
-				updateRawSqlInPanels(originalPanels, dashData.Panels)
-			}
-
 			// Marshal the entire wrapper back to JSON
 			updatedValue, err := json.Marshal(wrapperMap)
 			if err != nil {
