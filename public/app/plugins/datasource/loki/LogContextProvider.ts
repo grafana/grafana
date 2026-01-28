@@ -21,7 +21,7 @@ import { LabelParser, LabelFilter, LineFilters, PipelineStage, Logfmt, Json } fr
 import { LokiContextUi } from './components/LokiContextUi';
 import { LokiQueryDirection, LokiQueryType } from './dataquery.gen';
 import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
-import { escapeLabelValueInExactSelector, getLabelTypeFromFrame } from './languageUtils';
+import { escapeLabelValueInExactSelector, getLokiLabelTypeFromFrame } from './languageUtils';
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
 import {
   getNodePositionsFromQuery,
@@ -30,7 +30,7 @@ import {
   isQueryWithParser,
 } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
-import { ContextFilter, LabelType, LokiQuery } from './types';
+import { ContextFilter, LokiLabelType, LokiQuery } from './types';
 
 export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
 export const SHOULD_INCLUDE_PIPELINE_OPERATIONS = 'lokiLogContextShouldIncludePipelineOperations';
@@ -269,7 +269,7 @@ export class LogContextProvider {
             parsedLabel.label,
             '=',
             parsedLabel.value,
-            hasParser ? LabelType.Parsed : LabelType.StructuredMetadata
+            hasParser ? LokiLabelType.Parsed : LokiLabelType.StructuredMetadata
           );
         }
       }
@@ -353,12 +353,12 @@ export class LogContextProvider {
 
     const contextFilters: ContextFilter[] = [];
     Object.entries(rowLabels).forEach(([label, value]) => {
-      const labelType = getLabelTypeFromFrame(label, row.dataFrame, row.rowIndex);
+      const labelType = getLokiLabelTypeFromFrame(label, row.dataFrame, row.rowIndex);
       const filter: ContextFilter = {
         label,
         value: value,
         enabled: allLabels.includes(label),
-        nonIndexed: labelType !== null && labelType !== LabelType.Indexed,
+        nonIndexed: labelType !== null && labelType !== LokiLabelType.Indexed,
       };
 
       contextFilters.push(filter);

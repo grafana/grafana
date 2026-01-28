@@ -412,6 +412,9 @@ export function getLabelTypeFromRow(label: string, row: LogRowModel, plural = fa
 }
 
 function getDataSourceLabelType(labelType: string, datasourceType: string, plural: boolean) {
+  // @todo generalize
+
+  // datasource.getLabelTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null)
   switch (datasourceType) {
     case 'loki':
       switch (labelType) {

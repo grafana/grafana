@@ -2,9 +2,16 @@ import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { DataFrameType, GrafanaTheme2, store, TimeRange } from '@grafana/data';
+import {
+  DataFrameType,
+  GrafanaTheme2,
+  store,
+  TimeRange,
+  DataSourceWithLogsLabelTypesSupport,
+  hasLogsLabelTypesSupport,
+} from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { ControlledCollapse, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
@@ -37,6 +44,8 @@ export const LogLineDetailsComponent = memo(
     const [search, setSearch] = useState('');
     const inputRef = useRef('');
     const styles = useStyles2(getStyles);
+
+    const [ds, setDs] = useState<DataSourceWithLogsLabelTypesSupport | null>(null);
 
     const extensionLinks = useAttributesExtensionLinks(log, timeRange);
 
@@ -73,8 +82,16 @@ export const LogLineDetailsComponent = memo(
     const trace = useMemo(() => getTempoTraceFromLinks(fieldsWithLinks.links), [fieldsWithLinks.links]);
 
     const groupedLabels = useMemo(
-      () => groupBy(labelsWithLinks, (label) => getLabelTypeFromRow(label.key, log, true) ?? ''),
-      [labelsWithLinks, log]
+      () =>
+        groupBy(labelsWithLinks, (label) => {
+          // @matias
+          if (ds) {
+            return ds.getLabelTypeFromFrame(label.key, log.dataFrame, log.rowIndex);
+          } else {
+            return getLabelTypeFromRow(label.key, log, true) ?? '';
+          }
+        }),
+      [labelsWithLinks, log, ds]
     );
     const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
 
@@ -139,6 +156,18 @@ export const LogLineDetailsComponent = memo(
       // Once
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // This is not the right place for this, being lazy for PoC, needs to be moved up into the LogsPanel?
+    useEffect(() => {
+      const setDatasource = async () => {
+        const datasource = await getDataSourceSrv().get(log.datasourceUid);
+        if (datasource && hasLogsLabelTypesSupport(datasource)) {
+          setDs(datasource);
+        }
+      };
+
+      setDatasource();
+    }, [log.datasourceUid]);
 
     return (
       <>
