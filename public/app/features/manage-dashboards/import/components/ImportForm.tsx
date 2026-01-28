@@ -58,7 +58,7 @@ export function ImportForm({
   const existingLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.Exists) ?? [];
 
   return (
-    <>
+    <Stack direction="column" gap={2}>
       <Legend>
         <Trans i18nKey="manage-dashboards.import-dashboard-form.options">Options</Trans>
       </Legend>
@@ -180,7 +180,7 @@ export function ImportForm({
         )}
         folderName={watchFolder.title}
       />
-      <Stack>
+      <Stack direction="column" gap={2}>
         <Button
           type="submit"
           data-testid={selectors.components.ImportDashboardForm.submit}
@@ -195,7 +195,7 @@ export function ImportForm({
           <Trans i18nKey="manage-dashboards.import-dashboard-form.cancel">Cancel</Trans>
         </Button>
       </Stack>
-    </>
+    </Stack>
   );
 }
 
