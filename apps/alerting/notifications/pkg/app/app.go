@@ -46,6 +46,15 @@ func New(cfg app.Config) (app.App, error) {
 			{Kind: v0alpha1.TemplateGroupKind()},
 			{Kind: v0alpha1.TimeIntervalKind()},
 		},
+		VersionedCustomRoutes: map[string]simple.AppVersionRouteHandlers{
+			"v0alpha1": {
+				{
+					Namespaced: true,
+					Path:       "/receivers/schema",
+					Method:     "GET",
+				}: customCfg.ReceiverSchemasHandler.HandleGetSchemas,
+			},
+		},
 	}
 
 	a, err := simple.NewApp(c)
