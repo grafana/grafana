@@ -193,21 +193,75 @@ The query editor allows you to build OpenTSDB queries visually. The available op
 To create a query:
 
 1. Select the **OpenTSDB** data source in a panel.
-1. Configure the query using the sections described in the following table.
+1. Configure the query using the sections described in the following documentation.
 
-### Query editor sections
+### Metric section
 
-| Section | Description |
-| ------- | ----------- |
-| **Metric** | Select the metric name and aggregation function. The aggregator determines how data points are combined (for example, `sum`, `avg`, `max`, `min`). |
-| **Downsample** | Configure how data is downsampled to match the panel's time interval. Select an aggregator and optionally a fill policy for missing data. |
-| **Filters** | (Version 2.2+) Add filters to narrow down the time series returned. Filters support wildcards and regular expressions. |
-| **Tags** | Specify tag key-value pairs to filter metrics. Use `*` as a wildcard value. |
-| **Rate** | Enable rate calculation to compute the rate of change. Useful for counter metrics. Configure counter options to handle counter resets. |
+The Metric section contains the core query configuration:
+
+| Field | Description |
+| ----- | ----------- |
+| **Metric** | The metric name to query. Start typing to see autocomplete suggestions. |
+| **Aggregator** | The aggregation function to combine multiple time series. |
+| **Alias** | Custom display name for the series. Use `$tag_<tagname>` to include tag values in the alias (for example, `$tag_host` inserts the host tag value). |
+
+### Downsample section
+
+Downsampling reduces the number of data points returned by aggregating values over time intervals:
+
+| Field | Description |
+| ----- | ----------- |
+| **Interval** | The time interval for downsampling (for example, `1m`, `5m`, `1h`). Leave blank to use the automatic interval based on the panel's time range. |
+| **Aggregator** | The aggregation function for downsampling. |
+| **Fill** | (Version 2.2+) The fill policy for missing data points. |
+| **Disable downsampling** | Toggle to disable downsampling entirely. Use this when you need raw data points. |
+
+### Filters section
+
+Filters (available in OpenTSDB 2.2+) provide advanced filtering capabilities:
+
+| Field | Description |
+| ----- | ----------- |
+| **Key** | The tag key to filter on. |
+| **Type** | The filter type. Options include `literal_or`, `iliteral_or`, `wildcard`, `iwildcard`, `regexp`, `not_literal_or`, `not_iliteral_or`. |
+| **Filter** | The filter value or pattern. |
+| **Group by** | Toggle to group results by this tag key. |
+
+Filter types:
+
+| Type | Description |
+| ---- | ----------- |
+| `literal_or` | Matches exact values. Use `\|` to specify multiple values. |
+| `iliteral_or` | Case-insensitive literal match. |
+| `wildcard` | Matches using `*` as a wildcard character. |
+| `iwildcard` | Case-insensitive wildcard match. |
+| `regexp` | Matches using regular expressions. |
+| `not_literal_or` | Excludes exact values. |
+| `not_iliteral_or` | Case-insensitive exclusion. |
+
+### Tags section
+
+Tags provide simple key-value filtering. Use `*` as a wildcard value to match all.
+
+{{< admonition type="note" >}}
+Tags are deprecated in OpenTSDB 2.2 and later. Use Filters instead for more powerful filtering options.
+{{< /admonition >}}
 
 {{< admonition type="note" >}}
 When using OpenTSDB 2.2 or later, use either Filters or Tags, not both. They are mutually exclusive, and using both together may produce unexpected results.
 {{< /admonition >}}
+
+### Rate section
+
+The Rate section computes the rate of change, which is useful for counter metrics:
+
+| Field | Description |
+| ----- | ----------- |
+| **Rate** | Toggle to enable rate calculation. |
+| **Counter** | Toggle to indicate the metric is a counter that can reset. |
+| **Counter max** | (When Counter is enabled) The maximum counter value before it resets. |
+| **Reset value** | (When Counter is enabled) The value the counter resets to. |
+| **Explicit tags** | (Version 2.3+) Toggle to require explicit tag specification in queries. |
 
 ### Aggregators
 
