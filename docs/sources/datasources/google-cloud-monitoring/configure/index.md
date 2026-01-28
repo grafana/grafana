@@ -141,11 +141,11 @@ You're taken to the **Settings** tab where you configure the data source.
 
 The following are configuration options for the Google Cloud Monitoring data source.
 
-| Setting             | Description                                                                                                                                                                                                                                   |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**            | Sets the name you use to refer to the data source in panels and queries.                                                                                                                                                                      |
-| **Default**         | Sets whether the data source is pre-selected for new panels.                                                                                                                                                                                  |
-| **Universe Domain** | The universe domain to connect to. For more information, refer to the [Google Cloud universe domains documentation](https://cloud.google.com/docs/overview#universe_domains). Defaults to `googleapis.com`.                                  |
+| Setting             | Description                                                                                                                                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Name**            | Sets the name you use to refer to the data source in panels and queries.                                                                                                                                    |
+| **Default**         | Sets whether the data source is pre-selected for new panels.                                                                                                                                                |
+| **Universe Domain** | The universe domain to connect to. For more information, refer to the [Google Cloud universe domains documentation](https://cloud.google.com/docs/overview#universe_domains). Defaults to `googleapis.com`. |
 
 ### Authentication
 
