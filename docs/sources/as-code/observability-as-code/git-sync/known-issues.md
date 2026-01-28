@@ -45,7 +45,12 @@ When Git Sync is enabled, the database load might increase, especially if your G
 
 ## Git Sync account limits
 
-Free-tier accounts are limited to 20 resources per synced folder.
+The following Git Sync per-tier limits apply:
+
+| Tier | **Cloud - Free** |  **Cloud - Other**  | **On-prem OSS**    |   **On-prem Enterprise**    |
+| -------- | ---------- | ----------- | ----------- | ----------- |
+| Amount of connections | 1 | ??  | 10    |  10    |
+| Amount of synced resources| 20 | Grafana limit  | No limit    |  No limit    |
 
 ### Authentication
 
