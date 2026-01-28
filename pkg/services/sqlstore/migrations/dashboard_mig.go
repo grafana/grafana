@@ -361,117 +361,6 @@ type target struct {
 	RawSql string `json:"rawSql,omitempty"`
 }
 
-// removeQuotesAroundVariable is a wrapper for the shared implementation.
-func removeQuotesAroundVariable(sql, variableName string) string {
-	return removeQuotesAroundVariableShared(sql, variableName)
-}
-
-// processPanel processes a single panel and modifies its targets if conditions are met.
-// This is a wrapper around the shared logic for backward compatibility with tests.
-func processPanel(panel *dashboardPanel, templatingList []templateVariable) bool {
-	// Convert to map for shared processing
-	panelBytes, _ := json.Marshal(panel)
-	var panelMap map[string]any
-	json.Unmarshal(panelBytes, &panelMap)
-
-	// Convert templating list to maps
-	templatingMaps := make([]map[string]any, len(templatingList))
-	for i, tv := range templatingList {
-		tvBytes, _ := json.Marshal(tv)
-		var tvMap map[string]any
-		json.Unmarshal(tvBytes, &tvMap)
-		templatingMaps[i] = tvMap
-	}
-
-	// Process using shared logic
-	modified := processPanelMapShared(panelMap, templatingMaps)
-
-	if modified {
-		// Convert back to struct
-		panelBytes, _ = json.Marshal(panelMap)
-		json.Unmarshal(panelBytes, panel)
-	}
-
-	return modified
-}
-
-// processPanels recursively processes all panels including nested ones.
-// This is a wrapper around the shared logic for backward compatibility with tests.
-func processPanels(panels []dashboardPanel, templatingList []templateVariable) bool {
-	// Convert to maps for shared processing
-	panelsBytes, _ := json.Marshal(panels)
-	var panelsList []any
-	json.Unmarshal(panelsBytes, &panelsList)
-
-	// Convert templating list to maps
-	templatingMaps := make([]map[string]any, len(templatingList))
-	for i, tv := range templatingList {
-		tvBytes, _ := json.Marshal(tv)
-		var tvMap map[string]any
-		json.Unmarshal(tvBytes, &tvMap)
-		templatingMaps[i] = tvMap
-	}
-
-	// Process using shared logic
-	modified := processPanelMapsShared(panelsList, templatingMaps)
-
-	if modified {
-		// Convert back to structs
-		panelsBytes, _ = json.Marshal(panelsList)
-		json.Unmarshal(panelsBytes, &panels)
-	}
-
-	return modified
-}
-
-// updateRawSqlInPanels recursively updates rawSql fields in the original panel maps
-// This preserves all other fields that aren't in our struct
-func updateRawSqlInPanels(originalPanels any, modifiedPanels []dashboardPanel) {
-	panelsList, ok := originalPanels.([]any)
-	if !ok {
-		return
-	}
-
-	for i, panelInterface := range panelsList {
-		if i >= len(modifiedPanels) {
-			break
-		}
-
-		panelMap, ok := panelInterface.(map[string]any)
-		if !ok {
-			continue
-		}
-
-		modifiedPanel := modifiedPanels[i]
-
-		// Update targets if they exist
-		if len(modifiedPanel.Targets) > 0 {
-			targetsInterface, ok := panelMap["targets"]
-			if ok {
-				targetsList, ok := targetsInterface.([]any)
-				if ok {
-					for j, targetInterface := range targetsList {
-						if j >= len(modifiedPanel.Targets) {
-							break
-						}
-						targetMap, ok := targetInterface.(map[string]any)
-						if ok && modifiedPanel.Targets[j].RawSql != "" {
-							targetMap["rawSql"] = modifiedPanel.Targets[j].RawSql
-						}
-					}
-				}
-			}
-		}
-
-		// Recursively update nested panels (for row panels)
-		if len(modifiedPanel.Panels) > 0 {
-			if nestedPanels, ok := panelMap["panels"]; ok {
-				updateRawSqlInPanels(nestedPanels, modifiedPanel.Panels)
-			}
-		}
-	}
-}
-
 // RunFixDashboardVariableQuotesMigration performs the migration
 func RunFixDashboardVariableQuotesMigration(sess *xorm.Session, mg *Migrator) error {
 	type dashboard struct {
@@ -505,7 +394,7 @@ func RunFixDashboardVariableQuotesMigration(sess *xorm.Session, mg *Migrator) er
 
 		// Process dashboard using shared logic
 		// This directly modifies the dashboardMap in place
-		modified := processDashboardOrResourceSpecShared(dashboardMap)
+		modified := ProcessDashboardOrResourceSpecShared(dashboardMap)
 
 		// If modified, update the dashboard
 		if modified {

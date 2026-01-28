@@ -1,14 +1,14 @@
-package migrations
+package migrator
 
 import (
 	"regexp"
 )
 
-// removeQuotesAroundVariableShared removes one set of quotes around template variable references.
+// RemoveQuotesAroundVariableShared removes one set of quotes around template variable references.
 // Handles both $var and ${var} formats.
 // Only removes one layer of quotes (either single or double).
 // This is the shared implementation used by both dashboard and resource migrations.
-func removeQuotesAroundVariableShared(sql, variableName string) string {
+func RemoveQuotesAroundVariableShared(sql, variableName string) string {
 	// Skip if the SQL uses any format option like ${var:csv}
 	formattedVarPattern := regexp.MustCompile(`\$\{` + regexp.QuoteMeta(variableName) + `:[^}]*\}`)
 	if formattedVarPattern.MatchString(sql) {
@@ -28,9 +28,9 @@ func removeQuotesAroundVariableShared(sql, variableName string) string {
 	return result
 }
 
-// processPanelMapShared processes a single panel map and modifies its targets if conditions are met.
+// ProcessPanelMapShared processes a single panel map and modifies its targets if conditions are met.
 // Returns true if any modifications were made.
-func processPanelMapShared(panelMap map[string]any, templatingList []map[string]any) bool {
+func ProcessPanelMapShared(panelMap map[string]any, templatingList []map[string]any) bool {
 	modified := false
 
 	// Check if panel has datasource
@@ -99,7 +99,7 @@ func processPanelMapShared(panelMap map[string]any, templatingList []map[string]
 		}
 
 		originalSql := rawSql
-		newSql := removeQuotesAroundVariableShared(originalSql, repeatVar)
+		newSql := RemoveQuotesAroundVariableShared(originalSql, repeatVar)
 
 		if newSql != originalSql {
 			targetMap["rawSql"] = newSql
@@ -110,9 +110,9 @@ func processPanelMapShared(panelMap map[string]any, templatingList []map[string]
 	return modified
 }
 
-// processPanelMapsShared recursively processes all panels including nested ones.
+// ProcessPanelMapsShared recursively processes all panels including nested ones.
 // Returns true if any modifications were made.
-func processPanelMapsShared(panelsList []any, templatingList []map[string]any) bool {
+func ProcessPanelMapsShared(panelsList []any, templatingList []map[string]any) bool {
 	modified := false
 
 	for _, panelInterface := range panelsList {
@@ -122,14 +122,14 @@ func processPanelMapsShared(panelsList []any, templatingList []map[string]any) b
 		}
 
 		// Process the panel itself
-		if processPanelMapShared(panelMap, templatingList) {
+		if ProcessPanelMapShared(panelMap, templatingList) {
 			modified = true
 		}
 
 		// Process nested panels (for row panels)
 		if nestedPanelsInterface, ok := panelMap["panels"]; ok {
 			if nestedPanelsList, ok := nestedPanelsInterface.([]any); ok && len(nestedPanelsList) > 0 {
-				if processPanelMapsShared(nestedPanelsList, templatingList) {
+				if ProcessPanelMapsShared(nestedPanelsList, templatingList) {
 					modified = true
 				}
 			}
@@ -139,8 +139,8 @@ func processPanelMapsShared(panelsList []any, templatingList []map[string]any) b
 	return modified
 }
 
-// extractTemplatingListShared extracts the templating list from a dashboard or resource spec map.
-func extractTemplatingListShared(data map[string]any) []map[string]any {
+// ExtractTemplatingListShared extracts the templating list from a dashboard or resource spec map.
+func ExtractTemplatingListShared(data map[string]any) []map[string]any {
 	templatingInterface, ok := data["templating"]
 	if !ok {
 		return nil
@@ -171,11 +171,11 @@ func extractTemplatingListShared(data map[string]any) []map[string]any {
 	return result
 }
 
-// processDashboardOrResourceSpecShared processes a dashboard or resource spec map.
+// ProcessDashboardOrResourceSpecShared processes a dashboard or resource spec map.
 // Returns true if any modifications were made.
-func processDashboardOrResourceSpecShared(data map[string]any) bool {
+func ProcessDashboardOrResourceSpecShared(data map[string]any) bool {
 	// Extract templating list
-	templatingList := extractTemplatingListShared(data)
+	templatingList := ExtractTemplatingListShared(data)
 
 	// Get panels
 	panelsInterface, ok := data["panels"]
@@ -189,5 +189,5 @@ func processDashboardOrResourceSpecShared(data map[string]any) bool {
 	}
 
 	// Process panels
-	return processPanelMapsShared(panelsList, templatingList)
+	return ProcessPanelMapsShared(panelsList, templatingList)
 }
