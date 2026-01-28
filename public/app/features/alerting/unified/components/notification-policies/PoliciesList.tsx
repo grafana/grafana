@@ -28,6 +28,7 @@ import { AlertmanagerGroup, Receiver, Route, ROUTES_META_SYMBOL } from 'app/plug
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { stringifyErrorLike } from '../../utils/misc';
 import {
+  isRouteProvisioned,
   useCreateRoutingTree,
   useDeleteRoutingTree,
   useListNotificationPolicyRoutes,
@@ -223,7 +224,7 @@ interface RoutingTreeHeaderProps {
 }
 
 export const RoutingTreeHeader = ({ route, onDelete }: RoutingTreeHeaderProps) => {
-  const provisioned = route[ROUTES_META_SYMBOL]?.provisioned ?? false;
+  const provisioned = isRouteProvisioned(route)
   const styles = useStyles2(getStyles);
 
   const [
