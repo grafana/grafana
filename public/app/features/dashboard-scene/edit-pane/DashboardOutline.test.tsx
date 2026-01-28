@@ -7,6 +7,7 @@ import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneVariableSet, VizPanel } from '@grafana/scenes';
 import { ElementSelectionContext, Sidebar, useSidebar } from '@grafana/ui';
 
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -33,6 +34,7 @@ setPluginImportUtils({
 const testScene = new DashboardScene({
   title: 'Test Dashboard',
   $variables: new SceneVariableSet({ variables: [] }),
+  $data: new DashboardDataLayerSet({ annotationLayers: [] }),
   body: new RowsLayoutManager({
     rows: [
       new RowItem({
@@ -112,10 +114,10 @@ describe('DashboardOutline', () => {
           </WrapSidebar>
         </ElementSelectionContext.Provider>
       );
-      // select Row lvl 1
+      // select Row lvl 1 (index 2 because Annotations section is at index 1)
       await user.click(screen.getByTestId(selectors.components.PanelEditor.Outline.item('Row level 1')));
       expect(DashboardInteractions.outlineItemClicked).toHaveBeenNthCalledWith(1, {
-        index: 1,
+        index: 2,
         depth: 1,
       });
       // click on caret to expand Row lvl 1
