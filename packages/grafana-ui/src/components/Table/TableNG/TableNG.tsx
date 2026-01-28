@@ -352,6 +352,7 @@ export function TableNG(props: TableNGProps) {
       renderers: Renderers<TableRow, TableSummaryRow>
     ): TableColumn => ({
       key: EXPANDED_COLUMN_KEY,
+      sortable: false,
       name: '',
       field: {
         name: '',

@@ -250,6 +250,15 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
           }),
         });
       }
+
+      if (field.type === FieldType.nestedFrames) {
+        field.values = field.values.map((nestedFrames: DataFrame[]) => {
+          return applyFieldOverrides({
+            ...options,
+            data: nestedFrames,
+          });
+        });
+      }
     }
 
     return newFrame;
