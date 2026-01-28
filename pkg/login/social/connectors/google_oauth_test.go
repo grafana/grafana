@@ -3,10 +3,8 @@ package connectors
 import (
 	"context"
 	"crypto/ecdsa"
-	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -1212,44 +1210,6 @@ func TestSocialGoogle_AuthCodeURL(t *testing.T) {
 			require.EqualValues(t, tc.wantURL, parsedURL)
 		})
 	}
-}
-
-// Test helper functions for JWT signature validation
-func createTestRSAKey(t *testing.T) (*rsa.PrivateKey, string) {
-	t.Helper()
-	// Use a simple RSA key for testing
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.NoError(t, err)
-	keyID := "test-key-id"
-	return key, keyID
-}
-
-func createJWKSResponse(t *testing.T, key *rsa.PrivateKey, keyID string) []byte {
-	t.Helper()
-	jwk := jose.JSONWebKey{
-		KeyID:     keyID,
-		Key:       key.Public(),
-		Use:       "sig",
-		Algorithm: string(jose.RS256),
-	}
-	jwks := jose.JSONWebKeySet{
-		Keys: []jose.JSONWebKey{jwk},
-	}
-	jsonData, err := json.Marshal(jwks)
-	require.NoError(t, err)
-	return jsonData
-}
-
-func signJWT(t *testing.T, key *rsa.PrivateKey, keyID string, claims map[string]any) string {
-	t.Helper()
-	sig, err := jose.NewSigner(
-		jose.SigningKey{Algorithm: jose.RS256, Key: key},
-		(&jose.SignerOptions{}).WithHeader("kid", keyID).WithType("JWT"),
-	)
-	require.NoError(t, err)
-	token, err := jwt.Signed(sig).Claims(claims).Serialize()
-	require.NoError(t, err)
-	return token
 }
 
 func TestSocialGoogle_extractFromToken_WithIDTokenValidation(t *testing.T) {

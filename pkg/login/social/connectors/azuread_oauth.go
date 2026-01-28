@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -92,7 +93,7 @@ type keySetJWKS struct {
 }
 
 func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
-	s := newSocialBase(social.AzureADProviderName, orgRoleMapper, info, features, cfg)
+	s := newSocialBaseWithCache(social.AzureADProviderName, orgRoleMapper, info, features, cfg, cache)
 
 	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
 	if err != nil {
@@ -124,12 +125,12 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, ErrIDTokenNotFound
 	}
 
-	parsedToken, err := jwt.ParseSigned(idToken.(string), []jose.SignatureAlgorithm{jose.PS256, jose.RS256, jose.RS512, jose.ES256})
-	if err != nil {
-		return nil, fmt.Errorf("error parsing id token: %w", err)
+	idTokenStr, ok := idToken.(string)
+	if !ok {
+		return nil, fmt.Errorf("id_token is not a string")
 	}
 
-	claims, err := s.validateClaims(ctx, client, parsedToken)
+	claims, err := s.validateClaims(ctx, client, idTokenStr)
 	if err != nil {
 		return nil, err
 	}
@@ -306,10 +307,15 @@ func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester)
 	return nil
 }
 
-func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
-	claims, err := s.validateIDTokenSignature(ctx, client, parsedToken)
+func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client, idTokenString string) (*azureClaims, error) {
+	rawJSON, err := s.SocialBase.validateIDTokenSignatureWithRetrievers(ctx, client, idTokenString, s.getAzureJWKSRetrievers())
 	if err != nil {
-		return nil, fmt.Errorf("error getting claims from id token: %w", err)
+		return nil, fmt.Errorf("error validating id token signature: %w", err)
+	}
+
+	var claims azureClaims
+	if err := json.Unmarshal(rawJSON, &claims); err != nil {
+		return nil, fmt.Errorf("error parsing id token claims: %w", err)
 	}
 
 	if claims.OAuthVersion == "1.0" {
@@ -325,7 +331,7 @@ func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client,
 	if !s.isAllowedTenant(claims.TenantID) {
 		return nil, &SocialError{"AzureAD OAuth: tenant mismatch"}
 	}
-	return claims, nil
+	return &claims, nil
 }
 
 func (s *SocialAzureAD) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
@@ -339,41 +345,19 @@ func (s *SocialAzureAD) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption)
 	return s.getAuthCodeURL(state, opts...)
 }
 
-func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
-	var claims azureClaims
-
-	jwksFuncs := []func(ctx context.Context, client *http.Client, authURL string) (*keySetJWKS, time.Duration, error){
-		s.retrieveJWKSFromCache, s.retrieveSpecificJWKS, s.retrieveGeneralJWKS,
+// getAzureJWKSRetrievers returns JWKS retrievers for Azure AD (cache, app-specific URL, general URL).
+// Used by validateIDTokenSignatureWithRetrievers to unify ID token signature validation with other OAuth providers.
+func (s *SocialAzureAD) getAzureJWKSRetrievers() []jwksRetrieverFunc {
+	return []jwksRetrieverFunc{
+		func(ctx context.Context, client *http.Client) (*keySetJWKS, time.Duration, error) {
+			keysetURL := strings.Replace(s.Endpoint.AuthURL, "/oauth2/v2.0/authorize", "/discovery/v2.0/keys", 1) + "?appid=" + url.QueryEscape(s.ClientID)
+			return s.retrieveJWKSFromURL(ctx, client, keysetURL)
+		},
+		func(ctx context.Context, client *http.Client) (*keySetJWKS, time.Duration, error) {
+			keysetURL := strings.Replace(s.Endpoint.AuthURL, "/oauth2/v2.0/authorize", "/discovery/v2.0/keys", 1)
+			return s.retrieveJWKSFromURL(ctx, client, keysetURL)
+		},
 	}
-
-	keyID := parsedToken.Headers[0].KeyID
-
-	for _, jwksFunc := range jwksFuncs {
-		keyset, expiry, err := jwksFunc(ctx, client, s.Endpoint.AuthURL)
-		if err != nil {
-			return nil, fmt.Errorf("error retrieving jwks: %w", err)
-		}
-		var errClaims error
-		keys := keyset.Key(keyID)
-		for _, key := range keys {
-			s.log.Debug("AzureAD OAuth: trying to parse token with key", "kid", key.KeyID)
-			if errClaims = parsedToken.Claims(key, &claims); errClaims == nil {
-				if expiry != 0 {
-					s.log.Debug("AzureAD OAuth: caching key set", "kid", key.KeyID, "expiry", expiry)
-					if err := s.cacheJWKS(ctx, keyset, expiry); err != nil {
-						s.log.Warn("Failed to set key set in cache", "err", err)
-					}
-				}
-				return &claims, nil
-			} else {
-				s.log.Warn("AzureAD OAuth: failed to parse token with key", "kid", key.KeyID, "err", errClaims)
-			}
-		}
-	}
-
-	s.log.Warn("AzureAD OAuth: signing key not found", "kid", keyID)
-
-	return nil, &SocialError{"AzureAD OAuth: signing key not found"}
 }
 
 func validateFederatedCredentialAudience(info *social.OAuthInfo, requester identity.Requester) error {

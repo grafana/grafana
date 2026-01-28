@@ -832,9 +832,6 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 	jwksDump, err := json.Marshal(jwks)
 	require.NoError(t, err)
 
-	err = cache.Set(context.Background(), azureCacheKeyPrefix+"client-id-example", jwksDump, 0)
-	require.NoError(t, err)
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewAzureADProvider(tt.fields.providerCfg,
@@ -850,6 +847,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			} else {
 				s.Endpoint.AuthURL = authURL
 			}
+
+			err = cache.Set(context.Background(), s.getJWKSCacheKey(), jwksDump, 0)
+			require.NoError(t, err)
 
 			cl := jwt.Claims{
 				Audience:  jwt.Audience{"client-id-example"},
@@ -1010,9 +1010,6 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 	jwksDump, err := json.Marshal(jwks)
 	require.NoError(t, err)
 
-	err = cache.Set(context.Background(), azureCacheKeyPrefix+"client-id-example", jwksDump, 0)
-	require.NoError(t, err)
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewAzureADProvider(tt.fields.providerCfg,
@@ -1024,6 +1021,9 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				cache)
 
 			s.Endpoint.AuthURL = authURL
+
+			err = cache.Set(context.Background(), s.getJWKSCacheKey(), jwksDump, 0)
+			require.NoError(t, err)
 
 			cl := jwt.Claims{
 				Subject:   "subject",
