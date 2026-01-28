@@ -19,193 +19,225 @@
       "@grafana-app/source": "./src/index.ts",
       "types": "./dist/types/index.d.ts"
     },
-    "./raw/composable/*/dataquery": {
-      "@grafana-app/source": "./src/raw/composable/*/dataquery/x/*dataquery_types.gen.ts",
-      "types": "./dist/esm/raw/composable/*/dataquery/x/*dataquery_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/*/dataquery/x/*dataquery_types.gen.js"
-    },
-    "./raw/composable/*/panelcfg": {
-      "@grafana-app/source": "./src/raw/composable/*/panelcfg/x/*panelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/*/panelcfg/x/*panelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/*/panelcfg/x/*panelcfg_types.gen.js"
-    },
-    "./raw/dashboard": {
-      "@grafana-app/source": "./src/raw/dashboard/x/dashboard_types.gen.ts",
-      "types": "./dist/esm/raw/dashboard/x/dashboard_types.gen.d.ts",
-      "default": "./dist/esm/raw/dashboard/x/dashboard_types.gen.js"
-    },
     "./raw/preferences": {
       "@grafana-app/source": "./src/raw/preferences/x/preferences_types.gen.ts",
       "types": "./dist/esm/raw/preferences/x/preferences_types.gen.d.ts"
     },
     "./dist/esm/raw/composable/annotationslist/panelcfg/x/AnnotationsListPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/annotationslist/panelcfg/x/annotationslistpanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/annotationslist/panelcfg/x/annotationslistpanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/annotationslist/panelcfg/x/annotationslistpanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/annotationslist/panelcfg/x/annotationslistpanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/annotationslist/panelcfg/x/annotationslistpanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/annotationslist/panelcfg/x/annotationslistpanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/azuremonitor/dataquery/x/AzureMonitorDataQuery_types.gen": {
       "@grafana-app/source": "./src/raw/composable/azuremonitor/dataquery/x/azuremonitordataquery_types.gen.ts",
-      "types": "./dist/esm/raw/composable/azuremonitor/dataquery/x/azuremonitordataquery_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/azuremonitor/dataquery/x/azuremonitordataquery_types.gen.js"
+      "types": "./dist/types/raw/composable/azuremonitor/dataquery/x/azuremonitordataquery_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/azuremonitor/dataquery/x/azuremonitordataquery_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/azuremonitor/dataquery/x/azuremonitordataquery_types.gen.cjs"
     },
     "./dist/esm/raw/composable/barchart/panelcfg/x/BarChartPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/barchart/panelcfg/x/barchartpanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/barchart/panelcfg/x/barchartpanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/barchart/panelcfg/x/barchartpanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/barchart/panelcfg/x/barchartpanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/barchart/panelcfg/x/barchartpanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/barchart/panelcfg/x/barchartpanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/bargauge/panelcfg/x/BarGaugePanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/bargauge/panelcfg/x/bargaugepanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/bargauge/panelcfg/x/bargaugepanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/bargauge/panelcfg/x/bargaugepanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/bargauge/panelcfg/x/bargaugepanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/bargauge/panelcfg/x/bargaugepanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/bargauge/panelcfg/x/bargaugepanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/candlestick/panelcfg/x/CandlestickPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/candlestick/panelcfg/x/candlestickpanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/candlestick/panelcfg/x/candlestickpanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/candlestick/panelcfg/x/candlestickpanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/candlestick/panelcfg/x/candlestickpanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/candlestick/panelcfg/x/candlestickpanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/candlestick/panelcfg/x/candlestickpanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/canvas/panelcfg/x/CanvasPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/canvas/panelcfg/x/canvaspanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/canvas/panelcfg/x/canvaspanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/canvas/panelcfg/x/canvaspanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/canvas/panelcfg/x/canvaspanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/canvas/panelcfg/x/canvaspanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/canvas/panelcfg/x/canvaspanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/cloudwatch/dataquery/x/CloudWatchDataQuery_types.gen": {
       "@grafana-app/source": "./src/raw/composable/cloudwatch/dataquery/x/cloudwatchdataquery_types.gen.ts",
-      "types": "./dist/esm/raw/composable/cloudwatch/dataquery/x/cloudwatchdataquery_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/cloudwatch/dataquery/x/cloudwatchdataquery_types.gen.js"
+      "types": "./dist/types/raw/composable/cloudwatch/dataquery/x/cloudwatchdataquery_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/cloudwatch/dataquery/x/cloudwatchdataquery_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/cloudwatch/dataquery/x/cloudwatchdataquery_types.gen.cjs"
     },
     "./dist/esm/raw/composable/dashboardlist/panelcfg/x/DashboardListPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/dashboardlist/panelcfg/x/dashboardlistpanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/dashboardlist/panelcfg/x/dashboardlistpanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/dashboardlist/panelcfg/x/dashboardlistpanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/dashboardlist/panelcfg/x/dashboardlistpanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/dashboardlist/panelcfg/x/dashboardlistpanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/dashboardlist/panelcfg/x/dashboardlistpanelcfg_types.gen.cjs"
     },
-    "./dist/esm/raw/composable/datagrid/panelcfg/x/DatagridPanelCfg_types.gen": {
+    "./dist/esm/raw/composable/datagrid/panelcfg/x/DataGridPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/datagrid/panelcfg/x/datagridpanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/datagrid/panelcfg/x/datagridpanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/datagrid/panelcfg/x/datagridpanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/datagrid/panelcfg/x/datagridpanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/datagrid/panelcfg/x/datagridpanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/datagrid/panelcfg/x/datagridpanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/debug/panelcfg/x/DebugPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/debug/panelcfg/x/debugpanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/debug/panelcfg/x/debugpanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/debug/panelcfg/x/debugpanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/debug/panelcfg/x/debugpanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/debug/panelcfg/x/debugpanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/debug/panelcfg/x/debugpanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/elasticsearch/dataquery/x/ElasticsearchDataQuery_types.gen": {
       "@grafana-app/source": "./src/raw/composable/elasticsearch/dataquery/x/elasticsearchdataquery_types.gen.ts",
-      "types": "./dist/esm/raw/composable/elasticsearch/dataquery/x/elasticsearchdataquery_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/elasticsearch/dataquery/x/elasticsearchdataquery_types.gen.js"
+      "types": "./dist/types/raw/composable/elasticsearch/dataquery/x/elasticsearchdataquery_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/elasticsearch/dataquery/x/elasticsearchdataquery_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/elasticsearch/dataquery/x/elasticsearchdataquery_types.gen.cjs"
     },
     "./dist/esm/raw/composable/gauge/panelcfg/x/GaugePanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/gauge/panelcfg/x/gaugepanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/gauge/panelcfg/x/gaugepanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/gauge/panelcfg/x/gaugepanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/gauge/panelcfg/x/gaugepanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/gauge/panelcfg/x/gaugepanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/gauge/panelcfg/x/gaugepanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/geomap/panelcfg/x/GeomapPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/geomap/panelcfg/x/geomappanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/geomap/panelcfg/x/geomappanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/geomap/panelcfg/x/geomappanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/geomap/panelcfg/x/geomappanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/geomap/panelcfg/x/geomappanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/geomap/panelcfg/x/geomappanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/googlecloudmonitoring/dataquery/x/GoogleCloudMonitoringDataQuery_types.gen": {
       "@grafana-app/source": "./src/raw/composable/googlecloudmonitoring/dataquery/x/googlecloudmonitoringdataquery_types.gen.ts",
-      "types": "./dist/esm/raw/composable/googlecloudmonitoring/dataquery/x/googlecloudmonitoringdataquery_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/googlecloudmonitoring/dataquery/x/googlecloudmonitoringdataquery_types.gen.js"
+      "types": "./dist/types/raw/composable/googlecloudmonitoring/dataquery/x/googlecloudmonitoringdataquery_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/googlecloudmonitoring/dataquery/x/googlecloudmonitoringdataquery_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/googlecloudmonitoring/dataquery/x/googlecloudmonitoringdataquery_types.gen.cjs"
     },
     "./dist/esm/raw/composable/grafanapyroscope/dataquery/x/GrafanaPyroscopeDataQuery_types.gen": {
       "@grafana-app/source": "./src/raw/composable/grafanapyroscope/dataquery/x/grafanapyroscopedataquery_types.gen.ts",
-      "types": "./dist/esm/raw/composable/grafanapyroscope/dataquery/x/grafanapyroscopedataquery_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/grafanapyroscope/dataquery/x/grafanapyroscopedataquery_types.gen.js"
+      "types": "./dist/types/raw/composable/grafanapyroscope/dataquery/x/grafanapyroscopedataquery_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/grafanapyroscope/dataquery/x/grafanapyroscopedataquery_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/grafanapyroscope/dataquery/x/grafanapyroscopedataquery_types.gen.cjs"
     },
     "./dist/esm/raw/composable/heatmap/panelcfg/x/HeatmapPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/heatmap/panelcfg/x/heatmappanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/heatmap/panelcfg/x/heatmappanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/heatmap/panelcfg/x/heatmappanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/heatmap/panelcfg/x/heatmappanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/heatmap/panelcfg/x/heatmappanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/heatmap/panelcfg/x/heatmappanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/histogram/panelcfg/x/HistogramPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/histogram/panelcfg/x/histogrampanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/histogram/panelcfg/x/histogrampanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/histogram/panelcfg/x/histogrampanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/histogram/panelcfg/x/histogrampanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/histogram/panelcfg/x/histogrampanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/histogram/panelcfg/x/histogrampanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/logs/panelcfg/x/LogsPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/logs/panelcfg/x/logspanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/logs/panelcfg/x/logspanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/logs/panelcfg/x/logspanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/logs/panelcfg/x/logspanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/logs/panelcfg/x/logspanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/logs/panelcfg/x/logspanelcfg_types.gen.cjs"
+    },
+    "./dist/esm/raw/composable/logsnew/panelcfg/x/LogsNewPanelCfg_types.gen": {
+      "@grafana-app/source": "./src/raw/composable/logsnew/panelcfg/x/logsnewpanelcfg_types.gen.ts",
+      "types": "./dist/types/raw/composable/logsnew/panelcfg/x/logsnewpanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/logsnew/panelcfg/x/logsnewpanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/logsnew/panelcfg/x/logsnewpanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/loki/dataquery/x/LokiDataQuery_types.gen": {
       "@grafana-app/source": "./src/raw/composable/loki/dataquery/x/lokidataquery_types.gen.ts",
-      "types": "./dist/esm/raw/composable/loki/dataquery/x/lokidataquery_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/loki/dataquery/x/lokidataquery_types.gen.js"
+      "types": "./dist/types/raw/composable/loki/dataquery/x/lokidataquery_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/loki/dataquery/x/lokidataquery_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/loki/dataquery/x/lokidataquery_types.gen.cjs"
+    },
+    "./dist/esm/raw/composable/newgauge/panelcfg/x/NewGaugePanelCfg_types.gen": {
+      "@grafana-app/source": "./src/raw/composable/newgauge/panelcfg/x/newgaugepanelcfg_types.gen.ts",
+      "types": "./dist/types/raw/composable/newgauge/panelcfg/x/newgaugepanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/newgauge/panelcfg/x/newgaugepanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/newgauge/panelcfg/x/newgaugepanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/news/panelcfg/x/NewsPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/news/panelcfg/x/newspanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/news/panelcfg/x/newspanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/news/panelcfg/x/newspanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/news/panelcfg/x/newspanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/news/panelcfg/x/newspanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/news/panelcfg/x/newspanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/nodegraph/panelcfg/x/NodeGraphPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/nodegraph/panelcfg/x/nodegraphpanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/nodegraph/panelcfg/x/nodegraphpanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/nodegraph/panelcfg/x/nodegraphpanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/nodegraph/panelcfg/x/nodegraphpanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/nodegraph/panelcfg/x/nodegraphpanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/nodegraph/panelcfg/x/nodegraphpanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/parca/dataquery/x/ParcaDataQuery_types.gen": {
       "@grafana-app/source": "./src/raw/composable/parca/dataquery/x/parcadataquery_types.gen.ts",
-      "types": "./dist/esm/raw/composable/parca/dataquery/x/parcadataquery_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/parca/dataquery/x/parcadataquery_types.gen.js"
+      "types": "./dist/types/raw/composable/parca/dataquery/x/parcadataquery_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/parca/dataquery/x/parcadataquery_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/parca/dataquery/x/parcadataquery_types.gen.cjs"
     },
     "./dist/esm/raw/composable/piechart/panelcfg/x/PieChartPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/piechart/panelcfg/x/piechartpanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/piechart/panelcfg/x/piechartpanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/piechart/panelcfg/x/piechartpanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/piechart/panelcfg/x/piechartpanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/piechart/panelcfg/x/piechartpanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/piechart/panelcfg/x/piechartpanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/stat/panelcfg/x/StatPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/stat/panelcfg/x/statpanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/stat/panelcfg/x/statpanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/stat/panelcfg/x/statpanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/stat/panelcfg/x/statpanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/stat/panelcfg/x/statpanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/stat/panelcfg/x/statpanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/statetimeline/panelcfg/x/StateTimelinePanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/statetimeline/panelcfg/x/statetimelinepanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/statetimeline/panelcfg/x/statetimelinepanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/statetimeline/panelcfg/x/statetimelinepanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/statetimeline/panelcfg/x/statetimelinepanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/statetimeline/panelcfg/x/statetimelinepanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/statetimeline/panelcfg/x/statetimelinepanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/statushistory/panelcfg/x/StatusHistoryPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/statushistory/panelcfg/x/statushistorypanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/statushistory/panelcfg/x/statushistorypanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/statushistory/panelcfg/x/statushistorypanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/statushistory/panelcfg/x/statushistorypanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/statushistory/panelcfg/x/statushistorypanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/statushistory/panelcfg/x/statushistorypanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/table/panelcfg/x/tablepanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/table/panelcfg/x/tablepanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/table/panelcfg/x/tablepanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/table/panelcfg/x/tablepanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/table/panelcfg/x/tablepanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/table/panelcfg/x/tablepanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/tempo/dataquery/x/TempoDataQuery_types.gen": {
       "@grafana-app/source": "./src/raw/composable/tempo/dataquery/x/tempodataquery_types.gen.ts",
-      "types": "./dist/esm/raw/composable/tempo/dataquery/x/tempodataquery_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/tempo/dataquery/x/tempodataquery_types.gen.js"
+      "types": "./dist/types/raw/composable/tempo/dataquery/x/tempodataquery_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/tempo/dataquery/x/tempodataquery_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/tempo/dataquery/x/tempodataquery_types.gen.cjs"
     },
     "./dist/esm/raw/composable/text/panelcfg/x/TextPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/text/panelcfg/x/textpanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/text/panelcfg/x/textpanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/text/panelcfg/x/textpanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/text/panelcfg/x/textpanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/text/panelcfg/x/textpanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/text/panelcfg/x/textpanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/timeseries/panelcfg/x/TimeSeriesPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/timeseries/panelcfg/x/timeseriespanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/timeseries/panelcfg/x/timeseriespanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/timeseries/panelcfg/x/timeseriespanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/timeseries/panelcfg/x/timeseriespanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/timeseries/panelcfg/x/timeseriespanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/timeseries/panelcfg/x/timeseriespanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/trend/panelcfg/x/TrendPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/trend/panelcfg/x/trendpanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/trend/panelcfg/x/trendpanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/trend/panelcfg/x/trendpanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/trend/panelcfg/x/trendpanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/trend/panelcfg/x/trendpanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/trend/panelcfg/x/trendpanelcfg_types.gen.cjs"
     },
     "./dist/esm/raw/composable/xychart/panelcfg/x/XYChartPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/xychart/panelcfg/x/xychartpanelcfg_types.gen.ts",
-      "types": "./dist/esm/raw/composable/xychart/panelcfg/x/xychartpanelcfg_types.gen.d.ts",
-      "default": "./dist/esm/raw/composable/xychart/panelcfg/x/xychartpanelcfg_types.gen.js"
+      "types": "./dist/types/raw/composable/xychart/panelcfg/x/xychartpanelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/xychart/panelcfg/x/xychartpanelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/xychart/panelcfg/x/xychartpanelcfg_types.gen.cjs"
     },
-    "./dist/esm/raw/dashboard/x/dashboard_types.gen": {
+    "./dist/esm/raw/composable/xychart2/panelcfg/x/XYChart2PanelCfg_types.gen": {
+      "@grafana-app/source": "./src/raw/composable/xychart2/panelcfg/x/xychart2panelcfg_types.gen.ts",
+      "types": "./dist/types/raw/composable/xychart2/panelcfg/x/xychart2panelcfg_types.gen.d.ts",
+      "import": "./dist/esm/raw/composable/xychart2/panelcfg/x/xychart2panelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/xychart2/panelcfg/x/xychart2panelcfg_types.gen.cjs"
+    },
+    "./dist/esm/raw/dashboard/x/Dashboard_types.gen": {
       "@grafana-app/source": "./src/raw/dashboard/x/dashboard_types.gen.ts",
-      "types": "./dist/esm/raw/dashboard/x/dashboard_types.gen.d.ts",
-      "default": "./dist/esm/raw/dashboard/x/dashboard_types.gen.js"
-    },
-    "./dist/esm/raw/preferences/x/preferences_types.gen": {
-      "@grafana-app/source": "./src/raw/preferences/x/preferences_types.gen.ts",
-      "types": "./dist/esm/raw/preferences/x/preferences_types.gen.d.ts"
+      "types": "./dist/types/raw/dashboard/x/dashboard_types.gen.d.ts",
+      "import": "./dist/esm/raw/dashboard/x/dashboard_types.gen.mjs",
+      "require": "./dist/cjs/raw/dashboard/x/dashboard_types.gen.cjs"
     }
   },
   "main": "./dist/cjs/index.cjs",
