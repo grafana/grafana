@@ -70,7 +70,6 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
 
         const { title, description, appID, installationID, privateKey } = credentialForm.getValues();
         const spec: ConnectionSpec = {
-          title: t('provisioning.wizard.default-connection-title', 'GitHub Connection'),
           type: 'github',
           title,
           ...(description && { description }),

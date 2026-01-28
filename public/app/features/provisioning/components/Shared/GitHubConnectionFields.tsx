@@ -38,8 +38,9 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
           required
         >
           <Input
+            id="title"
             {...register('title', {
-              required: t('provisioning.connection-form.error-title-required', 'Title is required'),
+              required: requiredValidation,
             })}
             placeholder={t('provisioning.connection-form.placeholder-title', 'My GitHub App')}
           />
@@ -56,6 +57,7 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
           invalid={!!errors.description}
         >
           <Input
+            id="description"
             {...register('description')}
             placeholder={t('provisioning.connection-form.placeholder-description', 'Optional description')}
           />

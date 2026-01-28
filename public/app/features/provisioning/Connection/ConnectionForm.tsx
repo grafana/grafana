@@ -67,10 +67,9 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   const onSubmit = async (form: ConnectionFormData) => {
     try {
       const spec = {
-        title: data?.spec?.title || t('provisioning.connection-form.default-title', 'GitHub Connection'),
-        type: form.type,
         title: form.title,
-        description: form.description,
+        type: form.type,
+        ...(form.description && { description: form.description }),
         github: {
           appID: form.appID,
           installationID: form.installationID,
