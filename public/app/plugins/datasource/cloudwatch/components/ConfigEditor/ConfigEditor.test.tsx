@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { AwsAuthType } from '@grafana/aws-sdk';
@@ -225,24 +225,26 @@ describe('Render', () => {
   });
 
   it('should only display the first two default log groups and show all of them when clicking "Show all" button', async () => {
-    setup({
-      version: 2,
-      jsonData: {
-        logGroups: [
-          { arn: 'arn:aws:logs:us-east-2:123456789012:log-group:logGroup-foo:*', name: 'logGroup-foo' },
-          { arn: 'arn:aws:logs:us-east-2:123456789012:log-group:logGroup-bar:*', name: 'logGroup-bar' },
-          { arn: 'arn:aws:logs:us-east-2:123456789012:log-group:logGroup-baz:*', name: 'logGroup-baz' },
-        ],
-      },
+    await act(async () => {
+      setup({
+        version: 2,
+        jsonData: {
+          logGroups: [
+            { arn: 'arn:aws:logs:us-east-2:123456789012:log-group:logGroup-foo:*', name: 'logGroup-foo' },
+            { arn: 'arn:aws:logs:us-east-2:123456789012:log-group:logGroup-bar:*', name: 'logGroup-bar' },
+            { arn: 'arn:aws:logs:us-east-2:123456789012:log-group:logGroup-baz:*', name: 'logGroup-baz' },
+          ],
+        },
+      });
     });
     await waitFor(async () => {
-      expect(await screen.getByText('logGroup-foo')).toBeInTheDocument();
-      expect(await screen.getByText('logGroup-bar')).toBeInTheDocument();
-      expect(await screen.queryByText('logGroup-baz')).not.toBeInTheDocument();
+      expect(screen.getByText('logGroup-foo')).toBeInTheDocument();
+      expect(screen.getByText('logGroup-bar')).toBeInTheDocument();
+      expect(screen.queryByText('logGroup-baz')).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByText('Show all'));
 
-      expect(await screen.getByText('logGroup-baz')).toBeInTheDocument();
+      expect(screen.getByText('logGroup-baz')).toBeInTheDocument();
     });
   });
 

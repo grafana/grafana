@@ -108,32 +108,6 @@ const folder: Folder = {
 };
 
 describe('NotificationPreview', () => {
-  it('should render notification preview without alert manager label, when having only one alert manager configured to receive alerts', async () => {
-    mockHasEditPermission(false); // Grant read permissions
-    mockOneAlertManager();
-    mockPreviewApiResponse(server, [
-      mockAlertmanagerAlert({
-        labels: { tomato: 'red', avocate: 'green' },
-      }),
-    ]);
-
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
-
-    // wait for loading to finish
-    await waitFor(async () => {
-      const matchingContactPoint = await ui.contactPointGroup.findAll();
-      expect(matchingContactPoint).toHaveLength(1);
-    });
-
-    // we expect the alert manager label to be missing as there is only one alert manager configured to receive alerts
-    expect(ui.grafanaAlertManagerLabel.query()).not.toBeInTheDocument();
-    expect(ui.otherAlertManagerLabel.query()).not.toBeInTheDocument();
-
-    const matchingContactPoint = await ui.contactPointGroup.findAll();
-    expect(matchingContactPoint[0]).toHaveTextContent(/Delivered to slack/);
-    expect(matchingContactPoint[0]).toHaveTextContent(/1 instance/);
-  });
-
   it('should render notification preview with alert manager sections, when having more than one alert manager configured to receive alerts', async () => {
     mockHasEditPermission(false); // Grant read permissions
     // two alert managers configured  to receive alerts
@@ -164,6 +138,32 @@ describe('NotificationPreview', () => {
 
     expect(matchingContactPoint[1]).toHaveTextContent(/Delivered to slack/);
     expect(matchingContactPoint[1]).toHaveTextContent(/1 instance/);
+  });
+
+  it('should render notification preview without alert manager label, when having only one alert manager configured to receive alerts', async () => {
+    mockHasEditPermission(false); // Grant read permissions
+    mockOneAlertManager();
+    mockPreviewApiResponse(server, [
+      mockAlertmanagerAlert({
+        labels: { tomato: 'red', avocate: 'green' },
+      }),
+    ]);
+
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />);
+
+    // wait for loading to finish
+    await waitFor(async () => {
+      const matchingContactPoint = await ui.contactPointGroup.findAll();
+      expect(matchingContactPoint).toHaveLength(1);
+    });
+
+    // we expect the alert manager label to be missing as there is only one alert manager configured to receive alerts
+    expect(ui.grafanaAlertManagerLabel.query()).not.toBeInTheDocument();
+    expect(ui.otherAlertManagerLabel.query()).not.toBeInTheDocument();
+
+    const matchingContactPoint = await ui.contactPointGroup.findAll();
+    expect(matchingContactPoint[0]).toHaveTextContent(/Delivered to slack/);
+    expect(matchingContactPoint[0]).toHaveTextContent(/1 instance/);
   });
 
   it('should render details when clicking see details button', async () => {
