@@ -8,7 +8,7 @@ import { Button, Combobox, Field, Stack } from '@grafana/ui';
 import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
-import { GitHubAppCredentialFields } from '../components/Shared/GitHubAppCredentialFields';
+import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
 import { CONNECTIONS_TAB_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { ConnectionFormData } from '../types';
@@ -32,6 +32,8 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   const formMethods = useForm<ConnectionFormData>({
     defaultValues: {
       type: data?.spec?.type || 'github',
+      title: data?.spec?.title || '',
+      description: data?.spec?.description || '',
       appID: data?.spec?.github?.appID || '',
       installationID: data?.spec?.github?.installationID || '',
       privateKey: '',
@@ -65,8 +67,9 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   const onSubmit = async (form: ConnectionFormData) => {
     try {
       const spec = {
-        title: data?.spec?.title || t('provisioning.connection-form.default-title', 'GitHub Connection'),
+        title: form.title,
         type: form.type,
+        ...(form.description && { description: form.description }),
         github: {
           appID: form.appID,
           installationID: form.installationID,
@@ -112,7 +115,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
             />
           </Field>
 
-          <GitHubAppCredentialFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} />
+          <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} />
 
           <Stack gap={2}>
             <Button type="submit" disabled={request.isLoading}>
