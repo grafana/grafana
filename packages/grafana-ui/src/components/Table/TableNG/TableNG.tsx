@@ -781,10 +781,8 @@ export function TableNG(props: TableNGProps) {
     result.columns.unshift(
       buildNestedTableExpanderColumn(nestedColumnsMatrix, hasNestedHeaders, {
         renderRow,
-        renderCell: (key, props) => {
-          console.log(props.row);
-          return nestedColumnsMatrix[props.row.__parentIndex!].cellRootRenderers[props.column.key](key, props);
-        },
+        renderCell: (key, props) =>
+          nestedColumnsMatrix[props.row.__parentIndex!].cellRootRenderers[props.column.key](key, props),
       })
     );
 
