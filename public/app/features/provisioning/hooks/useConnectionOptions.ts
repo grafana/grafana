@@ -61,32 +61,37 @@ export function useConnectionOptions(enabled: boolean) {
     return result;
   }, [connectionNames.join(',')]);
 
-  // Build options with repo names in description
   const options = useMemo(() => {
     return githubConnections.map((conn) => {
       const name = conn.metadata?.name ?? '';
       const title = conn.spec?.title || name;
+      const connDescription = conn.spec?.description;
       const repos = reposByConnection?.[name];
-      let description: string;
+      const descriptionParts: string[] = [];
+
+      if (connDescription) {
+        descriptionParts.push(connDescription);
+      }
 
       if (reposLoading || !reposByConnection) {
-        description = t('provisioning.connection-options.loading', 'Loading...');
+        descriptionParts.push(t('provisioning.connection-options.loading', 'Loading...'));
       } else if (!repos || repos.length === 0) {
-        description = t('provisioning.connection-options.no-repos', 'No repositories');
+        descriptionParts.push(t('provisioning.connection-options.no-repos', 'No repositories'));
       } else {
         const maxToShow = 2;
         const shown = repos.slice(0, maxToShow).join(', ');
         const remaining = repos.length - maxToShow;
-        description =
+        const repoText =
           remaining > 0
             ? t('provisioning.connection-options.repos-truncated', '{{shown}} +{{count}} more', {
                 shown,
                 count: remaining,
               })
             : shown;
+        descriptionParts.push(repoText);
       }
 
-      return { value: name, label: title, description };
+      return { value: name, label: title, description: descriptionParts.join(' · ') };
     });
   }, [githubConnections, reposByConnection, reposLoading]);
 

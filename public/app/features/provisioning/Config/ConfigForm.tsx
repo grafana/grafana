@@ -194,6 +194,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                       options={connectionOptions}
                       onChange={(option) => onChange(option?.value ?? '')}
                       loading={connectionsLoading}
+                      disabled={connectionsLoading}
                       invalid={!!errors.connectionName}
                       {...field}
                     />
