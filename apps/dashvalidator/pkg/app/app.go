@@ -3,9 +3,11 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -19,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"strings"
 )
 
 type DashValidatorConfig struct {
@@ -178,12 +179,11 @@ func handleCheckRoute(
 			if err != nil {
 				dsLogger.Error("Failed to get datasource from namespace", "error", err)
 
-				// Check if it's a not found error vs other errors
-				errMsg := err.Error()
+				// Check if it's a not found error vs other errors using proper type checking
 				statusCode := http.StatusInternalServerError
 				userMsg := fmt.Sprintf("failed to retrieve datasource: %s", dsMapping.UID)
 
-				if strings.Contains(errMsg, "not found") || strings.Contains(errMsg, "does not exist") {
+				if errors.Is(err, datasources.ErrDataSourceNotFound) {
 					statusCode = http.StatusNotFound
 					userMsg = fmt.Sprintf("datasource not found: %s (type: %s)", dsMapping.UID, dsMapping.Type)
 					dsLogger.Warn("Datasource not found in namespace")
