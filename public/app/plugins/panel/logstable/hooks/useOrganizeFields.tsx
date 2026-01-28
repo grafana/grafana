@@ -41,14 +41,6 @@ export function useOrganizeFields({
       return;
     }
     const showPermalinkButton = supportsPermalink && !!options.showCopyLogLink;
-    console.log('useOrganizeFields', {
-      bodyFieldName,
-      extractedFrame,
-      options,
-      timeFieldName,
-      logsFrame,
-      showPermalinkButton,
-    });
 
     organizeFields(
       extractedFrame,

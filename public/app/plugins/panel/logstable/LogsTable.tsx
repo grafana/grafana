@@ -143,11 +143,6 @@ export const LogsTable = ({
     return;
   }
 
-  // @todo seeing 4 renders on time range change
-  console.log('render::LogsTable', { extractedFrame, organizedFrame });
-
-  // @todo add row color
-
   return (
     <div className={styles.wrapper}>
       <LogsTableFields

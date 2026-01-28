@@ -1,9 +1,5 @@
 import { AbsoluteTimeRange, TimeRange, toUtc } from '@grafana/data';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { notifyApp } from 'app/core/reducers/appNotification';
-import { copyStringToClipboard } from 'app/core/utils/explore';
-import { createShortLink, createShortLinkClipboardItem } from 'app/core/utils/shortLinks';
-import { dispatch } from 'app/store/store';
+import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 
 export function copyLogsTableDashboardUrl(logId: string, timeRange: TimeRange): string | null {
   // this is an extra check, to be sure that we are not
@@ -31,26 +27,7 @@ export function copyLogsTableDashboardUrl(logId: string, timeRange: TimeRange): 
   currentURL.searchParams.set('from', range.from.toString());
   currentURL.searchParams.set('to', range.to.toString());
 
-  createAndCopyLogsTableShortLink(currentURL.toString());
+  createAndCopyShortLink(currentURL.toString());
 
   return currentURL.toString();
 }
-
-export const createAndCopyLogsTableShortLink = async (path: string) => {
-  try {
-    if (typeof ClipboardItem !== 'undefined' && navigator.clipboard.write) {
-      await navigator.clipboard.write([createShortLinkClipboardItem(path)]);
-      dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
-    } else {
-      const shortLink = await createShortLink(path);
-      copyStringToClipboard(shortLink);
-      dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
-      return shortLink;
-    }
-  } catch (error) {
-    // createShortLink already handles error notifications, just log
-    console.error('Error in createAndCopyShortLink:', error);
-  }
-
-  return Promise.resolve();
-};
