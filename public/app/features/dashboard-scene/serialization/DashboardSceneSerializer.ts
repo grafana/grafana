@@ -1,3 +1,4 @@
+import { logWarning } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { AnnoKeyDashboardSnapshotOriginalUrl, ObjectMeta } from 'app/features/apiserver/types';
@@ -22,7 +23,7 @@ import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
-import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2'; 
 
 /**
  * T is the type of the save model
@@ -351,6 +352,10 @@ export class V2DashboardSerializer
             const datasourceType = variable.spec.query.group || undefined;
             this.defaultDsReferencesMap.variables.set(variable.spec.name, datasourceType);
           }
+        } else {
+          const warningMsg = 'Dashboard serializer: Undefined variable found in dashboard save model, ignoring it';
+          console.warn(warningMsg);
+          logWarning(warningMsg);
         }
       }
     }
