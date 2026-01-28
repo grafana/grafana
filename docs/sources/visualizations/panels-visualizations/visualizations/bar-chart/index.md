@@ -127,7 +127,10 @@ Use these options to refine your visualization.
 | X-axis tick label max length | Sets the maximum length of bar chart labels. Labels longer than the maximum length are truncated, and appended with `...`. |
 | X-axis labels minimum spacing | Sets the minimum spacing between x-axis labels. Depending on your choice, you can select the **RTL** checkbox to require space from the right side. Choose from: <ul><li>**None** - All tick marks are shown.</li><li>**Small** - 100 px of space is required between labels.</li><li>**Medium** - 200 px of space is required between labels.</li><li>**Large** - 300 px of space is required between labels.</li></ul>  |
 | Show values                      | This controls whether values are shown. Values are shown on top or to the left of bars. Choose from: <ul><li>**Auto** Values will be shown if there is space.</li><li>**Always** Always show values.</li><li>**Never** Never show values.</li></ul>                                                               |
+| Group By | Specify which field is used for the grouping. This will create clusters based on the selected field.
+| Stack Clusters               | Controls whether clusters are stacked. If on: Within a cluster, new fields will be created such that when Stacking is on this can work for multiple data rows that share a concatination field. |
 | Stacking                         | Controls bar chart stacking. Choose from: <ul><li>**Off**: Bars will not be stacked.</li><li>**Normal**: Bars will be stacked on each other.</li><li>**Percent**: Bars will be stacked on each other, and the height of each bar is the percentage of the total height of the stack.</li></ul> |
+| Cluster width                    | Controls the width of clusters. 1 = Max with, 0 = Min width.       |
 | Group width                      | Controls the width of groups. 1 = Max with, 0 = Min width.       |
 | Bar width                        | Controls the width of bars. 1 = Max width, 0 = Min width.    |
 | Bar radius                       | Controls the radius of the bars. Choose from: <ul><li>0 = Minimum radius</li><li>0.5 = Maximum radius</li></ul>     |

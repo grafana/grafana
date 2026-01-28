@@ -24,6 +24,10 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    */
   barWidth: number;
   /**
+   * Controls the width of the clusters. 1= max width, 0 = min width.
+   */
+  clusterWidth: number;
+  /**
    * Use the color value for a sibling field to color each bar value.
    */
   colorByField?: string;
@@ -33,9 +37,17 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    */
   fullHighlight: boolean;
   /**
+   * What field is being grouped by.
+   */
+  groupByField?: string;
+  /**
    * Controls the width of groups. 1 = max with, 0 = min width.
    */
   groupWidth: number;
+  /**
+   * Controls whether clusters are stacked or not
+   */
+  isClusteredStacked: boolean;
   /**
    * Controls the orientation of the bar chart, either vertical or horizontal.
    */
@@ -70,8 +82,11 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
 export const defaultOptions: Partial<Options> = {
   barRadius: 0,
   barWidth: 0.97,
+  clusterWidth: 0.7,
   fullHighlight: false,
+  groupByField: '',
   groupWidth: 0.7,
+  isClusteredStacked: false,
   orientation: common.VizOrientation.Auto,
   showValue: common.VisibilityMode.Auto,
   stacking: common.StackingMode.None,
