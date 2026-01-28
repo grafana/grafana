@@ -490,10 +490,13 @@ function ListMode({
               // Item is disabled if any action is active and this item is not the one being acted upon
               const isItemDisabled = isActionActive && !isRenaming && !isDeleting;
 
+              const href = `/alerting/list?search=${encodeURIComponent(search.query)}`;
+
               return (
                 <SavedSearchItem
                   key={search.id}
                   search={search}
+                  href={href}
                   isRenaming={isRenaming}
                   isDeleting={isDeleting}
                   isDisabled={isItemDisabled}

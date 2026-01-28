@@ -128,6 +128,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 				Reg:                opts.Reg,
 				UseChannelNotifier: !isHA,
 				Log:                log.New("storage-backend"),
+				DBKeepAlive:        eDB,
 			}
 
 			if opts.Cfg.EnableSQLKVCompatibilityMode {

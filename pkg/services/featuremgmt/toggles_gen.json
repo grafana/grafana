@@ -209,6 +209,20 @@
     },
     {
       "metadata": {
+        "name": "alertingDisableDMAinUI",
+        "resourceVersion": "1769428796156",
+        "creationTimestamp": "2026-01-26T11:59:56Z"
+      },
+      "spec": {
+        "description": "Disables the DMA feature in the UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingDisableSendAlertsExternal",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-05-23T12:29:19Z",
@@ -1589,17 +1603,17 @@
     {
       "metadata": {
         "name": "enableSCIM",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1769542829648",
         "creationTimestamp": "2024-11-07T14:38:46Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-01-27 19:40:29.648759061 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables SCIM support for user and group management",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3006,6 +3020,7 @@
         "name": "mysqlAnsiQuotes",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-10-12T11:43:35Z",
+        "deletionTimestamp": "2026-01-27T13:45:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -4002,6 +4017,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "savedQueriesRBAC",
+        "resourceVersion": "1768828040599",
+        "creationTimestamp": "2026-01-19T13:07:20Z"
+      },
+      "spec": {
+        "description": "Enables Saved queries (query library) RBAC permissions",
+        "stage": "preview",
+        "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
     },
