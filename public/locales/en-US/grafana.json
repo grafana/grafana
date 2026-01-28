@@ -11858,6 +11858,7 @@
       "back-to-connections": "Back to connections",
       "button-save": "Save",
       "button-saving": "Saving...",
+      "default-title": "GitHub Connection",
       "description-app-id": "The ID of your GitHub App",
       "description-installation-id": "The installation ID of your GitHub App",
       "description-private-key": "The private key for your GitHub App in PEM format",
@@ -12354,6 +12355,7 @@
       "button-start": "Begin synchronization",
       "check-status-button": "Check repository status",
       "check-status-message": "Repository connecting, synchronize will be ready soon.",
+      "default-connection-title": "GitHub Connection",
       "discard-modal": {
         "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
         "confirm": "Yes, discard",
