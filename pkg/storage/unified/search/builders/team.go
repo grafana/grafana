@@ -71,6 +71,7 @@ func (t *teamSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.R
 	}
 
 	doc := resource.NewIndexableDocument(key, rv, obj)
+	doc.SelectableFields = BuildSelectableFields(team, v0alpha1.TeamKind())
 
 	doc.Fields = make(map[string]any)
 	if team.Spec.Email != "" {
