@@ -929,11 +929,7 @@ func TestBackend_StorageDisabled(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTestStorageDisabled(t)
 
-		// Create a minimal bulk request iterator
-		iter := &testBulkRequestIterator{done: true}
-		settings := resource.BulkSettings{}
-
-		resp := b.ProcessBulk(ctx, settings, iter)
+		resp := b.ProcessBulk(ctx, resource.BulkSettings{}, nil)
 		require.NotNil(t, resp)
 		require.NotNil(t, resp.Error)
 		require.Contains(t, resp.Error.Message, "storage backend is not enabled")
@@ -948,23 +944,6 @@ func TestBackend_StorageDisabled(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorContains(t, err, "watcher is not enabled")
 	})
-}
-
-// testBulkRequestIterator is a minimal implementation of resource.BulkRequestIterator for testing
-type testBulkRequestIterator struct {
-	done bool
-}
-
-func (t *testBulkRequestIterator) Next() bool {
-	return !t.done
-}
-
-func (t *testBulkRequestIterator) Request() *resourcepb.BulkRequest {
-	return nil
-}
-
-func (t *testBulkRequestIterator) RollbackRequested() bool {
-	return false
 }
 
 // setupBackendTestStorageDisabled creates a test backend with storage disabled (search-only/read-only mode)
