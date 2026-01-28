@@ -108,6 +108,8 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		Resource:  "resource",
 	}
 
+	const resourceVersion = 23
+
 	// Build initial index with some test documents
 	index, err := backend.BuildIndex(ctx, ns, 3, nil, "test", func(index resource.ResourceIndex) (int64, error) {
 		err := index.BulkIndex(&resource.BulkIndexRequest{
@@ -149,7 +151,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 			},
 		})
 		require.NoError(t, err)
-		return int64(2), nil
+		return resourceVersion, nil
 	}, nil, false)
 	require.NoError(t, err)
 	require.NotNil(t, index)
@@ -174,9 +176,12 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, int64(1), resp.TotalHits) // Only doc2 should have tag3 now
+		require.Equal(t, int64(resourceVersion), resp.ResourceVersion)
+	})
 
-		// Search for Document
-		resp, err = index.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
+	t.Run("Search Before and After", func(t *testing.T) {
+		// Search for Document, matching both doc1 and doc2
+		request := &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Namespace: ns.Namespace,
@@ -187,10 +192,41 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 			Query:  "Document",
 			Fields: []string{"title", "folder", "tags"},
 			Limit:  10,
-		}, nil, nil)
+			SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: "title"}},
+		}
+		respAll, err := index.Search(ctx, nil, request, nil, nil)
 		require.NoError(t, err)
-		require.NotNil(t, resp)
-		require.Equal(t, int64(2), resp.TotalHits) // Both doc1 and doc2 should have doc now
+		require.NotNil(t, respAll)
+		require.Equal(t, int64(2), respAll.TotalHits)
+		require.Equal(t, int64(resourceVersion), respAll.ResourceVersion)
+		require.Len(t, respAll.Results.Rows, 2)
+		require.NotEmpty(t, respAll.Results.Rows[0].SortFields)
+		require.NotEmpty(t, respAll.Results.Rows[1].SortFields)
+
+		// Search for Document, starting after first match -- we should get second match only.
+		request.SearchAfter = respAll.Results.Rows[0].SortFields
+		{
+			respAfter, err := index.Search(ctx, nil, request, nil, nil)
+			require.NoError(t, err)
+			require.NotNil(t, respAfter)
+			require.Equal(t, int64(2), respAfter.TotalHits)
+			require.Len(t, respAfter.Results.Rows, 1)
+			// Verify it's the second match from "all" response.
+			require.Equal(t, respAll.Results.Rows[1].Key.Name, respAfter.Results.Rows[0].Key.Name)
+		}
+
+		// Search for document starting before second match -- we should get first match only.
+		request.SearchAfter = nil
+		request.SearchBefore = respAll.Results.Rows[1].SortFields
+		{
+			respBefore, err := index.Search(ctx, nil, request, nil, nil)
+			require.NoError(t, err)
+			require.NotNil(t, respBefore)
+			require.Equal(t, int64(2), respBefore.TotalHits)
+			require.Len(t, respBefore.Results.Rows, 1)
+			// Verify it's the first match from "all" response.
+			require.Equal(t, respAll.Results.Rows[0].Key.Name, respBefore.Results.Rows[0].Key.Name)
+		}
 	})
 
 	t.Run("Add a new document", func(t *testing.T) {
@@ -232,10 +268,13 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		}, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		require.Equal(t, int64(3), resp.TotalHits) // Both doc1, doc2, and doc3 should have doc now
+		require.Equal(t, int64(3), resp.TotalHits)                     // Both doc1, doc2, and doc3 should have doc now
+		require.Equal(t, int64(resourceVersion), resp.ResourceVersion) // Calling bulk index doesn't change resource version stored in index.
 	})
 
 	t.Run("Search by LibraryPanel reference", func(t *testing.T) {
+		const newResourceVersion = 444
+
 		// Build index with dashboards that have LibraryPanel references
 		index, err := backend.BuildIndex(ctx, ns, 3, nil, "test", func(index resource.ResourceIndex) (int64, error) {
 			err := index.BulkIndex(&resource.BulkIndexRequest{
@@ -295,7 +334,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 				},
 			})
 			require.NoError(t, err)
-			return int64(3), nil
+			return newResourceVersion, nil
 		}, nil, false)
 		require.NoError(t, err)
 		require.NotNil(t, index)
@@ -322,7 +361,8 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		}, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-		require.Equal(t, int64(1), resp.TotalHits) // Only dash1 should have lib-panel-1
+		require.Equal(t, int64(1), resp.TotalHits)                        // Only dash1 should have lib-panel-1
+		require.Equal(t, int64(newResourceVersion), resp.ResourceVersion) // Calling bulk index doesn't change resource version stored in index.
 
 		// Verify the result
 		require.Len(t, resp.Results.Rows, 1)
