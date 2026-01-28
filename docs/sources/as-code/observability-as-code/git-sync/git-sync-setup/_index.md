@@ -99,7 +99,7 @@ To create a GitHub access token:
 
 ### Create a GitHub App
 
-GitHub Apps are tools that extend GitHub's functionality. They use fine-grained permissions and short-lived tokens, giving you more control over which repositories are being accessed. Find out more in the [GitHub Apps official documentation](https://docs.github.com/en/apps/overview).
+GitHub Apps are tools that extend GitHub functionality. They use fine-grained permissions and short-lived tokens, giving you more control over which repositories are being accessed. Find out more in the [GitHub Apps official documentation](https://docs.github.com/en/apps/overview).
 
 If you chose to authenticate with a newly created GitHub App, you'll need the following parameters:
 
@@ -129,8 +129,8 @@ Next, go to the **Private Keys** section, generate one, and copy it.
 Finally, install the app:
 
 1. At the top left of the page, click on **Install App**
-1. Choose for which user you need to install it, you’ll be redirected to the repo selection section
-1. Choose for which repos you want to install the app
+1. Choose for which user you need to install it, you’ll be redirected to the repository selection screen
+1. Choose for which repositories you want to install the app
 1. Click **Install**.
 1. On the installation page, copy the **installationID** from the page URL https://github.com/settings/installations/**<installationID>**
 
@@ -320,4 +320,4 @@ To learn more about using Git Sync:
 - [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/use-git-sync/)
 - [Git Sync deployment scenarios](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios)
 - [Export resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources/)
-- [grafanactl documentation](https://grafana.github.io/grafanactl/)
+- [`grafanactl` documentation](https://grafana.github.io/grafanactl/)
