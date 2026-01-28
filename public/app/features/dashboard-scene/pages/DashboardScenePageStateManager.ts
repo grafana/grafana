@@ -46,6 +46,7 @@ import {
   SceneCreationOptions,
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
+import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -922,7 +923,25 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         }
         case DashboardRoutes.AssistantPreview: {
           const v1Response = await this.loadAssistantPreviewDashboard(uid);
-          return ensureV2Response(v1Response);
+          const scene = transformSaveModelToScene(v1Response, undefined, getSceneCreationOptions());
+          const spec = transformSceneToSaveModelSchemaV2(scene);
+          return {
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              creationTimestamp: '',
+              name: v1Response.dashboard.uid ?? '',
+              resourceVersion: v1Response.dashboard.version?.toString() || '0',
+            },
+            spec,
+            access: {
+              canSave: v1Response.meta.canSave ?? false,
+              canEdit: v1Response.meta.canEdit ?? false,
+              canDelete: v1Response.meta.canDelete ?? false,
+              canShare: v1Response.meta.canShare ?? false,
+              canStar: v1Response.meta.canStar ?? false,
+            },
+          };
         }
         case DashboardRoutes.Public: {
           return await this.dashboardLoader.loadDashboard('public', '', uid);
