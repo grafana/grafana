@@ -617,3 +617,110 @@ func TestCalculatePrometheusInterval(t *testing.T) {
 		})
 	}
 }
+
+func TestCalculateRateInterval(t *testing.T) {
+	tests := []struct {
+		name             string
+		queryInterval    time.Duration
+		requestedMinStep string
+		want             time.Duration
+	}{
+		{
+			name:             "with 30s scrape interval and 100s query interval",
+			queryInterval:    100 * time.Second,
+			requestedMinStep: "30s",
+			want:             130 * time.Second, // max(100s + 30s, 4*30s) = max(130s, 120s) = 130s
+		},
+		{
+			name:             "with 30s scrape interval and 60s query interval",
+			queryInterval:    60 * time.Second,
+			requestedMinStep: "30s",
+			want:             120 * time.Second, // max(60s + 30s, 4*30s) = max(90s, 120s) = 120s
+		},
+		{
+			name:             "with 15s scrape interval and 30s query interval",
+			queryInterval:    30 * time.Second,
+			requestedMinStep: "15s",
+			want:             60 * time.Second, // max(30s + 15s, 4*15s) = max(45s, 60s) = 60s
+		},
+		{
+			name:             "with empty scrape interval defaults to 15s",
+			queryInterval:    30 * time.Second,
+			requestedMinStep: "",
+			want:             60 * time.Second, // max(30s + 15s, 4*15s) = max(45s, 60s) = 60s
+		},
+		{
+			name:             "with 1m scrape interval and 5m query interval",
+			queryInterval:    5 * time.Minute,
+			requestedMinStep: "1m",
+			want:             6 * time.Minute, // max(5m + 1m, 4*1m) = max(6m, 4m) = 6m
+		},
+		{
+			name:             "with 1m scrape interval and 2m query interval",
+			queryInterval:    2 * time.Minute,
+			requestedMinStep: "1m",
+			want:             4 * time.Minute, // max(2m + 1m, 4*1m) = max(3m, 4m) = 4m
+		},
+		{
+			name:             "with zero query interval and 30s scrape interval",
+			queryInterval:    0,
+			requestedMinStep: "30s",
+			want:             120 * time.Second, // max(0 + 30s, 4*30s) = max(30s, 120s) = 120s
+		},
+		{
+			name:             "with very small query interval 10s and 30s scrape interval",
+			queryInterval:    10 * time.Second,
+			requestedMinStep: "30s",
+			want:             120 * time.Second, // max(10s + 30s, 4*30s) = max(40s, 120s) = 120s
+		},
+		{
+			name:             "with large query interval 10m and 30s scrape interval",
+			queryInterval:    10 * time.Minute,
+			requestedMinStep: "30s",
+			want:             630 * time.Second, // max(10m + 30s, 4*30s) = max(630s, 120s) = 630s
+		},
+		{
+			name:             "with 5s scrape interval and 10s query interval",
+			queryInterval:    10 * time.Second,
+			requestedMinStep: "5s",
+			want:             20 * time.Second, // max(10s + 5s, 4*5s) = max(15s, 20s) = 20s
+		},
+		{
+			name:             "with invalid scrape interval returns zero",
+			queryInterval:    100 * time.Second,
+			requestedMinStep: "invalid-interval",
+			want:             0,
+		},
+		{
+			name:             "with 1h scrape interval and 2h query interval",
+			queryInterval:    2 * time.Hour,
+			requestedMinStep: "1h",
+			want:             4 * time.Hour, // max(2h + 1h, 4*1h) = max(3h, 4h) = 4h
+		},
+		{
+			name:             "edge case: queryInterval equals minRateInterval boundary",
+			queryInterval:    45 * time.Second, // 3 * 15s
+			requestedMinStep: "15s",
+			want:             60 * time.Second, // max(45s + 15s, 4*15s) = max(60s, 60s) = 60s
+		},
+		{
+			name:             "with 10s scrape interval and 50s query interval",
+			queryInterval:    50 * time.Second,
+			requestedMinStep: "10s",
+			want:             60 * time.Second, // max(50s + 10s, 4*10s) = max(60s, 40s) = 60s
+		},
+		{
+			name:             "with 2m scrape interval and 1m query interval",
+			queryInterval:    1 * time.Minute,
+			requestedMinStep: "2m",
+			want:             8 * time.Minute, // max(1m + 2m, 4*2m) = max(3m, 8m) = 8m
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := calculateRateInterval(tt.queryInterval, tt.requestedMinStep)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
