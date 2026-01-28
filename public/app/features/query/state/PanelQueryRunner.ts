@@ -36,6 +36,8 @@ import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 
+import { queryLogger } from '../utils';
+
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard/runSharedRequest';
 import { PanelModel } from '../../dashboard/state/PanelModel';
 
@@ -257,7 +259,9 @@ export class PanelQueryRunner {
         return { ...data, series, annotations };
       }),
       catchError((err) => {
-        console.warn('Error running transformation:', err);
+        queryLogger.logError(err instanceof Error ? err : new Error('Error running transformation'), {
+          where: 'PanelQueryRunner.applyTransformations',
+        });
         return of({
           ...data,
           state: LoadingState.Error,

@@ -28,6 +28,8 @@ import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runShar
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types/query';
 
+import { queryLogger } from '../utils';
+
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
 
@@ -122,7 +124,9 @@ export class QueryGroup extends PureComponent<Props, State> {
         defaultDataSource,
       });
     } catch (error) {
-      console.error('failed to load data source', error);
+      queryLogger.logError(error instanceof Error ? error : new Error('Failed to load data source'), {
+        where: 'QueryGroup.setNewQueriesAndDatasource',
+      });
     }
   }
 

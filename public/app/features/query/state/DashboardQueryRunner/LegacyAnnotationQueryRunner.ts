@@ -6,6 +6,7 @@ import { shouldUseLegacyRunner } from 'app/features/annotations/standardAnnotati
 
 import { AnnotationQueryRunner, AnnotationQueryRunnerOptions } from './types';
 import { handleAnnotationQueryRunnerError } from './utils';
+import { queryLogger } from '../../utils';
 
 export class LegacyAnnotationQueryRunner implements AnnotationQueryRunner {
   canRun(datasource?: DataSourceApi): boolean {
@@ -26,13 +27,13 @@ export class LegacyAnnotationQueryRunner implements AnnotationQueryRunner {
     }
 
     if (datasource?.annotationQuery === undefined) {
-      console.warn('datasource does not have an annotation query');
+      queryLogger.logWarning('Datasource does not have an annotation query', { where: 'LegacyAnnotationQueryRunner.run' });
       return of([]);
     }
 
     const annotationQuery = datasource.annotationQuery({ range, rangeRaw: range.raw, annotation, dashboard });
     if (annotationQuery === undefined) {
-      console.warn('datasource does not have an annotation query');
+      queryLogger.logWarning('Datasource does not have an annotation query', { where: 'LegacyAnnotationQueryRunner.run' });
       return of([]);
     }
 

@@ -163,7 +163,6 @@ export function runRequest(
     }),
     // handle errors
     catchError((err) => {
-      console.error('runRequest.catchError', err);
       queryLogger.logError(err);
       return of({
         ...state.panelData,

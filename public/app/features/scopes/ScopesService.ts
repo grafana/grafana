@@ -6,6 +6,7 @@ import { LocationService, ScopesContextValue, ScopesContextValueState } from '@g
 
 import { ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
 import { deserializeFolderPath, serializeFolderPath } from './dashboards/scopeNavgiationUtils';
+import { scopesLogger } from './logging';
 import { ScopesSelectorService } from './selector/ScopesSelectorService';
 
 export interface State {
@@ -93,7 +94,10 @@ export class ScopesService implements ScopesContextValue {
     const nodeToPreload = scopeNodeId;
     if (nodeToPreload) {
       this.selectorService.resolvePathToRoot(nodeToPreload, this.selectorService.state.tree!).catch((error) => {
-        console.error('Failed to pre-load node path', error);
+        scopesLogger.logError(error instanceof Error ? error : new Error('Failed to pre-load node path'), {
+          where: 'ScopesService.constructor',
+          scopeNodeId: String(nodeToPreload),
+        });
       });
     }
 

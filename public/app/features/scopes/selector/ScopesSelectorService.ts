@@ -7,6 +7,7 @@ import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 import { isCurrentPath } from '../dashboards/scopeNavgiationUtils';
+import { scopesLogger } from '../logging';
 
 import {
   closeNodes,
@@ -97,7 +98,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       }
       return node;
     } catch (error) {
-      console.error('Failed to load node', error);
+      scopesLogger.logError(error instanceof Error ? error : new Error('Failed to load node'), {
+        where: 'ScopesSelectorService.getScopeNode',
+        scopeNodeId,
+      });
       return undefined;
     }
   };
@@ -105,7 +109,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   private getNodePath = async (scopeNodeId: string, visited: Set<string> = new Set()): Promise<ScopeNode[]> => {
     // Protect against circular references
     if (visited.has(scopeNodeId)) {
-      console.error('Circular reference detected in node path', scopeNodeId);
+      scopesLogger.logError(new Error('Circular reference detected in node path'), {
+        where: 'ScopesSelectorService.getNodePath',
+        scopeNodeId,
+      });
       return [];
     }
 
@@ -435,7 +442,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
       // Validate API response is an array
       if (!Array.isArray(fetchedScopes)) {
-        console.error('Expected fetchedScopes to be an array, got:', typeof fetchedScopes);
+        scopesLogger.logError(new Error('Expected fetchedScopes to be an array'), {
+          where: 'ScopesSelectorService.applyScopes',
+          fetchedScopesType: typeof fetchedScopes,
+        });
         this.updateState({ scopes: newScopesState, loading: false });
         return;
       }
@@ -644,7 +654,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
           newTree = expandNodes(newTree, parentPath);
         }
       } catch (error) {
-        console.error('Failed to expand to selected scope', error);
+        scopesLogger.logError(error instanceof Error ? error : new Error('Failed to expand to selected scope'), {
+          where: 'ScopesSelectorService.open',
+        });
       }
     }
 
@@ -727,7 +739,10 @@ function parseScopesFromLocalStorage(content: string | undefined): RecentScope[]
   try {
     recentScopes = JSON.parse(content || '[]');
   } catch (e) {
-    console.error('Failed to parse recent scopes', e, content);
+    scopesLogger.logError(e instanceof Error ? e : new Error('Failed to parse recent scopes'), {
+      where: 'parseScopesFromLocalStorage',
+      contentLength: String(content?.length ?? 0),
+    });
     return [];
   }
   if (!(Array.isArray(recentScopes) && Array.isArray(recentScopes[0]))) {

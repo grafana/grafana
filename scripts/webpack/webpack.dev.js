@@ -1,4 +1,22 @@
 'use strict';
+// #region agent log
+if (process.env.CURSOR_DEBUG === '1') {
+  fetch('http://127.0.0.1:7249/ingest/d52c2a10-5a23-426e-8584-45b32c06b828', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: 'debug-session',
+      runId: process.env.CURSOR_DEBUG_RUN_ID || 'run1',
+      hypothesisId: 'H1',
+      location: 'scripts/webpack/webpack.dev.js:2',
+      message: 'webpack.dev.js loaded',
+      data: { node: process.version, cwd: process.cwd(), yarnUserAgent: process.env.npm_config_user_agent },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+}
+// #endregion
+
 const { getPackagesSync } = require('@manypkg/get-packages');
 const browserslist = require('browserslist');
 const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
@@ -48,6 +66,24 @@ function scenesModule() {
 const envConfig = getEnvConfig();
 
 module.exports = (env = {}) => {
+  // #region agent log
+  if (process.env.CURSOR_DEBUG === '1') {
+    fetch('http://127.0.0.1:7249/ingest/d52c2a10-5a23-426e-8584-45b32c06b828', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: 'debug-session',
+        runId: process.env.CURSOR_DEBUG_RUN_ID || 'run1',
+        hypothesisId: 'H5',
+        location: 'scripts/webpack/webpack.dev.js:module.exports',
+        message: 'webpack dev config invoked',
+        data: { envKeys: Object.keys(env || {}), noTsCheck: env?.noTsCheck, noLint: env?.noLint, liveReload: env?.liveReload },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+  }
+  // #endregion
+
   return merge(common, {
     devtool: 'source-map',
     mode: 'development',

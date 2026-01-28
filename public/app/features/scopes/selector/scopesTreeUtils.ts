@@ -1,5 +1,7 @@
 import { ScopeNode } from '@grafana/data';
 
+import { scopesLogger } from '../logging';
+
 import { NodesMap, TreeNode } from './types';
 
 /**
@@ -125,7 +127,12 @@ export const insertPathNodesIntoTree = (tree: TreeNode, path: ScopeNode[]) => {
     newTree = modifyTreeNodeAtPath(newTree, pathSlice, (treeNode) => {
       treeNode.children = { ...treeNode.children };
       if (!childNodeName) {
-        console.warn('Failed to insert full path into tree. Did not find child to' + stringPath[index]);
+        scopesLogger.logWarning('Failed to insert full path into tree', {
+          where: 'insertPathNodesIntoTree',
+          segmentIndex: String(index),
+          parentNodeId: String(stringPath[index]),
+          path: stringPath.join(' > '),
+        });
         treeNode.childrenLoaded = treeNode.childrenLoaded ?? false;
         return;
       }

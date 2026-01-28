@@ -18,9 +18,18 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
+import { queryLogger } from '../utils';
+
 import { getNextRequestId } from './PanelQueryRunner';
 import { setStructureRevision } from './processing/revision';
 import { runRequest } from './runRequest';
+
+function ensureError(err: unknown): Error {
+  if (err instanceof Error) {
+    return err;
+  }
+  return new Error(typeof err === 'string' ? err : 'Unknown error');
+}
 
 export class QueryRunner implements QueryRunnerSrv {
   private subject: ReplaySubject<PanelData>;
@@ -113,7 +122,7 @@ export class QueryRunner implements QueryRunnerSrv {
             },
           });
         },
-        error: (error) => console.error('PanelQueryRunner Error', error),
+        error: (error) => queryLogger.logError(ensureError(error), { where: 'QueryRunner.run' }),
       });
   }
 
