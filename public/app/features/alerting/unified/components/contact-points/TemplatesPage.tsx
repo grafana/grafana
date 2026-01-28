@@ -15,7 +15,7 @@ function TemplatesPageContent() {
   );
 
   return (
-    <>
+    <Stack direction="column" gap={3}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Text variant="body" color="secondary">
           <Trans i18nKey="alerting.templates-page.description">
@@ -34,7 +34,7 @@ function TemplatesPageContent() {
         )}
       </Stack>
       <NotificationTemplates />
-    </>
+    </Stack>
   );
 }
 
