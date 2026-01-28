@@ -63,8 +63,8 @@ Before configuring the OpenTSDB data source, ensure you have:
 
 - **Grafana permissions:** Organization administrator role to add data sources
 - **OpenTSDB instance:** A running OpenTSDB server (version 2.1 or later recommended)
-- **Network access:** Grafana server can reach the OpenTSDB HTTP API endpoint (default port 4242)
-- **Suggest API:** For autocomplete functionality, enable the suggest API in OpenTSDB
+- **Network access:** The Grafana server can reach the OpenTSDB HTTP API endpoint (default port 4242)
+- **Metrics in OpenTSDB:** For autocomplete to work, metrics must exist in your OpenTSDB database
 
 ## Configure the data source
 
@@ -241,7 +241,7 @@ Filter types:
 
 ### Tags section
 
-Tags provide simple key-value filtering. Use `*` as a wildcard value to match all.
+Tags filter metrics by key-value pairs. Specify a tag key and value to limit results to time series with matching tags. Use `*` as a wildcard value to match all values for a given key.
 
 {{< admonition type="note" >}}
 Tags are deprecated in OpenTSDB 2.2 and later. Use Filters instead for more powerful filtering options.
@@ -257,11 +257,11 @@ The Rate section computes the rate of change, which is useful for counter metric
 
 | Field | Description |
 | ----- | ----------- |
-| **Rate** | Toggle to enable rate calculation. |
-| **Counter** | Toggle to indicate the metric is a counter that can reset. |
-| **Counter max** | (When Counter is enabled) The maximum counter value before it resets. |
-| **Reset value** | (When Counter is enabled) The value the counter resets to. |
-| **Explicit tags** | (Version 2.3+) Toggle to require explicit tag specification in queries. |
+| **Rate** | Toggle to enable rate calculation. Computes the difference between consecutive values divided by the time interval. |
+| **Counter** | Toggle to indicate the metric is a monotonically increasing counter that may reset (for example, after a server restart). |
+| **Counter max** | (When Counter is enabled) The maximum value the counter can reach before it wraps around. Used to calculate correct rates across counter resets. |
+| **Reset value** | (When Counter is enabled) The value the counter resets to after wrapping. Typically `0`. |
+| **Explicit tags** | (Version 2.3+) Toggle to require all tags specified in the query to exist on matching time series. Prevents unexpected results from partial tag matches. |
 
 ### Aggregators
 
@@ -454,9 +454,10 @@ These errors occur when executing queries against OpenTSDB.
 
 **Solutions:**
 
-1. Verify that the OpenTSDB suggest API is enabled. Check the `tsd.core.auto_create_metrics` setting in your OpenTSDB configuration.
+1. Verify that the OpenTSDB `/api/suggest` endpoint is accessible. Test it manually with `curl http://<OPENTSDB_HOST>:4242/api/suggest?type=metrics`.
 1. Increase the **Lookup limit** setting if you have many metrics or tags.
 1. Verify that the data source connection is working by clicking **Save & test**.
+1. Check that metrics exist in OpenTSDB. The suggest API only returns metrics that have been written to the database.
 
 ### Template variables don't populate
 
