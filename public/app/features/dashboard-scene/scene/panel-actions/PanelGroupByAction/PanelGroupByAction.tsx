@@ -141,10 +141,14 @@ async function getApplicableGroupByOptions(
   options: VariableValueOption[],
   queries: SceneDataQuery[]
 ) {
+  if (!queries.length) {
+    return options;
+  }
+
   const values = options.map((option) => option.value);
   const applicability = await groupByVariable.getGroupByApplicabilityForQueries(values, queries);
 
-  return applicability
+  return applicability?.length
     ? applicability.filter((item) => item.applicable).map((item) => ({ label: item.key, value: item.key }))
     : options;
 }
