@@ -1471,10 +1471,14 @@ export type GitlabConnectionConfig = {
 export type ConnectionSpec = {
   /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
   bitbucket?: BitbucketConnectionConfig;
+  /** The connection description */
+  description?: string;
   /** GitHub connection configuration Only applicable when provider is "github" */
   github?: GitHubConnectionConfig;
   /** Gitlab connection configuration Only applicable when provider is "gitlab" */
   gitlab?: GitlabConnectionConfig;
+  /** The connection display name (shown in the UI) */
+  title?: string;
   /** The connection provider type
     
     Possible enum values:
