@@ -160,7 +160,10 @@ export function getAppPluginsToPreloadSync(apps: AppPluginConfig[]): AppPluginCo
   const awaitedPluginIds = getAppPluginsToAwaitSync(apps).map((app) => app.id);
   const isNotAwaited = (app: AppPluginConfig) => !awaitedPluginIds.includes(app.id);
 
+  // TODO(@MattIPv4): cloud-home-app is deprecated and should not be preloaded
   return apps.filter((app) => {
-    return isNotAwaited(app) && (app.preload || dashboardPanelMenuPluginIds.includes(app.id));
+    return (
+      isNotAwaited(app) && app.id !== 'cloud-home-app' && (app.preload || dashboardPanelMenuPluginIds.includes(app.id))
+    );
   });
 }
