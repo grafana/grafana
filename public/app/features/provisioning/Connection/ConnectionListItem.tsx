@@ -35,7 +35,7 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
 
       {(description || url) && (
         <Card.Meta>
-          <Stack direction="column" gap={1}>
+          <Stack direction="column">
             {description && <Text color="secondary">{description}</Text>}
             {url && (
               <TextLink external href={url}>

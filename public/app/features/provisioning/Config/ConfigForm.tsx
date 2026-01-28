@@ -87,7 +87,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const connectionName = data?.spec?.connection?.name;
   const usesGitHubApp = Boolean(connectionName && type === 'github');
 
-  // Fetch connections and their repositories for GitHub App selection
   const { options: connectionOptions, isLoading: connectionsLoading } = useConnectionOptions(usesGitHubApp);
 
   const {

@@ -19,16 +19,10 @@ export function useConnectionOptions(enabled: boolean) {
   const [connections, connectionsLoading] = useConnectionList(enabled ? {} : skipToken);
   const githubConnections = useMemo(() => connections?.filter((c) => c.spec?.type === 'github') ?? [], [connections]);
 
-  const connectionNames = useMemo(() => {
-    const names: string[] = [];
-    for (const conn of githubConnections) {
-      const name = conn.metadata?.name;
-      if (name) {
-        names.push(name);
-      }
-    }
-    return names;
-  }, [githubConnections]);
+  const connectionNames = useMemo(
+    () => githubConnections.map((conn) => conn.metadata?.name).filter((name): name is string => Boolean(name)),
+    [githubConnections]
+  );
 
   const [fetchRepos] = useLazyGetConnectionRepositoriesQuery();
 
@@ -41,7 +35,6 @@ export function useConnectionOptions(enabled: boolean) {
         const items: ExternalRepository[] = response.items ?? [];
         result[name] = items
           .map((item) => {
-            // Use same URL formatting as RepositoryListItem
             const formattedUrl = formatRepoUrl(item.url);
             if (formattedUrl) {
               return formattedUrl;
@@ -59,7 +52,7 @@ export function useConnectionOptions(enabled: boolean) {
     }
 
     return result;
-  }, [connectionNames.join(',')]);
+  }, [connectionNames, fetchRepos]);
 
   const options = useMemo(() => {
     return githubConnections.map((conn) => {
