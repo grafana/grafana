@@ -167,7 +167,6 @@ export function TableNG(props: TableNGProps) {
     return getDisplayName(firstNestedField);
   }, [data, hasNestedFrames]);
   const rows = useMemo(() => frameToRecords(data, nestedFramesFieldName), [data, nestedFramesFieldName]);
-  console.log('TableNG rows:', rows);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const {
