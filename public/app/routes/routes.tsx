@@ -24,6 +24,7 @@ import { DashboardRoutes } from 'app/types/dashboard';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
+import { isDashboardSceneSoloEnabled } from '../features/dashboard-scene/utils/utils';
 import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 
 const isDevEnv = config.buildInfo.env === 'development';
@@ -99,7 +100,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(() =>
-        config.featureToggles.dashboardSceneSolo
+        isDashboardSceneSoloEnabled()
           ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
           : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
       ),
@@ -110,7 +111,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(() =>
-        config.featureToggles.dashboardSceneSolo
+        isDashboardSceneSoloEnabled()
           ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
           : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
       ),
