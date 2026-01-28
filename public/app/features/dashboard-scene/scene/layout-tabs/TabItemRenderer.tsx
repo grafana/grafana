@@ -20,7 +20,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const parentLayout = model.getParentLayout();
   const { currentTabSlug } = parentLayout.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
-  const { isSelected, onSelect, isSelectable } = useElementSelection(key);
+  const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
   const { isEditing } = useDashboardState(model);
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
@@ -90,6 +90,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
               }
 
               if (!isActive) {
+                onClearSelection?.();
                 return;
               }
 
