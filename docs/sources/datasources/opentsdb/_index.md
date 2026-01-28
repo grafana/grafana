@@ -31,11 +31,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
-  data-source-management:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
   explore:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
@@ -53,18 +48,14 @@ refs:
 Grafana ships with support for OpenTSDB, an open source time series database built on top of HBase.
 This document explains how to configure and use the OpenTSDB data source, including query editor features, template variables, annotations, and alerting.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
-Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
-
 ## Before you begin
 
 Before configuring the OpenTSDB data source, ensure you have:
 
-- **Grafana permissions:** Organization administrator role to add data sources
-- **OpenTSDB instance:** A running OpenTSDB server (version 2.1 or later recommended)
-- **Network access:** The Grafana server can reach the OpenTSDB HTTP API endpoint (default port 4242)
-- **Metrics in OpenTSDB:** For autocomplete to work, metrics must exist in your OpenTSDB database
+- **Grafana permissions:** Organization administrator role to add data sources.
+- **OpenTSDB instance:** A running OpenTSDB server (version 2.1 or later recommended).
+- **Network access:** The Grafana server can reach the OpenTSDB HTTP API endpoint (default port 4242).
+- **Metrics in OpenTSDB:** For autocomplete to work, metrics must exist in your OpenTSDB database.
 
 ## Configure the data source
 
@@ -107,7 +98,7 @@ If the test fails, refer to [Troubleshooting](#troubleshoot-opentsdb-data-source
 
 ### Provision the data source
 
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of the Grafana provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
 
 #### YAML example
@@ -294,6 +285,56 @@ Fill policies (available in OpenTSDB 2.2+) determine how to handle missing data 
 As you type metric names, tag names, or tag values, autocomplete suggestions appear. This feature requires the OpenTSDB suggest API to be enabled on your server.
 
 If autocomplete isn't working, refer to [Troubleshooting](#autocomplete-doesnt-work).
+
+### Query examples
+
+The following examples demonstrate common query patterns.
+
+**Basic metric query with tag filtering:**
+
+| Field | Value |
+| ----- | ----- |
+| Metric | `sys.cpu.user` |
+| Aggregator | `avg` |
+| Tags | `host=webserver01` |
+
+This query returns the average CPU usage for the host `webserver01`.
+
+**Query with wildcard filter (OpenTSDB 2.2+):**
+
+| Field | Value |
+| ----- | ----- |
+| Metric | `http.requests.count` |
+| Aggregator | `sum` |
+| Filter Key | `host` |
+| Filter Type | `wildcard` |
+| Filter Value | `web-*` |
+| Group by | enabled |
+
+This query sums HTTP request counts across all hosts matching `web-*` and groups results by host.
+
+**Rate calculation for network counters:**
+
+| Field | Value |
+| ----- | ----- |
+| Metric | `net.bytes.received` |
+| Aggregator | `sum` |
+| Rate | enabled |
+| Counter | enabled |
+| Counter max | `18446744073709551615` |
+
+This query calculates the rate of bytes received per second. The counter max is set to the 64-bit unsigned integer maximum to handle counter wraps correctly.
+
+**Using alias patterns:**
+
+| Field | Value |
+| ----- | ----- |
+| Metric | `app.response.time` |
+| Aggregator | `avg` |
+| Tags | `host=*`, `env=production` |
+| Alias | `$tag_host - Response Time` |
+
+This query uses the alias pattern to create readable legend labels like `webserver01 - Response Time`.
 
 ## Template variables
 
