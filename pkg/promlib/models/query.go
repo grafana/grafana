@@ -375,7 +375,6 @@ func normalizeIntervalFactor(factor int64) int64 {
 // Special handling:
 //   - Variable intervals ($__interval, $__rate_interval, etc.) are replaced with calculated values
 //   - Rate interval variables ($__rate_interval, ${__rate_interval}) use calculateRateInterval for proper rate() function support
-//   - Manual interval overrides (non-variable strings) take precedence over calculated values
 //   - The final interval ensures safe resolution limits are not exceeded
 //
 // Parameters:
@@ -423,18 +422,6 @@ func calculatePrometheusInterval(
 	// Apply interval factor to the adjusted interval
 	normalizedFactor := normalizeIntervalFactor(intervalFactor)
 	return time.Duration(int64(adjustedInterval) * normalizedFactor), nil
-
-	// // here is where we compare for $__rate_interval or ${__rate_interval}
-	// if originalQueryInterval == varRateInterval || originalQueryInterval == varRateIntervalAlt {
-	// 	// Rate interval is final and is not affected by resolution
-	// 	return calculateRateInterval(adjustedInterval, dsScrapeInterval), nil
-	// } else {
-	// 	queryIntervalFactor := intervalFactor
-	// 	if queryIntervalFactor == 0 {
-	// 		queryIntervalFactor = 1
-	// 	}
-	// 	return time.Duration(int64(adjustedInterval) * queryIntervalFactor), nil
-	// }
 }
 
 // calculateRateInterval calculates the $__rate_interval value
