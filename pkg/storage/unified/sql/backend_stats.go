@@ -2,8 +2,6 @@ package sql
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -12,8 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-// Support using SQL as fallback when the indexer is not running
-var _ resourcepb.ResourceIndexServer = &backend{}
+// Support getting resource stats using SQL as fallback when the indexer is not running
+var _ resource.StatsGetter = &backend{}
 
 // GetStats implements resource.ResourceIndexServer.
 // This will use the SQL index to count values
@@ -52,22 +50,4 @@ func (b *backend) GetStats(ctx context.Context, req *resourcepb.ResourceStatsReq
 		rsp.Error = resource.AsErrorResult(err)
 	}
 	return rsp, nil
-}
-
-func (b *backend) RepositoryList(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
-	return nil, fmt.Errorf("SQL backend does not implement RepositoryList")
-}
-
-func (b *backend) RepositoryStats(context.Context, *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
-	return nil, fmt.Errorf("SQL backend does not implement RepositoryStats")
-}
-
-// Search implements resource.ResourceIndexServer.
-func (b *backend) Search(context.Context, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	return &resourcepb.ResourceSearchResponse{
-		Error: &resourcepb.ErrorResult{
-			Code:    http.StatusNotImplemented,
-			Message: "SQL backend does not implement Search",
-		},
-	}, nil
 }

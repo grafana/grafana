@@ -343,6 +343,21 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The connection display name (shown in the UI)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The connection description",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
@@ -378,7 +393,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 						},
 					},
 				},
-				Required: []string{"type"},
+				Required: []string{"title", "type"},
 			},
 		},
 		Dependencies: []string{
@@ -444,15 +459,6 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 							},
 						},
 					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Connection state\n\nPossible enum values:\n - `\"connected\"`\n - `\"disconnected\"`",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"connected", "disconnected"},
-						},
-					},
 					"health": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The connection health status",
@@ -461,7 +467,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 						},
 					},
 				},
-				Required: []string{"observedGeneration", "state", "health"},
+				Required: []string{"observedGeneration", "health"},
 			},
 		},
 		Dependencies: []string{
