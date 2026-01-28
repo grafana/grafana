@@ -964,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Deze route blijft overeenkomen met ander beleid"
     },
     "copy-to-clipboard": "Label '{{label}}' kopiëren naar klembord",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Meldingen worden doorgegeven aan",
@@ -3642,7 +3649,10 @@
       "move-modal-title": "Verplaatsen",
       "move-provisioned-folder": "",
       "moving": "Bezig met verplaatsen ...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Mapnaam is vereist.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Je hebt zowel toegewezen als niet-toegewezen bronnen geselecteerd. Deze kunnen niet samen worden verwerkt. Selecteer alleen toegewezen bronnen of alleen niet-toegewezen bronnen en probeer het opnieuw.",
       "selected-mix-resources-modal-title": "Gemengde brontypes geselecteerd"
     },
@@ -10939,7 +10949,9 @@
     "invite-user": {
       "invite-button": "Uitnodigen",
       "invite-new-user-button": "Een nieuwe gebruiker uitnodigen",
-      "invite-tooltip": "Gebruiker uitnodigen"
+      "invite-tooltip": "Gebruiker uitnodigen",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Toevoegen aan bladwijzers",

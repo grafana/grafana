@@ -959,6 +959,13 @@
       "content-route-continue-matching-other-policies": "이 경로는 계속 다른 정책과 비교 후 적용 여부가 결정됩니다"
     },
     "copy-to-clipboard": "'{{label}}'을(를) 클립보드로 복사",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "알림 전송처:",
@@ -3631,7 +3638,10 @@
       "move-modal-title": "이동",
       "move-provisioned-folder": "",
       "moving": "이동 중...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "폴더 이름은 필수 입력 항목입니다.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "프로비저닝된 리소스와 프로비저닝되지 않은 리소스를 모두 선택하셨습니다. 이 두 가지는 함께 처리할 수 없습니다. 프로비저닝된 리소스만 또는 프로비저닝되지 않은 리소스만 선택한 후 다시 시도해 주세요.",
       "selected-mix-resources-modal-title": "혼합 리소스 유형 선택됨"
     },
@@ -10895,7 +10905,9 @@
     "invite-user": {
       "invite-button": "초대",
       "invite-new-user-button": "새 사용자 초대",
-      "invite-tooltip": "사용자 초대"
+      "invite-tooltip": "사용자 초대",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "북마크에 추가",

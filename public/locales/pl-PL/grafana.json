@@ -974,6 +974,13 @@
       "content-route-continue-matching-other-policies": "Ta trasa będzie nadal dopasowywana do innych zasad"
     },
     "copy-to-clipboard": "Kopiuj „{{label}}” do schowka",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Powiadomienia są dostarczane do",
@@ -3664,7 +3671,10 @@
       "move-modal-title": "Przenieś",
       "move-provisioned-folder": "",
       "moving": "Przenoszenie…",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Wymagana jest nazwa folderu.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Wybrano zarówno zasoby udostępnione, jak i nieudostępnione. Nie można ich przetwarzać razem. Wybierz tylko zasoby udostępnione lub tylko zasoby nieudostępnione i spróbuj ponownie.",
       "selected-mix-resources-modal-title": "Wybrano mieszane typy zasobów"
     },
@@ -11027,7 +11037,9 @@
     "invite-user": {
       "invite-button": "Zaproś",
       "invite-new-user-button": "Zaproś nowego użytkownika",
-      "invite-tooltip": "Zaproś użytkownika"
+      "invite-tooltip": "Zaproś użytkownika",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Dodaj do zakładek",

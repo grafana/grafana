@@ -959,6 +959,13 @@
       "content-route-continue-matching-other-policies": "此路由將繼續匹配其他原則"
     },
     "copy-to-clipboard": "將「{{label}}」複製到剪貼簿",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "通知已傳送至",
@@ -3631,7 +3638,10 @@
       "move-modal-title": "移動",
       "move-provisioned-folder": "",
       "moving": "正在移動…",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "必須要有資料夾名稱。",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "您已選取已佈建和非佈建資源。這些資源無法一起處理。請僅選取已佈建的資源或僅選取非佈建資源，然後再試一次。",
       "selected-mix-resources-modal-title": "已選取混合資源類型"
     },
@@ -10895,7 +10905,9 @@
     "invite-user": {
       "invite-button": "邀請",
       "invite-new-user-button": "邀請新使用者",
-      "invite-tooltip": "邀請使用者"
+      "invite-tooltip": "邀請使用者",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "新增至書籤",

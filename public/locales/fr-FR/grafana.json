@@ -964,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Ce chemin continuera à correspondre à d’autres politiques"
     },
     "copy-to-clipboard": "Copier « {{label}} » dans le presse-papiers",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Les notifications sont envoyées à",
@@ -3642,7 +3649,10 @@
       "move-modal-title": "Déplacer",
       "move-provisioned-folder": "",
       "moving": "Déplacement...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Vous devez saisir le nom du dossier.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Vous avez sélectionné à la fois des ressources provisionnées et non provisionnées. Ces deux types ne peuvent être traités simultanément. Veuillez sélectionner uniquement des ressources provisionnées ou uniquement des ressources non provisionnées, puis réessayer.",
       "selected-mix-resources-modal-title": "Types de ressources incompatibles sélectionnés"
     },
@@ -10939,7 +10949,9 @@
     "invite-user": {
       "invite-button": "Inviter",
       "invite-new-user-button": "Inviter un nouvel utilisateur",
-      "invite-tooltip": "Inviter un utilisateur"
+      "invite-tooltip": "Inviter un utilisateur",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Ajouter aux signets",

@@ -964,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Esta rota continuará correspondendo a outras políticas"
     },
     "copy-to-clipboard": "Copiar \"{{label}}\" para a área de transferência",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "As notificações são entregues a",
@@ -3642,7 +3649,10 @@
       "move-modal-title": "Mover",
       "move-provisioned-folder": "",
       "moving": "Movendo...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "O nome da pasta é obrigatório.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Você selecionou recursos provisionados e não provisionados. Não éo possível processá-los juntos. Selecione apenas um dos tipos de recurso e tente novamente.",
       "selected-mix-resources-modal-title": "Tipos de recursos mistos selecionados"
     },
@@ -10939,7 +10949,9 @@
     "invite-user": {
       "invite-button": "Convidar",
       "invite-new-user-button": "Convidar um novo usuário",
-      "invite-tooltip": "Convidar usuário"
+      "invite-tooltip": "Convidar usuário",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Adicionar aos Marcadores",

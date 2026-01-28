@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/datasource/grafana-pyroscope-datasource/dataquery.cue file.
+
 import * as common from '@grafana/schema';
 
 export type PyroscopeQueryType = ('metrics' | 'profile' | 'both');

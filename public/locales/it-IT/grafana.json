@@ -964,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Questo percorso continuerà a corrispondere ad altri criteri"
     },
     "copy-to-clipboard": "Copia \"{{label}}\" negli appunti",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Le notifiche vengono inviate a",
@@ -3642,7 +3649,10 @@
       "move-modal-title": "Sposta",
       "move-provisioned-folder": "",
       "moving": "Spostamento in corso...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Il nome della cartella è obbligatorio.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Hai selezionato sia risorse sottoposte a provisioning che risorse non sottoposte a provisioning. Non possono essere elaborate insieme. Seleziona solo risorse sottoposte a provisioning o solo risorse non sottoposte a provisioning e riprova.",
       "selected-mix-resources-modal-title": "Tipi di risorse miste selezionati"
     },
@@ -10939,7 +10949,9 @@
     "invite-user": {
       "invite-button": "Invito",
       "invite-new-user-button": "Invita nuovo utente",
-      "invite-tooltip": "Invita utente"
+      "invite-tooltip": "Invita utente",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Aggiungi a Segnalibri",

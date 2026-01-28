@@ -959,6 +959,13 @@
       "content-route-continue-matching-other-policies": "このルートは他のポリシーとのマッチングを継続します"
     },
     "copy-to-clipboard": "「{{label}}」をクリップボードにコピー",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "通知の配信先",
@@ -3631,7 +3638,10 @@
       "move-modal-title": "移動",
       "move-provisioned-folder": "",
       "moving": "移動中…",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "フォルダ名が必要です。",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "プロビジョニング済みのリソースと未プロビジョニングのリソースの両方が選択されています。これらは同時に処理できません。プロビジョニングされたリソースのみまたはプロビジョニングされていないリソースのみを選択して、再試行してください。",
       "selected-mix-resources-modal-title": "混在したリソースタイプが選択されました"
     },
@@ -10895,7 +10905,9 @@
     "invite-user": {
       "invite-button": "招待",
       "invite-new-user-button": "新しいユーザーを招待する",
-      "invite-tooltip": "ユーザーを招待"
+      "invite-tooltip": "ユーザーを招待",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "ブックマークに追加",
