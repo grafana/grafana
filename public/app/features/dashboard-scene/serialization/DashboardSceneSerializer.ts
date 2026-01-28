@@ -23,7 +23,7 @@ import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
-import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2'; 
+import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
 /**
  * T is the type of the save model
