@@ -843,9 +843,10 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 			if err != nil {
 				return false
 			}
+			readyCondition := meta.FindStatusCondition(updated.Status.Conditions, provisioning.ConditionTypeReady)
 			return updated.Status.ObservedGeneration == updated.Generation &&
 				updated.Status.Health.Checked > 0 &&
-				updated.Status.State == provisioning.ConnectionStateConnected &&
+				readyCondition != nil && readyCondition.Status == metav1.ConditionTrue &&
 				updated.Status.Health.Healthy
 		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled")
 
@@ -899,9 +900,10 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 			if err != nil {
 				return false
 			}
+			readyCondition := meta.FindStatusCondition(updated.Status.Conditions, provisioning.ConditionTypeReady)
 			return updated.Status.ObservedGeneration == updated.Generation &&
 				updated.Status.Health.Checked > 0 &&
-				updated.Status.State == provisioning.ConnectionStateConnected &&
+				readyCondition != nil && readyCondition.Status == metav1.ConditionTrue &&
 				updated.Status.Health.Healthy
 		}, 10*time.Second, 500*time.Millisecond, "connection should be reconciled again")
 
