@@ -12,6 +12,7 @@ export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   gradient?: string;
   lineStyle?: LineStyle;
   noMargin?: boolean;
+  tabIndex?: number;
 }
 
 export const SeriesIcon = React.memo(
