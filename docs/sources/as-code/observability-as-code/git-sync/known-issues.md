@@ -12,8 +12,8 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Git Sync known issues and limitations
-menuTitle: Known issues and limits
+title: Git Sync limitations and known issues 
+menuTitle: Limits and known issues
 weight: 125
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/known-issues/
 refs:
@@ -25,7 +25,7 @@ refs:
 aliases:
 ---
 
-# Git Sync known issues and limitations
+# Git Sync limitations and known issues 
 
 {{< admonition type="caution" >}}
 
@@ -47,6 +47,10 @@ When Git Sync is enabled, the database load might increase, especially if your G
 
 Free-tier accounts are limited to 20 resources per synced folder.
 
+### Authentication
+
+You can only authenticate in GitHub using your Personal Access Token token or a GitHub App. Refer to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup) for more details.
+
 ## Known issues
 
 ### Synced resources
@@ -58,17 +62,20 @@ Free-tier accounts are limited to 20 resources per synced folder.
 - If you want to manage existing resources with Git Sync, you need to save them as JSON files and commit them to the synced repository. Open a PR to import, copy, move, or save a dashboard.
 - Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
 
-### Authentication
-
-- You can only authenticate in GitHub using your Personal Access Token token or a GitHub App.
-
 ### Permission management
 
-- You cannot modify the permissions of a provisioned folder after you've synced it.
-- Default permissions are: Admin = Admin, Editor = Editor, and Viewer = Viewer. Refer to [Roles and permissions](ref:roles-and-permissions) for more information.
+You cannot modify the permissions of a provisioned folder after you've synced it.
+
+The default permissions are: 
+
+- Admin = Admin 
+- Editor = Editor 
+- Viewer = Viewer. 
+
+Refer to [Roles and permissions](ref:roles-and-permissions) for more information.
 
 ### Compatible services and providers
 
-- Support for native Git, Git app, and other providers, such as GitLab or Bitbucket, is on the roadmap.
+Git Sync is available for GitHub only. Support for native Git, Git app, and other providers, such as GitLab or Bitbucket, is on the roadmap.
 
 
