@@ -345,7 +345,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       }
     }
 
-    if (panel.state.pluginId === 'timeseries') {
+    if (panel.state.pluginId === 'timeseries' && config.featureToggles.panelStyleActions) {
       const stylesSubMenu: PanelMenuItem[] = [];
 
       stylesSubMenu.push({
