@@ -337,16 +337,6 @@ func replaceVariable(expr, dollarFormat, altFormat, replacement string) string {
 	return expr
 }
 
-// isManualIntervalOverride checks if the interval is a manually specified non-variable value
-// that should override the calculated interval
-func isManualIntervalOverride(interval string) bool {
-	return interval != "" &&
-		interval != varInterval &&
-		interval != varIntervalAlt &&
-		interval != varIntervalMs &&
-		interval != varIntervalMsAlt
-}
-
 // maxDuration returns the maximum of two durations
 func maxDuration(a, b time.Duration) time.Duration {
 	if a > b {
