@@ -176,6 +176,10 @@ type AlertNG struct {
 	bus          bus.Bus
 	pluginsStore pluginstore.Store
 	tracer       tracing.Tracer
+
+	evaluationCoordinator EvaluationCoordinator
+	schedCfg              schedule.SchedulerCfg
+	stateManagerCfg       state.ManagerCfg
 }
 
 func (ng *AlertNG) init() error {
@@ -331,7 +335,7 @@ func (ng *AlertNG) init() error {
 	}
 	ng.RecordingWriter = recordingWriter
 
-	schedCfg := schedule.SchedulerCfg{
+	ng.schedCfg = schedule.SchedulerCfg{
 		RetryConfig: schedule.RetryConfig{
 			MaxAttempts:         ng.Cfg.UnifiedAlerting.MaxAttempts,
 			InitialRetryDelay:   ng.Cfg.UnifiedAlerting.InitialRetryDelay,
@@ -353,10 +357,6 @@ func (ng *AlertNG) init() error {
 		Log:                  log.New("ngalert.scheduler"),
 		RecordingWriter:      ng.RecordingWriter,
 		FeatureToggles:       ng.FeatureToggles,
-	}
-
-	if ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation {
-		schedCfg.EvaluationCoordinator = cluster.NewEvaluationCoordinator(ng.MultiOrgAlertmanager.Peer())
 	}
 
 	history, err := configureHistorianBackend(
@@ -398,28 +398,49 @@ func (ng *AlertNG) init() error {
 		Log:                            log.New("ngalert.state.manager"),
 		ResolvedRetention:              ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
 	}
-	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
-	stateManager := state.NewManager(stateManagerCfg, statePersister)
-	scheduler := schedule.NewScheduler(schedCfg, stateManager)
+	ng.stateManagerCfg = stateManagerCfg
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
 	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
 		subscribeToFolderChanges(ng.Log, ng.bus, ng.store)
 	}
 
-	ng.stateManager = stateManager
-	ng.schedule = scheduler
+	var apiStateManager state.AlertInstanceManager
+	var apiStatusReader apiprometheus.StatusReader
+	if ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation {
+		// In HA single-node evaluation mode use NoopPersister initially.
+		// When we understand that this node is primary, we create a real persister.
+		// This is needed to avoid running state persisters on non-primary nodes.
+		ng.stateManager = state.NewManager(stateManagerCfg, state.NewNoopPersister())
 
-	// For HA single-node evaluation mode, use StoreStateReader for API calls.
-	// This ensures Grafana instances read alert rule state from DB instead of memory,
-	// which has no data on non-primary nodes.
-	apiStateManager, apiStatusReader := initAPIStateReaders(
-		ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation,
-		stateManager,
-		scheduler,
-		ng.InstanceStore,
-		ng.Log,
-	)
+		peer := ng.MultiOrgAlertmanager.Peer()
+		if peer == nil {
+			return fmt.Errorf("single-node evaluation in HA mode requires HA clustering to be enabled")
+		}
+		var err error
+		ng.evaluationCoordinator, err = cluster.NewEvaluationCoordinator(peer, ng.Log)
+		if err != nil {
+			return fmt.Errorf("failed to create evaluation coordinator: %w", err)
+		}
+
+		// Use StoreStateReader to serve rule statuses / alert instances from the database,
+		// because non-primary nodes have no in-memory state
+		storeStateReader := state.NewStoreStateReader(ng.InstanceStore, ng.Log)
+		apiStateManager = storeStateReader
+		apiStatusReader = storeStateReader
+	} else {
+		// Non single-node evaluation or a non-HA mode
+		statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
+		ng.stateManager = state.NewManager(stateManagerCfg, statePersister)
+
+		// No need for evaluation coordinator.
+		ng.evaluationCoordinator = cluster.NewNoopEvaluationCoordinator()
+
+		// Use in-memory state/scheduler for API calls
+		apiStateManager = ng.stateManager
+		ng.schedule = schedule.NewScheduler(ng.schedCfg, ng.stateManager)
+		apiStatusReader = ng.schedule
+	}
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService))
 	receiverAccess := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false)
@@ -548,24 +569,6 @@ func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles feature
 	return instanceStore, state.NewMultiInstanceReader(logger, protoInstanceStore, simpleInstanceStore)
 }
 
-// initAPIStateReaders returns the appropriate state manager and status reader for the API.
-// When HASingleNodeEvaluation is enabled, it returns a StoreStateReader that reads from the database,
-// ensuring non-primary instances can serve correct data even though they don't evaluate rules.
-// Otherwise, it returns the in-memory state manager and scheduler.
-func initAPIStateReaders(
-	haSingleNodeEvaluation bool,
-	stateManager *state.Manager,
-	scheduler apiprometheus.StatusReader,
-	instanceStore state.InstanceReader,
-	logger log.Logger,
-) (state.AlertInstanceManager, apiprometheus.StatusReader) {
-	if haSingleNodeEvaluation {
-		storeStateReader := state.NewStoreStateReader(instanceStore, logger)
-		return storeStateReader, storeStateReader
-	}
-	return stateManager, scheduler
-}
-
 func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
 	logger := log.New("ngalert.state.manager.persist")
 	var statePersister state.StatePersister
@@ -622,25 +625,51 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	})
 
 	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
-		// Only Warm() the state manager if we are actually executing alerts.
-		// Doing so when we are not executing alerts is wasteful and could lead
-		// to misleading rule status queries, as the status returned will be
-		// always based on the state loaded from the database at startup, and
-		// not the most recent evaluation state.
-		//
-		// Also note that this runs synchronously to ensure state is loaded
-		// before rule evaluation begins, hence we use ctx and not subCtx.
-		//
-		ng.stateManager.Warm(ctx, ng.store, ng.store, ng.StartupInstanceReader)
-
 		children.Go(func() error {
-			return ng.schedule.Run(subCtx)
-		})
-		children.Go(func() error {
-			return ng.stateManager.Run(subCtx)
+			return ng.runEvaluationLoop(subCtx)
 		})
 	}
 	return children.Wait()
+}
+
+// runEvaluationLoop manages the lifecycle of the scheduler and state manager
+// based on HA coordination. It listens for updates from the evaluation
+// coordinator and starts/stops the services accordingly.
+func (ng *AlertNG) runEvaluationLoop(ctx context.Context) error {
+	runner := &evaluationRunner{ng: ng}
+	updates := ng.evaluationCoordinator.Updates(ctx)
+
+	var shouldEvaluate bool
+	for {
+		select {
+		case <-ctx.Done():
+			if shouldEvaluate {
+				runner.stop()
+			}
+			return nil
+		case err, ok := <-runner.done:
+			if ok {
+				return err
+			}
+			if ctx.Err() != nil {
+				return nil
+			}
+			return fmt.Errorf("evaluation stopped unexpectedly")
+		case newShouldEvaluate, ok := <-updates:
+			if !ok {
+				if shouldEvaluate {
+					runner.stop()
+				}
+				return nil
+			}
+			if newShouldEvaluate && !shouldEvaluate {
+				runner.start(ctx)
+			} else if !newShouldEvaluate && shouldEvaluate {
+				runner.stop()
+			}
+			shouldEvaluate = newShouldEvaluate
+		}
+	}
 }
 
 // IsDisabled returns true if the alerting service is disabled for this instance.
