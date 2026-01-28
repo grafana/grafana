@@ -90,8 +90,9 @@ async function initPluginExtensionRegistries(): Promise<PluginExtensionRegistrie
  * Gets the plugin extension registries, initializing them on first call.
  * This function is safe to call concurrently - multiple simultaneous calls will
  * all receive the same Promise instance, ensuring only one initialization.
+ * If initialization (including getAppPluginMetas) fails, the error is logged and
+ * empty plugin extension registries are returned as a fallback.
  * @returns Promise resolving to the plugin extension registries
- * @throws Error if getAppPluginMetas() fails during initialization
  */
 export async function getPluginExtensionRegistries(): Promise<PluginExtensionRegistries> {
   // Return cached promise if already initialized or in progress
