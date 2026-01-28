@@ -70,7 +70,7 @@ const (
 
 type ConnectionSpec struct {
 	// The connection display name (shown in the UI)
-	Title string `json:"title,omitempty"`
+	Title string `json:"title"`
 	// The connection description
 	Description string `json:"description,omitempty"`
 	// The connection provider type

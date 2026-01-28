@@ -1478,7 +1478,7 @@ export type ConnectionSpec = {
   /** Gitlab connection configuration Only applicable when provider is "gitlab" */
   gitlab?: GitlabConnectionConfig;
   /** The connection display name (shown in the UI) */
-  title?: string;
+  title: string;
   /** The connection provider type
     
     Possible enum values:
