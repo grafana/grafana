@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
@@ -527,6 +528,34 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	shouldResync := rc.shouldResync(ctx, obj)
 	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
+
+	var shouldRefreshToken bool
+	var linkedConnection *provisioning.Connection
+	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
+		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
+		if err != nil {
+			logger.Error("retrieving connection",
+				"connection", obj.Spec.Connection.Name,
+				"error", err,
+			)
+			return err
+		}
+		linkedConnection = c
+
+		// Check if token needs refresh before determining triggering condition
+		// This allows token refresh to trigger reconciliation independently from health checks
+		recentlyCreated := tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated))
+		shouldRefreshBeforeExp := shouldRefreshBeforeExpiration(
+			time.UnixMilli(obj.Status.Token.Expiration), rc.resyncInterval,
+		)
+		// Only refresh if:
+		// - Token wasn't recently created
+		// - Token will expire before next resync
+		// - Connection is healthy (can generate valid tokens)
+		// - Repository is not currently healthy (needs a fresh token)
+		shouldRefreshToken = !recentlyCreated && shouldRefreshBeforeExp && c.Status.Health.Healthy && !obj.Status.Health.Healthy
+	}
+
 	var patchOperations []map[string]interface{}
 
 	// Determine the main triggering condition
@@ -542,6 +571,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		logger.Info("sync interval triggered", "sync_interval", time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, "sync_status", obj.Status.Sync)
 	case shouldCheckHealth:
 		logger.Info("health is stale", "health_status", obj.Status.Health.Healthy)
+	case shouldRefreshToken:
+		logger.Info("token must be refreshed or generated")
 	default:
 		logger.Info("skipping as conditions are not met", "status", obj.Status, "generation", obj.Generation, "sync_spec", obj.Spec.Sync)
 		return nil
@@ -564,36 +595,37 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		patchOperations = append(patchOperations, hookOps...)
 	}
 
-	// Handle health checks using the health checker
-	testResults, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
-	if err != nil {
-		return fmt.Errorf("update health status: %w", err)
-	}
+	// Generate token BEFORE health checks if needed, as the token is used for health checks
+	if linkedConnection != nil && shouldRefreshToken {
+		logger.Info("generating token for repository", "connection", linkedConnection.Name)
 
-	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
-		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
+		token, tokenOps, err := rc.generateRepositoryToken(ctx, obj, linkedConnection)
 		if err != nil {
-			logger.Error("retrieving connection",
-				"connection", obj.Spec.Connection.Name,
+			logger.Error("failed to generate token for repository",
+				"connection", linkedConnection.Name,
 				"error", err,
 			)
 			return err
 		}
 
-		if rc.shouldGenerateTokenFromConnection(obj, healthStatus, c) {
-			logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
-
-			tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
-			if err != nil {
-				logger.Error("generating token for repository",
-					"connection", obj.Spec.Connection.Name,
-					"error", err,
-				)
-				return err
-			}
-
+		if len(tokenOps) > 0 {
 			patchOperations = append(patchOperations, tokenOps...)
 		}
+
+		// Substitute generated token for health checks
+		obj.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
+
+		// Rebuild repository with new token for health checks
+		repo, err = rc.repoFactory.Build(ctx, obj)
+		if err != nil {
+			return fmt.Errorf("unable to rebuild repository with new token: %w", err)
+		}
+	}
+
+	// Handle health checks using the health checker
+	testResults, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
+	if err != nil {
+		return fmt.Errorf("update health status: %w", err)
 	}
 
 	// Add health patch operations first
@@ -702,15 +734,15 @@ func (rc *RepositoryController) generateRepositoryToken(
 	ctx context.Context,
 	obj *provisioning.Repository,
 	c *provisioning.Connection,
-) ([]map[string]any, error) {
+) (string, []map[string]any, error) {
 	conn, err := rc.connectionFactory.Build(ctx, c)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create connection from configuration: %w", err)
+		return "", nil, fmt.Errorf("unable to create connection from configuration: %w", err)
 	}
 
 	token, err := conn.GenerateRepositoryToken(ctx, obj)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create token for repository: %w", err)
+		return "", nil, fmt.Errorf("unable to create token for repository: %w", err)
 	}
 
 	patchOperations := []map[string]any{
@@ -755,5 +787,5 @@ func (rc *RepositoryController) generateRepositoryToken(
 		})
 	}
 
-	return patchOperations, nil
+	return string(token.Token), patchOperations, nil
 }
