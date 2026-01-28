@@ -5,6 +5,8 @@ import { useAsync } from 'react-use';
 import { t } from '@grafana/i18n';
 import { useLazyGetConnectionRepositoriesQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { formatRepoUrl } from '../utils/git';
+
 import { useConnectionList } from './useConnectionList';
 
 interface ExternalRepository {
@@ -42,9 +44,10 @@ export function useConnectionOptions(enabled: boolean) {
         const items: ExternalRepository[] = response.items ?? [];
         result[name] = items
           .map((item) => {
-            if (item.url) {
-              // Extract path part from URL (e.g., "owner/repo" from "https://github.com/owner/repo")
-              return item.url.split('/').slice(3).join('/');
+            // Use same URL formatting as RepositoryListItem
+            const formattedUrl = formatRepoUrl(item.url);
+            if (formattedUrl) {
+              return formattedUrl;
             }
             // Fallback to owner/name if URL not available
             if (item.owner && item.name) {
