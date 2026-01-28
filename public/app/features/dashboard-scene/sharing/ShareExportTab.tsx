@@ -35,7 +35,7 @@ import { SceneShareTabState, ShareView } from './types';
 
 export interface ExportableResource {
   apiVersion: string;
-  kind: 'Dashboard';
+  kind: 'DashboardWithAccessInfo';
   metadata: DashboardWithAccessInfo<DashboardV2Spec>['metadata'] | Partial<ObjectMeta>;
   spec: Dashboard | DashboardModel | DashboardV2Spec | DashboardJson | DashboardDataDTO | { error: unknown };
   // A placeholder for now because as code tooling expects it
@@ -147,7 +147,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       return {
         json: {
           apiVersion: scene.serializer.apiVersion ?? '',
-          kind: 'Dashboard',
+          kind: 'DashboardWithAccessInfo',
           metadata,
           spec: finalSpec,
           status: {},
@@ -185,7 +185,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
             json: {
               // Forcing V1 version here to match export mode selection
               apiVersion: `${K8S_V1_DASHBOARD_API_CONFIG.group}/${K8S_V1_DASHBOARD_API_CONFIG.version}`,
-              kind: 'Dashboard',
+              kind: 'DashboardWithAccessInfo',
               metadata,
               spec: exportableV1,
               status: {},
@@ -209,7 +209,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
           json: {
             // Forcing V1 version here to match export mode selection
             apiVersion: `${K8S_V1_DASHBOARD_API_CONFIG.group}/${K8S_V1_DASHBOARD_API_CONFIG.version}`,
-            kind: 'Dashboard',
+            kind: 'DashboardWithAccessInfo',
             metadata,
             spec,
             status: {},
@@ -259,7 +259,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
         json: {
           // Forcing V2 version here because in this case we have v1 serializer
           apiVersion: `${K8S_V2_DASHBOARD_API_CONFIG.group}/${K8S_V2_DASHBOARD_API_CONFIG.version}`,
-          kind: 'Dashboard',
+          kind: 'DashboardWithAccessInfo',
           metadata,
           spec: exportableV2,
           status: {},
