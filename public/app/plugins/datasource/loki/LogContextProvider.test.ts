@@ -318,8 +318,7 @@ describe('LogContextProvider', () => {
       expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | json`);
     });
 
-    it('should apply parsers and drop operations when includePipelineOperations is enabled', async () => {
-      window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
+    it('should apply parsers and drop operations', async () => {
       logContextProvider.cachedContextFilters = [{ value: 'info', enabled: true, nonIndexed: false, label: 'level' }];
       const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
         defaultLogRow,
@@ -332,22 +331,6 @@ describe('LogContextProvider', () => {
       );
 
       expect(contextQuery.query.expr).toEqual(`{level="info"} | logfmt | json | drop __error__, __error_details__`);
-    });
-
-    it('should not apply drop operations when includePipelineOperations is disabled', async () => {
-      window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'false');
-      logContextProvider.cachedContextFilters = [{ value: 'info', enabled: true, nonIndexed: false, label: 'level' }];
-      const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
-        defaultLogRow,
-        10,
-        LogRowContextQueryDirection.Backward,
-        {
-          expr: '{level="info"} | json | logfmt | drop __error__, __error_details__',
-          refId: 'A',
-        }
-      );
-
-      expect(contextQuery.query.expr).toEqual(`{level="info"} | logfmt | json`);
     });
 
     it('should not apply line_format if flag is not set by default', async () => {

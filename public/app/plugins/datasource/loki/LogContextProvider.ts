@@ -15,7 +15,6 @@ import {
   LogRowContextOptions,
   dateTime,
   ScopedVars,
-  store,
 } from '@grafana/data';
 import {
   LabelParser,
@@ -238,7 +237,7 @@ export class LogContextProvider {
 
   prepareExpression(contextFilters: ContextFilter[], query: LokiQuery | undefined): string {
     let preparedExpression = this.processContextFiltersToExpr(contextFilters, query);
-    if (store.get(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true') {
+    if (window.localStorage.getItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true') {
       preparedExpression = this.processPipelineStagesToExpr(preparedExpression, query);
     }
     return preparedExpression;
@@ -266,19 +265,17 @@ export class LogContextProvider {
       const parserInfo = isQueryWithParser(query.expr);
       if (parserInfo.parserCount >= 1) {
         hasParser = true;
-        // Extract parsers
+        // Extract parsers and drop operations separately
         const parserNodes = getNodesFromQuery(query.expr, [LabelParser, JsonExpressionParser, Logfmt]);
+        const dropNodes = getNodesFromQuery(query.expr, [DropLabelsExpr]);
 
-        // Add parsers
+        // Add parsers first
         for (const node of parserNodes) {
           const parserName = query.expr.substring(node.from, node.to).trim();
           expr = addParserToQuery(expr, parserName);
         }
-      }
 
-      // Add drop operations at the end only if includePipelineOperations is enabled
-      if (store.get(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true') {
-        const dropNodes = getNodesFromQuery(query.expr, [DropLabelsExpr]);
+        // Add drop operations at the end
         for (const node of dropNodes) {
           const dropExpression = query.expr.substring(node.from, node.to).trim();
           expr += ` | ${dropExpression}`;
@@ -390,7 +387,7 @@ export class LogContextProvider {
 
     // Secondly we check for preserved labels and update enabled state of filters based on that
     let preservedLabels: undefined | PreservedLabels = undefined;
-    const preservedLabelsString = store.get(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
+    const preservedLabelsString = window.localStorage.getItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
     if (preservedLabelsString) {
       try {
         preservedLabels = JSON.parse(preservedLabelsString);
