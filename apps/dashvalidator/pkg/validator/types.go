@@ -2,7 +2,6 @@ package validator
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 )
 
@@ -51,25 +50,4 @@ type QueryResult struct {
 	MissingMetrics     []string // Missing metrics for this query
 	CompatibilityScore float64  // Query compatibility (0.0 - 1.0)
 	ParseError         *string  // Optional parse error message (nil = parsed successfully)
-}
-
-// validatorRegistry holds registered validator constructors
-// Validators register themselves using RegisterValidator in their init() functions
-var validatorRegistry = make(map[string]func() DatasourceValidator)
-
-// RegisterValidator registers a validator constructor for a datasource type
-// This is called by validator implementations in their init() functions
-// Example: validator.RegisterValidator("prometheus", func() validator.DatasourceValidator { return NewValidator() })
-func RegisterValidator(dsType string, constructor func() DatasourceValidator) {
-	validatorRegistry[dsType] = constructor
-}
-
-// GetValidator returns a validator for the given datasource type
-// Returns an error if the datasource type is not supported
-func GetValidator(dsType string) (DatasourceValidator, error) {
-	constructor, ok := validatorRegistry[dsType]
-	if !ok {
-		return nil, fmt.Errorf("unsupported datasource type: %s", dsType)
-	}
-	return constructor(), nil
 }

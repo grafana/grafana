@@ -44,7 +44,8 @@ type DatasourceValidationResult struct {
 
 // ValidateDashboardCompatibility is the main entry point for validating dashboard compatibility
 // It extracts queries from the dashboard, validates them against each datasource, and returns aggregated results
-func ValidateDashboardCompatibility(ctx context.Context, req DashboardCompatibilityRequest) (*DashboardCompatibilityResult, error) {
+// validators is a map of datasource type -> validator (e.g., "prometheus" -> PrometheusValidator)
+func ValidateDashboardCompatibility(ctx context.Context, req DashboardCompatibilityRequest, validators map[string]DatasourceValidator) (*DashboardCompatibilityResult, error) {
 	// MVP: Only support single datasource validation
 	if len(req.DatasourceMappings) != 1 {
 		return nil, fmt.Errorf("MVP only supports single datasource validation, got %d datasources", len(req.DatasourceMappings))
@@ -93,10 +94,10 @@ func ValidateDashboardCompatibility(ctx context.Context, req DashboardCompatibil
 		fmt.Printf("[DEBUG] Found %d queries for datasource %s\n", len(dsQueries), dsMapping.UID)
 
 		// Get validator for this datasource type
-		v, err := GetValidator(dsMapping.Type)
-		if err != nil {
+		v, ok := validators[dsMapping.Type]
+		if !ok {
 			// Unsupported datasource type, skip but log
-			fmt.Printf("[DEBUG] Failed to get validator for type %s: %v\n", dsMapping.Type, err)
+			fmt.Printf("[DEBUG] No validator registered for type %s\n", dsMapping.Type)
 			continue
 		}
 

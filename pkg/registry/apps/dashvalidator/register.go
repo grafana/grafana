@@ -9,6 +9,9 @@ import (
 
 	validatorapis "github.com/grafana/grafana/apps/dashvalidator/pkg/apis/manifestdata"
 	validatorapp "github.com/grafana/grafana/apps/dashvalidator/pkg/app"
+	"github.com/grafana/grafana/apps/dashvalidator/pkg/cache"
+	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
+	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator/prometheus"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	roleauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -21,17 +24,32 @@ type DashValidatorAppInstaller struct {
 	appsdkapiserver.AppInstaller
 }
 
-// RegisterAppInstaller is called by Wire to create the app installer
+// RegisterAppInstaller is called by Wire to create the app installer.
+// This is the composition root where all components are created and wired together.
 func RegisterAppInstaller(
 	datasourceSvc datasources.DataSourceService,
 	pluginCtx *plugincontext.Provider,
 	httpClientProvider httpclient.Provider,
 ) (*DashValidatorAppInstaller, error) {
-	// Create specific config for the app
+	// Create MetricsCache - shared cache for all datasource types
+	metricsCache := cache.NewMetricsCache()
+
+	// Create and register Prometheus provider
+	prometheusProvider := prometheus.NewPrometheusProvider(cache.DefaultMetricsCacheTTL)
+	metricsCache.RegisterProvider("prometheus", prometheusProvider)
+
+	// Create validators map - keyed by datasource type
+	validators := map[string]validator.DatasourceValidator{
+		"prometheus": prometheus.NewValidator(metricsCache),
+	}
+
+	// Create specific config for the app with all components
 	specificConfig := &validatorapp.DashValidatorConfig{
 		DatasourceSvc:      datasourceSvc,
 		PluginCtx:          pluginCtx,
 		HTTPClientProvider: httpClientProvider,
+		MetricsCache:       metricsCache,
+		Validators:         validators,
 	}
 
 	// Create the app provider

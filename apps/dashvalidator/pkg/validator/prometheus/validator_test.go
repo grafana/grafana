@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
+	"github.com/grafana/grafana/apps/dashvalidator/pkg/cache"
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
 	"github.com/stretchr/testify/require"
 )
@@ -31,19 +33,36 @@ func (m *mockParser) ExtractMetrics(queryText string) ([]string, error) {
 	return []string{}, nil
 }
 
-// mockFetcher implements fetcherLike for testing
-type mockFetcher struct {
+// mockProvider implements cache.MetricsProvider for testing
+type mockProvider struct {
 	metricsToReturn []string
+	ttl             time.Duration
 	errorToReturn   error
 	callCount       int
 }
 
-func (m *mockFetcher) FetchMetrics(ctx context.Context, datasourceURL string, client *http.Client) ([]string, error) {
+func (m *mockProvider) GetMetrics(ctx context.Context, datasourceUID, datasourceURL string,
+	client *http.Client) (*cache.MetricsResult, error) {
 	m.callCount++
 	if m.errorToReturn != nil {
 		return nil, m.errorToReturn
 	}
-	return m.metricsToReturn, nil
+	return &cache.MetricsResult{
+		Metrics: m.metricsToReturn,
+		TTL:     m.ttl,
+	}, nil
+}
+
+// newTestValidator creates a validator with mock parser and mock provider wrapped in real cache.
+// It creates a fresh MetricsCache and registers the mock provider for "prometheus" type.
+// This is a test-only helper - production code uses NewValidator() which creates the real parser.
+func newTestValidator(mockPar *mockParser, mockProv *mockProvider) *Validator {
+	metricsCache := cache.NewMetricsCache()
+	metricsCache.RegisterProvider("prometheus", mockProv)
+	return &Validator{
+		parser: mockPar,
+		cache:  metricsCache,
+	}
 }
 
 // ============================================================================
@@ -57,11 +76,12 @@ func TestValidateQueries_SingleQuerySingleMetric_AllFound(t *testing.T) {
 			"up": {"up"},
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"up", "process_cpu_seconds_total"},
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	// Test data
 	queries := []validator.Query{
@@ -93,7 +113,7 @@ func TestValidateQueries_SingleQuerySingleMetric_AllFound(t *testing.T) {
 	require.Empty(t, result.MissingMetrics)
 	require.InDelta(t, 1.0, result.CompatibilityScore, 0.001)
 	require.Len(t, result.QueryBreakdown, 1)
-	require.Equal(t, 1, mockFet.callCount)
+	require.Equal(t, 1, mockProv.callCount)
 
 	// Verify query breakdown
 	qr := result.QueryBreakdown[0]
@@ -115,11 +135,12 @@ func TestValidateQueries_MultipleQueriesMultipleMetrics_AllFound(t *testing.T) {
 			"process_cpu_seconds_total":     {"process_cpu_seconds_total"},
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"up", "http_requests_total", "process_cpu_seconds_total"},
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	// Test data
 	queries := []validator.Query{
@@ -163,11 +184,12 @@ func TestValidateQueries_DuplicateMetricsAcrossQueries_Deduplication(t *testing.
 			"sum(up)": {"up"},
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"up", "other_metric"},
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	// Test data - both queries reference "up" metric
 	queries := []validator.Query{
@@ -206,11 +228,12 @@ func TestValidateQueries_SingleQuery_HalfMetricsMissing(t *testing.T) {
 			"metric_a / metric_b": {"metric_a", "metric_b"},
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"metric_a"}, // metric_b is missing
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{RefID: "A", QueryText: "metric_a / metric_b", PanelTitle: "Ratio", PanelID: 1},
@@ -253,11 +276,12 @@ func TestValidateQueries_MultipleQueries_VaryingCompatibility(t *testing.T) {
 			"metric_c + metric_d": {"metric_c", "metric_d"}, // Both missing
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"metric_a"}, // Only metric_a available
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{RefID: "A", QueryText: "metric_a", PanelTitle: "Panel A", PanelID: 1},
@@ -309,11 +333,12 @@ func TestValidateQueries_ComplexPromQL_SomeMissing(t *testing.T) {
 			},
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"http_requests_total", "other_metric"}, // http_requests_failed missing
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{
@@ -353,11 +378,12 @@ func TestValidateQueries_SingleQuery_AllMetricsMissing(t *testing.T) {
 			"missing_metric": {"missing_metric"},
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"other_metric"}, // missing_metric not available
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{RefID: "A", QueryText: "missing_metric", PanelTitle: "Panel", PanelID: 1},
@@ -396,11 +422,12 @@ func TestValidateQueries_MultipleQueries_NoMetricsFound(t *testing.T) {
 			"metric_c": {"metric_c"},
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{}, // Empty Prometheus - no metrics available
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{RefID: "A", QueryText: "metric_a", PanelTitle: "Panel A", PanelID: 1},
@@ -440,11 +467,12 @@ func TestValidateQueries_EmptyQueryList(t *testing.T) {
 	mockPar := &mockParser{
 		metricsToReturn: map[string][]string{},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"up", "metric_a"},
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{} // Empty query list
 	datasource := validator.Datasource{
@@ -475,11 +503,12 @@ func TestValidateQueries_QueryWithNoMetrics_TimeFunction(t *testing.T) {
 			"time()": {}, // No metrics in this query
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"up", "metric_a"},
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{RefID: "A", QueryText: "time()", PanelTitle: "Current Time", PanelID: 1},
@@ -518,11 +547,12 @@ func TestValidateQueries_QueryWithNoMetrics_MathExpression(t *testing.T) {
 			"1 + 1": {}, // No metrics in pure math
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"up", "metric_a"},
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{RefID: "A", QueryText: "1 + 1", PanelTitle: "Constant", PanelID: 1},
@@ -555,11 +585,12 @@ func TestValidateQueries_AllQueriesFailToParse(t *testing.T) {
 			"bad syntax": parseErr,
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"up", "metric_a"},
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{RefID: "A", QueryText: "invalid{{}", PanelTitle: "Bad Query 1", PanelID: 1},
@@ -612,11 +643,12 @@ func TestValidateQueries_SomeQueriesParse_SomeFail(t *testing.T) {
 			"invalid{{}": parseErr,
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"up", "metric_a"},
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{RefID: "A", QueryText: "up", PanelTitle: "Good Query", PanelID: 1},
@@ -669,19 +701,19 @@ func TestValidateQueries_ParserError_ValidationContinues(t *testing.T) {
 	// Parser errors are gracefully handled - validation continues
 }
 
-func TestValidateQueries_FetcherError_NetworkFailure(t *testing.T) {
-	// Setup mocks - fetcher returns error
+func TestValidateQueries_ProviderError_NetworkFailure(t *testing.T) {
+	// Setup mocks - provider returns error
 	mockPar := &mockParser{
 		metricsToReturn: map[string][]string{
 			"up": {"up"},
 		},
 	}
 	networkErr := errors.New("connection refused")
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		errorToReturn: networkErr,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{RefID: "A", QueryText: "up", PanelTitle: "Status", PanelID: 1},
@@ -696,26 +728,26 @@ func TestValidateQueries_FetcherError_NetworkFailure(t *testing.T) {
 	// Execute
 	result, err := v.ValidateQueries(context.Background(), queries, datasource)
 
-	// Verify - fetcher error causes validation to fail
+	// Verify - provider error causes validation to fail
 	require.Error(t, err)
 	require.Nil(t, result)
 	require.ErrorContains(t, err, "failed to fetch metrics from Prometheus")
 	require.ErrorContains(t, err, "connection refused")
 }
 
-func TestValidateQueries_FetcherError_AuthFailure(t *testing.T) {
-	// Setup mocks - fetcher returns auth error
+func TestValidateQueries_ProviderError_AuthFailure(t *testing.T) {
+	// Setup mocks - provider returns auth error
 	mockPar := &mockParser{
 		metricsToReturn: map[string][]string{
 			"up": {"up"},
 		},
 	}
 	authErr := fmt.Errorf("HTTP 401: Unauthorized")
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		errorToReturn: authErr,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{RefID: "A", QueryText: "up", PanelTitle: "Status", PanelID: 1},
@@ -744,11 +776,11 @@ func TestValidateQueries_ContextCancellation(t *testing.T) {
 			"up": {"up"},
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		errorToReturn: context.Canceled,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{RefID: "A", QueryText: "up", PanelTitle: "Status", PanelID: 1},
@@ -784,11 +816,12 @@ func TestValidateQueries_FoundMetricsCalculation(t *testing.T) {
 			"query1": {"metric_a", "metric_b", "metric_c"},
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"metric_a", "metric_c"}, // metric_b missing
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{RefID: "A", QueryText: "query1", PanelTitle: "Test", PanelID: 1},
@@ -823,11 +856,12 @@ func TestValidateQueries_MissingMetricsList(t *testing.T) {
 			"query2": {"metric_b", "metric_c"},
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"metric_a"}, // Only metric_a available
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{RefID: "A", QueryText: "query1", PanelTitle: "Panel A", PanelID: 1},
@@ -860,11 +894,12 @@ func TestValidateQueries_QueryBreakdownStructure(t *testing.T) {
 			"metric_a": {"metric_a"},
 		},
 	}
-	mockFet := &mockFetcher{
+	mockProv := &mockProvider{
 		metricsToReturn: []string{"up"}, // metric_a missing
+		ttl:             5 * time.Minute,
 	}
 
-	v := newValidatorForTest(mockPar, mockFet)
+	v := newTestValidator(mockPar, mockProv)
 
 	queries := []validator.Query{
 		{RefID: "A", QueryText: "up", PanelTitle: "Status Check", PanelID: 1},
@@ -903,4 +938,43 @@ func TestValidateQueries_QueryBreakdownStructure(t *testing.T) {
 	require.Equal(t, 0, qr2.FoundMetrics)
 	require.Contains(t, qr2.MissingMetrics, "metric_a")
 	require.InDelta(t, 0.0, qr2.CompatibilityScore, 0.001)
+}
+
+// ============================================================================
+// Category 7: Cache Behavior
+// ============================================================================
+
+func TestValidateQueries_CacheHit_NoProviderCallOnSecondValidation(t *testing.T) {
+	// Setup mocks
+	mockPar := &mockParser{
+		metricsToReturn: map[string][]string{
+			"up": {"up"},
+		},
+	}
+	mockProv := &mockProvider{
+		metricsToReturn: []string{"up"},
+		ttl:             5 * time.Minute,
+	}
+
+	v := newTestValidator(mockPar, mockProv)
+
+	queries := []validator.Query{
+		{RefID: "A", QueryText: "up", PanelTitle: "Status", PanelID: 1},
+	}
+	datasource := validator.Datasource{
+		UID:        "prom-uid",
+		Type:       "prometheus",
+		URL:        "http://localhost:9090",
+		HTTPClient: &http.Client{},
+	}
+
+	// First validation - cache miss
+	_, err := v.ValidateQueries(context.Background(), queries, datasource)
+	require.NoError(t, err)
+	require.Equal(t, 1, mockProv.callCount) // Provider called once
+
+	// Second validation - cache hit
+	_, err = v.ValidateQueries(context.Background(), queries, datasource)
+	require.NoError(t, err)
+	require.Equal(t, 1, mockProv.callCount) // Provider NOT called again
 }

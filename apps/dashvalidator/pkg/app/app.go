@@ -16,8 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	validatorv1alpha1 "github.com/grafana/grafana/apps/dashvalidator/pkg/apis/dashvalidator/v1alpha1"
+	"github.com/grafana/grafana/apps/dashvalidator/pkg/cache"
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
-	_ "github.com/grafana/grafana/apps/dashvalidator/pkg/validator/prometheus" // Register prometheus validator via init()
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -27,6 +27,8 @@ type DashValidatorConfig struct {
 	DatasourceSvc      datasources.DataSourceService
 	PluginCtx          *plugincontext.Provider
 	HTTPClientProvider httpclient.Provider
+	MetricsCache       *cache.MetricsCache                      // Injected by register.go
+	Validators         map[string]validator.DatasourceValidator // Injected by register.go, keyed by datasource type
 }
 
 // checkRequest matches the CUE schema for POST /check request
@@ -82,6 +84,12 @@ func New(cfg app.Config) (app.App, error) {
 
 	log := logging.DefaultLogger.With("app", "dashvalidator")
 
+	// MetricsCache and Validators are created by register.go and passed via config
+	metricsCache := specificConfig.MetricsCache
+	validators := specificConfig.Validators
+
+	log.Info("Initialized dashvalidator app", "numValidators", len(validators))
+
 	// configure our app
 	simpleConfig := simple.AppConfig{
 		Name:       "dashvalidator",
@@ -94,7 +102,7 @@ func New(cfg app.Config) (app.App, error) {
 					Namespaced: true,
 					Path:       "check",
 					Method:     "POST",
-				}: handleCheckRoute(log, specificConfig.DatasourceSvc, specificConfig.PluginCtx, specificConfig.HTTPClientProvider),
+				}: handleCheckRoute(log, specificConfig.DatasourceSvc, specificConfig.PluginCtx, specificConfig.HTTPClientProvider, validators),
 			},
 		},
 	}
@@ -103,6 +111,9 @@ func New(cfg app.Config) (app.App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create app: %w", err)
 	}
+
+	// Register MetricsCache as a runnable so its cleanup goroutine is managed by the app lifecycle
+	a.AddRunnable(metricsCache)
 
 	return a, nil
 }
@@ -113,6 +124,7 @@ func handleCheckRoute(
 	datasourceSvc datasources.DataSourceService,
 	pluginCtx *plugincontext.Provider,
 	httpClientProvider httpclient.Provider,
+	validators map[string]validator.DatasourceValidator,
 ) func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error {
 	return func(ctx context.Context, w app.CustomRouteResponseWriter, r *app.CustomRouteRequest) error {
 		logger := log.WithContext(ctx)
@@ -249,7 +261,7 @@ func handleCheckRoute(
 		}
 
 		// Step 3: Validate dashboard compatibility
-		result, err := validator.ValidateDashboardCompatibility(ctx, validatorReq)
+		result, err := validator.ValidateDashboardCompatibility(ctx, validatorReq, validators)
 		if err != nil {
 			logger.Error("Validation failed", "error", err)
 

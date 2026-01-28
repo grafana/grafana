@@ -3,46 +3,31 @@ package prometheus
 import (
 	"context"
 	"fmt"
-	"net/http"
 
+	"github.com/grafana/grafana/apps/dashvalidator/pkg/cache"
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
 )
 
-// parserLike and fetcherLike define minimal interfaces for dependency injection
+// parserLike defines minimal interface for dependency injection
 type parserLike interface {
 	ExtractMetrics(queryText string) ([]string, error)
 }
 
-type fetcherLike interface {
-	FetchMetrics(ctx context.Context, datasourceURL string, client *http.Client) ([]string, error)
-}
-
-// Register Prometheus validator on package import
-func init() {
-	validator.RegisterValidator("prometheus", func() validator.DatasourceValidator {
-		return NewValidator()
-	})
-}
-
 // Validator implements validator.DatasourceValidator for Prometheus datasources
 type Validator struct {
-	parser  parserLike
-	fetcher fetcherLike
+	parser parserLike
+	cache  *cache.MetricsCache
 }
 
-// NewValidator creates a new Prometheus validator
-func NewValidator() validator.DatasourceValidator {
-	return &Validator{
-		parser:  NewParser(),
-		fetcher: NewFetcher(),
+// NewValidator creates a new Prometheus validator.
+// The metricsCache parameter is required - pass nil will cause a panic.
+func NewValidator(mc *cache.MetricsCache) *Validator {
+	if mc == nil {
+		panic("metricsCache cannot be nil")
 	}
-}
-
-// newValidatorForTest creates a validator with injectable dependencies (for testing only)
-func newValidatorForTest(parser parserLike, fetcher fetcherLike) *Validator {
 	return &Validator{
-		parser:  parser,
-		fetcher: fetcher,
+		parser: NewParser(),
+		cache:  mc,
 	}
 }
 
@@ -99,14 +84,14 @@ func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Que
 
 	fmt.Printf("[DEBUG PROM] Total metrics to check: %d - %v\n", len(metricsToCheck), metricsToCheck)
 
-	// Step 2: Fetch available metrics from Prometheus
-	fmt.Printf("[DEBUG PROM] Fetching available metrics from %s\n", datasource.URL)
-	availableMetrics, err := v.fetcher.FetchMetrics(ctx, datasource.URL, datasource.HTTPClient)
+	// Step 2: Fetch available metrics from Prometheus (via cache)
+	fmt.Printf("[DEBUG PROM] Fetching available metrics for datasource %s\n", datasource.UID)
+	availableMetrics, err := v.cache.GetMetrics(ctx, "prometheus", datasource.UID, datasource.URL, datasource.HTTPClient)
 	if err != nil {
 		fmt.Printf("[DEBUG PROM] Failed to fetch metrics: %v\n", err)
 		return nil, fmt.Errorf("failed to fetch metrics from Prometheus: %w", err)
 	}
-	fmt.Printf("[DEBUG PROM] Fetched %d available metrics from Prometheus\n", len(availableMetrics))
+	fmt.Printf("[DEBUG PROM] Fetched %d available metrics for %s\n", len(availableMetrics), datasource.UID)
 
 	// Build a set for O(1) lookup
 	availableSet := make(map[string]bool)
