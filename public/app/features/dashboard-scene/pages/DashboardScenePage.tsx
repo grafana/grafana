@@ -39,8 +39,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, isLoading, loadError } = stateManager.useState();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const routeReloadCounter = (location.state as { routeReloadCounter?: number })?.routeReloadCounter;
+  const routeReloadCounter = (location.state as any)?.routeReloadCounter;
   const prevParams = useRef<Params<string>>(params);
 
   useEffect(() => {
@@ -54,7 +53,6 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
             : uid) ?? '',
         type,
         slug,
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
       });
