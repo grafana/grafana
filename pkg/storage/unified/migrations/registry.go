@@ -158,8 +158,8 @@ func init() {
 			dashboardGR: func(a legacy.MigrationDashboardAccessor) MigratorFunc { return a.MigrateDashboards },
 		},
 		Validators: []ValidatorFactory{
-			CountValidation(folderGR, "dashboard", "org_id = ? and is_folder = true"),
-			CountValidation(dashboardGR, "dashboard", "org_id = ? and is_folder = false"),
+			CountValidation(folderGR, "dashboard", "org_id = ? AND is_folder = true AND deleted IS NULL"),
+			CountValidation(dashboardGR, "dashboard", "org_id = ? AND is_folder = false AND deleted IS NULL"),
 			FolderTreeValidation(folderGR),
 		},
 	})
