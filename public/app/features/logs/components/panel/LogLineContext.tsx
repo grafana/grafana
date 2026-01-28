@@ -544,6 +544,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         flexDirection: 'column',
         alignItems: 'flex-start',
       },
+      [theme.breakpoints.down('sm')]: {
+        alignItems: 'center',
+      },
     }),
   };
 };
