@@ -17,11 +17,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
+// RemotePrimaryForkedAlertmanager coordinates between remote and internal Alertmanagers
+// with the remote Alertmanager as the primary/source of truth.
+//
+// In this mode:
+//   - All read operations go to the remote Alertmanager.
+//   - All write operations go to the remote Alertmanager first.
+//   - The internal Alertmanager receives replicated writes for comparison and rollback.
+//   - Internal Alertmanager errors are logged but don't fail operations.
+//
+// This mode is used when migrating to or running primarily on a remote Alertmanager.
 type RemotePrimaryForkedAlertmanager struct {
 	log log.Logger
 
-	internal notifier.Alertmanager
-	remote   remoteAlertmanager
+	internal notifier.Alertmanager // Internal AM running for comparison and potential rollback
+	remote   remoteAlertmanager     // Remote AM that is the source of truth
 }
 
 // NewRemotePrimaryFactory returns a function to override the default AM factory in the multi-org Alertmanager.
