@@ -4,7 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, Button, Card, Field, Icon, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Card, Field, Icon, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
@@ -81,17 +81,18 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
             'There was an issue connecting to the repository. Please check the repository settings and try again.'
           ),
         },
+        retry: retryRepositoryStatus,
       });
     } else {
       setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
     }
-  }, [isLoading, setStepStatusInfo, repositoryStatusError]);
+  }, [isLoading, setStepStatusInfo, repositoryStatusError, retryRepositoryStatus]);
 
   useEffect(() => {
     setValue('repository.sync.target', target);
   }, [target, setValue]);
 
-  if (isLoading) {
+  if (!repositoryStatusError && isLoading) {
     return (
       <Box padding={4}>
         <LoadingPlaceholder
@@ -102,12 +103,8 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   }
 
   if (repositoryStatusError || isRepositoryHealthy === false) {
-    // error message will be set in above step status
-    return (
-      <Button onClick={retryRepositoryStatus} disabled={isRepositoryStatusLoading}>
-        {t('provisioning.wizard.retry-status-button', 'Recheck repository status')}
-      </Button>
-    );
+    // error message and retry will be set in above step status
+    return null;
   }
 
   return (
