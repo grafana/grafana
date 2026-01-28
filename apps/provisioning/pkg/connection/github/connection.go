@@ -51,7 +51,7 @@ const (
 
 // Test validates the appID and installationID against the given github token.
 func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	if c.obj.Secure.Token.IsZero() {
+	if c.secrets.Token.IsZero() {
 		// In case the token is not generated, we create one on the fly
 		// to testing that the other fields are valid.
 		token, err := GenerateJWTToken(c.obj.Spec.GitHub.AppID, c.secrets.PrivateKey)
