@@ -27,7 +27,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
     'repository.sync.target',
     'migrate.migrateResources',
   ]);
-  const { requiresMigration } = useResourceStats(repoName, syncTarget, migrateResources);
+
   const {
     isHealthy: isRepositoryHealthy,
     healthMessage: repositoryHealthMessages,
@@ -37,6 +37,11 @@ export const SynchronizeStep = memo(function SynchronizeStep({ onCancel, isCance
     isLoading,
     refetch: refetchRepositoryStatus,
   } = useRepositoryStatus(repoName);
+
+  const { requiresMigration } = useResourceStats(repoName, syncTarget, migrateResources, {
+    enableRepositoryStatus: false,
+    isHealthy: isRepositoryHealthy,
+  });
 
   const { createSyncJob } = useCreateSyncJob({
     repoName,
