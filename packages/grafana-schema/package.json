@@ -19,9 +19,23 @@
       "@grafana-app/source": "./src/index.ts",
       "types": "./dist/types/index.d.ts"
     },
+    "./raw/composable/*/panelcfg": {
+      "@grafana-app/source": "./src/raw/composable/*/x/*panelcfg_types.gen.d",
+      "types": "./dist/types/raw/composable/*/x/*panelcfg_types.gen.ts",
+      "import": "./dist/esm/raw/composable/*/x/*panelcfg_types.gen.mjs",
+      "require": "./dist/cjs/raw/composable/*/x/*panelcfg_types.gen.cjs"
+    },
+    "./raw/dashboard": {
+      "@grafana-app/source": "./src/raw/dashboard/x/dashboard_types.gen.ts",
+      "types": "./dist/types/raw/dashboard/x/dashboard_types.gen.ts",
+      "import": "./dist/esm/raw/dashboard/x/dashboard_types.gen.mjs",
+      "require": "./dist/cjs/raw/dashboard/x/dashboard_types.gen.cjs"
+    },
     "./raw/preferences": {
       "@grafana-app/source": "./src/raw/preferences/x/preferences_types.gen.ts",
-      "types": "./dist/esm/raw/preferences/x/preferences_types.gen.d.ts"
+      "types": "./dist/types/raw/preferences/x/preferences_types.gen.ts",
+      "import": "./dist/esm/raw/preferences/x/preferences_types.gen.mjs",
+      "require": "./dist/cjs/raw/preferences/x/preferences_types.gen.cjs"
     },
     "./dist/esm/raw/composable/annotationslist/panelcfg/x/AnnotationsListPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/annotationslist/panelcfg/x/annotationslistpanelcfg_types.gen.ts",
