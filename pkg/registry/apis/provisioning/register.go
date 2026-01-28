@@ -95,7 +95,7 @@ type APIBuilder struct {
 	allowedTargets      []provisioning.SyncTargetType
 	allowImageRendering bool
 	minSyncInterval     time.Duration
-	quotaLimits         quotas.QuotaLimits
+	quotaLimitsProvider quotas.QuotaLimitsProvider
 
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
@@ -160,6 +160,7 @@ func NewAPIBuilder(
 	registry prometheus.Registerer,
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 	useExclusivelyAccessCheckerForAuthz bool,
+	quotaLimitsProvider quotas.QuotaLimitsProvider,
 ) *APIBuilder {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -168,8 +169,10 @@ func NewAPIBuilder(
 		clients = resources.NewClientFactory(configProvider)
 	}
 
-	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceListerForMigrations(unified)
+	quotaCheckerFactory := quotas.NewRepositoryQuotaCheckerFactory(resourceLister)
+
+	parsers := resources.NewParserFactory(clients, quotaCheckerFactory)
 
 	// Create access checker based on mode
 	var accessChecker auth.AccessChecker
@@ -204,6 +207,7 @@ func NewAPIBuilder(
 		allowImageRendering:                 allowImageRendering,
 		registry:                            registry,
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
+		quotaLimitsProvider:                 quotaLimitsProvider,
 	}
 
 	for _, builder := range extraBuilders {
@@ -211,15 +215,6 @@ func NewAPIBuilder(
 	}
 
 	return b
-}
-
-// SetQuotas sets the quota limits (including repository and resource limits).
-// HACK: This is a workaround to avoid changing NewAPIBuilder signature which would require
-// changes in the enterprise repository. This should be moved to NewAPIBuilder parameters
-// once we can coordinate the change across repositories.
-// The limits are stored here and then passed to validators and workers via quotaLimits.
-func (b *APIBuilder) SetQuotas(limits quotas.QuotaLimits) {
-	b.quotaLimits = limits
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -288,6 +283,12 @@ func RegisterAPIService(
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
 
+	// Config defaults to 10 in pkg/setting. If user sets 0, that means unlimited.
+	quotaLimitsProvider := quotas.NewFixedQuotaLimitsProvider(provisioning.QuotaStatus{
+		MaxResourcesPerRepository: cfg.ProvisioningMaxResourcesPerRepository,
+		MaxRepositories:           cfg.ProvisioningMaxRepositories,
+	})
+
 	builder := NewAPIBuilder(
 		cfg.DisableControllers,
 		repoFactory,
@@ -309,14 +310,8 @@ func RegisterAPIService(
 		reg,
 		nil,
 		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
+		quotaLimitsProvider,
 	)
-	// HACK: Set quota limits after construction to avoid changing NewAPIBuilder signature.
-	// See SetQuotas for details.
-	// Config defaults to 10 in pkg/setting. If user sets 0, that means unlimited.
-	builder.SetQuotas(quotas.QuotaLimits{
-		MaxResources:    cfg.ProvisioningMaxResourcesPerRepository,
-		MaxRepositories: cfg.ProvisioningMaxRepositories,
-	})
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -635,11 +630,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	// Repository mutator and validator
 	b.repoValidator = repository.NewValidator(b.allowImageRendering, b.repoFactory)
-	// quotaLimits is set via SetQuotas HACK method, use it directly
-
-	// HACK: Use NewVerifyAgainstExistingRepositoriesValidatorWithQuotas to pass QuotaLimits directly.
-	// This avoids the need for SetQuotaLimits and moves the HACK logic to construction.
-	existingReposValidatorRaw := repository.NewVerifyAgainstExistingRepositoriesValidatorWithQuotas(b.repoLister, b.quotaLimits)
+	existingReposValidatorRaw := repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister, b.quotaLimitsProvider)
 	repoAdmissionValidator := repository.NewAdmissionValidator(b.allowedTargets, b.repoValidator, existingReposValidatorRaw)
 	b.admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(b.repoFactory, b.minSyncInterval))
 	b.admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), repoAdmissionValidator)
@@ -808,10 +799,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 				b.tracer,
 				10,
+				b.quotaLimitsProvider,
 			)
-			// HACK: Set quota limits after construction to avoid changing NewSyncWorker signature.
-			// See SetQuotaLimits for details. Use the same quotaLimits constructed for the validator.
-			syncWorker.SetQuotaLimits(b.quotaLimits)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -884,7 +873,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
-			quotaGetter := quotas.NewFixedQuotaGetter(b.quotaLimits)
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
@@ -900,7 +888,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				10,
 				informerFactoryResyncInterval,
 				b.minSyncInterval,
-				quotaGetter,
+				b.quotaLimitsProvider,
 			)
 			if err != nil {
 				return err

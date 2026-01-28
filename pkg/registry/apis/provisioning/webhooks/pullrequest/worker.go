@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -35,7 +36,8 @@ func ProvidePullRequestWorker(
 	// FIXME: we should create providers for client and parsers, so that we don't have
 	// multiple connections for webhooks
 	clients := resources.NewClientFactory(configProvider)
-	parsers := resources.NewParserFactory(clients)
+	// No need to wire the limiter here because the parser is used as a parser (do not create resources)
+	parsers := resources.NewParserFactory(clients, quotas.NewUnlimitedQuotaCheckerFactory())
 	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
 	evaluator := NewEvaluator(screenshotRenderer, parsers, urlProvider, registry)
 	commenter := NewCommenter(cfg.ProvisioningAllowImageRendering)

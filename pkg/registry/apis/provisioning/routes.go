@@ -163,13 +163,18 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		errhttp.Write(ctx, err, w)
 		return
 	}
+	quotaStatus, err := b.quotaLimitsProvider.GetQuotaStatus(ctx, ns)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
 
 	settings := provisioning.RepositoryViewList{
 		Items:                    make([]provisioning.RepositoryView, len(all)),
 		AllowedTargets:           b.allowedTargets,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
 		AllowImageRendering:      b.allowImageRendering,
-		MaxRepositories:          b.quotaLimits.MaxRepositories,
+		MaxRepositories:          quotaStatus.MaxRepositories,
 	}
 
 	for i, val := range all {

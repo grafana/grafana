@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -211,13 +212,12 @@ func setupWorkers(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get clients: %w", err)
 	}
-	parsers := resources.NewParserFactory(clients)
-
 	unified, err := controllerCfg.UnifiedStorageClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get unified storage client: %w", err)
 	}
 	resourceLister := resources.NewResourceLister(unified)
+	parsers := resources.NewParserFactory(clients, quotas.NewRepositoryQuotaCheckerFactory(resourceLister))
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
@@ -230,7 +230,10 @@ func setupWorkers(
 	workers := make([]jobs.Worker, 0)
 
 	metrics := jobs.RegisterJobMetrics(registry)
-
+	quotaLimitsProvider, err := controllerCfg.QuotaLimitsProvider()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get quota limits provider: %w", err)
+	}
 	// Sync
 	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, tracer, controllerCfg.maxSyncWorkers, metrics)
 	syncWorker := sync.NewSyncWorker(
@@ -241,6 +244,7 @@ func setupWorkers(
 		metrics,
 		tracer,
 		controllerCfg.maxSyncWorkers,
+		quotaLimitsProvider,
 	)
 	workers = append(workers, syncWorker)
 

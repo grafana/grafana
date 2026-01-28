@@ -9,23 +9,21 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// QuotaLimits holds all configured quota limits for a repository.
-// This struct is designed to be extensible for future quota types.
-type QuotaLimits struct {
-	// MaxResources is the maximum number of resources allowed per repository.
-	// A value of 0 means unlimited.
-	MaxResources int64
-
-	// MaxRepositories is the maximum number of repositories allowed per namespace.
-	// 0 = unlimited, > 0 = use value
-	MaxRepositories int64
+type Usage struct {
+	TotalResources int64
 }
 
-// EvaluateCondition creates a Quota condition based on current stats and limits.
+func NewQuotaUsageFromStats(stats []provisioning.ResourceCount) Usage {
+	return Usage{
+		TotalResources: calculateTotalResources(stats),
+	}
+}
+
+// EvaluateCondition creates a Quota condition based on current stats and quota status.
 // Returns True if all quotas pass (or no limits configured), False if any quota is reached/exceeded.
-func (q QuotaLimits) EvaluateCondition(stats []provisioning.ResourceCount) metav1.Condition {
+func EvaluateCondition(quota provisioning.QuotaStatus, quotaUsage Usage) metav1.Condition {
 	// Check if any limits are configured
-	if q.MaxResources == 0 {
+	if quota.MaxResourcesPerRepository == 0 {
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeQuota,
 			Status:  metav1.ConditionTrue,
@@ -34,29 +32,29 @@ func (q QuotaLimits) EvaluateCondition(stats []provisioning.ResourceCount) metav
 		}
 	}
 
-	total := calculateTotalResources(stats)
+	total := quotaUsage.TotalResources
 
 	switch {
-	case total > q.MaxResources:
+	case total > quota.MaxResourcesPerRepository:
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeQuota,
 			Status:  metav1.ConditionFalse,
 			Reason:  provisioning.ReasonResourceQuotaExceeded,
-			Message: fmt.Sprintf("Resource quota exceeded: %d/%d resources", total, q.MaxResources),
+			Message: fmt.Sprintf("Resource quota exceeded: %d/%d resources", total, quota.MaxResourcesPerRepository),
 		}
-	case total == q.MaxResources:
+	case total == quota.MaxResourcesPerRepository:
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeQuota,
 			Status:  metav1.ConditionFalse,
 			Reason:  provisioning.ReasonResourceQuotaReached,
-			Message: fmt.Sprintf("Resource quota reached: %d/%d resources", total, q.MaxResources),
+			Message: fmt.Sprintf("Resource quota reached: %d/%d resources", total, quota.MaxResourcesPerRepository),
 		}
 	default:
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeQuota,
 			Status:  metav1.ConditionTrue,
 			Reason:  provisioning.ReasonWithinQuota,
-			Message: fmt.Sprintf("Within quota: %d/%d resources", total, q.MaxResources),
+			Message: fmt.Sprintf("Within quota: %d/%d resources", total, quota.MaxResourcesPerRepository),
 		}
 	}
 }
@@ -70,35 +68,31 @@ func calculateTotalResources(stats []provisioning.ResourceCount) int64 {
 	return total
 }
 
-// QuotaGetter retrieves quota information for repositories.
-type QuotaGetter interface {
-	// GetQuotaStatus returns the quota status to be set on repositories.
-	// It takes a context and namespace to allow for future implementations
-	// that may need to fetch quota information dynamically.
-	GetQuotaStatus(ctx context.Context, namespace string) provisioning.QuotaStatus
+// QuotaLimitsProvider provides quota limits for a given namespace.
+// This interface allows enterprise implementations to provide namespace-specific limits
+// (e.g., different limits for free tier vs paying tier).
+type QuotaLimitsProvider interface {
+	// GetQuotaStatus returns the quota status for the given namespace.
+	// This returns the API type (QuotaStatus) that can be used both for
+	// status reporting and enforcement logic.
+	GetQuotaStatus(ctx context.Context, namespace string) (provisioning.QuotaStatus, error)
 }
 
-// FixedQuotaGetter returns fixed quota values from static configuration.
-type FixedQuotaGetter struct {
-	maxRepositories           int64
-	maxResourcesPerRepository int64
+// FixedQuotaLimitsProvider is a QuotaLimitsProvider implementation that returns
+// fixed quota limits regardless of namespace. This is used for OSS where all
+// namespaces share the same global limits.
+type FixedQuotaLimitsProvider struct {
+	status provisioning.QuotaStatus
 }
 
-// NewFixedQuotaGetter creates a new FixedQuotaGetter from QuotaLimits.
-func NewFixedQuotaGetter(limits QuotaLimits) *FixedQuotaGetter {
-	return &FixedQuotaGetter{
-		maxRepositories:           limits.MaxRepositories,
-		maxResourcesPerRepository: limits.MaxResources,
+// NewFixedQuotaLimitsProvider creates a new FixedQuotaLimitsProvider with the given status.
+func NewFixedQuotaLimitsProvider(status provisioning.QuotaStatus) *FixedQuotaLimitsProvider {
+	return &FixedQuotaLimitsProvider{
+		status: status,
 	}
 }
 
-// GetQuotaStatus returns the configured quota limits as a QuotaStatus.
-func (f *FixedQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string) provisioning.QuotaStatus {
-	return provisioning.QuotaStatus{
-		MaxRepositories:           f.maxRepositories,
-		MaxResourcesPerRepository: f.maxResourcesPerRepository,
-	}
+// GetQuotaStatus returns the fixed quota status for any namespace.
+func (p *FixedQuotaLimitsProvider) GetQuotaStatus(ctx context.Context, namespace string) (provisioning.QuotaStatus, error) {
+	return p.status, nil
 }
-
-// Ensure FixedQuotaGetter implements QuotaGetter interface.
-var _ QuotaGetter = (*FixedQuotaGetter)(nil)

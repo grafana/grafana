@@ -62,8 +62,8 @@ type ControllerConfig struct {
 	ConnectionFactoryFunc func() (connection.Factory, error)
 	healthMetricsRecorder controller.HealthMetricsRecorder
 	tracer                tracing.Tracer
-	quotaGetter           quotas.QuotaGetter
-	QuotaGetterFunc       func() (quotas.QuotaGetter, error)
+	quotaGetter           quotas.QuotaLimitsProvider
+	QuotaGetterFunc       func() (quotas.QuotaLimitsProvider, error)
 	urlProvider           func(ctx context.Context, namespace string) string
 	URLProviderFunc       func() (func(ctx context.Context, namespace string) string, error)
 }
@@ -316,7 +316,7 @@ func (c *ControllerConfig) DecryptService() (decrypt.DecryptService, error) {
 	return decryptSvc, nil
 }
 
-func (c *ControllerConfig) QuotaGetter() (quotas.QuotaGetter, error) {
+func (c *ControllerConfig) QuotaLimitsProvider() (quotas.QuotaLimitsProvider, error) {
 	if c.quotaGetter != nil {
 		return c.quotaGetter, nil
 	}
@@ -330,12 +330,12 @@ func (c *ControllerConfig) QuotaGetter() (quotas.QuotaGetter, error) {
 		return quotaGetter, nil
 	}
 
-	quotaLimits := quotas.QuotaLimits{
-		MaxResources:    c.Settings.SectionWithEnvOverrides("provisioning").Key("max_resources_per_repository").MustInt64(0),
-		MaxRepositories: c.Settings.SectionWithEnvOverrides("provisioning").Key("max_repositories").MustInt64(10),
+	quotaLimits := provisioning.QuotaStatus{
+		MaxResourcesPerRepository: c.Settings.SectionWithEnvOverrides("provisioning").Key("max_resources_per_repository").MustInt64(0),
+		MaxRepositories:           c.Settings.SectionWithEnvOverrides("provisioning").Key("max_repositories").MustInt64(10),
 	}
 
-	c.quotaGetter = quotas.NewFixedQuotaGetter(quotaLimits)
+	c.quotaGetter = quotas.NewFixedQuotaLimitsProvider(quotaLimits)
 
 	return c.quotaGetter, nil
 }

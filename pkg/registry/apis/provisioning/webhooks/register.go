@@ -10,6 +10,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -76,7 +77,8 @@ func ProvideWebhooksWithImages(
 		urlProvider: urlProvider,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			clients := resources.NewClientFactory(configProvider)
-			parsers := resources.NewParserFactory(clients)
+			// No need to wire the limiter here because the parser is used as a parser (do not create resources)
+			parsers := resources.NewParserFactory(clients, quotas.NewUnlimitedQuotaCheckerFactory())
 
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
 			render := NewRenderConnector(blobstore, b)
