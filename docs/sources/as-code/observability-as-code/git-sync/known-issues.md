@@ -37,8 +37,6 @@ You can sign up to the private preview using the [Git Sync early access form](ht
 
 {{< /admonition >}}
 
-**Git Sync is under development and the following applies.**
-
 ## Performance considerations
 
 When Git Sync is enabled, the database load might increase, especially if your Grafana instance has many folders and nested folders. Evaluate the performance impact, if any, in a non-production environment.
@@ -49,12 +47,12 @@ The following Git Sync per-tier limits apply:
 
 | Tier | **Cloud - Free** |  **Cloud - Other**  | **On-prem OSS**    |   **On-prem Enterprise**    |
 | -------- | ---------- | ----------- | ----------- | ----------- |
-| Amount of connections | 1 | ??  | 10    |  10    |
+| Amount of connections | 1 | 10 | 10    |  10    |
 | Amount of synced resources| 20 | Grafana limit  | No limit    |  No limit    |
 
-### Authentication
+## Authentication
 
-You can only authenticate in GitHub using your Personal Access Token token or a GitHub App. Refer to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup) for more details.
+You can authenticate in GitHub using a Personal Access Token token or GitHub App. Refer to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup) for more details.
 
 ## Known issues
 

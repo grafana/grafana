@@ -36,7 +36,7 @@ Git Sync is available in [private preview](https://grafana.com/docs/release-life
 
 You can sign up to the private preview using the [Git Sync early access form](https://forms.gle/WKkR3EVMcbqsNnkD9).
 
-Git Sync is under continuous development. [Report any issues](https://grafana.com/help/) you encounter to help us improve Git Sync.
+Git Sync is under continuous development. Refer to [Limitations and known issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/known-issues) for more information, and [report any issues](https://grafana.com/help/) you encounter to help us improve the feature.
 
 {{< /admonition >}}
 
