@@ -17,10 +17,7 @@ interface ExternalRepository {
 
 export function useConnectionOptions(enabled: boolean) {
   const [connections, connectionsLoading] = useConnectionList(enabled ? {} : skipToken);
-  const githubConnections = useMemo(
-    () => connections?.filter((c) => c.spec?.type === 'github') ?? [],
-    [connections]
-  );
+  const githubConnections = useMemo(() => connections?.filter((c) => c.spec?.type === 'github') ?? [], [connections]);
 
   const connectionNames = useMemo(() => {
     const names: string[] = [];
@@ -68,6 +65,7 @@ export function useConnectionOptions(enabled: boolean) {
   const options = useMemo(() => {
     return githubConnections.map((conn) => {
       const name = conn.metadata?.name ?? '';
+      const title = conn.spec?.title || name;
       const repos = reposByConnection?.[name];
       let description: string;
 
@@ -88,7 +86,7 @@ export function useConnectionOptions(enabled: boolean) {
             : shown;
       }
 
-      return { value: name, label: name, description };
+      return { value: name, label: title, description };
     });
   }, [githubConnections, reposByConnection, reposLoading]);
 

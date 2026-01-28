@@ -6,7 +6,7 @@ import { Alert, Field, RadioButtonGroup, Spinner, Stack } from '@grafana/ui';
 import { ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
-import { GitHubAppCredentialFields } from '../components/Shared/GitHubAppCredentialFields';
+import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
 import { useConnectionList } from '../hooks/useConnectionList';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { ConnectionFormData } from '../types';
@@ -37,6 +37,8 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
   const credentialForm = useForm<ConnectionFormData>({
     defaultValues: {
       type: 'github',
+      title: '',
+      description: '',
       appID: '',
       installationID: '',
       privateKey: '',
@@ -66,9 +68,11 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
           return;
         }
 
-        const { appID, installationID, privateKey } = credentialForm.getValues();
+        const { title, description, appID, installationID, privateKey } = credentialForm.getValues();
         const spec: ConnectionSpec = {
           type: 'github',
+          title,
+          ...(description && { description }),
           github: { appID, installationID },
         };
 
@@ -178,7 +182,7 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
 
       {githubAppMode === 'new' && (
         <FormProvider {...credentialForm}>
-          <GitHubAppCredentialFields required />
+          <GitHubConnectionFields required />
         </FormProvider>
       )}
     </Stack>

@@ -35,7 +35,9 @@ export type RepositorySettingsField = Path<RepositoryFormData>;
 export type ConnectionType = ConnectionSpec['type'];
 
 export type ConnectionFormData = {
-  type: ConnectionSpec['type'];
+  type: ConnectionType;
+  title: string;
+  description: string;
   appID: string;
   installationID: string;
   privateKey?: string;

@@ -5,7 +5,6 @@ import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 import { RepoIcon } from '../Shared/RepoIcon';
 import { RepoType } from '../Wizard/types';
 import { CONNECTIONS_URL } from '../constants';
-import { getRepositoryTypeConfigs } from '../utils/repositoryTypes';
 
 import { ConnectionStatusBadge } from './ConnectionStatusBadge';
 
@@ -16,9 +15,10 @@ interface Props {
 export function ConnectionListItem({ connection }: Props) {
   const { metadata, spec, status } = connection;
   const name = metadata?.name ?? '';
+  const title = spec?.title || name;
+  const description = spec?.description;
   const url = spec?.url;
   const providerType: RepoType = spec?.type ?? 'github';
-  const repoConfig = getRepositoryTypeConfigs().find((config) => config.type === providerType);
   return (
     <Card noMargin key={name}>
       <Card.Figure>
@@ -26,16 +26,21 @@ export function ConnectionListItem({ connection }: Props) {
       </Card.Figure>
       <Card.Heading>
         <Stack gap={2} direction="row" alignItems="center">
-          {repoConfig && <Text variant="h3">{`${repoConfig.label} app connection`}</Text>}
+          <Text variant="h3">{title}</Text>
           <ConnectionStatusBadge status={status} />
         </Stack>
       </Card.Heading>
 
-      {url && (
+      {(description || url) && (
         <Card.Meta>
-          <TextLink external href={url}>
-            {url}
-          </TextLink>
+          <Stack direction="column" gap={1}>
+            {description && <Text color="secondary">{description}</Text>}
+            {url && (
+              <TextLink external href={url}>
+                {url}
+              </TextLink>
+            )}
+          </Stack>
         </Card.Meta>
       )}
 
