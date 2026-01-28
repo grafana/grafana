@@ -91,8 +91,8 @@ export function QueryEditorContextWrapper({
       deleteQuery: dataPane.deleteQuery,
       duplicateQuery: dataPane.duplicateQuery,
       runQueries: dataPane.runQueries,
-      changeDataSource: (settings: DataSourceInstanceSettings) => {
-        dataPane.changeDataSource(getDataSourceRef(settings));
+      changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
+        dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
     }),
     [dataPane]

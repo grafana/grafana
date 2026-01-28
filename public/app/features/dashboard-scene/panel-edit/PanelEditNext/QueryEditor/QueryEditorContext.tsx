@@ -33,7 +33,7 @@ export interface QueryEditorActions {
   deleteQuery: (index: number) => void;
   duplicateQuery: (index: number) => void;
   runQueries: () => void;
-  changeDataSource: (settings: DataSourceInstanceSettings) => void;
+  changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
 }
 
 const DatasourceContext = createContext<DatasourceState | null>(null);

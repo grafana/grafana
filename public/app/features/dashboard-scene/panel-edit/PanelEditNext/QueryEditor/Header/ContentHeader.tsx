@@ -5,9 +5,7 @@ import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { DataSourcePicker } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { useStyles2, Text, Button, Icon } from '@grafana/ui';
-import { isExpressionQuery } from 'app/features/expressions/guards';
-import { InspectTab } from 'app/features/inspector/types';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
 import { getDashboardSceneFor } from '../../../../utils/utils';
@@ -47,7 +45,7 @@ export function ContentHeader() {
       <div className={styles.queryHeaderWrapper}>
         <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />
         {cardType === QueryEditorType.Query && (
-          <DatasourceSection selectedCard={selectedCard} onChange={changeDataSource} />
+          <DatasourceSection selectedCard={selectedCard} onChange={(ds) => changeDataSource(ds, selectedCard.refId)} />
         )}
         <EditableQueryName query={selectedCard} queries={queries} onQueryUpdate={updateSelectedQuery} />
       </div>
@@ -69,7 +67,7 @@ export function ContentHeader() {
 
 interface DatasourceSectionProps {
   selectedCard: DataQuery;
-  onChange: (settings: DataSourceInstanceSettings) => void;
+  onChange: (ds: DataSourceInstanceSettings) => void;
 }
 
 function DatasourceSection({ selectedCard, onChange }: DatasourceSectionProps) {
@@ -78,7 +76,7 @@ function DatasourceSection({ selectedCard, onChange }: DatasourceSectionProps) {
   return (
     <>
       <div className={styles.dataSourcePickerWrapper}>
-        <DataSourcePicker current={selectedCard.datasource} onChange={onChange} />
+        <DataSourcePicker dashboard={true} variables={true} current={selectedCard.datasource} onChange={onChange} />
       </div>
       <Text variant="h4" color="secondary">
         /
@@ -110,12 +108,14 @@ const getStyles = (theme: GrafanaTheme2, { cardType }: { cardType: QueryEditorTy
 
 const getDatasourceSectionStyles = (theme: GrafanaTheme2) => ({
   dataSourcePickerWrapper: css({
-    '& .ds-picker': {
+    // Target the Input component inside the picker
+    input: {
       border: 'none',
       backgroundColor: theme.colors.background.secondary,
-      '& > div': {
-        border: 'none',
-      },
+    },
+    // Remove borders from all nested divs
+    '& > div, & div': {
+      border: 'none',
     },
   }),
 });

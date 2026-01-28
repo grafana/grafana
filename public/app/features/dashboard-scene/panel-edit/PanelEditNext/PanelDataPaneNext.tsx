@@ -165,10 +165,23 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
   };
 
-  public changeDataSource = (dsRef: DataSourceRef) => {
+  public changeDataSource = (dsRef: DataSourceRef, queryRefId: string) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
-    if (queryRunner) {
-      queryRunner.setState({ datasource: dsRef });
+    if (!queryRunner) {
+      return;
     }
+
+    // Update the specific query's datasource
+    const queries = queryRunner.state.queries.map((query) => {
+      if (query.refId === queryRefId) {
+        return {
+          ...query,
+          datasource: dsRef,
+        };
+      }
+      return query;
+    });
+
+    queryRunner.setState({ queries });
   };
 }
