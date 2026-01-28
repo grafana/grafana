@@ -684,6 +684,7 @@ export const frameToRecords = (
     const rows = Array(frame.length);
     const values = frame.fields.map(f => f.values);
     const hasNestedFrames = '${nestedFramesFieldName ?? ''}'.length > 0;
+    const isNestedRow = ${nestedRowIndex !== undefined};
 
     let rowCount = 0;
     for (let i = 0; i < frame.length; i++) {
@@ -692,15 +693,16 @@ export const frameToRecords = (
         __index: i,
         ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
       };
-      if (hasNestedFrames) {
+      if (isNestedRow) {
         rows[rowCount].__parentIndex = ${nestedRowIndex};
       }
       rowCount++;
 
       if (hasNestedFrames) {
         const childFrame = rows[rowCount-1][${JSON.stringify(nestedFramesFieldName)}];
-        if (childFrame){
-          rows[rowCount] = {__depth: 1, __index: i, data: childFrame[0]}
+        if (childFrame) {
+          delete rows[rowCount - 1][${JSON.stringify(nestedFramesFieldName)}];
+          rows[rowCount] = { __depth: 1, __index: i, data: childFrame[0] };
           rowCount++;
         }
       }
