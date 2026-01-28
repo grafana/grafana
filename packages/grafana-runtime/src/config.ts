@@ -85,6 +85,7 @@ export class GrafanaBootConfig {
   publicDashboardsEnabled = true;
   snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
+  /** @deprecated it will be removed in a future release, use getListedPanelPluginIds instead */
   panels: { [key: string]: PanelPluginMeta } = {};
   /** @deprecated it will be removed in a future release, use isAppPluginInstalled or getAppPluginVersion instead */
   apps: Record<string, AppPluginConfigGrafanaData> = {};

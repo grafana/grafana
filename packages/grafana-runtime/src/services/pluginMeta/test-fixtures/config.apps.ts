@@ -1,10 +1,8 @@
-import { cloneDeep } from 'lodash';
-
 import { AngularMeta, AppPluginConfig, PluginLoadingStrategy } from '@grafana/data';
 
 import { AppPluginMetas } from '../types';
 
-export const app: AppPluginConfig = cloneDeep({
+export const app: AppPluginConfig = structuredClone({
   id: 'myorg-someplugin-app',
   path: 'public/plugins/myorg-someplugin-app/module.js',
   version: '1.0.0',
@@ -30,7 +28,7 @@ export const app: AppPluginConfig = cloneDeep({
   buildMode: 'production',
 });
 
-export const apps: AppPluginMetas = cloneDeep({
+export const apps: AppPluginMetas = structuredClone({
   'grafana-exploretraces-app': {
     id: 'grafana-exploretraces-app',
     path: 'public/plugins/grafana-exploretraces-app/module.js',
@@ -299,5 +297,4 @@ export const apps: AppPluginMetas = cloneDeep({
     },
     buildMode: 'production',
   },
-  [app.id]: app,
 });
