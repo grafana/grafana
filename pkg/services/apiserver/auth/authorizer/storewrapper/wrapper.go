@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -48,6 +49,7 @@ type K8sStorage interface {
 }
 
 var _ rest.Storage = (*Wrapper)(nil)
+var _ k8srest.Watcher = (*Wrapper)(nil)
 
 func New(store K8sStorage, authz ResourceStorageAuthorizer) *Wrapper {
 	return &Wrapper{inner: store, authorizer: authz}
@@ -190,6 +192,15 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 	}
 
 	return updatedObj, nil
+}
+
+func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (watch.Interface, error) {
+	if watcher, ok := w.inner.(k8srest.Watcher); ok {
+		// Override the identity to use service identity for the watch operation
+		srvCtx, _ := identity.WithServiceIdentity(ctx, 0)
+		return watcher.Watch(srvCtx, options)
+	}
+	return nil, fmt.Errorf("watch is not supported on the underlying storage")
 }
 
 // NoopAuthorizer is a no-op implementation of ResourceStorageAuthorizer.
