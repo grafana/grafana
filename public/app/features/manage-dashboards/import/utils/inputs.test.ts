@@ -23,6 +23,7 @@ import {
 
 // Mock external dependencies
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
     getList: jest.fn().mockReturnValue([{ uid: 'ds-1', name: 'Prometheus', type: 'prometheus' }]),
   }),
