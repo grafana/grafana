@@ -376,6 +376,16 @@
 
           cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
           document.head.appendChild(cssLink);
+
+          // Set custom fav icon if set in whitelabeling settings
+          const customFavIcon = window.grafanaBootData.settings.whitelabeling.favIcon;
+          if (customFavIcon !== "") {
+            const favIconCustomLink = document.createElement('link');
+            favIconCustomLink.rel = 'icon';
+            favIconCustomLink.type = 'image/png';
+            favIconCustomLink.href = `[[.Assets.ContentDeliveryURL]]${customFavIcon}`;
+            document.head.appendChild(favIconCustomLink);
+          }
         }
 
         window.__grafana_boot_data_promise = initGrafana()
