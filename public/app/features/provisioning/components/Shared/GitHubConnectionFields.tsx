@@ -6,14 +6,14 @@ import { Field, Input, SecretTextArea, Stack } from '@grafana/ui';
 
 import { ConnectionFormData } from '../../types';
 
-export interface GitHubAppCredentialFieldsProps {
-  /** Whether fields are required */
+export interface GitHubConnectionFieldsProps {
+  /** Whether fields are required. Depends if we are in edit mode or not. */
   required?: boolean;
   /** Initial value for whether private key is configured (edit mode) */
   privateKeyConfigured?: boolean;
 }
 
-export const GitHubAppCredentialFields = memo<GitHubAppCredentialFieldsProps>(
+export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
   ({ required = true, privateKeyConfigured = false }) => {
     const [isPrivateKeyConfigured, setIsPrivateKeyConfigured] = useState(privateKeyConfigured);
     const {
@@ -29,6 +29,40 @@ export const GitHubAppCredentialFields = memo<GitHubAppCredentialFieldsProps>(
 
     return (
       <Stack direction="column" gap={2}>
+        <Field
+          noMargin
+          label={t('provisioning.connection-form.label-title', 'Title')}
+          description={t('provisioning.connection-form.description-title', 'A human-readable name for this connection')}
+          error={errors?.title?.message}
+          invalid={!!errors.title}
+          required={required}
+        >
+          <Input
+            id="title"
+            {...register('title', {
+              required: requiredValidation,
+            })}
+            placeholder={t('provisioning.connection-form.placeholder-title', 'My GitHub App')}
+          />
+        </Field>
+
+        <Field
+          noMargin
+          label={t('provisioning.connection-form.label-description', 'Description')}
+          description={t(
+            'provisioning.connection-form.description-description',
+            'Optional description for this connection'
+          )}
+          error={errors?.description?.message}
+          invalid={!!errors.description}
+        >
+          <Input
+            id="description"
+            {...register('description')}
+            placeholder={t('provisioning.connection-form.placeholder-description', 'Optional description')}
+          />
+        </Field>
+
         <Field
           noMargin
           label={t('provisioning.connection-form.label-app-id', 'GitHub App ID')}
@@ -108,4 +142,4 @@ export const GitHubAppCredentialFields = memo<GitHubAppCredentialFieldsProps>(
     );
   }
 );
-GitHubAppCredentialFields.displayName = 'GitHubAppCredentialFields';
+GitHubConnectionFields.displayName = 'GitHubConnectionFields';
