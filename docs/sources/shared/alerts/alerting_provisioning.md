@@ -355,11 +355,11 @@ Content-Type: application/json
 
 The receiver permissions endpoints manage access control for contact point receivers. These endpoints require Grafana Enterprise and allow you to assign permissions to users, teams, or built-in roles for specific receivers.
 
-| Method | URI                                                           | Name                                                                          | Summary                                                  |
-| ------ | ------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------- |
-| POST   | /api/access-control/receivers/:uid/users/:userID              | [route set user receiver permission](#route-set-user-receiver-permission)     | Set permissions for a user on a specific receiver.       |
-| POST   | /api/access-control/receivers/:uid/teams/:teamID              | [route set team receiver permission](#route-set-team-receiver-permission)     | Set permissions for a team on a specific receiver.       |
-| POST   | /api/access-control/receivers/:uid/builtInRoles/:builtInRole  | [route set builtin receiver permission](#route-set-builtin-receiver-permission) | Set permissions for a built-in role on a specific receiver. |
+| Method | URI                                                          | Name                                                                            | Summary                                                     |
+| ------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| POST   | /api/access-control/receivers/:uid/users/:userID             | [route set user receiver permission](#route-set-user-receiver-permission)       | Set permissions for a user on a specific receiver.          |
+| POST   | /api/access-control/receivers/:uid/teams/:teamID             | [route set team receiver permission](#route-set-team-receiver-permission)       | Set permissions for a team on a specific receiver.          |
+| POST   | /api/access-control/receivers/:uid/builtInRoles/:builtInRole | [route set builtin receiver permission](#route-set-builtin-receiver-permission) | Set permissions for a built-in role on a specific receiver. |
 
 **Example Request to assign permissions to a user:**
 
@@ -434,6 +434,7 @@ Content-Type: application/json
 ```
 
 **Available Permissions:**
+
 - `View` - Read-only access to the receiver
 - `Edit` - Ability to update the receiver
 - `Admin` - Full access including managing permissions
@@ -1018,19 +1019,19 @@ This endpoint requires Grafana Enterprise and the user must have the `receivers.
 
 #### Parameters
 
-| Name     | Source | Type   | Go type | Required | Default | Description                                                        |
-| -------- | ------ | ------ | ------- | :------: | ------- | ------------------------------------------------------------------ |
-| `uid`    | path   | string | string  |    ✓     |         | UID of the receiver                                                |
-| `userID` | path   | int64  | int64   |    ✓     |         | ID of the user to assign permissions to                            |
+| Name     | Source | Type   | Go type | Required | Default | Description                                                                           |
+| -------- | ------ | ------ | ------- | :------: | ------- | ------------------------------------------------------------------------------------- |
+| `uid`    | path   | string | string  |    ✓     |         | UID of the receiver                                                                   |
+| `userID` | path   | int64  | int64   |    ✓     |         | ID of the user to assign permissions to                                               |
 | `body`   | body   | object | object  |    ✓     |         | JSON body with `permission` field: `View`, `Edit`, `Admin`, or `""` (empty to remove) |
 
 #### All responses
 
-| Code                                              | Status | Description        | Has headers | Schema                                                      |
-| ------------------------------------------------- | ------ | ------------------ | :---------: | ----------------------------------------------------------- |
-| [200](#route-set-user-receiver-permission-200)    | OK     | Permission updated |             | [schema](#route-set-user-receiver-permission-200-schema)    |
-| [400](#route-set-user-receiver-permission-400)    | Bad Request | Invalid request    |             | [schema](#route-set-user-receiver-permission-400-schema) |
-| [403](#route-set-user-receiver-permission-403)    | Forbidden | Permission denied  |             | [schema](#route-set-user-receiver-permission-403-schema)    |
+| Code                                           | Status      | Description        | Has headers | Schema                                                   |
+| ---------------------------------------------- | ----------- | ------------------ | :---------: | -------------------------------------------------------- |
+| [200](#route-set-user-receiver-permission-200) | OK          | Permission updated |             | [schema](#route-set-user-receiver-permission-200-schema) |
+| [400](#route-set-user-receiver-permission-400) | Bad Request | Invalid request    |             | [schema](#route-set-user-receiver-permission-400-schema) |
+| [403](#route-set-user-receiver-permission-403) | Forbidden   | Permission denied  |             | [schema](#route-set-user-receiver-permission-403-schema) |
 
 #### Responses
 
@@ -1074,19 +1075,19 @@ This endpoint requires Grafana Enterprise and the user must have the `receivers.
 
 #### Parameters
 
-| Name     | Source | Type   | Go type | Required | Default | Description                                                        |
-| -------- | ------ | ------ | ------- | :------: | ------- | ------------------------------------------------------------------ |
-| `uid`    | path   | string | string  |    ✓     |         | UID of the receiver                                                |
-| `teamID` | path   | int64  | int64   |    ✓     |         | ID of the team to assign permissions to                            |
+| Name     | Source | Type   | Go type | Required | Default | Description                                                                           |
+| -------- | ------ | ------ | ------- | :------: | ------- | ------------------------------------------------------------------------------------- |
+| `uid`    | path   | string | string  |    ✓     |         | UID of the receiver                                                                   |
+| `teamID` | path   | int64  | int64   |    ✓     |         | ID of the team to assign permissions to                                               |
 | `body`   | body   | object | object  |    ✓     |         | JSON body with `permission` field: `View`, `Edit`, `Admin`, or `""` (empty to remove) |
 
 #### All responses
 
-| Code                                              | Status | Description        | Has headers | Schema                                                      |
-| ------------------------------------------------- | ------ | ------------------ | :---------: | ----------------------------------------------------------- |
-| [200](#route-set-team-receiver-permission-200)    | OK     | Permission updated |             | [schema](#route-set-team-receiver-permission-200-schema)    |
-| [400](#route-set-team-receiver-permission-400)    | Bad Request | Invalid request    |             | [schema](#route-set-team-receiver-permission-400-schema) |
-| [403](#route-set-team-receiver-permission-403)    | Forbidden | Permission denied  |             | [schema](#route-set-team-receiver-permission-403-schema)    |
+| Code                                           | Status      | Description        | Has headers | Schema                                                   |
+| ---------------------------------------------- | ----------- | ------------------ | :---------: | -------------------------------------------------------- |
+| [200](#route-set-team-receiver-permission-200) | OK          | Permission updated |             | [schema](#route-set-team-receiver-permission-200-schema) |
+| [400](#route-set-team-receiver-permission-400) | Bad Request | Invalid request    |             | [schema](#route-set-team-receiver-permission-400-schema) |
+| [403](#route-set-team-receiver-permission-403) | Forbidden   | Permission denied  |             | [schema](#route-set-team-receiver-permission-403-schema) |
 
 #### Responses
 
@@ -1130,19 +1131,19 @@ This endpoint requires Grafana Enterprise and the user must have the `receivers.
 
 #### Parameters
 
-| Name          | Source | Type   | Go type | Required | Default | Description                                                        |
-| ------------- | ------ | ------ | ------- | :------: | ------- | ------------------------------------------------------------------ |
-| `uid`         | path   | string | string  |    ✓     |         | UID of the receiver                                                |
-| `builtInRole` | path   | string | string  |    ✓     |         | Built-in role name: `Viewer`, `Editor`, or `Admin`                 |
+| Name          | Source | Type   | Go type | Required | Default | Description                                                                           |
+| ------------- | ------ | ------ | ------- | :------: | ------- | ------------------------------------------------------------------------------------- |
+| `uid`         | path   | string | string  |    ✓     |         | UID of the receiver                                                                   |
+| `builtInRole` | path   | string | string  |    ✓     |         | Built-in role name: `Viewer`, `Editor`, or `Admin`                                    |
 | `body`        | body   | object | object  |    ✓     |         | JSON body with `permission` field: `View`, `Edit`, `Admin`, or `""` (empty to remove) |
 
 #### All responses
 
-| Code                                                 | Status | Description        | Has headers | Schema                                                         |
-| ---------------------------------------------------- | ------ | ------------------ | :---------: | -------------------------------------------------------------- |
-| [200](#route-set-builtin-receiver-permission-200)    | OK     | Permission updated |             | [schema](#route-set-builtin-receiver-permission-200-schema)    |
-| [400](#route-set-builtin-receiver-permission-400)    | Bad Request | Invalid request    |             | [schema](#route-set-builtin-receiver-permission-400-schema) |
-| [403](#route-set-builtin-receiver-permission-403)    | Forbidden | Permission denied  |             | [schema](#route-set-builtin-receiver-permission-403-schema)    |
+| Code                                              | Status      | Description        | Has headers | Schema                                                      |
+| ------------------------------------------------- | ----------- | ------------------ | :---------: | ----------------------------------------------------------- |
+| [200](#route-set-builtin-receiver-permission-200) | OK          | Permission updated |             | [schema](#route-set-builtin-receiver-permission-200-schema) |
+| [400](#route-set-builtin-receiver-permission-400) | Bad Request | Invalid request    |             | [schema](#route-set-builtin-receiver-permission-400-schema) |
+| [403](#route-set-builtin-receiver-permission-403) | Forbidden   | Permission denied  |             | [schema](#route-set-builtin-receiver-permission-403-schema) |
 
 #### Responses
 
@@ -2178,10 +2179,10 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 
 {{% responsive-table %}}
 
-| Name                  | Type   | Go type | Required | Default | Description                                                                                              | Example                       |
-| --------------------- | ------ | ------- | :------: | ------- | -------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| `metric`              | string | string  |    ✓     |         | The name of the new metric to create. Must be a valid Prometheus metric name with no whitespace.        | `http_requests:rate5m:sum`    |
-| `from`                | string | string  |    ✓     |         | The query reference ID (refId) to use as the source for the recorded metric.                             | `A`                           |
+| Name                    | Type   | Go type | Required | Default | Description                                                                                                          | Example                        |
+| ----------------------- | ------ | ------- | :------: | ------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `metric`                | string | string  |    ✓     |         | The name of the new metric to create. Must be a valid Prometheus metric name with no whitespace.                     | `http_requests:rate5m:sum`     |
+| `from`                  | string | string  |    ✓     |         | The query reference ID (refId) to use as the source for the recorded metric.                                         | `A`                            |
 | `target_datasource_uid` | string | string  |          |         | UID of the Prometheus-compatible data source to write results to. Falls back to configured default if not specified. | `my-prometheus-datasource-uid` |
 
 {{% /responsive-table %}}
