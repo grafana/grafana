@@ -132,7 +132,7 @@ describe('MuteTimingsSelector', () => {
     expect(screen.queryByText('imported-2')).not.toBeInTheDocument();
   });
 
-  it('should not filter out intervals with missing canUse annotation', async () => {
+  it('should filter out intervals with missing canUse annotation', async () => {
     const user = userEvent.setup();
     // Manually create intervals without canUse annotation
     const listMuteTimingsPath = listNamespacedTimeIntervalHandler().info.path;
@@ -179,6 +179,6 @@ describe('MuteTimingsSelector', () => {
 
     // Only interval with canUse: 'true' should be visible
     expect(await screen.findByText('interval-with-canuse')).toBeInTheDocument();
-    expect(await screen.findByText('interval-without-canuse')).toBeInTheDocument();
+    expect(screen.queryByText('interval-without-canuse')).not.toBeInTheDocument();
   });
 });

@@ -15,7 +15,7 @@ const mapTimeInterval = ({ name, time_intervals }: MuteTiming): SelectableValue<
 /** Check if a time interval can be used in routes and rules */
 const isUsableTimeInterval = (timing: MuteTiming): boolean => {
   const canUse = timing.metadata?.annotations?.[K8sAnnotations.CanUse];
-  return canUse !== 'false';
+  return canUse === 'true';
 };
 
 /** Provides a MultiSelect with available time intervals for the given alertmanager */
