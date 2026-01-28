@@ -92,7 +92,7 @@ Before you begin, ensure you have the following:
 - **GCP project:** A Google Cloud Platform project.
 - **GCP permissions:** Permissions to create a service account or configure GCE default service account settings in your GCP project.
 
-Grafana includes a built-in Google Cloud Monitoring data source plugin, so you don't need to install a plugin.
+Grafana includes built-in support for Google Cloud Monitoring, so you don't need to install a plugin.
 
 ## Set up GCP authentication
 

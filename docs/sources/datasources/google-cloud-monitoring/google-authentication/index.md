@@ -49,15 +49,15 @@ The Google Cloud Monitoring data source supports the following authentication me
 | --------------------------------- | --------------------------------------------------------------------------------------------------- |
 | **Google JWT File**               | Use when Grafana runs outside of GCP, or when you need explicit control over credentials.           |
 | **GCE Default Service Account**   | Use when Grafana runs on a Google Compute Engine VM with a configured service account.              |
-| **Service account impersonation** | Use when you need Grafana to act as a different service account than the one it authenticates with. |
+| **Service Account Impersonation** | Use when you need Grafana to act as a different service account than the one it authenticates with. |
 
-## Use a Google Service Account key file
+## Use a Google service account key file
 
 Use this method when Grafana runs outside of Google Cloud Platform, or when you need explicit control over which credentials are used.
 
 Each Grafana data source connects to one GCP project by default. To visualize data from multiple GCP projects, create one data source per project, or use service account impersonation.
 
-### Create a GCP Service Account and key file
+### Create a GCP service account and key file
 
 To create a service account and download its key file:
 
@@ -150,7 +150,7 @@ The service account being impersonated (the "target") must have:
 1. Grant the target service account the **Monitoring Viewer** role on the relevant projects.
 1. In Grafana, navigate to the Google Cloud Monitoring data source configuration page.
 1. Configure authentication using either **Google JWT File** or **GCE Default Service Account**.
-1. Enable **Service account impersonation**.
+1. Enable **Service Account Impersonation**.
 1. Enter the email address of the target service account.
 1. Click **Save & test** to verify the connection.
 

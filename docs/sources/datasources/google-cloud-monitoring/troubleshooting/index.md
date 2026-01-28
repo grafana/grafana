@@ -327,7 +327,7 @@ To capture detailed error information for troubleshooting:
 If you've tried the solutions above and still encounter issues:
 
 1. Check the [Grafana community forums](https://community.grafana.com/) for similar issues.
-1. Review the [Google Cloud Monitoring plugin GitHub issues](https://github.com/grafana/grafana/issues) for known bugs.
+1. Review [Google Cloud Monitoring issues on GitHub](https://github.com/grafana/grafana/issues) for known bugs.
 1. Consult the [Google Cloud Monitoring documentation](https://cloud.google.com/monitoring/docs) for service-specific guidance.
 1. Contact Grafana Support if you're an Enterprise, Cloud Pro, or Cloud Contracted user.
 1. When reporting issues, include:
