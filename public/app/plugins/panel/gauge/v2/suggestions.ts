@@ -11,7 +11,7 @@ import { t } from '@grafana/i18n';
 import { GraphFieldConfig } from '@grafana/ui';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
-import { Options } from './panelcfg.gen';
+import { Options } from '../panelcfg.gen';
 
 const withDefaults = (
   suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
@@ -32,9 +32,7 @@ const withDefaults = (
 
 const MAX_GAUGES = 10;
 
-export const radialBarSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, GraphFieldConfig> = (
-  dataSummary
-) => {
+export const gaugeSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, GraphFieldConfig> = (dataSummary) => {
   if (!dataSummary.hasData || !dataSummary.hasFieldType(FieldType.number)) {
     return;
   }
