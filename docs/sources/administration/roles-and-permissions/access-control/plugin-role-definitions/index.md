@@ -5,7 +5,7 @@ labels:
     - cloud
 menuTitle: Plugin role definitions
 title: Grafana Cloud app plugin role definitions
-weight: 75
+weight: 95
 refs:
   folder-access-control:
     - pattern: /docs/grafana/
