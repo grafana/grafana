@@ -55,7 +55,7 @@ You can start a playlist in four different view modes. View modes determine how 
 
 1. Click **Start \<playlist name\>**.
 
-The playlist displays each dashboard for the time specified in the **Interval** field, set when creating or editing a playlist. After a playlist starts, you can [start or stop it](#control-a-playlist) it using the controls at the top of your screen.
+The playlist displays each dashboard for the time specified in the **Interval** field, set when creating or editing a playlist. After a playlist starts, you can start or stop it it using the [controls](#playlist-controls) at the top of your screen.
 
 ### Playlist modes
 
