@@ -167,6 +167,7 @@ export function TableNG(props: TableNGProps) {
     return getDisplayName(firstNestedField);
   }, [data, hasNestedFrames]);
   const rows = useMemo(() => frameToRecords(data, nestedFramesFieldName), [data, nestedFramesFieldName]);
+  console.log('TableNG rows:', rows);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const {
@@ -347,7 +348,7 @@ export function TableNG(props: TableNGProps) {
 
   const buildNestedTableExpanderColumn = useCallback(
     (
-      nestedColumns: TableColumn[],
+      nestedColumnsMatrix: FromFieldsResult[],
       hasNestedHeaders: boolean,
       renderers: Renderers<TableRow, TableSummaryRow>
     ): TableColumn => ({
@@ -395,7 +396,7 @@ export function TableNG(props: TableNGProps) {
         }
 
         const expandedRecords = applySort(
-          frameToRecords(nestedData, nestedFramesFieldName),
+          frameToRecords(nestedData, nestedFramesFieldName, row.__index),
           nestedData.fields,
           sortColumns
         );
@@ -413,7 +414,7 @@ export function TableNG(props: TableNGProps) {
             className={clsx(styles.grid, styles.gridNested)}
             headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
             headerRowHeight={hasNestedHeaders ? TABLE.HEADER_HEIGHT : 0}
-            columns={nestedColumns}
+            columns={nestedColumnsMatrix[row.__index].columns}
             rows={expandedRecords}
             renderers={renderers}
           />
@@ -772,19 +773,19 @@ export function TableNG(props: TableNGProps) {
     // pre-calculate renderRow and expandedColumns based on the first nested frame's fields.
     const hasNestedHeaders = firstRowNestedData.meta?.custom?.noHeader !== true;
     const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
-    const { columns: nestedColumns, cellRootRenderers: nestedCellRootRenderers } = fromFields(
-      nestedVisibleFields,
-      nestedFieldWidths
-    );
+    const nestedColumnsMatrix = rows.filter((r) => !!r.data).map((r) => fromFields(r.data!.fields, nestedFieldWidths));
 
     const expanderCellRenderer: CellRootRenderer = (key, props) => <Cell key={key} {...props} />;
     result.cellRootRenderers[EXPANDED_COLUMN_KEY] = expanderCellRenderer;
 
     // If we have nested frames, we need to add a column for the row expansion
     result.columns.unshift(
-      buildNestedTableExpanderColumn(nestedColumns, hasNestedHeaders, {
+      buildNestedTableExpanderColumn(nestedColumnsMatrix, hasNestedHeaders, {
         renderRow,
-        renderCell: (key, props) => nestedCellRootRenderers[props.column.key](key, props),
+        renderCell: (key, props) => {
+          console.log(props.row);
+          return nestedColumnsMatrix[props.row.__parentIndex!].cellRootRenderers[props.column.key](key, props);
+        },
       })
     );
 
@@ -796,8 +797,8 @@ export function TableNG(props: TableNGProps) {
     firstRowNestedData,
     fromFields,
     nestedFieldWidths,
-    nestedVisibleFields,
     panelContext,
+    rows,
     visibleFields,
     widths,
   ]);
@@ -922,13 +923,8 @@ const renderRowFactory =
     const isExpanded = expandedRows.has(rowIdx);
 
     // Don't render non expanded child rows
-    if (row.__depth === 1 && !isExpanded) {
+    if (row.__depth > 0 && !isExpanded) {
       return null;
-    }
-
-    // Add aria-expanded to parent rows that have nested data
-    if (row.data) {
-      return <Row key={key} {...props} aria-expanded={isExpanded} />;
     }
 
     const handlers: Partial<typeof props> = {};
@@ -950,5 +946,5 @@ const renderRowFactory =
       }
     }
 
-    return <Row key={key} {...props} {...handlers} />;
+    return <Row key={key} {...props} {...handlers} aria-expanded={!!row.data && isExpanded} />;
   };
