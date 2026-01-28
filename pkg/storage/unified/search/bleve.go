@@ -474,7 +474,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	// Batch all the changes
-	idx := b.newBleveIndex(key, index, newIndexType, fields, allFields, standardSearchFields, selectableFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
+	idx := b.newBleveIndex(key, index, newIndexType, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
 
 	if build {
 		if b.indexMetrics != nil {
@@ -720,9 +720,8 @@ type bleveIndex struct {
 	// Subsequent update requests only trigger new update if minUpdateInterval has elapsed.
 	nextUpdateTime time.Time
 
-	standard         resource.SearchableDocumentFields
-	fields           resource.SearchableDocumentFields
-	selectableFields map[string]bool
+	standard resource.SearchableDocumentFields
+	fields   resource.SearchableDocumentFields
 
 	indexStorage string // memory or file, used when updating metrics
 
@@ -758,25 +757,15 @@ func (b *bleveBackend) newBleveIndex(
 	fields resource.SearchableDocumentFields,
 	allFields []*resourcepb.ResourceTableColumnDefinition,
 	standardSearchFields resource.SearchableDocumentFields,
-	selectableFields []string,
 	updaterFn resource.UpdateFn,
 	logger log.Logger,
 ) *bleveIndex {
-	var sfMap map[string]bool
-	if len(selectableFields) > 0 {
-		sfMap = make(map[string]bool, len(selectableFields))
-		for _, field := range selectableFields {
-			sfMap[field] = true
-		}
-	}
-
 	bi := &bleveIndex{
 		key:               key,
 		index:             index,
 		indexStorage:      newIndexType,
 		fields:            fields,
 		allFields:         allFields,
-		selectableFields:  sfMap,
 		standard:          standardSearchFields,
 		logger:            logger,
 		updaterFn:         updaterFn,
