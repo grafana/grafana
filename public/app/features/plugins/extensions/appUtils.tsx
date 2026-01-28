@@ -141,10 +141,7 @@ export function getAppPluginDependenciesSync(
  * @returns A list of app plugins that has to be loaded before core Grafana could finish the initialization.
  */
 export function getAppPluginsToAwaitSync(apps: AppPluginConfig[]): AppPluginConfig[] {
-  const pluginIds = [
-    // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
-    'cloud-home-app',
-  ];
+  const pluginIds: string[] = [];
 
   return apps.filter((app) => pluginIds.includes(app.id));
 }
