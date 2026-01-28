@@ -72,7 +72,8 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -118,7 +119,8 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454546",
@@ -169,7 +171,8 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -226,7 +229,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "",
+				"title": "Test Connection",
+				"type":  "",
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
@@ -248,7 +252,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "some-invalid-type",
+				"title": "Test Connection",
+				"type":  "some-invalid-type",
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
@@ -270,7 +275,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "git",
+				"title": "Test Connection",
+				"type":  "git",
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
@@ -292,7 +298,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "local",
+				"title": "Test Connection",
+				"type":  "local",
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
@@ -314,7 +321,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 			},
 			"secure": map[string]any{
 				"privateKey": map[string]any{
@@ -336,7 +344,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -357,7 +366,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -403,7 +413,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -495,7 +506,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "454545",
@@ -585,7 +597,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "bitbucket",
+				"title": "Test Connection",
+				"type":  "bitbucket",
 			},
 			"secure": map[string]any{
 				"clientSecret": map[string]any{
@@ -607,7 +620,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "bitbucket",
+				"title": "Test Connection",
+				"type":  "bitbucket",
 				"bitbucket": map[string]any{
 					"clientID": "123456",
 				},
@@ -627,7 +641,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "bitbucket",
+				"title": "Test Connection",
+				"type":  "bitbucket",
 				"bitbucket": map[string]any{
 					"clientID": "123456",
 				},
@@ -655,7 +670,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "gitlab",
+				"title": "Test Connection",
+				"type":  "gitlab",
 			},
 			"secure": map[string]any{
 				"clientSecret": map[string]any{
@@ -677,7 +693,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "gitlab",
+				"title": "Test Connection",
+				"type":  "gitlab",
 				"gitlab": map[string]any{
 					"clientID": "123456",
 				},
@@ -697,7 +714,8 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 				"namespace": "default",
 			},
 			"spec": map[string]any{
-				"type": "gitlab",
+				"title": "Test Connection",
+				"type":  "gitlab",
 				"gitlab": map[string]any{
 					"clientID": "123456",
 				},
@@ -744,7 +762,8 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "12345",
 					"installationID": "67890",
@@ -808,7 +827,8 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "12345",
 					"installationID": "67890",
@@ -870,7 +890,8 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "54321",
 					"installationID": "67890",
@@ -944,7 +965,8 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "12345",
 					"installationID": "67890",
@@ -1006,7 +1028,8 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "11111",
 					"installationID": "22222",
@@ -1111,7 +1134,8 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "999999999", // Invalid installation ID that doesn't exist
@@ -1216,7 +1240,8 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456", // This will mismatch with the returned app ID
 					"installationID": "789012",
@@ -1333,7 +1358,8 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "999999999", // Invalid installation ID
@@ -1471,7 +1497,8 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 			"namespace": "default",
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "789012",
@@ -1645,7 +1672,8 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 			"namespace": "default",
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "454545",
@@ -1741,7 +1769,8 @@ func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) 
 			"namespace": "default",
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "789012",
 				"installationID": "121212",
@@ -1791,7 +1820,8 @@ func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) 
 				"namespace": namespace,
 			},
 			"spec": map[string]any{
-				"type": "github",
+				"title": "Test Connection",
+				"type":  "github",
 				"github": map[string]any{
 					"appID":          "123456",
 					"installationID": "789012",
