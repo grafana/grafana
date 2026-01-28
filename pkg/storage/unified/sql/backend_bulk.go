@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -105,6 +106,11 @@ func (x *bulkLock) Active() bool {
 }
 
 func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
+	if b.disableStorageServices {
+		return &resourcepb.BulkResponse{
+			Error: resource.AsErrorResult(errors.New("storage backend is not enabled")),
+		}
+	}
 	err := b.bulkLock.Start(setting.Collection)
 	if err != nil {
 		return &resourcepb.BulkResponse{
