@@ -52,6 +52,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `useSessionStorageForRedirection`     | Use session storage for handling the redirection after login                                                                                                  | Yes                |
 | `pluginsSriChecks`                    | Enables SRI checks for plugin assets                                                                                                                          |                    |
 | `azureMonitorDisableLogLimit`         | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                                              |                    |
+| `enableSCIM`                          | Enables SCIM support for user and group management                                                                                                            | Yes                |
 | `alertingUIOptimizeReducer`           | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                                                      | Yes                |
 | `azureMonitorEnableUserAuth`          | Enables user auth for Azure Monitor datasource only                                                                                                           | Yes                |
 | `alertingNotificationsStepMode`       | Enables simplified step mode in the notifications section                                                                                                     | Yes                |
@@ -89,8 +90,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |
 | `sqlExpressions`                  | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
 | `queryLibrary`                    | Enables Saved queries (query library) feature                                                          |
+| `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                                 |
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                                     |
-| `enableSCIM`                      | Enables SCIM support for user and group management                                                     |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
 | `logsPanelControls`               | Enables a control component for the logs panel in Explore                                              |
