@@ -141,18 +141,16 @@ func isMigrationEnabled(def MigrationDefinition, cfg *setting.Cfg) (bool, error)
 func countResource(ctx context.Context, sqlStore db.DB, resourceName string) (int64, error) {
 	var count int64
 	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var err error
 		switch resourceName {
 		case setting.DashboardResource:
-			var err error
-			count, err = sess.Table("dashboard").Where("is_folder = ?", false).Count()
-			return err
+			count, err = sess.Table("dashboard").Where("is_folder = ? AND deleted IS NULL", false).Count()
 		case setting.FolderResource:
-			var err error
-			count, err = sess.Table("dashboard").Where("is_folder = ?", true).Count()
-			return err
+			count, err = sess.Table("dashboard").Where("is_folder = ? AND deleted IS NULL", true).Count()
 		default:
 			return fmt.Errorf("unknown resource: %s", resourceName)
 		}
+		return err
 	})
 	return count, err
 }
