@@ -219,6 +219,9 @@ function getStyles(theme: GrafanaTheme2) {
       // should be 1px more than row header + padding + margin
       // consist of lineHeight + paddingBlock + margin + 0.125 = 39px
       minHeight: theme.spacing(2.75 + 1 + 1 + 0.125),
+      '&:hover .dashboard-canvas-controls': {
+        opacity: 1,
+      },
     }),
     wrapperNotCollapsed: css({
       '> div:nth-child(2)': {

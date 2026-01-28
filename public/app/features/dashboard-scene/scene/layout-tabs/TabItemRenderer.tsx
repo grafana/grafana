@@ -156,5 +156,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // consist of paddingTop + 0.125 = 9px
     minHeight: theme.spacing(1 + 0.125),
     paddingTop: theme.spacing(1),
+    '&:hover .dashboard-canvas-controls': {
+      opacity: 1,
+    },
   }),
 });

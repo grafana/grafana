@@ -147,10 +147,8 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       flexGrow: 1,
       width: '100%',
-      ':hover': {
-        '.dashboard-canvas-controls': {
-          opacity: 1,
-        },
+      '&:hover > .dashboard-canvas-controls': {
+        opacity: 1,
       },
     }),
   };
