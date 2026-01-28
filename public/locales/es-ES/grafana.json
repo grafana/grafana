@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Eliminar",
       "duplicate": "Duplicar",
       "label-integration": "Integración",
       "label-notification-settings": "Ajustes de notificaciones",
       "label-section": "Ajustes de {{name}} opcionales",
       "test": "Prueba",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -962,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Esta ruta continuará coincidiendo con otras políticas"
     },
     "copy-to-clipboard": "Copiar «{{label}}» al portapapeles",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Las notificaciones se envían a",
@@ -1018,10 +1027,6 @@
       "show-details": "Mostrar detalles",
       "this-datasource-has-been-removed": "Se ha eliminado esta fuente de datos",
       "update-datasource": "Actualizar fuente de datos"
-    },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Grafana Incident no está instalado o no está configurado correctamente",
-      "declare-incident": "Declarar incidente"
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident no está instalado o no está configurado correctamente",
@@ -1643,6 +1648,11 @@
       },
       "yaml-error": "Error al analizar el archivo YAML: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Supervisa el estado de tu sistema",
       "monitor-status-system-tooltip": "La información de alerta proporciona dashboards predefinidos para supervisar los datos de alerta.",
@@ -1928,6 +1938,10 @@
     "namespace-and-group-filter": {
       "select-group": "Seleccionar grupo",
       "select-namespace": "Seleccionar espacio de nombres"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "¿Necesitas ayuda?"
@@ -2686,7 +2700,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
       "default-indicator": "",
@@ -3631,7 +3644,10 @@
       "move-modal-title": "Mover",
       "move-provisioned-folder": "",
       "moving": "Moviendo...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Se requiere el nombre de la carpeta.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Has seleccionado recursos aprovisionados y no aprovisionados. No se pueden procesar juntos. Selecciona solo recursos aprovisionados o solo recursos no aprovisionados e inténtalo de nuevo.",
       "selected-mix-resources-modal-title": "Tipos de recursos mixtos seleccionados"
     },
@@ -4550,6 +4566,14 @@
     "actions": {
       "open-settings": "Configuración"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Cerrar el widget «Añadir panel»",
       "tooltip-close-widget": "Cerrar widget"
@@ -4932,12 +4956,14 @@
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
+      "description": "",
       "import-a-dashboard-body": "Importa dashboards desde archivos o <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importar un tablero",
       "import-dashboard-button": "Importar panel de control",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5149,6 +5175,9 @@
       "title": {
         "deleted": "eliminado"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -5444,6 +5473,10 @@
       "loading-configuration": "Cargando configuración"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -10911,7 +10944,9 @@
     "invite-user": {
       "invite-button": "Invitar",
       "invite-new-user-button": "Invitar a un nuevo usuario",
-      "invite-tooltip": "Invitar a usuario"
+      "invite-tooltip": "Invitar a usuario",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Añadir a marcadores",
@@ -11849,10 +11884,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12041,6 +12073,8 @@
       "error-delete-all-repositories": "Error al eliminar todos los repositorios",
       "subtitle": "Ver y gestionar tus repositorios configurados",
       "success-all-repositories-deleted": "Se han eliminado todos los repositorios configurados",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Cómo empezar",
       "tab-getting-started-title": "Cómo empezar",
       "tab-repositories": "Repositorios",
@@ -12104,6 +12138,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12124,7 +12161,6 @@
       "jobs": "Trabajos"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Configuración",
       "source-code": "Código fuente"
     },
@@ -12304,6 +12340,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Terminar",
@@ -12316,15 +12357,32 @@
         "dismiss": "Seguir trabajando",
         "title": "¿Descartar la configuración del repositorio?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-help-instructions": "",
+      "github-app-help-title": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Elegir qué sincronizar",
+      "step-configure-repo": "",
       "step-connect": "Conectarse",
       "step-finish": "Elegir ajustes adicionales",
+      "step-github-app": "",
       "step-synchronize": "Sincronizar con un almacenamiento externo",
       "sync-description": "Sincroniza los recursos con un almacenamiento externo. Después de este paso único, todas las actualizaciones futuras se guardarán automáticamente en el repositorio y se aprovisionarán de nuevo en la instancia.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Elegir qué sincronizar",
+      "title-configure-repo": "",
       "title-connect": "Conectar a un almacenamiento externo",
       "title-finish": "Elegir ajustes adicionales",
+      "title-github-app": "",
       "title-synchronize": "Sincronizar con un almacenamiento externo"
     },
     "wizard-content": {
@@ -12542,6 +12600,22 @@
       "query-inspector": "Inspector de consultas",
       "query-tab-help-button-title-open-data-source-help": "Abrir ayuda de la fuente de datos",
       "title-data-source-help": "Ayuda de la fuente de datos"
+    }
+  },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "card-click": "",
+      "expression": "",
+      "queries-expressions": "",
+      "query": "",
+      "query-stack": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {
@@ -13303,6 +13377,7 @@
       "label-standard": "Estándar"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14913,6 +14988,9 @@
       "label-both": "Ambas",
       "label-lines": "Líneas",
       "label-points": "Puntos"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

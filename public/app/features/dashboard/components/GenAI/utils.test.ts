@@ -1,4 +1,6 @@
+import { AppPluginConfig } from '@grafana/data';
 import { llm } from '@grafana/llm';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
 
 import { DASHBOARD_SCHEMA_VERSION } from '../../state/DashboardMigrator';
 import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
@@ -14,16 +16,6 @@ jest.mock('@grafana/llm', () => ({
     accumulateContent: jest.fn(),
     health: jest.fn(),
     Model: { LARGE: 'large' },
-  },
-}));
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    apps: {
-      'grafana-llm-app': true,
-    },
   },
 }));
 
@@ -99,6 +91,10 @@ describe('getDashboardChanges', () => {
 });
 
 describe('isLLMPluginEnabled', () => {
+  beforeEach(() => {
+    setAppPluginMetas({ 'grafana-llm-app': {} as AppPluginConfig });
+  });
+
   it('should return false if LLM plugin is not enabled', async () => {
     // Mock llm.health to return false
     jest.mocked(llm.health).mockResolvedValue({ ok: false, configured: false });

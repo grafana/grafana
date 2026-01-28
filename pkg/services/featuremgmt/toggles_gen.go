@@ -43,10 +43,6 @@ const (
 	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
 
-	// FlagMysqlAnsiQuotes
-	// Use double quotes to escape keyword in a MySQL query
-	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
-
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
@@ -343,6 +339,10 @@ const (
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagSavedQueriesRBAC
+	// Enables Saved queries (query library) RBAC permissions
+	FlagSavedQueriesRBAC = "savedQueriesRBAC"
+
 	// FlagDashboardLibrary
 	// Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
 	FlagDashboardLibrary = "dashboardLibrary"
@@ -350,6 +350,10 @@ const (
 	// FlagSuggestedDashboards
 	// Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page
 	FlagSuggestedDashboards = "suggestedDashboards"
+
+	// FlagDashboardValidatorApp
+	// Enables dashboard validator app to run compatibility checks between a dashboard and data source
+	FlagDashboardValidatorApp = "dashboardValidatorApp"
 
 	// FlagDashboardTemplates
 	// Enables a flow to get started with a new dashboard from a template
@@ -674,6 +678,10 @@ const (
 	// Enables the UI to see imported Alertmanager configuration
 	FlagAlertingImportAlertmanagerUI = "alertingImportAlertmanagerUI"
 
+	// FlagAlertingDisableDMAinUI
+	// Disables the DMA feature in the UI
+	FlagAlertingDisableDMAinUI = "alertingDisableDMAinUI"
+
 	// FlagPreferLibraryPanelTitle
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
@@ -789,4 +797,8 @@ const (
 	// FlagKubernetesTeamBindings
 	// Enables search for team bindings in the app platform API
 	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
+
+	// FlagAlertingMultiplePolicies
+	// Enables the ability to create multiple alerting policies
+	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 )

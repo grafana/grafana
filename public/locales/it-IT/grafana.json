@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Elimina",
       "duplicate": "Duplica",
       "label-integration": "Integrazione",
       "label-notification-settings": "Impostazioni delle notifiche",
       "label-section": "Impostazioni {{name}} facoltative",
       "test": "Prova",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -962,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Questo percorso continuerà a corrispondere ad altri criteri"
     },
     "copy-to-clipboard": "Copia \"{{label}}\" negli appunti",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Le notifiche vengono inviate a",
@@ -1018,10 +1027,6 @@
       "show-details": "Mostra dettagli",
       "this-datasource-has-been-removed": "Questa origine dei dati è stata rimossa",
       "update-datasource": "Aggiorna origine dei dati"
-    },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Grafana Incident non è installata o non è configurata correttamente",
-      "declare-incident": "Dichiara incidente"
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident non è installata o non è configurata correttamente",
@@ -1643,6 +1648,11 @@
       },
       "yaml-error": "Impossibile analizzare il file YAML: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Monitora lo stato del tuo sistema",
       "monitor-status-system-tooltip": "Gli approfondimenti sugli avvisi forniscono dashboard pre-costruite per monitorare i dati degli avvisi.",
@@ -1928,6 +1938,10 @@
     "namespace-and-group-filter": {
       "select-group": "Seleziona gruppo",
       "select-namespace": "Seleziona spazio di nomi"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Hai bisogno di aiuto?"
@@ -2686,7 +2700,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
       "default-indicator": "",
@@ -3631,7 +3644,10 @@
       "move-modal-title": "Sposta",
       "move-provisioned-folder": "",
       "moving": "Spostamento in corso...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Il nome della cartella è obbligatorio.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Hai selezionato sia risorse sottoposte a provisioning che risorse non sottoposte a provisioning. Non possono essere elaborate insieme. Seleziona solo risorse sottoposte a provisioning o solo risorse non sottoposte a provisioning e riprova.",
       "selected-mix-resources-modal-title": "Tipi di risorse miste selezionati"
     },
@@ -4550,6 +4566,14 @@
     "actions": {
       "open-settings": "Impostazioni"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Chiudi il widget \"Aggiungi pannello\"",
       "tooltip-close-widget": "Chiudi widget"
@@ -4932,12 +4956,14 @@
       "add-visualization-body": "Seleziona un'origine dati, quindi esegui query e visualizza i dati con grafici, statistiche e tabelle o crea elenchi, markdown e altri widget.",
       "add-visualization-button": "Aggiungi visualizzazione",
       "add-visualization-header": "Avvia il tuo nuovo dashboard aggiungendo una visualizzazione",
+      "description": "",
       "import-a-dashboard-body": "Importa dashboard da file o <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importa un dashboard",
       "import-dashboard-button": "Importa dashboard",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5149,6 +5175,9 @@
       "title": {
         "deleted": "eliminato"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -5444,6 +5473,10 @@
       "loading-configuration": "Caricamento configurazione"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -10911,7 +10944,9 @@
     "invite-user": {
       "invite-button": "Invito",
       "invite-new-user-button": "Invita nuovo utente",
-      "invite-tooltip": "Invita utente"
+      "invite-tooltip": "Invita utente",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Aggiungi a Segnalibri",
@@ -11849,10 +11884,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12041,6 +12073,8 @@
       "error-delete-all-repositories": "Impossibile eliminare tutti i repository",
       "subtitle": "Visualizza e gestisci i repository configurati",
       "success-all-repositories-deleted": "Tutti i repository configurati sono stati eliminati",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Come iniziare",
       "tab-getting-started-title": "Come iniziare",
       "tab-repositories": "Repository",
@@ -12104,6 +12138,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12124,7 +12161,6 @@
       "jobs": "Attività"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Impostazioni",
       "source-code": "Codice sorgente"
     },
@@ -12304,6 +12340,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Fine",
@@ -12316,15 +12357,32 @@
         "dismiss": "Continua a lavorare",
         "title": "Annullare la configurazione del repository?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-help-instructions": "",
+      "github-app-help-title": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Scegli cosa sincronizzare",
+      "step-configure-repo": "",
       "step-connect": "Connetti",
       "step-finish": "Scegli impostazioni aggiuntive",
+      "step-github-app": "",
       "step-synchronize": "Sincronizza con la memoria esterna",
       "sync-description": "Sincronizza le risorse con la memoria esterna. Dopo questo passaggio una tantum, tutti gli aggiornamenti futuri verranno salvati automaticamente nel repository e ripristinati nell'istanza.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Scegli cosa sincronizzare",
+      "title-configure-repo": "",
       "title-connect": "Connetti a una memoria esterna",
       "title-finish": "Scegli impostazioni aggiuntive",
+      "title-github-app": "",
       "title-synchronize": "Sincronizza con la memoria esterna"
     },
     "wizard-content": {
@@ -12542,6 +12600,22 @@
       "query-inspector": "Ispettore query",
       "query-tab-help-button-title-open-data-source-help": "Apri la guida dell'origine dei dati",
       "title-data-source-help": "Guida dell'origine dei dati"
+    }
+  },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "card-click": "",
+      "expression": "",
+      "queries-expressions": "",
+      "query": "",
+      "query-stack": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {
@@ -13303,6 +13377,7 @@
       "label-standard": "Standard"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14913,6 +14988,9 @@
       "label-both": "Entrambi",
       "label-lines": "Linee",
       "label-points": "Punti"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

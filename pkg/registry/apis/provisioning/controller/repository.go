@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,6 +23,7 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -63,16 +65,18 @@ type RepositoryController struct {
 
 	repoFactory       repository.Factory
 	connectionFactory connection.Factory
-	healthChecker     *HealthChecker
+	healthChecker     *RepositoryHealthChecker
 	// To allow injection for testing.
 	processFn         func(item *queueItem) error
 	enqueueRepository func(obj any)
 	keyFunc           func(obj any) (string, error)
 
-	queue workqueue.TypedRateLimitingInterface[*queueItem]
+	queue          workqueue.TypedRateLimitingInterface[*queueItem]
+	resyncInterval time.Duration
 
-	registry prometheus.Registerer
-	tracer   tracing.Tracer
+	registry    prometheus.Registerer
+	tracer      tracing.Tracer
+	quotaGetter quotas.QuotaGetter
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -87,11 +91,13 @@ func NewRepositoryController(
 		jobs.Queue
 		jobs.Store
 	},
-	healthChecker *HealthChecker,
+	healthChecker *RepositoryHealthChecker,
 	statusPatcher StatusPatcher,
 	registry prometheus.Registerer,
 	tracer tracing.Tracer,
 	parallelOperations int,
+	resyncInterval time.Duration,
+	quotaGetter quotas.QuotaGetter,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 
@@ -115,10 +121,12 @@ func NewRepositoryController(
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
 		},
-		jobs:     jobs,
-		logger:   logging.DefaultLogger.With("logger", loggerName),
-		registry: registry,
-		tracer:   tracer,
+		jobs:           jobs,
+		logger:         logging.DefaultLogger.With("logger", loggerName),
+		registry:       registry,
+		tracer:         tracer,
+		resyncInterval: resyncInterval,
+		quotaGetter:    quotaGetter,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -540,6 +548,35 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return nil
 	}
 
+	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
+		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
+		if err != nil {
+			logger.Error("retrieving connection",
+				"connection", obj.Spec.Connection.Name,
+				"error", err,
+			)
+			return err
+		}
+
+		if rc.shouldGenerateTokenFromConnection(obj, c) {
+			logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
+
+			token, tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
+			if err != nil {
+				logger.Error("generating token for repository",
+					"connection", obj.Spec.Connection.Name,
+					"error", err,
+				)
+				return err
+			}
+
+			if len(tokenOps) > 0 {
+				patchOperations = append(patchOperations, tokenOps...)
+			}
+			obj.Secure.Token.Create = token
+		}
+	}
+
 	repo, err := rc.repoFactory.Build(ctx, obj)
 	if err != nil {
 		return fmt.Errorf("unable to create repository from configuration: %w", err)
@@ -558,40 +595,39 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Handle health checks using the health checker
-	_, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
+	testResults, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("update health status: %w", err)
-	}
-
-	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
-		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
-		if err != nil {
-			logger.Error("retrieving connection",
-				"connection", obj.Spec.Connection.Name,
-				"error", err,
-			)
-			return err
-		}
-
-		if rc.shouldGenerateTokenFromConnection(obj, healthStatus, c) {
-			logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
-
-			tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
-			if err != nil {
-				logger.Error("generating token for repository",
-					"connection", obj.Spec.Connection.Name,
-					"error", err,
-				)
-				return err
-			}
-
-			patchOperations = append(patchOperations, tokenOps...)
-		}
 	}
 
 	// Add health patch operations first
 	if len(healthPatchOps) > 0 {
 		patchOperations = append(patchOperations, healthPatchOps...)
+	}
+
+	// Update fieldErrors from test results - always update to ensure fieldErrors are cleared when there are no errors
+	if testResults != nil {
+		fieldErrors := testResults.Errors
+		if fieldErrors == nil {
+			fieldErrors = []provisioning.ErrorDetails{}
+		}
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/fieldErrors",
+			"value": fieldErrors,
+		})
+	}
+
+	// Set quota information from configuration (only if changed)
+	newQuota := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
+	// Only update if the quota has changed
+	if obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
+		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/quota",
+			"value": newQuota,
+		})
 	}
 
 	// determine the sync strategy and sync status to apply
@@ -648,15 +684,23 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 // We're going to work on this in https://github.com/grafana/git-ui-sync-project/issues/744.
 func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	obj *provisioning.Repository,
-	healthStatus provisioning.HealthStatus,
 	c *provisioning.Connection,
 ) bool {
-	// We should generate a token from the connection when
-	// - The repo is not healthy
-	// - The token is expired
+	// Should always generate a token if it does not exist.
+	if obj.Secure.Token.IsZero() {
+		return true
+	}
+
+	// We should regenerate a token from the connection when
+	// - The token has not been recently created
+	// - The token will expire before the next resync interval
 	// - The linked connection is healthy (which means it is able to generate valid tokens)
-	return !healthStatus.Healthy &&
-		time.UnixMilli(obj.Status.Token.Expiration).Before(time.Now()) &&
+	recentlyCreated := tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated))
+	shouldRefresh := shouldRefreshBeforeExpiration(
+		time.UnixMilli(obj.Status.Token.Expiration), rc.resyncInterval,
+	)
+	return !recentlyCreated &&
+		shouldRefresh &&
 		c.Status.Health.Healthy
 }
 
@@ -664,15 +708,15 @@ func (rc *RepositoryController) generateRepositoryToken(
 	ctx context.Context,
 	obj *provisioning.Repository,
 	c *provisioning.Connection,
-) ([]map[string]any, error) {
+) (common.RawSecureValue, []map[string]any, error) {
 	conn, err := rc.connectionFactory.Build(ctx, c)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create connection from configuration: %w", err)
+		return "", nil, fmt.Errorf("unable to create connection from configuration: %w", err)
 	}
 
 	token, err := conn.GenerateRepositoryToken(ctx, obj)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create token for repository: %w", err)
+		return "", nil, fmt.Errorf("unable to create token for repository: %w", err)
 	}
 
 	patchOperations := []map[string]any{
@@ -717,5 +761,5 @@ func (rc *RepositoryController) generateRepositoryToken(
 		})
 	}
 
-	return patchOperations, nil
+	return token.Token, patchOperations, nil
 }

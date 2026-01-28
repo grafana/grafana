@@ -70,7 +70,7 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 
 	parsed, err := r.parser.Parse(ctx, info)
 	if err != nil {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("Parse file failed: %v", err))
+		return nil, err
 	}
 
 	// Fail as we use the dry run for this response and it's not about updating the resource

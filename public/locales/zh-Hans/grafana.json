@@ -799,12 +799,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "删除",
       "duplicate": "复制",
       "label-integration": "集成",
       "label-notification-settings": "通知设置",
       "label-section": "可选{{name}}设置",
       "test": "测试",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -957,6 +959,13 @@
       "content-route-continue-matching-other-policies": "此路由将继续匹配其他策略"
     },
     "copy-to-clipboard": "将“{{label}}”复制到剪贴板",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "通知已发送到",
@@ -1013,10 +1022,6 @@
       "show-details": "显示详细信息",
       "this-datasource-has-been-removed": "此数据源已被移除",
       "update-datasource": "更新数据源"
-    },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Grafana Incident 未安装或未正确配置",
-      "declare-incident": "声明事件"
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident 未安装或未正确配置",
@@ -1638,6 +1643,11 @@
       },
       "yaml-error": "解析 YAML 文件失败：{{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "监控系统状态",
       "monitor-status-system-tooltip": "警报洞察提供预构建的数据面板，用于监控您的警报数据。",
@@ -1922,6 +1932,10 @@
     "namespace-and-group-filter": {
       "select-group": "选择组",
       "select-namespace": "选择命名空间"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "需要帮助吗？"
@@ -2675,7 +2689,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
       "default-indicator": "",
@@ -3620,7 +3633,10 @@
       "move-modal-title": "移动",
       "move-provisioned-folder": "",
       "moving": "正在移动...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "文件夹名称是必需项。",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "您已选择了已预置和未预置的资源。这些资源无法一起处理。请仅选择已预置的资源或未预置的资源，然后重试。",
       "selected-mix-resources-modal-title": "已选择混合资源类型"
     },
@@ -4531,6 +4547,14 @@
     "actions": {
       "open-settings": "设置"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "关闭“添加面板”小部件",
       "tooltip-close-widget": "关闭小部件"
@@ -4913,12 +4937,14 @@
       "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
       "add-visualization-button": "添加可视化",
       "add-visualization-header": "通过添加可视化开始您的新仪表板",
+      "description": "",
       "import-a-dashboard-body": "从文件或 <2>grafana.com</2> 导入数据面板。",
       "import-a-dashboard-header": "导入仪表板",
       "import-dashboard-button": "导入仪表板",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5130,6 +5156,9 @@
       "title": {
         "deleted": "已删除"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -5424,6 +5453,10 @@
       "loading-configuration": "载入配置"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -10867,7 +10900,9 @@
     "invite-user": {
       "invite-button": "邀请",
       "invite-new-user-button": "邀请新用户",
-      "invite-tooltip": "邀请用户"
+      "invite-tooltip": "邀请用户",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "添加到书签",
@@ -11799,10 +11834,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -11989,6 +12021,8 @@
       "error-delete-all-repositories": "删除所有存储库失败",
       "subtitle": "查看和管理已配置的存储库",
       "success-all-repositories-deleted": "已删除所有已配置的存储库",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "开始操作",
       "tab-getting-started-title": "开始操作",
       "tab-repositories": "存储库",
@@ -12052,6 +12086,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12072,7 +12109,6 @@
       "jobs": "作业"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "设置",
       "source-code": "源代码"
     },
@@ -12252,6 +12288,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "完成",
@@ -12264,15 +12305,32 @@
         "dismiss": "继续工作",
         "title": "丢弃存储库设置？"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-help-instructions": "",
+      "github-app-help-title": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "选择要同步的内容",
+      "step-configure-repo": "",
       "step-connect": "连接",
       "step-finish": "选择附加设置",
+      "step-github-app": "",
       "step-synchronize": "与外部存储同步",
       "sync-description": "将资源与外部存储同步。完成此一次性步骤后，所有后续更新都将自动保存到存储库中，并预配回实例。",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "选择要同步的内容",
+      "title-configure-repo": "",
       "title-connect": "连接到外部存储",
       "title-finish": "选择附加设置",
+      "title-github-app": "",
       "title-synchronize": "与外部存储同步"
     },
     "wizard-content": {
@@ -12489,6 +12547,22 @@
       "query-inspector": "查询检查器",
       "query-tab-help-button-title-open-data-source-help": "打开数据源帮助",
       "title-data-source-help": "数据源帮助"
+    }
+  },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "card-click": "",
+      "expression": "",
+      "queries-expressions": "",
+      "query": "",
+      "query-stack": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {
@@ -13247,6 +13321,7 @@
       "label-standard": "标准"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14856,6 +14931,9 @@
       "label-both": "两个",
       "label-lines": "线",
       "label-points": "点"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

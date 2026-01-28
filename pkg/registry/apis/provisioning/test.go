@@ -27,7 +27,7 @@ type StatusPatcherProvider interface {
 }
 
 type HealthCheckerProvider interface {
-	GetHealthChecker() *controller.HealthChecker
+	GetHealthChecker() *controller.RepositoryHealthChecker
 }
 
 type ConnectorDependencies interface {
@@ -48,6 +48,9 @@ type ConnectorDependencies interface {
 // This is important because users can test new configurations before actually
 // creating/updating them - we want to catch validation errors and conflicts during
 // testing, not just during actual create/update operations.
+// TODO: This connector is deprecated and will be removed when we deprecate the test endpoint
+// We should use fieldErrors from status instead.
+// TODO: Remove this connector when we deprecate the test endpoint
 type testConnector struct {
 	repoGetter       RepoGetter
 	repoFactory      repository.Factory
@@ -136,9 +139,9 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					cfg.SetNamespace(ns)
 				}
 
-				// The new repository should be connected to a Connection resource,
-				// i.e. we should be generating the token based on it.
-				if cfg.Secure.Token.IsZero() && cfg.Spec.Connection != nil && cfg.Spec.Connection.Name != "" {
+				// In case a connection is specified, we should try creating a new token with given info
+				// to check its validity
+				if cfg.Spec.Connection != nil && cfg.Spec.Connection.Name != "" {
 					// A connection must be there
 					c, err := s.connectionGetter.GetConnection(ctx, cfg.Spec.Connection.Name)
 					if err != nil {
@@ -172,7 +175,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 								Status:  metav1.StatusFailure,
 								Code:    http.StatusInternalServerError,
 								Reason:  "InternalServerError",
-								Message: "failed to generate repository token from connection",
+								Message: fmt.Sprintf("failed to generate repository token from connection: %v", err),
 							},
 						})
 						return

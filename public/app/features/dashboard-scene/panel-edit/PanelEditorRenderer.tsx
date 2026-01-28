@@ -150,6 +150,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
                   />
                 </div>
               )}
+              {/* @ts-expect-error - dataPane is a union type of PanelDataPane and PanelDataPaneNext */}
               {!splitterState.collapsed && <dataPane.Component model={dataPane} />}
             </div>
           </>
