@@ -69,17 +69,12 @@ export const InspectDataOptions = ({
       parts.push(getFrameDisplayName(data[selectedDataFrame as number]));
     }
 
-    if (options.withTransforms || options.withFieldConfig) {
-      if (options.withTransforms) {
-        parts.push(t('dashboard.inspect-data.panel-transforms', 'Panel transforms'));
-      }
+    if (options.withTransforms) {
+      parts.push(t('dashboard.inspect-data.panel-transforms', 'Panel transforms'));
+    }
 
-      if (options.withTransforms && options.withFieldConfig) {
-      }
-
-      if (options.withFieldConfig) {
-        parts.push(t('dashboard.inspect-data.formatted', 'Formatted data'));
-      }
+    if (options.withFieldConfig) {
+      parts.push(t('dashboard.inspect-data.formatted', 'Formatted data'));
     }
 
     return parts.join(', ');
