@@ -104,7 +104,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           }}
           onPointerUp={(evt) => {
             // If we selected and are clicking a button inside row header then don't de-select row
-            if (isSelected && evt.target instanceof Element && evt.target.closest('button')) {
+            if (evt.target instanceof Element && evt.target.closest('button')) {
               // Stop propagation otherwise dashboaed level onPointerDown will de-select row
               evt.stopPropagation();
               return;
