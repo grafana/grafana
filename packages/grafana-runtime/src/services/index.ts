@@ -42,3 +42,13 @@ export {
 export { setCurrentUser } from './user';
 export { RuntimeDataSource } from './RuntimeDataSource';
 export { ScopesContext, type ScopesContextValueState, type ScopesContextValue, useScopes } from './ScopesContext';
+export {
+  getDashboardMutationAPI,
+  setDashboardMutationAPI,
+  type DashboardMutationAPI,
+  type DashboardMutationInfo,
+  type MutationResult,
+  type MutationChange,
+  type MutationRequest,
+  type MCPToolDefinition,
+} from './dashboardMutationAPI';
