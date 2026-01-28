@@ -41,6 +41,8 @@ func KeyLabel(providerID ProviderID) string {
 	return fmt.Sprintf("%s@%s", time.Now().Format("2006-01-02"), providerID)
 }
 
+// DataKeyCache is a multi-tenant cache used by the EncryptionManager to avoid expensive database lookups during repeated secret decryption operations.
+// Per AppSec, data keys in this cache must be encrypted at-rest.
 type DataKeyCache interface {
 	GetById(namespace, id string) (DataKeyCacheEntry, bool)
 	GetByLabel(namespace, label string) (DataKeyCacheEntry, bool)
