@@ -26,6 +26,10 @@ func (n *NoopAggregatorConfigurator) SetCRDInformer(_ apiextensionsinformers.Cus
 	// noop
 }
 
+func (n *NoopAggregatorConfigurator) SetAuthorizerRegistration(_ AutoAuthorizerRegistration) {
+	// noop
+}
+
 func ProvideNoopAggregatorConfigurator() AggregatorRunner {
 	return &NoopAggregatorConfigurator{}
 }
