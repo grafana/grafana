@@ -247,6 +247,10 @@ const (
 	// Enables new dashboard layouts
 	FlagDashboardNewLayouts = "dashboardNewLayouts"
 
+	// FlagDashboardLayout
+	// Enables new dashboard layouts
+	FlagDashboardLayout = "dashboardLayout"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"

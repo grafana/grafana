@@ -1161,6 +1161,33 @@
     },
     {
       "metadata": {
+        "name": "dashboardFiltersOverview",
+        "resourceVersion": "1769520282387",
+        "creationTimestamp": "2026-01-27T13:24:42Z"
+      },
+      "spec": {
+        "description": "Enables the dashboard filters overview pane",
+        "stage": "preview",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardLayout",
+        "resourceVersion": "1769514339132",
+        "creationTimestamp": "2026-01-27T11:45:39Z"
+      },
+      "spec": {
+        "description": "Enables new dashboard layouts",
+        "stage": "preview",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardLevelTimeMacros",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-07-31T09:49:07Z",
@@ -1311,6 +1338,21 @@
         "description": "Enables dashboard validator app to run compatibility checks between a dashboard and data source",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardVariableOverview",
+        "resourceVersion": "1769514339132",
+        "creationTimestamp": "2026-01-27T11:45:39Z",
+        "deletionTimestamp": "2026-01-27T13:24:42Z"
+      },
+      "spec": {
+        "description": "Enables the dashboard variables overview pane",
+        "stage": "preview",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "false"
       }
     },

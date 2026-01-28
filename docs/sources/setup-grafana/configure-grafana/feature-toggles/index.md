@@ -84,6 +84,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `cloudWatchBatchQueries`          | Runs CloudWatch metrics queries as separate batches                                                    |
 | `dashboardNewLayouts`             | Enables new dashboard layouts                                                                          |
+| `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
+| `dashboardLayout`                 | Enables new dashboard layouts                                                                          |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                         |

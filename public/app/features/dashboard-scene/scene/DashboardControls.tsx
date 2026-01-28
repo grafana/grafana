@@ -32,6 +32,7 @@ import { DrilldownControls } from './DrilldownControls';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
+import { DashboardFiltersOverviewPaneToggle } from './dashboard-filters-overview/DashboardFiltersOverviewPaneToggle';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
@@ -194,6 +195,11 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
                 <DashboardControlActions dashboard={dashboard} />
               </div>
             )}
+            {config.featureToggles.dashboardFiltersOverview && (
+              <div className={styles.fixedControls}>
+                <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
+              </div>
+            )}
           </div>
         </div>
         {!hideVariableControls && (
@@ -226,6 +232,11 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {config.featureToggles.dashboardNewLayouts && (
           <div className={styles.fixedControls}>
             <DashboardControlActions dashboard={dashboard} />
+          </div>
+        )}
+        {config.featureToggles.dashboardFiltersOverview && (
+          <div className={styles.fixedControls}>
+            <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
           </div>
         )}
       </div>

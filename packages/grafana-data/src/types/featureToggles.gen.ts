@@ -429,6 +429,16 @@ export interface FeatureToggles {
   */
   perPanelFiltering?: boolean;
   /**
+  * Enables the dashboard filters overview pane
+  * @default false
+  */
+  dashboardFiltersOverview?: boolean;
+  /**
+  * Enables new dashboard layouts
+  * @default false
+  */
+  dashboardLayout?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   * @default false
   */
