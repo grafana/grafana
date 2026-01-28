@@ -308,7 +308,7 @@ func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester)
 }
 
 func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client, idTokenString string) (*azureClaims, error) {
-	rawJSON, err := s.SocialBase.validateIDTokenSignatureWithRetrievers(ctx, client, idTokenString, s.getAzureJWKSRetrievers())
+	rawJSON, err := s.validateIDTokenSignatureWithRetrievers(ctx, client, idTokenString, s.getAzureJWKSRetrievers())
 	if err != nil {
 		return nil, fmt.Errorf("error validating id token signature: %w", err)
 	}
