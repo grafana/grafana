@@ -26,7 +26,7 @@ This page explains how folder permissions work and how to use them effectively t
 
 - Folders can be nested up to **4 levels deep**
 - Folder names cannot contain underscores (`_`) or percent signs (`%`)
-{{< /admonition >}}
+  {{< /admonition >}}
 
 ## Default permissions for new folders
 
