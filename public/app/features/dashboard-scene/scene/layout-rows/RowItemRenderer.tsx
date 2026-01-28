@@ -26,7 +26,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
     model.state.conditionalRendering
   );
-  const { isSelected, onSelect, isSelectable } = useElementSelection(key);
+  const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
   const title = useInterpolatedTitle(model);
   const { rows } = model.getParentLayout().useState();
   const styles = useStyles2(getStyles);
@@ -127,7 +127,10 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               {...dragProvided.dragHandleProps}
             >
               <button
-                onClick={() => model.onCollapseToggle()}
+                onClick={(evt) => {
+                  model.onCollapseToggle();
+                  onClearSelection?.();
+                }}
                 className={cx(clearStyles, styles.rowTitleButton)}
                 aria-label={
                   isCollapsed
