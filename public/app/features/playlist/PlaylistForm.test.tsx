@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Playlist } from '../../api/clients/playlist/v0alpha1';
@@ -50,6 +50,10 @@ function getTestContext(playlist: Playlist = mockPlaylist) {
   return { onSubmitMock, playlist, rerender };
 }
 
+function rows() {
+  return screen.getAllByRole('row');
+}
+
 describe('PlaylistForm', () => {
   beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -87,11 +91,11 @@ describe('PlaylistForm', () => {
     it('then the item should be removed and other items should be correct', async () => {
       getTestContext();
 
-      expect(screen.getAllByRole('row')).toHaveLength(3);
-      await userEvent.click(
-        within(screen.getAllByRole('row')[2]).getByRole('button', { name: /delete playlist item/i })
-      );
-      expect(screen.getAllByRole('row')).toHaveLength(2);
+      expect(rows()).toHaveLength(3);
+      await userEvent.click(within(rows()[2]).getByRole('button', { name: /delete playlist item/i }));
+      await waitFor(() => {
+        expect(rows()).toHaveLength(2);
+      });
       expectCorrectRow({ index: 0, type: 'dashboard_by_uid', value: 'uid_1' });
       expectCorrectRow({ index: 1, type: 'dashboard_by_uid', value: 'uid_2' });
     });
@@ -161,7 +165,7 @@ interface ExpectCorrectRowArgs {
 }
 
 function expectCorrectRow({ index, type, value }: ExpectCorrectRowArgs) {
-  const row = within(screen.getAllByRole('row')[index]);
+  const row = within(rows()[index]);
   const cell = `Playlist item, ${type}, ${value}`;
   const regex = new RegExp(cell, 'i');
   expect(row.getByRole('cell', { name: regex })).toBeInTheDocument();
