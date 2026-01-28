@@ -53,7 +53,7 @@ const templateSrvStub = {
   replace: jest.fn((a: string, ...rest: unknown[]) => a),
 } as unknown as TemplateSrv;
 
-const testFrame: DataFrame = {
+const legacyTestFrame: DataFrame = {
   refId: 'A',
   fields: [
     {
@@ -99,12 +99,68 @@ const testFrame: DataFrame = {
   ],
   length: 2,
 };
+const dataplaneTestFrame = {
+  refId: 'A',
+  fields: [
+    {
+      name: 'timestamp',
+      type: FieldType.time,
+      config: {},
+      values: [1, 2],
+    },
+    {
+      name: 'body',
+      type: FieldType.string,
+      config: {},
+      values: ['hello', 'hello 2'],
+    },
+    {
+      name: 'labels',
+      type: FieldType.other,
+      config: {},
+      values: [
+        {
+          label: 'value',
+          label2: 'value ',
+        },
+        {
+          label: '',
+          label2: 'value2',
+          label3: ' ',
+        },
+      ],
+    },
+    {
+      name: 'id',
+      type: FieldType.string,
+      config: {},
+      values: ['id1', 'id2'],
+    },
+    {
+      name: 'labelTypes',
+      type: FieldType.other,
+      config: {},
+      values: [
+        {
+          label: 'I',
+          label2: 'S',
+        },
+        {
+          label: 'I',
+          label2: 'S',
+          label3: 'P',
+        },
+      ],
+    },
+  ],
+  length: 2,
+};
 
 const testLogsResponse: FetchResponse = {
   data: {
     results: {
       A: {
-        frames: [dataFrameToJSON(testFrame)],
+        frames: [dataFrameToJSON(legacyTestFrame)],
       },
     },
   },
@@ -334,6 +390,12 @@ describe('LokiDatasource', () => {
       expect(ds.interpolateQueryExpr("|~ `abc'$^*{}[]+?.()|`", variable)).toEqual("|~ `abc'$^*{}[]+?.()|`");
       expect(ds.interpolateQueryExpr("!= `abc'$^*{}[]+?.()|`", variable)).toEqual("!= `abc'$^*{}[]+?.()|`");
       expect(ds.interpolateQueryExpr("!~ `abc'$^*{}[]+?.()|`", variable)).toEqual("!~ `abc'$^*{}[]+?.()|`");
+    });
+
+    it('should return label type', () => {
+      expect(ds.getLabelTypeFromFrame('label', dataplaneTestFrame, 0)).toEqual('Indexed labels');
+      expect(ds.getLabelTypeFromFrame('label2', dataplaneTestFrame, 0)).toEqual('Parsed field');
+      expect(ds.getLabelTypeFromFrame('label3', dataplaneTestFrame, 1)).toEqual('Structured metadata');
     });
 
     it('should return a number', () => {

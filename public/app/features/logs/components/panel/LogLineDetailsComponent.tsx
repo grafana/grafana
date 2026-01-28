@@ -152,7 +152,6 @@ export const LogLineDetailsComponent = memo(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // This is not the right place for this, being lazy for PoC, needs to be moved up into the LogsPanel?
     useEffect(() => {
       const setDatasource = async () => {
         const datasource = await getDataSourceSrv().get(log.datasourceUid);
