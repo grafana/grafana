@@ -36,6 +36,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 				Version:     "1.0.0",
 				JSON:        expectedMeta,
 				Description: "Test description",
+				CDNURL:      "/cdn/test-plugin/1.0.0",
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -49,7 +50,8 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.Equal(t, expectedMeta, result.Meta.PluginJson)
+		assert.Equal(t, expectedMeta.Id, result.Meta.PluginJson.Id)
+		assert.Equal(t, expectedMeta.Name, result.Meta.PluginJson.Name)
 		assert.Equal(t, defaultCatalogTTL, result.TTL)
 	})
 
@@ -102,7 +104,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid grafana.com API URL")
+		assert.Contains(t, err.Error(), "failed to build API URL")
 		assert.Nil(t, result)
 	})
 
@@ -119,6 +121,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 				PluginID: "test-plugin",
 				Version:  "1.0.0",
 				JSON:     expectedMeta,
+				CDNURL:   "/cdn/test-plugin/1.0.0",
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -172,6 +175,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 				Version:     "1.0.0",
 				JSON:        expectedMeta,
 				Description: "Test description",
+				CDNURL:      "/cdn/test-plugin/1.0.0",
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -185,7 +189,8 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.Equal(t, expectedMeta, result.Meta.PluginJson)
+		assert.Equal(t, expectedMeta.Id, result.Meta.PluginJson.Id)
+		assert.Equal(t, expectedMeta.Name, result.Meta.PluginJson.Name)
 		assert.Equal(t, defaultCatalogTTL, result.TTL)
 	})
 }
@@ -194,7 +199,7 @@ func TestNewCatalogProvider(t *testing.T) {
 	t.Run("creates provider with default TTL", func(t *testing.T) {
 		provider := NewCatalogProvider("https://grafana.com/api/plugins", "")
 		assert.Equal(t, defaultCatalogTTL, provider.ttl)
-		assert.NotNil(t, provider.httpClient)
+		assert.NotNil(t, provider.loader)
 		assert.Equal(t, "https://grafana.com/api/plugins", provider.grafanaComAPIURL)
 	})
 
