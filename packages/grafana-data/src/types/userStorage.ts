@@ -7,12 +7,11 @@ export interface UserStorage {
   getItem(key: string): Promise<string | null>;
   /**
    * Sets an item in the backend user storage or local storage if not enabled.
-   * If value is null, the item is deleted.
    * @param key - The key of the item to set.
-   * @param value - The value of the item to set, or null to delete the item.
-   * @returns A promise that resolves when the item is set or deleted.
+   * @param value - The value of the item to set.
+   * @returns A promise that resolves when the item is set.
    */
-  setItem(key: string, value: string | null): Promise<void>;
+  setItem(key: string, value: string): Promise<void>;
   /**
    * Deletes an item from the backend user storage or local storage if not enabled.
    * @param key - The key of the item to delete.

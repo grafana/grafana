@@ -400,13 +400,6 @@ describe('userStorage', () => {
       expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
     });
 
-    it('uses localStorage delete via setItem(key, null) if the user is not logged in', async () => {
-      config.bootData.user.isSignedIn = false;
-      const storage = usePluginUserStorage();
-      await storage.setItem('key', null);
-      expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
-    });
-
     it('sends PATCH with null value to delete from backend', async () => {
       // Initial GET returns existing data
       request.mockReturnValueOnce(

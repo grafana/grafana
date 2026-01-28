@@ -218,7 +218,15 @@ export class UserStorage implements UserStorageType {
     }
   }
 
-  async setItem(key: string, value: string | null): Promise<void> {
+  async setItem(key: string, value: string): Promise<void> {
+    return this.setOrDeleteItem(key, value);
+  }
+
+  async deleteItem(key: string): Promise<void> {
+    return this.setOrDeleteItem(key, null);
+  }
+
+  private async setOrDeleteItem(key: string, value: string | null): Promise<void> {
     if (!this.canUseUserStorage) {
       this.setLocalStorage(key, value);
       return;
@@ -288,10 +296,6 @@ export class UserStorage implements UserStorageType {
     } finally {
       releaseLock();
     }
-  }
-
-  async deleteItem(key: string): Promise<void> {
-    return this.setItem(key, null);
   }
 }
 
