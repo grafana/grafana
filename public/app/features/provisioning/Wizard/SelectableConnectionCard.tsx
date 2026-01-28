@@ -27,7 +27,7 @@ export function SelectableConnectionCard({ connection, isSelected, onClick }: Pr
       <Card.Heading>
         <Stack gap={2} direction="row" alignItems="center">
           <Text variant="h4">{name}</Text>
-          {status?.state && <ConnectionStatusBadge status={status} />}
+          <ConnectionStatusBadge status={status} />
         </Stack>
       </Card.Heading>
 

@@ -339,6 +339,19 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("should update sync interval", func(t *testing.T) {
+		r := helper.RenderObject(t, "testdata/local-readonly.json.tmpl", map[string]any{
+			"Name":                "valid-repo-testinterval",
+			"SyncEnabled":         true,
+			"SyncIntervalSeconds": 5,
+		})
+		created, err := helper.Repositories.Resource.Create(ctx, r, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		createdRepo := unstructuredToRepository(t, created)
+		require.Equal(t, int64(10), createdRepo.Spec.Sync.IntervalSeconds, "interval should be updated with default value")
+	})
 }
 
 func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
@@ -1111,7 +1124,8 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 			"namespace": "default",
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "789012",
@@ -1210,7 +1224,8 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 			"namespace": namespace,
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "789012",

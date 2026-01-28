@@ -35,6 +35,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/
+  plugin-role-definitions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plugin-role-definitions/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plugin-role-definitions/
 ---
 
 # RBAC for app plugins
@@ -63,6 +68,8 @@ Plugins with fine-grained RBAC support allow you to manage access to plugin feat
 For instance, you can grant admin access to an app plugin to a user with Viewer organization role. Or restrict the Editor organization role from being able to edit plugin resources.
 
 Please refer to plugin documentation to see what RBAC permissions the plugin has and what default access the plugin grants to Viewer, Editor and Admin organization roles.
+
+For a complete list of all Grafana Cloud app plugin roles and their permissions, refer to [Grafana Cloud app plugin role definitions](ref:plugin-role-definitions).
 
 The following list contains app plugins that have fine-grained RBAC support.
 

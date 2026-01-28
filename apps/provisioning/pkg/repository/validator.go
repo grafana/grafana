@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,22 +24,15 @@ type Validator interface {
 // RepositoryValidator implements Validator for basic repository configuration checks.
 type RepositoryValidator struct {
 	allowImageRendering bool
-	minSyncInterval     time.Duration
 	repoFactory         Factory
 }
 
 // FIXME: The separation of concerns here is not ideal. RepositoryValidator should not depend on Factory,
 // but we need to call Factory.Validate() for structural validation (URL, branch, path, etc.) before
 // doing configuration validation. This coupling was introduced to avoid more extensive refactoring.
-func NewValidator(minSyncInterval time.Duration, allowImageRendering bool, repoFactory Factory) Validator {
-	// do not allow minsync interval to be less than 10
-	if minSyncInterval <= 10*time.Second {
-		minSyncInterval = 10 * time.Second
-	}
-
+func NewValidator(allowImageRendering bool, repoFactory Factory) Validator {
 	return &RepositoryValidator{
 		allowImageRendering: allowImageRendering,
-		minSyncInterval:     minSyncInterval,
 		repoFactory:         repoFactory,
 	}
 }
@@ -62,11 +54,6 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 		if cfg.Spec.Sync.Target == "" {
 			list = append(list, field.Required(field.NewPath("spec", "sync", "target"),
 				"The target type is required when sync is enabled"))
-		}
-
-		if cfg.Spec.Sync.IntervalSeconds < int64(v.minSyncInterval.Seconds()) {
-			list = append(list, field.Invalid(field.NewPath("spec", "sync", "intervalSeconds"),
-				cfg.Spec.Sync.IntervalSeconds, fmt.Sprintf("Interval must be at least %d seconds", int64(v.minSyncInterval.Seconds()))))
 		}
 	}
 

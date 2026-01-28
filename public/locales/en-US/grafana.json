@@ -1028,10 +1028,6 @@
       "this-datasource-has-been-removed": "This datasource has been removed",
       "update-datasource": "Update datasource"
     },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
-      "declare-incident": "Declare Incident"
-    },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
       "label-declare-incident": "Declare incident"
@@ -2704,7 +2700,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
-      "apply-tooltip": "Apply search \"{{name}}\"",
       "button-label": "Saved searches",
       "cancel": "Cancel",
       "default-indicator": "Default search",
@@ -10038,6 +10033,8 @@
       "no-more-logs-available": "No more logs available.",
       "older-logs": "older",
       "open-in-split-view": "Open in split view",
+      "show-original-log": "Show original logs",
+      "show-original-log-tooltip": "Clear displayed fields and show the original log line message",
       "time-window-label": "Context time window",
       "time-window-tooltip": "Amount of time before and after the referenced log",
       "title-log-context": "Log context",
@@ -11861,6 +11858,7 @@
       "back-to-connections": "Back to connections",
       "button-save": "Save",
       "button-saving": "Saving...",
+      "default-title": "GitHub Connection",
       "description-app-id": "The ID of your GitHub App",
       "description-installation-id": "The installation ID of your GitHub App",
       "description-private-key": "The private key for your GitHub App in PEM format",
@@ -11893,6 +11891,7 @@
       "search-placeholder": "Search connections",
       "status-connected": "Connected",
       "status-disconnected": "Disconnected",
+      "status-pending": "Pending",
       "status-unknown": "Unknown",
       "view": "View"
     },
@@ -12356,6 +12355,7 @@
       "button-start": "Begin synchronization",
       "check-status-button": "Check repository status",
       "check-status-message": "Repository connecting, synchronize will be ready soon.",
+      "default-connection-title": "GitHub Connection",
       "discard-modal": {
         "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
         "confirm": "Yes, discard",
@@ -12610,7 +12610,11 @@
   "query-editor-next": {
     "detail-placeholder": "Query/Transform detail view goes here",
     "sidebar": {
-      "placeholder": "Sidebar content placeholder",
+      "card-click": "Select query {{refId}}",
+      "expression": "Expression",
+      "queries-expressions": "Queries & Expressions",
+      "query": "Query",
+      "query-stack": "Query Stack",
       "toggle-size": "Toggle sidebar size"
     }
   },
