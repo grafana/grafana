@@ -392,11 +392,11 @@ describe('userStorage', () => {
     });
   });
 
-  describe('deleteItem', () => {
+  describe('removeItem', () => {
     it('uses localStorage delete if the user is not logged in', async () => {
       config.bootData.user.isSignedIn = false;
       const storage = usePluginUserStorage();
-      await storage.deleteItem('key');
+      await storage.removeItem('key');
       expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
     });
 
@@ -412,7 +412,7 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
 
       const storage = usePluginUserStorage();
-      await storage.deleteItem('key');
+      await storage.removeItem('key');
 
       expect(request).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -439,7 +439,7 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
 
       const storage = usePluginUserStorage();
-      await storage.deleteItem('key');
+      await storage.removeItem('key');
 
       // Verify the key was removed from cache
       const deletedValue = await storage.getItem('key');
@@ -453,7 +453,7 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
 
       const storage = usePluginUserStorage();
-      await storage.deleteItem('key');
+      await storage.removeItem('key');
 
       // Should only make the GET request, no PATCH since storage doesn't exist
       expect(request).toHaveBeenCalledTimes(1);
@@ -476,7 +476,7 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.reject({ status: 500 } as FetchError));
 
       const storage = usePluginUserStorage();
-      await storage.deleteItem('key');
+      await storage.removeItem('key');
 
       expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
     });
@@ -486,7 +486,7 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.reject({ status: 500 } as FetchError));
 
       const storage = usePluginUserStorage();
-      await storage.deleteItem('key');
+      await storage.removeItem('key');
 
       expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
     });

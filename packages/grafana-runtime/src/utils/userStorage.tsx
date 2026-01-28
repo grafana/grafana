@@ -222,7 +222,7 @@ export class UserStorage implements UserStorageType {
     return this.setOrDeleteItem(key, value);
   }
 
-  async deleteItem(key: string): Promise<void> {
+  async removeItem(key: string): Promise<void> {
     return this.setOrDeleteItem(key, null);
   }
 
