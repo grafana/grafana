@@ -22,7 +22,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	apimodel "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -2075,13 +2074,7 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
 	// These tests are focused on exports using featuremgmt.FlagAlertingMultiplePolicies, but are using the `user-defined` for now.
 	env := createTestEnv(t, testConfig) // testConfig should be unused here, we're overriding the policy service.
-
 	sut := createProvisioningSrvSutFromEnv(t, &env)
-
-	policies := []string{apimodel.UserDefinedRoutingTreeName}
-	for policy := range policy_exports.AllRoutes() {
-		policies = append(policies, policy)
-	}
 
 	for policyName, route := range policy_exports.AllRoutes() {
 		t.Run(fmt.Sprintf("policy=%s", policyName), func(t *testing.T) {
