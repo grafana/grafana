@@ -17,7 +17,9 @@
     "./package.json": "./package.json",
     ".": {
       "@grafana-app/source": "./src/index.ts",
-      "types": "./dist/types/index.d.ts"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/raw/index.cjs"
     },
     "./raw/composable/*/panelcfg": {
       "@grafana-app/source": "./src/raw/composable/*/x/*panelcfg_types.gen.d",
