@@ -77,13 +77,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "logRequestsInstrumentedAsUnknown",
-			Description: "Logs the path for requests that are instrumented as unknown",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendGroup,
-			Expression:  "false",
-		},
-		{
 			Name:        "grpcServer",
 			Description: "Run the GRPC server",
 			Stage:       FeatureStagePublicPreview,
@@ -102,13 +95,6 @@ var (
 			Description: "Show warnings when dashboards do not validate against the schema",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "mysqlAnsiQuotes",
-			Description: "Use double quotes to escape keyword in a MySQL query",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
 		},
 		{
@@ -149,6 +135,16 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaPartnerPluginsSquad,
 			Expression:   "true", // enabled by default
+		},
+		{
+			Name:            "liveAPIServer",
+			Description:     "Registers a live apiserver",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
 		},
 		{
 			Name:         "starsFromAPIServer",
@@ -361,24 +357,6 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 			Expression:  "false",
-		},
-		{
-			Name:            "enableNativeHTTPHistogram",
-			Description:     "Enables native HTTP Histograms",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           grafanaBackendServicesSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-		},
-		{
-			Name:            "disableClassicHTTPHistogram",
-			Description:     "Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           grafanaBackendServicesSquad,
-			RequiresRestart: true,
-			Expression:      "false",
 		},
 		{
 			Name:            "kubernetesSnapshots",
@@ -924,6 +902,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "savedQueriesRBAC",
+			Description:  "Enables Saved queries (query library) RBAC permissions",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
+		{
 			Name:         "dashboardLibrary",
 			Description:  "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:        FeatureStageExperimental,
@@ -934,6 +920,14 @@ var (
 		{
 			Name:         "suggestedDashboards",
 			Description:  "Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
+		{
+			Name:         "dashboardValidatorApp",
+			Description:  "Enables dashboard validator app to run compatibility checks between a dashboard and data source",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: false,
@@ -1263,9 +1257,9 @@ var (
 		{
 			Name:        "enableSCIM",
 			Description: "Enables SCIM support for user and group management",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       identityAccessTeam,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:         "crashDetection",
@@ -1566,7 +1560,7 @@ var (
 		{
 			Name:        "localeFormatPreference",
 			Description: "Specifies the locale so the correct format for numbers and dates can be shown",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageDeprecated, // not continuing the work for now, will be removed
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 		},
@@ -1732,6 +1726,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesAuthzTeamLBACRuleApi",
+			Description:  "Registers AuthZ TeamLBACRule /apis endpoint",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:         "kubernetesAuthzRoleBindingsApi",
 			Description:  "Registers AuthZ Role Bindings /apis endpoint",
 			Stage:        FeatureStageExperimental,
@@ -1814,6 +1816,14 @@ var (
 		{
 			Name:         "alertingImportAlertmanagerUI",
 			Description:  "Enables the UI to see imported Alertmanager configuration",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingDisableDMAinUI",
+			Description:  "Disables the DMA feature in the UI",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -2197,6 +2207,7 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 			FrontendOnly: true,
 			Expression:   "false",
+			HideFromDocs: true,
 		},
 		{
 			Name:         "multiPropsVariables",
@@ -2239,6 +2250,30 @@ var (
 			RequiresRestart: true,
 			HideFromDocs:    true,
 			Expression:      "false",
+		},
+		{
+			Name:         "queryWithAssistant",
+			Description:  "Enables the Query with Assistant button in the query editor",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaOSSBigTent,
+			Expression:   "false",
+		},
+		{
+			Name:         "queryEditorNext",
+			Description:  "Enables next generation query editor experience",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDataProSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesTeamBindings",
+			Description:  "Enables search for team bindings in the app platform API",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
 		},
 	}
 )

@@ -59,11 +59,6 @@ export interface FeatureToggles {
   */
   canvasPanelNesting?: boolean;
   /**
-  * Logs the path for requests that are instrumented as unknown
-  * @default false
-  */
-  logRequestsInstrumentedAsUnknown?: boolean;
-  /**
   * Run the GRPC server
   * @default false
   */
@@ -78,11 +73,6 @@ export interface FeatureToggles {
   * @default false
   */
   showDashboardValidationWarnings?: boolean;
-  /**
-  * Use double quotes to escape keyword in a MySQL query
-  * @default false
-  */
-  mysqlAnsiQuotes?: boolean;
   /**
   * Rule backtesting API for alerting
   * @default false
@@ -108,6 +98,11 @@ export interface FeatureToggles {
   * @default true
   */
   influxdbBackendMigration?: boolean;
+  /**
+  * Registers a live apiserver
+  * @default false
+  */
+  liveAPIServer?: boolean;
   /**
   * populate star status from apiserver
   * @default false
@@ -243,16 +238,6 @@ export interface FeatureToggles {
   * @default false
   */
   externalServiceAccounts?: boolean;
-  /**
-  * Enables native HTTP Histograms
-  * @default false
-  */
-  enableNativeHTTPHistogram?: boolean;
-  /**
-  * Disables classic HTTP Histogram (use with enableNativeHTTPHistogram)
-  * @default false
-  */
-  disableClassicHTTPHistogram?: boolean;
   /**
   * Routes snapshot requests from /api to the /apis endpoint
   * @default false
@@ -594,6 +579,11 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
+  * Enables Saved queries (query library) RBAC permissions
+  * @default false
+  */
+  savedQueriesRBAC?: boolean;
+  /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
   */
@@ -603,6 +593,11 @@ export interface FeatureToggles {
   * @default false
   */
   suggestedDashboards?: boolean;
+  /**
+  * Enables dashboard validator app to run compatibility checks between a dashboard and data source
+  * @default false
+  */
+  dashboardValidatorApp?: boolean;
   /**
   * Enables a flow to get started with a new dashboard from a template
   * @default false
@@ -811,7 +806,7 @@ export interface FeatureToggles {
   enableExtensionsAdminPage?: boolean;
   /**
   * Enables SCIM support for user and group management
-  * @default false
+  * @default true
   */
   enableSCIM?: boolean;
   /**
@@ -1001,6 +996,7 @@ export interface FeatureToggles {
   azureMonitorLogsBuilderEditor?: boolean;
   /**
   * Specifies the locale so the correct format for numbers and dates can be shown
+  * @deprecated
   * @default false
   */
   localeFormatPreference?: boolean;
@@ -1106,6 +1102,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthzRolesApi?: boolean;
   /**
+  * Registers AuthZ TeamLBACRule /apis endpoint
+  * @default false
+  */
+  kubernetesAuthzTeamLBACRuleApi?: boolean;
+  /**
   * Registers AuthZ Role Bindings /apis endpoint
   * @default false
   */
@@ -1160,6 +1161,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingImportAlertmanagerUI?: boolean;
+  /**
+  * Disables the DMA feature in the UI
+  * @default false
+  */
+  alertingDisableDMAinUI?: boolean;
   /**
   * Enables image sharing functionality for dashboards
   * @default true
@@ -1420,4 +1426,19 @@ export interface FeatureToggles {
   * @default false
   */
   alertingSyncDispatchTimer?: boolean;
+  /**
+  * Enables the Query with Assistant button in the query editor
+  * @default false
+  */
+  queryWithAssistant?: boolean;
+  /**
+  * Enables next generation query editor experience
+  * @default false
+  */
+  queryEditorNext?: boolean;
+  /**
+  * Enables search for team bindings in the app platform API
+  * @default false
+  */
+  kubernetesTeamBindings?: boolean;
 }

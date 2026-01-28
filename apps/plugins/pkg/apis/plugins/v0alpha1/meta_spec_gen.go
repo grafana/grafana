@@ -151,7 +151,7 @@ type MetaRoute struct {
 	ReqRole     *string `json:"reqRole,omitempty"`
 	ReqAction   *string `json:"reqAction,omitempty"`
 	// +listType=atomic
-	Headers      []string                       `json:"headers,omitempty"`
+	Headers      []MetaV0alpha1RouteHeaders     `json:"headers,omitempty"`
 	Body         map[string]interface{}         `json:"body,omitempty"`
 	TokenAuth    *MetaV0alpha1RouteTokenAuth    `json:"tokenAuth,omitempty"`
 	JwtTokenAuth *MetaV0alpha1RouteJwtTokenAuth `json:"jwtTokenAuth,omitempty"`
@@ -293,6 +293,17 @@ type MetaV0alpha1DependenciesExtensions struct {
 // NewMetaV0alpha1DependenciesExtensions creates a new MetaV0alpha1DependenciesExtensions object.
 func NewMetaV0alpha1DependenciesExtensions() *MetaV0alpha1DependenciesExtensions {
 	return &MetaV0alpha1DependenciesExtensions{}
+}
+
+// +k8s:openapi-gen=true
+type MetaV0alpha1RouteHeaders struct {
+	Name    string `json:"name"`
+	Content string `json:"content"`
+}
+
+// NewMetaV0alpha1RouteHeaders creates a new MetaV0alpha1RouteHeaders object.
+func NewMetaV0alpha1RouteHeaders() *MetaV0alpha1RouteHeaders {
+	return &MetaV0alpha1RouteHeaders{}
 }
 
 // +k8s:openapi-gen=true

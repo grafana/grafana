@@ -6,23 +6,39 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/google/go-github/v70/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // API errors that we need to convey after parsing real GH errors (or faking them).
 var (
 	//lint:ignore ST1005 this is not punctuation
+	ErrAuthentication = apierrors.NewUnauthorized("authentication failed")
+	//lint:ignore ST1005 this is not punctuation
 	ErrServiceUnavailable = apierrors.NewServiceUnavailable("github is unavailable")
+	//lint:ignore ST1005 this is not punctuation
+	ErrNotFound = apierrors.NewNotFound(schema.GroupResource{Resource: "github"}, "resource not found")
 )
 
 //go:generate mockery --name Client --structname MockClient --inpackage --filename client_mock.go --with-expecter
 type Client interface {
-	// Apps and installations
 	GetApp(ctx context.Context) (App, error)
 	GetAppInstallation(ctx context.Context, installationID string) (AppInstallation, error)
+	ListInstallationRepositories(ctx context.Context) ([]Repository, error)
 	CreateInstallationAccessToken(ctx context.Context, installationID string, repo string) (InstallationToken, error)
+}
+
+// Repository represents a GitHub repository accessible through an installation.
+type Repository struct {
+	// Name of the repository
+	Name string
+	// Owner is the user or organization that owns the repository
+	Owner string
+	// URL of the repository (HTML URL)
+	URL string
 }
 
 // App represents a Github App.
@@ -48,7 +64,7 @@ type InstallationToken struct {
 	// Token is the access token value.
 	Token string
 	// ExpiresAt is the expiration time of the token.
-	ExpiresAt string
+	ExpiresAt time.Time
 }
 
 type githubClient struct {
@@ -56,7 +72,7 @@ type githubClient struct {
 }
 
 func NewClient(client *github.Client) Client {
-	return &githubClient{client}
+	return &githubClient{gh: client}
 }
 
 // GetApp gets the app by using the given token.
@@ -64,8 +80,15 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 	app, _, err := r.gh.Apps.Get(ctx, "")
 	if err != nil {
 		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return App{}, ErrServiceUnavailable
+		if errors.As(err, &ghErr) && ghErr.Response != nil {
+			switch ghErr.Response.StatusCode {
+			case http.StatusUnauthorized, http.StatusForbidden:
+				return App{}, ErrAuthentication
+			case http.StatusNotFound:
+				return App{}, ErrNotFound
+			case http.StatusServiceUnavailable:
+				return App{}, ErrServiceUnavailable
+			}
 		}
 		return App{}, err
 	}
@@ -87,8 +110,15 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 	installation, _, err := r.gh.Apps.GetInstallation(ctx, int64(id))
 	if err != nil {
 		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return AppInstallation{}, ErrServiceUnavailable
+		if errors.As(err, &ghErr) && ghErr.Response != nil {
+			switch ghErr.Response.StatusCode {
+			case http.StatusUnauthorized, http.StatusForbidden:
+				return AppInstallation{}, ErrAuthentication
+			case http.StatusNotFound:
+				return AppInstallation{}, ErrNotFound
+			case http.StatusServiceUnavailable:
+				return AppInstallation{}, ErrServiceUnavailable
+			}
 		}
 		return AppInstallation{}, err
 	}
@@ -99,15 +129,66 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 	}, nil
 }
 
+const (
+	maxRepositories = 1000 // Maximum number of repositories to fetch
+)
+
+// ListInstallationRepositories lists all repositories accessible by the specified GitHub App installation.
+func (r *githubClient) ListInstallationRepositories(ctx context.Context) ([]Repository, error) {
+	var allRepos []Repository
+	opts := &github.ListOptions{
+		Page:    1,
+		PerPage: 100,
+	}
+
+	for {
+		result, resp, err := r.gh.Apps.ListRepos(ctx, opts)
+		if err != nil {
+			var ghErr *github.ErrorResponse
+			if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+				return nil, ErrServiceUnavailable
+			}
+			return nil, fmt.Errorf("list repositories: %w", err)
+		}
+
+		for _, repo := range result.Repositories {
+			allRepos = append(allRepos, Repository{
+				Name:  repo.GetName(),
+				Owner: repo.GetOwner().GetLogin(),
+				URL:   repo.GetHTMLURL(),
+			})
+		}
+
+		// Check if we've exceeded the maximum allowed repositories
+		if len(allRepos) > maxRepositories {
+			return nil, fmt.Errorf("too many repositories to fetch (more than %d)", maxRepositories)
+		}
+
+		// If there are no more pages, break
+		if resp.NextPage == 0 {
+			break
+		}
+
+		opts.Page = resp.NextPage
+	}
+
+	return allRepos, nil
+}
+
 // CreateInstallationAccessToken creates an installation access token scoped to a specific repository.
+// Based on https://docs.github.com/en/rest/apps/apps?apiVersion=latest#create-an-installation-access-token-for-an-app
+// the installation access token will last one hour from the time it is created.
 func (r *githubClient) CreateInstallationAccessToken(ctx context.Context, installationID string, repo string) (InstallationToken, error) {
 	id, err := strconv.Atoi(installationID)
 	if err != nil {
 		return InstallationToken{}, fmt.Errorf("invalid installation ID: %s", installationID)
 	}
 
-	opts := &github.InstallationTokenOptions{
-		Repositories: []string{repo},
+	var opts *github.InstallationTokenOptions
+	if repo != "" {
+		opts = &github.InstallationTokenOptions{
+			Repositories: []string{repo},
+		}
 	}
 
 	token, _, err := r.gh.Apps.CreateInstallationToken(ctx, int64(id), opts)
@@ -121,6 +202,6 @@ func (r *githubClient) CreateInstallationAccessToken(ctx context.Context, instal
 
 	return InstallationToken{
 		Token:     token.GetToken(),
-		ExpiresAt: token.GetExpiresAt().String(),
+		ExpiresAt: token.GetExpiresAt().Time,
 	}, nil
 }

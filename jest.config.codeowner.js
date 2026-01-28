@@ -3,6 +3,7 @@ const open = require('open').default;
 const path = require('path');
 
 const baseConfig = require('./jest.config.js');
+const { CODEOWNER_KIND, getCodeownerKind, createCodeownerSlug } = require('./scripts/codeowners-manifest/utils.js');
 
 const CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH = 'codeowners-manifest/filenames-by-team.json';
 
@@ -12,7 +13,8 @@ if (!codeownerName) {
   process.exit(1);
 }
 
-const outputDir = `./coverage/by-team/${createOwnerDirectory(codeownerName)}`;
+const outputDir = `./coverage/by-team/${createCodeownerDirectory(codeownerName)}`;
+const COVERAGE_SUMMARY_OUTPUT_PATH = './coverage-summary.json';
 
 const codeownersFilePath = path.join(__dirname, CODEOWNERS_MANIFEST_FILENAMES_BY_TEAM_PATH);
 
@@ -48,7 +50,11 @@ const sourceFiles = teamFiles.filter((file) => {
     !file.includes('.d.ts') &&
     !file.endsWith('/types.ts') &&
     // and anything in graveyard
-    !path.matchesGlob(file, '**/graveyard/**/*')
+    !path.matchesGlob(file, '**/graveyard/**/*') &&
+    // and scripts directory
+    !file.startsWith('scripts/') &&
+    // and jest config files
+    !path.matchesGlob(file, '**/jest.config*.js')
   );
 });
 
@@ -100,6 +106,8 @@ module.exports = {
             openCoverageReport(reportURL);
           }
 
+          writeCoverageSummaryArtifact(coverageResults);
+
           // TODO: Emit coverage metrics https://github.com/grafana/grafana/issues/111208
         },
       },
@@ -112,28 +120,73 @@ module.exports = {
 };
 
 /**
- * Create a filesystem-safe directory structure for different owner types
- * @param {string} owner - CODEOWNERS owner (username, team, or email)
- * @returns {string} Directory path relative to coverage/by-team/
+ * @typedef {Object} CoverageMetric
+ * @property {number} pct - Percentage value
  */
-function createOwnerDirectory(owner) {
-  if (owner.includes('@') && owner.includes('/')) {
-    // Example: @grafana/dataviz-squad
-    const [org, team] = owner.substring(1).split('/');
-    return `teams/${org}/${team}`;
-  } else if (owner.startsWith('@')) {
-    // Example: @jesdavpet
-    return `users/${owner.substring(1)}`;
-  } else {
-    // Example: user@domain.tld
-    const [user, domain] = owner.split('@');
-    return `emails/${user}-at-${domain}`;
+
+/**
+ * @typedef {Object} CoverageSummary
+ * @property {CoverageMetric} lines
+ * @property {CoverageMetric} statements
+ * @property {CoverageMetric} functions
+ * @property {CoverageMetric} branches
+ */
+
+/**
+ * @typedef {Object} CoverageResults
+ * @property {CoverageSummary} summary
+ */
+
+/**
+ * Writes coverage summary artifact for CI/CD consumption
+ * @param {CoverageResults} coverageResults - Coverage results from jest-monocart-coverage
+ */
+function writeCoverageSummaryArtifact(coverageResults) {
+  if (!coverageResults || !coverageResults.summary) {
+    return;
+  }
+
+  const summary = {
+    team: codeownerName,
+    commit: process.env.GITHUB_SHA || 'unknown',
+    timestamp: new Date().toISOString(),
+    summary: {
+      lines: { pct: coverageResults.summary.lines.pct },
+      statements: { pct: coverageResults.summary.statements.pct },
+      functions: { pct: coverageResults.summary.functions.pct },
+      branches: { pct: coverageResults.summary.branches.pct },
+    },
+  };
+
+  try {
+    fs.writeFileSync(COVERAGE_SUMMARY_OUTPUT_PATH, JSON.stringify(summary, null, 2));
+    console.log(`📊 Coverage summary written to ${COVERAGE_SUMMARY_OUTPUT_PATH}`);
+  } catch (err) {
+    console.error(`Failed to write coverage summary: ${err}`);
   }
 }
 
 /**
- * Open the given file URL in the default browser safely, without shell injection risk.
- * @param {string} reportURL
+ * Creates a directory path for coverage reports grouped by codeowner kind
+ * @param {string} codeowner - CODEOWNERS codeowner
+ * @returns {string} Directory path relative to coverage/by-team/
+ */
+function createCodeownerDirectory(codeowner) {
+  const kind = getCodeownerKind(codeowner);
+
+  if (kind === CODEOWNER_KIND.UNKNOWN) {
+    throw new Error(
+      `Invalid codeowner format: "${codeowner}". Must be a GitHub team (@org/team), user (@username), or email (email@domain.tld)`
+    );
+  }
+
+  const slug = createCodeownerSlug(codeowner);
+  return `${kind}s/${slug}`;
+}
+
+/**
+ * Opens the coverage report in the default browser
+ * @param {string} reportURL - File URL to the coverage report HTML
  */
 async function openCoverageReport(reportURL) {
   try {

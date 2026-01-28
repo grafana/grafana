@@ -34,7 +34,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
+	apiprometheus "github.com/grafana/grafana/pkg/services/ngalert/api/prometheus"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/cluster"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -353,6 +355,10 @@ func (ng *AlertNG) init() error {
 		FeatureToggles:       ng.FeatureToggles,
 	}
 
+	if ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation {
+		schedCfg.EvaluationCoordinator = cluster.NewEvaluationCoordinator(ng.MultiOrgAlertmanager.Peer())
+	}
+
 	history, err := configureHistorianBackend(
 		initCtx,
 		ng.Cfg.UnifiedAlerting.StateHistory,
@@ -404,9 +410,21 @@ func (ng *AlertNG) init() error {
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
 
+	// For HA single-node evaluation mode, use StoreStateReader for API calls.
+	// This ensures Grafana instances read alert rule state from DB instead of memory,
+	// which has no data on non-primary nodes.
+	apiStateManager, apiStatusReader := initAPIStateReaders(
+		ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation,
+		stateManager,
+		scheduler,
+		ng.InstanceStore,
+		ng.Log,
+	)
+
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService))
+	receiverAccess := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false)
 	receiverService := notifier.NewReceiverService(
-		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false),
+		receiverAccess,
 		configStore,
 		ng.store,
 		ng.store,
@@ -418,6 +436,13 @@ func (ng *AlertNG) init() error {
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 	)
+	receiverTestService := notifier.NewReceiverTestingService(
+		receiverService,
+		ng.MultiOrgAlertmanager,
+		ng.SecretsService,
+		receiverAccess,
+	)
+
 	provisioningReceiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
 		configStore,
@@ -455,11 +480,12 @@ func (ng *AlertNG) init() error {
 		AdminConfigStore:     ng.store,
 		ProvenanceStore:      ng.store,
 		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
-		StateManager:         ng.stateManager,
-		Scheduler:            scheduler,
+		StateManager:         apiStateManager,
+		RuleStatusReader:     apiStatusReader,
 		AccessControl:        ng.accesscontrol,
 		Policies:             policyService,
 		ReceiverService:      receiverService,
+		ReceiverTestService:  receiverTestService,
 		ContactPointService:  contactPointService,
 		Templates:            templateService,
 		MuteTimings:          muteTimingService,
@@ -520,6 +546,24 @@ func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles feature
 	}
 
 	return instanceStore, state.NewMultiInstanceReader(logger, protoInstanceStore, simpleInstanceStore)
+}
+
+// initAPIStateReaders returns the appropriate state manager and status reader for the API.
+// When HASingleNodeEvaluation is enabled, it returns a StoreStateReader that reads from the database,
+// ensuring non-primary instances can serve correct data even though they don't evaluate rules.
+// Otherwise, it returns the in-memory state manager and scheduler.
+func initAPIStateReaders(
+	haSingleNodeEvaluation bool,
+	stateManager *state.Manager,
+	scheduler apiprometheus.StatusReader,
+	instanceStore state.InstanceReader,
+	logger log.Logger,
+) (state.AlertInstanceManager, apiprometheus.StatusReader) {
+	if haSingleNodeEvaluation {
+		storeStateReader := state.NewStoreStateReader(instanceStore, logger)
+		return storeStateReader, storeStateReader
+	}
+	return stateManager, scheduler
 }
 
 func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
