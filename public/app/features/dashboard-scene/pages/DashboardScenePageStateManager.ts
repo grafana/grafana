@@ -1,6 +1,7 @@
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
+import { UserStorage } from '@grafana/runtime/internal';
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { GetRepositoryFilesWithPathApiResponse, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
@@ -45,6 +46,7 @@ import {
   SceneCreationOptions,
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
+import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -217,6 +219,36 @@ abstract class DashboardScenePageStateManagerBase<T>
         throw err;
       }
     }
+  }
+
+  /**
+   * Loads the assistant preview dashboard from the user storage
+   * @param base64EncodedKey base64 encoded key of the dashboard in the user storage
+   * @returns Promise<DashboardDTO>
+   */
+  protected async loadAssistantPreviewDashboard(base64EncodedKey: string): Promise<DashboardDTO> {
+    const decodedKey = atob(decodeURIComponent(base64EncodedKey));
+    const userStorage = new UserStorage('grafana-assistant-app');
+    const dashboard = await userStorage.getItem(decodeURIComponent(decodedKey));
+    if (!dashboard) {
+      throw new Error('Dashboard not found');
+    }
+    let dashboardData: DashboardDataDTO;
+    try {
+      dashboardData = JSON.parse(dashboard);
+    } catch (err) {
+      throw new Error('Invalid dashboard data');
+    }
+    return {
+      dashboard: dashboardData,
+      meta: {
+        canStar: false,
+        canShare: false,
+        canDelete: false,
+        canSave: false,
+        canEdit: false,
+      },
+    };
   }
 
   protected async loadProvisioningDashboard(repo: string, path: string): Promise<T> {
@@ -682,6 +714,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           break;
         case DashboardRoutes.Provisioning:
           return this.loadProvisioningDashboard(slug || '', uid);
+        case DashboardRoutes.AssistantPreview:
+          return this.loadAssistantPreviewDashboard(uid);
         case DashboardRoutes.Public: {
           const result = await dashboardLoaderSrv.loadDashboard('public', '', uid);
           // public dashboards use legacy API but can return V2 dashboards
@@ -886,6 +920,28 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
           break;
         case DashboardRoutes.Provisioning: {
           return await this.loadProvisioningDashboard(slug || '', uid);
+        }
+        case DashboardRoutes.AssistantPreview: {
+          const v1Response = await this.loadAssistantPreviewDashboard(uid);
+          const scene = transformSaveModelToScene(v1Response, undefined, getSceneCreationOptions());
+          const spec = transformSceneToSaveModelSchemaV2(scene);
+          return {
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: {
+              creationTimestamp: '',
+              name: v1Response.dashboard.uid ?? '',
+              resourceVersion: v1Response.dashboard.version?.toString() || '0',
+            },
+            spec,
+            access: {
+              canSave: v1Response.meta.canSave ?? false,
+              canEdit: v1Response.meta.canEdit ?? false,
+              canDelete: v1Response.meta.canDelete ?? false,
+              canShare: v1Response.meta.canShare ?? false,
+              canStar: v1Response.meta.canStar ?? false,
+            },
+          };
         }
         case DashboardRoutes.Public: {
           return await this.dashboardLoader.loadDashboard('public', '', uid);

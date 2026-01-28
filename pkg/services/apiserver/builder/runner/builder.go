@@ -1,8 +1,7 @@
 package runner
 
 import (
-	"fmt"
-
+	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -90,22 +89,7 @@ func (b *appBuilder) InstallSchema(scheme *runtime.Scheme) error {
 			if len(kind.SelectableFields()) == 0 {
 				continue
 			}
-			gvk := gv.WithKind(kind.Kind())
-			err := scheme.AddFieldLabelConversionFunc(
-				gvk,
-				func(label, value string) (string, string, error) {
-					if label == "metadata.name" || label == "metadata.namespace" {
-						return label, value, nil
-					}
-					fields := kind.SelectableFields()
-					for _, field := range fields {
-						if field.FieldSelector == label {
-							return label, value, nil
-						}
-					}
-					return "", "", fmt.Errorf("field label not supported for %s: %s", gvk, label)
-				},
-			)
+			err := apiregistry.AddSelectableFieldLabelConversions(scheme, gv, kind)
 			if err != nil {
 				return err
 			}
