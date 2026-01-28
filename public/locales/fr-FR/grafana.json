@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Supprimer",
       "duplicate": "Dupliquer",
       "label-integration": "Intégration",
       "label-notification-settings": "Paramètres de notification",
       "label-section": "Paramètres facultatifs : {{name}}",
       "test": "Test",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -962,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Ce chemin continuera à correspondre à d’autres politiques"
     },
     "copy-to-clipboard": "Copier « {{label}} » dans le presse-papiers",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Les notifications sont envoyées à",
@@ -1643,6 +1652,11 @@
       },
       "yaml-error": "Échec de l’analyse du fichier YAML : {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Surveiller le statut de votre système",
       "monitor-status-system-tooltip": "Les informations sur les alertes fournissent des tableaux de bord prédéfinis pour surveiller vos données d’alerte.",
@@ -1928,6 +1942,10 @@
     "namespace-and-group-filter": {
       "select-group": "Sélectionner un groupe",
       "select-namespace": "Sélectionner le namespace"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Vous avez besoin d’aide ?"
@@ -3631,7 +3649,10 @@
       "move-modal-title": "Déplacer",
       "move-provisioned-folder": "",
       "moving": "Déplacement...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Vous devez saisir le nom du dossier.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Vous avez sélectionné à la fois des ressources provisionnées et non provisionnées. Ces deux types ne peuvent être traités simultanément. Veuillez sélectionner uniquement des ressources provisionnées ou uniquement des ressources non provisionnées, puis réessayer.",
       "selected-mix-resources-modal-title": "Types de ressources incompatibles sélectionnés"
     },
@@ -5159,6 +5180,9 @@
       "title": {
         "deleted": "supprimé"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -10925,7 +10949,9 @@
     "invite-user": {
       "invite-button": "Inviter",
       "invite-new-user-button": "Inviter un nouvel utilisateur",
-      "invite-tooltip": "Inviter un utilisateur"
+      "invite-tooltip": "Inviter un utilisateur",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Ajouter aux signets",
@@ -11863,10 +11889,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12055,6 +12078,8 @@
       "error-delete-all-repositories": "Échec de la suppression de tous les référentiels",
       "subtitle": "Afficher et gérer vos référentiels configurés",
       "success-all-repositories-deleted": "Tous les référentiels configurés ont été supprimés",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Pour commencer",
       "tab-getting-started-title": "Pour commencer",
       "tab-repositories": "Référentiels",
@@ -12118,6 +12143,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12138,7 +12166,6 @@
       "jobs": "Missions"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Paramètres",
       "source-code": "Code source"
     },
@@ -12318,6 +12345,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Terminer",
@@ -12330,15 +12362,30 @@
         "dismiss": "Continuer",
         "title": "Annuler la configuration du dépôt ?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Choisir ce qui doit être synchronisé",
+      "step-configure-repo": "",
       "step-connect": "Connecter",
       "step-finish": "Choisir des paramètres supplémentaires",
+      "step-github-app": "",
       "step-synchronize": "Synchroniser avec un stockage externe",
       "sync-description": "Synchronisez les ressources avec un stockage externe. Après cette étape unique, toutes les futures mises à jour seront automatiquement enregistrées dans le référentiel et mises en service dans l’instance.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Choisir ce qui doit être synchronisé",
+      "title-configure-repo": "",
       "title-connect": "Se connecter à un stockage externe",
       "title-finish": "Choisir des paramètres supplémentaires",
+      "title-github-app": "",
       "title-synchronize": "Synchroniser avec un stockage externe"
     },
     "wizard-content": {
@@ -12556,6 +12603,18 @@
       "query-inspector": "Inspecteur de requête",
       "query-tab-help-button-title-open-data-source-help": "Aide sur la source de données ouverte",
       "title-data-source-help": "Aide sur la source de données"
+    }
+  },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {
@@ -13317,6 +13376,7 @@
       "label-standard": "Standard"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14927,6 +14987,9 @@
       "label-both": "Les deux",
       "label-lines": "Lignes",
       "label-points": "Points"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

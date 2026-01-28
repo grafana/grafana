@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	rawSchemaReceiverv0alpha1          = []byte(`{"Integration":{"additionalProperties":false,"properties":{"disableResolveMessage":{"type":"boolean"},"secureFields":{"additionalProperties":{"type":"boolean"},"type":"object"},"settings":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"type":{"type":"string"},"uid":{"type":"string"},"version":{"type":"string"}},"required":["type","version","settings"],"type":"object"},"Receiver":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"integrations":{"items":{"$ref":"#/components/schemas/Integration"},"type":"array"},"title":{"type":"string"}},"required":["title","integrations"],"type":"object"}}`)
+	rawSchemaReceiverv0alpha1          = []byte(`{"Integration":{"additionalProperties":false,"properties":{"disableResolveMessage":{"type":"boolean"},"secureFields":{"additionalProperties":{"type":"boolean"},"type":"object"},"settings":{"additionalProperties":{"additionalProperties":{},"type":"object"},"type":"object"},"type":{"type":"string"},"uid":{"type":"string"},"version":{"type":"string"}},"required":["type","version","settings"],"type":"object"},"Receiver":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"createReceiverIntegrationTestAlert":{"type":"object","required":["labels","annotations"],"properties":{"annotations":{"type":"object","additionalProperties":{"type":"string"}},"labels":{"type":"object","additionalProperties":{"type":"string"}}},"additionalProperties":false},"createReceiverIntegrationTestIntegration":{"type":"object","required":["type","version","settings"],"properties":{"disableResolveMessage":{"type":"boolean"},"secureFields":{"type":"object","additionalProperties":{"type":"boolean"}},"settings":{"type":"object","additionalProperties":{"type":"object","additionalProperties":{}}},"type":{"type":"string"},"uid":{"type":"string"},"version":{"type":"string"}},"additionalProperties":false},"spec":{"additionalProperties":false,"properties":{"integrations":{"items":{"$ref":"#/components/schemas/Integration"},"type":"array"},"title":{"type":"string"}},"required":["title","integrations"],"type":"object"}}`)
 	versionSchemaReceiverv0alpha1      app.VersionSchema
 	_                                  = json.Unmarshal(rawSchemaReceiverv0alpha1, &versionSchemaReceiverv0alpha1)
 	rawSchemaRoutingTreev0alpha1       = []byte(`{"Matcher":{"additionalProperties":false,"properties":{"label":{"type":"string"},"type":{"enum":["=","!=","=~","!~"],"type":"string"},"value":{"type":"string"}},"required":["type","label","value"],"type":"object"},"Route":{"additionalProperties":false,"properties":{"active_time_intervals":{"items":{"type":"string"},"type":"array"},"continue":{"type":"boolean"},"group_by":{"items":{"type":"string"},"type":"array"},"group_interval":{"type":"string"},"group_wait":{"type":"string"},"matchers":{"items":{"$ref":"#/components/schemas/Matcher"},"type":"array"},"mute_time_intervals":{"items":{"type":"string"},"type":"array"},"receiver":{"type":"string"},"repeat_interval":{"type":"string"},"routes":{"items":{"$ref":"#/components/schemas/Route"},"type":"array"}},"required":["continue"],"type":"object"},"RouteDefaults":{"additionalProperties":false,"properties":{"group_by":{"items":{"type":"string"},"type":"array"},"group_interval":{"type":"string"},"group_wait":{"type":"string"},"receiver":{"type":"string"},"repeat_interval":{"type":"string"}},"required":["receiver"],"type":"object"},"RoutingTree":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"defaults":{"$ref":"#/components/schemas/RouteDefaults"},"routes":{"items":{"$ref":"#/components/schemas/Route"},"type":"array"}},"required":["defaults","routes"],"type":"object"}}`)
@@ -51,6 +51,105 @@ var appManifestData = app.ManifestData{
 					Schema:     &versionSchemaReceiverv0alpha1,
 					SelectableFields: []string{
 						"spec.title",
+					},
+					Routes: map[string]spec3.PathProps{
+						"test": {
+							Post: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									OperationId: "createReceiverIntegrationTest",
+
+									RequestBody: &spec3.RequestBody{
+										RequestBodyProps: spec3.RequestBodyProps{
+
+											Required: true,
+											Content: map[string]*spec3.MediaType{
+												"application/json": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"object"},
+																Properties: map[string]spec.Schema{
+																	"alert": {
+																		SchemaProps: spec.SchemaProps{
+
+																			Ref: spec.MustCreateRef("#/components/schemas/createReceiverIntegrationTestAlert"),
+																		},
+																	},
+																	"integration": {
+																		SchemaProps: spec.SchemaProps{
+
+																			Ref: spec.MustCreateRef("#/components/schemas/createReceiverIntegrationTestIntegration"),
+																		},
+																	},
+																},
+																Required: []string{
+																	"integration",
+																	"alert",
+																},
+															}},
+													}},
+											},
+										}},
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"apiVersion": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																				},
+																			},
+																			"duration": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																			"error": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																			"kind": {
+																				SchemaProps: spec.SchemaProps{
+																					Type:        []string{"string"},
+																					Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																				},
+																			},
+																			"status": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																					Enum: []interface{}{
+																						"success",
+																						"failure",
+																					},
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"status",
+																			"duration",
+																			"apiVersion",
+																			"kind",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+						},
 					},
 				},
 
@@ -109,7 +208,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 	return goType, exists
 }
 
-var customRouteToGoResponseType = map[string]any{}
+var customRouteToGoResponseType = map[string]any{
+	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTest{},
+}
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
 // kind may be empty for custom routes which are not kind subroutes. Leading slashes are removed from subroute paths.
@@ -133,7 +234,9 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 	return goType, exists
 }
 
-var customRouteToGoRequestBodyType = map[string]any{}
+var customRouteToGoRequestBodyType = map[string]any{
+	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTestRequestBody{},
+}
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {
 	if len(path) > 0 && path[0] == '/' {

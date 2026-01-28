@@ -92,6 +92,8 @@ export interface NotifierVersion {
   options: NotificationChannelOption[];
   /** Whether this version can be used to create new integrations */
   canCreate?: boolean;
+  /** Whether this version is deprecated and will be removed in a future release */
+  deprecated?: boolean;
 }
 
 export interface NotifierDTO<T = NotifierType> {
@@ -119,6 +121,8 @@ export interface NotifierDTO<T = NotifierType> {
    * version information or validate notifier capabilities.
    */
   currentVersion?: string;
+  /** Whether this integration type is deprecated and will be removed in a future release */
+  deprecated?: boolean;
 }
 
 export interface NotificationChannelType {
