@@ -15,6 +15,7 @@ import {
   LogRowContextOptions,
   dateTime,
   ScopedVars,
+  store,
 } from '@grafana/data';
 import {
   LabelParser,
@@ -24,7 +25,6 @@ import {
   Logfmt,
   Json,
   JsonExpressionParser,
-  DropLabelsExpr,
 } from '@grafana/lezer-logql';
 
 import { LokiContextUi } from './components/LokiContextUi';
@@ -237,7 +237,7 @@ export class LogContextProvider {
 
   prepareExpression(contextFilters: ContextFilter[], query: LokiQuery | undefined): string {
     let preparedExpression = this.processContextFiltersToExpr(contextFilters, query);
-    if (window.localStorage.getItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true') {
+    if (store.get(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true') {
       preparedExpression = this.processPipelineStagesToExpr(preparedExpression, query);
     }
     return preparedExpression;
@@ -376,7 +376,7 @@ export class LogContextProvider {
 
     // Secondly we check for preserved labels and update enabled state of filters based on that
     let preservedLabels: undefined | PreservedLabels = undefined;
-    const preservedLabelsString = window.localStorage.getItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
+    const preservedLabelsString = store.get(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
     if (preservedLabelsString) {
       try {
         preservedLabels = JSON.parse(preservedLabelsString);
