@@ -40,7 +40,6 @@ func New(cfg app.Config) (app.App, error) {
 		clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.DefaultClientConfig())
 		registrar := install.NewInstallRegistrar(clientGenerator)
 		pluginKind.Reconciler = install.NewChildPluginReconciler(specificConfig.MetaProviderManager, registrar)
-
 	}
 
 	simpleConfig := simple.AppConfig{

@@ -68,7 +68,7 @@ func TestChildPluginReconciler_ReconcileWithChildren(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockProv := &mockMetaProvider{
-				getMetaFunc: func(ctx context.Context, pluginID, version string) (*meta.Result, error) {
+				getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
 					return &meta.Result{
 						Meta: pluginsv0alpha1.MetaSpec{
 							Children: tt.children,
@@ -167,7 +167,7 @@ func TestChildPluginReconciler_ReconcileSpecialCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockProv := &mockMetaProvider{
-				getMetaFunc: func(ctx context.Context, pluginID, version string) (*meta.Result, error) {
+				getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
 					if tt.getMetaFatalOnCall {
 						t.Fatal("GetMeta should not be called when parent ID is already set")
 					}
@@ -235,7 +235,7 @@ func TestChildPluginReconciler_ReconcileMetaErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockProv := &mockMetaProvider{
-				getMetaFunc: func(ctx context.Context, pluginID, version string) (*meta.Result, error) {
+				getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
 					return nil, tt.metaErr
 				},
 			}
@@ -319,7 +319,7 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockProv := &mockMetaProvider{
-				getMetaFunc: func(ctx context.Context, pluginID, version string) (*meta.Result, error) {
+				getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
 					return &meta.Result{
 						Meta: pluginsv0alpha1.MetaSpec{
 							Children: tt.children,
@@ -409,7 +409,7 @@ func TestChildPluginReconciler_PartialFailures(t *testing.T) {
 
 func TestChildPluginReconciler_ReconcileInvalidAction(t *testing.T) {
 	mockProv := &mockMetaProvider{
-		getMetaFunc: func(ctx context.Context, pluginID, version string) (*meta.Result, error) {
+		getMetaFunc: func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
 			return &meta.Result{
 				Meta: pluginsv0alpha1.MetaSpec{
 					Children: []string{"child-plugin-1"},
@@ -450,12 +450,12 @@ func TestChildPluginReconciler_ReconcileInvalidAction(t *testing.T) {
 
 // mockMetaProvider implements meta.Provider for testing
 type mockMetaProvider struct {
-	getMetaFunc func(ctx context.Context, pluginID, version string) (*meta.Result, error)
+	getMetaFunc func(ctx context.Context, ref meta.PluginRef) (*meta.Result, error)
 }
 
-func (m *mockMetaProvider) GetMeta(ctx context.Context, pluginID, version string) (*meta.Result, error) {
+func (m *mockMetaProvider) GetMeta(ctx context.Context, ref meta.PluginRef) (*meta.Result, error) {
 	if m.getMetaFunc != nil {
-		return m.getMetaFunc(ctx, pluginID, version)
+		return m.getMetaFunc(ctx, ref)
 	}
 	return nil, meta.ErrMetaNotFound
 }

@@ -48,11 +48,14 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 
 	// If the plugin already has a parent ID set, skip the reconciliation
 	if plugin.Spec.ParentId != nil && *plugin.Spec.ParentId != "" {
-		logger.Debug("Plugin already has a parent ID set, skipping child plugin reconciliation")
+		logger.Debug("Plugin is a child plugin, skipping child discovery")
 		return operator.ReconcileResult{}, nil
 	}
 
-	result, err := r.metaManager.GetMeta(ctx, plugin.Spec.Id, plugin.Spec.Version)
+	result, err := r.metaManager.GetMeta(ctx, meta.PluginRef{
+		ID:      plugin.Spec.Id,
+		Version: plugin.Spec.Version,
+	})
 	if err != nil {
 		logger.Error("Failed to get plugin metadata", "error", err)
 		return operator.ReconcileResult{
@@ -75,6 +78,8 @@ func (r *ChildPluginReconciler) reconcile(ctx context.Context, req operator.Type
 		return r.registerChildren(ctx, plugin, result.Meta.Children)
 	case operator.ReconcileActionDeleted:
 		return r.unregisterChildren(ctx, plugin.Namespace, result.Meta.Children)
+	case operator.ReconcileActionUnknown:
+		break // handled by return statement below
 	}
 	return operator.ReconcileResult{}, fmt.Errorf("invalid action: %d", req.Action)
 }
