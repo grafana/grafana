@@ -48,7 +48,10 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       stateManager.loadSnapshot(slug!);
     } else {
       stateManager.loadDashboard({
-        uid: (route.routeName === DashboardRoutes.Provisioning || route.routeName === DashboardRoutes.AssistantPreview ? path : uid) ?? '',
+        uid:
+          (route.routeName === DashboardRoutes.Provisioning || route.routeName === DashboardRoutes.AssistantPreview
+            ? path
+            : uid) ?? '',
         type,
         slug,
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

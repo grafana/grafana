@@ -141,7 +141,8 @@ export function getSceneCreationOptions(
 
 abstract class DashboardScenePageStateManagerBase<T>
   extends StateManagerBase<DashboardScenePageState>
-  implements DashboardScenePageStateManagerLike<T> {
+  implements DashboardScenePageStateManagerLike<T>
+{
   abstract fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
   abstract reloadDashboard(queryParams: UrlQueryMap): Promise<void>;
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
@@ -226,7 +227,7 @@ abstract class DashboardScenePageStateManagerBase<T>
    */
   protected async loadAssistantPreviewDashboard(base64EncodedKey: string): Promise<DashboardDTO> {
     const decodedKey = atob(decodeURIComponent(base64EncodedKey));
-    const userStorage = new UserStorage('grafana-assistant-app')
+    const userStorage = new UserStorage('grafana-assistant-app');
     const dashboard = await userStorage.getItem(decodedKey);
     if (!dashboard) {
       throw new Error('Dashboard not found');
