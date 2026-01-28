@@ -3298,6 +3298,20 @@
     },
     {
       "metadata": {
+        "name": "panelStyleActions",
+        "resourceVersion": "1769620237787",
+        "creationTimestamp": "2026-01-28T17:10:37Z"
+      },
+      "spec": {
+        "description": "Enable style actions (copy/paste) in the panel editor",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "panelTimeSettings",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-10-29T08:06:23Z",
