@@ -5,7 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { CollapsableSection, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { useQueryRunnerContext } from '../QueryEditorContext';
+import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { isDataTransformerConfig } from '../utils';
 
 import { SidebarCard } from './SidebarCard';
 
@@ -25,7 +26,9 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   const styles = useStyles2(getStyles);
   const isMini = sidebarSize === SidebarSize.Mini;
   const { queries } = useQueryRunnerContext();
+  const { transformations } = usePanelContext();
   const [queriesIsOpen, setQueriesIsOpen] = useState(true);
+  const [transformationsIsOpen, setTransformationsIsOpen] = useState(true);
 
   const toggleSize = () => {
     setSidebarSize(isMini ? SidebarSize.Full : SidebarSize.Mini);
@@ -59,6 +62,25 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           {queries.map((query) => (
             <SidebarCard key={query.refId} query={query} />
           ))}
+        </Stack>
+      </CollapsableSection>
+      <CollapsableSection
+        label={
+          <Text color="secondary" variant="body">
+            {t('query-editor-next.sidebar.transformations', 'Transformations')}
+          </Text>
+        }
+        isOpen={transformationsIsOpen}
+        onToggle={setTransformationsIsOpen}
+        contentClassName={styles.collapsableSectionContent}
+      >
+        <Stack direction="column" gap={1}>
+          {transformations.map((transformation) => {
+            if (isDataTransformerConfig(transformation)) {
+              return <SidebarCard key={transformation.id} query={transformation} />;
+            }
+            return null;
+          })}
         </Stack>
       </CollapsableSection>
     </div>

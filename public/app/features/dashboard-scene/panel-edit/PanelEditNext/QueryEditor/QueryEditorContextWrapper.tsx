@@ -8,6 +8,7 @@ import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { QueryEditorProvider } from './QueryEditorContext';
+import { isDataTransformerConfig } from './utils';
 
 /**
  * Bridge component that subscribes to Scene state and provides it via React Context.
@@ -25,6 +26,13 @@ export function QueryEditorContextWrapper({
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
   const [selectedCardRefId, setSelectedCardRefId] = useState<string | null>(null);
+
+  const transformations = useMemo(() => {
+    if (panel.state.$data instanceof SceneDataTransformer) {
+      return panel.state.$data.state.transformations;
+    }
+    return [];
+  }, [panel]);
 
   const dsState = useMemo(
     () => ({
@@ -45,37 +53,38 @@ export function QueryEditorContextWrapper({
   );
 
   const panelState = useMemo(() => {
-    let transformations: Array<DataTransformerConfig | CustomTransformerDefinition> = [];
-
-    if (panel.state.$data instanceof SceneDataTransformer) {
-      transformations = panel.state.$data.state.transformations;
-    }
-
     return {
       panel,
       transformations,
     };
-  }, [panel]);
+  }, [panel, transformations]);
 
   const selectedCard = useMemo(() => {
     const queries = queryRunnerState?.queries ?? [];
+
     // If we have a selected refId, try to find that query
     if (selectedCardRefId) {
       const query = queries.find((q) => q.refId === selectedCardRefId);
       if (query) {
         return query;
       }
+      const transformation = transformations.find(
+        (t): t is DataTransformerConfig => isDataTransformerConfig(t) && t.id === selectedCardRefId
+      );
+      if (transformation) {
+        return transformation;
+      }
     }
 
     // Otherwise, default to the first query if available
     return queries.length > 0 ? queries[0] : null;
-  }, [queryRunnerState?.queries, selectedCardRefId]);
+  }, [queryRunnerState?.queries, selectedCardRefId, transformations]);
 
   const uiState = useMemo(
     () => ({
       selectedCard,
-      setSelectedCard: (query: DataQuery | null) => {
-        setSelectedCardRefId(query?.refId ?? null);
+      setSelectedCard: (query: DataQuery | DataTransformerConfig | null) => {
+        setSelectedCardRefId(isDataTransformerConfig(query) ? query.id : (query?.refId ?? null));
       },
     }),
     [selectedCard]

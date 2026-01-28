@@ -2,20 +2,28 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
-import { isExpressionQuery } from 'app/features/expressions/guards';
 
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useQueryRunnerContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { getEditorType, isDataTransformerConfig } from '../utils';
+
+const getTypeText = (editorType: QueryEditorType) => {
+  switch (editorType) {
+    case QueryEditorType.Transformation:
+      return t('query-editor-next.sidebar.transformation', 'Transformation');
+    case QueryEditorType.Expression:
+      return t('query-editor-next.sidebar.expression', 'Expression');
+    default:
+      return t('query-editor-next.sidebar.query', 'Query');
+  }
+};
 
 const Header = ({ editorType, styles }: { editorType: QueryEditorType; styles: ReturnType<typeof getStyles> }) => {
-  const typeText =
-    editorType === 'expression'
-      ? t('query-editor-next.sidebar.expression', 'Expression')
-      : t('query-editor-next.sidebar.query', 'Query');
+  const typeText = getTypeText(editorType);
 
   return (
     <div className={styles.cardHeader}>
@@ -30,21 +38,49 @@ const Header = ({ editorType, styles }: { editorType: QueryEditorType; styles: R
   );
 };
 
-const getEditorType = (query: DataQuery): QueryEditorType =>
-  isExpressionQuery(query) ? QueryEditorType.Expression : QueryEditorType.Query;
-
 interface SidebarCardProps {
   query: DataQuery;
 }
 
-export const SidebarCard = ({ query }: SidebarCardProps) => {
+const TransformationCard = ({ transformation }: { transformation: DataTransformerConfig }) => {
+  const { selectedCard, setSelectedCard } = useQueryEditorUIContext();
+
+  const isSelected = isDataTransformerConfig(selectedCard) && selectedCard.id === transformation.id;
+  const styles = useStyles2(getStyles, QueryEditorType.Transformation, false, isSelected);
+
+  const handleClick = () => {
+    // We don't allow deselecting cards so don't do anything if already selected
+    if (!isSelected) {
+      setSelectedCard(transformation);
+    }
+  };
+
+  return (
+    <button
+      className={styles.card}
+      onClick={handleClick}
+      type="button"
+      aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id: transformation.id })}
+      aria-pressed={isSelected}
+    >
+      <Header editorType={QueryEditorType.Transformation} styles={styles} />
+      <div className={styles.cardContent}>
+        <Text weight="light" variant="body" color="secondary">
+          {transformation.id}
+        </Text>
+      </div>
+    </button>
+  );
+};
+
+const QueryCard = ({ query }: SidebarCardProps) => {
   const editorType = getEditorType(query);
   const queryDsSettings = useDatasource(query.datasource);
   const { data } = useQueryRunnerContext();
   const { selectedCard, setSelectedCard } = useQueryEditorUIContext();
 
   const hasError = data?.errors?.some((e) => e.refId === query.refId) ?? false;
-  const isSelected = selectedCard?.refId === query.refId;
+  const isSelected = !isDataTransformerConfig(selectedCard) && selectedCard?.refId === query.refId;
   const styles = useStyles2(getStyles, editorType, hasError, isSelected);
 
   const handleClick = () => {
@@ -59,7 +95,7 @@ export const SidebarCard = ({ query }: SidebarCardProps) => {
       className={styles.card}
       onClick={handleClick}
       type="button"
-      aria-label={t('query-editor-next.sidebar.card-click', 'Select query {{refId}}', { refId: query.refId })}
+      aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{refId}}', { refId: query.refId })}
       aria-pressed={isSelected}
     >
       <Header editorType={editorType} styles={styles} />
@@ -71,6 +107,16 @@ export const SidebarCard = ({ query }: SidebarCardProps) => {
       </div>
     </button>
   );
+};
+
+export const SidebarCard = ({ query }: { query: DataQuery | DataTransformerConfig }) => {
+  const editorType = getEditorType(query);
+  if (editorType === QueryEditorType.Transformation) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return <TransformationCard transformation={query as DataTransformerConfig} />;
+  }
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return <QueryCard query={query as DataQuery} />;
 };
 
 function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: boolean, isSelected?: boolean) {
