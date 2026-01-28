@@ -672,7 +672,7 @@ func TestSocialGitlab_Validate(t *testing.T) {
 				Settings: map[string]any{
 					"client_id":         "client-id",
 					"validate_id_token": "true",
-					"jwk_set_url":       "https://gitlab.com/.well-known/jwks.json",
+					"jwk_set_url":       "https://gitlab.com/oauth/discovery/keys",
 				},
 			},
 			wantErr: nil,
@@ -694,7 +694,7 @@ func TestSocialGitlab_Validate(t *testing.T) {
 				Settings: map[string]any{
 					"client_id":         "client-id",
 					"validate_id_token": "false",
-					"jwk_set_url":       "https://gitlab.com/.well-known/jwks.json",
+					"jwk_set_url":       "https://gitlab.com/oauth/discovery/keys",
 				},
 			},
 			wantErr: nil,
