@@ -4885,6 +4885,7 @@
     },
     "edit-pane": {
       "annotation": {
+        "change-data-source": "Change annotation data source",
         "choose-panels": "Choose panels",
         "color": "Color",
         "color-description": "Color to use for the annotation event markers",
