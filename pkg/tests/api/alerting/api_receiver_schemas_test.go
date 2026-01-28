@@ -37,47 +37,7 @@ func TestIntegrationReceiverSchemas(t *testing.T) {
 		Login:          "grafana",
 	})
 
-	t.Run("K8s API endpoint should return same data as legacy endpoint (v1 format)", func(t *testing.T) {
-		// Test old endpoint
-		oldReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/api/alert-notifiers", grafanaListedAddr), nil)
-		require.NoError(t, err)
-
-		oldResp, err := http.DefaultClient.Do(oldReq)
-		require.NoError(t, err)
-
-		oldBody, err := io.ReadAll(oldResp.Body)
-		require.NoError(t, oldResp.Body.Close())
-		require.NoError(t, err)
-		require.Equal(t, 200, oldResp.StatusCode)
-
-		newReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr), nil)
-		require.NoError(t, err)
-
-		newResp, err := http.DefaultClient.Do(newReq)
-		require.NoError(t, err)
-
-		newBody, err := io.ReadAll(newResp.Body)
-		require.NoError(t, newResp.Body.Close())
-		require.NoError(t, err)
-		require.Equal(t, 200, newResp.StatusCode)
-
-		// Both should return the same data
-		assert.JSONEq(t, string(oldBody), string(newBody),
-			"K8s API endpoint should return same v1 format as legacy endpoint")
-
-		// Verify we got an array of notifiers
-		var oldNotifiers []map[string]interface{}
-		err = json.Unmarshal(oldBody, &oldNotifiers)
-		require.NoError(t, err)
-		assert.Greater(t, len(oldNotifiers), 0, "Should return at least one notifier")
-
-		var newNotifiers []map[string]interface{}
-		err = json.Unmarshal(newBody, &newNotifiers)
-		require.NoError(t, err)
-		assert.Equal(t, len(oldNotifiers), len(newNotifiers), "Both endpoints should return same number of notifiers")
-	})
-
-	t.Run("K8s API endpoint should return same data as legacy endpoint (v2 format)", func(t *testing.T) {
+	t.Run("app platform api endpoint returns v2 schemas", func(t *testing.T) {
 		// Test old endpoint with version=2
 		oldReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/api/alert-notifiers?version=2", grafanaListedAddr), nil)
 		require.NoError(t, err)
@@ -118,7 +78,7 @@ func TestIntegrationReceiverSchemas(t *testing.T) {
 		assert.Equal(t, len(oldSchemas), len(newSchemas), "Both endpoints should return same number of schemas")
 	})
 
-	t.Run("K8s API endpoint requires authentication", func(t *testing.T) {
+	t.Run("app platform api endpoint requires authentication", func(t *testing.T) {
 		// Test without authentication
 		newReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr), nil)
 		require.NoError(t, err)
@@ -131,7 +91,7 @@ func TestIntegrationReceiverSchemas(t *testing.T) {
 		assert.Equal(t, 401, resp.StatusCode, "Should require authentication")
 	})
 
-	t.Run("K8s API endpoint works with namespace path", func(t *testing.T) {
+	t.Run("app platform api endpoint works with namespace path", func(t *testing.T) {
 		// Note: The endpoint is namespace-scoped for API consistency with other
 		// alerting notification endpoints, but the schema data itself is global
 		// (same for all orgs). In a multi-tenant environment, all namespaces would
@@ -156,7 +116,7 @@ func TestIntegrationReceiverSchemas(t *testing.T) {
 		assert.Greater(t, len(schemas), 0, "Should return at least one schema")
 	})
 
-	t.Run("K8s API returns well-known integration types", func(t *testing.T) {
+	t.Run("app platform api returns well-known integration types", func(t *testing.T) {
 		newReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr), nil)
 		require.NoError(t, err)
 
