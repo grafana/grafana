@@ -23,6 +23,7 @@ jest.mock('@grafana/data', () => {
   const storeMocks = {
     get: jest.fn(),
     set: jest.fn(),
+    delete: jest.fn(),
   };
   return {
     ...jest.requireActual('@grafana/data'),
@@ -47,6 +48,7 @@ describe('userStorage', () => {
     const store = getStoreMocks();
     store.get.mockReset();
     store.set.mockReset();
+    store.delete.mockReset();
     _clearStorageCache();
   });
 
@@ -387,6 +389,113 @@ describe('userStorage', () => {
       expect(finalValue).toBe('value2'); // Last write wins
       // Should have made 1 GET and 2 PATCH requests
       expect(request).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('deleteItem', () => {
+    it('uses localStorage delete if the user is not logged in', async () => {
+      config.bootData.user.isSignedIn = false;
+      const storage = usePluginUserStorage();
+      await storage.deleteItem('key');
+      expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
+    });
+
+    it('uses localStorage delete via setItem(key, null) if the user is not logged in', async () => {
+      config.bootData.user.isSignedIn = false;
+      const storage = usePluginUserStorage();
+      await storage.setItem('key', null);
+      expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
+    });
+
+    it('sends PATCH with null value to delete from backend', async () => {
+      // Initial GET returns existing data
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { spec: { data: { key: 'value', otherKey: 'otherValue' } } },
+        } as FetchResponse)
+      );
+      // PATCH to delete the key
+      request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
+
+      const storage = usePluginUserStorage();
+      await storage.deleteItem('key');
+
+      expect(request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
+          method: 'PATCH',
+          data: {
+            spec: {
+              data: { key: null },
+            },
+          },
+        })
+      );
+    });
+
+    it('removes key from cache after successful deletion', async () => {
+      // Initial GET returns existing data
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { spec: { data: { key: 'value', otherKey: 'otherValue' } } },
+        } as FetchResponse)
+      );
+      // PATCH to delete the key
+      request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
+
+      const storage = usePluginUserStorage();
+      await storage.deleteItem('key');
+
+      // Verify the key was removed from cache
+      const deletedValue = await storage.getItem('key');
+      const otherValue = await storage.getItem('otherKey');
+
+      expect(deletedValue).toBeUndefined();
+      expect(otherValue).toBe('otherValue');
+    });
+
+    it('does nothing if storage does not exist (404)', async () => {
+      request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
+
+      const storage = usePluginUserStorage();
+      await storage.deleteItem('key');
+
+      // Should only make the GET request, no PATCH since storage doesn't exist
+      expect(request).toHaveBeenCalledTimes(1);
+      expect(request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          method: 'GET',
+        })
+      );
+    });
+
+    it('falls back to localStorage delete on PATCH failure', async () => {
+      // Initial GET returns existing data
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { spec: { data: { key: 'value' } } },
+        } as FetchResponse)
+      );
+      // PATCH fails
+      request.mockReturnValueOnce(Promise.reject({ status: 500 } as FetchError));
+
+      const storage = usePluginUserStorage();
+      await storage.deleteItem('key');
+
+      expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
+    });
+
+    it('falls back to localStorage delete on init error', async () => {
+      // GET fails with non-404 error
+      request.mockReturnValueOnce(Promise.reject({ status: 500 } as FetchError));
+
+      const storage = usePluginUserStorage();
+      await storage.deleteItem('key');
+
+      expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
     });
   });
 });
