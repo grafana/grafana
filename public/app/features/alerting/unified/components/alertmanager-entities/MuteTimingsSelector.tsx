@@ -25,7 +25,7 @@ const TimeIntervalSelector = ({
 }: BaseAlertmanagerArgs & { selectProps: MultiSelectCommonProps<string> }) => {
   const { data } = useMuteTimings({ alertmanager, skip: selectProps.disabled });
 
-  // Filter to only show usable time intervals (canUse !== 'false')
+  // Filter to only show usable time intervals (canUse === 'true')
   const availableTimings = data?.filter(isUsableTimeInterval) || [];
   const timeIntervalOptions = availableTimings.map((value) => mapTimeInterval(value));
 
