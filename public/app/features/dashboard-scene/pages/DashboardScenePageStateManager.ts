@@ -920,6 +920,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         case DashboardRoutes.Provisioning: {
           return await this.loadProvisioningDashboard(slug || '', uid);
         }
+        case DashboardRoutes.AssistantPreview: {
+          const v1Response = await this.loadAssistantPreviewDashboard(uid);
+          return ensureV2Response(v1Response);
+        }
         case DashboardRoutes.Public: {
           return await this.dashboardLoader.loadDashboard('public', '', uid);
         }
