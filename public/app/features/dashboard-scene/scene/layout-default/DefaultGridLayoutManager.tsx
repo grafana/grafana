@@ -43,6 +43,7 @@ import {
   useDashboard,
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
+  isDashboardNewLayoutsEnabled,
 } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -124,7 +125,7 @@ export class DefaultGridLayoutManager
   }
 
   private _activationHandler() {
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       this._subs.add(
         this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) => {
           const gridItem = panel.parent;
@@ -151,7 +152,7 @@ export class DefaultGridLayoutManager
     vizPanel.clearParent();
 
     // With new edit mode we add panels to the bottom of the grid
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       const emptySpace = findSpaceForNewPanel(this.state.grid);
       const newGridItem = new DashboardGridItem({
         ...emptySpace,
@@ -189,7 +190,7 @@ export class DefaultGridLayoutManager
     const emptySpace = findSpaceForNewPanel(this.state.grid);
     const newGridItem = getDashboardGridItemFromClipboard(getDashboardSceneFor(this), emptySpace);
 
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       dashboardEditActions.edit({
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: newGridItem.state.body,
@@ -233,7 +234,7 @@ export class DefaultGridLayoutManager
       return;
     }
 
-    if (!config.featureToggles.dashboardNewLayouts) {
+    if (!isDashboardNewLayoutsEnabled()) {
       // No undo/redo support in legacy edit mode
       layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
       return;
@@ -292,7 +293,7 @@ export class DefaultGridLayoutManager
     });
 
     // No undo/redo support in legacy edit mode
-    if (!config.featureToggles.dashboardNewLayouts) {
+    if (!isDashboardNewLayoutsEnabled()) {
       if (gridItem.parent instanceof SceneGridRow) {
         const row = gridItem.parent;
 
@@ -418,7 +419,7 @@ export class DefaultGridLayoutManager
       forceRenderChildren(this.state.grid, true);
     };
 
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       // We do this in a timeout to wait a bit with enabling dragging as dragging enables grid animations
       // if we show the edit pane without animations it opens much faster and feels more responsive
       setTimeout(updateResizeAndDragging, 10);
@@ -639,7 +640,7 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const { isEditing } = dashboard.useState();
   const hasClonedParents = isRepeatCloneOrChildOf(model);
   const styles = useStyles2(getStyles);
-  const showCanvasActions = isEditing && config.featureToggles.dashboardNewLayouts && !hasClonedParents;
+  const showCanvasActions = isEditing && isDashboardNewLayoutsEnabled() && !hasClonedParents;
   const soloPanelContext = useSoloPanelContext();
 
   if (soloPanelContext) {

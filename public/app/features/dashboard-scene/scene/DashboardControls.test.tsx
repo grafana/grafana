@@ -236,6 +236,7 @@ describe('DashboardControls', () => {
     const originalFeatureToggles = { ...config.featureToggles };
 
     beforeEach(() => {
+      config.featureToggles.dashboardScene = true;
       config.featureToggles.dashboardNewLayouts = true;
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
     });

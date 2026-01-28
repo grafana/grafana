@@ -28,6 +28,7 @@ describe('ShareExportTab', () => {
 
   beforeEach(() => {
     config.featureToggles.kubernetesDashboards = true;
+    config.featureToggles.dashboardScene = false;
     config.featureToggles.dashboardNewLayouts = false;
 
     // Set up spies on the functions we want to track
@@ -231,10 +232,12 @@ describe('ShareExportTab', () => {
 
   describe('V2Resource export mode with dashboardNewLayouts disabled', () => {
     beforeEach(() => {
+      config.featureToggles.dashboardScene = false;
       config.featureToggles.dashboardNewLayouts = false;
     });
 
     afterEach(() => {
+      config.featureToggles.dashboardScene = true;
       config.featureToggles.dashboardNewLayouts = true;
     });
 

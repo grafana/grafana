@@ -9,6 +9,7 @@ import { config } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink, Icon } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard-scene/utils/utils';
 
 import { BasicProvisionedDashboardsEmptyPage } from '../DashboardLibrary/BasicProvisionedDashboardsEmptyPage';
 import { SuggestedDashboards } from '../DashboardLibrary/SuggestedDashboards';
@@ -42,7 +43,7 @@ const InternalDashboardEmpty = ({ onAddVisualization, onAddLibraryPanel, onImpor
               !dashboardLibraryDatasourceUid,
           })}
         >
-          {config.featureToggles.dashboardNewLayouts
+          {isDashboardNewLayoutsEnabled()
             ? renderNewLayoutEmpty({ styles, dashboardLibraryDatasourceUid })
             : renderOldLayoutEmpty({
                 dashboardLibraryDatasourceUid,

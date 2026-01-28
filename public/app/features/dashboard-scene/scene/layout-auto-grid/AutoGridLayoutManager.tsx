@@ -20,6 +20,7 @@ import {
   getDashboardSceneFor,
   getGridItemKeyForPanelId,
   getVizPanelKeyForPanelId,
+  isDashboardNewLayoutsEnabled,
 } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
@@ -135,7 +136,7 @@ export class AutoGridLayoutManager
 
   public pastePanel() {
     const panel = getAutoGridItemFromClipboard(getDashboardSceneFor(this));
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       dashboardEditActions.edit({
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: panel.state.body,

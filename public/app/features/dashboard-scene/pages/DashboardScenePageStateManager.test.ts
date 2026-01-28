@@ -1351,6 +1351,7 @@ describe('DashboardScenePageStateManager v2', () => {
 describe('UnifiedDashboardScenePageStateManager', () => {
   afterEach(() => {
     store.delete(DASHBOARD_FROM_LS_KEY);
+    config.featureToggles.dashboardScene = false;
     config.featureToggles.dashboardNewLayouts = false;
   });
 
@@ -1624,6 +1625,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
   describe('New dashboards', () => {
     it('should use v1 manager for new dashboards when dashboardNewLayouts feature toggle is disabled', async () => {
+      config.featureToggles.dashboardScene = false;
       config.featureToggles.dashboardNewLayouts = false;
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -1638,6 +1640,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should use v2 manager for new dashboards when dashboardNewLayouts feature toggle is enabled', async () => {
+      config.featureToggles.dashboardScene = true;
       config.featureToggles.dashboardNewLayouts = true;
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -1652,6 +1655,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should maintain manager version for subsequent loads based on feature toggle', async () => {
+      config.featureToggles.dashboardScene = false;
       config.featureToggles.dashboardNewLayouts = false;
       const manager1 = new UnifiedDashboardScenePageStateManager({});
       manager1.setActiveManager('v2');
@@ -1662,6 +1666,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       await manager1.loadDashboard({ uid: '', route: DashboardRoutes.New });
       expect(manager1['activeManager']).toBeInstanceOf(DashboardScenePageStateManager);
 
+      config.featureToggles.dashboardScene = true;
       config.featureToggles.dashboardNewLayouts = true;
       const manager2 = new UnifiedDashboardScenePageStateManager({});
       manager2.setActiveManager('v1');
@@ -1694,6 +1699,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should always use v1 manager for template dashboards even when dashboardNewLayouts is enabled', async () => {
+      config.featureToggles.dashboardScene = true;
       config.featureToggles.dashboardNewLayouts = true;
       config.featureToggles.suggestedDashboards = true;
 
@@ -1741,6 +1747,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should reset to V2 manager when loading a new dashboard after template', async () => {
+      config.featureToggles.dashboardScene = true;
       config.featureToggles.dashboardNewLayouts = true;
       config.featureToggles.suggestedDashboards = true;
 

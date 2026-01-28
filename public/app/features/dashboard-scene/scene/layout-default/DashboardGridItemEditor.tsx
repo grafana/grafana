@@ -11,6 +11,7 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 import { dashboardEditActions } from '../../edit-pane/shared';
+import { isDashboardNewLayoutsEnabled } from '../../utils/utils';
 
 import { DashboardGridItem } from './DashboardGridItem';
 
@@ -75,7 +76,7 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
 
   const options = [repeatCategory];
 
-  if (config.featureToggles.dashboardNewLayouts) {
+  if (isDashboardNewLayoutsEnabled()) {
     options.push(conditionalRenderingCategory);
   }
 

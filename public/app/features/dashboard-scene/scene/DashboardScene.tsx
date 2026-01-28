@@ -74,6 +74,7 @@ import {
   getLayoutManagerFor,
   getPanelIdForVizPanel,
   hasActualSaveChanges,
+  isDashboardNewLayoutsEnabled,
 } from '../utils/utils';
 import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
@@ -320,7 +321,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       appEvents.publish(
         new ShowConfirmModalEvent({
           title: t('dashboard-scene.dashboard-scene.modal.title.unsaved-changes', 'Unsaved changes'),
@@ -575,7 +576,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public copyPanel(vizPanel: VizPanel) {
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       const gridItem = vizPanel.parent;
 
       if (gridItem instanceof AutoGridItem) {

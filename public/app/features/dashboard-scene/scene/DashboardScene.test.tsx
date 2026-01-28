@@ -204,6 +204,8 @@ describe('DashboardScene', () => {
 
       it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', () => {
         const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
+        const originalDashboardScene = config.featureToggles.dashboardScene;
+        config.featureToggles.dashboardScene = true;
         config.featureToggles.dashboardNewLayouts = true;
 
         const publishSpy = jest.spyOn(appEvents, 'publish');
@@ -232,6 +234,7 @@ describe('DashboardScene', () => {
         publishSpy.mockRestore();
         hasActualSaveChangesSpy.mockRestore();
         config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+        config.featureToggles.dashboardScene = originalDashboardScene;
       });
 
       it('Should start the detect changes worker', () => {

@@ -17,6 +17,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
+import { isDashboardNewLayoutsEnabled } from '../utils/utils';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
 interface Props {
@@ -27,7 +28,7 @@ interface Props {
 }
 
 export function DashboardEditPaneSplitter(props: Props) {
-  if (config.featureToggles.dashboardNewLayouts) {
+  if (isDashboardNewLayoutsEnabled()) {
     return <DashboardEditPaneSplitterNewLayouts {...props} />;
   } else {
     return <DashboardEditPaneSplitterLegacy {...props} />;

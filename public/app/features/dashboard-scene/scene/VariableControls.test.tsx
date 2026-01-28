@@ -14,6 +14,7 @@ jest.mock('@grafana/runtime', () => {
     config: {
       ...runtime.config,
       featureToggles: {
+        dashboardScene: true,
         dashboardNewLayouts: true,
       },
     },

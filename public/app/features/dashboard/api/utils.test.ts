@@ -7,36 +7,37 @@ describe('getDashboardsApiVersion', () => {
     jest.resetModules();
   });
 
-  it('should return v1 when dashboardScene is disabled and kubernetesDashboards is enabled', () => {
-    config.featureToggles = {
+  it.each([
+    {
       dashboardScene: false,
       kubernetesDashboards: true,
-    };
-    expect(getDashboardsApiVersion()).toBe('v1');
-  });
-
-  it('should return legacy when dashboardScene is disabled and kubernetesDashboards is disabled', () => {
-    config.featureToggles = {
+      expected: 'v1',
+      description: 'v1 when dashboardScene is disabled and kubernetesDashboards is enabled',
+    },
+    {
       dashboardScene: false,
       kubernetesDashboards: false,
-    };
-    expect(getDashboardsApiVersion()).toBe('legacy');
-  });
-
-  it('should return unified when dashboardScene is enabled and kubernetesDashboards is enabled', () => {
-    config.featureToggles = {
+      expected: 'legacy',
+      description: 'legacy when dashboardScene is disabled and kubernetesDashboards is disabled',
+    },
+    {
       dashboardScene: true,
       kubernetesDashboards: true,
-    };
-    expect(getDashboardsApiVersion()).toBe('unified');
-  });
-
-  it('should return legacy when dashboardScene is enabled and kubernetesDashboards is disabled', () => {
-    config.featureToggles = {
+      expected: 'unified',
+      description: 'unified when dashboardScene is enabled and kubernetesDashboards is enabled',
+    },
+    {
       dashboardScene: true,
       kubernetesDashboards: false,
+      expected: 'legacy',
+      description: 'legacy when dashboardScene is enabled and kubernetesDashboards is disabled',
+    },
+  ])('should return $expected - $description', ({ dashboardScene, kubernetesDashboards, expected }) => {
+    config.featureToggles = {
+      dashboardScene,
+      kubernetesDashboards,
     };
-    expect(getDashboardsApiVersion()).toBe('legacy');
+    expect(getDashboardsApiVersion()).toBe(expected);
   });
 
   describe('forcing scenes through URL', () => {
@@ -44,20 +45,53 @@ describe('getDashboardsApiVersion', () => {
       locationService.push('/test?scenes=false');
     });
 
-    it('should return legacy when kubernetesDashboards is disabled', () => {
-      config.featureToggles = {
-        dashboardScene: false,
+    it.each([
+      {
         kubernetesDashboards: false,
-      };
-      expect(getDashboardsApiVersion()).toBe('legacy');
-    });
-
-    it('should return v1 when kubernetesDashboards is enabled', () => {
+        expected: 'legacy',
+        description: 'legacy when kubernetesDashboards is disabled',
+      },
+      {
+        kubernetesDashboards: true,
+        expected: 'v1',
+        description: 'v1 when kubernetesDashboards is enabled',
+      },
+    ])('should return $expected - $description', ({ kubernetesDashboards, expected }) => {
       config.featureToggles = {
         dashboardScene: false,
+        kubernetesDashboards,
+      };
+      expect(getDashboardsApiVersion()).toBe(expected);
+    });
+  });
+
+  describe('dashboardNewLayouts requires dashboardScene', () => {
+    it.each([
+      {
+        dashboardScene: false,
+        dashboardNewLayouts: true,
+        expected: 'v1',
+        description: 'v1 when dashboardNewLayouts is enabled but dashboardScene is disabled',
+      },
+      {
+        dashboardScene: true,
+        dashboardNewLayouts: true,
+        expected: 'v2',
+        description: 'v2 when both dashboardScene and dashboardNewLayouts are enabled',
+      },
+      {
+        dashboardScene: true,
+        dashboardNewLayouts: false,
+        expected: 'unified',
+        description: 'unified when dashboardScene is enabled but dashboardNewLayouts is disabled',
+      },
+    ])('should return $expected - $description', ({ dashboardScene, dashboardNewLayouts, expected }) => {
+      config.featureToggles = {
+        dashboardScene,
+        dashboardNewLayouts,
         kubernetesDashboards: true,
       };
-      expect(getDashboardsApiVersion()).toBe('v1');
+      expect(getDashboardsApiVersion()).toBe(expected);
     });
   });
 });

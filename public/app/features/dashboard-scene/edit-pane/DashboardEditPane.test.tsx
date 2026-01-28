@@ -57,6 +57,7 @@ function buildTestScene() {
     editable: true,
   });
 
+  config.featureToggles.dashboardScene = true;
   config.featureToggles.dashboardNewLayouts = true;
 
   activateFullSceneTree(scene);

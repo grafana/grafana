@@ -34,6 +34,7 @@ import {
   getDefaultVizPanel,
   getLibraryPanelBehavior,
   getPanelIdForVizPanel,
+  isDashboardNewLayoutsEnabled,
 } from '../utils/utils';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
@@ -130,7 +131,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.setState({ editPreview: undefined });
 
     // Temp fix for old edit mode
-    if (this._layoutItem instanceof DashboardGridItem && !config.featureToggles.dashboardNewLayouts) {
+    if (this._layoutItem instanceof DashboardGridItem && !isDashboardNewLayoutsEnabled()) {
       this._layoutItem.handleEditChange();
       return;
     }
