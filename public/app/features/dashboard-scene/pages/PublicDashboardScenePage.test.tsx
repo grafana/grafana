@@ -131,6 +131,44 @@ describe('PublicDashboardScenePage', () => {
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
   });
 
+  it('does not show time controls when it is hidden', async () => {
+    const accessToken = 'hidden-time-picker-pubdash-access-token';
+    config.publicDashboardAccessToken = accessToken;
+    setupLoadDashboardMock({
+      dashboard: { ...simpleDashboard, timepicker: { hidden: true } },
+      meta: {},
+    });
+    await setup(accessToken);
+
+    await waitForDashboardGridToRender();
+
+    expect(screen.queryByTestId(componentsSelector.TimePicker.openButton)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(componentsSelector.RefreshPicker.runButtonV2)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(componentsSelector.RefreshPicker.intervalButtonV2)).not.toBeInTheDocument();
+  });
+
+  it('shows time controls when it is not hidden', async () => {
+    const accessToken = 'shows-time-controls';
+    config.publicDashboardAccessToken = accessToken;
+    await setup(accessToken);
+
+    await waitForDashboardGridToRender();
+
+    expect(screen.queryByTestId(componentsSelector.TimePicker.openButton)).toBeInTheDocument();
+    expect(screen.queryByTestId(componentsSelector.RefreshPicker.runButtonV2)).toBeInTheDocument();
+    expect(screen.queryByTestId(componentsSelector.RefreshPicker.intervalButtonV2)).toBeInTheDocument();
+  });
+
+  it('does not render paused or deleted screen', async () => {
+    const accessToken = 'does-not-render-paused-or-deleted-screen';
+    config.publicDashboardAccessToken = accessToken;
+    await setup(accessToken);
+
+    await waitForDashboardGridToRender();
+
+    expect(screen.queryByTestId(publicDashboardSelector.NotAvailable.container)).not.toBeInTheDocument();
+  });
+
   it('can render public dashboard', async () => {
     const accessToken = 'an-access-token';
     config.publicDashboardAccessToken = accessToken;
@@ -156,44 +194,6 @@ describe('PublicDashboardScenePage', () => {
 
     expect(screen.queryByTestId(componentsSelector.Panels.Panel.menu('Panel A'))).not.toBeInTheDocument();
     expect(screen.queryByTestId(componentsSelector.Panels.Panel.menu('Panel B'))).not.toBeInTheDocument();
-  });
-
-  it('shows time controls when it is not hidden', async () => {
-    const accessToken = 'shows-time-controls';
-    config.publicDashboardAccessToken = accessToken;
-    await setup(accessToken);
-
-    await waitForDashboardGridToRender();
-
-    expect(screen.queryByTestId(componentsSelector.TimePicker.openButton)).toBeInTheDocument();
-    expect(screen.queryByTestId(componentsSelector.RefreshPicker.runButtonV2)).toBeInTheDocument();
-    expect(screen.queryByTestId(componentsSelector.RefreshPicker.intervalButtonV2)).toBeInTheDocument();
-  });
-
-  it('does not render paused or deleted screen', async () => {
-    const accessToken = 'does-not-render-paused-or-deleted-screen';
-    config.publicDashboardAccessToken = accessToken;
-    await setup(accessToken);
-
-    await waitForDashboardGridToRender();
-
-    expect(screen.queryByTestId(publicDashboardSelector.NotAvailable.container)).not.toBeInTheDocument();
-  });
-
-  it('does not show time controls when it is hidden', async () => {
-    const accessToken = 'hidden-time-picker-pubdash-access-token';
-    config.publicDashboardAccessToken = accessToken;
-    setupLoadDashboardMock({
-      dashboard: { ...simpleDashboard, timepicker: { hidden: true } },
-      meta: {},
-    });
-    await setup(accessToken);
-
-    await waitForDashboardGridToRender();
-
-    expect(screen.queryByTestId(componentsSelector.TimePicker.openButton)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(componentsSelector.RefreshPicker.runButtonV2)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(componentsSelector.RefreshPicker.intervalButtonV2)).not.toBeInTheDocument();
   });
 });
 
