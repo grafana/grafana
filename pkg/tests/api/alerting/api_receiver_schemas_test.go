@@ -39,23 +39,25 @@ func TestIntegrationReceiverSchemas(t *testing.T) {
 
 	t.Run("K8s API endpoint should return same data as legacy endpoint (v1 format)", func(t *testing.T) {
 		// Test old endpoint
-		oldURL := fmt.Sprintf("http://grafana:password@%s/api/alert-notifiers", grafanaListedAddr)
-		oldResp, err := http.Get(oldURL)
+		oldReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/api/alert-notifiers", grafanaListedAddr), nil)
 		require.NoError(t, err)
-		defer oldResp.Body.Close()
+
+		oldResp, err := http.DefaultClient.Do(oldReq)
+		require.NoError(t, err)
 
 		oldBody, err := io.ReadAll(oldResp.Body)
+		require.NoError(t, oldResp.Body.Close())
 		require.NoError(t, err)
 		require.Equal(t, 200, oldResp.StatusCode)
 
-		// Test new K8s API endpoint
-		// Using "default" as namespace - in Grafana this maps to the default org
-		newURL := fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr)
-		newResp, err := http.Get(newURL)
+		newReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr), nil)
 		require.NoError(t, err)
-		defer newResp.Body.Close()
+
+		newResp, err := http.DefaultClient.Do(newReq)
+		require.NoError(t, err)
 
 		newBody, err := io.ReadAll(newResp.Body)
+		require.NoError(t, newResp.Body.Close())
 		require.NoError(t, err)
 		require.Equal(t, 200, newResp.StatusCode)
 
@@ -77,22 +79,26 @@ func TestIntegrationReceiverSchemas(t *testing.T) {
 
 	t.Run("K8s API endpoint should return same data as legacy endpoint (v2 format)", func(t *testing.T) {
 		// Test old endpoint with version=2
-		oldURL := fmt.Sprintf("http://grafana:password@%s/api/alert-notifiers?version=2", grafanaListedAddr)
-		oldResp, err := http.Get(oldURL)
+		oldReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/api/alert-notifiers?version=2", grafanaListedAddr), nil)
 		require.NoError(t, err)
-		defer oldResp.Body.Close()
+
+		oldResp, err := http.DefaultClient.Do(oldReq)
+		require.NoError(t, err)
 
 		oldBody, err := io.ReadAll(oldResp.Body)
+		require.NoError(t, oldResp.Body.Close())
 		require.NoError(t, err)
 		require.Equal(t, 200, oldResp.StatusCode)
 
 		// Test new K8s API endpoint with version=2
-		newURL := fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema?version=2", grafanaListedAddr)
-		newResp, err := http.Get(newURL)
+		newReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema?version=2", grafanaListedAddr), nil)
 		require.NoError(t, err)
-		defer newResp.Body.Close()
+
+		newResp, err := http.DefaultClient.Do(newReq)
+		require.NoError(t, err)
 
 		newBody, err := io.ReadAll(newResp.Body)
+		require.NoError(t, newResp.Body.Close())
 		require.NoError(t, err)
 		require.Equal(t, 200, newResp.StatusCode)
 
@@ -114,10 +120,12 @@ func TestIntegrationReceiverSchemas(t *testing.T) {
 
 	t.Run("K8s API endpoint requires authentication", func(t *testing.T) {
 		// Test without authentication
-		newURL := fmt.Sprintf("http://%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr)
-		resp, err := http.Get(newURL)
+		newReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr), nil)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+
+		resp, err := http.DefaultClient.Do(newReq)
+		require.NoError(t, err)
+		require.NoError(t, resp.Body.Close())
 
 		// Should return 401 Unauthorized
 		assert.Equal(t, 401, resp.StatusCode, "Should require authentication")
@@ -130,12 +138,14 @@ func TestIntegrationReceiverSchemas(t *testing.T) {
 		// return identical schema data.
 
 		// Test with "default" namespace
-		url := fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr)
-		resp, err := http.Get(url)
+		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr), nil)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
 
 		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, resp.Body.Close())
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -147,12 +157,14 @@ func TestIntegrationReceiverSchemas(t *testing.T) {
 	})
 
 	t.Run("K8s API returns well-known integration types", func(t *testing.T) {
-		newURL := fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr)
-		resp, err := http.Get(newURL)
+		newReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr), nil)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+
+		resp, err := http.DefaultClient.Do(newReq)
+		require.NoError(t, err)
 
 		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, resp.Body.Close())
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
