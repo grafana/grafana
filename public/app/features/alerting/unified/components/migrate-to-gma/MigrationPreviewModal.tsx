@@ -14,7 +14,7 @@ import { stringifyErrorLike } from '../../utils/misc';
 import { createListFilterLink } from '../../utils/navigation';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
-import { MigrationFormValues } from './MigrateToGMA';
+import { MERGE_MATCHERS_LABEL_NAME, MigrationFormValues } from './MigrateToGMA';
 import { filterRulerRulesConfig, useMigrateNotifications, useMigrateRules } from './useMigration';
 
 interface MigrationPreviewModalProps {
@@ -248,7 +248,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
     setError(null);
 
     try {
-      const notificationsLabel = `${formData.migrationLabelName}=${formData.migrationLabelValue}`;
+      const notificationsLabel = `${MERGE_MATCHERS_LABEL_NAME}=${formData.policyTreeName}`;
 
       // Migrate notifications first (if step 1 was completed)
       if (willMigrateNotifications) {
@@ -278,7 +278,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
         // Calculate extra labels based on notification policy option
         let extraLabels: string | undefined;
         if (formData.notificationPolicyOption === 'imported') {
-          extraLabels = `${formData.migrationLabelName}=${formData.migrationLabelValue}`;
+          extraLabels = `${MERGE_MATCHERS_LABEL_NAME}=${formData.policyTreeName}`;
         } else if (formData.notificationPolicyOption === 'manual') {
           extraLabels = `${formData.manualLabelName}=${formData.manualLabelValue}`;
         }
@@ -371,9 +371,9 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                           <Stack direction="column" gap={2}>
                             <Text color="secondary">
                               <Trans i18nKey="alerting.migrate-to-gma.preview.label-used">
-                                Migration label:{' '}
+                                Policy tree:{' '}
                                 <strong>
-                                  {formData.migrationLabelName}={formData.migrationLabelValue}
+                                  {MERGE_MATCHERS_LABEL_NAME}={formData.policyTreeName}
                                 </strong>
                               </Trans>
                             </Text>
@@ -459,7 +459,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                               <Trans i18nKey="alerting.migrate-to-gma.preview.policy-imported">
                                 Routing: Using imported policy. Label{' '}
                                 <strong>
-                                  {formData.migrationLabelName}={formData.migrationLabelValue}
+                                  {MERGE_MATCHERS_LABEL_NAME}={formData.policyTreeName}
                                 </strong>{' '}
                                 will be added.
                               </Trans>

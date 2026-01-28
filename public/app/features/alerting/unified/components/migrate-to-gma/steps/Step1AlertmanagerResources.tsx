@@ -20,7 +20,7 @@ import {
 } from '@grafana/ui';
 
 import { getAlertManagerDataSources } from '../../../utils/datasource';
-import { DEFAULT_MIGRATION_LABEL_NAME, MigrationFormValues } from '../MigrateToGMA';
+import { MigrationFormValues } from '../MigrateToGMA';
 
 interface Step1Props {
   onComplete: () => void;
@@ -39,16 +39,9 @@ export function Step1AlertmanagerResources({ onComplete, onSkip, canImport }: St
     formState: { errors },
   } = useFormContext<MigrationFormValues>();
 
-  const [
-    notificationsSource,
-    migrationLabelName,
-    migrationLabelValue,
-    notificationsDatasourceUID,
-    notificationsYamlFile,
-  ] = watch([
+  const [notificationsSource, policyTreeName, notificationsDatasourceUID, notificationsYamlFile] = watch([
     'notificationsSource',
-    'migrationLabelName',
-    'migrationLabelValue',
+    'policyTreeName',
     'notificationsDatasourceUID',
     'notificationsYamlFile',
   ]);
@@ -74,7 +67,7 @@ export function Step1AlertmanagerResources({ onComplete, onSkip, canImport }: St
     if (!canImport) {
       return false;
     }
-    if (!migrationLabelName || !migrationLabelValue) {
+    if (!policyTreeName) {
       return false;
     }
     if (notificationsSource === 'yaml' && !notificationsYamlFile) {
@@ -114,46 +107,33 @@ export function Step1AlertmanagerResources({ onComplete, onSkip, canImport }: St
       )}
 
       {/* Migration Label Card */}
+      {/* Policy Tree Name Card */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <Text variant="h5" element="h3">
-            {t('alerting.migrate-to-gma.step1.label-title', 'Migration Label')}
+            {t('alerting.migrate-to-gma.step1.policy-tree-title', 'Policy Tree Name')}
           </Text>
         </div>
         <div className={styles.cardContent}>
           <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="alerting.migrate-to-gma.step1.label-desc">
-              This label will be used as a matcher in the imported notification policy tree to route alerts from the
-              imported rules to the correct contact points.
+            <Trans i18nKey="alerting.migrate-to-gma.step1.policy-tree-desc">
+              Name for the imported notification policy tree. Alerts with the label{' '}
+              <code>__grafana_managed_route__</code> matching this name will be routed through this policy tree.
             </Trans>
           </Text>
           <Box marginTop={2}>
-            <Stack direction="row" gap={2}>
-              <Field
-                label={t('alerting.migrate-to-gma.step1.label-name', 'Label name')}
-                invalid={!!errors.migrationLabelName}
-                error={errors.migrationLabelName?.message}
-                noMargin
-              >
-                <Input
-                  {...register('migrationLabelName', { required: 'Label name is required' })}
-                  placeholder={t('alerting.migrate-to-gma.step1.label-name-placeholder', DEFAULT_MIGRATION_LABEL_NAME)}
-                  width={25}
-                />
-              </Field>
-              <Field
-                label={t('alerting.migrate-to-gma.step1.label-value', 'Label value')}
-                invalid={!!errors.migrationLabelValue}
-                error={errors.migrationLabelValue?.message}
-                noMargin
-              >
-                <Input
-                  {...register('migrationLabelValue', { required: 'Label value is required' })}
-                  placeholder={t('alerting.migrate-to-gma.step1.label-value-placeholder', 'prometheus-prod')}
-                  width={25}
-                />
-              </Field>
-            </Stack>
+            <Field
+              label={t('alerting.migrate-to-gma.step1.policy-tree-name', 'Policy tree name')}
+              invalid={!!errors.policyTreeName}
+              error={errors.policyTreeName?.message}
+              noMargin
+            >
+              <Input
+                {...register('policyTreeName', { required: 'Policy tree name is required' })}
+                placeholder={t('alerting.migrate-to-gma.step1.policy-tree-placeholder', 'prometheus-prod')}
+                width={40}
+              />
+            </Field>
           </Box>
         </div>
       </div>

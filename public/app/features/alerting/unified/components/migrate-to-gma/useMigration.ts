@@ -10,7 +10,7 @@ interface MigrateNotificationsParams {
   /** Datasource name (not UID) - required when source is 'datasource' */
   datasourceName?: string;
   yamlFile: File | null;
-  mergeMatchers: string; // e.g., "importedLabel=my-policy" (label name should match DEFAULT_MIGRATION_LABEL_NAME)
+  mergeMatchers: string; // e.g., "__grafana_managed_route__=my-policy" (uses MERGE_MATCHERS_LABEL_NAME constant)
 }
 
 interface MigrateRulesParams {

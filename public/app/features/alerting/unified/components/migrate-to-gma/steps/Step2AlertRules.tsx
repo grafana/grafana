@@ -32,7 +32,7 @@ import {
 } from '../../../utils/datasource';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName } from '../../rule-editor/useAlertRuleSuggestions';
-import { MigrationFormValues } from '../MigrateToGMA';
+import { MERGE_MATCHERS_LABEL_NAME, MigrationFormValues } from '../MigrateToGMA';
 
 interface Step2Props {
   onComplete: () => void;
@@ -62,8 +62,7 @@ export function Step2AlertRules({ onComplete, onSkip, onBack, step1Completed, st
     rulesDatasourceName,
     rulesYamlFile,
     notificationPolicyOption,
-    migrationLabelName,
-    migrationLabelValue,
+    policyTreeName,
     manualLabelName,
     manualLabelValue,
     namespace,
@@ -74,8 +73,7 @@ export function Step2AlertRules({ onComplete, onSkip, onBack, step1Completed, st
     'rulesDatasourceName',
     'rulesYamlFile',
     'notificationPolicyOption',
-    'migrationLabelName',
-    'migrationLabelValue',
+    'policyTreeName',
     'manualLabelName',
     'manualLabelValue',
     'namespace',
@@ -147,8 +145,8 @@ export function Step2AlertRules({ onComplete, onSkip, onBack, step1Completed, st
         'alerting.migrate-to-gma.step2.policy.imported-desc',
         'Use the policy tree imported in Step 1. Label {{label}}={{value}} will be added to all rules.',
         {
-          label: migrationLabelName,
-          value: migrationLabelValue,
+          label: MERGE_MATCHERS_LABEL_NAME,
+          value: policyTreeName,
         }
       ),
     });

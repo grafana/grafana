@@ -17,15 +17,22 @@ import { MigrationPreviewModal } from './MigrationPreviewModal';
 import { Step1AlertmanagerResources } from './steps/Step1AlertmanagerResources';
 import { Step2AlertRules } from './steps/Step2AlertRules';
 
-/** Default label name used for migration - links imported rules to notification policies */
-export const DEFAULT_MIGRATION_LABEL_NAME = 'importedLabel';
+/**
+ * Label name used in X-Grafana-Alerting-Merge-Matchers header.
+ * We use __grafana_managed_route__ as the label name for merge matchers.
+ * Alerts matching this label will be routed through the imported policy tree.
+ */
+export const MERGE_MATCHERS_LABEL_NAME = '__grafana_managed_route__';
 
 export interface MigrationFormValues {
   // Step 1: Alertmanager resources
   step1Completed: boolean;
   step1Skipped: boolean;
-  migrationLabelName: string;
-  migrationLabelValue: string;
+  /**
+   * Name of the imported policy tree (value for __grafana_managed_route__ label).
+   * For now, this is free-form as we don't have an API to retrieve the list of available policy trees.
+   */
+  policyTreeName: string;
   notificationsSource: 'datasource' | 'yaml';
   notificationsDatasourceUID?: string;
   notificationsDatasourceName: string | null;
@@ -67,8 +74,7 @@ const MigrateToGMA = () => {
       // Step 1
       step1Completed: false,
       step1Skipped: false,
-      migrationLabelName: DEFAULT_MIGRATION_LABEL_NAME,
-      migrationLabelValue: '',
+      policyTreeName: '',
       notificationsSource: 'yaml',
       notificationsDatasourceUID: undefined,
       notificationsDatasourceName: null,
@@ -385,9 +391,9 @@ function ReviewStep({ formData, onBack, onStartMigration }: ReviewStepProps) {
                     </Text>
                   </div>
                   <div className={styles.row}>
-                    <Text color="secondary">{t('alerting.migrate-to-gma.review.label', 'Migration label')}</Text>
+                    <Text color="secondary">{t('alerting.migrate-to-gma.review.policy-tree', 'Policy tree')}</Text>
                     <Text weight="medium">
-                      {formData.migrationLabelName}={formData.migrationLabelValue}
+                      {MERGE_MATCHERS_LABEL_NAME}={formData.policyTreeName}
                     </Text>
                   </div>
                 </Stack>
@@ -432,8 +438,8 @@ function ReviewStep({ formData, onBack, onStartMigration }: ReviewStepProps) {
                         t('alerting.migrate-to-gma.review.routing-default', 'Default Grafana policy')}
                       {formData.notificationPolicyOption === 'imported' &&
                         t('alerting.migrate-to-gma.review.routing-imported', 'Imported policy ({{label}}={{value}})', {
-                          label: formData.migrationLabelName,
-                          value: formData.migrationLabelValue,
+                          label: MERGE_MATCHERS_LABEL_NAME,
+                          value: formData.policyTreeName,
                         })}
                       {formData.notificationPolicyOption === 'manual' &&
                         t('alerting.migrate-to-gma.review.routing-manual', 'Manual label ({{label}}={{value}})', {

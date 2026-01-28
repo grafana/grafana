@@ -57,13 +57,11 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         alertmanagerConfig: string;
         /** Template files map */
         templateFiles?: Record<string, string>;
-        /** Identifier for the imported config (default: "default") */
-        configIdentifier?: string;
         /** Merge matchers - label=value pairs that will be added to notification policies (e.g., "importedLabel=my-policy") */
         mergeMatchers: string;
       }
     >({
-      query: ({ alertmanagerConfig, templateFiles = {}, configIdentifier = 'default', mergeMatchers }) => ({
+      query: ({ alertmanagerConfig, templateFiles = {}, mergeMatchers }) => ({
         url: `/api/convert/api/v1/alerts`,
         method: 'POST',
         body: {
@@ -71,7 +69,13 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           template_files: templateFiles,
         },
         headers: {
-          'X-Grafana-Alerting-Config-Identifier': configIdentifier,
+          // We use 'default' for X-Grafana-Alerting-Config-Identifier for now.
+          // The backend currently only supports ONE extra configuration at a time.
+          // Using 'default' allows overwriting the existing config on subsequent imports.
+          // TODO: Change to 'imported' once the API supports multiple extra configurations.
+          'X-Grafana-Alerting-Config-Identifier': 'default',
+          // We use __grafana_managed_route__ as the label name in X-Grafana-Alerting-Merge-Matchers.
+          // The value is the policy tree name chosen by the user.
           'X-Grafana-Alerting-Merge-Matchers': mergeMatchers,
         },
       }),
