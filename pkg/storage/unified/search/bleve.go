@@ -81,6 +81,10 @@ type BleveOptions struct {
 	// Indexes that are not owned by current instance are eligible for cleanup.
 	// If nil, all indexes are owned by the current instance.
 	OwnsIndex func(key resource.NamespacedResource) (bool, error)
+
+	// Map "group/kind" -> list of selectable fields. Only given fields
+	// are indexed (have mapping).
+	SelectableFieldsForKinds map[string][]string
 }
 
 type bleveBackend struct {
@@ -144,7 +148,7 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		opts:             opts,
 		ownsIndexFn:      ownFn,
 		indexMetrics:     indexMetrics,
-		selectableFields: resource.SelectableFields(),
+		selectableFields: opts.SelectableFieldsForKinds,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1254,11 +1258,8 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// filters
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
-			prefix := ""
-			if b.selectableFields[v.Key] {
-				prefix = "selectable_fields."
-			}
-			q, err := requirementQuery(v, prefix)
+			// Fields should already have correct prefix (either "fields." or "selectableFields.")
+			q, err := requirementQuery(v, "")
 			if err != nil {
 				return nil, err
 			}

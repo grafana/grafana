@@ -16,6 +16,7 @@ func AppManifests() []app.Manifest {
 	}
 }
 
+// SelectableFields returns map of <group>/<Kind> to list of selectable fields for known manifests.
 func SelectableFields() map[string][]string {
 	return SelectableFieldsForManifests(AppManifests())
 }

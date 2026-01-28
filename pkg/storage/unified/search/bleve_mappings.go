@@ -1,6 +1,8 @@
 package search
 
 import (
+	"strings"
+
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
@@ -175,7 +177,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 		}
 	}
 
-	mapper.AddSubDocumentMapping("fields", fieldMapper)
+	mapper.AddSubDocumentMapping(strings.TrimSuffix(resource.SEARCH_FIELD_PREFIX, "."), fieldMapper)
 
 	selectableFieldsMapper := bleve.NewDocumentStaticMapping()
 	for _, field := range selectableFields {
@@ -187,7 +189,7 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 			Index:    true,
 		})
 	}
-	mapper.AddSubDocumentMapping("selectable_fields", selectableFieldsMapper)
+	mapper.AddSubDocumentMapping(strings.TrimSuffix(resource.SEARCH_SELECTABLE_FIELDS_PREFIX, "."), selectableFieldsMapper)
 
 	return mapper
 }
