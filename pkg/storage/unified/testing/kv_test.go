@@ -40,9 +40,15 @@ func TestSQLKV(t *testing.T) {
 		dbstore := db.InitTestDB(t)
 		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 		require.NoError(t, err)
-
-		kv, err := resource.NewSQLKV(eDB)
+		dbConn, err := eDB.Init(ctx)
+		require.NoError(t, err)
+		kv, err := resource.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 		require.NoError(t, err)
 		return kv
-	}, &KVTestOptions{NSPrefix: "sql-kv-test"})
+	}, &KVTestOptions{
+		NSPrefix: "sql-kv-test",
+		SkipTests: map[string]bool{
+			TestKVBatch: true, // Batch operations not yet implemented for sqlKV
+		},
+	})
 }

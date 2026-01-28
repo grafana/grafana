@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, PropsWithChildren, ReactElement, ReactNode, useId, useState } from 'react';
+import { CSSProperties, ReactElement, ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
@@ -114,11 +114,6 @@ interface HoverHeader {
   hoverHeader?: boolean;
   hoverHeaderOffset?: number;
 }
-
-const MaybeWrap = ({ children }: PropsWithChildren<{}>) => {
-  const styles = useStyles2(getStyles);
-  return getFeatureToggle('preventPanelChromeOverflow') ? <div className={styles.container}>{children}</div> : children;
-};
 
 /**
  * @internal
@@ -248,10 +243,15 @@ export function PanelChrome({
 
   const onContentPointerDown = React.useCallback(
     (evt: React.PointerEvent) => {
-      // When selected, ignore clicks inside buttons, links, canvas and svg elments
-      // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
-      if (isSelected && evt.target instanceof Element && evt.target.closest('button,a,canvas,svg')) {
-        // Stop propagation otherwise row config editor will get selected
+      // Always ignore interactive controls so their clicks don't select the panel.
+      // This prevents legend item clicks from selecting the panel and opening the edit sidebar.
+      if (evt.target instanceof Element && evt.target.closest('button,a')) {
+        evt.stopPropagation();
+        return;
+      }
+
+      // When selected, ignore clicks inside canvas/svg to avoid selecting row config editor.
+      if (isSelected && evt.target instanceof Element && evt.target.closest('canvas,svg')) {
         evt.stopPropagation();
         return;
       }
@@ -352,7 +352,7 @@ export function PanelChrome({
   const hasHeaderContent = title || description || titleItems || menu || dragClass || actions;
 
   return (
-    <MaybeWrap>
+    <div className={styles.container}>
       {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
       <section
         className={cx(
@@ -459,7 +459,7 @@ export function PanelChrome({
           </div>
         )}
       </section>
-    </MaybeWrap>
+    </div>
   );
 }
 
@@ -528,12 +528,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-container',
       backgroundColor: background,
       border: `1px solid ${borderColor}`,
-      position: getFeatureToggle('preventPanelChromeOverflow') ? 'unset' : 'relative',
+      position: 'unset',
       borderRadius: theme.shape.radius.default,
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      overflow: getFeatureToggle('preventPanelChromeOverflow') ? 'hidden' : 'initial',
+      overflow: 'hidden',
 
       '.always-show': {
         background: 'none',

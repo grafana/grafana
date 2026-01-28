@@ -808,12 +808,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Odstranit",
       "duplicate": "Duplikovat",
       "label-integration": "Integrace",
       "label-notification-settings": "Nastavení oznámení",
       "label-section": "Nepovinné nastavení: {{name}}",
       "test": "Test",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -972,6 +974,13 @@
       "content-route-continue-matching-other-policies": "Tato cesta bude nadále odpovídat jiným zásadám"
     },
     "copy-to-clipboard": "Kopírovat „{{label}}“ do schránky",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Oznámení jsou doručována na",
@@ -1653,6 +1662,11 @@
       },
       "yaml-error": "Nepodařilo se analyzovat soubor YAML: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Sledujte stav svého systému",
       "monitor-status-system-tooltip": "Postřehy o upozorňování poskytují předem připravené nástěnky pro sledování dat upozorňování.",
@@ -1940,6 +1954,10 @@
     "namespace-and-group-filter": {
       "select-group": "Vybrat skupinu",
       "select-namespace": "Vyberte jmenný prostor"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Potřebujete pomoc?"
@@ -3653,7 +3671,10 @@
       "move-modal-title": "Přesunout",
       "move-provisioned-folder": "",
       "moving": "Probíhá přesouvání…",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Název složky je povinný.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Vybrali jste přidělené i nepřidělené zdroje. Tyto zdroje nelze zpracovat společně. Vyberte pouze přidělené nebo nepřidělené zdroje a zkuste to znovu.",
       "selected-mix-resources-modal-title": "Byly vybrány smíšené typy zdrojů"
     },
@@ -4588,6 +4609,14 @@
     "actions": {
       "open-settings": "Nastavení"
     },
+    "add": {
+      "new-panel": {
+        "button": "",
+        "description": "",
+        "title": ""
+      },
+      "pane-header": ""
+    },
     "add-library-panel-widget": {
       "aria-label-close-add-panel-widget": "Zavřít widget „Přidat panel“",
       "tooltip-close-widget": "Zavřít widget"
@@ -4970,12 +4999,14 @@
       "add-visualization-body": "Vyberte zdroj dat a poté se dotazujte a vizualizujte data pomocí grafů, statistik a tabulek nebo vytvářejte seznamy, přehledy a další widgety.",
       "add-visualization-button": "Přidat vizualizaci",
       "add-visualization-header": "Začněte novou nástěnku přidáním vizualizace",
+      "description": "",
       "import-a-dashboard-body": "Importujte nástěnky ze souborů nebo z <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importovat nástěnku",
       "import-dashboard-button": "Importovat nástěnku",
       "show-less-dashboards": "",
       "show-more-dashboards": "",
       "start-with-suggested-dashboards": "",
+      "title": "",
       "use-template-button": ""
     },
     "errors": {
@@ -5187,6 +5218,9 @@
       "title": {
         "deleted": "odstraněno"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -5484,6 +5518,10 @@
       "loading-configuration": "Načítání konfigurace"
     },
     "sidebar": {
+      "add": {
+        "title": "",
+        "tooltip": ""
+      },
       "dashboard-options": {
         "title": "",
         "tooltip": ""
@@ -10999,7 +11037,9 @@
     "invite-user": {
       "invite-button": "Pozvat",
       "invite-new-user-button": "Pozvat nového uživatele",
-      "invite-tooltip": "Pozvat uživatele"
+      "invite-tooltip": "Pozvat uživatele",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Přidat do záložek",
@@ -11949,10 +11989,7 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
@@ -12145,6 +12182,8 @@
       "error-delete-all-repositories": "Nepodařilo se odstranit všechna úložiště",
       "subtitle": "Zobrazujte a spravujte nakonfigurovaná úložiště",
       "success-all-repositories-deleted": "Všechna nakonfigurovaná úložiště byla odstraněna",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Začínáme",
       "tab-getting-started-title": "Začínáme",
       "tab-repositories": "Úložiště",
@@ -12208,6 +12247,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12228,7 +12270,6 @@
       "jobs": "Práce"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Nastavení",
       "source-code": "Zdrojový kód"
     },
@@ -12408,6 +12449,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Dokončit",
@@ -12420,15 +12466,30 @@
         "dismiss": "Pokračovat v práci",
         "title": "Zahodit nastavení úložiště?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Vyberte, co chcete synchronizovat",
+      "step-configure-repo": "",
       "step-connect": "Připojit",
       "step-finish": "Vybrat další nastavení",
+      "step-github-app": "",
       "step-synchronize": "Synchronizovat s externím úložištěm",
       "sync-description": "Synchronizujte zdroje s externím úložištěm. Po tomto jednorázovém kroku budou všechny budoucí aktualizace automaticky uloženy do úložiště a zajištěny zpět do instance.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Vyberte, co chcete synchronizovat",
+      "title-configure-repo": "",
       "title-connect": "Připojit k externímu úložišti",
       "title-finish": "Vybrat další nastavení",
+      "title-github-app": "",
       "title-synchronize": "Synchronizovat s externím úložištěm"
     },
     "wizard-content": {
@@ -12648,6 +12709,18 @@
       "query-inspector": "Inspektor dotazů",
       "query-tab-help-button-title-open-data-source-help": "Otevřít nápovědu pro zdroj dat",
       "title-data-source-help": "Nápověda pro zdroj dat"
+    }
+  },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "placeholder": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
     }
   },
   "query-operation": {
@@ -13415,6 +13488,7 @@
       "label-standard": "Standardní"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -15027,6 +15101,9 @@
       "label-both": "Oba",
       "label-lines": "Čáry",
       "label-points": "Body"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }
