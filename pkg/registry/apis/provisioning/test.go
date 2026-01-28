@@ -139,9 +139,9 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					cfg.SetNamespace(ns)
 				}
 
-				// The new repository should be connected to a Connection resource,
-				// i.e. we should be generating the token based on it.
-				if cfg.Secure.Token.IsZero() && cfg.Spec.Connection != nil && cfg.Spec.Connection.Name != "" {
+				// In case a connection is specified, we should try creating a new token with given info
+				// to check its validity
+				if cfg.Spec.Connection != nil && cfg.Spec.Connection.Name != "" {
 					// A connection must be there
 					c, err := s.connectionGetter.GetConnection(ctx, cfg.Spec.Connection.Name)
 					if err != nil {

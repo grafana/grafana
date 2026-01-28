@@ -10,7 +10,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2022-09-26,grpcServer,preview,@grafana/search-and-storage,false,false,false
 2022-11-28,cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 2022-10-14,showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
-2022-10-12,mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
 2022-12-14,alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
 2023-01-27,logsContextDatasourceUi,GA,@grafana/observability-logs,false,false,true
 2024-10-23,lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
@@ -157,7 +156,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-11-14,passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,false,false,false
 2024-12-18,prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,false,true
 2024-11-05,enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
-2024-11-07,enableSCIM,preview,@grafana/identity-access-team,false,false,false
+2024-11-07,enableSCIM,GA,@grafana/identity-access-team,false,false,false
 2024-11-12,crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2024-11-18,alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true
 2024-11-27,azureMonitorEnableUserAuth,GA,@grafana/partner-datasources,false,false,false

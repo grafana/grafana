@@ -11,7 +11,7 @@ import { PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';
 
-import { SidebarSize } from './QueryEditor/QueryEditorSidebar';
+import { SidebarSize } from './QueryEditor/Sidebar/QueryEditorSidebar';
 
 type UseHorizontalResizeOptions = {
   initialWidth: number;

@@ -295,7 +295,9 @@ type SyncOptions struct {
 	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace
 	// Folder string `json:"folder,omitempty"`
 
-	// When non-zero, the sync will run periodically
+	// The interval between sync runs.
+	// The system defines a default value for this field, which will overwrite the
+	// user-defined one in case the latter is zero or lower than the system-defined one.
 	IntervalSeconds int64 `json:"intervalSeconds,omitempty"`
 }
 

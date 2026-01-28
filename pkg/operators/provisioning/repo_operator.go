@@ -70,7 +70,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	validator := repository.NewValidator(controllerCfg.minSyncInterval, controllerCfg.allowImageRendering, controllerCfg.repoFactory)
+	validator := repository.NewValidator(controllerCfg.allowImageRendering, controllerCfg.repoFactory)
 	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
 	// Health checker uses basic validation only - no need to validate against existing repositories
 	// since the repository already passed admission validation when it was created/updated.
