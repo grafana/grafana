@@ -209,35 +209,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           dashboard.copyPanel(panel);
         },
       });
-
-      if (panel.state.pluginId === 'timeseries') {
-        const stylesSubMenu: PanelMenuItem[] = [];
-
-        stylesSubMenu.push({
-          text: t('panel.header-menu.copy-styles', `Copy styles`),
-          iconClassName: 'copy',
-          onClick: () => {
-            dashboard.copyPanelStyles(panel);
-          },
-        });
-
-        if (DashboardScene.hasPanelStylesToPaste('timeseries')) {
-          stylesSubMenu.push({
-            text: t('panel.header-menu.paste-styles', `Paste styles`),
-            iconClassName: 'clipboard-alt',
-            onClick: () => {
-              dashboard.pastePanelStyles(panel);
-            },
-          });
-        }
-
-        moreSubMenu.push({
-          type: 'submenu',
-          text: t('panel.header-menu.styles', `Styles`),
-          iconClassName: 'palette',
-          subMenu: stylesSubMenu,
-        });
-      }
     }
 
     if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
@@ -372,6 +343,38 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           subMenu: createExtensionSubMenu(otherLinks),
         });
       }
+    }
+
+    if (panel.state.pluginId === 'timeseries') {
+      const stylesSubMenu: PanelMenuItem[] = [];
+
+      stylesSubMenu.push({
+        text: t('panel.header-menu.copy-styles', `Copy styles`),
+        iconClassName: 'copy',
+        onClick: () => {
+          dashboard.copyPanelStyles(panel);
+        },
+      });
+
+      if (DashboardScene.hasPanelStylesToPaste('timeseries')) {
+        stylesSubMenu.push({
+          text: t('panel.header-menu.paste-styles', `Paste styles`),
+          iconClassName: 'clipboard-alt',
+          onClick: () => {
+            dashboard.pastePanelStyles(panel);
+          },
+        });
+      }
+
+      items.push({
+        type: 'submenu',
+        text: t('panel.header-menu.styles', `Styles`),
+        iconClassName: 'palette',
+        subMenu: stylesSubMenu,
+        onClick: (e) => {
+          e.preventDefault();
+        },
+      });
     }
 
     if (moreSubMenu.length) {
