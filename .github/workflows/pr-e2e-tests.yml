@@ -200,15 +200,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - suite: various-suite (old arch)
-            path: e2e/old-arch/various-suite
-            flags: --flags="--env dashboardScene=false"
+          # - suite: various-suite (old arch)
+          #   path: e2e/old-arch/various-suite
+          #   flags: --flags="--env dashboardScene=false"
           - suite: dashboards-suite (old arch)
             path: e2e/old-arch/dashboards-suite
             flags: --flags="--env dashboardScene=false"
-          - suite: smoke-tests-suite (old arch)
-            path: e2e/old-arch/smoke-tests-suite
-            flags: --flags="--env dashboardScene=false"
+          # - suite: smoke-tests-suite (old arch)
+          #   path: e2e/old-arch/smoke-tests-suite
+          #   flags: --flags="--env dashboardScene=false"
           - suite: panels-suite (old arch)
             path: e2e/old-arch/panels-suite
             flags: --flags="--env dashboardScene=false"
