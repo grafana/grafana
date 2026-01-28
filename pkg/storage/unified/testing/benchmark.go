@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"os"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/stretchr/testify/require"
 )
@@ -94,7 +93,6 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 	// Create channels for workers
 	jobs := make(chan int, opts.NumResources)
 	latencies := make([]time.Duration, opts.NumResources)
-	errors := make(chan error, opts.NumResources)
 
 	// Fill the jobs channel
 	for i := 0; i < opts.NumResources; i++ {
@@ -102,12 +100,12 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 	}
 	close(jobs)
 
-	var wg sync.WaitGroup
+	g, ctx := errgroup.WithContext(ctx)
 
 	// Start workers
 	startTime := time.Now()
 	for workerID := 0; workerID < opts.Concurrency; workerID++ {
-		wg.Go(func() {
+		g.Go(func() error {
 			for jobID := range jobs {
 				// Calculate a unique ID for this job that's guaranteed to be unique across all workers
 				uniqueID := jobID
@@ -127,22 +125,19 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 					WithValue(strings.Repeat("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 20))) // ~1.21 KiB
 
 				if err != nil {
-					errors <- err
-					return
+					return err
 				}
 
 				latencies[jobID] = time.Since(writeStart)
 			}
+
+			return nil
 		})
 	}
 
 	// Wait for all workers to complete
-	wg.Wait()
-	close(errors)
-
-	// Check for errors
-	if len(errors) > 0 {
-		return nil, <-errors // Return the first error encountered
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 
 	totalDuration := time.Since(startTime)
@@ -184,15 +179,10 @@ func RunStorageBackendBenchmark(t *testing.T, backend resource.StorageBackend, o
 
 // runSearchBackendBenchmarkWriteThroughput runs a write throughput benchmark for search backend
 // This is a simple benchmark that writes a single resource/group/namespace because indices are per-tenant/group/resource.
-func runSearchBackendBenchmarkWriteThroughput(t *testing.T, ctx context.Context, backend resource.SearchBackend, opts *BenchmarkOptions) (*BenchmarkResult, error) {
-	if opts == nil {
-		opts = DefaultBenchmarkOptions(t)
-	}
-
+func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resource.SearchBackend, opts *BenchmarkOptions) (*BenchmarkResult, error) {
 	// Create channels for workers
 	jobs := make(chan int, opts.NumResources)
-	results := make(chan time.Duration, opts.NumResources)
-	errors := make(chan error, opts.NumResources)
+	latencies := make([]time.Duration, opts.NumResources)
 
 	// Fill the jobs channel
 	for i := 0; i < opts.NumResources; i++ {
@@ -200,7 +190,7 @@ func runSearchBackendBenchmarkWriteThroughput(t *testing.T, ctx context.Context,
 	}
 	close(jobs)
 
-	var wg sync.WaitGroup
+	g, ctx := errgroup.WithContext(ctx)
 
 	// Initialize namespace and resource type
 	nr := resource.NamespacedResource{
@@ -221,12 +211,13 @@ func runSearchBackendBenchmarkWriteThroughput(t *testing.T, ctx context.Context,
 	// Start workers
 	startTime := time.Now()
 	for workerID := 0; workerID < opts.Concurrency; workerID++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		g.Go(func() error {
 			batch := make([]*resource.BulkIndexItem, 0, 1000)
+			var jobIDs []int
 
 			for jobID := range jobs {
+				jobIDs = append(jobIDs, jobID)
+
 				doc := &resource.IndexableDocument{
 					Key: &resourcepb.ResourceKey{
 						Namespace: nr.Namespace,
@@ -254,43 +245,31 @@ func runSearchBackendBenchmarkWriteThroughput(t *testing.T, ctx context.Context,
 						Items: batch,
 					})
 					if err != nil {
-						errors <- err
-						return
+						return err
 					}
 
 					// Record the latency for each document in the batch
-					latency := time.Since(writeStart)
-					for i := 0; i < len(batch); i++ {
-						results <- latency
+					for _, jid := range jobIDs {
+						latencies[jid] = time.Since(writeStart)
 					}
 
 					// Reset the batch
 					batch = batch[:0]
+					jobIDs = nil
 				}
 			}
-		}()
+
+			return nil
+		})
 	}
 
 	// Wait for all workers to complete
-	wg.Wait()
-	close(results)
-	close(errors)
-
-	// Check for errors
-	if len(errors) > 0 {
-		return nil, <-errors // Return the first error encountered
-	}
-
-	// Collect all latencies
-	latencies := make([]time.Duration, 0, opts.NumResources)
-	for latency := range results {
-		latencies = append(latencies, latency)
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 
 	// Sort latencies for percentile calculation
-	sort.Slice(latencies, func(i, j int) bool {
-		return latencies[i] < latencies[j]
-	})
+	slices.Sort(latencies)
 
 	totalDuration := time.Since(startTime)
 	throughput := float64(opts.NumResources) / totalDuration.Seconds()
@@ -307,7 +286,7 @@ func runSearchBackendBenchmarkWriteThroughput(t *testing.T, ctx context.Context,
 
 // RunSearchBackendBenchmark runs a benchmark test for a search backend implementation
 func RunSearchBackendBenchmark(t *testing.T, backend resource.SearchBackend, opts *BenchmarkOptions) {
-	result, err := runSearchBackendBenchmarkWriteThroughput(t, t.Context(), backend, opts)
+	result, err := runSearchBackendBenchmarkWriteThroughput(t.Context(), backend, opts)
 	require.NoError(t, err)
 
 	// Log the results for better visibility
