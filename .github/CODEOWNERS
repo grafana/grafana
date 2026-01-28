@@ -704,6 +704,8 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/nodegraph @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
 /packages/grafana-schema/src/**/parca @grafana/oss-big-tent
 /packages/grafana-schema/src/**/piechart @grafana/dataviz-squad
+/packages/grafana-schema/src/**/prometheusinstantresults @grafana/oss-big-tent
+/packages/grafana-schema/src/**/rawprometheus @grafana/oss-big-tent
 /packages/grafana-schema/src/**/stat @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statetimeline @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statushistory @grafana/dataviz-squad
@@ -995,6 +997,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/plugins/panel/traces/ @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/flamegraph/ @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/piechart/ @grafana/dataviz-squad
+/public/app/plugins/panel/raw-prometheus/ @grafana/oss-big-tent
 /public/app/plugins/panel/state-timeline/ @grafana/dataviz-squad
 /public/app/plugins/panel/status-history/ @grafana/dataviz-squad
 /public/app/plugins/panel/table/ @grafana/dataviz-squad
