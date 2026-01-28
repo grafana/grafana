@@ -23,22 +23,33 @@ function getBadgeConfig(status: ConnectionStatus): BadgeConfig {
     };
   }
 
-  if (readyCondition.status === 'True') {
-    return {
-      color: 'green',
-      text: t('provisioning.connections.status-connected', 'Connected'),
-      icon: 'check',
-    };
+  switch (readyCondition.status) {
+    case 'True':
+      return {
+        color: 'green',
+        text: t('provisioning.connections.status-connected', 'Connected'),
+        icon: 'check',
+      };
+    case 'False':
+      return {
+        color: 'red',
+        text: t('provisioning.connections.status-disconnected', 'Disconnected'),
+        icon: 'times-circle',
+      };
+    default:
+      return {
+        color: 'darkgrey',
+        text: t('provisioning.connections.status-unknown', 'Unknown'),
+        icon: 'question-circle',
+      };
   }
-
-  return {
-    color: 'red',
-    text: t('provisioning.connections.status-disconnected', 'Disconnected'),
-    icon: 'times-circle',
-  };
 }
 
 export function ConnectionStatusBadge({ status }: Props) {
+  if (!status?.conditions?.length) {
+    return null;
+  }
+
   const config = getBadgeConfig(status);
 
   return <Badge color={config.color} text={config.text} icon={config.icon} />;

@@ -27,7 +27,7 @@ export function ConnectionListItem({ connection }: Props) {
       <Card.Heading>
         <Stack gap={2} direction="row" alignItems="center">
           {repoConfig && <Text variant="h3">{`${repoConfig.label} app connection`}</Text>}
-          {status?.conditions && <ConnectionStatusBadge status={status} />}
+          {status && <ConnectionStatusBadge status={status} />}
         </Stack>
       </Card.Heading>
 
