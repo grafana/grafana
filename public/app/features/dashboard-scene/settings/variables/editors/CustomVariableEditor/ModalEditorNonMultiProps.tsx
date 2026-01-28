@@ -18,6 +18,7 @@ interface ModalEditorProps {
 
 export function ModalEditorNonMultiProps(props: ModalEditorProps) {
   const {
+    variable,
     displayMultiPropsWarningBanner,
     formRef,
     onCloseModal,
@@ -44,7 +45,7 @@ export function ModalEditorNonMultiProps(props: ModalEditorProps) {
       )}
       <Stack direction="column" gap={2}>
         <VariableStaticOptionsForm options={options} onChange={onChangeOptions} ref={formRef} isInModal />
-        <VariableValuesPreview options={options} />
+        <VariableValuesPreview variable={variable} />
       </Stack>
       <Modal.ButtonRow leftItems={<VariableStaticOptionsFormAddButton onAdd={onAddNewOption} />}>
         <Button
@@ -74,6 +75,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
   const formRef = useRef<VariableStaticOptionsFormRef | null>(null);
 
   return {
+    variable,
     displayMultiPropsWarningBanner: valuesFormat === 'json',
     formRef,
     onCloseModal: onClose,

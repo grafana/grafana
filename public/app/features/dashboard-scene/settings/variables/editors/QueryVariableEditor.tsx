@@ -301,17 +301,15 @@ export function Editor({ variable }: { variable: QueryVariable }) {
         refresh={refresh}
       />
 
-      {onStaticOptionsChange && onStaticOptionsOrderChange && (
-        <QueryVariableStaticOptions
-          options={options}
-          staticOptions={staticOptions}
-          staticOptionsOrder={staticOptionsOrder}
-          onStaticOptionsChange={onStaticOptionsChange}
-          onStaticOptionsOrderChange={onStaticOptionsOrderChange}
-        />
-      )}
+      <QueryVariableStaticOptions
+        options={options}
+        staticOptions={staticOptions}
+        staticOptionsOrder={staticOptionsOrder}
+        onStaticOptionsChange={onStaticOptionsChange}
+        onStaticOptionsOrderChange={onStaticOptionsOrderChange}
+      />
 
-      {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect(false)} />}
+      {isHasVariableOptions && <VariableValuesPreview variable={variable} />}
     </div>
   );
 }

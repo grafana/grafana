@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useRef, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { CustomVariableModel } from '@grafana/data';
@@ -29,10 +29,10 @@ export function ModalEditor(props: ModalEditorProps) {
 
 function ModalEditorMultiProps(props: ModalEditorProps) {
   const {
+    variable,
     valuesFormat,
     query,
     queryValidationError,
-    options,
     onCloseModal,
     onValuesFormatChange,
     onQueryChange,
@@ -69,7 +69,7 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
           {queryValidationError && <FieldValidationMessage>{queryValidationError.message}</FieldValidationMessage>}
         </div>
         <div>
-          <VariableValuesPreview options={options} />
+          <VariableValuesPreview variable={variable} />
         </div>
       </Stack>
       <Modal.ButtonRow>
@@ -102,22 +102,11 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
   const [prevQuery, setPrevQuery] = useState('');
   const [queryValidationError, setQueryValidationError] = useState<Error>();
 
-  const options = useMemo(() => {
-    if (valuesFormat === 'csv') {
-      return variable.transformCsvStringToOptions(query, false).map(({ label, value }) => ({
-        value,
-        label: value === label ? '' : label,
-      }));
-    } else {
-      return variable.transformJsonToOptions(query);
-    }
-  }, [query, valuesFormat, variable]);
-
   return {
+    variable,
     valuesFormat,
     query,
     queryValidationError,
-    options,
     onCloseModal: onClose,
     onValuesFormatChange(newFormat: CustomVariableModel['valuesFormat']) {
       setQuery(prevQuery);

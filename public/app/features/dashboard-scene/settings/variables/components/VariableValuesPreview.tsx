@@ -8,71 +8,17 @@ import { config } from '@grafana/runtime';
 import { VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
 import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
 
-export interface Props {
+interface VariableState {
   options: VariableValueOption[];
+  staticOptions?: VariableValueOption[];
+  valuesFormat?: string;
 }
 
-// the option at index 0 can be "All" so we first try to grab the properties from the option at index 1
-export const getPropertiesFromOptions = (options: VariableValueOption[]) => {
-  const keys = Object.keys(options[1]?.properties ?? options[0]?.properties ?? {}).filter(
-    (p) => !['text', 'value'].includes(p)
-  );
-  return ['text', 'value', ...keys];
-};
-
-export const VariableValuesPreview = ({ options }: Props) => {
-  const styles = useStyles2(getStyles);
-  const hasOptions = options.length > 0;
-  const displayMultiPropsPreview =
-    config.featureToggles.multiPropsVariables && hasOptions && getPropertiesFromOptions(options).length > 2;
-
-  return (
-    <div className={styles.previewContainer} style={{ gap: '8px' }}>
-      <Text variant="bodySmall" weight="medium">
-        <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values" values={{ count: options.length }}>
-          Preview of values ({'{{count}}'})
-        </Trans>
-        {hasOptions && displayMultiPropsPreview && <VariableValuesWithPropsPreview options={options} />}
-        {hasOptions && !displayMultiPropsPreview && <VariableValuesWithoutPropsPreview options={options} />}
-      </Text>
-    </div>
-  );
-};
-
-function VariableValuesWithPropsPreview({ options }: { options: VariableValueOption[] }) {
-  const styles = useStyles2(getStyles);
-
-  const { data, columns } = useMemo(() => {
-    const data = options.map(({ label, value, properties }) => ({
-      text: label,
-      value,
-      ...flattenProperties(properties),
-    }));
-
-    return {
-      data,
-      // the data at index 0 can be "All" so we first try to grab the column names from the data at index 1
-      columns: Object.keys(data[1] ?? data[0] ?? {}).map((id) => ({
-        id,
-        // see https://github.com/TanStack/table/issues/1671
-        header: unsanitizeKey(id),
-        sortType: 'alphanumeric' as const,
-      })),
-    };
-  }, [options]);
-
-  return (
-    <InteractiveTable
-      className={styles.table}
-      columns={columns}
-      data={data}
-      getRowId={(r) => String(r.value)}
-      pageSize={8}
-    />
-  );
+// made only for legacy reasons in public/app/features/variables/editor/VariableEditorEditor.tsx
+// TODO: remove ASAP
+interface VariableValuesPreviewProps {
+  variable: { useState(): VariableState };
 }
-const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
-const unsanitizeKey = (key: string) => key.replace(/__dot__/g, '.');
 
 function flattenProperties(properties?: VariableValueOptionProperties, path = ''): Record<string, string> {
   if (properties === undefined) {
@@ -87,13 +33,85 @@ function flattenProperties(properties?: VariableValueOptionProperties, path = ''
     if (typeof value === 'object' && value !== null) {
       Object.assign(result, flattenProperties(value, newPath));
     } else {
-      // see https://github.com/TanStack/table/issues/1671
-      result[sanitizeKey(newPath)] = value;
+      result[sanitizeKey(newPath)] = value; // see https://github.com/TanStack/table/issues/1671
     }
   }
 
   return result;
 }
+
+// always get the properties from a non-static option
+export const useGetPropertiesFromOptions = (options: VariableValueOption[], staticOptions?: VariableValueOption[]) =>
+  useMemo(() => {
+    const staticValues = new Set(staticOptions?.map((s) => s.value) ?? []);
+    const queryOption = options.find((opt) => !staticValues.has(opt.value));
+    const flattened = flattenProperties(queryOption?.properties);
+    const keys = Object.keys(flattened).filter((p) => !['text', 'value'].includes(p));
+    return ['text', 'value', ...keys];
+  }, [options, staticOptions]);
+
+export const VariableValuesPreview = ({ variable }: VariableValuesPreviewProps) => {
+  const styles = useStyles2(getStyles);
+  const state = variable.useState();
+  const { options } = state;
+  const staticOptions = 'staticOptions' in state && Array.isArray(state.staticOptions) ? state.staticOptions : [];
+  const hasOptions = options.length > 0;
+  const properties = useGetPropertiesFromOptions(options, staticOptions);
+  const displayMultiPropsPreview = config.featureToggles.multiPropsVariables && hasOptions && properties.length > 2;
+
+  return (
+    <div className={styles.previewContainer} style={{ gap: '8px' }}>
+      <Text variant="bodySmall" weight="medium">
+        <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values" values={{ count: options.length }}>
+          Preview of values ({'{{count}}'})
+        </Trans>
+        {hasOptions && displayMultiPropsPreview && (
+          <VariableValuesWithPropsPreview options={options} properties={properties} />
+        )}
+        {hasOptions && !displayMultiPropsPreview && <VariableValuesWithoutPropsPreview options={options} />}
+      </Text>
+    </div>
+  );
+};
+
+function VariableValuesWithPropsPreview({
+  options,
+  properties,
+}: {
+  options: VariableValueOption[];
+  properties: string[];
+}) {
+  const styles = useStyles2(getStyles);
+
+  const { data, columns } = useMemo(() => {
+    const data = options.map(({ label, value, properties }) => ({
+      text: label,
+      value,
+      ...flattenProperties(properties),
+    }));
+
+    return {
+      data,
+      columns: properties.map((id) => ({
+        id,
+        header: unsanitizeKey(id), // see https://github.com/TanStack/table/issues/1671
+        sortType: 'alphanumeric' as const,
+      })),
+    };
+  }, [options, properties]);
+
+  return (
+    <InteractiveTable
+      className={styles.table}
+      columns={columns}
+      data={data}
+      getRowId={(r) => String(r.value)}
+      pageSize={8}
+    />
+  );
+}
+const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
+const unsanitizeKey = (key: string) => key.replace(/__dot__/g, '.');
 
 function VariableValuesWithoutPropsPreview({ options }: { options: VariableValueOption[] }) {
   const styles = useStyles2(getStyles);
