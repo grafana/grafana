@@ -70,6 +70,10 @@ public/css/*.min.css
 !.vscode/launch.json
 .vs/
 .cursor/
+!.cursor/
+.cursor/*
+!.cursor/skills/
+!.cursor/skills/**
 .devcontainer/
 .claude/
 
@@ -176,6 +180,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 
 # Ignore frontend build manifest
 manifest.json
+/packages/grafana-data/src/themes/schema.generated.json
 
 # Ignore go local build dependencies
 /scripts/go/bin/**
