@@ -13,17 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	claims "github.com/grafana/authlib/types"
-
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -148,14 +142,10 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, options runt
 			return
 		}
 
-		// searchResults, err := s.parseResults(result, searchRequest.Offset)
-		// if err != nil {
-		// 	responder.Error(err)
-		// 	return
-		// }
-
-		searchResults := &iamv0.TeamMemberList{
-			Items: make([]iamv0.TeamMember, 0, len(result.Results.Rows)),
+		searchResults, err := parseResults(result, searchRequest.Offset)
+		if err != nil {
+			responder.Error(err)
+			return
 		}
 
 		if err := json.NewEncoder(w).Encode(searchResults); err != nil {
@@ -175,20 +165,68 @@ func (s *TeamMembersREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
-var cfg = &setting.Cfg{}
-
-func mapToTeamMember(m legacy.TeamMember) iamv0.TeamMember {
-	return iamv0.TeamMember{
-		Display: iamv0.Display{
-			Identity: iamv0.IdentityRef{
-				Type: claims.TypeUser,
-				Name: m.UserUID,
-			},
-			DisplayName: m.Name,
-			AvatarURL:   dtos.GetGravatarUrlWithDefault(cfg, m.Email, m.Name),
-			InternalID:  m.UserID,
-		},
-		External:   m.External,
-		Permission: common.MapUserTeamPermission(m.Permission),
+func parseResults(result *resourcepb.ResourceSearchResponse, offset int64) (iamv0alpha1.GetMembersBody, error) {
+	if result == nil {
+		return iamv0alpha1.GetMembersBody{}, nil
 	}
+	if result.Error != nil {
+		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+	}
+	if result.Results == nil {
+		return iamv0alpha1.GetMembersBody{}, nil
+	}
+
+	subjectNameIDX := -1
+	teamRefIDX := -1
+	permissionIDX := -1
+	externalIDX := -1
+
+	for i, v := range result.Results.Columns {
+		if v == nil {
+			continue
+		}
+
+		switch v.Name {
+		case builders.TEAM_BINDING_SUBJECT_NAME:
+			subjectNameIDX = i
+		case builders.TEAM_BINDING_TEAM_REF:
+			teamRefIDX = i
+		case builders.TEAM_BINDING_PERMISSION:
+			permissionIDX = i
+		case builders.TEAM_BINDING_EXTERNAL:
+			externalIDX = i
+		}
+	}
+
+	if subjectNameIDX < 0 {
+		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_SUBJECT_NAME)
+	}
+	if teamRefIDX < 0 {
+		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_TEAM_REF)
+	}
+	if permissionIDX < 0 {
+		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_PERMISSION)
+	}
+	if externalIDX < 0 {
+		return iamv0alpha1.GetMembersBody{}, fmt.Errorf("required column '%s' not found in search results", builders.TEAM_BINDING_EXTERNAL)
+	}
+
+	body := iamv0alpha1.GetMembersBody{
+		Items: make([]iamv0alpha1.VersionsV0alpha1Kinds7RoutesMembersGETResponseTeamUser, len(result.Results.Rows)),
+	}
+
+	for i, row := range result.Results.Rows {
+		if len(row.Cells) != len(result.Results.Columns) {
+			return iamv0alpha1.GetMembersBody{}, fmt.Errorf("error parsing team binding response: mismatch number of columns and cells")
+		}
+
+		body.Items[i] = iamv0alpha1.VersionsV0alpha1Kinds7RoutesMembersGETResponseTeamUser{
+			User:       string(row.Cells[subjectNameIDX]),
+			Team:       string(row.Cells[teamRefIDX]),
+			Permission: string(row.Cells[permissionIDX]),
+			External:   string(row.Cells[externalIDX]) == "true",
+		}
+	}
+
+	return body, nil
 }
