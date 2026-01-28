@@ -121,7 +121,7 @@ func TestNewSearchClient(t *testing.T) {
 		cfg.EnableSearchClient = true
 		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue("localhost:12345")
 
-		client, err := NewSearchClient(cfg, featuremgmt.WithFeatures())
+		client, err := NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures())
 		require.NoError(t, err)
 		require.NotNil(t, client)
 	})
