@@ -6,9 +6,8 @@ import { BarGaugeSizing, VizOrientation } from '@grafana/schema';
 import { DataLinksContextMenu, Gauge, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/internal';
 
-import { clearNameForSingleSeries } from '../bargauge/BarGaugePanel';
-
-import { defaultOptions, Options } from './panelcfg.gen';
+import { clearNameForSingleSeries } from '../../bargauge/BarGaugePanel';
+import { defaultOptions, Options } from '../panelcfg.gen';
 
 export class GaugePanel extends PureComponent<PanelProps<Options>> {
   renderComponent = (

@@ -1,13 +1,13 @@
 import { createDataFrame, Field, FieldType, getPanelDataSummary } from '@grafana/data';
 
-import { radialBarSuggestionsSupplier } from './suggestions';
+import { gaugeSuggestionsSupplier } from './suggestions';
 
-describe('RadialBarPanel Suggestions', () => {
+describe('GaugePanel Suggestions', () => {
   it('does not suggest gauge if no data is present', () => {
-    expect(radialBarSuggestionsSupplier(getPanelDataSummary([]))).toBeFalsy();
-    expect(radialBarSuggestionsSupplier(getPanelDataSummary(undefined))).toBeFalsy();
+    expect(gaugeSuggestionsSupplier(getPanelDataSummary([]))).toBeFalsy();
+    expect(gaugeSuggestionsSupplier(getPanelDataSummary(undefined))).toBeFalsy();
     expect(
-      radialBarSuggestionsSupplier(
+      gaugeSuggestionsSupplier(
         getPanelDataSummary([
           createDataFrame({
             fields: [
@@ -27,7 +27,7 @@ describe('RadialBarPanel Suggestions', () => {
         { name: 'status', type: FieldType.string },
       ],
     });
-    expect(radialBarSuggestionsSupplier(getPanelDataSummary([df]))).toBeFalsy();
+    expect(gaugeSuggestionsSupplier(getPanelDataSummary([df]))).toBeFalsy();
   });
 
   it('does not suggest gauge if there are too many numeric fields', () => {
@@ -35,12 +35,12 @@ describe('RadialBarPanel Suggestions', () => {
     for (let i = 0; i < 20; i++) {
       fields.push({ name: `numeric-${i}`, type: FieldType.number, values: [0, 100, 200, 300, 400, 500], config: {} });
     }
-    expect(radialBarSuggestionsSupplier(getPanelDataSummary([createDataFrame({ fields })]))).toBeFalsy();
+    expect(gaugeSuggestionsSupplier(getPanelDataSummary([createDataFrame({ fields })]))).toBeFalsy();
   });
 
   it('suggests gauge for a single numeric field', () => {
     expect(
-      radialBarSuggestionsSupplier(
+      gaugeSuggestionsSupplier(
         getPanelDataSummary([
           createDataFrame({
             fields: [
@@ -58,7 +58,7 @@ describe('RadialBarPanel Suggestions', () => {
 
   it('suggests gauge for a few numeric fields, with other fields mixed in', () => {
     expect(
-      radialBarSuggestionsSupplier(
+      gaugeSuggestionsSupplier(
         getPanelDataSummary([
           createDataFrame({
             fields: [
@@ -136,7 +136,7 @@ describe('RadialBarPanel Suggestions', () => {
         ],
       },
     ])('$description suggests aggregated=$aggregated', ({ dataframes, aggregated }) => {
-      const suggestions = radialBarSuggestionsSupplier(getPanelDataSummary(dataframes));
+      const suggestions = gaugeSuggestionsSupplier(getPanelDataSummary(dataframes));
       const expected = aggregated ? { values: false, calcs: ['lastNotNull'] } : { values: true, calcs: [] };
       if (Array.isArray(suggestions)) {
         for (const suggestion of suggestions) {
@@ -150,7 +150,7 @@ describe('RadialBarPanel Suggestions', () => {
   });
 
   it('figures out a suitable min and max for gauges', () => {
-    const suggestions = radialBarSuggestionsSupplier(
+    const suggestions = gaugeSuggestionsSupplier(
       getPanelDataSummary([
         {
           length: 1,

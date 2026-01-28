@@ -3,15 +3,15 @@ import { t } from '@grafana/i18n';
 import { BarGaugeSizing, VizOrientation } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
-import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
+import { addOrientationOption, addStandardDataReduceOptions } from '../../stat/common';
+import { defaultGaugePanelEffects, defaultOptions, Options } from '../panelcfg.gen';
 
 import { EffectsEditor } from './EffectsEditor';
-import { RadialBarPanel } from './RadialBarPanel';
+import { GaugePanel } from './GaugePanel';
 import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './migrations';
-import { defaultGaugePanelEffects, defaultOptions, Options } from './panelcfg.gen';
-import { radialBarSuggestionsSupplier } from './suggestions';
+import { gaugeSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<Options>(RadialBarPanel)
+export const plugin = new PanelPlugin<Options>(GaugePanel)
   .useFieldConfig({})
   .setPanelOptions((builder) => {
     const category = [t('gauge.category-radial-bar', 'Gauge')];
@@ -22,13 +22,13 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
 
     builder.addRadio({
       path: 'shape',
-      name: t('radialbar.config.shape', 'Style'),
+      name: t('gauge.config.shape', 'Style'),
       category,
       defaultValue: defaultOptions.shape,
       settings: {
         options: [
-          { value: 'circle', label: t('radialbar.config.shape-circle', 'Circle'), icon: 'circle' },
-          { value: 'gauge', label: t('radialbar.config.shape-gauge', 'Arc'), icon: 'tachometer-empty' },
+          { value: 'circle', label: t('gauge.config.shape-circle', 'Circle'), icon: 'circle' },
+          { value: 'gauge', label: t('gauge.config.shape-gauge', 'Arc'), icon: 'tachometer-empty' },
         ],
       },
     });
@@ -80,7 +80,7 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
 
     builder.addSliderInput({
       path: 'barWidthFactor',
-      name: t('radialbar.config.bar-width', 'Bar width'),
+      name: t('gauge.config.bar-width', 'Bar width'),
       category,
       defaultValue: defaultOptions.barWidthFactor,
       settings: {
@@ -92,7 +92,7 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
 
     builder.addSliderInput({
       path: 'segmentCount',
-      name: t('radialbar.config.segment-count', 'Segments'),
+      name: t('gauge.config.segment-count', 'Segments'),
       category,
       defaultValue: defaultOptions.segmentCount,
       settings: {
@@ -104,7 +104,7 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
 
     builder.addSliderInput({
       path: 'segmentSpacing',
-      name: t('radialbar.config.segment-spacing', 'Segment spacing'),
+      name: t('gauge.config.segment-spacing', 'Segment spacing'),
       category,
       defaultValue: defaultOptions.segmentSpacing,
       showIf: (options) => options.segmentCount > 1,
@@ -117,13 +117,13 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
 
     builder.addRadio({
       path: 'barShape',
-      name: t('radialbar.config.bar-shape', 'Bar Style'),
+      name: t('gauge.config.bar-shape', 'Bar Style'),
       category,
       defaultValue: defaultOptions.barShape,
       settings: {
         options: [
-          { value: 'flat', label: t('radialbar.config.bar-shape-flat', 'Flat') },
-          { value: 'rounded', label: t('radialbar.config.bar-shape-rounded', 'Rounded') },
+          { value: 'flat', label: t('gauge.config.bar-shape-flat', 'Flat') },
+          { value: 'rounded', label: t('gauge.config.bar-shape-rounded', 'Rounded') },
         ],
       },
       showIf: (options) => options.segmentCount === 1,
@@ -131,15 +131,15 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
 
     builder.addRadio({
       path: 'endpointMarker',
-      name: t('radialbar.config.endpoint-marker', 'Endpoint marker'),
-      description: t('radialbar.config.endpoint-marker-description', 'Glow is only supported in dark mode'),
+      name: t('gauge.config.endpoint-marker', 'Endpoint marker'),
+      description: t('gauge.config.endpoint-marker-description', 'Glow is only supported in dark mode'),
       category,
       defaultValue: defaultOptions.endpointMarker,
       settings: {
         options: [
-          { value: 'point', label: t('radialbar.config.endpoint-marker-point', 'Point') },
-          { value: 'glow', label: t('radialbar.config.endpoint-marker-glow', 'Glow') },
-          { value: 'none', label: t('radialbar.config.endpoint-marker-none', 'None') },
+          { value: 'point', label: t('gauge.config.endpoint-marker-point', 'Point') },
+          { value: 'glow', label: t('gauge.config.endpoint-marker-glow', 'Glow') },
+          { value: 'none', label: t('gauge.config.endpoint-marker-none', 'None') },
         ],
       },
       showIf: (options) => options.barShape === 'rounded' && options.segmentCount === 1,
@@ -147,15 +147,15 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
 
     builder.addSelect({
       path: 'textMode',
-      name: t('radialbar.config.text-mode', 'Text mode'),
+      name: t('gauge.config.text-mode', 'Text mode'),
       category,
       settings: {
         options: [
-          { value: 'auto', label: t('radialbar.config.text-mode-auto', 'Auto') },
-          { value: 'value_and_name', label: t('radialbar.config.text-mode-value-and-name', 'Value and Name') },
-          { value: 'value', label: t('radialbar.config.text-mode-value', 'Value') },
-          { value: 'name', label: t('radialbar.config.text-mode-name', 'Name') },
-          { value: 'none', label: t('radialbar.config.text-mode-none', 'None') },
+          { value: 'auto', label: t('gauge.config.text-mode-auto', 'Auto') },
+          { value: 'value_and_name', label: t('gauge.config.text-mode-value-and-name', 'Value and Name') },
+          { value: 'value', label: t('gauge.config.text-mode-value', 'Value') },
+          { value: 'name', label: t('gauge.config.text-mode-name', 'Name') },
+          { value: 'none', label: t('gauge.config.text-mode-none', 'None') },
         ],
       },
       defaultValue: defaultOptions.textMode,
@@ -163,47 +163,47 @@ export const plugin = new PanelPlugin<Options>(RadialBarPanel)
 
     builder.addNumberInput({
       path: 'neutral',
-      name: t('radialbar.config.neutral.title', 'Neutral value'),
-      description: t('radialbar.config.neutral.description', 'Leave empty to use Min as neutral point'),
+      name: t('gauge.config.neutral.title', 'Neutral value'),
+      description: t('gauge.config.neutral.description', 'Leave empty to use Min as neutral point'),
       category,
       settings: {
-        placeholder: t('radialbar.config.neutral.placeholder', 'none'),
+        placeholder: t('gauge.config.neutral.placeholder', 'none'),
         step: 1,
       },
     });
 
     builder.addBooleanSwitch({
       path: 'sparkline',
-      name: t('radialbar.config.sparkline', 'Show sparkline'),
+      name: t('gauge.config.sparkline', 'Show sparkline'),
       category,
       defaultValue: defaultOptions.sparkline,
     });
 
     builder.addBooleanSwitch({
       path: 'showThresholdMarkers',
-      name: t('radialbar.config.threshold-markers', 'Show thresholds'),
+      name: t('gauge.config.threshold-markers', 'Show thresholds'),
       category,
       defaultValue: defaultOptions.showThresholdMarkers,
     });
 
     builder.addBooleanSwitch({
       path: 'showThresholdLabels',
-      name: t('radialbar.config.threshold-labels', 'Show labels'),
-      description: t('radialbar.config.threshold-labels-description', 'Display threshold and neutral values'),
+      name: t('gauge.config.threshold-labels', 'Show labels'),
+      description: t('gauge.config.threshold-labels-description', 'Display threshold and neutral values'),
       category,
       defaultValue: defaultOptions.showThresholdLabels,
     });
 
     builder.addCustomEditor({
-      id: 'radialbar-effects',
+      id: 'gauge-effects',
       path: 'effects',
-      name: t('radialbar.config.effects.label', 'Effects'),
+      name: t('gauge.config.effects.label', 'Effects'),
       category,
       editor: EffectsEditor,
       settings: {},
       defaultValue: defaultGaugePanelEffects,
     });
   })
-  .setSuggestionsSupplier(radialBarSuggestionsSupplier)
+  .setSuggestionsSupplier(gaugeSuggestionsSupplier)
   .setMigrationHandler(gaugePanelMigrationHandler, shouldMigrateGauge)
   .setPanelChangeHandler(gaugePanelChangedHandler);
