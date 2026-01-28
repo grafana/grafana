@@ -140,7 +140,6 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		ret, err := sql.NewBackend(sql.BackendOptions{
 			DBProvider:      eDB,
 			PollingInterval: time.Millisecond, // Keep this fast
-			EnableStorage:   true,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, ret)

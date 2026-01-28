@@ -71,7 +71,8 @@ type BackendOptions struct {
 	IsHA              bool
 	storageMetrics    *resource.StorageMetrics
 	GarbageCollection GarbageCollectionConfig
-	EnableStorage     bool
+
+	DisableStorageServices bool
 
 	// testing
 	SimulatedNetworkLatency time.Duration // slows down the create transactions by a fixed amount
@@ -94,7 +95,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}
 	return &backend{
 		isHA:                    opts.IsHA,
-		storageEnabled:          opts.EnableStorage,
+		disableStorageServices:  opts.DisableStorageServices,
 		done:                    ctx.Done(),
 		cancel:                  cancel,
 		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
@@ -112,8 +113,8 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 
 type backend struct {
 	//general
-	isHA           bool
-	storageEnabled bool
+	isHA                   bool
+	disableStorageServices bool
 
 	// server lifecycle
 	done     <-chan struct{}
@@ -132,7 +133,7 @@ type backend struct {
 	dialect    sqltemplate.Dialect
 	bulkLock   *bulkLock
 
-	// -- Storage Fields
+	// -- Storage Services
 
 	// watch streaming
 	//stream chan *resource.WatchEvent
@@ -150,7 +151,7 @@ type backend struct {
 
 	garbageCollection GarbageCollectionConfig
 
-	// -- Search Fields
+	// Fields to control the cleanup of "lastImportTime" rows (used to find indexes to rebuild)
 	lastImportTimeMaxAge       time.Duration
 	lastImportTimeDeletionTime atomic.Time
 }
@@ -180,7 +181,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 		return fmt.Errorf("no dialect for driver %q", driverName)
 	}
 
-	if !b.storageEnabled {
+	if b.disableStorageServices {
 		return nil
 	}
 
@@ -471,7 +472,7 @@ func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedR
 }
 
 func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (int64, error) {
-	if !b.storageEnabled {
+	if b.disableStorageServices {
 		return 0, fmt.Errorf("storage backend is not enabled")
 	}
 	_, span := tracer.Start(ctx, "sql.backend.WriteEvent")
@@ -1065,8 +1066,8 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
-	if !b.storageEnabled {
-		return nil, fmt.Errorf("storage backend is not enabled")
+	if b.disableStorageServices {
+		return nil, fmt.Errorf("watcher is not enabled")
 	}
 	return b.notifier.notify(ctx)
 }

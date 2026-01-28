@@ -161,7 +161,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 					MaxAge:           opts.Cfg.GarbageCollectionMaxAge,
 					DashboardsMaxAge: opts.Cfg.DashboardsGarbageCollectionMaxAge,
 				},
-				EnableStorage: true,
+				DisableStorageServices: true,
 			})
 			if err != nil {
 				return nil, err

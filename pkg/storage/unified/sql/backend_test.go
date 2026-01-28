@@ -85,7 +85,7 @@ func setupBackendTest(t *testing.T) (testBackend, context.Context) {
 
 	ctx := testutil.NewDefaultTestContext(t)
 	dbp := test.NewDBProviderMatchWords(t)
-	b, err := NewBackend(BackendOptions{DBProvider: dbp, EnableStorage: true})
+	b, err := NewBackend(BackendOptions{DBProvider: dbp})
 	require.NoError(t, err)
 	require.NotNil(t, b)
 
@@ -110,6 +110,15 @@ func TestNewBackend(t *testing.T) {
 
 		dbp := test.NewDBProviderNopSQL(t)
 		b, err := NewBackend(BackendOptions{DBProvider: dbp})
+		require.NoError(t, err)
+		require.NotNil(t, b)
+	})
+
+	t.Run("happy path without storage services enabled", func(t *testing.T) {
+		t.Parallel()
+
+		dbp := test.NewDBProviderNopSQL(t)
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, DisableStorageServices: true})
 		require.NoError(t, err)
 		require.NotNil(t, b)
 	})
@@ -149,12 +158,12 @@ func TestBackend_Init(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("happy path storage enabled", func(t *testing.T) {
+	t.Run("happy path without storage services enabled", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := testutil.NewDefaultTestContext(t)
 		dbp := test.NewDBProviderWithPing(t)
-		b, err := NewBackend(BackendOptions{DBProvider: dbp, EnableStorage: true})
+		b, err := NewBackend(BackendOptions{DBProvider: dbp, DisableStorageServices: true})
 		require.NoError(t, err)
 		require.NotNil(t, b)
 
@@ -937,7 +946,7 @@ func TestBackend_StorageDisabled(t *testing.T) {
 		ch, err := b.WatchWriteEvents(ctx)
 		require.Nil(t, ch)
 		require.Error(t, err)
-		require.ErrorContains(t, err, "storage backend is not enabled")
+		require.ErrorContains(t, err, "watcher is not enabled")
 	})
 }
 
@@ -964,7 +973,7 @@ func setupBackendTestStorageDisabled(t *testing.T) (testBackend, context.Context
 
 	ctx := testutil.NewDefaultTestContext(t)
 	dbp := test.NewDBProviderMatchWords(t)
-	b, err := NewBackend(BackendOptions{DBProvider: dbp, EnableStorage: false})
+	b, err := NewBackend(BackendOptions{DBProvider: dbp, DisableStorageServices: true})
 	require.NoError(t, err)
 	require.NotNil(t, b)
 

@@ -1390,6 +1390,11 @@ func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchReque
 	return s.search.Search(ctx, req)
 }
 
+// StatsGetter provides resource statistics (via search index or backend).
+type StatsGetter interface {
+	GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error)
+}
+
 // GetStats implements ResourceServer.
 func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	if err := s.Init(ctx); err != nil {
@@ -1398,7 +1403,7 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 
 	if s.search == nil {
 		// If the backend implements "GetStats", we can use it
-		srv, ok := s.backend.(resourcepb.ResourceIndexServer)
+		srv, ok := s.backend.(StatsGetter)
 		if ok {
 			return srv.GetStats(ctx, req)
 		}
