@@ -165,23 +165,45 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
   };
 
-  public changeDataSource = (dsRef: DataSourceRef, queryRefId: string) => {
+  public changeDataSource = async (dsRef: DataSourceRef, queryRefId: string) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
     if (!queryRunner) {
       return;
     }
 
-    // Update the specific query's datasource
-    const queries = queryRunner.state.queries.map((query) => {
-      if (query.refId === queryRefId) {
-        return {
-          ...query,
-          datasource: dsRef,
-        };
+    const newDataSource = getDataSourceSrv().getInstanceSettings(dsRef);
+    if (!newDataSource) {
+      throw new Error(`Failed to get datasource ${dsRef.uid ?? dsRef.type}`);
+    }
+
+    const targetIndex = queryRunner.state.queries.findIndex(({ refId }) => refId === queryRefId);
+    if (targetIndex === -1) {
+      return;
+    }
+
+    const targetQuery = queryRunner.state.queries[targetIndex];
+    const previousDataSource = targetQuery.datasource
+      ? getDataSourceSrv().getInstanceSettings(targetQuery.datasource)
+      : undefined;
+
+    const shouldUseDefaultQuery = !previousDataSource || previousDataSource.type !== newDataSource.type;
+
+    let updatedQuery: DataQuery;
+    if (shouldUseDefaultQuery) {
+      try {
+        const ds = await getDataSourceSrv().get(dsRef);
+        updatedQuery = { ...ds.getDefaultQuery?.(CoreApp.PanelEditor), ...targetQuery, datasource: dsRef };
+      } catch {
+        throw new Error(`Failed to get datasource ${newDataSource.name ?? newDataSource.uid}`);
       }
-      return query;
-    });
+    } else {
+      updatedQuery = { ...targetQuery, datasource: dsRef };
+    }
+
+    const queries = [...queryRunner.state.queries];
+    queries[targetIndex] = updatedQuery;
 
     queryRunner.setState({ queries });
+    queryRunner.runQueries();
   };
 }
