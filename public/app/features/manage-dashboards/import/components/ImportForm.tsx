@@ -58,144 +58,146 @@ export function ImportForm({
   const existingLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.Exists) ?? [];
 
   return (
-    <Stack direction="column" gap={2}>
+    <>
       <Legend>
         <Trans i18nKey="manage-dashboards.import-dashboard-form.options">Options</Trans>
       </Legend>
-      <Field
-        label={t('manage-dashboards.import-dashboard-form.label-name', 'Name')}
-        invalid={!!errors.title}
-        error={errors.title?.message}
-        noMargin
-      >
-        <Input
-          {...register('title', {
-            required: 'Name is required',
-            validate: async (v: string) => await validateTitle(v, getValues().folder.uid),
-          })}
-          type="text"
-          data-testid={selectors.components.ImportDashboardForm.name}
-        />
-      </Field>
-      <Field label={t('manage-dashboards.import-dashboard-form.label-folder', 'Folder')} noMargin>
-        <Controller
-          render={({ field: { ref, value, onChange, ...field } }) => (
-            <FolderPicker {...field} onChange={(uid, title) => onChange({ uid, title })} value={value.uid} />
-          )}
-          name="folder"
-          control={control}
-        />
-      </Field>
-      <Field
-        label={t('manage-dashboards.import-dashboard-form.label-unique-identifier-uid', 'Unique identifier (UID)')}
-        description={t(
-          'manage-dashboards.import-dashboard-form.description-unique-identifier-uid',
-          'The unique identifier (UID) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs. The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any bookmarked links to that dashboard.'
-        )}
-        invalid={!!errors.uid}
-        error={errors.uid?.message}
-        noMargin
-      >
-        <>
-          {!uidReset ? (
-            <Input
-              disabled
-              {...register('uid', { validate: async (v: string) => await validateUid(v) })}
-              addonAfter={
-                !uidReset && (
-                  <Button onClick={onUidReset}>
-                    <Trans i18nKey="manage-dashboards.import-dashboard-form.change-uid">Change uid</Trans>
-                  </Button>
-                )
-              }
-            />
-          ) : (
-            <Input {...register('uid', { required: true, validate: async (v: string) => await validateUid(v) })} />
-          )}
-        </>
-      </Field>
-      {inputs.dataSources &&
-        inputs.dataSources.map((input: DataSourceInput, index: number) => {
-          if (input.pluginId === ExpressionDatasourceRef.type) {
-            return null;
-          }
-          const dataSourceOption = `dataSources.${index}` as const;
-          const current = watchDataSources ?? [];
-          return (
-            <Field
-              label={input.name}
-              description={input.description}
-              key={dataSourceOption}
-              invalid={errors.dataSources && !!errors.dataSources[index]}
-              error={errors.dataSources && errors.dataSources[index] && 'A data source is required'}
-              noMargin
-            >
-              <Controller
-                name={dataSourceOption}
-                render={({ field: { ref, ...field } }) => (
-                  <DataSourcePicker
-                    {...field}
-                    noDefault={true}
-                    placeholder={input.info}
-                    pluginId={input.pluginId}
-                    current={current[index]?.uid}
-                  />
-                )}
-                control={control}
-                rules={{ required: true }}
-              />
-            </Field>
-          );
-        })}
-      {inputs.constants &&
-        inputs.constants.map((input: DashboardInput, index) => {
-          const constantIndex = `constants.${index}` as const;
-          return (
-            <Field
-              label={input.label}
-              error={errors.constants && errors.constants[index] && `${input.label} needs a value`}
-              invalid={errors.constants && !!errors.constants[index]}
-              key={constantIndex}
-              noMargin
-            >
-              <Input {...register(constantIndex, { required: true })} defaultValue={input.value} />
-            </Field>
-          );
-        })}
-      <LibraryPanelsList
-        inputs={newLibraryPanels}
-        label={t('manage-dashboards.import-dashboard-form.label-new-library-panels', 'New library panels')}
-        description={t(
-          'manage-dashboards.import-dashboard-form.description-library-panels-imported',
-          'List of new library panels that will get imported.'
-        )}
-        folderName={watchFolder.title}
-      />
-      <LibraryPanelsList
-        inputs={existingLibraryPanels}
-        label={t('manage-dashboards.import-dashboard-form.label-existing-library-panels', 'Existing library panels')}
-        description={t(
-          'manage-dashbaords.import-dashboard-form.description-existing-library-panels',
-          'List of existing library panels. These panels are not affected by the import.'
-        )}
-        folderName={watchFolder.title}
-      />
       <Stack direction="column" gap={2}>
-        <Button
-          type="submit"
-          data-testid={selectors.components.ImportDashboardForm.submit}
-          variant={getButtonVariant(errors)}
-          onClick={() => {
-            setSubmitted(true);
-          }}
+        <Field
+          label={t('manage-dashboards.import-dashboard-form.label-name', 'Name')}
+          invalid={!!errors.title}
+          error={errors.title?.message}
+          noMargin
         >
-          {getButtonText(errors)}
-        </Button>
-        <Button type="reset" variant="secondary" onClick={onCancel}>
-          <Trans i18nKey="manage-dashboards.import-dashboard-form.cancel">Cancel</Trans>
-        </Button>
+          <Input
+            {...register('title', {
+              required: 'Name is required',
+              validate: async (v: string) => await validateTitle(v, getValues().folder.uid),
+            })}
+            type="text"
+            data-testid={selectors.components.ImportDashboardForm.name}
+          />
+        </Field>
+        <Field label={t('manage-dashboards.import-dashboard-form.label-folder', 'Folder')} noMargin>
+          <Controller
+            render={({ field: { ref, value, onChange, ...field } }) => (
+              <FolderPicker {...field} onChange={(uid, title) => onChange({ uid, title })} value={value.uid} />
+            )}
+            name="folder"
+            control={control}
+          />
+        </Field>
+        <Field
+          label={t('manage-dashboards.import-dashboard-form.label-unique-identifier-uid', 'Unique identifier (UID)')}
+          description={t(
+            'manage-dashboards.import-dashboard-form.description-unique-identifier-uid',
+            'The unique identifier (UID) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs. The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any bookmarked links to that dashboard.'
+          )}
+          invalid={!!errors.uid}
+          error={errors.uid?.message}
+          noMargin
+        >
+          <>
+            {!uidReset ? (
+              <Input
+                disabled
+                {...register('uid', { validate: async (v: string) => await validateUid(v) })}
+                addonAfter={
+                  !uidReset && (
+                    <Button onClick={onUidReset}>
+                      <Trans i18nKey="manage-dashboards.import-dashboard-form.change-uid">Change uid</Trans>
+                    </Button>
+                  )
+                }
+              />
+            ) : (
+              <Input {...register('uid', { required: true, validate: async (v: string) => await validateUid(v) })} />
+            )}
+          </>
+        </Field>
+        {inputs.dataSources &&
+          inputs.dataSources.map((input: DataSourceInput, index: number) => {
+            if (input.pluginId === ExpressionDatasourceRef.type) {
+              return null;
+            }
+            const dataSourceOption = `dataSources.${index}` as const;
+            const current = watchDataSources ?? [];
+            return (
+              <Field
+                label={input.name}
+                description={input.description}
+                key={dataSourceOption}
+                invalid={errors.dataSources && !!errors.dataSources[index]}
+                error={errors.dataSources && errors.dataSources[index] && 'A data source is required'}
+                noMargin
+              >
+                <Controller
+                  name={dataSourceOption}
+                  render={({ field: { ref, ...field } }) => (
+                    <DataSourcePicker
+                      {...field}
+                      noDefault={true}
+                      placeholder={input.info}
+                      pluginId={input.pluginId}
+                      current={current[index]?.uid}
+                    />
+                  )}
+                  control={control}
+                  rules={{ required: true }}
+                />
+              </Field>
+            );
+          })}
+        {inputs.constants &&
+          inputs.constants.map((input: DashboardInput, index) => {
+            const constantIndex = `constants.${index}` as const;
+            return (
+              <Field
+                label={input.label}
+                error={errors.constants && errors.constants[index] && `${input.label} needs a value`}
+                invalid={errors.constants && !!errors.constants[index]}
+                key={constantIndex}
+                noMargin
+              >
+                <Input {...register(constantIndex, { required: true })} defaultValue={input.value} />
+              </Field>
+            );
+          })}
+        <LibraryPanelsList
+          inputs={newLibraryPanels}
+          label={t('manage-dashboards.import-dashboard-form.label-new-library-panels', 'New library panels')}
+          description={t(
+            'manage-dashboards.import-dashboard-form.description-library-panels-imported',
+            'List of new library panels that will get imported.'
+          )}
+          folderName={watchFolder.title}
+        />
+        <LibraryPanelsList
+          inputs={existingLibraryPanels}
+          label={t('manage-dashboards.import-dashboard-form.label-existing-library-panels', 'Existing library panels')}
+          description={t(
+            'manage-dashbaords.import-dashboard-form.description-existing-library-panels',
+            'List of existing library panels. These panels are not affected by the import.'
+          )}
+          folderName={watchFolder.title}
+        />
+        <Stack>
+          <Button
+            type="submit"
+            data-testid={selectors.components.ImportDashboardForm.submit}
+            variant={getButtonVariant(errors)}
+            onClick={() => {
+              setSubmitted(true);
+            }}
+          >
+            {getButtonText(errors)}
+          </Button>
+          <Button type="reset" variant="secondary" onClick={onCancel}>
+            <Trans i18nKey="manage-dashboards.import-dashboard-form.cancel">Cancel</Trans>
+          </Button>
+        </Stack>
       </Stack>
-    </Stack>
+    </>
   );
 }
 
