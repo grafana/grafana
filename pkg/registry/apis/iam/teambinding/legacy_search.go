@@ -1,4 +1,4 @@
-package user
+package teambinding
 
 import (
 	"context"
@@ -19,24 +19,24 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
-var _ resourcepb.ResourceIndexClient = (*LegacyUserTeamSearchClient)(nil)
+var _ resourcepb.ResourceIndexClient = (*LegacyTeamBindingSearchClient)(nil)
 
-type LegacyUserTeamSearchClient struct {
+type LegacyTeamBindingSearchClient struct {
 	store  legacy.LegacyIdentityStore
 	log    *slog.Logger
 	tracer trace.Tracer
 }
 
-func NewLegacyUserTeamSearchClient(store legacy.LegacyIdentityStore, tracer trace.Tracer) *LegacyUserTeamSearchClient {
-	return &LegacyUserTeamSearchClient{
+func NewLegacyTeamBindingSearchClient(store legacy.LegacyIdentityStore, tracer trace.Tracer) *LegacyTeamBindingSearchClient {
+	return &LegacyTeamBindingSearchClient{
 		store:  store,
 		tracer: tracer,
-		log:    slog.Default().With("logger", "legacy-user-team-search-client"),
+		log:    slog.Default().With("logger", "legacy-teambinding-search-client"),
 	}
 }
 
-func (c *LegacyUserTeamSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-	ctx, span := c.tracer.Start(ctx, "user.teams.legacy")
+func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	ctx, span := c.tracer.Start(ctx, "teambinding.legacy.search")
 	defer span.End()
 
 	if req == nil || req.Options == nil || req.Options.Key == nil {
@@ -78,18 +78,18 @@ func (c *LegacyUserTeamSearchClient) Search(ctx context.Context, req *resourcepb
 		}
 	}
 
-	cols := userTeamColumns(fields)
+	cols := teamBindingColumns(fields)
 	resp := &resourcepb.ResourceSearchResponse{
 		Results: &resourcepb.ResourceTable{Columns: cols},
 	}
 
 	var (
 		continueToken int64
-		pageItems     []legacy.UserTeam
+		pageItems     []legacy.TeamMember
 	)
 
 	for p := int64(1); p <= req.Page; p++ {
-		res, err := c.store.ListUserTeams(ctx, ns, legacy.ListUserTeamsQuery{
+		res, err := c.store.ListTeamBindings(ctx, ns, legacy.ListTeamBindingsQuery{
 			UserUID: subjectUID,
 			Pagination: common.Pagination{
 				Limit:    req.Limit,
@@ -100,8 +100,12 @@ func (c *LegacyUserTeamSearchClient) Search(ctx context.Context, req *resourcepb
 			return nil, err
 		}
 
-		pageItems = res.Items
+		pageItems = res.Bindings
 		continueToken = res.Continue
+
+		if len(pageItems) > int(req.Limit) {
+			pageItems = pageItems[:req.Limit]
+		}
 
 		if p < req.Page && continueToken == 0 {
 			pageItems = nil
@@ -115,10 +119,9 @@ func (c *LegacyUserTeamSearchClient) Search(ctx context.Context, req *resourcepb
 				Namespace: req.Options.Key.Namespace,
 				Group:     req.Options.Key.Group,
 				Resource:  req.Options.Key.Resource,
-				// We don't have the team_member UID here, using team UID instead for this subresource response.
-				Name: t.UID,
+				Name:      t.UID,
 			},
-			Cells: userTeamCells(t, fields, subjectUID),
+			Cells: teamBindingCells(t, fields),
 		})
 	}
 
@@ -126,11 +129,11 @@ func (c *LegacyUserTeamSearchClient) Search(ctx context.Context, req *resourcepb
 	return resp, nil
 }
 
-func (c *LegacyUserTeamSearchClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+func (c *LegacyTeamBindingSearchClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	return &resourcepb.ResourceStatsResponse{}, nil
 }
 
-func (c *LegacyUserTeamSearchClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, _ ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+func (c *LegacyTeamBindingSearchClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, _ ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
 	return &resourcepb.RebuildIndexesResponse{}, nil
 }
 
@@ -154,7 +157,7 @@ func subjectUIDFromRequirements(reqs []*resourcepb.Requirement) string {
 	return ""
 }
 
-func userTeamColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
+func teamBindingColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	cols := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(fields))
 	for _, f := range fields {
 		name := strings.TrimPrefix(f, resource.SEARCH_FIELD_PREFIX)
@@ -165,19 +168,23 @@ func userTeamColumns(fields []string) []*resourcepb.ResourceTableColumnDefinitio
 	return cols
 }
 
-func userTeamCells(t legacy.UserTeam, fields []string, subjectUID string) [][]byte {
+func teamBindingCells(t legacy.TeamMember, fields []string) [][]byte {
 	cells := make([][]byte, 0, len(fields))
 	for _, f := range fields {
 		name := strings.TrimPrefix(f, resource.SEARCH_FIELD_PREFIX)
 		switch name {
 		case builders.TEAM_BINDING_SUBJECT_NAME:
-			cells = append(cells, []byte(subjectUID))
+			cells = append(cells, []byte(t.UserUID))
 		case builders.TEAM_BINDING_TEAM_REF:
-			cells = append(cells, []byte(t.UID))
+			cells = append(cells, []byte(t.TeamUID))
 		case builders.TEAM_BINDING_PERMISSION:
 			cells = append(cells, []byte(string(common.MapTeamPermission(t.Permission))))
 		case builders.TEAM_BINDING_EXTERNAL:
-			cells = append(cells, []byte("false"))
+			if t.External {
+				cells = append(cells, []byte("true"))
+			} else {
+				cells = append(cells, []byte("false"))
+			}
 		}
 	}
 	return cells

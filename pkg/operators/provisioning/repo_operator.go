@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
@@ -69,7 +70,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	validator := repository.NewValidator(controllerCfg.minSyncInterval, controllerCfg.allowImageRendering, controllerCfg.repoFactory)
+	validator := repository.NewValidator(controllerCfg.allowImageRendering, controllerCfg.repoFactory)
 	statusPatcher := appcontroller.NewRepositoryStatusPatcher(controllerCfg.provisioningClient.ProvisioningV0alpha1())
 	// Health checker uses basic validation only - no need to validate against existing repositories
 	// since the repository already passed admission validation when it was created/updated.
@@ -77,6 +78,16 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	// that may arise from manual edits or migrations (e.g., duplicate paths, instance sync conflicts).
 	healthMetricsRecorder := controller.NewHealthMetricsRecorder(deps.Registerer)
 	healthChecker := controller.NewRepositoryHealthChecker(statusPatcher, repository.NewTester(validator), healthMetricsRecorder)
+
+	// Create quota getter from configuration.
+	// Defaults: max_resources_per_repository=0 (unlimited), max_repositories=10
+	// Note: This operator may need to move to enterprise repository to support
+	// enterprise-specific quota implementations and dependencies.
+	quotaLimits := quotas.QuotaLimits{
+		MaxResources:    deps.Config.SectionWithEnvOverrides("provisioning").Key("max_resources_per_repository").MustInt64(0),
+		MaxRepositories: deps.Config.SectionWithEnvOverrides("provisioning").Key("max_repositories").MustInt64(10),
+	}
+	quotaGetter := quotas.NewFixedQuotaGetter(quotaLimits)
 
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
 	controller, err := controller.NewRepositoryController(
@@ -93,6 +104,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		tracer,
 		controllerCfg.parallelOperations,
 		controllerCfg.resyncInterval,
+		quotaGetter,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)
@@ -147,6 +159,8 @@ func getRepoControllerConfig(cfg *setting.Cfg, registry prometheus.Registerer) (
 		allowedTargets = []string{"folder"}
 	}
 
+	// Note: This operator may need to move to enterprise repository to support
+	// enterprise-specific quota implementations and dependencies.
 	return &repoControllerConfig{
 		provisioningControllerConfig: *controllerCfg,
 		repoFactory:                  repoFactory,
