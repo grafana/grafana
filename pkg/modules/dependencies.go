@@ -10,6 +10,7 @@ const (
 	SearchServerRing        string = "search-server-ring"
 	SearchServerDistributor string = "search-server-distributor"
 	StorageServer           string = "storage-server"
+	SearchServer            string = "search-server"
 	ZanzanaServer           string = "zanzana-server"
 	InstrumentationServer   string = "instrumentation-server"
 	FrontendServer          string = "frontend-server"
@@ -17,10 +18,14 @@ const (
 )
 
 var dependencyMap = map[string][]string{
-	MemberlistKV:            {InstrumentationServer},
-	SearchServerRing:        {InstrumentationServer, MemberlistKV},
-	GrafanaAPIServer:        {InstrumentationServer},
-	StorageServer:           {InstrumentationServer, SearchServerRing},
+	MemberlistKV:     {InstrumentationServer},
+	SearchServerRing: {InstrumentationServer, MemberlistKV},
+	GrafanaAPIServer: {InstrumentationServer},
+
+	// TODO: remove SearchServerRing once we only allow using sharding in search servers
+	StorageServer: {InstrumentationServer, SearchServerRing},
+	SearchServer:  {InstrumentationServer, SearchServerRing},
+
 	ZanzanaServer:           {InstrumentationServer},
 	SearchServerDistributor: {InstrumentationServer, MemberlistKV, SearchServerRing},
 	Core:                    {},

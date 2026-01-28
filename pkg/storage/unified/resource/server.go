@@ -36,14 +36,26 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
-	resourcepb.ResourceStoreServer
-	resourcepb.BulkStoreServer
+	resourcepb.DiagnosticsServer
+	SearchServer
+	StorageServer
+	ResourceServerStopper
+}
+
+type SearchServer interface {
+	LifecycleHooks
 	resourcepb.ResourceIndexServer
 	resourcepb.ManagedObjectIndexServer
-	resourcepb.BlobStoreServer
 	resourcepb.DiagnosticsServer
+}
+
+type StorageServer interface {
+	LifecycleHooks
+	resourcepb.ResourceStoreServer
+	resourcepb.BulkStoreServer
+	resourcepb.BlobStoreServer
 	resourcepb.QuotasServer
-	ResourceServerStopper
+	resourcepb.DiagnosticsServer
 }
 
 type ResourceServerStopper interface {
@@ -268,6 +280,58 @@ type ResourceServerOptions struct {
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
 }
 
+// NewSearchServer creates a standalone search server.
+// This returns a SearchServer that only handles search operations.
+func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
+	// No backend search support
+	if opts.Backend == nil {
+		return nil, fmt.Errorf("missing backend implementation")
+	}
+
+	// Initialize the blob storage
+	blobstore := opts.Blob.Backend
+	if blobstore == nil {
+		if opts.Blob.URL != "" {
+			ctx := context.Background()
+			bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
+			if err != nil {
+				return nil, err
+			}
+
+			blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
+				Bucket: NewInstrumentedBucket(bucket, opts.Reg),
+			})
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// Check if the backend supports blob storage
+			blobstore, _ = opts.Backend.(BlobSupport)
+		}
+	}
+
+	// Create the search server using the search.go factory
+	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.AccessClient, blobstore, opts.IndexMetrics, opts.OwnsIndexFn)
+	if err != nil {
+		return nil, err
+	}
+	searchServer.lifecycle = opts.Lifecycle
+	searchServer.backendDiagnostics = opts.Diagnostics
+
+	// Initialize the backend server
+	ctx := context.Background()
+	if err := opts.Lifecycle.Init(ctx); err != nil {
+		return nil, fmt.Errorf("failed to initialize lifecycle hooks: %w", err)
+	}
+	// Initialize the search server
+	if err := searchServer.Init(ctx); err != nil {
+		return nil, fmt.Errorf("failed to initialize search server: %w", err)
+	}
+
+	return searchServer, nil
+}
+
+// Deprecated: use NewSearchServer / NewStorageServer instead
 func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
@@ -354,14 +418,13 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
 		overridesService: opts.OverridesService,
-		storageEnabled:   true,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
+		s.search, err = newSearchServer(opts.Search, s.backend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}
@@ -377,13 +440,14 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 }
 
 var _ ResourceServer = &server{}
+var _ StorageServer = &server{}
 
 type server struct {
 	log              log.Logger
 	backend          StorageBackend
 	blob             BlobSupport
 	secure           secrets.InlineSecureValueSupport
-	search           *searchSupport
+	search           *searchServer
 	diagnostics      resourcepb.DiagnosticsServer
 	access           claims.AccessClient
 	writeHooks       WriteAccessHooks
@@ -412,7 +476,6 @@ type server struct {
 	// write operations to make sure that subsequent search by the same client will return up-to-date results.
 	// Set from SearchOptions.IndexMinUpdateInterval.
 	artificialSuccessfulWriteDelay time.Duration
-	storageEnabled                 bool
 }
 
 // Init implements ResourceServer.
@@ -437,7 +500,7 @@ func (s *server) Init(ctx context.Context) error {
 		}
 
 		// Start watching for changes
-		if s.initErr == nil && s.storageEnabled {
+		if s.initErr == nil {
 			s.initErr = s.initWatcher()
 		}
 

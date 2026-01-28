@@ -47,137 +47,217 @@ type ServerOptions struct {
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport
 	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
+
+	// Used only on search server to disable rvManager, pruner, notifier, ...
+	DisableStorageServices bool
 }
 
+// NewResourceServer creates a new ResourceServer with both storage and search capabilities enabled.
+// Deprecated: use NewStorageServer or NewSearchServer instead.
 func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
-	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
-
-	if opts.SecureValues == nil && opts.Cfg != nil && opts.Cfg.SecretsManagement.GrpcClientEnable {
-		inlineSecureValueService, err := inlinesecurevalue.ProvideInlineSecureValueService(
-			opts.Cfg,
-			opts.Tracer,
-			nil, // not needed for gRPC client mode
-			nil, // not needed for gRPC client mode
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create inline secure value service: %w", err)
-		}
-		opts.SecureValues = inlineSecureValueService
+	if opts.DisableStorageServices {
+		return nil, fmt.Errorf("cannot create ResourceServer with storage services disabled")
 	}
+	resourceOpts, err := buildResourceServerOptions(&opts,
+		withSecureValueService,
+		withBlobConfig,
+		withAccessClient,
+		withMaxPageSizeBytes,
+		withBackend,
+		withQOSQueue,
+		withOverridesService,
+		withSearch,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return resource.NewResourceServer(*resourceOpts)
+}
 
-	serverOptions := resource.ResourceServerOptions{
+// NewSearchServer creates a new SearchServer with only search capabilities enabled.
+// The search server requires a backend to read data for building indexes.
+func NewSearchServer(opts ServerOptions) (resource.SearchServer, error) {
+	opts.DisableStorageServices = true
+	resourceOpts, err := buildResourceServerOptions(&opts,
+		withBlobConfig,
+		withAccessClient,
+		withBackend,
+		withSearch,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return resource.NewSearchServer(*resourceOpts)
+}
+
+type buildResourceServerOpts func(*ServerOptions, *resource.ResourceServerOptions) error
+
+// buildResourceServerOptions builds the resource.ResourceServerOptions from sql.ServerOptions.
+func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceServerOpts) (*resource.ResourceServerOptions, error) {
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+	serverOptions := &resource.ResourceServerOptions{
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
 		Reg:          opts.Reg,
 		SecureValues: opts.SecureValues,
 	}
-	if opts.AccessClient != nil {
-		serverOptions.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
-	}
-	// Support local file blob
-	if strings.HasPrefix(serverOptions.Blob.URL, "./data/") {
-		dir := strings.Replace(serverOptions.Blob.URL, "./data", opts.Cfg.DataPath, 1)
-		err := os.MkdirAll(dir, 0700)
-		if err != nil {
+	for _, optFn := range withOpts {
+		if err := optFn(opts, serverOptions); err != nil {
 			return nil, err
 		}
-		serverOptions.Blob.URL = "file:///" + dir
 	}
+	return serverOptions, nil
+}
 
-	// This is mostly for testing, being able to influence when we paginate
-	// based on the page size during tests.
+func withSecureValueService(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	if opts.SecureValues != nil || opts.Cfg == nil || !opts.Cfg.SecretsManagement.GrpcClientEnable {
+		return nil
+	}
+	inlineSecureValueService, err := inlinesecurevalue.ProvideInlineSecureValueService(
+		opts.Cfg,
+		opts.Tracer,
+		nil, // not needed for gRPC client mode
+		nil, // not needed for gRPC client mode
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create inline secure value service: %w", err)
+	}
+	resourceOpts.SecureValues = inlineSecureValueService
+	return nil
+}
+
+func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
-	serverOptions.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
+	resourceOpts.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
+	return nil
+}
 
+func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	if opts.Backend != nil {
-		serverOptions.Backend = opts.Backend
 		// TODO: we should probably have a proper interface for diagnostics/lifecycle
-	} else {
-		eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
-		if err != nil {
-			return nil, err
-		}
-
-		isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
-			opts.Cfg.SectionWithEnvOverrides("resource_api"))
-
-		if opts.Cfg.EnableSQLKVBackend {
-			sqlkv, err := resource.NewSQLKV(eDB)
-			if err != nil {
-				return nil, fmt.Errorf("error creating sqlkv: %s", err)
-			}
-
-			kvBackendOpts := resource.KVBackendOptions{
-				KvStore:            sqlkv,
-				Tracer:             opts.Tracer,
-				Reg:                opts.Reg,
-				UseChannelNotifier: !isHA,
-				Log:                log.New("storage-backend"),
-			}
-
-			ctx := context.Background()
-			dbConn, err := eDB.Init(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("error initializing DB: %w", err)
-			}
-
-			dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
-			if dialect == nil {
-				return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
-			}
-
-			if opts.Cfg.EnableSQLKVCompatibilityMode {
-				rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-					Dialect: dialect,
-					DB:      dbConn,
-				})
-				if err != nil {
-					return nil, fmt.Errorf("failed to create resource version manager: %w", err)
-				}
-
-				kvBackendOpts.RvManager = rvManager
-			}
-
-			kvBackend, err := resource.NewKVStorageBackend(kvBackendOpts)
-			if err != nil {
-				return nil, fmt.Errorf("error creating kv backend: %s", err)
-			}
-
-			serverOptions.Backend = kvBackend
-			serverOptions.Diagnostics = kvBackend
-		} else {
-			backend, err := NewBackend(BackendOptions{
-				DBProvider:           eDB,
-				Reg:                  opts.Reg,
-				IsHA:                 isHA,
-				storageMetrics:       opts.StorageMetrics,
-				LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
-				GarbageCollection: GarbageCollectionConfig{
-					Enabled:          opts.Cfg.EnableGarbageCollection,
-					Interval:         opts.Cfg.GarbageCollectionInterval,
-					BatchSize:        opts.Cfg.GarbageCollectionBatchSize,
-					MaxAge:           opts.Cfg.GarbageCollectionMaxAge,
-					DashboardsMaxAge: opts.Cfg.DashboardsGarbageCollectionMaxAge,
-				},
-			})
-			if err != nil {
-				return nil, err
-			}
-			serverOptions.Backend = backend
-			serverOptions.Diagnostics = backend
-			serverOptions.Lifecycle = backend
-		}
+		resourceOpts.Backend = opts.Backend
+		return nil
 	}
 
-	serverOptions.Search = opts.SearchOptions
-	serverOptions.IndexMetrics = opts.IndexMetrics
-	serverOptions.QOSQueue = opts.QOSQueue
-	serverOptions.OwnsIndexFn = opts.OwnsIndexFn
-	serverOptions.OverridesService = opts.OverridesService
+	eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
+	if err != nil {
+		return err
+	}
 
-	return resource.NewResourceServer(serverOptions)
+	isHA := isHighAvailabilityEnabled(opts.Cfg.SectionWithEnvOverrides("database"),
+		opts.Cfg.SectionWithEnvOverrides("resource_api"))
+
+	if !opts.Cfg.EnableSQLKVBackend {
+		backend, err := NewBackend(BackendOptions{
+			DBProvider:           eDB,
+			Reg:                  opts.Reg,
+			IsHA:                 isHA,
+			storageMetrics:       opts.StorageMetrics,
+			LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge,
+			GarbageCollection: GarbageCollectionConfig{
+				Enabled:          opts.Cfg.EnableGarbageCollection,
+				Interval:         opts.Cfg.GarbageCollectionInterval,
+				BatchSize:        opts.Cfg.GarbageCollectionBatchSize,
+				MaxAge:           opts.Cfg.GarbageCollectionMaxAge,
+				DashboardsMaxAge: opts.Cfg.DashboardsGarbageCollectionMaxAge,
+			},
+			DisableStorageServices: opts.DisableStorageServices,
+		})
+		if err != nil {
+			return err
+		}
+		resourceOpts.Backend = backend
+		resourceOpts.Diagnostics = backend
+		resourceOpts.Lifecycle = backend
+		return nil
+	}
+
+	sqlkv, err := resource.NewSQLKV(eDB)
+	if err != nil {
+		return fmt.Errorf("error creating sqlkv: %s", err)
+	}
+
+	kvBackendOpts := resource.KVBackendOptions{
+		KvStore:            sqlkv,
+		Tracer:             opts.Tracer,
+		Reg:                opts.Reg,
+		UseChannelNotifier: !isHA,
+		Log:                log.New("storage-backend"),
+	}
+
+	ctx := context.Background()
+	dbConn, err := eDB.Init(ctx)
+	if err != nil {
+		return fmt.Errorf("error initializing DB: %w", err)
+	}
+
+	dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
+	if dialect == nil {
+		return fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
+	}
+
+	if opts.Cfg.EnableSQLKVCompatibilityMode {
+		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+			Dialect: dialect,
+			DB:      dbConn,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create resource version manager: %w", err)
+		}
+
+		kvBackendOpts.RvManager = rvManager
+	}
+
+	kvBackend, err := resource.NewKVStorageBackend(kvBackendOpts)
+	if err != nil {
+		return err
+	}
+	resourceOpts.Backend = kvBackend
+	resourceOpts.Diagnostics = kvBackend
+	return nil
+}
+
+func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.Search = opts.SearchOptions
+	resourceOpts.IndexMetrics = opts.IndexMetrics
+	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
+	return nil
+}
+
+func withQOSQueue(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.QOSQueue = opts.QOSQueue
+	return nil
+}
+
+func withOverridesService(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.OverridesService = opts.OverridesService
+	return nil
+}
+
+func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+	resourceOpts.Blob = resource.BlobConfig{
+		URL: apiserverCfg.Key("blob_url").MustString(""),
+	}
+	// Support local file blob
+	if strings.HasPrefix(resourceOpts.Blob.URL, "./data/") {
+		dir := strings.Replace(resourceOpts.Blob.URL, "./data", opts.Cfg.DataPath, 1)
+		err := os.MkdirAll(dir, 0700)
+		if err != nil {
+			return err
+		}
+		resourceOpts.Blob.URL = "file:///" + dir
+	}
+	return nil
+}
+
+func withAccessClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	if opts.AccessClient != nil {
+		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
+	}
+	return nil
 }
 
 // isHighAvailabilityEnabled determines if high availability mode should
