@@ -10,9 +10,11 @@ import { ConnectionStatusBadge } from './ConnectionStatusBadge';
 
 interface Props {
   connection: Connection;
+  isSelected?: boolean;
+  onClick?: () => void;
 }
 
-export function ConnectionListItem({ connection }: Props) {
+export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
   const { metadata, spec, status } = connection;
   const name = metadata?.name ?? '';
   const title = spec?.title || name;
@@ -20,7 +22,7 @@ export function ConnectionListItem({ connection }: Props) {
   const url = spec?.url;
   const providerType: RepoType = spec?.type ?? 'github';
   return (
-    <Card noMargin key={name}>
+    <Card noMargin key={name} isSelected={isSelected} onClick={onClick}>
       <Card.Figure>
         <RepoIcon type={providerType} />
       </Card.Figure>
@@ -44,11 +46,13 @@ export function ConnectionListItem({ connection }: Props) {
         </Card.Meta>
       )}
 
-      <Card.Actions>
-        <LinkButton icon="eye" href={`${CONNECTIONS_URL}/${name}/edit`} variant="primary" size="md">
-          <Trans i18nKey="provisioning.connections.view">View</Trans>
-        </LinkButton>
-      </Card.Actions>
+      {!onClick && (
+        <Card.Actions>
+          <LinkButton icon="eye" href={`${CONNECTIONS_URL}/${name}/edit`} variant="primary" size="md">
+            <Trans i18nKey="provisioning.connections.view">View</Trans>
+          </LinkButton>
+        </Card.Actions>
+      )}
     </Card>
   );
 }
