@@ -23,6 +23,8 @@ The `export` endpoints allow you to export alerting resources in a JSON format s
 
 ### Alert rules
 
+The following endpoints can be used to manage both alert rules and recording rules. To create a recording rule, include a `record` block in your request instead of a `condition` field.
+
 | Method | URI                                                              | Name                                                                    | Summary                                                 |
 | ------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------- |
 | DELETE | /api/v1/provisioning/alert-rules/:uid                            | [route delete alert rule](#route-delete-alert-rule)                     | Delete a specific alert rule by UID.                    |
@@ -51,6 +53,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "noDataState": "OK",
   "execErrState": "OK",
   "for": "5m",
+  "keepFiringFor": "2m",
   "orgId": 1,
   "uid": "",
   "condition": "B",
@@ -200,6 +203,7 @@ Content-Type: application/json
   "noDataState": "OK",
   "execErrState": "OK",
   "for": "5m",
+  "keepFiringFor": "2m",
   "annotations": {
     "summary": "test_api_1"
   },
@@ -210,6 +214,103 @@ Content-Type: application/json
   "isPaused": false,
   "notification_settings": null,
   "record": null
+}
+```
+
+**Example request for new recording rule:**
+
+Recording rules allow you to pre-compute frequently used or computationally expensive expressions and save the results as new time series data. To create a recording rule instead of an alert rule, include a `record` block in your request.
+
+The `record` block contains the following fields:
+
+- `metric`: The name of the new metric to create
+- `from`: The `refId` of the query whose value will be used for the recording
+- `target_datasource_uid`: The UID of the data source where the metric will be written
+
+```http
+POST /api/v1/provisioning/alert-rules
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "folderUID": "IpGEy0u7k",
+  "ruleGroup": "Testing",
+  "title": "test-grafana-recording-rule-2",
+  "condition": "",
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0
+      },
+      "datasourceUid": "grafanacloud-prom",
+      "model": {
+        "expr": "up{job=\"integrations/macos-node\",instance=\"Bojans-MacBook-Pro.local\"}",
+        "instant": true,
+        "intervalMs": 1000,
+        "legendFormat": "__auto",
+        "maxDataPoints": 43200,
+        "range": false,
+        "refId": "A"
+      }
+    },
+    {
+      "refId": "B",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [],
+              "type": "gt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "B"
+              ]
+            },
+            "reducer": {
+              "params": [],
+              "type": "last"
+            },
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "type": "__expr__",
+          "uid": "__expr__"
+        },
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "reducer": "last",
+        "refId": "B",
+        "type": "reduce"
+      }
+    }
+  ],
+  "noDataState": "",
+  "execErrState": "",
+  "for": "0s",
+  "keep_firing_for": "0s",
+  "isPaused": false,
+  "notification_settings": null,
+  "record": {
+    "metric": "grafana_recording_rule_test_2",
+    "from": "B",
+    "target_datasource_uid": "grafanacloud-prom"
+  }
 }
 ```
 
@@ -1551,20 +1652,21 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name           | Type                                      | Go type               | Required | Default | Description | Example |
-| -------------- | ----------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
-| `annotations`  | map of string                             | `map[string]string`   |          |         |             |         |
-| `condition`    | string                                    | string                |          |         |             |         |
-| `dashboardUid` | string                                    | string                |          |         |             |         |
-| `data`         | [][AlertQueryExport](#alert-query-export) | `[]*AlertQueryExport` |          |         |             |         |
-| `execErrState` | string                                    | string                |          |         |             |         |
-| `for`          | [Duration](#duration)                     | Duration              |          |         |             |         |
-| `isPaused`     | boolean                                   | `bool`                |          |         |             |         |
-| `labels`       | map of string                             | `map[string]string`   |          |         |             |         |
-| `noDataState`  | string                                    | string                |          |         |             |         |
-| `panelId`      | int64 (formatted integer)                 | int64                 |          |         |             |         |
-| `title`        | string                                    | string                |          |         |             |         |
-| `uid`          | string                                    | string                |          |         |             |         |
+| Name            | Type                                      | Go type               | Required | Default | Description                                                                                         | Example |
+| --------------- | ----------------------------------------- | --------------------- | :------: | ------- | --------------------------------------------------------------------------------------------------- | ------- |
+| `annotations`   | map of string                             | `map[string]string`   |          |         |                                                                                                     |         |
+| `condition`     | string                                    | string                |          |         |                                                                                                     |         |
+| `dashboardUid`  | string                                    | string                |          |         |                                                                                                     |         |
+| `data`          | [][AlertQueryExport](#alert-query-export) | `[]*AlertQueryExport` |          |         |                                                                                                     |         |
+| `execErrState`  | string                                    | string                |          |         |                                                                                                     |         |
+| `for`           | [Duration](#duration)                     | Duration              |          |         |                                                                                                     |         |
+| `keepFiringFor` | [Duration](#duration)                     | Duration              |          |         | How long the alert continues to fire after the condition is no longer met. Prevents alert flapping. | `2m`    |
+| `isPaused`      | boolean                                   | `bool`                |          |         |                                                                                                     |         |
+| `labels`        | map of string                             | `map[string]string`   |          |         |                                                                                                     |         |
+| `noDataState`   | string                                    | string                |          |         |                                                                                                     |         |
+| `panelId`       | int64 (formatted integer)                 | int64                 |          |         |                                                                                                     |         |
+| `title`         | string                                    | string                |          |         |                                                                                                     |         |
+| `uid`           | string                                    | string                |          |         |                                                                                                     |         |
 
 {{% /responsive-table %}}
 
@@ -1784,24 +1886,25 @@ When creating a contact point, the `EmbeddedContactPoint.name` property determin
 
 {{% responsive-table %}}
 
-| Name          | Type                         | Go type                   | Required | Default | Description                                                                                                               | Example                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| ------------- | ---------------------------- | ------------------------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `annotations` | map of string                | `map[string]string`       |          |         | Optional key-value pairs. `__dashboardUid__` and `__panelId__` must be set together; one cannot be set without the other. | `{"runbook_url":"https://supercoolrunbook.com/page/13"}`                                                                                                                                                                                                                                                                                                                                                                         |
-| `condition`   | string                       | string                    |    ✓     |         |                                                                                                                           | `A`                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `data`        | [][AlertQuery](#alert-query) | `[]*AlertQuery`           |    ✓     |         |                                                                                                                           | `[{"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
-| execErrState  | string                       | string                    |    ✓     |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `folderUID`   | string                       | string                    |    ✓     |         |                                                                                                                           | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `for`         | [Duration](#duration)        | [Duration](#duration)     |    ✓     |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `id`          | int64 (formatted integer)    | int64                     |          |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `isPaused`    | boolean                      | `bool`                    |          |         |                                                                                                                           | `false`                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `labels`      | map of string                | `map[string]string`       |          |         |                                                                                                                           | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `noDataState` | string                       | string                    |    ✓     |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `orgID`       | int64 (formatted integer)    | `int64                    |    ✓     |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `provenance`  | [Provenance](#provenance)    | [Provenance](#provenance) |          |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `ruleGroup`   | string                       | string                    |    ✓     |         |                                                                                                                           | `eval_group_1`                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `title`       | string                       | string                    |    ✓     |         |                                                                                                                           | `Always firing`                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `uid`         | string                       | string                    |          |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `updated`     | date-time (formatted string) | `strfmt.DateTime`         |          |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Name            | Type                         | Go type                   | Required | Default | Description                                                                                                               | Example                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------- | ---------------------------- | ------------------------- | :------: | ------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `annotations`   | map of string                | `map[string]string`       |          |         | Optional key-value pairs. `__dashboardUid__` and `__panelId__` must be set together; one cannot be set without the other. | `{"runbook_url":"https://supercoolrunbook.com/page/13"}`                                                                                                                                                                                                                                                                                                                                                                         |
+| `condition`     | string                       | string                    |    ✓     |         |                                                                                                                           | `A`                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `data`          | [][AlertQuery](#alert-query) | `[]*AlertQuery`           |    ✓     |         |                                                                                                                           | `[{"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
+| execErrState    | string                       | string                    |    ✓     |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `folderUID`     | string                       | string                    |    ✓     |         |                                                                                                                           | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `for`           | [Duration](#duration)        | [Duration](#duration)     |    ✓     |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `keepFiringFor` | [Duration](#duration)        | [Duration](#duration)     |          |         | How long the alert continues to fire after the condition is no longer met. Prevents alert flapping.                       | `2m`                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `id`            | int64 (formatted integer)    | int64                     |          |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `isPaused`      | boolean                      | `bool`                    |          |         |                                                                                                                           | `false`                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `labels`        | map of string                | `map[string]string`       |          |         |                                                                                                                           | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `noDataState`   | string                       | string                    |    ✓     |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `orgID`         | int64 (formatted integer)    | `int64                    |    ✓     |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `provenance`    | [Provenance](#provenance)    | [Provenance](#provenance) |          |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `ruleGroup`     | string                       | string                    |    ✓     |         |                                                                                                                           | `eval_group_1`                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `title`         | string                       | string                    |    ✓     |         |                                                                                                                           | `Always firing`                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `uid`           | string                       | string                    |          |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `updated`       | date-time (formatted string) | `strfmt.DateTime`         |          |         |                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 {{% /responsive-table %}}
 
