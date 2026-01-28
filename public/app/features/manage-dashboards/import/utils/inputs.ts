@@ -1,13 +1,7 @@
 import { DataSourceInstanceSettings, VariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Panel } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
-import {
-  AnnotationQueryKind,
-  AnnotationQueryKind as AnnotationQueryKindV2,
-  PanelQueryKind,
-  QueryVariableKind,
-  Spec as DashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { AnnotationQueryKind, Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import { AnnotationQuery, Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { isRecord } from 'app/core/utils/isRecord';
 import { ExportFormat } from 'app/features/dashboard/api/types';
@@ -181,9 +175,7 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
   if (dashboard.variables) {
     for (const variable of dashboard.variables) {
       if (variable.kind === 'QueryVariable') {
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        const queryVar = variable as QueryVariableKind;
-        const dsType = queryVar.spec.query?.group;
+        const dsType = variable.spec.query?.group;
         if (dsType) {
           dsTypes.add(dsType);
         }
@@ -193,9 +185,12 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
 
   if (dashboard.annotations) {
     for (const annotation of dashboard.annotations) {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const annot = annotation as AnnotationQueryKindV2;
-      const dsType = annot.spec.query?.group;
+      // Skip built-in annotations
+      if (annotation.spec.builtIn) {
+        continue;
+      }
+
+      const dsType = annotation.spec.query?.group;
       if (dsType) {
         dsTypes.add(dsType);
       }
@@ -207,9 +202,7 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
       if (element.kind === 'Panel' && element.spec.data?.kind === 'QueryGroup') {
         for (const query of element.spec.data.spec.queries) {
           if (query.kind === 'PanelQuery') {
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            const panelQuery = query as PanelQueryKind;
-            const dsType = panelQuery.spec.query?.group;
+            const dsType = query.spec.query?.group;
             if (dsType) {
               dsTypes.add(dsType);
             }
