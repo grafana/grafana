@@ -20,5 +20,6 @@ export const getLayoutControlsStyles = (theme: GrafanaTheme2) => ({
     height: theme.spacing(5),
     bottom: 0,
     left: 0,
+    minWidth: 'min-content',
   }),
 });

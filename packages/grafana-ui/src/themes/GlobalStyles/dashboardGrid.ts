@@ -93,7 +93,18 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
 
     '.dashboard-canvas-controls': {
       opacity: 0,
-      '&:hover,:focus-within': {
+
+      '@media (hover: none) and (pointer: coarse)': {
+        '&': {
+          opacity: 1,
+        },
+      },
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create('opacity'),
+      },
+
+      '&:hover, :focus-within': {
         opacity: 1,
       },
     },

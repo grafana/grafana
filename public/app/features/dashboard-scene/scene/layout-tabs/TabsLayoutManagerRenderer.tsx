@@ -128,7 +128,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     flex: '1 1 auto',
   }),
-  tabsBar: css(dashboardCanvasAddButtonHoverStyles),
+  tabsBar: css({
+    ...dashboardCanvasAddButtonHoverStyles,
+
+    '& .dashboard-canvas-controls': {
+      opacity: 1,
+    },
+  }),
   tabsRow: css({
     display: 'flex',
     width: '100%',

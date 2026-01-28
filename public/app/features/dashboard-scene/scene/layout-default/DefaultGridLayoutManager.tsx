@@ -694,6 +694,7 @@ function getStyles(theme: GrafanaTheme2) {
       '&:hover .dashboard-canvas-controls': {
         opacity: 1,
       },
+
       // In editing the add actions should live at the bottom of the grid so we have to
       // disable flex grow on the SceneGridLayouts first div
       '> div:first-child': {

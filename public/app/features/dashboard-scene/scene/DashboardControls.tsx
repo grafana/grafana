@@ -315,6 +315,7 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
       },
+
       '&:hover .dashboard-canvas-controls': {
         opacity: 1,
       },
