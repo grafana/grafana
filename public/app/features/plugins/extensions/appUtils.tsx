@@ -136,17 +136,6 @@ export function getAppPluginDependenciesSync(
 }
 
 /**
- * Returns a list of app plugins that has to be loaded before core Grafana could finish the initialization.
- * @param apps - The app plugin configs.
- * @returns A list of app plugins that has to be loaded before core Grafana could finish the initialization.
- */
-export function getAppPluginsToAwaitSync(apps: AppPluginConfig[]): AppPluginConfig[] {
-  const pluginIds: string[] = [];
-
-  return apps.filter((app) => pluginIds.includes(app.id));
-}
-
-/**
  * Returns a list of app plugins that has to be preloaded in parallel with the core Grafana initialization.
  * @param apps - The app plugin configs.
  * @returns An array of app plugin configs that has to be preloaded in parallel with the core Grafana initialization.
@@ -157,13 +146,9 @@ export function getAppPluginsToPreloadSync(apps: AppPluginConfig[]): AppPluginCo
     PluginExtensionPoints.DashboardPanelMenu,
     apps
   );
-  const awaitedPluginIds = getAppPluginsToAwaitSync(apps).map((app) => app.id);
-  const isNotAwaited = (app: AppPluginConfig) => !awaitedPluginIds.includes(app.id);
 
   // TODO(@MattIPv4): cloud-home-app is deprecated and should not be preloaded
   return apps.filter((app) => {
-    return (
-      isNotAwaited(app) && app.id !== 'cloud-home-app' && (app.preload || dashboardPanelMenuPluginIds.includes(app.id))
-    );
+    return app.id !== 'cloud-home-app' && (app.preload || dashboardPanelMenuPluginIds.includes(app.id));
   });
 }
