@@ -226,6 +226,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"flamegraph":     {},
 		"traces":         {},
 		"piechart":       {},
+		"raw-prometheus": {},
 		"stat":           {},
 		"state-timeline": {},
 		"status-history": {},
