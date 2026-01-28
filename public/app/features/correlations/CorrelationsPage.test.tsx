@@ -1,4 +1,4 @@
-import { render, waitFor, screen, within, Matcher, getByRole, act, fireEvent } from '@testing-library/react';
+import { render, waitFor, screen, within, Matcher, getByRole } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { merge, uniqueId } from 'lodash';
 import { openMenu } from 'react-select-event';
@@ -300,9 +300,7 @@ describe('CorrelationsPage', () => {
       await userEvent.click(screen.getByText('Regular expression'));
       await userEvent.type(screen.getByLabelText(/expression/i), 'test expression');
 
-      // TODO investigate why we need act/fireEvent
-      // see https://github.com/testing-library/react-testing-library/issues/1375
-      await act(() => fireEvent.click(screen.getByRole('button', { name: /add$/i })));
+      await userEvent.click(screen.getByRole('button', { name: /add$/i }));
 
       await waitFor(() => {
         expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');
@@ -453,9 +451,7 @@ describe('CorrelationsPage', () => {
       await userEvent.clear(screen.getByRole('textbox', { name: /results field/i }));
       await userEvent.type(screen.getByRole('textbox', { name: /results field/i }), 'Line');
 
-      // TODO investigate why we need act/fireEvent
-      // see https://github.com/testing-library/react-testing-library/issues/1375
-      await act(() => fireEvent.click(screen.getByRole('button', { name: /add$/i })));
+      await userEvent.click(screen.getByRole('button', { name: /add$/i }));
 
       await waitFor(() => {
         expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');
@@ -522,9 +518,7 @@ describe('CorrelationsPage', () => {
       await userEvent.click(screen.getByRole('button', { name: /next$/i }));
       await userEvent.click(screen.getByRole('button', { name: /next$/i }));
 
-      // TODO investigate why we need act/fireEvent
-      // see https://github.com/testing-library/react-testing-library/issues/1375
-      await act(() => fireEvent.click(screen.getByRole('button', { name: /save$/i })));
+      await userEvent.click(screen.getByRole('button', { name: /save$/i }));
 
       expect(await screen.findByRole('cell', { name: /edited label$/i }, { timeout: 5000 })).toBeInTheDocument();
 
@@ -542,9 +536,7 @@ describe('CorrelationsPage', () => {
       const rowExpanderButton = within(tableRows[0]).getByRole('button', { name: /toggle row expanded/i });
       await userEvent.click(rowExpanderButton);
 
-      // TODO investigate why we need act/fireEvent
-      // see https://github.com/testing-library/react-testing-library/issues/1375
-      await act(() => fireEvent.click(screen.getByRole('button', { name: /next$/i })));
+      await userEvent.click(screen.getByRole('button', { name: /next$/i }));
       await userEvent.click(screen.getByRole('button', { name: /next$/i }));
 
       // select Logfmt, be sure expression field is disabled
@@ -583,9 +575,7 @@ describe('CorrelationsPage', () => {
       await userEvent.click(screen.getByRole('button', { name: /save$/i }));
       expect(screen.getByText('Please define an expression')).toBeInTheDocument();
       await userEvent.type(screen.getByLabelText(/expression/i), 'test expression');
-      // TODO investigate why we need act/fireEvent
-      // see https://github.com/testing-library/react-testing-library/issues/1375
-      await act(() => fireEvent.click(screen.getByRole('button', { name: /save$/i })));
+      await userEvent.click(screen.getByRole('button', { name: /save$/i }));
       await waitFor(() => {
         expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_edited');
       });
@@ -736,9 +726,7 @@ describe('CorrelationsPage', () => {
       expect(descriptionInput).toBeInTheDocument();
       expect(descriptionInput).toHaveAttribute('readonly');
 
-      // TODO investigate why we need act/fireEvent
-      // see https://github.com/testing-library/react-testing-library/issues/1375
-      await act(() => fireEvent.click(screen.getByRole('button', { name: /next$/i })));
+      await userEvent.click(screen.getByRole('button', { name: /next$/i }));
       await userEvent.click(screen.getByRole('button', { name: /next$/i }));
 
       // expect the transformation to exist but be read only

@@ -1,4 +1,3 @@
-import { act, fireEvent } from '@testing-library/react';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
@@ -59,10 +58,7 @@ describe('RuleList - GroupedView', () => {
   });
 
   it('should paginate through groups', async () => {
-    // TODO investigate why we need act
-    // see https://github.com/testing-library/react-testing-library/issues/1375
-    // eslint-disable-next-line testing-library/no-unnecessary-act
-    await act(() => render(<GroupedView />));
+    const { user } = render(<GroupedView />);
 
     const mimirSection = await ui.dsSection(/Mimir/).find();
 
@@ -77,10 +73,7 @@ describe('RuleList - GroupedView', () => {
     expect(firstPageGroups[39]).toHaveTextContent('test-group-40');
 
     const loadMoreButton = await within(mimirSection).findByRole('button', { name: /Show more/i });
-    // TODO investigate why we need act/fireEvent
-    // see https://github.com/testing-library/react-testing-library/issues/1375
-    // eslint-disable-next-line testing-library/no-unnecessary-act, testing-library/prefer-user-event
-    await act(() => fireEvent.click(loadMoreButton));
+    await user.click(loadMoreButton);
 
     await waitFor(() => expect(loadMoreButton).toBeEnabled());
 
@@ -93,10 +86,7 @@ describe('RuleList - GroupedView', () => {
   });
 
   it('should disable next button when there is no more data', async () => {
-    // TODO investigate why we need act
-    // see https://github.com/testing-library/react-testing-library/issues/1375
-    // eslint-disable-next-line testing-library/no-unnecessary-act
-    await act(() => render(<GroupedView />));
+    const { user } = render(<GroupedView />);
 
     const prometheusSection = await ui.dsSection(/Prometheus/).find();
     const promNamespace = await ui.namespace(/test-prometheus-namespace/).find(prometheusSection);
@@ -106,27 +96,17 @@ describe('RuleList - GroupedView', () => {
     await ui.group('test-group-40').find(promNamespace);
 
     // fetch page 2
-    // TODO investigate why we need act/fireEvent
-    // see https://github.com/testing-library/react-testing-library/issues/1375
-    // eslint-disable-next-line testing-library/no-unnecessary-act, testing-library/prefer-user-event
-    await act(async () => fireEvent.click(await loadMoreButton.find(prometheusSection)));
-    // await user.click(await loadMoreButton.find(prometheusSection));
+    await user.click(await loadMoreButton.find(prometheusSection));
     // we should now have all groups 1-80
     await ui.group('test-group-80').find(promNamespace);
 
     // fetch page 3
-    // TODO investigate why we need act/fireEvent
-    // see https://github.com/testing-library/react-testing-library/issues/1375
-    // eslint-disable-next-line testing-library/no-unnecessary-act, testing-library/prefer-user-event
-    await act(async () => fireEvent.click(await loadMoreButton.find(prometheusSection)));
+    await user.click(await loadMoreButton.find(prometheusSection));
     // we should now have all groups 1-120
     await ui.group('test-group-120').find(promNamespace);
 
     // fetch page 4
-    // TODO investigate why we need act/fireEvent
-    // see https://github.com/testing-library/react-testing-library/issues/1375
-    // eslint-disable-next-line testing-library/no-unnecessary-act, testing-library/prefer-user-event
-    await act(async () => fireEvent.click(await loadMoreButton.find(prometheusSection)));
+    await user.click(await loadMoreButton.find(prometheusSection));
     // we should now have all groups 1-130
     await ui.group('test-group-130').find(promNamespace);
 

@@ -418,8 +418,6 @@ describe('Tree', () => {
       await openSelector();
 
       const searchInput = screen.getByRole('combobox', { name: 'Search' });
-      // TODO investigate why we need act/fireEvent
-      // see https://github.com/testing-library/react-testing-library/issues/1375
       await act(async () => fireEvent.focus(searchInput));
 
       // Navigate to Applications (which is expandable) - need to ensure we reach it

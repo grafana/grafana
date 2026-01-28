@@ -295,18 +295,14 @@ describe('VisualMetricQueryEditor', () => {
     const defaultQuery = { ...query, ...defaultTimeSeriesList(datasource), filters: query.filters };
     const range = getDefaultTimeRange();
 
-    // TODO investigate why we need act
-    // see https://github.com/testing-library/react-testing-library/issues/1375
-    await act(async () =>
-      render(
-        <VisualMetricQueryEditor
-          {...defaultProps}
-          onChange={onChange}
-          datasource={datasource}
-          query={query}
-          range={range}
-        />
-      )
+    render(
+      <VisualMetricQueryEditor
+        {...defaultProps}
+        onChange={onChange}
+        datasource={datasource}
+        query={query}
+        range={range}
+      />
     );
     expect(document.body).toHaveTextContent('metric.test_label');
     expect(await screen.findByText('Delta')).toBeInTheDocument();

@@ -1,5 +1,5 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
-import { act, fireEvent, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -239,9 +239,7 @@ describe('ConnectionForm', () => {
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
 
       const saveButton = screen.getByRole('button', { name: /^save$/i });
-      // TODO investigate why we need act/fireEvent
-      // see https://github.com/testing-library/react-testing-library/issues/1375
-      await act(async () => fireEvent.click(saveButton));
+      await user.click(saveButton);
 
       await waitFor(() => {
         expect(screen.getByText('Invalid App ID')).toBeInTheDocument();
@@ -261,9 +259,7 @@ describe('ConnectionForm', () => {
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
 
       const saveButton = screen.getByRole('button', { name: /^save$/i });
-      // TODO investigate why we need act/fireEvent
-      // see https://github.com/testing-library/react-testing-library/issues/1375
-      await act(async () => fireEvent.click(saveButton));
+      await user.click(saveButton);
 
       await waitFor(() => {
         expect(screen.getByText('Invalid Installation ID')).toBeInTheDocument();
@@ -283,9 +279,7 @@ describe('ConnectionForm', () => {
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), 'invalid-key');
 
       const saveButton = screen.getByRole('button', { name: /^save$/i });
-      // TODO investigate why we need act/fireEvent
-      // see https://github.com/testing-library/react-testing-library/issues/1375
-      await act(async () => fireEvent.click(saveButton));
+      await user.click(saveButton);
 
       await waitFor(() => {
         expect(screen.getByText('Invalid Private Key format')).toBeInTheDocument();

@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import { MessageChannel } from 'node:worker_threads';
 import { TextEncoder, TextDecoder } from 'util';
 
 import { matchers } from '@grafana/test-utils/matchers';
@@ -85,18 +86,4 @@ global.ResizeObserver = class ResizeObserver {
   }
 };
 
-global.MessageChannel = jest.fn().mockImplementation(() => {
-  let onmessage;
-  return {
-    port1: {
-      set onmessage(cb) {
-        onmessage = cb;
-      },
-    },
-    port2: {
-      postMessage: (data) => {
-        onmessage?.({ data });
-      },
-    },
-  };
-});
+global.MessageChannel = MessageChannel;

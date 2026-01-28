@@ -1,4 +1,3 @@
-import { act, fireEvent } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render, screen } from 'test/test-utils';
 import { byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
@@ -66,10 +65,7 @@ describe('new receiver', () => {
     await user.type(email, 'tester@grafana.com');
 
     // try to test the contact point
-    // TODO investigate why we need act/fireEvent
-    // see https://github.com/testing-library/react-testing-library/issues/1375
-    // eslint-disable-next-line testing-library/no-unnecessary-act, testing-library/prefer-user-event
-    await act(async () => fireEvent.click(await ui.testContactPointButton.find()));
+    await user.click(await ui.testContactPointButton.find());
 
     expect(await ui.testContactPointModal.find()).toBeInTheDocument();
 

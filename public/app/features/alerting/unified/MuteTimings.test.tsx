@@ -1,4 +1,3 @@
-import { act, fireEvent } from '@testing-library/react';
 import { InitialEntry } from 'history';
 import { last } from 'lodash';
 import { Route, Routes } from 'react-router-dom-v5-compat';
@@ -145,11 +144,8 @@ const fillOutForm = async ({
 };
 
 const saveMuteTiming = async () => {
-  // TODO investigate why we need act/fireEvent
-  // see https://github.com/testing-library/react-testing-library/issues/1375
-  const button = await screen.findByText(/save time interval/i);
-  // eslint-disable-next-line testing-library/no-unnecessary-act, testing-library/prefer-user-event
-  await act(() => fireEvent.click(button));
+  const user = userEvent.setup();
+  await user.click(await screen.findByText(/save time interval/i));
 };
 
 setupMswServer();

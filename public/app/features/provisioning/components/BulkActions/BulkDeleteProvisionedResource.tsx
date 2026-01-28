@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { flushSync } from 'react-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -44,10 +43,7 @@ function FormContent({ initialValues, selectedItems, repository, workflowOptions
   const workflow = watch('workflow');
 
   const handleSubmitForm = async (data: BulkActionFormData) => {
-    // TODO why?
-    flushSync(() => {
-      setHasSubmitted(true);
-    });
+    setHasSubmitted(true);
 
     const resources = collectSelectedItems(selectedItems);
 

@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -13,32 +13,24 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-async function renderComponent({
-  initialValue = '',
-  onChange = jest.fn(),
-  onRunQuery = jest.fn(),
-}: Partial<Props> = {}) {
+function renderComponent({ initialValue = '', onChange = jest.fn(), onRunQuery = jest.fn() }: Partial<Props> = {}) {
   const datasource = createLokiDatasource();
 
-  // TODO investigate why we need act
-  // see https://github.com/testing-library/react-testing-library/issues/1375
-  await act(() =>
-    render(
-      <MonacoQueryFieldWrapper
-        datasource={datasource}
-        history={[]}
-        initialValue={initialValue}
-        onChange={onChange}
-        onRunQuery={onRunQuery}
-        placeholder="Enter a Loki query (run with Shift+Enter)"
-      />
-    )
+  render(
+    <MonacoQueryFieldWrapper
+      datasource={datasource}
+      history={[]}
+      initialValue={initialValue}
+      onChange={onChange}
+      onRunQuery={onRunQuery}
+      placeholder="Enter a Loki query (run with Shift+Enter)"
+    />
   );
 }
 
 describe('MonacoFieldWrapper', () => {
   test('Renders with no errors', async () => {
-    await renderComponent();
+    renderComponent();
 
     await waitFor(
       async () => {

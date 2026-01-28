@@ -1,4 +1,3 @@
-import { act } from '@testing-library/react';
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
@@ -30,9 +29,7 @@ const selectComboboxOptionInTest = async (input: HTMLElement, optionOrOptions: s
 };
 
 const setup = async () => {
-  // TODO investigate why we need act
-  // see https://github.com/testing-library/react-testing-library/issues/1375
-  const view = await act(() => render(<SharedPreferences resourceUri="user" preferenceType="user" />));
+  const view = render(<SharedPreferences resourceUri="user" preferenceType="user" />);
   const themeSelect = await screen.findByRole('combobox', { name: 'Interface theme' });
   await waitFor(() => expect(themeSelect).not.toBeDisabled());
   return view;
