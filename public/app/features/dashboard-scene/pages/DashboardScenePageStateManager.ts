@@ -228,7 +228,7 @@ abstract class DashboardScenePageStateManagerBase<T>
   protected async loadAssistantPreviewDashboard(base64EncodedKey: string): Promise<DashboardDTO> {
     const decodedKey = atob(decodeURIComponent(base64EncodedKey));
     const userStorage = new UserStorage('grafana-assistant-app');
-    const dashboard = await userStorage.getItem(decodedKey);
+    const dashboard = await userStorage.getItem(decodeURIComponent(decodedKey));
     if (!dashboard) {
       throw new Error('Dashboard not found');
     }
