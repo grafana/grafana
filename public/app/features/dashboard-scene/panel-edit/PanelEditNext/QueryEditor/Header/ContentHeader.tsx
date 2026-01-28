@@ -3,9 +3,11 @@ import { useCallback } from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { DataSourcePicker } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import { useStyles2, Icon, Button, Text } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { isExpressionQuery } from 'app/features/expressions/guards';
+import { InspectTab } from 'app/features/inspector/types';
 
 import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
 import { getDashboardSceneFor } from '../../../../utils/utils';
