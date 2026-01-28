@@ -12,7 +12,7 @@ export function useRepositoryStatus(repoName?: string, options?: UseRepositorySt
   const pollIntervalMs = options?.pollIntervalMs ?? 5000;
   const stopPollingWhenReady = options?.stopPollingWhenReady ?? true;
 
-  const [shouldEnablePolling, setShouldEnablePolling] = useState(true);
+  const [shouldEnablePolling, setShouldEnablePolling] = useState(Boolean(repoName));
 
   const query = useGetRepositoryStatusQuery(repoName ? { name: repoName } : skipToken, {
     pollingInterval: repoName && shouldEnablePolling ? pollIntervalMs : 0,
