@@ -267,18 +267,11 @@ export class LogContextProvider {
         hasParser = true;
         // Extract parsers and drop operations separately
         const parserNodes = getNodesFromQuery(query.expr, [LabelParser, JsonExpressionParser, Logfmt]);
-        const dropNodes = getNodesFromQuery(query.expr, [DropLabelsExpr]);
 
         // Add parsers first
         for (const node of parserNodes) {
           const parserName = query.expr.substring(node.from, node.to).trim();
           expr = addParserToQuery(expr, parserName);
-        }
-
-        // Add drop operations at the end
-        for (const node of dropNodes) {
-          const dropExpression = query.expr.substring(node.from, node.to).trim();
-          expr += ` | ${dropExpression}`;
         }
       }
 
@@ -302,10 +295,6 @@ export class LogContextProvider {
   processPipelineStagesToExpr = (currentExpr: string, query: LokiQuery | undefined): string => {
     let newExpr = currentExpr;
     const origExpr = query?.expr ?? '';
-
-    if (isQueryWithParser(origExpr).parserCount > 1) {
-      return newExpr;
-    }
 
     const allNodePositions = getNodePositionsFromQuery(origExpr, [
       PipelineStage,
