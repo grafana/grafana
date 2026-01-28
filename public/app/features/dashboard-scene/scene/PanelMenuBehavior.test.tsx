@@ -541,6 +541,46 @@ describe('panelMenuBehavior', () => {
       );
     });
 
+    it('should add root category items to the main menu', async () => {
+      getPluginExtensionsMock.mockReturnValue({
+        extensions: [
+          {
+            id: '1',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Root Action',
+            description: 'Action at root level',
+            path: '/path',
+            category: '${root}',
+          },
+        ],
+      });
+
+      const { menu, panel } = await buildTestScene({});
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      // Should be in main menu
+      expect(menu.state.items).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Root Action',
+            href: '/path',
+          }),
+        ])
+      );
+
+      // Extensions submenu should not exist if only root items
+      expect(menu.state.items?.find((i) => i.text === 'Extensions')).toBeUndefined();
+    });
+
     it('it should not contain remove and duplicate menu items when not in edit mode', async () => {
       const { menu, panel } = await buildTestScene({});
 

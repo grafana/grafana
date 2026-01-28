@@ -28,7 +28,11 @@ import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSu
 import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
 import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 import { GetPluginExtensions } from 'app/features/plugins/extensions/types';
-import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
+import {
+  createExtensionSubMenu,
+  extensionLinkToPanelMenuItem,
+  isRootPluginExtension,
+} from 'app/features/plugins/extensions/utils';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -311,8 +315,20 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     if (extensions.length > 0 && !dashboard.state.isEditing) {
       const linkExtensions = extensions.filter((extension) => extension.type === PluginExtensionTypes.link);
 
+      const rootExtensions = linkExtensions.filter(isRootPluginExtension);
+      const nonRootExtensions = linkExtensions.filter((e) => !isRootPluginExtension(e));
+
+      // Add root extensions to items
+      if (rootExtensions.length > 0) {
+        for (const extension of rootExtensions) {
+          items.push(extensionLinkToPanelMenuItem(extension));
+        }
+      }
+
       // Separate metrics drilldown links from other links
-      const [metricsDrilldownLinks, otherLinks] = linkExtensions.reduce<[PluginExtensionLink[], PluginExtensionLink[]]>(
+      const [metricsDrilldownLinks, otherLinks] = nonRootExtensions.reduce<
+        [PluginExtensionLink[], PluginExtensionLink[]]
+      >(
         ([metricsDrilldownLinks, otherLinks], link) => {
           if (link.category === METRICS_DRILLDOWN_CATEGORY) {
             metricsDrilldownLinks.push(link);
