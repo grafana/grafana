@@ -54,7 +54,7 @@ export const RolePicker = ({
   pickerId,
 }: Props): JSX.Element | null => {
   // Generate stable picker ID if not provided
-  const stablePickerIdRef = useRef(pickerId || Math.random().toString(36).substring(2, 11));
+  const stablePickerIdRef = useRef(pickerId || crypto.randomUUID());
   const stablePickerId = stablePickerIdRef.current;
 
   // Use external store for isOpen state so it survives remounts
