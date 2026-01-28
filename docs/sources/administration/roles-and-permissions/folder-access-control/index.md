@@ -21,7 +21,7 @@ This page explains how folder permissions work and how to use them effectively t
 - To create folders, you need the Folder Creator role or appropriate organization permissions
 - Folder permissions are available in all Grafana editions (OSS, Enterprise, and Cloud)
 
-{{< admonition type="note" >}}
+{{< admonition type="caution" >}}
 **Folder limitations:**
 
 - Folders can be nested up to **4 levels deep**
