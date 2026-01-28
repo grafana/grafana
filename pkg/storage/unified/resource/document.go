@@ -297,23 +297,23 @@ func (x *searchableDocumentFields) Field(name string) *resourcepb.ResourceTableC
 }
 
 const (
-	SEARCH_FIELD_PREFIX            = "fields."
-	SEARCH_FIELD_ID                = "_id" // {namespace}/{group}/{resource}/{name}
-	SEARCH_FIELD_LEGACY_ID         = utils.LabelKeyDeprecatedInternalID
-	SEARCH_FIELD_KIND              = "kind" // resource ( for federated index filtering )
-	SEARCH_FIELD_GROUP_RESOURCE    = "gr"   // group/resource
-	SEARCH_FIELD_NAMESPACE         = "namespace"
-	SEARCH_FIELD_NAME              = "name"
-	SEARCH_FIELD_RV                = "rv"
-	SEARCH_FIELD_TITLE             = "title"
-	SEARCH_FIELD_TITLE_PHRASE      = "title_phrase" // filtering/sorting on title by full phrase
-	SEARCH_FIELD_DESCRIPTION       = "description"
-	SEARCH_FIELD_TAGS              = "tags"
-	SEARCH_FIELD_LABELS            = "labels" // All labels, not a specific one
-	SEARCH_FIELD_OWNER_REFERENCES  = "ownerReferences"
-	SEARCH_FIELD_FOLDER            = "folder"
-	SEARCH_FIELD_CREATED           = "created"
-	SEARCH_FIELD_CREATED_BY        = "createdBy"
+	SEARCH_FIELD_PREFIX             = "fields."
+	SEARCH_FIELD_ID                 = "_id" // {namespace}/{group}/{resource}/{name}
+	SEARCH_FIELD_LEGACY_ID          = utils.LabelKeyDeprecatedInternalID
+	SEARCH_FIELD_KIND               = "kind" // resource ( for federated index filtering )
+	SEARCH_FIELD_GROUP_RESOURCE     = "gr"   // group/resource
+	SEARCH_FIELD_NAMESPACE          = "namespace"
+	SEARCH_FIELD_NAME               = "name"
+	SEARCH_FIELD_RV                 = "rv"
+	SEARCH_FIELD_TITLE              = "title"
+	SEARCH_FIELD_TITLE_PHRASE       = "title_phrase" // filtering/sorting on title by full phrase
+	SEARCH_FIELD_DESCRIPTION        = "description"
+	SEARCH_FIELD_TAGS               = "tags"
+	SEARCH_FIELD_LABELS             = "labels" // All labels, not a specific one
+	SEARCH_FIELD_OWNER_REFERENCES   = "ownerReferences"
+	SEARCH_FIELD_FOLDER             = "folder"
+	SEARCH_FIELD_CREATED            = "created"
+	SEARCH_FIELD_CREATED_BY         = "createdBy"
 	SEARCH_FIELD_UPDATED            = "updated"
 	SEARCH_FIELD_UPDATED_BY         = "updatedBy"
 	SEARCH_FIELD_MANAGED_BY         = "managedBy" // {kind}:{id}
