@@ -49,6 +49,8 @@ To help choose the best language for your needs, refer to
 a [comparison of Flux vs InfluxQL](https://docs.influxdata.com/influxdb/v1.8/flux/flux-vs-influxql/)
 and [Why InfluxData created Flux](https://www.influxdata.com/blog/why-were-building-flux-a-new-data-scripting-and-query-language/).
 
+If you're unsure which InfluxDB product you're using, refer to InfluxData's [InfluxDB product detection tool](https://docs.influxdata.com/influxdb3/enterprise/visualize-data/grafana/) for guidance.
+
 ## Add the InfluxDB data source
 
 Complete the following steps to set up a new InfluxDB data source:
