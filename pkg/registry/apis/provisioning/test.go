@@ -170,12 +170,13 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 							return
 						}
 
+						wrappedErr := fmt.Errorf("failed to generate repository token from connection: %w", err)
 						responder.Error(&k8serrors.StatusError{
 							ErrStatus: metav1.Status{
 								Status:  metav1.StatusFailure,
 								Code:    http.StatusInternalServerError,
 								Reason:  "InternalServerError",
-								Message: fmt.Sprintf("failed to generate repository token from connection: %v", err),
+								Message: wrappedErr.Error(),
 							},
 						})
 						return
