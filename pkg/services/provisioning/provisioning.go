@@ -19,6 +19,7 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	alertingauthz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -317,7 +318,11 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		notifier.NewCachedNotificationSettingsValidationService(ps.alertingStore),
 		alertingauthz.NewRuleService(ps.ac),
 	)
-	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore, notifier.NewExtraConfigsCrypto(ps.secretService), ps.alertingStore.FeatureToggles)
+	var features featuremgmt.FeatureToggles
+	if ps.alertingStore != nil {
+		features = ps.alertingStore.FeatureToggles
+	}
+	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore, notifier.NewExtraConfigsCrypto(ps.secretService), features)
 	receiverSvc := notifier.NewReceiverService(
 		alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true),
 		configStore,
@@ -333,7 +338,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
 		ps.alertingStore, ps.SQLStore, receiverSvc, ps.log, ps.alertingStore, ps.resourcePermissions)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
-		ps.alertingStore, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.alertingStore.FeatureToggles, ps.log)
+		ps.alertingStore, ps.SQLStore, ps.Cfg.UnifiedAlerting, features, ps.log)
 	mutetimingsService := provisioning.NewMuteTimingService(configStore, ps.alertingStore, ps.alertingStore, ps.log, ps.alertingStore)
 	templateService := provisioning.NewTemplateService(configStore, ps.alertingStore, ps.alertingStore, ps.log)
 	cfg := prov_alerting.ProvisionerConfig{
