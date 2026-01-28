@@ -346,6 +346,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 					"title": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The connection display name (shown in the UI)",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -392,7 +393,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 						},
 					},
 				},
-				Required: []string{"type"},
+				Required: []string{"title", "type"},
 			},
 		},
 		Dependencies: []string{
