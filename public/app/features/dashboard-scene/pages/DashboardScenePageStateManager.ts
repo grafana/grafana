@@ -219,6 +219,11 @@ abstract class DashboardScenePageStateManagerBase<T>
     }
   }
 
+  /**
+   * Loads the assistant preview dashboard from the user storage
+   * @param base64EncodedKey base64 encoded key of the dashboard in the user storage
+   * @returns Promise<DashboardDTO>
+   */
   protected async loadAssistantPreviewDashboard(base64EncodedKey: string): Promise<DashboardDTO> {
     const decodedKey = atob(decodeURIComponent(base64EncodedKey));
     const userStorage = new UserStorage('grafana-assistant-app')
