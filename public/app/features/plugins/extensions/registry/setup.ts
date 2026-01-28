@@ -1,5 +1,5 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
-import { PluginExtensionExposedComponents } from '@grafana/data';
+import { AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
 import { getAppPluginMetas } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { CreateAlertFromPanelExposedComponent } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponent';
@@ -7,6 +7,7 @@ import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
+import { log } from '../logs/log';
 
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from './AddedFunctionsRegistry';
@@ -20,19 +21,15 @@ import { PluginExtensionRegistries } from './types';
  */
 let pluginExtensionRegistries: Promise<PluginExtensionRegistries> | undefined;
 
-async function initPluginExtensionRegistries(): Promise<PluginExtensionRegistries> {
-  const apps = await getAppPluginMetas();
+function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
   const addedComponentsRegistry = new AddedComponentsRegistry(apps);
   const exposedComponentsRegistry = new ExposedComponentsRegistry(apps);
   const addedLinksRegistry = new AddedLinksRegistry(apps);
   const addedFunctionsRegistry = new AddedFunctionsRegistry(apps);
-  const pluginExtensionRegistries = {
-    addedComponentsRegistry,
-    exposedComponentsRegistry,
-    addedLinksRegistry,
-    addedFunctionsRegistry,
-  };
+  return { addedComponentsRegistry, addedFunctionsRegistry, addedLinksRegistry, exposedComponentsRegistry };
+}
 
+function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry }: PluginExtensionRegistries) {
   // Registering core extension links
   addedLinksRegistry.register({
     pluginId: 'grafana',
@@ -69,8 +66,24 @@ async function initPluginExtensionRegistries(): Promise<PluginExtensionRegistrie
       },
     ],
   });
+}
 
-  return pluginExtensionRegistries;
+async function initPluginExtensionRegistries(): Promise<PluginExtensionRegistries> {
+  try {
+    const apps = await getAppPluginMetas();
+    const registries = initRegistries(apps);
+    registerCoreExtensions(registries);
+
+    return registries;
+  } catch (err) {
+    if (err instanceof Error) {
+      log.error(`Failed to init plugin extension registries.`, { stack: err.stack ?? '', message: err.message });
+    }
+
+    // fetching plugin meta failed, so we clear the cached promise to allow a retry at a later point.
+    pluginExtensionRegistries = undefined;
+    return initRegistries([]);
+  }
 }
 
 /**
@@ -97,10 +110,15 @@ export async function getPluginExtensionRegistries(): Promise<PluginExtensionReg
  * @param overrides Plugin extension registries to set
  * @throws Error if called outside of a test environment
  */
-export function setPluginExtensionRegistries(overrides: PluginExtensionRegistries) {
+export function setPluginExtensionRegistries(overrides?: PluginExtensionRegistries) {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('setPluginExtensionRegistries() function can only be called from tests.');
   }
 
-  pluginExtensionRegistries = Promise.resolve(overrides);
+  if (overrides) {
+    pluginExtensionRegistries = Promise.resolve(overrides);
+    return;
+  }
+
+  pluginExtensionRegistries = undefined;
 }
