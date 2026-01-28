@@ -552,6 +552,32 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return fmt.Errorf("unable to create repository from configuration: %w", err)
 	}
 
+	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
+		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
+		if err != nil {
+			logger.Error("retrieving connection",
+				"connection", obj.Spec.Connection.Name,
+				"error", err,
+			)
+			return err
+		}
+
+		if rc.shouldGenerateTokenFromConnection(obj, c) {
+			logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
+
+			tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
+			if err != nil {
+				logger.Error("generating token for repository",
+					"connection", obj.Spec.Connection.Name,
+					"error", err,
+				)
+				return err
+			}
+
+			patchOperations = append(patchOperations, tokenOps...)
+		}
+	}
+
 	// Handle hooks - may return early if hooks fail
 	hookOps, shouldContinue, err := rc.processHooks(ctx, repo, obj)
 	if err != nil {
@@ -568,32 +594,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	testResults, healthStatus, healthPatchOps, err := rc.healthChecker.RefreshHealthWithPatchOps(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("update health status: %w", err)
-	}
-
-	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
-		c, err := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
-		if err != nil {
-			logger.Error("retrieving connection",
-				"connection", obj.Spec.Connection.Name,
-				"error", err,
-			)
-			return err
-		}
-
-		if rc.shouldGenerateTokenFromConnection(obj, healthStatus, c) {
-			logger.Info("updating token for repository", "connection", obj.Spec.Connection.Name)
-
-			tokenOps, err := rc.generateRepositoryToken(ctx, obj, c)
-			if err != nil {
-				logger.Error("generating token for repository",
-					"connection", obj.Spec.Connection.Name,
-					"error", err,
-				)
-				return err
-			}
-
-			patchOperations = append(patchOperations, tokenOps...)
-		}
 	}
 
 	// Add health patch operations first
@@ -680,12 +680,10 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 // We're going to work on this in https://github.com/grafana/git-ui-sync-project/issues/744.
 func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 	obj *provisioning.Repository,
-	healthStatus provisioning.HealthStatus,
 	c *provisioning.Connection,
 ) bool {
 	// We should generate a token from the connection when
 	// - The token has not been recently created
-	// - The repo is not healthy
 	// - The token will expire before the next resync interval
 	// - The linked connection is healthy (which means it is able to generate valid tokens)
 	recentlyCreated := tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated))
@@ -693,7 +691,6 @@ func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 		time.UnixMilli(obj.Status.Token.Expiration), rc.resyncInterval,
 	)
 	return !recentlyCreated &&
-		!healthStatus.Healthy &&
 		shouldRefresh &&
 		c.Status.Health.Healthy
 }
