@@ -467,7 +467,8 @@
                       "title": "Go to drilldown",
                       "url": "/d/O6GmNPvWk/dashboard-tests-nested-template-variables-drilldown?orgId=1\u0026${__all_variables}\u0026${__url_time_range}"
                     }
-                  ]
+                  ],
+                  "nullValueMode": "connected"
                 },
                 "overrides": []
               }
@@ -550,7 +551,8 @@
                       "title": "Go to drilldown",
                       "url": "/d/O6GmNPvWk/dashboard-tests-nested-template-variables-drilldown?orgId=1\u0026${__all_variables}\u0026${__url_time_range}"
                     }
-                  ]
+                  ],
+                  "nullValueMode": "connected"
                 },
                 "overrides": []
               }

@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Azure 로그 쿼리 시작 버튼",
       "body-switching-to-builder": "빌더로 전환하면 현재 KQL 쿼리가 취소되고 KQL 편집기가 지워집니다. 정말 진행하시겠어요?",
-      "body-switching-to-kql": "KQL로 전환하면 현재 빌더 설정이 취소됩니다. 정말 진행하시겠어요?",
       "button-kick-start-your-query": "쿼리 시작하기",
       "button-run-query": "쿼리 실행",
       "confirmText-switch-to": "{{newMode}} 모드로 전환",
@@ -275,7 +274,7 @@
       "label-time-column": "시간 열",
       "label-time-range": "시간 범위",
       "tooltip-time-column": "<0>필터링에 사용할 시간 열을 지정합니다. 기본값은 첫 번째 테이블 <1>timeSpan</1> 열, 처음 찾은 <3>datetime</3> 열 또는 <5>TimeGenerated</5>입니다.</0>",
-      "tooltip-time-range": "<0>쿼리에 사용할 시간 범위를 지정합니다. <1>쿼리</1> 옵션은 쿼리에 지정된 시간 범위만 사용합니다. <3>대시보드</3>는 Grafana 시간 범위만 사용합니다. 로그 빌더 모드에서는 대시보드 시간만 사용됩니다.</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "상단"

@@ -1,38 +1,46 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useSceneObjectState } from '@grafana/scenes';
+import { sceneGraph, SceneObject, SceneObjectState, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { TabItem } from '../scene/layout-tabs/TabItem';
 import { ToolbarActionProps } from '../scene/new-toolbar/types';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
+import { getDefaultVizPanel } from '../utils/utils';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
+import { DashboardSidePaneNew } from './DashboardSidePaneNew';
 import { ElementEditPane } from './ElementEditPane';
 
 export interface Props {
   editPane: DashboardEditPane;
   dashboard: DashboardScene;
-  isDocked?: boolean;
 }
 
 /**
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
-export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Props) {
+export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const { isEditing, meta, uid } = dashboard.useState();
   const hasUid = Boolean(uid);
   const selectedObject = selection?.getFirstObject();
   const isNewElement = selection?.isNewElement() ?? false;
+  // the layout element that was selected when opening the 'add' pane
+  // used when adding new panel from the sidebar
+  const [selectedLayoutElement, setSelectedLayoutElement] = useState<DashboardScene | SceneObject<SceneObjectState>>(
+    dashboard
+  );
 
   const editableElement = useMemo(() => {
     if (selection) {
@@ -41,6 +49,36 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
 
     return undefined;
   }, [selection]);
+
+  const onSetLayoutElement = useCallback(
+    (obj: SceneObject<SceneObjectState> | undefined) => {
+      if (obj) {
+        // find the closest row or tab to add the new panel to
+        // if the selected element is not inside a row or tab, add to dashboard root
+        setSelectedLayoutElement(
+          sceneGraph.findObject(
+            obj,
+            (currentSceneObject: SceneObject<SceneObjectState>) =>
+              currentSceneObject instanceof RowItem || currentSceneObject instanceof TabItem
+          ) || dashboard
+        );
+      } else {
+        setSelectedLayoutElement(dashboard);
+      }
+    },
+    [dashboard]
+  );
+
+  const onAddNewPanel = useCallback(() => {
+    if (selectedLayoutElement) {
+      const panel = getDefaultVizPanel();
+      if (selectedLayoutElement instanceof DashboardScene) {
+        dashboard.addPanel(panel);
+      } else if (selectedLayoutElement instanceof RowItem || selectedLayoutElement instanceof TabItem) {
+        selectedLayoutElement.getLayout().addPanel(panel);
+      }
+    }
+  }, [dashboard, selectedLayoutElement]);
 
   return (
     <>
@@ -51,6 +89,15 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
             editPane={editPane}
             element={editableElement}
             isNewElement={isNewElement}
+          />
+        </Sidebar.OpenPane>
+      )}
+      {openPane === 'add' && (
+        <Sidebar.OpenPane>
+          <DashboardSidePaneNew
+            onAddPanel={onAddNewPanel}
+            dashboard={dashboard}
+            selectedElement={selectedLayoutElement}
           />
         </Sidebar.OpenPane>
       )}
@@ -68,6 +115,19 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
                 <RedoButton dashboard={dashboard} />
               </>
             )}
+            <Sidebar.Button
+              icon="plus"
+              iconColor="primary"
+              iconSize="xl"
+              onClick={() => {
+                onSetLayoutElement(selectedObject);
+                editPane.openPane('add');
+              }}
+              title={t('dashboard.sidebar.add.title', 'Add')}
+              tooltip={t('dashboard.sidebar.add.tooltip', 'Add new element')}
+              data-testid={selectors.pages.Dashboard.Sidebar.addButton}
+              active={selectedObject === null || openPane === 'add'}
+            />
             <Sidebar.Button
               icon="cog"
               onClick={() => editPane.selectObject(dashboard, dashboard.state.key!)}

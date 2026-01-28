@@ -21,19 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-type contextKey string
-
-const txKey contextKey = "rvmanager_db_tx"
-
-func ContextWithTx(ctx context.Context, tx db.Tx) context.Context {
-	return context.WithValue(ctx, txKey, tx)
-}
-
-func TxFromCtx(ctx context.Context) (db.Tx, bool) {
-	tx, ok := ctx.Value(txKey).(db.Tx)
-	return tx, ok
-}
-
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager")
 
 var (
@@ -307,7 +294,7 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 		// Allocate the RVs
 		for i, guid := range guids {
 			guidToRV[guid] = rv
-			guidToSnowflakeRV[guid] = SnowflakeFromRv(rv)
+			guidToSnowflakeRV[guid] = SnowflakeFromRV(rv)
 			rvs[i] = rv
 			rv++
 		}
@@ -364,10 +351,18 @@ func (m *ResourceVersionManager) execBatch(ctx context.Context, group, resource 
 	}
 }
 
-// takes a unix microsecond rv and transforms into a snowflake format. The timestamp is converted from microsecond to
+// takes a unix microsecond RV and transforms into a snowflake format. The timestamp is converted from microsecond to
 // millisecond (the integer division) and the remainder is saved in the stepbits section. machine id is always 0
-func SnowflakeFromRv(rv int64) int64 {
+func SnowflakeFromRV(rv int64) int64 {
 	return (((rv / 1000) - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)) + (rv % 1000)
+}
+
+// It is generally not possible to convert from a snowflakeID to a microsecond RV due to the loss in precision
+// (snowflake ID stores timestamp in milliseconds). However, this implementation stores the microsecond fraction
+// in the step bits (see SnowflakeFromRV), allowing us to compute the microsecond timestamp.
+func RVFromSnowflake(snowflakeID int64) int64 {
+	microSecFraction := snowflakeID & ((1 << snowflake.StepBits) - 1)
+	return ((snowflakeID>>(snowflake.NodeBits+snowflake.StepBits))+snowflake.Epoch)*1000 + microSecFraction
 }
 
 // helper utility to compare two RVs. The first RV must be in snowflake format. Will convert rv2 to snowflake and retry
@@ -377,7 +372,7 @@ func IsRvEqual(rv1, rv2 int64) bool {
 		return true
 	}
 
-	return rv1 == SnowflakeFromRv(rv2)
+	return rv1 == SnowflakeFromRV(rv2)
 }
 
 // Lock locks the resource version for the given key

@@ -140,7 +140,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/datasources/correlations',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "CorrelationsPage" */ 'app/features/correlations/CorrelationsPage')
+        () =>
+          import(/* webpackChunkName: "CorrelationsPageWrapper" */ 'app/features/correlations/CorrelationsPageWrapper')
       ),
     },
     {
@@ -395,6 +396,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/invite/:code',
+      allowAnonymous: true,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SignupInvited" */ 'app/features/invites/SignupInvited')
       ),

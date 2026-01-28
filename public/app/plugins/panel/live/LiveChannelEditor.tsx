@@ -10,8 +10,8 @@ import {
   parseLiveChannelAddress,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Select, Alert, Label, stylesFactory, Combobox } from '@grafana/ui';
-import { config } from 'app/core/config';
 import { discoveryResources, getAPIGroupDiscoveryList, GroupDiscoveryResource } from 'app/features/apiserver/discovery';
 import { getManagedChannelInfo } from 'app/features/live/info';
 

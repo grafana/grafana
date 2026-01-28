@@ -2,10 +2,9 @@ import { useCallback, useRef } from 'react';
 import { createSelector } from 'reselect';
 
 import { DashboardViewItem } from 'app/features/search/types';
-import { useSelector, StoreState, useDispatch } from 'app/types/store';
+import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/services';
-import { isSharedWithMe } from '../components/utils';
 import {
   BrowseDashboardsState,
   DashboardsTreeItem,
@@ -13,6 +12,7 @@ import {
   DashboardViewItemWithUIItems,
   UIDashboardViewItem,
 } from '../types';
+import { isSharedWithMe } from '../utils/dashboards';
 
 import { fetchNextChildrenPage } from './actions';
 import { getPaginationPlaceholders } from './utils';

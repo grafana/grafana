@@ -377,11 +377,6 @@
       "count": 1
     }
   },
-  "packages/grafana-prometheus/src/configuration/PromSettings.tsx": {
-    "no-restricted-syntax": {
-      "count": 25
-    }
-  },
   "packages/grafana-prometheus/src/datasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -504,11 +499,6 @@
   "packages/grafana-runtime/src/utils/queryResponse.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "packages/grafana-runtime/src/utils/userStorage.tsx": {
-    "no-restricted-syntax": {
-      "count": 12
     }
   },
   "packages/grafana-schema/src/veneer/common.types.ts": {
@@ -1156,11 +1146,6 @@
       "count": 2
     }
   },
-  "public/app/core/config.ts": {
-    "no-barrel-files/no-barrel-files": {
-      "count": 2
-    }
-  },
   "public/app/core/navigation/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -1207,11 +1192,6 @@
   },
   "public/app/core/specs/backend_srv.test.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/core/store.ts": {
-    "no-barrel-files/no-barrel-files": {
       "count": 1
     }
   },
@@ -1387,11 +1367,6 @@
       "count": 2
     }
   },
-  "public/app/features/alerting/unified/components/mute-timings/MuteTimingForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/mute-timings/MuteTimingTimeInterval.tsx": {
     "no-restricted-syntax": {
       "count": 5
@@ -1512,11 +1487,6 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/ActiveTimingFields.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/MuteTimingFields.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
@@ -1714,21 +1684,6 @@
       "count": 1
     }
   },
-  "public/app/features/browse-dashboards/components/NewFolderForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/commandPalette/actions/scopeActions.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 4
-    }
-  },
-  "public/app/features/commandPalette/actions/scopesUtils.ts": {
-    "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
   "public/app/features/connections/tabs/ConnectData/ConnectData.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -1738,11 +1693,6 @@
     },
     "react/no-unescaped-entities": {
       "count": 2
-    }
-  },
-  "public/app/features/correlations/CorrelationsPage.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/correlations/Forms/ConfigureCorrelationBasicInfoForm.tsx": {
@@ -1776,11 +1726,6 @@
   "public/app/features/dashboard-scene/addToDashboard/AddToDashboardForm.tsx": {
     "no-restricted-syntax": {
       "count": 2
-    }
-  },
-  "public/app/features/dashboard-scene/edit-pane/DashboardEditPaneSplitter.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 5
     }
   },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
@@ -1994,7 +1939,7 @@
   },
   "public/app/features/dashboard-scene/v2schema/ImportDashboardOverviewV2.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 10
+      "count": 3
     }
   },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
@@ -2894,6 +2839,56 @@
       "count": 1
     }
   },
+  "public/app/features/plugins/extensions/registry/AddedComponentsRegistry.test.ts": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "public/app/features/plugins/extensions/registry/AddedFunctionsRegistry.test.ts": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "public/app/features/plugins/extensions/registry/AddedLinksRegistry.test.ts": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "public/app/features/plugins/extensions/registry/ExposedComponentsRegistry.test.ts": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "public/app/features/plugins/extensions/usePluginComponent.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "public/app/features/plugins/extensions/usePluginComponents.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "public/app/features/plugins/extensions/usePluginFunctions.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "public/app/features/plugins/extensions/usePluginLinks.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "public/app/features/plugins/extensions/validators.test.tsx": {
+    "no-restricted-syntax": {
+      "count": 30
+    }
+  },
+  "public/app/features/plugins/extensions/validators.ts": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
   "public/app/features/plugins/sandbox/distortions.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -3002,11 +2997,6 @@
   "public/app/features/search/page/components/columns.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "public/app/features/search/service/bluge.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
     }
   },
   "public/app/features/search/state/SearchStateManager.ts": {
@@ -3620,22 +3610,7 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/elasticsearch/components/QueryEditor/BucketAggregationsEditor/SettingsEditor/DateHistogramSettingsEditor.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/elasticsearch/components/QueryEditor/BucketAggregationsEditor/SettingsEditor/TermsSettingsEditor.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/elasticsearch/components/QueryEditor/BucketAggregationsEditor/aggregations.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/elasticsearch/components/QueryEditor/BucketAggregationsEditor/state/reducer.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
@@ -3645,17 +3620,7 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/elasticsearch/components/QueryEditor/MetricAggregationsEditor/SettingsEditor/SettingField.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    }
-  },
   "public/app/plugins/datasource/elasticsearch/components/QueryEditor/MetricAggregationsEditor/aggregations.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/elasticsearch/components/QueryEditor/MetricAggregationsEditor/state/reducer.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
@@ -4159,11 +4124,6 @@
   "public/app/plugins/panel/canvas/editor/LineStyleEditor.tsx": {
     "no-restricted-syntax": {
       "count": 1
-    }
-  },
-  "public/app/plugins/panel/canvas/editor/element/APIEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/plugins/panel/canvas/editor/element/ParamsEditor.tsx": {
