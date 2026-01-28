@@ -68,7 +68,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
 
   useEffect(() => {
     // TODO: improve error handling base on BE response, leverage "fieldErrors" when available
-    if (repositoryStatusError) {
+    if (repositoryStatusError || isRepositoryHealthy === false) {
       setStepStatusInfo({
         status: 'error',
         error: {
@@ -86,7 +86,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     } else {
       setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
     }
-  }, [isLoading, setStepStatusInfo, repositoryStatusError, retryRepositoryStatus]);
+  }, [isLoading, setStepStatusInfo, repositoryStatusError, retryRepositoryStatus, isRepositoryHealthy]);
 
   useEffect(() => {
     setValue('repository.sync.target', target);
