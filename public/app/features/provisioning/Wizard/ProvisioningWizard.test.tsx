@@ -1,7 +1,7 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
 import { screen } from '@testing-library/react';
 import { UserEvent } from '@testing-library/user-event';
-import { type JSX } from 'react';
+import type { JSX } from 'react';
 import { render } from 'test/test-utils';
 
 import {
@@ -510,6 +510,7 @@ describe('ProvisioningWizard', () => {
         path: '/',
       });
 
+      // Click the submit button on the connection step
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
       // Button should be disabled while submitting
@@ -555,6 +556,9 @@ describe('ProvisioningWizard', () => {
         branch: 'main',
         path: '/',
       });
+
+      // Connection step shows "Choose what to synchronize" button
+      expect(screen.getByRole('button', { name: /Choose what to synchronize/i })).toBeInTheDocument();
 
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 

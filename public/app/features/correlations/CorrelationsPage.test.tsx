@@ -300,7 +300,7 @@ describe('CorrelationsPage', () => {
       await userEvent.click(screen.getByText('Regular expression'));
       await userEvent.type(screen.getByLabelText(/expression/i), 'test expression');
 
-      await userEvent.click(screen.getByRole('button', { name: /add$/i }));
+      await userEvent.click(await screen.findByRole('button', { name: /add$/i }));
 
       await waitFor(() => {
         expect(mocks.reportInteraction).toHaveBeenCalledWith('grafana_correlations_added');

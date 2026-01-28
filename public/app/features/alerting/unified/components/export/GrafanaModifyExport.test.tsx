@@ -72,12 +72,14 @@ describe('GrafanaModifyExport', () => {
       json: 'Json Export Content',
     });
 
+    const user = userEvent.setup();
+
     renderModifyExport(grafanaRulerRule.grafana_alert.uid);
 
     await waitForElementToBeRemoved(() => ui.loading.get());
     expect(await ui.form.nameInput.find()).toHaveValue('Grafana-rule');
 
-    await userEvent.click(ui.exportButton.get());
+    await user.click(ui.exportButton.get());
 
     const drawer = await ui.exportDrawer.dialog.find();
     expect(drawer).toBeInTheDocument();

@@ -165,8 +165,6 @@ describe('DashboardScenePage', () => {
     });
     locationService.push('/d/my-dash-uid');
     getDashboardScenePageStateManager().clearDashboardCache();
-    getDashboardScenePageStateManager().clearSceneCache();
-    getDashboardScenePageStateManager().clearState();
     loadDashboardMock.mockClear();
     loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: { slug: '123' } });
     // hacky way because mocking autosizer does not work
@@ -263,7 +261,7 @@ describe('DashboardScenePage', () => {
 
     props.location.state = { routeReloadCounter: 1 };
 
-    await rerender(props);
+    rerender(props);
 
     expect(await screen.findByTitle('Updated title')).toBeInTheDocument();
   });
