@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -21,25 +22,48 @@ func SelectableFields() map[string][]string {
 	return SelectableFieldsForManifests(AppManifests())
 }
 
-// SelectableFieldsForManifests returns map of <group/kind> to list of selectable fields.
+// SelectableFieldsForManifests returns map of <group/kind> to list of selectable fields (across all versions).
 // Also <group/plural> is included as a key, pointing to the same fields.
+// Keys are lower-case.
 func SelectableFieldsForManifests(manifests []app.Manifest) map[string][]string {
 	fields := map[string][]string{}
-
 	for _, m := range manifests {
-		group := m.ManifestData.Group
+		for k, v := range selectableFieldsForManifest(m) {
+			fields[k] = v
+		}
+	}
+	return fields
+}
 
-		for _, version := range m.ManifestData.Versions {
-			for _, kind := range version.Kinds {
-				key := strings.ToLower(group + "/" + kind.Kind)
-				keyPlural := strings.ToLower(group + "/" + kind.Plural)
+func selectableFieldsForManifest(m app.Manifest) map[string][]string {
+	kindFields := map[string]map[string]bool{}
+	kinds := map[string]app.ManifestVersionKind{}
 
-				if len(kind.SelectableFields) > 0 {
-					fields[key] = kind.SelectableFields
-					fields[keyPlural] = kind.SelectableFields
+	for _, version := range m.ManifestData.Versions {
+		for _, kind := range version.Kinds {
+			if len(kind.SelectableFields) > 0 {
+				kinds[kind.Kind] = kind
+
+				if kindFields[kind.Kind] == nil {
+					kindFields[kind.Kind] = map[string]bool{}
+				}
+				for _, f := range kind.SelectableFields {
+					kindFields[kind.Kind][f] = true
 				}
 			}
 		}
+	}
+
+	fields := map[string][]string{}
+	for k, v := range kinds {
+		fs := make([]string, 0, len(kindFields[k]))
+		for f := range kindFields[k] {
+			fs = append(fs, f)
+		}
+		slices.Sort(fs)
+
+		fields[strings.ToLower(m.ManifestData.Group+"/"+v.Kind)] = fs
+		fields[strings.ToLower(m.ManifestData.Group+"/"+v.Plural)] = fs
 	}
 
 	return fields

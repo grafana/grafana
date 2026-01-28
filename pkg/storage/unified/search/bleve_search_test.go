@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"testing"
 
 	"github.com/blevesearch/bleve/v2"
@@ -332,13 +333,13 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "test.grafana.app",
-		Resource:  "item",
+		Resource:  "Item",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
 		SelectableFieldsForKinds: map[string][]string{
-			key.Group + "/" + key.Resource: {"spec.some.field", "spec.some.other.field"},
+			strings.ToLower(key.Group + "/" + key.Resource): {"spec.some.field", "spec.some.other.field"},
 		},
 	}, nil)
 	require.NoError(t, err)

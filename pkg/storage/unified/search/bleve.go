@@ -82,8 +82,8 @@ type BleveOptions struct {
 	// If nil, all indexes are owned by the current instance.
 	OwnsIndex func(key resource.NamespacedResource) (bool, error)
 
-	// Map "group/kind" -> list of selectable fields. Only given fields
-	// are indexed (have mapping).
+	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
+	// Only given fields are indexed (have mapping).
 	SelectableFieldsForKinds map[string][]string
 }
 
@@ -375,7 +375,7 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	selectableFields := b.selectableFields[fmt.Sprintf("%s/%s", key.Group, key.Resource)]
+	selectableFields := b.selectableFields[strings.ToLower(fmt.Sprintf("%s/%s", key.Group, key.Resource))]
 
 	mapper, err := GetBleveMappings(fields, selectableFields)
 	if err != nil {
