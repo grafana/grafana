@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/raw-prometheus/panelcfg.cue file.
+
 export interface Options {
   /**
    * Whether to expand results by default
