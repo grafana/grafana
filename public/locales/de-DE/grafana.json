@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Löschen",
       "duplicate": "Duplikat",
       "label-integration": "Integration",
       "label-notification-settings": "Benachrichtigungseinstellungen",
       "label-section": "Optionale {{name}}-Einstellungen",
       "test": "Test",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -962,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Diese Route wird weiterhin mit anderen Richtlinien übereinstimmen"
     },
     "copy-to-clipboard": "„{{label}}“ in die Zwischenablage kopieren",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Benachrichtigungen werden übermittelt an",
@@ -1018,10 +1027,6 @@
       "show-details": "Details anzeigen",
       "this-datasource-has-been-removed": "Diese Datenquelle wurde entfernt",
       "update-datasource": "Datenquelle aktualisieren"
-    },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Grafana Incident ist nicht installiert oder nicht korrekt konfiguriert",
-      "declare-incident": "Vorfall angeben"
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident ist nicht installiert oder nicht korrekt konfiguriert",
@@ -1934,6 +1939,10 @@
       "select-group": "Gruppe auswählen",
       "select-namespace": "Namensraum auswählen"
     },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
+    },
     "need-help-info": {
       "need-help": "Brauchen Sie Hilfe?"
     },
@@ -2691,7 +2700,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
       "default-indicator": "",
@@ -3636,7 +3644,10 @@
       "move-modal-title": "Verschieben",
       "move-provisioned-folder": "",
       "moving": "Verschieben...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Ordnername ist erforderlich.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Sie haben sowohl bereitgestellte als auch nicht bereitgestellte Ressourcen ausgewählt. Diese können nicht zusammen verarbeitet werden. Bitte wählen Sie nur bereitgestellte Ressourcen oder nur nicht bereitgestellte Ressourcen aus und versuchen Sie es dann erneut.",
       "selected-mix-resources-modal-title": "Gemischte Ressourcentypen ausgewählt"
     },
@@ -5164,6 +5175,9 @@
       "title": {
         "deleted": "gelöscht"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -10930,7 +10944,9 @@
     "invite-user": {
       "invite-button": "Einladen",
       "invite-new-user-button": "Neuen Nutzer einladen",
-      "invite-tooltip": "Nutzer einladen"
+      "invite-tooltip": "Nutzer einladen",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Zu Lesezeichen hinzufügen",
@@ -12345,6 +12361,8 @@
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
       "github-app-error-required": "",
+      "github-app-help-instructions": "",
+      "github-app-help-title": "",
       "github-app-mode-existing": "",
       "github-app-mode-label": "",
       "github-app-mode-new": "",
@@ -12584,6 +12602,17 @@
       "title-data-source-help": "Datenquellen-Hilfe"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "card-click": "",
+      "expression": "",
+      "queries-expressions": "",
+      "query": "",
+      "query-stack": "",
+      "toggle-size": ""
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": ""
@@ -12613,45 +12642,6 @@
       "show-response": "Antwort anzeigen "
     },
     "query-editor-not-exported": "Datenquellen-Plugin exportiert keine Komponente des Abfrageeditors"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {
@@ -13348,6 +13338,7 @@
       "label-standard": "Standard"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14958,6 +14949,9 @@
       "label-both": "Beides",
       "label-lines": "Linien",
       "label-points": "Punkte"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

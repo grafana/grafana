@@ -18,7 +18,7 @@ func InitDBQueryTimer(ctx context.Context) context.Context {
 // IncDBQueryTimer increments the database query timer on the context.
 func IncDBQueryTimer(ctx context.Context, queryTimeInMs int64) context.Context {
 	if val := ctx.Value(dbCallQueryTimerKey); val == nil {
-		ctx = InitCounter(ctx)
+		ctx = InitDBQueryTimer(ctx)
 	}
 
 	if val := ctx.Value(dbCallQueryTimerKey); val != nil {

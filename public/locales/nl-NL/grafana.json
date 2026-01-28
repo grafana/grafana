@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Verwijderen",
       "duplicate": "Dupliceren",
       "label-integration": "Integratie",
       "label-notification-settings": "Instellingen van meldingen",
       "label-section": "Optionele instellingen voor {{name}}",
       "test": "Testen",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -962,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Deze route blijft overeenkomen met ander beleid"
     },
     "copy-to-clipboard": "Label '{{label}}' kopiëren naar klembord",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Meldingen worden doorgegeven aan",
@@ -1018,10 +1027,6 @@
       "show-details": "Details weergeven",
       "this-datasource-has-been-removed": "Deze gegevensbron is verwijderd",
       "update-datasource": "Gegevensbron bijwerken"
-    },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Grafana Incident is niet geïnstalleerd of niet juist geconfigureerd",
-      "declare-incident": "Incident melden"
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident is niet geïnstalleerd of niet juist geconfigureerd",
@@ -1934,6 +1939,10 @@
       "select-group": "Groep selecteren",
       "select-namespace": "Namespace selecteren"
     },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
+    },
     "need-help-info": {
       "need-help": "Hulp nodig?"
     },
@@ -2691,7 +2700,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
       "default-indicator": "",
@@ -3636,7 +3644,10 @@
       "move-modal-title": "Verplaatsen",
       "move-provisioned-folder": "",
       "moving": "Bezig met verplaatsen ...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Mapnaam is vereist.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Je hebt zowel toegewezen als niet-toegewezen bronnen geselecteerd. Deze kunnen niet samen worden verwerkt. Selecteer alleen toegewezen bronnen of alleen niet-toegewezen bronnen en probeer het opnieuw.",
       "selected-mix-resources-modal-title": "Gemengde brontypes geselecteerd"
     },
@@ -5164,6 +5175,9 @@
       "title": {
         "deleted": "verwijderd"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -10930,7 +10944,9 @@
     "invite-user": {
       "invite-button": "Uitnodigen",
       "invite-new-user-button": "Een nieuwe gebruiker uitnodigen",
-      "invite-tooltip": "Gebruiker uitnodigen"
+      "invite-tooltip": "Gebruiker uitnodigen",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Toevoegen aan bladwijzers",
@@ -12345,6 +12361,8 @@
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
       "github-app-error-required": "",
+      "github-app-help-instructions": "",
+      "github-app-help-title": "",
       "github-app-mode-existing": "",
       "github-app-mode-label": "",
       "github-app-mode-new": "",
@@ -12584,6 +12602,17 @@
       "title-data-source-help": "Hulp bij gegevensbron"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "card-click": "",
+      "expression": "",
+      "queries-expressions": "",
+      "query": "",
+      "query-stack": "",
+      "toggle-size": ""
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": ""
@@ -12613,45 +12642,6 @@
       "show-response": "Antwoord weergeven"
     },
     "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {
@@ -13348,6 +13338,7 @@
       "label-standard": "Standaard"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14958,6 +14949,9 @@
       "label-both": "Allebei",
       "label-lines": "Regels",
       "label-points": "Punten"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

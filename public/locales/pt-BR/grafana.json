@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Excluir",
       "duplicate": "Duplicar",
       "label-integration": "Integração",
       "label-notification-settings": "Configurações de notificações",
       "label-section": "Configurações de {{name}} opcionais",
       "test": "Teste",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -962,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Esta rota continuará correspondendo a outras políticas"
     },
     "copy-to-clipboard": "Copiar \"{{label}}\" para a área de transferência",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "As notificações são entregues a",
@@ -1018,10 +1027,6 @@
       "show-details": "Mostrar detalhes",
       "this-datasource-has-been-removed": "Esta fonte de dados foi removida",
       "update-datasource": "Atualizar fonte de dados"
-    },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "O Grafana Incident não está instalado ou não está configurado corretamente",
-      "declare-incident": "Declarar incidente"
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "O Grafana Incident não está instalado ou não está configurado corretamente",
@@ -1934,6 +1939,10 @@
       "select-group": "Selecionar o grupo",
       "select-namespace": "Selecionar nomenclatura "
     },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
+    },
     "need-help-info": {
       "need-help": "Precisa de ajuda?"
     },
@@ -2691,7 +2700,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
       "default-indicator": "",
@@ -3636,7 +3644,10 @@
       "move-modal-title": "Mover",
       "move-provisioned-folder": "",
       "moving": "Movendo...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "O nome da pasta é obrigatório.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Você selecionou recursos provisionados e não provisionados. Não éo possível processá-los juntos. Selecione apenas um dos tipos de recurso e tente novamente.",
       "selected-mix-resources-modal-title": "Tipos de recursos mistos selecionados"
     },
@@ -5164,6 +5175,9 @@
       "title": {
         "deleted": "excluída"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -10836,7 +10850,7 @@
       "title": "Consultas gravadas"
     },
     "reporting": {
-      "title": "Reportar"
+      "title": "Relatórios"
     },
     "scenes": {
       "title": "Cenários"
@@ -10930,7 +10944,9 @@
     "invite-user": {
       "invite-button": "Convidar",
       "invite-new-user-button": "Convidar um novo usuário",
-      "invite-tooltip": "Convidar usuário"
+      "invite-tooltip": "Convidar usuário",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Adicionar aos Marcadores",
@@ -12345,6 +12361,8 @@
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
       "github-app-error-required": "",
+      "github-app-help-instructions": "",
+      "github-app-help-title": "",
       "github-app-mode-existing": "",
       "github-app-mode-label": "",
       "github-app-mode-new": "",
@@ -12584,6 +12602,17 @@
       "title-data-source-help": "Ajuda da fonte de dados"
     }
   },
+  "query-editor-next": {
+    "detail-placeholder": "",
+    "sidebar": {
+      "card-click": "",
+      "expression": "",
+      "queries-expressions": "",
+      "query": "",
+      "query-stack": "",
+      "toggle-size": ""
+    }
+  },
   "query-library": {
     "exposed-compoment": {
       "tooltip": ""
@@ -12613,45 +12642,6 @@
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {
@@ -13348,6 +13338,7 @@
       "label-standard": "Padrão"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -13684,13 +13675,13 @@
       "from-input": "De",
       "open-input-calendar": "Abrir calendário",
       "range-error": "\"De\" não pode ser após \"Para\"",
-      "to-input": "Para"
+      "to-input": "Até"
     },
     "range-picker": {
       "backwards-time-aria-label": "Mover intervalo de tempo para trás",
       "current-time-selected": "Intervalo de tempo selecionado: {{currentTimeRange}}",
       "forwards-time-aria-label": "Avançar intervalo de tempo",
-      "to": "para",
+      "to": "até",
       "zoom-out-button": "Diminuir o intervalo de tempo",
       "zoom-out-tooltip": "",
       "zoom-out-tooltip-new": ""
@@ -14958,6 +14949,9 @@
       "label-both": "Ambos",
       "label-lines": "Linhas",
       "label-points": "Pontos"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }
