@@ -74,11 +74,6 @@ export interface FeatureToggles {
   */
   showDashboardValidationWarnings?: boolean;
   /**
-  * Use double quotes to escape keyword in a MySQL query
-  * @default false
-  */
-  mysqlAnsiQuotes?: boolean;
-  /**
   * Rule backtesting API for alerting
   * @default false
   */
@@ -811,7 +806,7 @@ export interface FeatureToggles {
   enableExtensionsAdminPage?: boolean;
   /**
   * Enables SCIM support for user and group management
-  * @default false
+  * @default true
   */
   enableSCIM?: boolean;
   /**

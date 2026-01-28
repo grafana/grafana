@@ -1,8 +1,8 @@
 import { createContext, ReactNode, useContext } from 'react';
 
 import { DataSourceApi, DataSourceInstanceSettings, PanelData } from '@grafana/data';
-import { VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { CustomTransformerDefinition, VizPanel } from '@grafana/scenes';
+import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 
 export interface DatasourceState {
   datasource?: DataSourceApi;
@@ -18,6 +18,12 @@ export interface QueryRunnerState {
 
 export interface PanelState {
   panel: VizPanel;
+  transformations: Array<DataTransformerConfig | CustomTransformerDefinition>;
+}
+
+export interface QueryEditorUIState {
+  selectedCard: DataQuery | null;
+  setSelectedCard: (query: DataQuery | null) => void;
 }
 
 export interface QueryEditorActions {
@@ -32,6 +38,7 @@ export interface QueryEditorActions {
 const DatasourceContext = createContext<DatasourceState | null>(null);
 const QueryRunnerContext = createContext<QueryRunnerState | null>(null);
 const PanelContext = createContext<PanelState | null>(null);
+const QueryEditorUIContext = createContext<QueryEditorUIState | null>(null);
 const ActionsContext = createContext<QueryEditorActions | null>(null);
 
 export function useDatasourceContext(): DatasourceState {
@@ -66,20 +73,38 @@ export function useActionsContext(): QueryEditorActions {
   return context;
 }
 
+export function useQueryEditorUIContext(): QueryEditorUIState {
+  const context = useContext(QueryEditorUIContext);
+  if (!context) {
+    throw new Error('useQueryEditorUIContext must be used within QueryEditorProvider');
+  }
+  return context;
+}
+
 interface QueryEditorProviderProps {
   children: ReactNode;
   dsState: DatasourceState;
   qrState: QueryRunnerState;
   panelState: PanelState;
+  uiState: QueryEditorUIState;
   actions: QueryEditorActions;
 }
 
-export function QueryEditorProvider({ children, dsState, qrState, panelState, actions }: QueryEditorProviderProps) {
+export function QueryEditorProvider({
+  children,
+  dsState,
+  qrState,
+  panelState,
+  uiState,
+  actions,
+}: QueryEditorProviderProps) {
   return (
     <ActionsContext.Provider value={actions}>
       <DatasourceContext.Provider value={dsState}>
         <QueryRunnerContext.Provider value={qrState}>
-          <PanelContext.Provider value={panelState}>{children}</PanelContext.Provider>
+          <PanelContext.Provider value={panelState}>
+            <QueryEditorUIContext.Provider value={uiState}>{children}</QueryEditorUIContext.Provider>
+          </PanelContext.Provider>
         </QueryRunnerContext.Provider>
       </DatasourceContext.Provider>
     </ActionsContext.Provider>

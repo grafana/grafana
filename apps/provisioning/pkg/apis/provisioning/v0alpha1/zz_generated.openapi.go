@@ -3014,7 +3014,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref common.ReferenceCallb
 					},
 					"intervalSeconds": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When non-zero, the sync will run periodically",
+							Description: "The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one.",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
