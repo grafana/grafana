@@ -71,6 +71,7 @@ dc_resource("tempo", labels=["observability"])
 
 dc_resource("postgres", labels=["misc"])
 dc_resource("tempo-init", labels=["misc"])
+dc_resource("authelia", labels=["auth"])
 
 # paths in tilt files are confusing....
 # - if tilt is dealing with the path, it is relative to the Tiltfile
@@ -86,6 +87,7 @@ docker_build('grafana-fs-dev',
     'devenv/frontend-service/provisioning',
     'devenv/frontend-service/configs/grafana-api.local.ini',
     'devenv/frontend-service/configs/frontend-service.local.ini',
+    'devenv/frontend-service/configs/authelia',
     'conf/defaults.ini',
     'public/emails',
     'public/views',
@@ -107,6 +109,7 @@ docker_build('grafana-fs-dev',
     sync('../../public/dashboards', '/grafana/public/dashboards'),
     sync('../../public/app/plugins', '/grafana/public/app/plugins'),
     sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
+    sync('./configs/authelia', '/grafana/devenv/frontend-service/configs/authelia'),
     sync('./provisioning', '/ignore/provisioning'),  # Just to trigger a restart instead of rebuild
     sync('./configs/grafana-api.local.ini', '/ignore/grafana-api.local.ini'),  # Just to trigger a restart instead of rebuild
     sync('./configs/frontend-service.local.ini', '/ignore/frontend-service.local.ini'),  # Just to trigger a restart instead of rebuild

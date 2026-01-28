@@ -41,7 +41,7 @@ services:
       GF_FEATURE_TOGGLES_ENABLE: enableNativeHTTPHistogram
       GF_DATABASE_URL: postgres://grafana:grafana@postgres:5432/grafana
       GF_SERVER_ROUTER_LOGGING: true
-      GF_LOG_LEVEL: info
+      GF_LOG_LEVEL: debug
       GF_AUTH_LOGIN_COOKIE_NAME: grafana_fs_dev_login # set a custom cookie name to not conflict with other instances running on localhost
       OTEL_SERVICE_NAME: grafana-api
       GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS: 'alloy:4317'
@@ -150,6 +150,62 @@ services:
       tempo-init:
         condition: service_completed_successfully
 
+<<<<<<< ours
+  authelia:
+    image: authelia/authelia:latest
+    container_name: authelia
+    volumes:
+      - ./configs/authelia/configuration.yml:/config/configuration.yml
+      - ./configs/authelia/users_database.yml:/config/users_database.yml
+    ports:
+      - '9091:9091'
+    environment:
+      - TZ=UTC
+    labels:
+      - 'alloy.logs=true'
+
+  authelia:
+    image: authelia/authelia:latest
+    container_name: authelia
+    volumes:
+      - ./configs/authelia/configuration.yml:/config/configuration.yml
+      - ./configs/authelia/users_database.yml:/config/users_database.yml
+    ports:
+      - '9091:9091'
+    environment:
+      - TZ=UTC
+    labels:
+      - 'alloy.logs=true'
+
+  authelia:
+    image: authelia/authelia:latest
+    container_name: authelia
+    volumes:
+      - ./configs/authelia/configuration.yml:/config/configuration.yml
+      - ./configs/authelia/users_database.yml:/config/users_database.yml
+    ports:
+      - '9091:9091'
+    environment:
+      - TZ=UTC
+    labels:
+      - 'alloy.logs=true'
+
+||||||| ancestor
+=======
+  authelia:
+    image: authelia/authelia:latest
+    container_name: authelia
+    volumes:
+      - ./configs/authelia/configuration.yml:/config/configuration.yml
+      - ./configs/authelia/users_database.yml:/config/users_database.yml
+    ports:
+      - '9091:9091'
+    environment:
+      - TZ=UTC
+    labels:
+      - 'alloy.logs=true'
+
+>>>>>>> theirs
 volumes:
   backend-data:
   postgres-data:

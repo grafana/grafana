@@ -1,0 +1,45 @@
+# This file defines test users for local development.
+# Password: all users have password "password"
+# Password hash generated with: docker run --rm authelia/authelia:latest authelia crypto hash generate argon2 --password 'password'
+#
+# Users must in the 'grafana' group to be able to log in to Grafana.
+
+users:
+  # Admin user with GrafanaAdmin role
+  oauth-admin:
+    disabled: false
+    displayname: 'Admin User'
+    password: '$argon2id$v=19$m=65536,t=3,p=4$an3cCNeaYsC2sFIc1LrCLQ$YxvcYkj2NTUsV5o5wxeIc0KNhqc8/mPIKKC6e1AnC4A'
+    email: test1@example.com
+    groups:
+      - grafana
+      - grafanaadmin
+
+  # Editor user
+  oauth-editor:
+    disabled: false
+    displayname: 'Editor User'
+    password: '$argon2id$v=19$m=65536,t=3,p=4$an3cCNeaYsC2sFIc1LrCLQ$YxvcYkj2NTUsV5o5wxeIc0KNhqc8/mPIKKC6e1AnC4A'
+    email: test2@example.com
+    groups:
+      - grafana
+      - editor
+
+  # Viewer user
+  oauth-viewer:
+    disabled: false
+    displayname: 'Viewer User'
+    password: '$argon2id$v=19$m=65536,t=3,p=4$an3cCNeaYsC2sFIc1LrCLQ$YxvcYkj2NTUsV5o5wxeIc0KNhqc8/mPIKKC6e1AnC4A'
+    email: test3@example.com
+    groups:
+      - grafana
+      - viewer
+
+  # Denied access user (not in grafana group)
+  norole:
+    disabled: false
+    displayname: 'No Role User'
+    password: '$argon2id$v=19$m=65536,t=3,p=4$an3cCNeaYsC2sFIc1LrCLQ$YxvcYkj2NTUsV5o5wxeIc0KNhqc8/mPIKKC6e1AnC4A'
+    email: norole@example.com
+    groups:
+      - users
