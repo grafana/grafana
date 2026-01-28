@@ -11888,6 +11888,7 @@
       "search-placeholder": "Search connections",
       "status-connected": "Connected",
       "status-disconnected": "Disconnected",
+      "status-pending": "Pending",
       "status-unknown": "Unknown",
       "view": "View"
     },
