@@ -23,7 +23,7 @@ You can assign a user one of three types of permissions:
 
 - Grafana server administrator permissions: Manage Grafana server-wide settings and resources
 - Organization permissions: Manage access to dashboards, alerts, plugins, teams, playlists, and other resources for an entire organization. The available roles are Viewer, Editor, and Admin.
-- Dashboard and folder permission: Manage access to dashboards and folders
+- Dashboard and folder permission: Manage access to dashboards and folders. For a detailed explanation of how folders work as the primary permission boundary, refer to [Folder access control]({{< relref "./folder-access-control" >}}).
 
 {{< admonition type="note" >}}
 If you are running Grafana Enterprise, you can also control access to data sources and use role-based access control to grant user access to read and write permissions to specific Grafana resources. For more information about access control options available with Grafana Enterprise, refer to [Grafana Enterprise user permissions features](#grafana-enterprise-user-permissions-features).

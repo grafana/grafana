@@ -15,9 +15,18 @@ const createMockConnection = (overrides: Partial<Connection> = {}): Connection =
     },
   },
   status: {
-    state: 'connected',
     health: { healthy: true },
     observedGeneration: 1,
+    conditions: [
+      {
+        type: 'Ready',
+        status: 'True',
+        reason: 'Available',
+        message: 'Connection is available',
+        lastTransitionTime: new Date().toISOString(),
+        observedGeneration: 1,
+      },
+    ],
   },
   ...overrides,
 });

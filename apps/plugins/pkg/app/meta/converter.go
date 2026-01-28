@@ -45,6 +45,14 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 		meta.Info.Description = &jsonData.Info.Description
 	}
 
+	// Map Build info
+	if jsonData.Info.Build.Time != 0 {
+		buildInfo := &pluginsv0alpha1.MetaV0alpha1InfoBuild{}
+		timeFloat := float64(jsonData.Info.Build.Time)
+		buildInfo.Time = &timeFloat
+		meta.Info.Build = buildInfo
+	}
+
 	if jsonData.Info.Author.Name != "" || jsonData.Info.Author.URL != "" {
 		author := &pluginsv0alpha1.MetaV0alpha1InfoAuthor{}
 		if jsonData.Info.Author.Name != "" {
@@ -196,7 +204,10 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 			state = pluginsv0alpha1.MetaJSONDataStateAlpha
 		case plugins.ReleaseStateBeta:
 			state = pluginsv0alpha1.MetaJSONDataStateBeta
-		default:
+		case "stable":
+			state = pluginsv0alpha1.MetaJSONDataStateStable
+		case "deprecated":
+			state = pluginsv0alpha1.MetaJSONDataStateDeprecated
 		}
 		if state != "" {
 			meta.State = &state
@@ -337,10 +348,20 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 					v0Route.TokenAuth.Scopes = route.TokenAuth.Scopes
 				}
 				if len(route.TokenAuth.Params) > 0 {
-					v0Route.TokenAuth.Params = make(map[string]interface{})
-					for k, v := range route.TokenAuth.Params {
-						v0Route.TokenAuth.Params[k] = v
+					params := &pluginsv0alpha1.MetaV0alpha1RouteTokenAuthParams{}
+					if grantType, ok := route.TokenAuth.Params["grant_type"]; ok {
+						params.GrantType = &grantType
 					}
+					if clientId, ok := route.TokenAuth.Params["client_id"]; ok {
+						params.ClientId = &clientId
+					}
+					if clientSecret, ok := route.TokenAuth.Params["client_secret"]; ok {
+						params.ClientSecret = &clientSecret
+					}
+					if resource, ok := route.TokenAuth.Params["resource"]; ok {
+						params.Resource = &resource
+					}
+					v0Route.TokenAuth.Params = params
 				}
 			}
 			if route.JwtTokenAuth != nil {
@@ -352,10 +373,17 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 					v0Route.JwtTokenAuth.Scopes = route.JwtTokenAuth.Scopes
 				}
 				if len(route.JwtTokenAuth.Params) > 0 {
-					v0Route.JwtTokenAuth.Params = make(map[string]interface{})
-					for k, v := range route.JwtTokenAuth.Params {
-						v0Route.JwtTokenAuth.Params[k] = v
+					params := &pluginsv0alpha1.MetaV0alpha1RouteJwtTokenAuthParams{}
+					if tokenUri, ok := route.JwtTokenAuth.Params["token_uri"]; ok {
+						params.TokenUri = &tokenUri
 					}
+					if clientEmail, ok := route.JwtTokenAuth.Params["client_email"]; ok {
+						params.ClientEmail = &clientEmail
+					}
+					if privateKey, ok := route.JwtTokenAuth.Params["private_key"]; ok {
+						params.PrivateKey = &privateKey
+					}
+					v0Route.JwtTokenAuth.Params = params
 				}
 			}
 			if len(route.Body) > 0 {
@@ -501,6 +529,11 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 			iam.Permissions = append(iam.Permissions, v0Perm)
 		}
 		meta.Iam = iam
+	}
+
+	// Map Languages
+	if len(jsonData.Languages) > 0 {
+		meta.Languages = jsonData.Languages
 	}
 
 	return meta

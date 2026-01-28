@@ -140,6 +140,8 @@ func (s *frontendService) addMiddlewares(m *web.Mux) {
 	m.UseMiddleware(s.contextMiddleware())
 	m.UseMiddleware(loggermiddleware.Middleware())
 
+	m.UseMiddleware(CSPMiddleware(s.cfg))
+
 	m.UseMiddleware(middleware.Recovery(s.cfg, s.license))
 }
 

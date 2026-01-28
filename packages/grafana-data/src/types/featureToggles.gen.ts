@@ -771,12 +771,12 @@ export interface FeatureToggles {
   timeRangeProvider?: boolean;
   /**
   * Enables time range panning functionality
-  * @default false
+  * @default true
   */
   timeRangePan?: boolean;
   /**
   * Enables new keyboard shortcuts for time range zoom operations
-  * @default false
+  * @default true
   */
   newTimeRangeZoomShortcuts?: boolean;
   /**
@@ -806,7 +806,7 @@ export interface FeatureToggles {
   enableExtensionsAdminPage?: boolean;
   /**
   * Enables SCIM support for user and group management
-  * @default false
+  * @default true
   */
   enableSCIM?: boolean;
   /**

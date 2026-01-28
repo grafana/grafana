@@ -42,6 +42,12 @@ var (
 		"Invalid receiver: '{{ .Public.Reason }}'",
 		errutil.WithPublic("Invalid receiver: '{{ .Public.Reason }}'"),
 	)
+
+	ErrReceiverTestingIntegrationNotFound = errutil.NotFound("alerting.notifications.receivers.testing.integrationNotFound", errutil.WithPublicMessage("Integration not found"))
+
+	ErrReceiverTestingInvalidIntegrationBase = errutil.BadRequest("alerting.notifications.receivers.testing.invalid").MustTemplate(
+		"Invalid request to test integration: {{ .Public.Reason }}",
+		errutil.WithPublic("Invalid request to test integration: {{ .Public.Reason }}"))
 )
 
 func ErrAlertRuleConflict(ruleUID string, orgID int64, err error) error {
@@ -64,4 +70,13 @@ func ErrReceiverInvalid(err error) error {
 		Error: err,
 	}
 	return ErrReceiverInvalidBase.Build(data)
+}
+
+func ErrReceiverTestingInvalidIntegration(reason string) error {
+	data := errutil.TemplateData{
+		Public: map[string]any{
+			"Reason": reason,
+		},
+	}
+	return ErrReceiverTestingInvalidIntegrationBase.Build(data)
 }
