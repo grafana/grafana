@@ -415,8 +415,8 @@ export function k8sRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNot
       resourceVersion: route.metadata.resourceVersion,
       name: route.metadata.name,
       metadata: route.metadata,
-      provenance: getAnnotation(route, K8sAnnotations.Provenance),
     },
+    provenance: getAnnotation(route, K8sAnnotations.Provenance),
   };
 }
 

@@ -12,9 +12,10 @@ import { DataSourceType } from '../../utils/datasource';
 import { getRoutingTree, getRoutingTreeList, resetRoutingTreeMap } from '../../mocks/server/entities/k8s/routingtrees';
 import { TIMING_OPTIONS_DEFAULTS } from './timingOptions';
 import { countPolicies } from './PoliciesList';
-import { K8sAnnotations, PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
+import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { AccessControlAction } from '../../../../../types/accessControl';
+import { KnownProvenance } from '../../types/knownProvenance';
 
 jest.mock('../../useRouteGroupsMatcher');
 
@@ -181,7 +182,7 @@ describe('PoliciesList', () => {
           )
         );
 
-        if (route?.metadata.annotations?.[K8sAnnotations.Provenance] !== PROVENANCE_NONE) {
+        if (route?.metadata.annotations?.[K8sAnnotations.Provenance] !== KnownProvenance.None) {
           expect(routeEl).toHaveTextContent(new RegExp(`Provisioned`, 'i'));
         }
       }
