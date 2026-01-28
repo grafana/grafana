@@ -106,7 +106,7 @@ describe('ShareExportTab', () => {
       // Should use V1 API version
       expect(result.json).toMatchObject({
         apiVersion: 'dashboard.grafana.app/v1beta1',
-        kind: 'Dashboard',
+        kind: 'DashboardWithAccessInfo',
         status: {},
       });
 
@@ -129,7 +129,7 @@ describe('ShareExportTab', () => {
       // Should use V1 API version (not V2!)
       expect(result.json).toMatchObject({
         apiVersion: 'dashboard.grafana.app/v1beta1',
-        kind: 'Dashboard',
+        kind: 'DashboardWithAccessInfo',
         status: {},
       });
 
@@ -154,7 +154,7 @@ describe('ShareExportTab', () => {
       // Should use V1 API version
       expect(result.json).toMatchObject({
         apiVersion: 'dashboard.grafana.app/v1beta1',
-        kind: 'Dashboard',
+        kind: 'DashboardWithAccessInfo',
         status: {},
       });
 
@@ -181,7 +181,7 @@ describe('ShareExportTab', () => {
       // Should use V2 API version
       expect(result.json).toMatchObject({
         apiVersion: 'dashboard.grafana.app/v2beta1',
-        kind: 'Dashboard',
+        kind: 'DashboardWithAccessInfo',
         status: {},
       });
 
