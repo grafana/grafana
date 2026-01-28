@@ -19,7 +19,6 @@ const ui = {
   saveInput: byPlaceholderText(/enter a name/i),
   // Action buttons
   cancelButton: byRole('button', { name: /cancel/i }),
-  applyButtons: byRole('button', { name: /apply search/i }),
   actionMenuButtons: byRole('button', { name: /actions/i }),
   deleteButton: byRole('button', { name: /delete/i }),
   // Menu items (using byRole for proper accessibility testing)
@@ -88,12 +87,12 @@ describe('SavedSearches', () => {
 
       await user.click(ui.savedSearchesButton.get());
 
-      // Verify searches are displayed
-      const applyButtons = await ui.applyButtons.findAll();
-      expect(applyButtons).toHaveLength(3);
+      // Verify searches are displayed by checking for clickable name links
+      expect(await screen.findByRole('link', { name: 'Default Search' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Critical Alerts' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'My Firing Rules' })).toBeInTheDocument();
 
       // Verify the default search has a star icon
-      expect(screen.getByText('Default Search')).toBeInTheDocument();
       expect(screen.getByTitle('Default search')).toBeInTheDocument();
     });
   });
@@ -174,13 +173,12 @@ describe('SavedSearches', () => {
   });
 
   describe('Applying a search', () => {
-    it('applies the selected search and closes dropdown', async () => {
+    it('applies the selected search when clicking the search name', async () => {
       const { user } = render(<SavedSearches {...defaultProps} />);
 
       await user.click(ui.savedSearchesButton.get());
-      const applyButtons = await ui.applyButtons.findAll();
-      // Click the apply button for "My Firing Rules" (third in list: Default, Critical, My Firing)
-      await user.click(applyButtons[2]);
+      // Click directly on the search name link "My Firing Rules"
+      await user.click(await screen.findByRole('link', { name: 'My Firing Rules' }));
 
       expect(defaultProps.onApply).toHaveBeenCalledWith(
         expect.objectContaining({

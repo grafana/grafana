@@ -12,6 +12,7 @@ import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnectio
 import { ConnectionFormData } from '../types';
 
 import { SelectableConnectionCard } from './SelectableConnectionCard';
+import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
 import { ConnectionCreationResult, WizardFormData } from './types';
 
 export interface GitHubAppStepRef {
@@ -67,6 +68,7 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
 
         const { appID, installationID, privateKey } = credentialForm.getValues();
         const spec: ConnectionSpec = {
+          title: t('provisioning.wizard.default-connection-title', 'GitHub Connection'),
           type: 'github',
           github: { appID, installationID },
         };
@@ -94,6 +96,7 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
 
   return (
     <Stack direction="column" gap={2}>
+      <GithubAppStepInstruction />
       <Field noMargin label={t('provisioning.wizard.github-app-mode-label', 'GitHub App configuration')}>
         <Controller
           name="githubAppMode"

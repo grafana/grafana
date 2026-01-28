@@ -959,6 +959,13 @@
       "content-route-continue-matching-other-policies": "Rute ini akan terus mencocokkan dengan kebijakan lain"
     },
     "copy-to-clipboard": "Salin \"{{label}}\" ke papan klip",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Pemberitahuan dikirimkan ke",
@@ -1015,10 +1022,6 @@
       "show-details": "Tampilkan detail",
       "this-datasource-has-been-removed": "Sumber data ini telah dihapus",
       "update-datasource": "Perbarui sumber data"
-    },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Grafana Incident tidak diinstal atau tidak dikonfigurasi dengan benar",
-      "declare-incident": "Nyatakan Insiden"
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident tidak diinstal atau tidak dikonfigurasi dengan benar",
@@ -2686,7 +2689,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
       "default-indicator": "",
@@ -3631,7 +3633,10 @@
       "move-modal-title": "Pindahkan",
       "move-provisioned-folder": "",
       "moving": "Memindahkan...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Nama folder wajib diisi.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Anda telah memilih sumber daya yang disediakan dan tidak disediakan. Keduanya tidak dapat diproses sekaligus. Hanya pilih sumber daya yang disediakan atau hanya sumber daya yang tidak disediakan dan coba lagi.",
       "selected-mix-resources-modal-title": "Jenis sumber daya campuran dipilih"
     },
@@ -10895,7 +10900,9 @@
     "invite-user": {
       "invite-button": "Undang",
       "invite-new-user-button": "Undang pengguna baru",
-      "invite-tooltip": "Undang pengguna"
+      "invite-tooltip": "Undang pengguna",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Tambahkan ke Bookmark",
@@ -12302,6 +12309,8 @@
       "github-app-creation-failed": "",
       "github-app-error-loading": "",
       "github-app-error-required": "",
+      "github-app-help-instructions": "",
+      "github-app-help-title": "",
       "github-app-mode-existing": "",
       "github-app-mode-label": "",
       "github-app-mode-new": "",
@@ -12543,7 +12552,11 @@
   "query-editor-next": {
     "detail-placeholder": "",
     "sidebar": {
-      "placeholder": "",
+      "card-click": "",
+      "expression": "",
+      "queries-expressions": "",
+      "query": "",
+      "query-stack": "",
       "toggle-size": ""
     }
   },

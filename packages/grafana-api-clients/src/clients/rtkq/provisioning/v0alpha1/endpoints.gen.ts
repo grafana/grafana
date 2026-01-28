@@ -1471,10 +1471,14 @@ export type GitlabConnectionConfig = {
 export type ConnectionSpec = {
   /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
   bitbucket?: BitbucketConnectionConfig;
+  /** The connection description */
+  description?: string;
   /** GitHub connection configuration Only applicable when provider is "github" */
   github?: GitHubConnectionConfig;
   /** Gitlab connection configuration Only applicable when provider is "gitlab" */
   gitlab?: GitlabConnectionConfig;
+  /** The connection display name (shown in the UI) */
+  title: string;
   /** The connection provider type
     
     Possible enum values:
@@ -1532,12 +1536,6 @@ export type ConnectionStatus = {
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
-  /** Connection state
-    
-    Possible enum values:
-     - `"connected"`
-     - `"disconnected"` */
-  state: 'connected' | 'disconnected';
 };
 export type Connection = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1816,7 +1814,7 @@ export type LocalRepositoryConfig = {
 export type SyncOptions = {
   /** Enabled must be saved as true before any sync job will run */
   enabled: boolean;
-  /** When non-zero, the sync will run periodically */
+  /** The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one. */
   intervalSeconds?: number;
   /** Where values should be saved
     
@@ -1855,6 +1853,12 @@ export type RepositorySpec = {
   type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
+};
+export type QuotaStatus = {
+  /** MaxRepositories is the maximum number of repositories allowed. 0 means unlimited. */
+  maxRepositories?: number;
+  /** MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited. */
+  maxResourcesPerRepository?: number;
 };
 export type ResourceCount = {
   count: number;
@@ -1907,6 +1911,8 @@ export type RepositoryStatus = {
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
+  /** Quota contains the configured quota limits for this repository */
+  quota?: QuotaStatus;
   /** The object count when sync last ran */
   stats?: ResourceCount[];
   /** Sync information with the last sync information */

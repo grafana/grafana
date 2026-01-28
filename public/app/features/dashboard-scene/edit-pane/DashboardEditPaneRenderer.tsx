@@ -34,6 +34,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const { isEditing, meta, uid } = dashboard.useState();
   const hasUid = Boolean(uid);
+  const isEmbedded = meta.isEmbedded;
   const selectedObject = selection?.getFirstObject();
   const isNewElement = selection?.isNewElement() ?? false;
   // the layout element that was selected when opening the 'add' pane
@@ -163,7 +164,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             />
           </>
         )}
-        {hasUid && <ShareExportDashboardButton dashboard={dashboard} />}
+        {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
         <Sidebar.Button
           icon="list-ui-alt"
           onClick={() => editPane.openPane('outline')}
