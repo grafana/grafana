@@ -4295,6 +4295,10 @@
               }
             ]
           },
+          "description": {
+            "description": "The connection description",
+            "type": "string"
+          },
           "github": {
             "description": "GitHub connection configuration Only applicable when provider is \"github\"",
             "allOf": [
@@ -4310,6 +4314,10 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitlabConnectionConfig"
               }
             ]
+          },
+          "title": {
+            "description": "The connection display name (shown in the UI)",
+            "type": "string"
           },
           "type": {
             "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
