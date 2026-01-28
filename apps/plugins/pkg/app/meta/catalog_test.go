@@ -45,7 +45,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		defer server.Close()
 
 		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -60,7 +60,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		defer server.Close()
 
 		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
-		result, err := provider.GetMeta(ctx, "nonexistent-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "nonexistent-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, ErrMetaNotFound))
@@ -74,7 +74,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		defer server.Close()
 
 		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "unexpected status code 500")
@@ -90,7 +90,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		defer server.Close()
 
 		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to decode response")
@@ -99,7 +99,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 
 	t.Run("returns error for invalid API URL", func(t *testing.T) {
 		provider := NewCatalogProvider("://invalid-url", "")
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid grafana.com API URL")
@@ -128,7 +128,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		defer server.Close()
 
 		provider := NewCatalogProviderWithTTL(server.URL+"/api/plugins", "", customTTL)
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -146,7 +146,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		cancel()
 
 		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
@@ -181,7 +181,7 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		defer server.Close()
 
 		provider := NewCatalogProvider(server.URL+"/api/plugins", expectedToken)
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)

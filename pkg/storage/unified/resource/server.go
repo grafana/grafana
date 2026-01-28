@@ -354,6 +354,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
 		overridesService: opts.OverridesService,
+		storageEnabled:   true,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
@@ -411,6 +412,7 @@ type server struct {
 	// write operations to make sure that subsequent search by the same client will return up-to-date results.
 	// Set from SearchOptions.IndexMinUpdateInterval.
 	artificialSuccessfulWriteDelay time.Duration
+	storageEnabled                 bool
 }
 
 // Init implements ResourceServer.
@@ -435,7 +437,7 @@ func (s *server) Init(ctx context.Context) error {
 		}
 
 		// Start watching for changes
-		if s.initErr == nil {
+		if s.initErr == nil && s.storageEnabled {
 			s.initErr = s.initWatcher()
 		}
 
@@ -1172,6 +1174,7 @@ func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, t
 	return obj.GetUpdatedBy() == user.GetUID() || trashChecker(iter.Name(), iter.Folder())
 }
 
+// Start the server.broadcaster (requires that the backend storage services are enabled)
 func (s *server) initWatcher() error {
 	var err error
 	s.broadcaster, err = NewBroadcaster(s.ctx, func(out chan<- *WrittenEvent) error {
@@ -1388,6 +1391,11 @@ func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchReque
 	return s.search.Search(ctx, req)
 }
 
+// StatsGetter provides resource statistics (via search index or backend).
+type StatsGetter interface {
+	GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error)
+}
+
 // GetStats implements ResourceServer.
 func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	if err := s.Init(ctx); err != nil {
@@ -1396,7 +1404,7 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 
 	if s.search == nil {
 		// If the backend implements "GetStats", we can use it
-		srv, ok := s.backend.(resourcepb.ResourceIndexServer)
+		srv, ok := s.backend.(StatsGetter)
 		if ok {
 			return srv.GetStats(ctx, req)
 		}

@@ -37,8 +37,10 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       };
       // Add connection reference at spec level if using GitHub App
       // connection name is only available for the app flow
-      if (connectionName) {
-        spec.connection = { name: connectionName };
+      // Prefer data.connectionName over the parameter for consistency
+      const finalConnectionName = data.connectionName || connectionName;
+      if (finalConnectionName) {
+        spec.connection = { name: finalConnectionName };
       }
       break;
     case 'gitlab':
@@ -75,6 +77,7 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
     readOnly: !spec.workflows.length,
     prWorkflow: spec.workflows.includes('branch'),
     enablePushToConfiguredBranch: spec.workflows.includes('write'),
+    connectionName: spec.connection?.name,
   });
 };
 

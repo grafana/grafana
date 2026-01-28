@@ -1035,9 +1035,9 @@ describe('setDynamicConfigValue', () => {
     );
 
     expect(config.mappings).toHaveLength(3);
-    expect(config.mappings![0]).toEqual({ type: MappingType.ValueToText, options: { existing: { text: 'existing' } } });
+    expect(config.mappings![0]).toEqual({ type: MappingType.ValueToText, options: { second: { text: 'second' } } });
     expect(config.mappings![1]).toEqual({ type: MappingType.ValueToText, options: { first: { text: 'first' } } });
-    expect(config.mappings![2]).toEqual({ type: MappingType.ValueToText, options: { second: { text: 'second' } } });
+    expect(config.mappings![2]).toEqual({ type: MappingType.ValueToText, options: { existing: { text: 'existing' } } });
   });
 });
 

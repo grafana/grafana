@@ -1028,10 +1028,6 @@
       "this-datasource-has-been-removed": "This datasource has been removed",
       "update-datasource": "Update datasource"
     },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
-      "declare-incident": "Declare Incident"
-    },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
       "label-declare-incident": "Declare incident"
@@ -2704,7 +2700,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
-      "apply-tooltip": "Apply search \"{{name}}\"",
       "button-label": "Saved searches",
       "cancel": "Cancel",
       "default-indicator": "Default search",
@@ -8015,6 +8010,43 @@
   "gauge": {
     "category-gauge": "Gauge",
     "category-radial-bar": "Gauge",
+    "config": {
+      "bar-shape": "Bar Style",
+      "bar-shape-flat": "Flat",
+      "bar-shape-rounded": "Rounded",
+      "bar-width": "Bar width",
+      "effects": {
+        "bar-glow": "Bar glow",
+        "center-glow": "Center glow",
+        "gradient": "Gradient",
+        "label": "Effects"
+      },
+      "endpoint-marker": "Endpoint marker",
+      "endpoint-marker-description": "Glow is only supported in dark mode",
+      "endpoint-marker-glow": "Glow",
+      "endpoint-marker-none": "None",
+      "endpoint-marker-point": "Point",
+      "neutral": {
+        "description": "Leave empty to use Min as neutral point",
+        "placeholder": "none",
+        "title": "Neutral value"
+      },
+      "segment-count": "Segments",
+      "segment-spacing": "Segment spacing",
+      "shape": "Style",
+      "shape-circle": "Circle",
+      "shape-gauge": "Arc",
+      "sparkline": "Show sparkline",
+      "text-mode": "Text mode",
+      "text-mode-auto": "Auto",
+      "text-mode-name": "Name",
+      "text-mode-none": "None",
+      "text-mode-value": "Value",
+      "text-mode-value-and-name": "Value and Name",
+      "threshold-labels": "Show labels",
+      "threshold-labels-description": "Display threshold and neutral values",
+      "threshold-markers": "Show thresholds"
+    },
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
     "description-neutral": "Leave empty to use Min as neutral point",
@@ -10038,6 +10070,8 @@
       "no-more-logs-available": "No more logs available.",
       "older-logs": "older",
       "open-in-split-view": "Open in split view",
+      "show-original-log": "Show original logs",
+      "show-original-log-tooltip": "Clear displayed fields and show the original log line message",
       "time-window-label": "Context time window",
       "time-window-tooltip": "Amount of time before and after the referenced log",
       "title-log-context": "Log context",
@@ -11801,6 +11835,8 @@
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
+      "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
+      "error-repository-status-unhealthy-title": "Repository status unhealthy",
       "external-storage-label": "External storage",
       "files-count_one": "{{count}} files",
       "files-count_other": "{{count}} files",
@@ -11825,13 +11861,16 @@
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
+      "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-title": "A human-readable name for the config",
+      "error-connection-required": "Connection is required",
       "error-fetch-branches": "Failed to fetch branches",
       "error-required": "This field is required.",
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
+      "label-connection": "GitHub App connection",
       "label-enabled": "Enabled",
       "label-interval-seconds": "Interval (seconds)",
       "label-repository-type": "Repository type",
@@ -11865,24 +11904,36 @@
       "button-save": "Save",
       "button-saving": "Saving...",
       "description-app-id": "The ID of your GitHub App",
+      "description-description": "Optional description for this connection",
       "description-installation-id": "The installation ID of your GitHub App",
       "description-private-key": "The private key for your GitHub App in PEM format",
       "description-provider": "Select the provider type",
+      "description-title": "A human-readable name for this connection",
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
       "error-save-connection": "Failed to save connection",
       "label-app-id": "GitHub App ID",
+      "label-description": "Description",
       "label-installation-id": "GitHub Installation ID",
       "label-private-key": "Private Key (PEM)",
       "label-provider": "Provider",
+      "label-title": "Title",
       "not-found": "Connection not found",
       "not-found-description": "The connection you are looking for does not exist.",
       "page-subtitle": "Configure a connection to authenticate with external providers",
       "page-title-create": "Create connection",
       "page-title-edit": "Edit connection",
       "placeholder-app-id": "123456",
+      "placeholder-description": "Optional description",
       "placeholder-installation-id": "12345678",
-      "placeholder-private-key": "-----BEGIN RSA PRIVATE KEY-----..."
+      "placeholder-private-key": "-----BEGIN RSA PRIVATE KEY-----...",
+      "placeholder-title": "My GitHub App"
+    },
+    "connection-options": {
+      "loading": "Loading...",
+      "no-repos": "No repositories",
+      "repos-truncated_one": "{{shown}} +{{count}} more",
+      "repos-truncated_other": "{{shown}} +{{count}} more"
     },
     "connections": {
       "add-connection": "Add connection",
@@ -11896,6 +11947,7 @@
       "search-placeholder": "Search connections",
       "status-connected": "Connected",
       "status-disconnected": "Disconnected",
+      "status-pending": "Pending",
       "status-unknown": "Unknown",
       "view": "View"
     },
@@ -12406,6 +12458,9 @@
       "push-to-existing-branch": "Push to an existing branch"
     }
   },
+  "provisioning-alert": {
+    "retry": "Retry"
+  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "Before you make the dashboard public, acknowledge the following:",
@@ -12610,10 +12665,23 @@
       "title-data-source-help": "Data source help"
     }
   },
+  "query-editor": {
+    "action": {
+      "inspector": "Query inspector"
+    },
+    "edit-query-name": "Edit query name",
+    "validation": {
+      "duplicate-name": "Query name already exists",
+      "empty-name": "An empty query name is not allowed"
+    }
+  },
   "query-editor-next": {
-    "detail-placeholder": "Query/Transform detail view goes here",
     "sidebar": {
-      "placeholder": "Sidebar content placeholder",
+      "card-click": "Select query {{refId}}",
+      "expression": "Expression",
+      "queries-expressions": "Queries & Expressions",
+      "query": "Query",
+      "query-stack": "Query Stack",
       "toggle-size": "Toggle sidebar size"
     }
   },
@@ -12646,45 +12714,6 @@
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "Bar Style",
-      "bar-shape-flat": "Flat",
-      "bar-shape-rounded": "Rounded",
-      "bar-width": "Bar width",
-      "effects": {
-        "bar-glow": "Bar glow",
-        "center-glow": "Center glow",
-        "gradient": "Gradient",
-        "label": "Effects"
-      },
-      "endpoint-marker": "Endpoint marker",
-      "endpoint-marker-description": "Glow is only supported in dark mode",
-      "endpoint-marker-glow": "Glow",
-      "endpoint-marker-none": "None",
-      "endpoint-marker-point": "Point",
-      "neutral": {
-        "description": "Leave empty to use Min as neutral point",
-        "placeholder": "none",
-        "title": "Neutral value"
-      },
-      "segment-count": "Segments",
-      "segment-spacing": "Segment spacing",
-      "shape": "Style",
-      "shape-circle": "Circle",
-      "shape-gauge": "Arc",
-      "sparkline": "Show sparkline",
-      "text-mode": "Text mode",
-      "text-mode-auto": "Auto",
-      "text-mode-name": "Name",
-      "text-mode-none": "None",
-      "text-mode-value": "Value",
-      "text-mode-value-and-name": "Value and Name",
-      "threshold-labels": "Show labels",
-      "threshold-labels-description": "Display threshold and neutral values",
-      "threshold-markers": "Show thresholds"
-    }
   },
   "recently-deleted": {
     "buttons": {
