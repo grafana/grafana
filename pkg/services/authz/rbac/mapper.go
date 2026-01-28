@@ -299,26 +299,6 @@ func NewMapperRegistry() MapperRegistry {
 			"checktypes": newResourceTranslation("advisor.checktypes", "uid", false, nil),
 			"register":   newResourceTranslation("advisor.register", "uid", false, nil),
 		},
-		"apps.grafana.com": {
-			// AppManifest is a cluster-scoped resource that defines application schemas.
-			// Read access is allowed for users.
-			// Write access is restricted to services (handled by the AppManifest authorizer).
-			"appmanifests": translation{
-				resource:  "apps.appmanifests",
-				attribute: "name",
-				verbMapping: map[string]string{
-					utils.VerbGet:    "apps.appmanifests:read",
-					utils.VerbList:   "apps.appmanifests:read",
-					utils.VerbWatch:  "apps.appmanifests:read",
-					utils.VerbCreate: "apps.appmanifests:write",
-					utils.VerbUpdate: "apps.appmanifests:write",
-					utils.VerbPatch:  "apps.appmanifests:write",
-					utils.VerbDelete: "apps.appmanifests:delete",
-				},
-				folderSupport:    false,
-				useWildcardScope: true,
-			},
-		},
 	})
 
 	return mapper

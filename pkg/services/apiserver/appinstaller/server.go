@@ -103,6 +103,8 @@ func getResourceFromStoragePath(storagePath string) (string, error) {
 }
 
 func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSupported bool, storage genericrest.Storage) genericrest.Storage {
+	log := logging.FromContext(s.ctx)
+
 	if gs, ok := storage.(*genericregistry.Store); ok {
 		// if dual write is supported, we need to modify the update strategy
 		// this is not needed for the status store
@@ -112,8 +114,7 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 			}
 		}
 
-		// Respect the strategy's namespace scope setting
-		// The SDK sets this correctly based on the Kind's scope
+		// Check if resource is namespace-scoped or cluster-scoped
 		isNamespaced := gs.CreateStrategy != nil && gs.CreateStrategy.NamespaceScoped()
 		if isNamespaced {
 			gs.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
@@ -121,15 +122,31 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 			return gs
 		}
 
-		// For cluster-scoped resources, we need to wrap the storage with an identity wrapper.
-		// This switches the identity to service identity for backend operations, which allows
-		// the storage layer's namespace checks to pass. Authorization is handled at the API
-		// level by the custom authorizer provided by the AppInstaller.
+		// Case for Cluster Scoped resources.
+		// Require explicit opt-in via ClusterScopedStorageAuthorizerProvider
 		gs.KeyFunc = grafanaregistry.ClusterScopedKeyFunc(gr)
 		gs.KeyRootFunc = grafanaregistry.ClusterKeyRootFunc(gr)
 
-		// Wrap with identity switcher - the genericregistry.Store implements K8sStorage
-		return storewrapper.New(gs, &storewrapper.NoopAuthorizer{})
+		// Check if the app provides a custom storage authorizer
+		var authz storewrapper.ResourceStorageAuthorizer
+		if provider, ok := s.installer.(ClusterScopedStorageAuthorizerProvider); ok {
+			authz = provider.GetClusterScopedStorageAuthorizer(gr)
+			if authz != nil {
+				log.Debug("Using app-provided storage authorizer for cluster-scoped resource",
+					"resource", gr.String())
+			}
+		}
+
+		if authz == nil {
+			// No authorizer provided - use deny authorizer for safety
+			log.Warn("No storage authorizer provided for cluster-scoped resource, using deny authorizer. "+
+				"Implement ClusterScopedStorageAuthorizerProvider to provide explicit authorization.",
+				"resource", gr.String(),
+				"app", s.installer.ManifestData().AppName)
+			authz = &storewrapper.DenyAuthorizer{}
+		}
+
+		return storewrapper.New(gs, authz)
 	}
 
 	// if the storage is a status store, we need to extract the underlying generic registry store
@@ -141,6 +158,15 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 		} else {
 			statusStore.Store.KeyFunc = grafanaregistry.ClusterScopedKeyFunc(gr)
 			statusStore.Store.KeyRootFunc = grafanaregistry.ClusterKeyRootFunc(gr)
+			// Note: StatusREST for cluster-scoped resources relies on API-level authorization.
+			// Storage-level wrapping is not applied here since StatusREST uses the Store directly.
+			// The parent resource's ClusterScopedStorageAuthorizerProvider handles main resource authorization.
+			if _, ok := s.installer.(ClusterScopedStorageAuthorizerProvider); !ok {
+				log.Warn("Cluster-scoped status subresource without explicit ClusterScopedStorageAuthorizerProvider. "+
+					"Authorization relies on API-level authorizer only.",
+					"resource", gr.String(),
+					"app", s.installer.ManifestData().AppName)
+			}
 		}
 		return statusStore
 	}
@@ -154,6 +180,15 @@ func (s *serverWrapper) configureStorage(gr schema.GroupResource, dualWriteSuppo
 		} else {
 			subresourceStore.Store.KeyFunc = grafanaregistry.ClusterScopedKeyFunc(gr)
 			subresourceStore.Store.KeyRootFunc = grafanaregistry.ClusterKeyRootFunc(gr)
+			// Note: SubresourceREST for cluster-scoped resources relies on API-level authorization.
+			// Storage-level wrapping is not applied here since SubresourceREST uses the Store directly.
+			// The parent resource's ClusterScopedStorageAuthorizerProvider handles main resource authorization.
+			if _, ok := s.installer.(ClusterScopedStorageAuthorizerProvider); !ok {
+				log.Warn("Cluster-scoped subresource without explicit ClusterScopedStorageAuthorizerProvider. "+
+					"Authorization relies on API-level authorizer only.",
+					"resource", gr.String(),
+					"app", s.installer.ManifestData().AppName)
+			}
 		}
 		return subresourceStore
 	}
