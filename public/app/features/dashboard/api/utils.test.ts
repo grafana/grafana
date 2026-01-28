@@ -14,11 +14,9 @@ import {
   isDashboardV1Spec,
   isDashboardV2Resource,
   isDashboardV2Spec,
-  isV0V1StoredVersion,
   isV1ClassicDashboard,
   isV1DashboardCommand,
   isV2DashboardCommand,
-  isV2StoredVersion,
 } from './utils';
 
 // Test data constants
@@ -39,21 +37,6 @@ function createTestResource(
     status,
   };
 }
-
-describe('version string helpers', () => {
-  it.each([
-    ['v2alpha1', true, false],
-    ['v2beta1', true, false],
-    ['v0alpha1', false, true],
-    ['v1alpha1', false, true],
-    ['v1beta1', false, true],
-    ['invalid', false, false],
-    [undefined, false, false],
-  ])('version %s: isV2=%s, isV0V1=%s', (version, expectV2, expectV0V1) => {
-    expect(isV2StoredVersion(version)).toBe(expectV2);
-    expect(isV0V1StoredVersion(version)).toBe(expectV0V1);
-  });
-});
 
 describe('spec type guards handle unknown inputs safely', () => {
   describe('isDashboardV2Spec', () => {
