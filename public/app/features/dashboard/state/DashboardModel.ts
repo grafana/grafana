@@ -81,6 +81,7 @@ export class DashboardModel implements TimeModel {
   graphTooltip: DashboardCursorSync;
   time: any;
   liveNow?: boolean;
+  connectLiveToAutoRefresh?: boolean;
   preload?: boolean;
   private originalTime: any;
   timepicker: any;
@@ -160,6 +161,7 @@ export class DashboardModel implements TimeModel {
     this.time = data.time ?? { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker ?? {};
     this.liveNow = data.liveNow;
+    this.connectLiveToAutoRefresh = data.connectLiveToAutoRefresh;
     this.templating = this.removeNullValuesFromVariables(this.ensureListExist(data.templating));
     this.annotations = this.ensureListExist(data.annotations);
     this.refresh = data.refresh;

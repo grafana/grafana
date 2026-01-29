@@ -207,7 +207,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       description: dashboard.description,
       editable: dashboard.editable,
       preload: dashboard.preload,
-      connectLiveToAutoRefresh: true,
+      connectLiveToAutoRefresh: dashboard.connectLiveToAutoRefresh,
       id: dashboardId,
       isDirty: false,
       links: dashboard.links,
