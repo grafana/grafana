@@ -18,7 +18,6 @@ export function livePanelAutoRefreshBehavior(dashboard: DashboardScene) {
     refreshEventSub: Unsubscribable | undefined;
 
   const settingSub = dashboard.subscribeToState((newState, oldState) => {
-    console.log(newState, oldState);
     if (newState.connectLiveToAutoRefresh === oldState.connectLiveToAutoRefresh) {
       return;
     }
