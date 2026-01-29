@@ -44,7 +44,10 @@ export const defaultGraphConfig: GraphFieldConfig = {
   showValues: false,
 };
 
-// from GraphFieldConfig
+/**
+ * Defines graph style configuration properties. Properties from GraphFieldConfig.
+ * Temporary config - PoC.
+ */
 export const defaultGraphStyleConfig = {
   fieldConfig: {
     defaultsProps: ['color'],

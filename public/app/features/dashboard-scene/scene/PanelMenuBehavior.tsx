@@ -352,6 +352,11 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.copy-styles', `Copy styles`),
         iconClassName: 'copy',
         onClick: () => {
+          DashboardInteractions.panelStylesMenuClicked(
+            'copy',
+            panel.state.pluginId,
+            getPanelIdForVizPanel(panel) ?? -1
+          );
           dashboard.copyPanelStyles(panel);
         },
       });
@@ -361,6 +366,11 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.paste-styles', `Paste styles`),
           iconClassName: 'clipboard-alt',
           onClick: () => {
+            DashboardInteractions.panelStylesMenuClicked(
+              'paste',
+              panel.state.pluginId,
+              getPanelIdForVizPanel(panel) ?? -1
+            );
             dashboard.pastePanelStyles(panel);
           },
         });

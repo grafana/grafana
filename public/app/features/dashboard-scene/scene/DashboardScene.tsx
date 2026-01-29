@@ -68,6 +68,7 @@ import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
+import { DashboardInteractions } from '../utils/interactions';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -629,6 +630,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /**
    * Hardcoded to Timeseries for this PoC
+   * @internal
    */
   private static extractPanelStyles(panel: VizPanel): {
     fieldConfig?: { defaults?: Partial<FieldConfig> };
@@ -674,6 +676,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return styles;
   }
 
+  /** @internal */
   public copyPanelStyles(vizPanel: VizPanel) {
     if (!config.featureToggles.panelStyleActions) {
       return;
@@ -694,6 +697,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     appEvents.emit('alert-success', ['Panel styles copied.']);
   }
 
+  /** @internal */
   public static hasPanelStylesToPaste(panelType: string): boolean {
     if (!config.featureToggles.panelStyleActions) {
       return false;
@@ -712,6 +716,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
+  /** @internal */
   public pastePanelStyles(vizPanel: VizPanel) {
     if (!config.featureToggles.panelStyleActions) {
       return;
@@ -762,6 +767,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     } catch (e) {
       console.error('Error pasting panel styles:', e);
       appEvents.emit('alert-error', ['Error pasting panel styles.']);
+      DashboardInteractions.panelStylesMenuClicked(
+        'paste',
+        vizPanel.state.pluginId,
+        getPanelIdForVizPanel(vizPanel) ?? -1,
+        true
+      );
     }
   }
 
