@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input } from '@grafana/ui';
+import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input, Alert } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -20,6 +20,7 @@ interface Props
   errors: FieldErrors<SaveDashboardCommand<DashboardV2Spec> & { [key: `datasource-${string}`]: string }>;
   onCancel: () => void;
   onSubmit: FormsOnSubmit<SaveDashboardCommand<DashboardV2Spec> & { [key: `datasource-${string}`]: string }>;
+  hasFloatGridItems: boolean;
 }
 
 export const ImportDashboardFormV2 = ({
@@ -31,6 +32,7 @@ export const ImportDashboardFormV2 = ({
   onCancel,
   onSubmit,
   watch,
+  hasFloatGridItems,
 }: Props) => {
   const [isSubmitted, setSubmitted] = useState(false);
   const [selectedDataSources, setSelectedDataSources] = useState<Record<string, { uid: string; type: string }>>({});
@@ -131,6 +133,19 @@ export const ImportDashboardFormV2 = ({
             </Field>
           );
         })}
+
+      {hasFloatGridItems && (
+        <Alert
+          severity="warning"
+          title={t('dashboard-scene.import-dashboard-form-v2.float-grid-items-warning-title', 'Floating grid items')}
+          data-testid={selectors.components.ImportDashboardForm.floatGridItemsWarning}
+        >
+          <Trans i18nKey="dashboard-scene.import-dashboard-form-v2.float-grid-items-warning-body">
+            The dashboard contains grid items with floating positions. This is not supported by Grafana and the numbers
+            will be rounded to the nearest integer.
+          </Trans>
+        </Alert>
+      )}
 
       <Stack direction="row" gap={2}>
         <Button
