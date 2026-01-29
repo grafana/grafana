@@ -535,7 +535,7 @@ func (svc *MuteTimingService) renameTimeIntervalInDependentResources(ctx context
 				if err != nil {
 					return err
 				}
-				canUpdate = validate(routeProvenance)
+				canUpdate = canUpdate && validate(routeProvenance)
 			}
 		}
 	}

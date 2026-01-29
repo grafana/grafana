@@ -36,29 +36,8 @@ type ManagedRoute struct {
 	Provenance models.Provenance
 }
 
-func (r *ManagedRoute) AsRoute() definition.Route {
-	groupByAll, groupBy := ToGroupBy(r.GroupBy...)
-
-	// Only need to copy the fields that are valid for a root route.
-	return definition.Route{
-		Receiver:       r.Receiver,
-		GroupByStr:     r.GroupBy,
-		GroupWait:      r.GroupWait,
-		GroupInterval:  r.GroupInterval,
-		RepeatInterval: r.RepeatInterval,
-		Routes:         r.Routes,
-		Provenance:     definitions.Provenance(r.Provenance),
-
-		// These are deceptively necessary since they are normally generated during unmarshalling and assumed to be
-		// present in upstream alertmanager code. We can't assume we'll be unmarshalling the route again, so we need to
-		// set them here.
-		GroupBy:    groupBy,
-		GroupByAll: groupByAll,
-	}
-}
-
 func (r *ManagedRoute) GeneratedSubRoute() *definition.Route {
-	amRoute := r.AsRoute()
+	amRoute := ManagedRouteToRoute(r)
 
 	// It's important that the generated sub-route is fully defined so that they will never rely on the values of the root.
 	defaultOpts := dispatch.DefaultRouteOpts
@@ -190,7 +169,7 @@ func (rev *ConfigRevision) CreateManagedRoute(name string, subtree definitions.R
 	}
 
 	if name == UserDefinedRoutingTreeName {
-		return nil, fmt.Errorf("cannot create a managed route with the name %q, this name is reserved for the user-defined routing tree", UserDefinedRoutingTreeName)
+		return nil, models.ErrRouteExists.Errorf("cannot create a managed route with the name %q, this name is reserved for the user-defined routing tree", UserDefinedRoutingTreeName)
 	}
 
 	if _, exists := rev.Config.ManagedRoutes[name]; exists {
@@ -198,7 +177,7 @@ func (rev *ConfigRevision) CreateManagedRoute(name string, subtree definitions.R
 	}
 
 	managedRoute := NewManagedRoute(name, &subtree)
-	amRoute := managedRoute.AsRoute()
+	amRoute := ManagedRouteToRoute(managedRoute)
 
 	err := rev.ValidateRoute(amRoute)
 	if err != nil {
@@ -223,7 +202,7 @@ func (rev *ConfigRevision) UpdateNamedRoute(name string, subtree definitions.Rou
 	}
 
 	managedRoute := NewManagedRoute(name, &subtree)
-	amRoute := managedRoute.AsRoute()
+	amRoute := ManagedRouteToRoute(managedRoute)
 
 	err := rev.ValidateRoute(amRoute)
 	if err != nil {
@@ -365,19 +344,6 @@ func renameTimeIntervalInRoute(oldName, newName string, routes ...*definitions.R
 		updated += renameTimeIntervalInRoute(oldName, newName, route.Routes...)
 	}
 	return updated
-}
-
-// ToGroupBy converts the given label strings to (groupByAll, []model.LabelName) where groupByAll is true if the input
-// contains models.GroupByAll. This logic is in accordance with upstream Route.ValidateChild().
-func ToGroupBy(groupByStr ...string) (groupByAll bool, groupBy []model.LabelName) {
-	for _, l := range groupByStr {
-		if l == models.GroupByAll {
-			return true, nil
-		} else {
-			groupBy = append(groupBy, model.LabelName(l))
-		}
-	}
-	return false, groupBy
 }
 
 func CalculateRouteFingerprint(route definitions.Route) string {

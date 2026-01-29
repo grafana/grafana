@@ -125,7 +125,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext)
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to export notification policy tree", err)
 	}
 
-	e, err := AlertingFileExportFromRoute(c.GetOrgID(), managedRoute.AsRoute())
+	e, err := AlertingFileExportFromRoute(c.GetOrgID(), legacy_storage.ManagedRouteToRoute(&managedRoute))
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}

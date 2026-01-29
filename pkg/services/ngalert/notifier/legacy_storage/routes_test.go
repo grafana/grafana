@@ -19,33 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestManagedRoute_AsRoute(t *testing.T) {
-	gw := model.Duration(10)
-	gi := model.Duration(20)
-	ri := model.Duration(30)
-
-	mr := &ManagedRoute{
-		Name:           "test",
-		Receiver:       "receiver",
-		GroupBy:        []string{"alertname"},
-		GroupWait:      &gw,
-		GroupInterval:  &gi,
-		RepeatInterval: &ri,
-		Routes:         []*definition.Route{{Receiver: "child"}},
-		Provenance:     models.Provenance("test"),
-	}
-
-	route := mr.AsRoute()
-
-	assert.Equal(t, "receiver", route.Receiver)
-	assert.Equal(t, []string{"alertname"}, route.GroupByStr)
-	assert.Equal(t, &gw, route.GroupWait)
-	assert.Equal(t, &gi, route.GroupInterval)
-	assert.Equal(t, &ri, route.RepeatInterval)
-	assert.Len(t, route.Routes, 1)
-	assert.EqualValues(t, definitions.Provenance("test"), route.Provenance)
-}
-
 func TestManagedRoute_GeneratedSubRoute_DefaultsAndMatcher(t *testing.T) {
 	mr := &ManagedRoute{
 		Name:     "managed",
@@ -279,12 +252,13 @@ func TestConfigRevision_CreateManagedRoute(t *testing.T) {
 		_, err := testConfig().CreateManagedRoute(UserDefinedRoutingTreeName, subtree)
 		assert.ErrorContains(t, err, "reserved")
 		assert.ErrorContains(t, err, UserDefinedRoutingTreeName)
+		assert.ErrorIs(t, err, models.ErrRouteExists)
 	})
 
 	t.Run("rejects duplicate name", func(t *testing.T) {
 		rev := testConfig()
 		_, err := rev.CreateManagedRoute(getAnyKey(t, rev.Config.ManagedRoutes), subtree)
-		assert.ErrorIs(t, err, models.ErrRouteExists.Errorf(""))
+		assert.ErrorIs(t, err, models.ErrRouteExists)
 	})
 
 	t.Run("rejects invalid route", func(t *testing.T) {

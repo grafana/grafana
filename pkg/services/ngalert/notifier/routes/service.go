@@ -206,7 +206,6 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	if name == legacy_storage.UserDefinedRoutingTreeName {
 		defaultCfg, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(nps.settings.DefaultConfiguration))
 		if err != nil {
-			nps.log.Error("Failed to parse default alertmanager config: %w", err)
 			return fmt.Errorf("failed to parse default alertmanager config: %w", err)
 		}
 

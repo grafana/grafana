@@ -788,7 +788,7 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 				if err != nil {
 					return err
 				}
-				canUpdate = validate(routeProvenance)
+				canUpdate = canUpdate && validate(routeProvenance)
 			}
 		}
 	}
