@@ -6079,6 +6079,16 @@
         "dashboard-not-found": "Dashboard not found"
       }
     },
+    "dashboard-side-pane-new": {
+      "description-expandable-sections": "Expandable sections",
+      "description-multiple-views": "Multiple views",
+      "existing-panels-first-group": "Existing panels go to the first group",
+      "label-rows": "Rows",
+      "label-tabs": "Tabs",
+      "panel-groups": "Panel groups",
+      "tooltip-group-panels-into-rows": "Group panels into rows",
+      "tooltip-group-panels-into-tabs": "Group panels into tabs"
+    },
     "data-source-variable-form": {
       "data-source-options": "Data source options",
       "description-instance-name-filter": "Regex filter for which data source instances to choose from in the variable value list. Leave empty for all.",
