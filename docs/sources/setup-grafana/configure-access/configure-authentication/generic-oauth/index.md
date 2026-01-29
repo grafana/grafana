@@ -215,6 +215,42 @@ To configure Generic OAuth to use a refresh token, set `use_refresh_token` confi
 The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
 {{< /admonition >}}
 
+### Configure JWT ID token validation
+
+By default, Grafana extracts user information from ID tokens without validating their cryptographic signatures. To enhance security, you can enable JWT signature validation to ensure that ID tokens are authentic and have not been tampered with.
+
+To enable JWT ID token validation:
+
+1. Set `validate_id_token` to `true` in the `[auth.generic_oauth]` section of the Grafana configuration file.
+2. Configure `jwk_set_url` with the URL of your OAuth2 provider's JSON Web Key Set (JWKS) endpoint. This endpoint provides the public keys used to verify JWT signatures.
+
+   Common JWKS endpoint locations:
+   - OIDC providers: `https://<provider-domain>/.well-known/jwks.json`
+   - Auth0: `https://<tenant>.auth0.com/.well-known/jwks.json`
+   - Keycloak: `https://<keycloak-domain>/realms/<realm>/.well-known/openid-configuration` (contains `jwks_uri`)
+
+Example configuration:
+
+```ini
+[auth.generic_oauth]
+enabled = true
+validate_id_token = true
+jwk_set_url = https://your-provider.com/.well-known/jwks.json
+client_id = <client id>
+client_secret = <client secret>
+auth_url = https://your-provider.com/authorize
+token_url = https://your-provider.com/token
+api_url = https://your-provider.com/userinfo
+```
+
+{{< admonition type="note" >}}
+When JWT validation is enabled, Grafana caches the JWKS keys to improve performance. The cache respects the `Cache-Control` header from the JWKS endpoint response. If no cache expiration is specified, keys are cached for 5 minutes by default.
+{{< /admonition >}}
+
+{{< admonition type="caution" >}}
+If `validate_id_token` is set to `true`, you must configure `jwk_set_url`. Authentication will fail if the JWK Set URL is not provided or if the ID token signature cannot be verified.
+{{< /admonition >}}
+
 ### Configure role mapping
 
 Unless `skip_org_role_sync` option is enabled, the user's role will be set to the role retrieved from the auth provider upon user login.
@@ -422,6 +458,8 @@ If the configuration option requires a JMESPath expression that includes a colon
 | `tls_client_ca`              | No       | No                 | The path to the trusted certificate authority list.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |                 |
 | `use_pkce`                   | No       | Yes                | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                                                                                                                                          | `false`         |
 | `use_refresh_token`          | No       | Yes                | Set to `true` to use refresh token and check access token expiration.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `false`         |
+| `validate_id_token`          | No       | Yes                | Set to `true` to enable JWT signature validation for ID tokens. When enabled, `jwk_set_url` must be configured.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `false`         |
+| `jwk_set_url`                | No       | Yes                | URL of the JSON Web Key Set (JWKS) endpoint used to verify JWT ID token signatures. Required when `validate_id_token` is set to `true`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |                 |
 | `signout_redirect_url`       | No       | Yes                | URL to redirect to after the user logs out.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |                 |
 
 ## Examples of setting up Generic OAuth

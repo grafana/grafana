@@ -18,10 +18,12 @@ type OAuthStrategy struct {
 var extraKeysByProvider = map[string]map[string]connectors.ExtraKeyInfo{
 	social.AzureADProviderName:      connectors.ExtraAzureADSettingKeys,
 	social.GenericOAuthProviderName: connectors.ExtraGenericOAuthSettingKeys,
+	social.GitlabProviderName:       connectors.ExtraGitlabSettingKeys,
 	social.GitHubProviderName:       connectors.ExtraGithubSettingKeys,
 	social.GoogleProviderName:       connectors.ExtraGoogleSettingKeys,
 	social.GrafanaComProviderName:   connectors.ExtraGrafanaComSettingKeys,
 	social.GrafanaNetProviderName:   connectors.ExtraGrafanaComSettingKeys,
+	social.OktaProviderName:         connectors.ExtraOktaSettingKeys,
 }
 
 var _ ssosettings.FallbackStrategy = (*OAuthStrategy)(nil)

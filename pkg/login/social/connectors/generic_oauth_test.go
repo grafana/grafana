@@ -2,6 +2,7 @@ package connectors
 
 import (
 	"context"
+	"crypto/rsa"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -516,7 +517,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 		}, cfg,
 			orgRoleMapper,
 			ssosettingstests.NewFakeService(),
-			featuremgmt.WithFeatures())
+			featuremgmt.WithFeatures(),
+			nil)
 
 		provider.info.RoleAttributePath = tc.RoleAttributePath
 		provider.info.OrgAttributePath = tc.OrgAttributePath
@@ -566,7 +568,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 		}, cfg,
 			orgRoleMapper,
 			ssosettingstests.NewFakeService(),
-			featuremgmt.WithFeatures())
+			featuremgmt.WithFeatures(),
+			nil)
 
 		body, err := json.Marshal(map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}})
 		require.NoError(t, err)
@@ -659,7 +662,8 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 	}, setting.NewCfg(),
 		ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
 		ssosettingstests.NewFakeService(),
-		featuremgmt.WithFeatures())
+		featuremgmt.WithFeatures(),
+		nil)
 
 	for _, tc := range testCases {
 		provider.loginAttributePath = tc.LoginAttributePath
@@ -759,7 +763,8 @@ func TestUserInfoSearchesForName(t *testing.T) {
 		setting.NewCfg(),
 		ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
 		ssosettingstests.NewFakeService(),
-		featuremgmt.WithFeatures())
+		featuremgmt.WithFeatures(),
+		nil)
 
 	for _, tc := range testCases {
 		provider.nameAttributePath = tc.NameAttributePath
@@ -841,7 +846,8 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 			}, setting.NewCfg(),
 				ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
 				ssosettingstests.NewFakeService(),
-				featuremgmt.WithFeatures())
+				featuremgmt.WithFeatures(),
+				nil)
 
 			token := &oauth2.Token{
 				AccessToken:  "",
@@ -860,7 +866,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 func TestPayloadCompression(t *testing.T) {
 	provider := NewGenericOAuthProvider(&social.OAuthInfo{
 		EmailAttributePath: "email",
-	}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+	}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 	tests := []struct {
 		Name          string
@@ -903,6 +909,7 @@ func TestPayloadCompression(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
+			ctx := context.Background()
 			staticToken := oauth2.Token{
 				AccessToken:  "",
 				TokenType:    "",
@@ -911,7 +918,7 @@ func TestPayloadCompression(t *testing.T) {
 			}
 
 			token := staticToken.WithExtra(test.OAuth2Extra)
-			userInfo := provider.extractFromIDToken(token)
+			userInfo := provider.extractFromIDToken(ctx, token)
 
 			if test.ExpectedEmail == "" {
 				require.Nil(t, userInfo, "Testing case %q", test.Name)
@@ -1015,7 +1022,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			require.Equal(t, tc.want.nameAttributePath, s.nameAttributePath)
 			require.Equal(t, tc.want.loginAttributePath, s.loginAttributePath)
@@ -1248,7 +1255,7 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -1330,7 +1337,7 @@ func TestSocialGenericOAuth_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -1431,7 +1438,7 @@ func TestGenericOAuth_Reload_ExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)
@@ -1448,6 +1455,104 @@ func TestGenericOAuth_Reload_ExtraFields(t *testing.T) {
 			require.EqualValues(t, tc.expectedLoginAttributePath, s.loginAttributePath)
 			require.EqualValues(t, tc.expectedIdTokenAttributeName, s.idTokenAttributeName)
 			require.EqualValues(t, tc.expectedNameAttributePath, s.nameAttributePath)
+		})
+	}
+}
+
+func TestSocialGenericOAuth_extractFromIDToken_WithIDTokenValidation(t *testing.T) {
+	validKey, validKeyID := createTestRSAKey(t)
+	invalidKey, _ := createTestRSAKey(t)
+
+	// Create a mock JWKS server
+	jwksServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		jwksData := createJWKSResponse(t, validKey, validKeyID)
+		_, _ = w.Write(jwksData)
+	}))
+	defer jwksServer.Close()
+
+	claims := map[string]any{
+		"sub":   "123456789",
+		"email": "test@example.com",
+		"name":  "Test User",
+		"exp":   time.Now().Add(time.Hour).Unix(),
+		"iat":   time.Now().Unix(),
+	}
+
+	tests := []struct {
+		name          string
+		validateToken bool
+		jwkSetURL     string
+		tokenKey      *rsa.PrivateKey
+		tokenKeyID    string
+		wantData      bool
+		wantEmail     string
+	}{
+		{
+			name:          "valid signature with validation enabled",
+			validateToken: true,
+			jwkSetURL:     jwksServer.URL,
+			tokenKey:      validKey,
+			tokenKeyID:    validKeyID,
+			wantData:      true,
+			wantEmail:     "test@example.com",
+		},
+		{
+			name:          "invalid signature with validation enabled",
+			validateToken: true,
+			jwkSetURL:     jwksServer.URL,
+			tokenKey:      invalidKey,
+			tokenKeyID:    validKeyID,
+			wantData:      false, // extractFromIDToken returns nil on validation error
+			wantEmail:     "",
+		},
+		{
+			name:          "validation disabled should extract without signature check",
+			validateToken: false,
+			jwkSetURL:     "",
+			tokenKey:      invalidKey,
+			tokenKeyID:    validKeyID,
+			wantData:      true,
+			wantEmail:     "test@example.com",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			info := &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			}
+			if tc.validateToken {
+				info.Extra = map[string]string{
+					"validate_id_token": "true",
+					"jwk_set_url":       tc.jwkSetURL,
+				}
+			}
+
+			provider := NewGenericOAuthProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+
+			// Sign the token
+			idToken := signJWT(t, tc.tokenKey, tc.tokenKeyID, claims)
+
+			// Create OAuth token with ID token
+			token := &oauth2.Token{
+				AccessToken: "access-token",
+			}
+			token = token.WithExtra(map[string]any{
+				"id_token": idToken,
+			})
+
+			// Extract from ID token
+			userInfo := provider.extractFromIDToken(ctx, token)
+
+			if tc.wantData {
+				require.NotNil(t, userInfo, "Expected user data but got nil")
+				assert.Equal(t, tc.wantEmail, userInfo.Email)
+			} else {
+				require.Nil(t, userInfo, "Expected nil data but got user data")
+			}
 		})
 	}
 }
