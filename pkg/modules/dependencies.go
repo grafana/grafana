@@ -22,7 +22,7 @@ var dependencyMap = map[string][]string{
 	SearchServerRing: {InstrumentationServer, MemberlistKV},
 	GrafanaAPIServer: {InstrumentationServer},
 
-	// TODO: remove SearchServerRing once we only allow using sharding in search servers
+	// TODO: remove SearchServerRing once we only use sharding in SearchServer
 	StorageServer: {InstrumentationServer, SearchServerRing},
 	SearchServer:  {InstrumentationServer, SearchServerRing},
 

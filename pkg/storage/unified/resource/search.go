@@ -165,7 +165,6 @@ var (
 )
 
 // newSearchServer creates a new search server implementation.
-// This is an internal factory function called by NewSearchServer in server.go.
 func newSearchServer(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
 	// No backend search support
 	if opts.Backend == nil {
@@ -641,12 +640,12 @@ func (s *searchServer) stop() {
 	s.bgTaskWg.Wait()
 }
 
-// Init initializes the search server. This is the exported lifecycle method.
+// Init initializes the search server.
 func (s *searchServer) Init(ctx context.Context) error {
 	return s.init(ctx)
 }
 
-// Stop stops the search server. This is the exported lifecycle method.
+// Stop stops the search server.
 func (s *searchServer) Stop(ctx context.Context) error {
 	err := s.lifecycle.Stop(ctx)
 	if err != nil {

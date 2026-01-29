@@ -11,17 +11,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/grafana/authlib/grpcutils"
-	"github.com/grafana/dskit/kv"
-	"github.com/grafana/dskit/netutil"
-	"github.com/grafana/dskit/ring"
-	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/services/authz"
-	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
-	"github.com/grafana/grafana/pkg/util/scheduler"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
@@ -29,13 +18,24 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
+	"github.com/grafana/authlib/grpcutils"
+	"github.com/grafana/dskit/kv"
+	"github.com/grafana/dskit/netutil"
+	"github.com/grafana/dskit/ring"
+	"github.com/grafana/dskit/services"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 var (
@@ -48,15 +48,6 @@ type UnifiedStorageGrpcService interface {
 	// Return the address where this service is running
 	GetAddress() string
 }
-
-type ServiceType string
-
-const (
-	StorageServiceType ServiceType = "storage"
-	SearchServiceType  ServiceType = "search"
-	// Deprecated: use a more StorageServiceType or SearchServiceType specific service instead.
-	UnifiedServiceType ServiceType = "unified"
-)
 
 type service struct {
 	*services.BasicService
@@ -136,7 +127,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 ) (UnifiedStorageGrpcService, error) {
 	s := newBaseService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend)
 
-	// TODO: move to SearchServiceType once we only allow using sharding in search servers
+	// TODO: move to standalone search once we only use sharding in search servers
 	if cfg.EnableSharding {
 		err := s.withRingLifecycle(memberlistKVConfig, httpServerRouter)
 		if err != nil {
@@ -358,14 +349,14 @@ func (s *service) starting(ctx context.Context) error {
 		return err
 	}
 
-	// Create and register the appropriate server based on service type
-	err = s.registerServer(serverOptions)
+	// Create and register the server
+	err = s.createAndRegisterServer(serverOptions)
 	if err != nil {
 		return err
 	}
 
 	// TODO: move to standalone mode once we use sharding in search servers
-	if s.ringLifecycler != nil {
+	if s.cfg.EnableSharding {
 		s.log.Info("waiting until resource server is JOINING in the ring")
 		lfcCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ResourceServerJoinRingTimeout)
 		defer cancel()
@@ -539,7 +530,7 @@ func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecycl
 	}, nil
 }
 
-func (s *service) registerServer(opts ServerOptions) error {
+func (s *service) createAndRegisterServer(opts ServerOptions) error {
 	if s.searchStandalone {
 		server, err := NewSearchServer(opts)
 		if err != nil {

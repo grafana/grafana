@@ -52,8 +52,7 @@ type ServerOptions struct {
 	DisableStorageServices bool
 }
 
-// NewResourceServer creates a new ResourceServer with both storage and search capabilities enabled.
-// Deprecated: use NewStorageServer or NewSearchServer instead.
+// NewResourceServer creates a new ResourceServer with support for both storage and search capabilities.
 func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 	if opts.DisableStorageServices {
 		return nil, fmt.Errorf("cannot create ResourceServer with storage services disabled")
@@ -75,8 +74,8 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 }
 
 // NewSearchServer creates a new SearchServer with only search capabilities enabled.
-// The search server requires a backend to read data for building indexes.
 func NewSearchServer(opts ServerOptions) (resource.SearchServer, error) {
+	// In case we build the backend, create without storage-specific services
 	opts.DisableStorageServices = true
 	resourceOpts, err := buildResourceServerOptions(&opts,
 		withBlobConfig,
