@@ -14,6 +14,9 @@ type EncryptionManager interface {
 	// implementation present at manager.EncryptionService.
 	Encrypt(ctx context.Context, namespace xkube.Namespace, payload []byte) (EncryptedPayload, error)
 	Decrypt(ctx context.Context, namespace xkube.Namespace, payload EncryptedPayload) ([]byte, error)
+
+	// Since consolidation occurs at a level above the EncryptionManager, we need to allow that process to manually flush the cache
+	FlushCache(namespace xkube.Namespace)
 }
 
 type EncryptedPayload struct {

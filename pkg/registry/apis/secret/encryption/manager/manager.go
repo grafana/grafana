@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -26,6 +28,10 @@ type EncryptionManager struct {
 	tracer     trace.Tracer
 	store      contracts.DataKeyStorage
 	usageStats usagestats.Service
+	cfg        *setting.Cfg
+
+	dataKeyCache       encryption.DataKeyCache
+	cacheEncryptionKey string
 
 	mtx sync.Mutex
 
@@ -44,19 +50,34 @@ func ProvideEncryptionManager(
 	usageStats usagestats.Service,
 	enc cipher.Cipher,
 	providerConfig encryption.ProviderConfig,
+	dataKeyCache encryption.DataKeyCache,
+	cfg *setting.Cfg,
 ) (contracts.EncryptionManager, error) {
 	currentProviderID := providerConfig.CurrentProvider
 	if _, ok := providerConfig.AvailableProviders[currentProviderID]; !ok {
 		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
 	}
 
+	// Use the configured cache encryption key, or generate a random one if not provided.
+	cacheEncryptionKey := cfg.SecretsManagement.DataKeysCacheEncryptionKey
+	if cacheEncryptionKey == "" {
+		randomKey, err := newRandomDataKey()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate random cache encryption key: %w", err)
+		}
+		cacheEncryptionKey = string(randomKey)
+	}
+
 	s := &EncryptionManager{
-		tracer:         tracer,
-		store:          store,
-		usageStats:     usageStats,
-		cipher:         enc,
-		log:            log.New("encryption"),
-		providerConfig: providerConfig,
+		tracer:             tracer,
+		store:              store,
+		usageStats:         usageStats,
+		cipher:             enc,
+		log:                log.New("encryption"),
+		providerConfig:     providerConfig,
+		dataKeyCache:       dataKeyCache,
+		cfg:                cfg,
+		cacheEncryptionKey: cacheEncryptionKey,
 	}
 
 	s.registerUsageMetrics()
@@ -171,8 +192,20 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace xkube.
 }
 
 // dataKeyByLabel looks up for data key in cache by label.
-// Otherwise, it fetches it from database, decrypts it and caches it decrypted.
+// Otherwise, it fetches it from database, decrypts it and caches it.
 func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label string) (string, []byte, error) {
+	// 0. Get data key from in-memory cache (stored encrypted).
+	if entry, exists := s.dataKeyCache.GetByLabel(namespace, label); exists && entry.Active {
+		// Decrypt the cached data key before returning.
+		decrypted, err := s.decryptCachedDataKey(entry.EncryptedDataKey)
+		if err != nil {
+			s.log.Error("Failed to decrypt cached data key, fetching from database", "error", err)
+			// Fall through to fetch from database
+		} else {
+			return entry.Id, decrypted, nil
+		}
+	}
+
 	// 1. Get data key from database.
 	dataKey, err := s.store.GetCurrentDataKey(ctx, namespace, label)
 	if err != nil {
@@ -193,6 +226,9 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 	if err != nil {
 		return "", nil, err
 	}
+
+	// 3. Store the data key into the in-memory cache.
+	s.cacheDataKey(namespace, dataKey, decrypted)
 
 	return dataKey.UID, decrypted, nil
 }
@@ -239,6 +275,9 @@ func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, la
 	if err != nil {
 		return "", nil, err
 	}
+
+	// 4. Store the decrypted data key into the in-memory cache.
+	s.cacheDataKey(namespace, &dbDataKey, dataKey)
 
 	return id, dataKey, nil
 }
@@ -303,6 +342,18 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 	))
 	defer span.End()
 
+	// 0. Get data key from in-memory cache (stored encrypted).
+	if entry, exists := s.dataKeyCache.GetById(namespace, id); exists && entry.Active {
+		// Decrypt the cached data key before returning.
+		decrypted, err := s.decryptCachedDataKey(entry.EncryptedDataKey)
+		if err != nil {
+			s.log.Error("Failed to decrypt cached data key, fetching from database", "error", err)
+			// Fall through to fetch from database
+		} else {
+			return decrypted, nil
+		}
+	}
+
 	// 1. Get encrypted data key from database.
 	dataKey, err := s.store.GetDataKey(ctx, namespace, id)
 	if err != nil {
@@ -321,9 +372,80 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 		return nil, err
 	}
 
+	// 3. Store the data key into the in-memory cache.
+	s.cacheDataKey(namespace, dataKey, decrypted)
+
 	return decrypted, nil
 }
 
 func (s *EncryptionManager) GetProviders() encryption.ProviderConfig {
 	return s.providerConfig
+}
+
+// TODO: This is called repeatedly during consolidation and could perform poorly due to the mutex lock contention.
+// We may want to consider an approach where we temporarily disable the cache during consolidation then flush it all at once.
+// Do some benchmarking and revisit.
+func (s *EncryptionManager) FlushCache(namespace xkube.Namespace) {
+	s.dataKeyCache.Flush(namespace.String())
+}
+
+func (s *EncryptionManager) Run(ctx context.Context) error {
+	gc := time.NewTicker(s.cfg.SecretsManagement.DataKeysCacheCleanupInterval)
+
+	for {
+		select {
+		case <-gc.C:
+			s.log.Debug("Removing expired data keys from cache...")
+			s.dataKeyCache.RemoveExpired()
+			s.log.Debug("Removing expired data keys from cache finished successfully")
+		case <-ctx.Done():
+			s.log.Debug("Grafana is shutting down; stopping...")
+			gc.Stop()
+			return nil
+		}
+	}
+}
+
+// NB: Much of this was copied or derived from the original implementation in the legacy SecretsService.
+//
+// Caching a data key is tricky, because at SecretsService level we cannot guarantee
+// that a newly created data key has actually been persisted, depending on the different
+// use cases that rely on SecretsService encryption and different database engines that
+// we have support for, because the data key creation may have happened within a DB TX,
+// that may fail afterwards.
+//
+// Therefore, if we cache a data key that hasn't been persisted with success (and won't),
+// and later that one is used for a encryption operation (aside from the DB TX that created
+// it), we may end up with data encrypted by a non-persisted data key, which could end up
+// in (unrecoverable) data corruption.
+//
+// So, we cache the data key by id and/or by label, depending on the data key's lifetime,
+// assuming that a data key older than a "caution period" should have been persisted.
+//
+// Look at the comments inline for further details.
+// You can also take a look at the issue below for more context:
+// https://github.com/grafana/grafana-enterprise/issues/4252
+func (s *EncryptionManager) cacheDataKey(namespace string, dataKey *contracts.SecretDataKey, decrypted []byte) {
+	// Encrypt the decrypted data key with configured secret before storing in cache.
+	encryptedForCache, err := s.cipher.Encrypt(context.Background(), decrypted, s.cacheEncryptionKey)
+	if err != nil {
+		s.log.Error("Failed to encrypt data key for cache, skipping cache", "error", err)
+		return
+	}
+
+	// First, we cache the data key by id, because cache "by id" is
+	// only used by decrypt operations, so no risk of corrupting data.
+	entry := encryption.DataKeyCacheEntry{
+		Namespace:        namespace,
+		Id:               dataKey.UID,
+		Label:            dataKey.Label,
+		EncryptedDataKey: encryptedForCache,
+		Active:           dataKey.Active,
+	}
+	s.dataKeyCache.Set(namespace, entry)
+}
+
+// decryptCachedDataKey decrypts a data key retrieved from the cache.
+func (s *EncryptionManager) decryptCachedDataKey(encryptedDataKey []byte) ([]byte, error) {
+	return s.cipher.Decrypt(context.Background(), encryptedDataKey, s.cacheEncryptionKey)
 }
