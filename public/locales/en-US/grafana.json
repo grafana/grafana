@@ -4908,7 +4908,6 @@
           "apply": "Apply",
           "change-value": "Change variable value",
           "discard": "Discard",
-          "modal-title": "Custom Variable",
           "values": "Values separated by comma"
         },
         "datasource-options": {
@@ -4925,11 +4924,6 @@
         "name": "Name",
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
-        "query-options": {
-          "close": "Close",
-          "modal-title": "Query Variable",
-          "preview": "Preview"
-        },
         "selection-options": {
           "allow-custom-values": "Allow custom values",
           "allow-custom-values-description": "Enables users to enter values",
@@ -6112,6 +6106,9 @@
         }
       }
     },
+    "editor-multi-props": {
+      "options": "Options"
+    },
     "email-list": {
       "aria-label-emailmenu": "Toggle email menu"
     },
@@ -6279,6 +6276,9 @@
       "repository": "Managed by: Repository {{title}}",
       "terraform": "Managed by: Terraform"
     },
+    "modal-editor": {
+      "title-variable-editor": "Variable editor"
+    },
     "move-provisioned-dashboard-form": {
       "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
@@ -6312,6 +6312,19 @@
       "title": {
         "remove-panel": "Remove panel"
       }
+    },
+    "option-row": {
+      "aria-label-remove-option": "Remove option",
+      "title-drag-and-drop-to-reorder": "Drag and drop to reorder",
+      "tooltip-remove-option": "Remove option"
+    },
+    "pane-item": {
+      "tabs": {
+        "label-preview": "Preview",
+        "label-query": "Query",
+        "label-static-options": "Static options"
+      },
+      "title-custom-variable-editor": "Custom variable editor"
     },
     "panel-data-alerting-tab": {
       "tab-label": "Alert"
@@ -6406,8 +6419,7 @@
           "value": "Variable value"
         }
       },
-      "selection-options": "Selection options",
-      "static-options-legend": "Static options"
+      "selection-options": "Selection options"
     },
     "resource-export": {
       "label": {
@@ -6609,6 +6621,11 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
     },
+    "use-variable-refreshs-category": {
+      "title": {
+        "refresh-options": "Refresh options"
+      }
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
       "aria-label-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard.",
@@ -6680,6 +6697,9 @@
         }
       },
       "label": "Hide"
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": "Static options"
     },
     "variable-type-select": {
       "name-variable-type": "Variable type"

@@ -241,6 +241,8 @@ lineage: schemas: [{
 			text: string | [...string]
 			// Value of the option
 			value: string | [...string]
+			// Additional properties for multi-props variables
+			properties?: {[string]: string}
 		} @cuetsy(kind="interface")
 
 		// Options to config when to refresh a variable
