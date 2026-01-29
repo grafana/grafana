@@ -377,7 +377,8 @@ export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery
 }
 
 /**
- * Logs data sources that support custom field groupings within logs details in the Logs Panel
+ * Logs data sources that support custom field groupings within logs details in the Logs Panel.
+ * If this method is defined, the return value will be used to group fields in the Logs Panel.
  */
 export interface DataSourceWithLogsLabelTypesSupport {
   getLabelTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null): null | string;

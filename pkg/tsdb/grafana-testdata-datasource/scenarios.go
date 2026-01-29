@@ -703,7 +703,7 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 					t,
 					message,
 					nanos,
-					json.RawMessage(`{"container_id":"Indexed label","hostname":"Parsed field","level":"Metadata"}`),
+					json.RawMessage(`{"container_id":"Indexed label","hostname":"Parsed field"}`),
 				)
 			}
 
