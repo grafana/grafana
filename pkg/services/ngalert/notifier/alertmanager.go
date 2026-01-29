@@ -246,7 +246,7 @@ func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 }
 
 // ApplyConfig applies the configuration to the Alertmanager.
-func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertConfiguration) error {
+func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertConfiguration, opts ...ngmodels.ApplyConfigOption) error {
 	var err error
 	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
 	if err != nil {
@@ -259,7 +259,8 @@ func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 		// Since we will now update last_applied when autogen changes even if the user-created config remains the same.
 		// To fix this however, the local alertmanager needs to be able to tell the difference between user-created and
 		// autogen config, which may introduce cross-cutting complexity.
-		configChanged, err := am.applyConfig(ctx, cfg, LogInvalidReceivers)
+		defaults := ngmodels.ApplyConfigOptions{AutogenInvalidReceiversAction: LogInvalidReceivers}
+		configChanged, err := am.applyConfig(ctx, cfg, defaults.WithOverrides(opts...).AutogenInvalidReceiversAction)
 		if err != nil {
 			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 			return

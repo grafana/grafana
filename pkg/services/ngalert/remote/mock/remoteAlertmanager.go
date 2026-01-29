@@ -33,17 +33,24 @@ func (_m *RemoteAlertmanagerMock) EXPECT() *RemoteAlertmanagerMock_Expecter {
 	return &RemoteAlertmanagerMock_Expecter{mock: &_m.Mock}
 }
 
-// ApplyConfig provides a mock function with given fields: _a0, _a1
-func (_m *RemoteAlertmanagerMock) ApplyConfig(_a0 context.Context, _a1 *models.AlertConfiguration) error {
-	ret := _m.Called(_a0, _a1)
+// ApplyConfig provides a mock function with given fields: _a0, _a1, _a2
+func (_m *RemoteAlertmanagerMock) ApplyConfig(_a0 context.Context, _a1 *models.AlertConfiguration, _a2 ...models.ApplyConfigOption) error {
+	_va := make([]interface{}, len(_a2))
+	for _i := range _a2 {
+		_va[_i] = _a2[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, _a0, _a1)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApplyConfig")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.AlertConfiguration) error); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.AlertConfiguration, ...models.ApplyConfigOption) error); ok {
+		r0 = rf(_a0, _a1, _a2...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -59,13 +66,21 @@ type RemoteAlertmanagerMock_ApplyConfig_Call struct {
 // ApplyConfig is a helper method to define mock.On call
 //   - _a0 context.Context
 //   - _a1 *models.AlertConfiguration
-func (_e *RemoteAlertmanagerMock_Expecter) ApplyConfig(_a0 interface{}, _a1 interface{}) *RemoteAlertmanagerMock_ApplyConfig_Call {
-	return &RemoteAlertmanagerMock_ApplyConfig_Call{Call: _e.mock.On("ApplyConfig", _a0, _a1)}
+//   - _a2 ...models.ApplyConfigOption
+func (_e *RemoteAlertmanagerMock_Expecter) ApplyConfig(_a0 interface{}, _a1 interface{}, _a2 ...interface{}) *RemoteAlertmanagerMock_ApplyConfig_Call {
+	return &RemoteAlertmanagerMock_ApplyConfig_Call{Call: _e.mock.On("ApplyConfig",
+		append([]interface{}{_a0, _a1}, _a2...)...)}
 }
 
-func (_c *RemoteAlertmanagerMock_ApplyConfig_Call) Run(run func(_a0 context.Context, _a1 *models.AlertConfiguration)) *RemoteAlertmanagerMock_ApplyConfig_Call {
+func (_c *RemoteAlertmanagerMock_ApplyConfig_Call) Run(run func(_a0 context.Context, _a1 *models.AlertConfiguration, _a2 ...models.ApplyConfigOption)) *RemoteAlertmanagerMock_ApplyConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.AlertConfiguration))
+		variadicArgs := make([]models.ApplyConfigOption, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(models.ApplyConfigOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(*models.AlertConfiguration), variadicArgs...)
 	})
 	return _c
 }
@@ -75,22 +90,22 @@ func (_c *RemoteAlertmanagerMock_ApplyConfig_Call) Return(_a0 error) *RemoteAler
 	return _c
 }
 
-func (_c *RemoteAlertmanagerMock_ApplyConfig_Call) RunAndReturn(run func(context.Context, *models.AlertConfiguration) error) *RemoteAlertmanagerMock_ApplyConfig_Call {
+func (_c *RemoteAlertmanagerMock_ApplyConfig_Call) RunAndReturn(run func(context.Context, *models.AlertConfiguration, ...models.ApplyConfigOption) error) *RemoteAlertmanagerMock_ApplyConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CompareAndSendConfiguration provides a mock function with given fields: _a0, _a1
-func (_m *RemoteAlertmanagerMock) CompareAndSendConfiguration(_a0 context.Context, _a1 *models.AlertConfiguration) error {
-	ret := _m.Called(_a0, _a1)
+// CompareAndSendConfiguration provides a mock function with given fields: _a0, _a1, _a2
+func (_m *RemoteAlertmanagerMock) CompareAndSendConfiguration(_a0 context.Context, _a1 *models.AlertConfiguration, _a2 models.InvalidReceiversAction) error {
+	ret := _m.Called(_a0, _a1, _a2)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CompareAndSendConfiguration")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.AlertConfiguration) error); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.AlertConfiguration, models.InvalidReceiversAction) error); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -106,13 +121,14 @@ type RemoteAlertmanagerMock_CompareAndSendConfiguration_Call struct {
 // CompareAndSendConfiguration is a helper method to define mock.On call
 //   - _a0 context.Context
 //   - _a1 *models.AlertConfiguration
-func (_e *RemoteAlertmanagerMock_Expecter) CompareAndSendConfiguration(_a0 interface{}, _a1 interface{}) *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call {
-	return &RemoteAlertmanagerMock_CompareAndSendConfiguration_Call{Call: _e.mock.On("CompareAndSendConfiguration", _a0, _a1)}
+//   - _a2 models.InvalidReceiversAction
+func (_e *RemoteAlertmanagerMock_Expecter) CompareAndSendConfiguration(_a0 interface{}, _a1 interface{}, _a2 interface{}) *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call {
+	return &RemoteAlertmanagerMock_CompareAndSendConfiguration_Call{Call: _e.mock.On("CompareAndSendConfiguration", _a0, _a1, _a2)}
 }
 
-func (_c *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call) Run(run func(_a0 context.Context, _a1 *models.AlertConfiguration)) *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call {
+func (_c *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call) Run(run func(_a0 context.Context, _a1 *models.AlertConfiguration, _a2 models.InvalidReceiversAction)) *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*models.AlertConfiguration))
+		run(args[0].(context.Context), args[1].(*models.AlertConfiguration), args[2].(models.InvalidReceiversAction))
 	})
 	return _c
 }
@@ -122,7 +138,7 @@ func (_c *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call) Return(_a0 er
 	return _c
 }
 
-func (_c *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call) RunAndReturn(run func(context.Context, *models.AlertConfiguration) error) *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call {
+func (_c *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call) RunAndReturn(run func(context.Context, *models.AlertConfiguration, models.InvalidReceiversAction) error) *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call {
 	_c.Call.Return(run)
 	return _c
 }

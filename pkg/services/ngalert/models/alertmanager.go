@@ -47,3 +47,36 @@ func HistoricConfigFromAlertConfig(config AlertConfiguration) HistoricAlertConfi
 		AlertConfiguration: config,
 	}
 }
+
+// ApplyConfigOption is a functional option for ApplyConfig.
+type ApplyConfigOption func(*ApplyConfigOptions)
+
+// ApplyConfigOptions holds options for ApplyConfig functions. Exported so other
+// packages (for example `remote`) can construct and apply options.
+type ApplyConfigOptions struct {
+	AutogenInvalidReceiversAction InvalidReceiversAction
+}
+
+// WithAutogenInvalidReceiversAction configures which InvalidReceiversAction to use when
+// applying configuration and generating autogen routes.
+func WithAutogenInvalidReceiversAction(a InvalidReceiversAction) ApplyConfigOption {
+	return func(o *ApplyConfigOptions) {
+		o.AutogenInvalidReceiversAction = a
+	}
+}
+
+// WithOverrides returns a copy of the ApplyConfigOptions with each option applied in order.
+func (ao ApplyConfigOptions) WithOverrides(opts ...ApplyConfigOption) ApplyConfigOptions {
+	for _, o := range opts {
+		o(&ao)
+	}
+	return ao
+}
+
+type InvalidReceiversAction string
+
+const (
+	ErrorOnInvalidReceivers InvalidReceiversAction = "error"
+	LogInvalidReceivers     InvalidReceiversAction = "log"
+	IgnoreInvalidReceivers  InvalidReceiversAction = "ignore"
+)

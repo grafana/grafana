@@ -502,6 +502,6 @@ func (moa *MultiOrgAlertmanager) saveAndApplyConfig(ctx context.Context, org int
 	}
 
 	return moa.configStore.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func(alertConfig models.AlertConfiguration) error {
-		return am.ApplyConfig(ctx, &alertConfig) // Rollback save if apply fails. // TODO: ErrorOnInvalidReceivers
+		return am.ApplyConfig(ctx, &alertConfig, models.WithAutogenInvalidReceiversAction(models.ErrorOnInvalidReceivers)) // Rollback save if apply fails.
 	})
 }

@@ -50,7 +50,7 @@ var (
 //go:generate mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mock
 type Alertmanager interface {
 	// Configuration
-	ApplyConfig(context.Context, *models.AlertConfiguration) error
+	ApplyConfig(context.Context, *models.AlertConfiguration, ...models.ApplyConfigOption) error
 	SaveAndApplyDefaultConfig(ctx context.Context) error
 	GetStatus(context.Context) (apimodels.GettableStatus, error)
 

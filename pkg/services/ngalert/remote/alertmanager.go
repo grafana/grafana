@@ -252,7 +252,7 @@ func NewAlertmanager(
 // 1. Execute a readiness check to make sure the remote Alertmanager we're about to communicate with is up and ready.
 // 2. Upload the configuration and state we currently hold.
 // On each subsequent call to ApplyConfig we compare and upload only the configuration.
-func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration, opts ...models.ApplyConfigOption) error {
 	if am.ready {
 		am.log.Debug("Alertmanager previously marked as ready, skipping readiness check and state sync")
 	} else {
@@ -274,7 +274,8 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	}
 
 	am.log.Debug("Start configuration upload to remote Alertmanager", "url", am.url)
-	if err := am.CompareAndSendConfiguration(ctx, config); err != nil {
+	defaults := models.ApplyConfigOptions{AutogenInvalidReceiversAction: models.LogInvalidReceivers}
+	if err := am.CompareAndSendConfiguration(ctx, config, defaults.WithOverrides(opts...).AutogenInvalidReceiversAction); err != nil {
 		return fmt.Errorf("unable to upload the configuration to the remote Alertmanager: %w", err)
 	}
 	am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
@@ -295,8 +296,8 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 
 // CompareAndSendConfiguration checks whether a given configuration is being used by the remote Alertmanager.
 // If not, it sends the configuration to the remote Alertmanager.
-func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
-	payload, err := am.buildConfiguration(ctx, []byte(config.AlertmanagerConfiguration), config.CreatedAt, notifier.LogInvalidReceivers)
+func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration, autogenInvalidReceiverAction models.InvalidReceiversAction) error {
+	payload, err := am.buildConfiguration(ctx, []byte(config.AlertmanagerConfiguration), config.CreatedAt, autogenInvalidReceiverAction)
 	if err != nil {
 		return fmt.Errorf("unable to build configuration: %w", err)
 	}

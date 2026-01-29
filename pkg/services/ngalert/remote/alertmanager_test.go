@@ -564,7 +564,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			cfg := ngmodels.AlertConfiguration{
 				AlertmanagerConfiguration: test.config,
 			}
-			err = am.CompareAndSendConfiguration(ctx, &cfg)
+			err = am.CompareAndSendConfiguration(ctx, &cfg, notifier.LogInvalidReceivers)
 			if len(test.expErrContains) == 0 {
 				require.NoError(tt, err)
 
@@ -582,7 +582,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 
 				got1 := got
 				got = ""
-				err = am.CompareAndSendConfiguration(ctx, &cfg)
+				err = am.CompareAndSendConfiguration(ctx, &cfg, notifier.LogInvalidReceivers)
 				require.NoError(tt, err)
 
 				got2 := got
@@ -872,7 +872,7 @@ receivers:
 		AlertmanagerConfiguration: string(configJSON),
 	}
 
-	err = am.CompareAndSendConfiguration(ctx, config)
+	err = am.CompareAndSendConfiguration(ctx, config, notifier.LogInvalidReceivers)
 	require.NoError(t, err)
 
 	require.Equal(t, len(configSent.GrafanaAlertmanagerConfig.AlertmanagerConfig.Receivers), 2)
