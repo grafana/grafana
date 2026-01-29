@@ -27,21 +27,10 @@ weight: 320
 # Configure SCIM with Entra ID
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and to customers on select Grafana Cloud plans. For pricing information, visit [pricing](https://grafana.com/pricing/) or contact our sales team.
-{{< /admonition >}}
-
-{{< admonition type="warning" >}}
-**Public Preview:** SCIM provisioning is currently in Public Preview. While functional, the feature is actively being refined and may undergo changes. We recommend thorough testing in non-production environments before deploying to production systems.
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
 {{< /admonition >}}
 
 This guide explains how to configure SCIM provisioning with Entra ID to automate user and team management in Grafana.
-
-{{< admonition type="note" >}}
-This feature is behind the `enableSCIM` feature toggle.
-You can enable feature toggles through configuration file or environment variables.
-
-For more information, refer to the [feature toggles documentation](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
-{{< /admonition >}}
 
 {{< admonition type="note" >}}
 **Important SAML and SCIM Configuration:**

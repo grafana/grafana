@@ -22,7 +22,7 @@ interface Props extends Omit<BoxProps, 'display' | 'direction' | 'element' | 'fl
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-scrollcontainer--docs
  */
-export const ScrollContainer = forwardRef<HTMLDivElement, PropsWithChildren<Props>>(
+export const ScrollContainer = forwardRef<HTMLDivElement | null, PropsWithChildren<Props>>(
   (
     {
       children,

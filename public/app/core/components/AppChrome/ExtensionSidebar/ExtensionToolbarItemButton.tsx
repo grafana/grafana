@@ -17,6 +17,8 @@ function getPluginIcon(pluginId?: string): string {
     case 'grafana-grafanadocsplugin-app':
     case 'grafana-pathfinder-app':
       return 'book';
+    case 'grafana-grotfood-app':
+      return 'gf-grotfood';
     default:
       return 'ai-sparkle';
   }

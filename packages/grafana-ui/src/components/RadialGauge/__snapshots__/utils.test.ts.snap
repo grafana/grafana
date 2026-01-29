@@ -10,8 +10,6 @@ exports[`RadialGauge utils drawRadialArcPath should draw correct path for narrow
 
 exports[`RadialGauge utils drawRadialArcPath should draw correct path for quarter arc 1`] = `"M 100 20 A 80 80 0 0 1 180 100"`;
 
-exports[`RadialGauge utils drawRadialArcPath should draw correct path for rounded bars 1`] = `"M 100 20 A 80 80 0 1 1 20 100.00000000000001"`;
-
 exports[`RadialGauge utils drawRadialArcPath should draw correct path for three quarter arc 1`] = `"M 100 20 A 80 80 0 1 1 20 100.00000000000001"`;
 
 exports[`RadialGauge utils drawRadialArcPath should draw correct path for wide bar width 1`] = `"M 100 20 A 80 80 0 0 1 100 180"`;

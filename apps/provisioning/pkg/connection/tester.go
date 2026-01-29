@@ -14,8 +14,8 @@ type SimpleConnectionTester struct {
 	factory Factory
 }
 
-func NewSimpleConnectionTester(factory Factory) SimpleConnectionTester {
-	return SimpleConnectionTester{
+func NewSimpleConnectionTester(factory Factory) *SimpleConnectionTester {
+	return &SimpleConnectionTester{
 		factory: factory,
 	}
 }

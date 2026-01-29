@@ -20,6 +20,7 @@ type RepositoryStatusApplyConfiguration struct {
 	Webhook            *WebhookStatusApplyConfiguration  `json:"webhook,omitempty"`
 	Token              *TokenStatusApplyConfiguration    `json:"token,omitempty"`
 	DeleteError        *string                           `json:"deleteError,omitempty"`
+	Quota              *QuotaStatusApplyConfiguration    `json:"quota,omitempty"`
 }
 
 // RepositoryStatusApplyConfiguration constructs a declarative configuration of the RepositoryStatus type for use with
@@ -112,5 +113,13 @@ func (b *RepositoryStatusApplyConfiguration) WithToken(value *TokenStatusApplyCo
 // If called multiple times, the DeleteError field is set to the value of the last call.
 func (b *RepositoryStatusApplyConfiguration) WithDeleteError(value string) *RepositoryStatusApplyConfiguration {
 	b.DeleteError = &value
+	return b
+}
+
+// WithQuota sets the Quota field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Quota field is set to the value of the last call.
+func (b *RepositoryStatusApplyConfiguration) WithQuota(value *QuotaStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
+	b.Quota = value
 	return b
 }

@@ -19,6 +19,8 @@ type AccessControlService interface {
 	AuthorizeCreate(context.Context, identity.Requester) error
 	AuthorizeUpdateByUID(context.Context, identity.Requester, string) error
 	AuthorizeDeleteByUID(context.Context, identity.Requester, string) error
+	AuthorizeTestByUID(context.Context, identity.Requester, string) error
+	AuthorizeTestNew(context.Context, identity.Requester) error
 }
 
 func Authorize(ctx context.Context, ac AccessControlService, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
@@ -42,6 +44,20 @@ func Authorize(ctx context.Context, ac AccessControlService, attr authorizer.Att
 		}
 
 		return authorizer.DecisionDeny, "", err
+	}
+
+	switch attr.GetSubresource() {
+	case "test":
+		var err error
+		if uid == newReceiverNamePlaceholder {
+			err = ac.AuthorizeTestNew(ctx, user)
+		} else {
+			err = ac.AuthorizeTestByUID(ctx, user, uid)
+		}
+		if err != nil {
+			return deny(err)
+		}
+		return authorizer.DecisionAllow, "", nil
 	}
 
 	switch attr.GetVerb() {

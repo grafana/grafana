@@ -2,31 +2,39 @@ package receivers
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"io"
 	"maps"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/alerting/definition"
 	"github.com/grafana/grafana-app-sdk/resource"
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	alertingauthz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
+var NoReceiverIdentifier = resource.Identifier{
+	Namespace: "default",
+	Name:      "-",
+}
+
+func TestIntegrationReceiverAuthorizationTest(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
@@ -48,36 +56,14 @@ func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
 		Spec: v0alpha1.ReceiverSpec{
 			Title: "test-receiver-1",
 			Integrations: []v0alpha1.ReceiverIntegration{
-				func() v0alpha1.ReceiverIntegration {
-					i := createIntegration(t, "webhook")
-					i.Settings["url"] = "http://localhost:8080"
-					return i
-				}(),
+				createIntegration(t, "webhook"),
 			},
 		},
 	}, resource.CreateOptions{})
 	require.NoError(t, err)
 
-	data, err := json.Marshal(existingReceiver.Spec.Integrations[0].Settings)
-	require.NoError(t, err)
-
-	legacyReceiver := apimodels.PostableApiReceiver{
-		Receiver: config.Receiver{
-			Name: existingReceiver.Spec.Title,
-		},
-		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
-			GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{
-				{
-					UID:      *existingReceiver.Spec.Integrations[0].Uid,
-					Type:     existingReceiver.Spec.Integrations[0].Type,
-					Settings: apimodels.RawMessage(data),
-				},
-			},
-		},
-	}
-
-	alert := apimodels.TestReceiversConfigAlertParams{
-		Labels: map[model.LabelName]model.LabelValue{
+	alert := v0alpha1.CreateReceiverIntegrationTestRequestAlert{
+		Labels: map[string]string{
 			"alertname": "test-alert",
 		},
 	}
@@ -110,6 +96,26 @@ func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
 							Actions: []string{
 								accesscontrol.ActionAlertingReceiversTest,
 							},
+						},
+					})
+				}(),
+				canTestNew:      true,
+				canTestExisting: false,
+			},
+			{
+				name: "legacy test + reader",
+				user: func() apis.User {
+					return helper.CreateUser("legacyTesterReader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+						{
+							Actions: []string{
+								accesscontrol.ActionAlertingReceiversTest,
+							},
+						},
+						{
+							Actions:           []string{accesscontrol.ActionAlertingReceiversRead},
+							Resource:          models.ScopeReceiversRoot,
+							ResourceAttribute: "uid",
+							ResourceID:        existingReceiver.Name,
 						},
 					})
 				}(),
@@ -224,39 +230,31 @@ func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				cfg := tc.user.NewRestConfig()
-
-				alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cfg.Username, cfg.Password)
+				client, err := v0alpha1.NewReceiverClientFromGenerator(tc.user.GetClientRegistry())
+				require.NoError(t, err)
 
 				prefix := "cannot"
 				if tc.canTestNew {
 					prefix = "can"
 				}
 				t.Run(prefix+" test when no receiver name provided", func(t *testing.T) {
-					resp, code, err := alertingApi.TestReceiver(t, apimodels.TestReceiversConfigBodyParams{
-						Alert: &alert,
-						Receivers: []*apimodels.PostableApiReceiver{
-							{
-								Receiver: config.Receiver{
-									Name: "",
-								},
-								PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
-									GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{
-										{
-											Type:     "webhook",
-											Settings: apimodels.RawMessage(`{"url":"http://localhost:8080"}`),
-										},
-									},
+					resp, err := client.CreateReceiverIntegrationTest(ctx, NoReceiverIdentifier, v0alpha1.CreateReceiverIntegrationTestRequest{
+						Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
+							Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+								Type: "webhook",
+								Settings: map[string]interface{}{
+									"url": "http://localhost:8080",
 								},
 							},
+							Alert: alert,
 						},
 					})
-					require.NoError(t, err)
-					expectedCode := 207
-					if !tc.canTestNew {
-						expectedCode = 403
+					if tc.canTestNew {
+						require.NoError(t, err)
+					} else {
+						d, _ := json.Marshal(resp)
+						require.Truef(t, errors.IsForbidden(err), "Response %s", string(d))
 					}
-					require.Equalf(t, expectedCode, code, "Expected %d, got %d: %s", expectedCode, code, string(resp))
 				})
 
 				prefix = "cannot"
@@ -265,44 +263,38 @@ func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
 				}
 				t.Run(prefix+" test integration when receiver name is provided", func(t *testing.T) {
 					t.Run("and existing integration is tested", func(t *testing.T) {
-						resp, code, err := alertingApi.TestReceiver(t, apimodels.TestReceiversConfigBodyParams{
-							Alert: &alert,
-							Receivers: []*apimodels.PostableApiReceiver{
-								&legacyReceiver,
+						resp, err := client.CreateReceiverIntegrationTest(ctx, existingReceiver.GetStaticMetadata().Identifier(), v0alpha1.CreateReceiverIntegrationTestRequest{
+							Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
+								Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration(existingReceiver.Spec.Integrations[0]),
+								Alert:       alert,
 							},
 						})
-						require.NoError(t, err)
-						expectedCode := 207
-						if !tc.canTestExisting {
-							expectedCode = 403
+						if tc.canTestExisting {
+							require.NoError(t, err)
+						} else {
+							d, _ := json.Marshal(resp)
+							require.Truef(t, errors.IsForbidden(err), "Response %s", string(d))
 						}
-						require.Equalf(t, expectedCode, code, "Expected %d, got %d: %s", expectedCode, code, string(resp))
 					})
 					t.Run("and new integration is tested", func(t *testing.T) {
-						resp, code, err := alertingApi.TestReceiver(t, apimodels.TestReceiversConfigBodyParams{
-							Alert: &alert,
-							Receivers: []*apimodels.PostableApiReceiver{
-								{
-									Receiver: config.Receiver{
-										Name: legacyReceiver.Name,
-									},
-									PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
-										GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{
-											{
-												Type:     "webhook",
-												Settings: apimodels.RawMessage(`{"url":"http://localhost:8080"}`),
-											},
-										},
+						resp, err := client.CreateReceiverIntegrationTest(ctx, existingReceiver.GetStaticMetadata().Identifier(), v0alpha1.CreateReceiverIntegrationTestRequest{
+							Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
+								Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+									Uid:  nil,
+									Type: "webhook",
+									Settings: map[string]interface{}{
+										"url": "http://localhost:8080",
 									},
 								},
+								Alert: alert,
 							},
 						})
-						require.NoError(t, err)
-						expectedCode := 207
-						if !tc.canTestExisting {
-							expectedCode = 403
+						if tc.canTestExisting {
+							require.NoError(t, err)
+						} else {
+							d, _ := json.Marshal(resp)
+							require.Truef(t, errors.IsForbidden(err), "Response %s", string(d))
 						}
-						require.Equalf(t, expectedCode, code, "Expected %d, got %d: %s", expectedCode, code, string(resp))
 					})
 				})
 			})
@@ -310,23 +302,16 @@ func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
 	})
 
 	t.Run("should require protected:write permission if existing integration is tested", func(t *testing.T) {
-		modified := maps.Clone(existingReceiver.Spec.Integrations[0].Settings)
-		modified["url"] = "grafana://noop/1"
-		data, err := json.Marshal(modified)
+		modified, err := adminClient.Get(ctx, existingReceiver.GetStaticMetadata().Identifier())
 		require.NoError(t, err)
 
-		modifiedProtected := apimodels.PostableApiReceiver{
-			Receiver: config.Receiver{
-				Name: existingReceiver.Spec.Title,
-			},
-			PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{
-					{
-						UID:      *existingReceiver.Spec.Integrations[0].Uid,
-						Type:     existingReceiver.Spec.Integrations[0].Type,
-						Settings: apimodels.RawMessage(data),
-					},
-				},
+		modifiedIntegration := v0alpha1.CreateReceiverIntegrationTestRequestIntegration(modified.Spec.Integrations[0])
+		modifiedIntegration.Settings["url"] = "http://localhost:8080/protected"
+
+		request := v0alpha1.CreateReceiverIntegrationTestRequest{
+			Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
+				Integration: modifiedIntegration,
+				Alert:       alert,
 			},
 		}
 
@@ -338,17 +323,16 @@ func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
 				ResourceID:        existingReceiver.Name,
 			},
 		})
-		cfg := noProtected.NewRestConfig()
-		alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cfg.Username, cfg.Password)
-
-		resp, code, err := alertingApi.TestReceiver(t, apimodels.TestReceiversConfigBodyParams{
-			Alert: &alert,
-			Receivers: []*apimodels.PostableApiReceiver{
-				&modifiedProtected,
-			},
-		})
+		client, err := v0alpha1.NewReceiverClientFromGenerator(noProtected.GetClientRegistry())
 		require.NoError(t, err)
-		require.Equalf(t, 403, code, "Expected 403, got %d: %s", code, string(resp))
+
+		resp, err := client.CreateReceiverIntegrationTest(ctx, existingReceiver.GetStaticMetadata().Identifier(), request)
+
+		var d []byte
+		if resp != nil {
+			d, _ = json.Marshal(resp)
+		}
+		assert.Truef(t, errors.IsForbidden(err), "Response %s", string(d))
 
 		protected := helper.CreateUser("updater+protected", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 			{
@@ -358,16 +342,240 @@ func TestIntegrationLegacyReceiverAuthorizationTest(t *testing.T) {
 				ResourceID:        existingReceiver.Name,
 			},
 		})
-		cfg = protected.NewRestConfig()
-		alertingApi = alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cfg.Username, cfg.Password)
+		client, err = v0alpha1.NewReceiverClientFromGenerator(protected.GetClientRegistry())
+		require.NoError(t, err)
 
-		resp, code, err = alertingApi.TestReceiver(t, apimodels.TestReceiversConfigBodyParams{
-			Alert: &alert,
-			Receivers: []*apimodels.PostableApiReceiver{
-				&modifiedProtected,
+		_, err = client.CreateReceiverIntegrationTest(ctx, existingReceiver.GetStaticMetadata().Identifier(), request)
+		require.NoError(t, err)
+	})
+}
+
+func TestIntegrationTesting(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	type request struct {
+		path    string
+		body    []byte
+		headers map[string][]string
+	}
+
+	var requests []request
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		rq := request{
+			path:    r.URL.Path,
+			body:    body,
+			headers: maps.Clone(r.Header),
+		}
+		requests = append(requests, rq)
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(server.Close)
+
+	assertRequest := func(t *testing.T, r request, urlPath, user, password string) {
+		t.Helper()
+		assert.Equal(t, urlPath, r.path)
+		assert.Equal(t, []string{"Basic " + base64.StdEncoding.EncodeToString([]byte(user+":"+password))}, r.headers["Authorization"])
+	}
+
+	user := helper.CreateUser("user", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{accesscontrol.ActionAlertingReceiversCreate},
+		},
+		{
+			Actions:           []string{accesscontrol.ActionAlertingReceiversTestCreate},
+			Resource:          models.ScopeReceiversRoot,
+			ResourceAttribute: "type",
+			ResourceID:        alertingauthz.NewReceiverType,
+		},
+	})
+
+	client, err := v0alpha1.NewReceiverClientFromGenerator(user.GetClientRegistry())
+	require.NoError(t, err)
+
+	integration := v0alpha1.ReceiverIntegration{
+		Type:    "webhook",
+		Version: "v1",
+		Settings: map[string]interface{}{
+			"url":      server.URL,
+			"username": "user",
+			"password": "secret-password",
+		},
+	}
+
+	alert := v0alpha1.CreateReceiverIntegrationTestRequestAlert{
+		Labels: map[string]string{
+			"alertname": "test-alert",
+		},
+	}
+
+	t.Run("should be able to test a new receiver", func(t *testing.T) {
+		requests = nil
+		result, err := client.CreateReceiverIntegrationTest(ctx, NoReceiverIdentifier,
+			v0alpha1.CreateReceiverIntegrationTestRequest{
+				Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
+					Alert: alert,
+					Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+						Type:     integration.Type,
+						Version:  integration.Version,
+						Settings: integration.Settings,
+					},
+				},
+			})
+		require.NoError(t, err)
+		assert.Equal(t, v0alpha1.CreateReceiverIntegrationTestBodyStatusSuccess, result.Status)
+		require.Len(t, requests, 1)
+		assertRequest(t, requests[0], "/", "user", "secret-password")
+	})
+
+	receiver, err := client.Create(ctx, &v0alpha1.Receiver{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.ReceiverSpec{
+			Title: "test-receiver-1",
+			Integrations: []v0alpha1.ReceiverIntegration{
+				integration,
+			},
+		},
+	}, resource.CreateOptions{})
+	require.NoError(t, err)
+
+	t.Run("should be able to test with changed settings", func(t *testing.T) {
+		receiver, err := client.Get(ctx, receiver.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+		integration := v0alpha1.CreateReceiverIntegrationTestRequestIntegration(receiver.Spec.Integrations[0])
+		integration.Settings["url"] = server.URL + "/changed"
+		integration.Settings["password"] = "new-super-secure"
+		integration.SecureFields["password"] = false
+
+		requests = nil
+		result, err := client.CreateReceiverIntegrationTest(ctx, receiver.GetStaticMetadata().Identifier(), v0alpha1.CreateReceiverIntegrationTestRequest{
+			Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
+				Alert:       alert,
+				Integration: integration,
 			},
 		})
 		require.NoError(t, err)
-		require.Equalf(t, 207, code, "Expected 403, got %d: %s", code, string(resp))
+		assert.Equal(t, v0alpha1.CreateReceiverIntegrationTestBodyStatusSuccess, result.Status)
+		require.Len(t, requests, 1)
+		assertRequest(t, requests[0], "/changed", "user", "new-super-secure")
+	})
+
+	t.Run("should be able to test a new integration for the existing receiver", func(t *testing.T) {
+		requests = nil
+		result, err := client.CreateReceiverIntegrationTest(ctx, receiver.GetStaticMetadata().Identifier(), v0alpha1.CreateReceiverIntegrationTestRequest{
+			Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
+				Alert: alert,
+				Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+					Type: "webhook",
+					Settings: map[string]interface{}{
+						"url":      server.URL + "/some-other",
+						"username": "user1",
+						"password": "test",
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+		assert.Equal(t, v0alpha1.CreateReceiverIntegrationTestBodyStatusSuccess, result.Status)
+		require.Len(t, requests, 1)
+		assertRequest(t, requests[0], "/some-other", "user1", "test")
+	})
+
+	t.Run("should not be able to test", func(t *testing.T) {
+		adminClient, err := v0alpha1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+		require.NoError(t, err)
+
+		assertError := func(t *testing.T, predicate func(error) bool, resp *v0alpha1.CreateReceiverIntegrationTest, err error) {
+			t.Helper()
+			var d []byte
+			if resp != nil {
+				d, _ = json.Marshal(resp)
+			}
+			require.Truef(t, predicate(err), "Response %s", string(d))
+		}
+
+		t.Run("a new integration with UID specified", func(t *testing.T) {
+			receiver, err := client.Get(ctx, receiver.GetStaticMetadata().Identifier())
+			integration := v0alpha1.CreateReceiverIntegrationTestRequestIntegration(receiver.Spec.Integrations[0])
+			require.NoError(t, err)
+			requests = nil
+			result, err := adminClient.CreateReceiverIntegrationTest(ctx, NoReceiverIdentifier, v0alpha1.CreateReceiverIntegrationTestRequest{
+				Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
+					Alert:       alert,
+					Integration: integration,
+				},
+			})
+			assertError(t, errors.IsBadRequest, result, err)
+			assert.Empty(t, requests)
+		})
+		t.Run("an integration with not existing UID", func(t *testing.T) {
+			requests = nil
+			result, err := adminClient.CreateReceiverIntegrationTest(ctx, receiver.GetStaticMetadata().Identifier(), v0alpha1.CreateReceiverIntegrationTestRequest{
+				Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
+					Alert: alert,
+					Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+						Uid:  utils.Pointer("test-uid"),
+						Type: "webhook",
+						Settings: map[string]interface{}{
+							"url":      server.URL + "/some-other",
+							"username": "user1",
+							"password": "test",
+						},
+					},
+				},
+			})
+			assertError(t, errors.IsNotFound, result, err)
+			assert.Empty(t, requests)
+		})
+		t.Run("a receiver that does not exist", func(t *testing.T) {
+			requests = nil
+			result, err := adminClient.CreateReceiverIntegrationTest(ctx,
+				resource.Identifier{
+					Namespace: "default",
+					Name:      "not-existing",
+				},
+				v0alpha1.CreateReceiverIntegrationTestRequest{
+					Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
+						Alert: alert,
+						Integration: v0alpha1.CreateReceiverIntegrationTestRequestIntegration{
+							Uid:  util.Pointer("test-uid"),
+							Type: "webhook",
+							Settings: map[string]interface{}{
+								"url": server.URL,
+							},
+						},
+					},
+				})
+			assertError(t, errors.IsNotFound, result, err)
+		})
+		t.Run("an integration that does not belong to receiver", func(t *testing.T) {
+			receiver, err := client.Get(ctx, receiver.GetStaticMetadata().Identifier())
+			require.NoError(t, err)
+			receiver1Integration := v0alpha1.CreateReceiverIntegrationTestRequestIntegration(receiver.Spec.Integrations[0])
+
+			receiver2, err := client.Create(ctx, &v0alpha1.Receiver{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: v0alpha1.ReceiverSpec{
+					Title:        "test-receiver-2",
+					Integrations: []v0alpha1.ReceiverIntegration{},
+				},
+			}, resource.CreateOptions{})
+			require.NoError(t, err)
+
+			result, err := client.CreateReceiverIntegrationTest(ctx, receiver2.GetStaticMetadata().Identifier(), v0alpha1.CreateReceiverIntegrationTestRequest{
+				Body: v0alpha1.CreateReceiverIntegrationTestRequestBody{
+					Alert:       alert,
+					Integration: receiver1Integration,
+				},
+			})
+			assertError(t, errors.IsNotFound, result, err)
+		})
 	})
 }

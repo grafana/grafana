@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { locationUtil } from '@grafana/data';
 import { config, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
+import { OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import {
@@ -65,11 +66,12 @@ export default function CreateNewButton({
     renderPreBuiltDashboardAction = testDataSources.length > 0;
   }
 
-  const onCreateFolder = async (folderName: string) => {
+  const onCreateFolder = async (folderName: string, teamOwnerRefs?: OwnerReference[]) => {
     try {
       const folder = await newFolder({
         title: folderName,
         parentUid: parentFolder?.uid,
+        teamOwnerReferences: teamOwnerRefs,
       });
 
       const depth = parentFolder ? (parentFolder.parents?.length || 0) + 1 : 0;

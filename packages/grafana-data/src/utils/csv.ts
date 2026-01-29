@@ -263,6 +263,8 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
     return '';
   }
 
+  data = expandNestedFrames(data);
+
   config = defaults(config, {
     delimiter: getLocaleDelimiter(),
     newline: '\r\n',
@@ -337,4 +339,88 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
   }
 
   return csv;
+}
+
+function expandNestedFrames(data: DataFrame[]): DataFrame[] {
+  const expanded: DataFrame[] = [];
+
+  for (const series of data) {
+    const nestedField = series.fields.find((field) => field.type === FieldType.nestedFrames);
+    if (!nestedField) {
+      expanded.push(series);
+      continue;
+    }
+
+    const parentFields = series.fields.filter((field) => field !== nestedField);
+    const childFields = getFirstNestedFields(nestedField.values);
+    const flattenedFields = [...parentFields, ...childFields].map((field) => ({
+      ...field,
+      values: field.values.slice(0, 0),
+    }));
+
+    const parentFieldCount = parentFields.length;
+    const childFieldCount = childFields.length;
+
+    const pushRow = (parentValues: unknown[], childValues: unknown[]) => {
+      for (let i = 0; i < flattenedFields.length; i++) {
+        const value = i < parentFieldCount ? parentValues[i] : childValues[i - parentFieldCount];
+        flattenedFields[i].values.push(value);
+      }
+    };
+
+    for (let rowIndex = 0; rowIndex < series.length; rowIndex++) {
+      const parentValues = parentFields.map((field) => field.values[rowIndex]);
+      const nestedFrames = nestedField.values[rowIndex] ?? [];
+      let addedChildRow = false;
+
+      for (const childFrame of nestedFrames) {
+        if (!childFrame || childFrame.length === 0 || childFieldCount === 0) {
+          continue;
+        }
+
+        const fieldIndexByName = new Map(childFrame.fields.map((field: Field, index: number) => [field.name, index]));
+        for (let childRowIndex = 0; childRowIndex < childFrame.length; childRowIndex++) {
+          const childValues = childFields.map((field) => {
+            const fieldIndex = fieldIndexByName.get(field.name);
+            if (fieldIndex === undefined || typeof fieldIndex !== 'number') {
+              return null;
+            }
+            const fieldValue = childFrame.fields[fieldIndex].values[childRowIndex];
+            if (fieldValue === undefined || fieldValue === null) {
+              return null;
+            }
+            return fieldValue;
+          });
+
+          pushRow(parentValues, childValues);
+          addedChildRow = true;
+        }
+      }
+
+      if (!addedChildRow) {
+        pushRow(parentValues, new Array(childFieldCount).fill(null));
+      }
+    }
+
+    const length = flattenedFields[0]?.values.length ?? 0;
+    expanded.push({
+      ...series,
+      fields: flattenedFields,
+      length,
+    });
+  }
+
+  return expanded;
+}
+
+function getFirstNestedFields(values: Array<DataFrame[] | undefined>): Field[] {
+  for (const nestedFrames of values) {
+    for (const nestedFrame of nestedFrames ?? []) {
+      if (nestedFrame.fields.length > 0) {
+        return nestedFrame.fields;
+      }
+    }
+  }
+
+  return [];
 }

@@ -39,7 +39,7 @@ func buildCollectionSettings(opts legacy.MigrateOptions) resource.BulkSettings {
 		SkipValidation:    true,
 	}
 	for _, res := range opts.Resources {
-		key := buildResourceKey(res.Group, res.Resource, opts.Namespace)
+		key := buildResourceKey(res, opts.Namespace)
 		if key != nil {
 			settings.Collection = append(settings.Collection, key)
 		}
@@ -103,8 +103,6 @@ func newUnifiedMigrator(
 	}
 }
 
-type migratorFunc = func(ctx context.Context, orgId int64, opts legacy.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) (*legacy.BlobStoreInfo, error)
-
 func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error) {
 	info, err := authlib.ParseNamespace(opts.Namespace)
 	if err != nil {
@@ -127,9 +125,9 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 		return nil, err
 	}
 
-	migratorFuncs := []migratorFunc{}
+	migratorFuncs := []MigratorFunc{}
 	for _, res := range opts.Resources {
-		fn := getMigratorFunc(m.MigrationDashboardAccessor, res.Group, res.Resource)
+		fn := Registry.GetMigratorFunc(m.MigrationDashboardAccessor, res)
 		if fn == nil {
 			return nil, fmt.Errorf("unsupported resource: %s/%s", res.Group, res.Resource)
 		}
@@ -137,19 +135,14 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 	}
 
 	// Execute migrations
-	blobStore := legacy.BlobStoreInfo{}
 	m.log.Info("start migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	for _, fn := range migratorFuncs {
-		blobs, err := fn(ctx, info.OrgID, opts, stream)
+		err := fn(ctx, info.OrgID, opts, stream)
 		if err != nil {
 			m.log.Error("error migrating legacy resources", "error", err, "namespace", opts.Namespace)
 			return nil, err
 		}
-		if blobs != nil {
-			blobStore.Count += blobs.Count
-			blobStore.Size += blobs.Size
-		}
 	}
-	m.log.Info("finished migrating legacy resources", "blobStore", blobStore)
+	m.log.Info("finished migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	return stream.CloseAndRecv()
 }

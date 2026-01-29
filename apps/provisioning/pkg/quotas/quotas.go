@@ -1,6 +1,7 @@
 package quotas
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,3 +69,36 @@ func calculateTotalResources(stats []provisioning.ResourceCount) int64 {
 	}
 	return total
 }
+
+// QuotaGetter retrieves quota information for repositories.
+type QuotaGetter interface {
+	// GetQuotaStatus returns the quota status to be set on repositories.
+	// It takes a context and namespace to allow for future implementations
+	// that may need to fetch quota information dynamically.
+	GetQuotaStatus(ctx context.Context, namespace string) provisioning.QuotaStatus
+}
+
+// FixedQuotaGetter returns fixed quota values from static configuration.
+type FixedQuotaGetter struct {
+	maxRepositories           int64
+	maxResourcesPerRepository int64
+}
+
+// NewFixedQuotaGetter creates a new FixedQuotaGetter from QuotaLimits.
+func NewFixedQuotaGetter(limits QuotaLimits) *FixedQuotaGetter {
+	return &FixedQuotaGetter{
+		maxRepositories:           limits.MaxRepositories,
+		maxResourcesPerRepository: limits.MaxResources,
+	}
+}
+
+// GetQuotaStatus returns the configured quota limits as a QuotaStatus.
+func (f *FixedQuotaGetter) GetQuotaStatus(ctx context.Context, namespace string) provisioning.QuotaStatus {
+	return provisioning.QuotaStatus{
+		MaxRepositories:           f.maxRepositories,
+		MaxResourcesPerRepository: f.maxResourcesPerRepository,
+	}
+}
+
+// Ensure FixedQuotaGetter implements QuotaGetter interface.
+var _ QuotaGetter = (*FixedQuotaGetter)(nil)

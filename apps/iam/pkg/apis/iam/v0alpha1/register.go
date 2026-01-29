@@ -243,8 +243,8 @@ var TeamLBACRuleInfo = utils.NewResourceInfo(
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Datasource Type", Type: "string", Format: "string", Description: "Data source type"},
 			{Name: "Datasource UID", Type: "string", Format: "string", Description: "Data source UID"},
-			{Name: "Team UID", Type: "string", Format: "string", Description: "Team UID"},
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
@@ -254,8 +254,8 @@ var TeamLBACRuleInfo = utils.NewResourceInfo(
 			}
 			return []interface{}{
 				t.Name,
+				t.Spec.DatasourceType,
 				t.Spec.DatasourceUid,
-				t.Spec.TeamUid,
 				t.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil
 		},

@@ -2,6 +2,7 @@ package datasourcecheck
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -346,6 +347,39 @@ func TestCheck_Run(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, failures)
 	})
+
+	t.Run("should exclude deprecated plugins when IncludeDeprecated is false", func(t *testing.T) {
+		datasources := []*datasources.DataSource{
+			{UID: "valid-uid-1", Type: "test-plugin", Name: "Test Plugin"},
+		}
+		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
+		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
+		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}}
+		mockPluginRepo := &MockPluginRepo{
+			plugins: []repo.PluginInfo{
+				{ID: 1, Slug: "test-plugin", Status: "deprecated"},
+			},
+		}
+		mockPluginStore := &MockPluginStore{exists: false}
+
+		check := &check{
+			DatasourceSvc:  mockDatasourceSvc,
+			PluginRepo:     mockPluginRepo,
+			PluginStore:    mockPluginStore,
+			GrafanaVersion: "11.0.0",
+			healthChecker: &checks.HealthCheckerImpl{
+				PluginContextProvider: mockPluginContextProvider,
+				PluginClient:          mockPluginClient,
+			},
+		}
+
+		failures, err := runChecks(check)
+		assert.NoError(t, err)
+		assert.Len(t, failures, 1)
+		assert.Equal(t, MissingPluginStepID, failures[0].StepID)
+		// Should have only 1 link (delete datasource) since deprecated plugin is excluded
+		assert.Len(t, failures[0].Links, 1)
+	})
 }
 
 func TestCheck_Item(t *testing.T) {
@@ -413,6 +447,17 @@ type MockPluginRepo struct {
 	plugins []repo.PluginInfo
 }
 
-func (m *MockPluginRepo) GetPluginsInfo(context.Context, repo.GetPluginsInfoOptions, repo.CompatOpts) ([]repo.PluginInfo, error) {
-	return m.plugins, nil
+func (m *MockPluginRepo) GetPluginsInfo(_ context.Context, options repo.GetPluginsInfoOptions, _ repo.CompatOpts) ([]repo.PluginInfo, error) {
+	plugins := slices.Collect(func(yield func(repo.PluginInfo) bool) {
+		for _, plugin := range m.plugins {
+			// Filter out deprecated plugins if IncludeDeprecated is false
+			if !options.IncludeDeprecated && plugin.Status == "deprecated" {
+				continue
+			}
+			if !yield(plugin) {
+				return
+			}
+		}
+	})
+	return plugins, nil
 }

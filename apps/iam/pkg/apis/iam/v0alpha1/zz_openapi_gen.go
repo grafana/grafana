@@ -2854,31 +2854,39 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRuleSpec(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
-					"team_uid": {
+					"datasource_type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Team UID that this TeamLBAC Rule applies to",
+							Description: "Data source type that this TeamLBAC Rule applies to",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"filters": {
+					"team_filters": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Filters for the TeamLBAC Rule",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
+							Description: "Map of team UIDs to their filter lists Each team can have multiple filters",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: "",
+													Type:    []string{"string"},
+													Format:  "",
+												},
+											},
+										},
 									},
 								},
 							},
 						},
 					},
 				},
-				Required: []string{"datasource_uid", "team_uid", "filters"},
+				Required: []string{"datasource_uid", "datasource_type", "team_filters"},
 			},
 		},
 	}

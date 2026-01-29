@@ -21,19 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-type contextKey string
-
-const txKey contextKey = "rvmanager_db_tx"
-
-func ContextWithTx(ctx context.Context, tx db.Tx) context.Context {
-	return context.WithValue(ctx, txKey, tx)
-}
-
-func TxFromCtx(ctx context.Context) (db.Tx, bool) {
-	tx, ok := ctx.Value(txKey).(db.Tx)
-	return tx, ok
-}
-
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager")
 
 var (

@@ -1,6 +1,6 @@
 import { incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
-import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
-import { getIrmIfPresentOrIncidentPluginId } from 'app/features/alerting/unified/utils/config';
+import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 interface IncidentsPluginConfig {
   isInstalled: boolean;
@@ -10,11 +10,13 @@ interface IncidentsPluginConfig {
 }
 
 export function useGetIncidentPluginConfig(): IncidentsPluginConfig {
-  const { installed: incidentPluginInstalled, loading: loadingPluginSettings } = usePluginBridge(
-    getIrmIfPresentOrIncidentPluginId()
-  );
+  const {
+    pluginId,
+    installed: incidentPluginInstalled,
+    loading: loadingPluginSettings,
+  } = useIrmPlugin(SupportedPlugin.Incident);
   const { data: incidentsConfig, isLoading: loadingPluginConfig } =
-    incidentsApi.endpoints.getIncidentsPluginConfig.useQuery();
+    incidentsApi.endpoints.getIncidentsPluginConfig.useQuery({ pluginId });
 
   return {
     isInstalled: incidentPluginInstalled ?? false,

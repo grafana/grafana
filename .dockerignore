@@ -5,6 +5,7 @@
 .vscode
 bin
 !bin/grafana-linux-k8s
+!bin/grafana-linux-k8s-debug
 data*
 dist
 docker

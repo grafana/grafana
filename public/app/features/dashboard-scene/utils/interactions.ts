@@ -88,7 +88,7 @@ export const DashboardInteractions = {
   },
 
   panelActionClicked(
-    item: 'configure' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
+    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
     id: number,
     source: 'panel' | 'edit_pane'
   ) {

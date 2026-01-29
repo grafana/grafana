@@ -28,6 +28,10 @@ func (d sqlDB) DriverName() string {
 	return d.driverName
 }
 
+func (d sqlDB) SqlDB() *sql.DB {
+	return d.DB
+}
+
 func (d sqlDB) QueryContext(ctx context.Context, query string, args ...any) (db.Rows, error) {
 	return d.DB.QueryContext(ctx, query, args...)
 }

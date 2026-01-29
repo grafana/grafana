@@ -214,3 +214,123 @@ func nestedField(obj map[string]interface{}, fields ...string) (interface{}, boo
 	}
 	return val, true, nil
 }
+
+func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("quota status shows configured limits", func(t *testing.T) {
+		// Set specific quota limits
+		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+			opts.ProvisioningMaxResourcesPerRepository = 50
+			opts.ProvisioningMaxRepositories = 5
+		})
+		ctx := context.Background()
+
+		const repo = "quota-status-configured-repo"
+		testRepo := TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"testdata/all-panels.json": "dashboard1.json",
+			},
+			ExpectedDashboards: 1,
+			ExpectedFolders:    1,
+		}
+		helper.CreateRepo(t, testRepo)
+
+		// Wait for the repository to be reconciled and check the QuotaStatus
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			if err != nil {
+				collect.Errorf("failed to get repository: %v", err)
+				return
+			}
+
+			quota, found, err := nestedField(repoObj.Object, "status", "quota")
+			if err != nil || !found {
+				collect.Errorf("quota status not found: %v", err)
+				return
+			}
+
+			quotaMap, ok := quota.(map[string]interface{})
+			if !ok {
+				collect.Errorf("quota status is not a map")
+				return
+			}
+
+			// Check maxResourcesPerRepository
+			maxResources, ok := quotaMap["maxResourcesPerRepository"]
+			if !ok {
+				collect.Errorf("maxResourcesPerRepository not found in quota status")
+				return
+			}
+			assert.EqualValues(collect, 50, maxResources, "maxResourcesPerRepository should be 50")
+
+			// Check maxRepositories
+			maxRepos, ok := quotaMap["maxRepositories"]
+			if !ok {
+				collect.Errorf("maxRepositories not found in quota status")
+				return
+			}
+			assert.EqualValues(collect, 5, maxRepos, "maxRepositories should be 5")
+		}, waitTimeoutDefault, waitIntervalDefault, "QuotaStatus should show configured limits")
+	})
+
+	t.Run("quota status shows unlimited when no limits configured", func(t *testing.T) {
+		// Don't set any quota limits (defaults to 0 = unlimited)
+		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+			opts.ProvisioningMaxResourcesPerRepository = 0
+			opts.ProvisioningMaxRepositories = 0
+		})
+		ctx := context.Background()
+
+		const repo = "quota-status-unlimited-repo"
+		testRepo := TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"testdata/all-panels.json": "dashboard1.json",
+			},
+			ExpectedDashboards: 1,
+			ExpectedFolders:    1,
+		}
+		helper.CreateRepo(t, testRepo)
+
+		// Wait for the repository to be reconciled and check the QuotaStatus
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			if err != nil {
+				collect.Errorf("failed to get repository: %v", err)
+				return
+			}
+
+			quota, found, err := nestedField(repoObj.Object, "status", "quota")
+			if err != nil {
+				collect.Errorf("error getting quota status: %v", err)
+				return
+			}
+
+			// Quota status should exist but values should be 0 (unlimited)
+			if !found {
+				// If quota is not found at all, that's also acceptable for unlimited
+				return
+			}
+
+			quotaMap, ok := quota.(map[string]interface{})
+			if !ok {
+				collect.Errorf("quota status is not a map")
+				return
+			}
+
+			// Check maxResourcesPerRepository is 0 or not present (both mean unlimited)
+			if maxResources, ok := quotaMap["maxResourcesPerRepository"]; ok {
+				assert.EqualValues(collect, 0, maxResources, "maxResourcesPerRepository should be 0 (unlimited)")
+			}
+
+			// Check maxRepositories is 0 or not present (both mean unlimited)
+			if maxRepos, ok := quotaMap["maxRepositories"]; ok {
+				assert.EqualValues(collect, 0, maxRepos, "maxRepositories should be 0 (unlimited)")
+			}
+		}, waitTimeoutDefault, waitIntervalDefault, "QuotaStatus should show unlimited (0) values")
+	})
+}

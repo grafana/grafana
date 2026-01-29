@@ -21,7 +21,7 @@ func TestNewRepositoryHealthChecker(t *testing.T) {
 	mockFactory := repository.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	validator := repository.NewValidator(30*time.Second, true, mockFactory)
+	validator := repository.NewValidator(true, mockFactory)
 	mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 	hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
@@ -142,7 +142,7 @@ func TestShouldCheckHealth(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-			validator := repository.NewValidator(30*time.Second, true, mockFactory)
+			validator := repository.NewValidator(true, mockFactory)
 			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
@@ -233,7 +233,7 @@ func TestHasRecentFailure(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-			validator := repository.NewValidator(30*time.Second, true, mockFactory)
+			validator := repository.NewValidator(true, mockFactory)
 			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
@@ -279,7 +279,7 @@ func TestRecordFailure(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-			validator := repository.NewValidator(30*time.Second, true, mockFactory)
+			validator := repository.NewValidator(true, mockFactory)
 			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
@@ -328,7 +328,7 @@ func TestRecordFailureFunction(t *testing.T) {
 	mockPatcher := mocks.NewStatusPatcher(t)
 	mockFactory := repository.NewMockFactory(t)
 	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-	validator := repository.NewValidator(30*time.Second, true, mockFactory)
+	validator := repository.NewValidator(true, mockFactory)
 	mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 	hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 
@@ -509,7 +509,7 @@ func TestRefreshHealth(t *testing.T) {
 
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-			validator := repository.NewValidator(30*time.Second, true, mockFactory)
+			validator := repository.NewValidator(true, mockFactory)
 			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 			mockMetricsRecorder.EXPECT().RecordHealthCheck("repository", mock.Anything, mock.Anything).Return()
 			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
@@ -661,7 +661,7 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 			// Create health checker with validator and tester
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-			validator := repository.NewValidator(30*time.Second, true, mockFactory)
+			validator := repository.NewValidator(true, mockFactory)
 			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 			mockMetricsRecorder.EXPECT().RecordHealthCheck("repository", mock.Anything, mock.Anything).Return()
 			hc := NewRepositoryHealthChecker(nil, repository.NewTester(validator), mockMetricsRecorder)
@@ -796,7 +796,7 @@ func TestHasHealthStatusChanged(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
-			validator := repository.NewValidator(30*time.Second, true, mockFactory)
+			validator := repository.NewValidator(true, mockFactory)
 			mockMetricsRecorder := NewMockHealthMetricsRecorder(t)
 			hc := NewRepositoryHealthChecker(mockPatcher, repository.NewTester(validator), mockMetricsRecorder)
 

@@ -52,7 +52,7 @@ export function SaveProvisionedDashboardForm({
 }: Props) {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
-  const { isDirty, editPanel: panelEditor } = dashboard.useState();
+  const { isDirty } = dashboard.useState();
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
@@ -111,15 +111,13 @@ export function SaveProvisionedDashboardForm({
   );
 
   const handleDismiss = useCallback(() => {
-    panelEditor?.onDiscard();
-
     const model = dashboard.getSaveModel();
     const resourceData = request?.data?.resource.upsert || request?.data?.resource.dryRun;
     const saveResponse = createSaveResponseFromResource(resourceData);
     dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
 
     drawer.onClose();
-  }, [dashboard, defaultValues.folder?.uid, drawer, panelEditor, request?.data?.resource]);
+  }, [dashboard, defaultValues.folder?.uid, drawer, request?.data?.resource]);
 
   const onWriteSuccess = useCallback(
     (upsert: Resource<Dashboard>) => {

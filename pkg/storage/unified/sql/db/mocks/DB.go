@@ -419,6 +419,53 @@ func (_c *DB_Stats_Call) RunAndReturn(run func() sql.DBStats) *DB_Stats_Call {
 	return _c
 }
 
+// SqlDB provides a mock function with no fields
+func (_m *DB) SqlDB() *sql.DB {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for SqlDB")
+	}
+
+	var r0 *sql.DB
+	if rf, ok := ret.Get(0).(func() *sql.DB); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*sql.DB)
+		}
+	}
+
+	return r0
+}
+
+// DB_SqlDB_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SqlDB'
+type DB_SqlDB_Call struct {
+	*mock.Call
+}
+
+// SqlDB is a helper method to define mock.On call
+func (_e *DB_Expecter) SqlDB() *DB_SqlDB_Call {
+	return &DB_SqlDB_Call{Call: _e.mock.On("SqlDB")}
+}
+
+func (_c *DB_SqlDB_Call) Run(run func()) *DB_SqlDB_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *DB_SqlDB_Call) Return(_a0 *sql.DB) *DB_SqlDB_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_SqlDB_Call) RunAndReturn(run func() *sql.DB) *DB_SqlDB_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // WithTx provides a mock function with given fields: _a0, _a1, _a2
 func (_m *DB) WithTx(_a0 context.Context, _a1 *sql.TxOptions, _a2 func(context.Context, db.Tx) error) error {
 	ret := _m.Called(_a0, _a1, _a2)

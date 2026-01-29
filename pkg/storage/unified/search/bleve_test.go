@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
-	index "github.com/blevesearch/bleve_index_api"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -51,7 +50,6 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-		ScoringModel:  index.BM25Scoring,
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -826,7 +824,6 @@ func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, pro
 		IndexCacheTTL: defaultIndexCacheTTL,
 		Logger:        log.NewNopLogger(),
 		BuildVersion:  buildVersion,
-		ScoringModel:  index.BM25Scoring,
 	}
 	for _, opt := range options {
 		opt(&opts)

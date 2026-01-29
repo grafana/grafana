@@ -10,7 +10,7 @@
         "panel-tests",
         "graph-ng"
       ],
-      "score": 0.073,
+      "score": 0.09,
       "explain": {
         "children": [
           {
@@ -27,15 +27,15 @@
                           },
                           {
                             "message": "idf(docFreq=1, maxDocs=16)",
-                            "value": 3.079
+                            "value": 2.428
                           },
                           {
                             "message": "queryNorm",
-                            "value": 0.022
+                            "value": 0.024
                           }
                         ],
                         "message": "queryWeight(fields.panel_title:orange^5.000000), product of:",
-                        "value": 0.338
+                        "value": 0.29
                       },
                       {
                         "children": [
@@ -44,28 +44,34 @@
                             "value": 1.732
                           },
                           {
-                            "message": "fieldNorm(field=fields.panel_title, doc=\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001)",
-                            "value": 0.162
+                            "children": [
+                              {
+                                "message": "fieldNorm(field=fields.panel_title), b=0.750000, fieldLength=38.000002, avgFieldLength=17.000000)",
+                                "value": 1.926
+                              }
+                            ],
+                            "message": "saturation(term:), k1=1.200000/(tf=1.732051 + k1*fieldNorm=1.926471))",
+                            "value": 0.297
                           },
                           {
                             "message": "idf(docFreq=1, maxDocs=16)",
-                            "value": 3.079
+                            "value": 2.428
                           }
                         ],
-                        "message": "fieldWeight(fields.panel_title:orange in \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001), as per tf-idf model, product of:",
-                        "value": 0.865
+                        "message": "fieldWeight(fields.panel_title:orange in \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001), as per bm25 model, product of:",
+                        "value": 1.248
                       }
                     ],
                     "message": "weight(fields.panel_title:orange^5.000000 in \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001), product of:",
-                    "value": 0.293
+                    "value": 0.362
                   }
                 ],
                 "message": "sum of:",
-                "value": 0.293
+                "value": 0.362
               }
             ],
             "message": "sum of:",
-            "value": 0.293
+            "value": 0.362
           },
           {
             "message": "coord(1/4)",
@@ -74,9 +80,9 @@
         ],
         "message": "product of:",
         "partial_match": true,
-        "value": 0.073
+        "value": 0.09
       }
     }
   ],
-  "maxScore": 0.073
+  "maxScore": 0.09
 }

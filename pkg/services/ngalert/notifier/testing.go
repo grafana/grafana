@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -563,4 +564,50 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 	}
 
 	return moa
+}
+
+type FakeAlertmanagerProvider struct {
+	Calls struct {
+		AlertmanagerFor []AlertmanagerForCall
+	}
+	AlertmanagerForFunc func(orgID int64) (Alertmanager, error)
+}
+
+type AlertmanagerForCall struct {
+	OrgID int64
+}
+
+func (f *FakeAlertmanagerProvider) AlertmanagerFor(orgID int64) (Alertmanager, error) {
+	f.Calls.AlertmanagerFor = append(f.Calls.AlertmanagerFor, AlertmanagerForCall{OrgID: orgID})
+	if f.AlertmanagerForFunc != nil {
+		return f.AlertmanagerForFunc(orgID)
+	}
+	return nil, ErrNoAlertmanagerForOrg
+}
+
+type FakeReceiverService struct {
+	Calls struct {
+		GetReceiver []GetReceiverCall
+	}
+	GetReceiverFunc func(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error)
+}
+
+type GetReceiverCall struct {
+	Ctx     context.Context
+	UID     string
+	Decrypt bool
+	User    identity.Requester
+}
+
+func (f *FakeReceiverService) GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error) {
+	f.Calls.GetReceiver = append(f.Calls.GetReceiver, GetReceiverCall{
+		Ctx:     ctx,
+		UID:     uid,
+		Decrypt: decrypt,
+		User:    user,
+	})
+	if f.GetReceiverFunc != nil {
+		return f.GetReceiverFunc(ctx, uid, decrypt, user)
+	}
+	return nil, models.ErrReceiverNotFound.Errorf("")
 }

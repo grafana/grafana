@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/apiserver/pkg/admission"
 
@@ -11,13 +12,18 @@ import (
 
 // AdmissionMutator handles mutation for Repository resources
 type AdmissionMutator struct {
-	factory Factory
+	factory         Factory
+	minSyncInterval time.Duration
 }
 
 // NewAdmissionMutator creates a new repository mutator
-func NewAdmissionMutator(factory Factory) *AdmissionMutator {
+func NewAdmissionMutator(
+	factory Factory,
+	minSyncInterval time.Duration,
+) *AdmissionMutator {
 	return &AdmissionMutator{
-		factory: factory,
+		factory:         factory,
+		minSyncInterval: minSyncInterval,
 	}
 }
 
@@ -41,8 +47,8 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		}
 	}
 
-	if r.Spec.Sync.IntervalSeconds == 0 {
-		r.Spec.Sync.IntervalSeconds = 60
+	if r.Spec.Sync.IntervalSeconds == 0 || r.Spec.Sync.IntervalSeconds < int64(m.minSyncInterval.Seconds()) {
+		r.Spec.Sync.IntervalSeconds = int64(m.minSyncInterval.Seconds())
 	}
 
 	if r.Spec.Workflows == nil {

@@ -37,7 +37,7 @@ import {
   getResultCloudOpsLink,
 } from './selectors';
 
-const click = async (selector: () => HTMLElement) => act(() => userEvent.click(selector()));
+const click = async (selector: () => HTMLElement) => act(async () => await userEvent.click(selector()));
 
 const type = async (selector: () => HTMLInputElement, value: string) => {
   await act(() => fireEvent.input(selector(), { target: { value } }));

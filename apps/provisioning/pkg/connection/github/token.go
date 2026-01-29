@@ -50,15 +50,15 @@ func GenerateJWTToken(appID string, privateKey common.RawSecureValue) (common.Ra
 	return common.RawSecureValue(signedToken), nil
 }
 
-func getIssuingAndExpirationTimeFromToken(token, privateKey common.RawSecureValue) (time.Time, time.Time, error) {
+func parseJWTToken(token, privateKey common.RawSecureValue) (*jwt.RegisteredClaims, error) {
 	privateKeyPEM, err := base64.StdEncoding.DecodeString(string(privateKey))
 	if err != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf("failed to decode base64 private key: %w", err)
+		return nil, fmt.Errorf("failed to decode base64 private key: %w", err)
 	}
 
 	key, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyPEM)
 	if err != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf("failed to parse private key: %w", err)
+		return nil, fmt.Errorf("failed to parse private key: %w", err)
 	}
 
 	parser := jwt.NewParser(
@@ -69,12 +69,21 @@ func getIssuingAndExpirationTimeFromToken(token, privateKey common.RawSecureValu
 		return &key.PublicKey, nil
 	})
 	if err != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf("failed to parse token: %w", err)
+		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}
 
 	claims, ok := parsedToken.Claims.(*jwt.RegisteredClaims)
 	if !ok {
-		return time.Time{}, time.Time{}, fmt.Errorf("unexpected token claims")
+		return nil, fmt.Errorf("unexpected token claims")
+	}
+
+	return claims, nil
+}
+
+func getIssuingAndExpirationTimeFromToken(token, privateKey common.RawSecureValue) (time.Time, time.Time, error) {
+	claims, err := parseJWTToken(token, privateKey)
+	if err != nil {
+		return time.Time{}, time.Time{}, fmt.Errorf("failed to parse token: %w", err)
 	}
 
 	return claims.IssuedAt.Time, claims.ExpiresAt.Time, nil

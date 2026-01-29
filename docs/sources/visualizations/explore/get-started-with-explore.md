@@ -192,13 +192,7 @@ The `from` and `to` also accept relative ranges defined in [Time units and relat
 
 ## Share shortened link
 
-{{< admonition type="note" >}}
-Available in Grafana 7.3 and later versions.
-{{< /admonition >}}
-
 The Share shortened link capability allows you to create smaller and simpler URLs of the format `/goto/:uid` instead of using longer URLs with query parameters. To create a shortened link to the executed query, click the **Share** option in the Explore toolbar.
-
-A shortened link that's not accessed automatically gets deleted after a [configurable period](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#short_links), which defaults to seven days. However, if the link is accessed at least once, it will not be deleted.
 
 ### Share shortened links with absolute time
 

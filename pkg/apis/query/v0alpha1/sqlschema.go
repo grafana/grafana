@@ -62,7 +62,7 @@ func (u *SampleRows) Values() [][]any {
 	return u.values
 }
 
-func (u *SampleRows) MarshalJSON() ([]byte, error) {
+func (u SampleRows) MarshalJSON() ([]byte, error) {
 	return json.Marshal(u.values)
 }
 

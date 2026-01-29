@@ -3,6 +3,7 @@ package github_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -307,6 +308,277 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 
 			// Check the result
 			assert.Equal(t, tt.wantInstallation, installation)
+		})
+	}
+}
+
+func TestGithubClient_ListInstallationRepositories(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		wantRepos   []conngh.Repository
+		wantErr     bool
+		errContains string
+	}{
+		{
+			name: "list repositories successfully - single page",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetInstallationRepositories,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						response := &github.ListRepositories{
+							TotalCount: github.Ptr(2),
+							Repositories: []*github.Repository{
+								{
+									Name: github.Ptr("repo1"),
+									Owner: &github.User{
+										Login: github.Ptr("owner1"),
+									},
+									HTMLURL: github.Ptr("https://github.com/owner1/repo1"),
+								},
+								{
+									Name: github.Ptr("repo2"),
+									Owner: &github.User{
+										Login: github.Ptr("owner2"),
+									},
+									HTMLURL: github.Ptr("https://github.com/owner2/repo2"),
+								},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(response))
+					}),
+				),
+			),
+			wantRepos: []conngh.Repository{
+				{Name: "repo1", Owner: "owner1", URL: "https://github.com/owner1/repo1"},
+				{Name: "repo2", Owner: "owner2", URL: "https://github.com/owner2/repo2"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "list repositories successfully - multiple pages",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetInstallationRepositories,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						page := r.URL.Query().Get("page")
+						switch page {
+						case "", "1":
+							// First page
+							response := &github.ListRepositories{
+								TotalCount: github.Ptr(3),
+								Repositories: []*github.Repository{
+									{
+										Name: github.Ptr("repo1"),
+										Owner: &github.User{
+											Login: github.Ptr("owner1"),
+										},
+										HTMLURL: github.Ptr("https://github.com/owner1/repo1"),
+									},
+								},
+							}
+							w.Header().Set("Link", `<https://api.github.com/installation/repositories?page=2>; rel="next"`)
+							w.WriteHeader(http.StatusOK)
+							require.NoError(t, json.NewEncoder(w).Encode(response))
+						case "2":
+							// Second page
+							response := &github.ListRepositories{
+								TotalCount: github.Ptr(3),
+								Repositories: []*github.Repository{
+									{
+										Name: github.Ptr("repo2"),
+										Owner: &github.User{
+											Login: github.Ptr("owner2"),
+										},
+										HTMLURL: github.Ptr("https://github.com/owner2/repo2"),
+									},
+									{
+										Name: github.Ptr("repo3"),
+										Owner: &github.User{
+											Login: github.Ptr("owner3"),
+										},
+										HTMLURL: github.Ptr("https://github.com/owner3/repo3"),
+									},
+								},
+							}
+							w.WriteHeader(http.StatusOK)
+							require.NoError(t, json.NewEncoder(w).Encode(response))
+						}
+					}),
+				),
+			),
+			wantRepos: []conngh.Repository{
+				{Name: "repo1", Owner: "owner1", URL: "https://github.com/owner1/repo1"},
+				{Name: "repo2", Owner: "owner2", URL: "https://github.com/owner2/repo2"},
+				{Name: "repo3", Owner: "owner3", URL: "https://github.com/owner3/repo3"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty repository list",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetInstallationRepositories,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						response := &github.ListRepositories{
+							TotalCount:   github.Ptr(0),
+							Repositories: []*github.Repository{},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(response))
+					}),
+				),
+			),
+			wantRepos: nil,
+			wantErr:   false,
+		},
+		{
+			name: "service unavailable",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetInstallationRepositories,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			wantRepos:   nil,
+			wantErr:     true,
+			errContains: conngh.ErrServiceUnavailable.Error(),
+		},
+		{
+			name: "unauthorized error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetInstallationRepositories,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnauthorized)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusUnauthorized,
+							},
+							Message: "Bad credentials",
+						}))
+					}),
+				),
+			),
+			wantRepos:   nil,
+			wantErr:     true,
+			errContains: "list repositories",
+		},
+		{
+			name: "forbidden error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetInstallationRepositories,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusForbidden)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusForbidden,
+							},
+							Message: "Resource not accessible by integration",
+						}))
+					}),
+				),
+			),
+			wantRepos:   nil,
+			wantErr:     true,
+			errContains: "list repositories",
+		},
+		{
+			name: "internal server error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetInstallationRepositories,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal server error",
+						}))
+					}),
+				),
+			),
+			wantRepos:   nil,
+			wantErr:     true,
+			errContains: "list repositories",
+		},
+		{
+			name: "too many repositories - exceeds max limit",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetInstallationRepositories,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						page := r.URL.Query().Get("page")
+						pageNum := 1
+						if page != "" && page != "1" {
+							// Parse page number
+							var err error
+							_, err = fmt.Sscanf(page, "%d", &pageNum)
+							require.NoError(t, err)
+						}
+
+						// Create 100 repos per page to simulate going over 1000 limit
+						repos := make([]*github.Repository, 100)
+						for i := 0; i < 100; i++ {
+							repoNum := (pageNum-1)*100 + i + 1
+							repos[i] = &github.Repository{
+								Name: github.Ptr(fmt.Sprintf("repo%d", repoNum)),
+								Owner: &github.User{
+									Login: github.Ptr(fmt.Sprintf("owner%d", repoNum)),
+								},
+								HTMLURL: github.Ptr(fmt.Sprintf("https://github.com/owner%d/repo%d", repoNum, repoNum)),
+							}
+						}
+
+						response := &github.ListRepositories{
+							TotalCount:   github.Ptr(1200),
+							Repositories: repos,
+						}
+
+						// Simulate pagination - 12 pages of 100 repos each
+						if pageNum < 12 {
+							w.Header().Set("Link", fmt.Sprintf(`<https://api.github.com/installation/repositories?page=%d>; rel="next"`, pageNum+1))
+						}
+
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(response))
+					}),
+				),
+			),
+			wantRepos:   nil,
+			wantErr:     true,
+			errContains: "too many repositories",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ghClient := github.NewClient(tt.mockHandler)
+			client := conngh.NewClient(ghClient)
+
+			repos, err := client.ListInstallationRepositories(context.Background())
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errContains != "" {
+					assert.Contains(t, err.Error(), tt.errContains)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Equal(t, tt.wantRepos, repos)
 		})
 	}
 }

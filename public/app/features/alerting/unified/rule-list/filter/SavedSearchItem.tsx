@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Dropdown, Icon, IconButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, IconButton, Menu, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { InlineRenameInput } from './InlineRenameInput';
 import { SavedSearch } from './savedSearchesSchema';
@@ -13,6 +13,8 @@ import { SavedSearch } from './savedSearchesSchema';
 
 export interface SavedSearchItemProps {
   search: SavedSearch;
+  /** URL to navigate to when clicking the search name */
+  href: string;
   isRenaming: boolean;
   isDeleting: boolean;
   isDisabled: boolean;
@@ -31,6 +33,7 @@ export interface SavedSearchItemProps {
 
 export function SavedSearchItem({
   search,
+  href,
   isRenaming,
   isDeleting,
   isDisabled,
@@ -107,7 +110,15 @@ export function SavedSearchItem({
       <Stack direction="row" alignItems="center" gap={1} wrap={false}>
         {/* Name and default indicator */}
         <Stack direction="row" alignItems="center" gap={0.5} flex={1}>
-          <Text truncate>{search.name}</Text>
+          {isDisabled ? (
+            <Text truncate color="disabled">
+              {search.name}
+            </Text>
+          ) : (
+            <TextLink href={href} color="primary" inline={false} onClick={onApply}>
+              {search.name}
+            </TextLink>
+          )}
           {search.isDefault && (
             <Icon
               name="favorite"
@@ -117,18 +128,6 @@ export function SavedSearchItem({
             />
           )}
         </Stack>
-
-        {/* Apply button (magnifying glass) */}
-        <IconButton
-          name="search"
-          tooltip={t('alerting.saved-searches.apply-tooltip', 'Apply search "{{name}}"', {
-            name: search.name,
-          })}
-          onClick={onApply}
-          size="md"
-          variant="secondary"
-          disabled={isDisabled}
-        />
 
         {/* Action menu - stop propagation to prevent parent Dropdown from closing */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}

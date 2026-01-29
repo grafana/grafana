@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"encoding/base64"
+	"strconv"
 
 	"github.com/golang-jwt/jwt/v4"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -58,12 +59,22 @@ func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 		}
 	}
 
-	// Validate GitHub configuration fields
+	// Validate the existence of GitHub configuration fields
 	if conn.Spec.GitHub.AppID == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "appID"), "appID must be specified for GitHub connection"))
 	}
 	if conn.Spec.GitHub.InstallationID == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "installationID"), "installationID must be specified for GitHub connection"))
+	}
+
+	// Validating the correctness of Github config fields
+	_, err := strconv.Atoi(conn.Spec.GitHub.AppID)
+	if err != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "github", "appID"), conn.Spec.GitHub.AppID, "appID must be a numeric value"))
+	}
+	_, err = strconv.Atoi(conn.Spec.GitHub.InstallationID)
+	if err != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "github", "installationID"), conn.Spec.GitHub.InstallationID, "installationID must be a numeric value"))
 	}
 
 	return list

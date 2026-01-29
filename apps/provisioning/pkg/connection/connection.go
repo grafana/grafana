@@ -42,6 +42,8 @@ type TokenConnection interface {
 	TokenCreationTime(ctx context.Context) (time.Time, error)
 	// TokenExpiration returns the underlying token expiration.
 	TokenExpiration(ctx context.Context) (time.Time, error)
+	// TokenValid returns whether the underlying token is valid.
+	TokenValid(ctx context.Context) bool
 	// GenerateConnectionToken generates a connection-level token.
 	// Returns the generated token value.
 	GenerateConnectionToken(ctx context.Context) (common.RawSecureValue, error)

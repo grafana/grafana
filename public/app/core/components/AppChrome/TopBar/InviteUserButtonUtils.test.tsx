@@ -4,7 +4,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { performInviteUserClick, shouldRenderInviteUserButton } from './InviteUserButtonUtils';
+import {
+  performInviteUserClick,
+  performUpgradeUserClick,
+  shouldRenderInviteUserButton,
+  shouldRenderUpgradeUserButton,
+} from './InviteUserButtonUtils';
 
 // Mock dependencies
 jest.mock('@grafana/runtime', () => ({
@@ -13,7 +18,13 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     featureToggles: {} as Partial<FeatureToggles>,
     externalUserMngLinkUrl: '',
+    externalUserUpgradeLinkUrl: '',
+    namespace: 'org-1',
   },
+}));
+
+jest.mock('app/features/provisioning/utils/isOnPrem', () => ({
+  isOnPrem: jest.fn(() => true),
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -56,10 +67,18 @@ describe('InviteUserButtonUtils', () => {
       expect(mockContextSrv.hasPermission).toHaveBeenCalledWith(AccessControlAction.OrgUsersAdd);
     });
 
-    it('should return false when URL is not configured', () => {
+    it('should return false when neither URL is configured', () => {
       mockConfig.externalUserMngLinkUrl = '';
+      mockConfig.externalUserUpgradeLinkUrl = '';
 
       expect(shouldRenderInviteUserButton()).toBeFalsy();
+    });
+
+    it('should return true when upgrade URL is configured even without invite URL', () => {
+      mockConfig.externalUserMngLinkUrl = '';
+      mockConfig.externalUserUpgradeLinkUrl = 'https://example.com/upgrade';
+
+      expect(shouldRenderInviteUserButton()).toBe(true);
     });
 
     it('should return false when user lacks permission', () => {
@@ -107,6 +126,73 @@ describe('InviteUserButtonUtils', () => {
       });
       expect(mockGetExternalUserMngLinkUrl).toHaveBeenCalledWith(cnt);
       expect(mockWindowOpen).toHaveBeenCalledWith(`https://example.com/invite?cnt=${cnt}`, '_blank');
+    });
+  });
+
+  describe('shouldRenderUpgradeUserButton', () => {
+    it('should return false on on-prem instances', () => {
+      const { isOnPrem } = require('app/features/provisioning/utils/isOnPrem');
+      isOnPrem.mockReturnValue(true);
+      mockConfig.externalUserUpgradeLinkUrl = 'https://example.com/upgrade';
+      mockContextSrv.hasPermission.mockReturnValue(true);
+
+      expect(shouldRenderUpgradeUserButton()).toBeFalsy();
+    });
+
+    it('should return false without upgrade URL even on cloud', () => {
+      const { isOnPrem } = require('app/features/provisioning/utils/isOnPrem');
+      isOnPrem.mockReturnValue(false);
+      mockConfig.externalUserUpgradeLinkUrl = '';
+      mockContextSrv.hasPermission.mockReturnValue(true);
+
+      expect(shouldRenderUpgradeUserButton()).toBeFalsy();
+    });
+
+    it('should return false without permission even with URL on cloud', () => {
+      const { isOnPrem } = require('app/features/provisioning/utils/isOnPrem');
+      isOnPrem.mockReturnValue(false);
+      mockConfig.externalUserUpgradeLinkUrl = 'https://example.com/upgrade';
+      mockContextSrv.hasPermission.mockReturnValue(false);
+
+      expect(shouldRenderUpgradeUserButton()).toBeFalsy();
+    });
+
+    it('should return true when all conditions met (cloud + URL + permission)', () => {
+      const { isOnPrem } = require('app/features/provisioning/utils/isOnPrem');
+      isOnPrem.mockReturnValue(false);
+      mockConfig.externalUserUpgradeLinkUrl = 'https://example.com/upgrade';
+      mockContextSrv.hasPermission.mockReturnValue(true);
+
+      expect(shouldRenderUpgradeUserButton()).toBe(true);
+      expect(mockContextSrv.hasPermission).toHaveBeenCalledWith(AccessControlAction.OrgUsersAdd);
+    });
+  });
+
+  describe('performUpgradeUserClick', () => {
+    beforeEach(() => {
+      mockConfig.externalUserUpgradeLinkUrl = 'https://example.com/upgrade';
+    });
+
+    it('should report interaction and open upgrade URL', () => {
+      const placement = 'top_bar_right';
+
+      performUpgradeUserClick(placement);
+
+      expect(mockReportInteraction).toHaveBeenCalledWith('upgrade_user_button_clicked', {
+        placement,
+      });
+      expect(mockWindowOpen).toHaveBeenCalledWith('https://example.com/upgrade', '_blank');
+    });
+
+    it('should work with different placements', () => {
+      const placement = 'settings_page';
+
+      performUpgradeUserClick(placement);
+
+      expect(mockReportInteraction).toHaveBeenCalledWith('upgrade_user_button_clicked', {
+        placement,
+      });
+      expect(mockWindowOpen).toHaveBeenCalledWith('https://example.com/upgrade', '_blank');
     });
   });
 });

@@ -69,6 +69,10 @@ const (
 )
 
 type ConnectionSpec struct {
+	// The connection display name (shown in the UI)
+	Title string `json:"title,omitempty"`
+	// The connection description
+	Description string `json:"description,omitempty"`
 	// The connection provider type
 	Type ConnectionType `json:"type"`
 	// The connection URL

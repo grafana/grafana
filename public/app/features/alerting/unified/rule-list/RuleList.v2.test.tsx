@@ -411,6 +411,62 @@ describe('RuleListActions', () => {
       expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).toBeInTheDocument();
     });
   });
+
+  describe('alertingDisableDMAinUI feature toggle', () => {
+    testWithFeatureToggles({ enable: ['alertingListViewV2', 'alertingDisableDMAinUI'] });
+
+    beforeEach(() => {
+      // Set up data source with manageAlerts enabled to ensure the option would be shown
+      // if not for the feature toggle
+      setupDataSources(
+        mockDataSource({
+          name: 'Prometheus-enabled',
+          uid: 'prometheus-enabled',
+          type: 'prometheus',
+          jsonData: { manageAlerts: true },
+        })
+      );
+    });
+
+    it('should not show "New Data source recording rule" option when alertingDisableDMAinUI is enabled', async () => {
+      grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
+
+      const { user } = render(<RuleListActions />);
+
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).not.toBeInTheDocument();
+    });
+
+    it('should not show "New alert rule" button when user only has DMA permissions and alertingDisableDMAinUI is enabled', async () => {
+      grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
+
+      render(<RuleListActions />);
+
+      expect(ui.newRuleButton.query()).not.toBeInTheDocument();
+    });
+
+    it('should show "New alert rule" button when user has Grafana rule permissions even with alertingDisableDMAinUI enabled', async () => {
+      grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+
+      render(<RuleListActions />);
+
+      expect(ui.newRuleButton.get()).toBeInTheDocument();
+    });
+
+    it('should show "New Grafana recording rule" but not "New Data source recording rule" when alertingDisableDMAinUI is enabled', async () => {
+      grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]);
+
+      const { user } = render(<RuleListActions />);
+
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.newGrafanaRecordingRule.query(menu)).toBeInTheDocument();
+      expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).not.toBeInTheDocument();
+    });
+  });
 });
 
 describe('RuleListPage v2 - View switching', () => {
