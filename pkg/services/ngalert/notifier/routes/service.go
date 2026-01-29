@@ -64,11 +64,6 @@ func NewService(
 }
 
 func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name string) (legacy_storage.ManagedRoute, error) {
-	// TODO: Keep this?
-	if name == "" {
-		name = legacy_storage.UserDefinedRoutingTreeName
-	}
-
 	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
 	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
 		return legacy_storage.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
@@ -118,11 +113,6 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64) (legacy_s
 }
 
 func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance, version string) (*legacy_storage.ManagedRoute, error) {
-	// TODO: Keep this?
-	if name == "" {
-		name = legacy_storage.UserDefinedRoutingTreeName
-	}
-
 	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
 	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
 		return nil, models.ErrRouteNotFound.Errorf("route %q not found", name)
@@ -185,11 +175,6 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 }
 
 func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name string, p models.Provenance, version string) error {
-	// TODO: Keep this?
-	if name == "" {
-		name = legacy_storage.UserDefinedRoutingTreeName
-	}
-
 	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
 	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
 		return models.ErrRouteNotFound.Errorf("route %q not found", name)
