@@ -400,6 +400,6 @@ You can use the OpenTSDB query editor in [Explore](ref:explore) for ad-hoc data 
 
 ## Next steps
 
-- [Use template variables](ref:template-variables) to create dynamic, reusable dashboards
-- [Set up alerting](ref:alerting) to get notified when metrics cross thresholds
-- [Troubleshoot issues](ref:troubleshooting-opentsdb) if you encounter problems with queries
+- [Use template variables](ref:template-variables) to create dynamic, reusable dashboards.
+- [Set up alerting](ref:alerting) to get notified when metrics cross thresholds.
+- [Troubleshoot issues](ref:troubleshooting-opentsdb) if you encounter problems with queries.
