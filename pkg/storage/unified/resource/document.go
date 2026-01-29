@@ -101,6 +101,10 @@ type IndexableDocument struct {
 	// metadata, annotations, or external data linked at index time
 	Fields map[string]any `json:"fields,omitempty"`
 
+	// Selectable fields used for field-based filtering when listing.
+	// Standard document builder automatically adds all selectable fields from document here.
+	SelectableFields map[string]string `json:"selectableFields,omitempty"`
+
 	// The list of owner references,
 	// each value is of the form {group}/{kind}/{name}
 	// ex: iam.grafana.app/Team/abc-engineering
@@ -292,36 +296,36 @@ func (x *searchableDocumentFields) Field(name string) *resourcepb.ResourceTableC
 	return nil
 }
 
-const SEARCH_FIELD_PREFIX = "fields."
-const SEARCH_FIELD_ID = "_id" // {namespace}/{group}/{resource}/{name}
-const SEARCH_FIELD_LEGACY_ID = utils.LabelKeyDeprecatedInternalID
-const SEARCH_FIELD_KIND = "kind"         // resource ( for federated index filtering )
-const SEARCH_FIELD_GROUP_RESOURCE = "gr" // group/resource
-const SEARCH_FIELD_NAMESPACE = "namespace"
-const SEARCH_FIELD_NAME = "name"
-const SEARCH_FIELD_RV = "rv"
-const SEARCH_FIELD_TITLE = "title"
-const SEARCH_FIELD_TITLE_PHRASE = "title_phrase" // filtering/sorting on title by full phrase
-const SEARCH_FIELD_DESCRIPTION = "description"
-const SEARCH_FIELD_TAGS = "tags"
-const SEARCH_FIELD_LABELS = "labels" // All labels, not a specific one
-const SEARCH_FIELD_OWNER_REFERENCES = "ownerReferences"
-
-const SEARCH_FIELD_FOLDER = "folder"
-const SEARCH_FIELD_CREATED = "created"
-const SEARCH_FIELD_CREATED_BY = "createdBy"
-const SEARCH_FIELD_UPDATED = "updated"
-const SEARCH_FIELD_UPDATED_BY = "updatedBy"
-
-const SEARCH_FIELD_MANAGED_BY = "managedBy" // {kind}:{id}
-const SEARCH_FIELD_MANAGER_KIND = "manager.kind"
-const SEARCH_FIELD_MANAGER_ID = "manager.id"
-const SEARCH_FIELD_SOURCE_PATH = "source.path"
-const SEARCH_FIELD_SOURCE_CHECKSUM = "source.checksum"
-const SEARCH_FIELD_SOURCE_TIME = "source.timestampMillis"
-
-const SEARCH_FIELD_SCORE = "_score"     // the match score
-const SEARCH_FIELD_EXPLAIN = "_explain" // score explanation as JSON object
+const (
+	SEARCH_FIELD_PREFIX             = "fields."
+	SEARCH_FIELD_ID                 = "_id" // {namespace}/{group}/{resource}/{name}
+	SEARCH_FIELD_LEGACY_ID          = utils.LabelKeyDeprecatedInternalID
+	SEARCH_FIELD_KIND               = "kind" // resource ( for federated index filtering )
+	SEARCH_FIELD_GROUP_RESOURCE     = "gr"   // group/resource
+	SEARCH_FIELD_NAMESPACE          = "namespace"
+	SEARCH_FIELD_NAME               = "name"
+	SEARCH_FIELD_RV                 = "rv"
+	SEARCH_FIELD_TITLE              = "title"
+	SEARCH_FIELD_TITLE_PHRASE       = "title_phrase" // filtering/sorting on title by full phrase
+	SEARCH_FIELD_DESCRIPTION        = "description"
+	SEARCH_FIELD_TAGS               = "tags"
+	SEARCH_FIELD_LABELS             = "labels" // All labels, not a specific one
+	SEARCH_FIELD_OWNER_REFERENCES   = "ownerReferences"
+	SEARCH_FIELD_FOLDER             = "folder"
+	SEARCH_FIELD_CREATED            = "created"
+	SEARCH_FIELD_CREATED_BY         = "createdBy"
+	SEARCH_FIELD_UPDATED            = "updated"
+	SEARCH_FIELD_UPDATED_BY         = "updatedBy"
+	SEARCH_FIELD_MANAGED_BY         = "managedBy" // {kind}:{id}
+	SEARCH_FIELD_MANAGER_KIND       = "manager.kind"
+	SEARCH_FIELD_MANAGER_ID         = "manager.id"
+	SEARCH_FIELD_SOURCE_PATH        = "source.path"
+	SEARCH_FIELD_SOURCE_CHECKSUM    = "source.checksum"
+	SEARCH_FIELD_SOURCE_TIME        = "source.timestampMillis"
+	SEARCH_FIELD_SCORE              = "_score"            // the match score
+	SEARCH_FIELD_EXPLAIN            = "_explain"          // score explanation as JSON object
+	SEARCH_SELECTABLE_FIELDS_PREFIX = "selectableFields." // Prefix for searching selectable fields.
+)
 
 var standardSearchFieldsInit sync.Once
 var standardSearchFields SearchableDocumentFields

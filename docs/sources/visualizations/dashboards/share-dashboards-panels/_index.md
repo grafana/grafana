@@ -7,8 +7,8 @@ aliases:
   - ../../sharing/playlists/ # /docs/grafana/next/sharing/playlists/
   - ../../sharing/share-dashboard/ # /docs/grafana/next/sharing/share-dashboard/
   - ../../sharing/share-panel/ # /docs/grafana/next/sharing/share-panel/
-  - ../../dashboards/share-dashboard/ # /docs/grafana/next/dashboards/share-dashboard/
-  - ../../dashboards/share-dashboards-panels/ # /docs/grafana/next/dashboards/share-dashboards-panels/
+  - ../../visualizations/dashboards/share-dashboard/ # /docs/grafana/next/visualizations/dashboards/share-dashboard/
+  - ../../visualizations/dashboards/share-dashboards-panels/ # /docs/grafana/next/visualizations/dashboards/share-dashboards-panels/
 keywords:
   - grafana
   - dashboard
@@ -27,47 +27,6 @@ menuTitle: Sharing
 title: Share dashboards and panels
 description: Share Grafana dashboards and panels within your organization and publicly
 weight: 650
-refs:
-  image-rendering:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
-  grafana-enterprise:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
-  shared-dashboards:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
-  configure-report:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#create-a-report
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/create-reports/#create-a-report
-  image-rendering-config:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration
-  max-width:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-width
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-width
-  max-height:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-height
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-height
-  max-scale:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#maximum-device-scale-factor
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#maximum-device-scale-factor
 ---
 
 # Share dashboards and panels
@@ -136,7 +95,7 @@ This link has any customizations, like time range locking or theme, that you've 
 
 Externally shared dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization.
 
-Learn how to configure and manage externally shared dashboards in [Externally shared dashboards](ref:shared-dashboards).
+Learn how to configure and manage externally shared dashboards in [Externally shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/shared-dashboards/).
 
 ### Schedule a report
 
@@ -149,7 +108,7 @@ To share your dashboard as a report, follow these steps:
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
 1. Click the **Share** drop-down list in the top-right corner and select **Schedule a report**.
-1. [Configure the report](ref:configure-report).
+1. [Configure the report](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/create-reports/#create-a-report).
 1. Depending on your schedule settings, you'll have different options at this step. Click either **Schedule send** or **Send now**.
 
 You can also save the report as a draft.
@@ -225,7 +184,8 @@ To export a dashboard in its current state as a PDF, follow these steps:
 
 ### Export a dashboard as code
 
-Export a Grafana JSON file that contains everything you need, including layout, variables, styles, data sources, queries, and so on, so that you can later import the dashboard. To export a JSON file, follow these steps:
+Export a Grafana JSON file that contains everything you need, including layout, variables, styles, data sources, queries, and so on, so that you can later import the dashboard.
+To export a JSON file, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Open the dashboard you want to export.
@@ -233,17 +193,15 @@ Export a Grafana JSON file that contains everything you need, including layout, 
 
    The **Export dashboard** drawer opens.
 
-1. Select the dashboard JSON model that you to export:
-   - **Classic** - Export dashboards created using the [current dashboard schema](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/).
-   - **V1 Resource** - Export dashboards created using the [current dashboard schema](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/) wrapped in the `spec` property of the [V1 Kubernetes-style resource](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2alpha1). Choose between **JSON** and **YAML** format.
-   - **V2 Resource** - Export dashboards created using the [V2 Resource schema](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1). Choose between **JSON** and **YAML** format.
-
-1. Do one of the following:
-   - Toggle the **Export for sharing externally** switch to generate the JSON with a different data source UID.
-   - Toggle the **Remove deployment details** switch to make the dashboard externally shareable.
-
+1. (Optional) Click **Advanced options** to expand the section and choose whether the dashboard export is in **JSON** or **YAML**.
+1. (Optional) Toggle the **Share dashboard with another instance** switch to remove details specific to your Grafana instance.
 1. Click **Download file** or **Copy to clipboard**.
 1. Click the **X** at the top-right corner to close the share drawer.
+
+The generated file uses one of the following schema models:
+
+- **V1 Resource** - For dashboards created using the [current dashboard schema](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/) wrapped in the `spec` property of the [V1 Kubernetes-style resource](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2alpha1).
+- **V2 Resource** - For dashboards created using the [V2 Resource schema](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1).
 
 ### Export a dashboard as an image
 
@@ -293,12 +251,12 @@ To share a personalized, direct link to your panel within your organization, fol
 1. Select the theme for the dashboard. Choose from **Current**, **Dark**, or **Light**.
 1. Click **Copy link**.
 1. Send the copied link to a Grafana user with authorization to view it.
-1. (Optional) To [generate an image of the panel as a PNG file](ref:image-rendering), customize the image settings:
+1. (Optional) To [generate an image of the panel as a PNG file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/), customize the image settings:
    - **Width** - In pixels. The default is 1000.
    - **Height** - In pixels. The default is 500.
    - **Scale factor** - The default is 1.
 
-   There are maximums for [width](ref:max-width), [height](ref:max-height), and [scale factor](ref:max-scale) in the image renderer configuration that you can customize if needed.
+   There are maximums for [width](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-width), [height](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#viewport-maximum-height), and [scale factor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#maximum-device-scale-factor) in the image renderer configuration that you can customize if needed.
 
 1. (Optional) Click **Generate image** to see a preview of the panel image.
 1. (Optional) Click **Download image**.
@@ -317,7 +275,7 @@ When you click **Generate image** in the panel link settings, Grafana generates 
 | timeout   | Number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.             |
 | scale     | Numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). |
 
-You can also update these parameters in the [image rendering configuration](ref:image-rendering-config).
+You can also update these parameters in the [image rendering configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/#configuration).
 
 The following example shows a link to a server-side rendered PNG:
 
@@ -330,7 +288,7 @@ https://play.grafana.org/render/d-solo/ktMs4D6Mk?from=2024-09-03T11:55:44.442Z&t
 You can share a panel by embedding it on another website using an iframe. Users must be signed into Grafana to view the panel unless you have anonymous access permission enabled for your Grafana instance.
 
 {{< admonition type="note" >}}
-Panel embedding and anonymous access permissions are not available in Grafana Cloud, even for panels in [externally shared dashboards](ref:shared-dashboards). These capabilities are only supported in Grafana Enterprise and Grafana Open Source.
+Panel embedding and anonymous access permissions are not available in Grafana Cloud, even for panels in [externally shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/shared-dashboards/). These capabilities are only supported in Grafana Enterprise and Grafana Open Source.
 {{< /admonition >}}
 
 To create a panel that can be embedded, follow these steps:

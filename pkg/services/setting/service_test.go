@@ -229,7 +229,7 @@ func TestRemoteSettingService_List(t *testing.T) {
 func TestParseSettingList(t *testing.T) {
 	t.Run("should parse valid settings list", func(t *testing.T) {
 		jsonData := `{
-			"apiVersion": "setting.grafana.app/v0alpha1",
+			"apiVersion": "setting.grafana.app/v1beta1",
 			"kind": "SettingList",
 			"metadata": {"continue": ""},
 			"items": [
@@ -250,7 +250,7 @@ func TestParseSettingList(t *testing.T) {
 
 	t.Run("should parse continue token", func(t *testing.T) {
 		jsonData := `{
-			"apiVersion": "setting.grafana.app/v0alpha1",
+			"apiVersion": "setting.grafana.app/v1beta1",
 			"kind": "SettingList",
 			"metadata": {"continue": "next-page-token"},
 			"items": []
@@ -264,7 +264,7 @@ func TestParseSettingList(t *testing.T) {
 
 	t.Run("should handle empty items", func(t *testing.T) {
 		jsonData := `{
-			"apiVersion": "setting.grafana.app/v0alpha1",
+			"apiVersion": "setting.grafana.app/v1beta1",
 			"kind": "SettingList",
 			"metadata": {},
 			"items": []
@@ -436,14 +436,14 @@ func newTestClient(t *testing.T, serverURL string, pageSize int64) Service {
 
 func generateSettingsJSON(settings []Setting, continueToken string) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf(`{"apiVersion":"setting.grafana.app/v0alpha1","kind":"SettingList","metadata":{"continue":"%s"},"items":[`, continueToken))
+	sb.WriteString(fmt.Sprintf(`{"apiVersion":"setting.grafana.app/v1beta1","kind":"SettingList","metadata":{"continue":"%s"},"items":[`, continueToken))
 
 	for i, s := range settings {
 		if i > 0 {
 			sb.WriteString(",")
 		}
 		sb.WriteString(fmt.Sprintf(
-			`{"apiVersion":"setting.grafana.app/v0alpha1","kind":"Setting","metadata":{"name":"%s--%s","namespace":"test-namespace"},"spec":{"section":"%s","key":"%s","value":"%s"}}`,
+			`{"apiVersion":"setting.grafana.app/v1beta1","kind":"Setting","metadata":{"name":"%s--%s","namespace":"test-namespace"},"spec":{"section":"%s","key":"%s","value":"%s"}}`,
 			s.Section, s.Key, s.Section, s.Key, s.Value,
 		))
 	}
@@ -481,7 +481,7 @@ func BenchmarkParseSettingList_SinglePage(b *testing.B) {
 // generateSettingListJSON generates a K8s-style SettingList JSON response for benchmarks
 func generateSettingListJSON(totalSettings, numSections int) string {
 	var sb strings.Builder
-	sb.WriteString(`{"apiVersion":"setting.grafana.app/v0alpha1","kind":"SettingList","metadata":{"continue":""},"items":[`)
+	sb.WriteString(`{"apiVersion":"setting.grafana.app/v1beta1","kind":"SettingList","metadata":{"continue":""},"items":[`)
 
 	settingsPerSection := totalSettings / numSections
 	first := true
@@ -492,7 +492,7 @@ func generateSettingListJSON(totalSettings, numSections int) string {
 			}
 			first = false
 			sb.WriteString(fmt.Sprintf(
-				`{"apiVersion":"setting.grafana.app/v0alpha1","kind":"Setting","metadata":{"name":"section-%03d--key-%03d","namespace":"bench-ns"},"spec":{"section":"section-%03d","key":"key-%03d","value":"value-for-section-%d-key-%d"}}`,
+				`{"apiVersion":"setting.grafana.app/v1beta1","kind":"Setting","metadata":{"name":"section-%03d--key-%03d","namespace":"bench-ns"},"spec":{"section":"section-%03d","key":"key-%03d","value":"value-for-section-%d-key-%d"}}`,
 				section, key, section, key, section, key,
 			))
 		}

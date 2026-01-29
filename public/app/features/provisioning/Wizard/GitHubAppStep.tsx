@@ -6,12 +6,13 @@ import { Alert, Field, RadioButtonGroup, Spinner, Stack } from '@grafana/ui';
 import { ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
-import { GitHubAppCredentialFields } from '../components/Shared/GitHubAppCredentialFields';
+import { ConnectionListItem } from '../Connection/ConnectionListItem';
+import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
 import { useConnectionList } from '../hooks/useConnectionList';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { ConnectionFormData } from '../types';
 
-import { SelectableConnectionCard } from './SelectableConnectionCard';
+import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
 import { ConnectionCreationResult, WizardFormData } from './types';
 
 export interface GitHubAppStepRef {
@@ -36,6 +37,8 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
   const credentialForm = useForm<ConnectionFormData>({
     defaultValues: {
       type: 'github',
+      title: '',
+      description: '',
       appID: '',
       installationID: '',
       privateKey: '',
@@ -65,9 +68,11 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
           return;
         }
 
-        const { appID, installationID, privateKey } = credentialForm.getValues();
+        const { title, description, appID, installationID, privateKey } = credentialForm.getValues();
         const spec: ConnectionSpec = {
           type: 'github',
+          title,
+          ...(description && { description }),
           github: { appID, installationID },
         };
 
@@ -94,6 +99,7 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
 
   return (
     <Stack direction="column" gap={2}>
+      <GithubAppStepInstruction />
       <Field noMargin label={t('provisioning.wizard.github-app-mode-label', 'GitHub App configuration')}>
         <Controller
           name="githubAppMode"
@@ -159,7 +165,7 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
                   {githubConnections.map((connection) => {
                     const connectionName = connection.metadata?.name ?? '';
                     return (
-                      <SelectableConnectionCard
+                      <ConnectionListItem
                         key={connectionName}
                         connection={connection}
                         isSelected={value === connectionName}
@@ -176,7 +182,7 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
 
       {githubAppMode === 'new' && (
         <FormProvider {...credentialForm}>
-          <GitHubAppCredentialFields required />
+          <GitHubConnectionFields required />
         </FormProvider>
       )}
     </Stack>

@@ -422,8 +422,9 @@ func (ng *AlertNG) init() error {
 	)
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService))
+	receiverAccess := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false)
 	receiverService := notifier.NewReceiverService(
-		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false),
+		receiverAccess,
 		configStore,
 		ng.store,
 		ng.store,
@@ -435,6 +436,13 @@ func (ng *AlertNG) init() error {
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 	)
+	receiverTestService := notifier.NewReceiverTestingService(
+		receiverService,
+		ng.MultiOrgAlertmanager,
+		ng.SecretsService,
+		receiverAccess,
+	)
+
 	provisioningReceiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
 		configStore,
@@ -477,6 +485,7 @@ func (ng *AlertNG) init() error {
 		AccessControl:        ng.accesscontrol,
 		Policies:             policyService,
 		ReceiverService:      receiverService,
+		ReceiverTestService:  receiverTestService,
 		ContactPointService:  contactPointService,
 		Templates:            templateService,
 		MuteTimings:          muteTimingService,

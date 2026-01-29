@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { GroupByVariable, SceneDataQuery, VariableValueOption, VariableValueSingle } from '@grafana/scenes';
 import { Button, Icon, Popover } from '@grafana/ui';
+import { getApplicableGroupByOptions } from 'app/features/dashboard-scene/utils/getApplicableGroupByOptions';
 
 import { PanelGroupByActionPopover } from './PanelGroupByActionPopover';
 
@@ -134,17 +135,4 @@ function getGroupByValue(groupByVariable: GroupByVariable) {
     : groupByVariable.state.value
       ? [groupByVariable.state.value]
       : [];
-}
-
-async function getApplicableGroupByOptions(
-  groupByVariable: GroupByVariable,
-  options: VariableValueOption[],
-  queries: SceneDataQuery[]
-) {
-  const values = options.map((option) => option.value);
-  const applicability = await groupByVariable.getGroupByApplicabilityForQueries(values, queries);
-
-  return applicability
-    ? applicability.filter((item) => item.applicable).map((item) => ({ label: item.key, value: item.key }))
-    : options;
 }
