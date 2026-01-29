@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
+import { MultiValueVariable, VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
 import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
 
 interface VariableState {
@@ -16,8 +16,10 @@ interface VariableState {
 
 // made only for legacy reasons in public/app/features/variables/editor/VariableEditorEditor.tsx
 // TODO: remove ASAP
+type VariableValuesPreviewVariable = { useState(): VariableState } | MultiValueVariable;
+
 interface VariableValuesPreviewProps {
-  variable: { useState(): VariableState };
+  variable: VariableValuesPreviewVariable;
 }
 
 function flattenProperties(properties?: VariableValueOptionProperties, path = ''): Record<string, string> {
@@ -53,7 +55,7 @@ export const useGetPropertiesFromOptions = (options: VariableValueOption[], stat
 export const VariableValuesPreview = ({ variable }: VariableValuesPreviewProps) => {
   const styles = useStyles2(getStyles);
   const state = variable.useState();
-  const { options } = state;
+  const options = 'getOptionsForSelect' in variable ? variable.getOptionsForSelect(false) : state.options;
   const staticOptions = 'staticOptions' in state && Array.isArray(state.staticOptions) ? state.staticOptions : [];
   const hasOptions = options.length > 0;
   const properties = useGetPropertiesFromOptions(options, staticOptions);
