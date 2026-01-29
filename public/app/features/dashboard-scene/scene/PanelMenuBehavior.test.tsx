@@ -5,6 +5,7 @@ import {
   PluginExtensionPanelContext,
   PluginExtensionTypes,
   getDefaultTimeRange,
+  store,
   toDataFrame,
   urlUtil,
 } from '@grafana/data';
@@ -18,6 +19,7 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
@@ -852,22 +854,8 @@ describe('panelMenuBehavior', () => {
   });
 
   describe('Panel styles menu', () => {
-    beforeEach(() => {
-      config.featureToggles.panelStyleActions = true;
-    });
-
-    afterEach(() => {
-      config.featureToggles.panelStyleActions = false;
-    });
-
-    it('should call analytics when copy styles is clicked', async () => {
-      const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
-      const copySpy = jest.spyOn(DashboardScene.prototype, 'copyPanelStyles');
-
-      const menu = new VizPanelMenu({
-        $behaviors: [panelMenuBehavior],
-      });
-
+    async function buildTimeseriesTestScene() {
+      const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
       const panel = new VizPanel({
         title: 'Timeseries Panel',
         pluginId: 'timeseries',
@@ -885,22 +873,52 @@ describe('panelMenuBehavior', () => {
       });
 
       menu.activate();
-
       await new Promise((r) => setTimeout(r, 1));
 
-      const stylesMenu = menu.state.items?.find((item) => item.text === 'Styles');
-      expect(stylesMenu).toBeDefined();
+      return { menu, panel };
+    }
 
-      const copyItem = stylesMenu?.subMenu?.find((item) => item.text === 'Copy styles');
-      expect(copyItem).toBeDefined();
+    beforeEach(() => {
+      config.featureToggles.panelStyleActions = true;
+    });
 
+    afterEach(() => {
+      config.featureToggles.panelStyleActions = false;
+      store.delete(LS_STYLES_COPY_KEY);
+    });
+
+    it('should call analytics when copy styles is clicked', async () => {
+      const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
+      const { menu } = await buildTimeseriesTestScene();
+
+      const copyItem = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu?.[0];
       copyItem?.onClick?.({} as never);
 
       expect(spy).toHaveBeenCalledWith('copy', 'timeseries', expect.any(Number));
-      expect(copySpy).toHaveBeenCalled();
+    });
 
-      spy.mockRestore();
-      copySpy.mockRestore();
+    it('should call analytics when paste styles is clicked', async () => {
+      store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
+      const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
+      const { menu } = await buildTimeseriesTestScene();
+
+      const pasteItem = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu?.[1];
+      pasteItem?.onClick?.({} as never);
+
+      expect(spy).toHaveBeenCalledWith('paste', 'timeseries', expect.any(Number));
+    });
+
+    it('should not show styles menu when feature flag is disabled', async () => {
+      config.featureToggles.panelStyleActions = false;
+      const { menu } = await buildTimeseriesTestScene();
+
+      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
+    });
+
+    it('should not show styles menu for non-timeseries panels', async () => {
+      const { menu } = await buildTestScene({});
+
+      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
     });
   });
 });

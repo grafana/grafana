@@ -657,6 +657,10 @@ describe('DashboardScene', () => {
           config.featureToggles.panelStyleActions = true;
         });
 
+        afterEach(() => {
+          config.featureToggles.panelStyleActions = false;
+        });
+
         it('Should copy panel styles when feature flag is enabled', () => {
           const timeseriesPanel = createTimeseriesPanel();
 
@@ -801,17 +805,13 @@ describe('DashboardScene', () => {
         });
 
         it('Should report analytics on paste error', () => {
-          const timeseriesPanel = createTimeseriesPanel();
           const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
-          const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+          jest.spyOn(console, 'error').mockImplementation();
 
           store.set(LS_STYLES_COPY_KEY, 'invalid json');
-
-          scene.pastePanelStyles(timeseriesPanel);
+          scene.pastePanelStyles(createTimeseriesPanel());
 
           expect(spy).toHaveBeenCalledWith('paste', 'timeseries', expect.any(Number), true);
-          spy.mockRestore();
-          consoleErrorSpy.mockRestore();
         });
       });
 
