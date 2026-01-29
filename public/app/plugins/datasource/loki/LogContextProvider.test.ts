@@ -285,7 +285,7 @@ describe('LogContextProvider', () => {
       });
     });
 
-    it('should not apply parser and parsed labels if more parsers in original query', async () => {
+    it('should apply all parsers when multiple parsers in original query', async () => {
       logContextProvider.cachedContextFilters = [
         { value: 'baz', enabled: true, nonIndexed: false, label: 'bar' },
         { value: 'uniqueParsedLabel', enabled: true, nonIndexed: true, label: 'foo' },
@@ -300,7 +300,38 @@ describe('LogContextProvider', () => {
         }
       );
 
-      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | foo=\`uniqueParsedLabel\``);
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | json | logfmt | foo=\`uniqueParsedLabel\``);
+    });
+
+    it('should apply all parsers in correct order (json | logfmt)', async () => {
+      logContextProvider.cachedContextFilters = [{ value: 'baz', enabled: true, nonIndexed: false, label: 'bar' }];
+      const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
+        defaultLogRow,
+        10,
+        LogRowContextQueryDirection.Backward,
+        {
+          expr: '{bar="baz"} | json | logfmt',
+          refId: 'A',
+        }
+      );
+
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | json`);
+    });
+
+    it('should apply parsers and drop operations when includePipelineOperations is enabled', async () => {
+      window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
+      logContextProvider.cachedContextFilters = [{ value: 'info', enabled: true, nonIndexed: false, label: 'level' }];
+      const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
+        defaultLogRow,
+        10,
+        LogRowContextQueryDirection.Backward,
+        {
+          expr: '{level="info"} | json | logfmt | drop __error__, __error_details__',
+          refId: 'A',
+        }
+      );
+
+      expect(contextQuery.query.expr).toEqual(`{level="info"} | logfmt | json | drop __error__, __error_details__`);
     });
 
     it('should not apply line_format if flag is not set by default', async () => {
@@ -434,7 +465,7 @@ describe('LogContextProvider', () => {
       expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format "foo" | label_format a="baz"`);
     });
 
-    it('should not apply additional parsers', async () => {
+    it('should apply all parsers and pipeline operations when includePipelineOperations is enabled', async () => {
       window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
       logContextProvider.cachedContextFilters = [{ value: 'baz', enabled: true, nonIndexed: false, label: 'bar' }];
       const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
@@ -447,7 +478,37 @@ describe('LogContextProvider', () => {
         }
       );
 
-      expect(contextQuery.query.expr).toEqual(`{bar="baz"}`);
+      // When includePipelineOperations is enabled, both parsers and pipeline stages are added
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | json | logfmt | line_format "foo" | label_format a="baz"`);
+    });
+  });
+
+  describe('processPipelineStagesToExpr', () => {
+    it('should include drop operations in the query', () => {
+      const currentExpr = '{bar="baz"} | logfmt';
+      const query: LokiQuery = {
+        expr: '{bar="baz"} | logfmt | drop __error__, __error_details__',
+        refId: 'A',
+      };
+
+      const result = logContextProvider.processPipelineStagesToExpr(currentExpr, query);
+
+      expect(result).toContain('drop __error__, __error_details__');
+      expect(result).toBe('{bar="baz"} | logfmt | drop __error__, __error_details__');
+    });
+
+    it('should include drop operations along with other pipeline stages', () => {
+      const currentExpr = '{bar="baz"} | logfmt';
+      const query: LokiQuery = {
+        expr: '{bar="baz"} | logfmt | line_format "foo" | drop __error__ | label_format a="baz"',
+        refId: 'A',
+      };
+
+      const result = logContextProvider.processPipelineStagesToExpr(currentExpr, query);
+
+      expect(result).toContain('drop __error__');
+      expect(result).toContain('line_format "foo"');
+      expect(result).toContain('label_format a="baz"');
     });
   });
 
