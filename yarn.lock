@@ -3310,14 +3310,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@portal:/Users/isabellasiu/code/grafana-aws-sdk-react::locator=grafana%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@grafana/aws-sdk@portal:/Users/isabellasiu/code/grafana-aws-sdk-react::locator=grafana%40workspace%3A."
+"@grafana/aws-sdk@npm:0.8.3":
+  version: 0.8.3
+  resolution: "@grafana/aws-sdk@npm:0.8.3"
+  dependencies:
+    "@grafana/async-query-data": "npm:0.4.2"
+    "@grafana/plugin-ui": "npm:^0.11.0"
+  checksum: 10/e2b7ab725f1602831857ad63adb314ec62b9b4d08404f71ffa2ce278df0c364f5ad7a9a83f5e8d7e646922124f812cdc2a7035bff4a952a9f455eaf2c9a5992a
+  languageName: node
+  linkType: hard
+
+"@grafana/aws-sdk@npm:0.9.0":
+  version: 0.9.0
+  resolution: "@grafana/aws-sdk@npm:0.9.0"
   dependencies:
     "@grafana/async-query-data": "npm:0.4.2"
     "@grafana/plugin-ui": "npm:^0.12.0"
+  checksum: 10/c215140b0c18ad355dff0cc716fc459a0f8b8c265a272d0d3f00db425ba60a02fd43a73b6c34b30d2540d9d211e679d31c364cd0dc62502461e231d21a539284
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@grafana/azure-sdk@npm:0.0.8":
   version: 0.0.8
@@ -3689,6 +3700,34 @@ __metadata:
   peerDependencies:
     "@playwright/test": ^1.52.0
   checksum: 10/16bad2ac140624119f35b31857115b17164b672316a7855617ce8507badcf0f1f056132e560fb7300be8430b773d0a6bf21d74e53e1dc54359960faf06347694
+  languageName: node
+  linkType: hard
+
+"@grafana/plugin-ui@npm:^0.11.0":
+  version: 0.11.1
+  resolution: "@grafana/plugin-ui@npm:0.11.1"
+  dependencies:
+    "@emotion/css": "npm:^11.11.2"
+    "@hello-pangea/dnd": "npm:^17.0.0"
+    "@react-awesome-query-builder/ui": "npm:^6.6.4"
+    "@types/prismjs": "npm:^1.26.4"
+    lodash: "npm:^4.17.21"
+    prismjs: "npm:^1.30.0"
+    react-calendar: "npm:^4.8.0"
+    react-popper-tooltip: "npm:^4.4.2"
+    react-use: "npm:^17.3.1"
+    react-virtualized-auto-sizer: "npm:^1.0.6"
+    sql-formatter-plus: "npm:^1.3.6"
+    uuid: "npm:^11.0.0"
+  peerDependencies:
+    "@grafana/data": ">=10.4.0"
+    "@grafana/e2e-selectors": ">=10.4.0"
+    "@grafana/runtime": ">=10.4.0"
+    "@grafana/ui": ">=10.4.0"
+    react: ^18.2.0
+    react-dom: ^18.2.0
+    rxjs: ^7.8.1
+  checksum: 10/e22f79ca453338b37ce3778ee71b253aaa6dfb8e3c9e77a4f4d26e5ed6f5e618c453ebffef713e12a75d5aa63dce3209389fb38a27727882007d8ba4b6bd63c6
   languageName: node
   linkType: hard
 
@@ -19923,7 +19962,7 @@ __metadata:
     "@grafana/alerting": "workspace:*"
     "@grafana/api-clients": "workspace:*"
     "@grafana/assistant": "npm:0.1.4"
-    "@grafana/aws-sdk": "npm:0.8.3"
+    "@grafana/aws-sdk": "npm:0.9.0"
     "@grafana/azure-sdk": "npm:0.0.8"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"

@@ -276,7 +276,7 @@
     "@grafana/alerting": "workspace:*",
     "@grafana/api-clients": "workspace:*",
     "@grafana/assistant": "0.1.4",
-    "@grafana/aws-sdk": "0.8.3",
+    "@grafana/aws-sdk": "0.9.0",
     "@grafana/azure-sdk": "0.0.8",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
@@ -460,8 +460,7 @@
     "js-yaml@npm:4.1.0": "^4.1.0",
     "js-yaml@npm:=4.1.0": "^4.1.0",
     "nodemailer": "7.0.12",
-    "@storybook/core@npm:8.6.15": "patch:@storybook/core@npm%3A8.6.15#~/.yarn/patches/@storybook-core-npm-8.6.15-a468a35170.patch",
-    "@grafana/aws-sdk": "portal:/Users/isabellasiu/code/grafana-aws-sdk-react"
+    "@storybook/core@npm:8.6.15": "patch:@storybook/core@npm%3A8.6.15#~/.yarn/patches/@storybook-core-npm-8.6.15-a468a35170.patch"
   },
   "workspaces": {
     "packages": [

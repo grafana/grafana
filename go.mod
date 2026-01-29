@@ -100,7 +100,7 @@ require (
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
 	github.com/grafana/grafana-app-sdk v0.49.1 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.49.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-aws-sdk v1.4.2 // @grafana/aws-datasources
+	github.com/grafana/grafana-aws-sdk v1.4.3 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.3.1 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.9.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.4.2 // @grafana/partner-datasources
@@ -751,5 +751,3 @@ exclude (
 	// otherwise pulled in as a transitive dependency.
 	k8s.io/client-go v12.0.0+incompatible
 )
-
-replace github.com/grafana/grafana-aws-sdk => /Users/isabellasiu/code/grafana-aws-sdk
