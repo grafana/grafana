@@ -75,28 +75,14 @@ export function useWizardButtons({
   }, [isCancelling, shouldUseCancelBehavior, activeStep, repoName]);
 
   const isNextDisabled = useMemo(() => {
-    // AuthType step is always enabled (user just needs to select an option)
-    if (activeStep === 'authType') {
-      return false;
-    }
-    if (activeStep !== 'connection' && hasStepError) {
-      return true;
-    }
-    // Synchronize step requires success or warning to proceed
+    // Synchronize step requires success or warning to proceed (async operation result)
     if (activeStep === 'synchronize') {
       return !(isStepSuccess || hasStepWarning);
     }
+    // For all other steps, rely on RHF validation - don't block based on hasStepError
+    // so users can fix their input and retry
     return isSubmitting || isCancelling || isStepRunning || isCreatingSkipJob;
-  }, [
-    activeStep,
-    hasStepError,
-    isStepSuccess,
-    hasStepWarning,
-    isSubmitting,
-    isCancelling,
-    isStepRunning,
-    isCreatingSkipJob,
-  ]);
+  }, [activeStep, isStepSuccess, hasStepWarning, isSubmitting, isCancelling, isStepRunning, isCreatingSkipJob]);
 
   const isPreviousDisabled = isSubmitting || isCancelling || isStepRunning || showCancelConfirmation;
 
