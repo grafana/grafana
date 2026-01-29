@@ -3,10 +3,11 @@ import { render, screen } from '@testing-library/react';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 
+import { SidebarSize } from '../../constants';
 import { QueryEditorProvider } from '../QueryEditorContext';
 import { ds1SettingsMock, mockActions } from '../testUtils';
 
-import { QueryEditorSidebar, SidebarSize } from './QueryEditorSidebar';
+import { QueryEditorSidebar } from './QueryEditorSidebar';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

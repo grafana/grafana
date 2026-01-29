@@ -40,7 +40,7 @@ describe('SidebarCard', () => {
         }}
         actions={mockActions}
       >
-        <SidebarCard query={query} />
+        <SidebarCard item={query} />
       </QueryEditorProvider>
     );
 
@@ -71,7 +71,7 @@ describe('SidebarCard', () => {
         }}
         actions={mockActions}
       >
-        <SidebarCard query={transformation} />
+        <SidebarCard item={transformation} />
       </QueryEditorProvider>
     );
 
@@ -101,7 +101,7 @@ describe('SidebarCard', () => {
         }}
         actions={mockActions}
       >
-        <SidebarCard query={query} />
+        <SidebarCard item={query} />
       </QueryEditorProvider>
     );
 
