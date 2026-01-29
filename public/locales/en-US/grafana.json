@@ -14840,6 +14840,9 @@
         "variable-values-fetched-datasource-query": "Variable values are fetched from a datasource query"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": "A variable that can be toggled on and off"
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "default",
