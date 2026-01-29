@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, PluginType } from '@grafana/data';
@@ -17,7 +17,9 @@ describe('QueryEditor', () => {
   it('should render without error', async () => {
     setup();
 
-    expect(await screen.findByDisplayValue('process_cpu-cpu')).toBeDefined();
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('process_cpu-cpu')).toBeDefined();
+    });
   });
 
   it('should render without error if empty profileTypes', async () => {

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
@@ -26,7 +26,9 @@ describe('QueryEditor', () => {
     setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
     setup();
 
-    expect(await screen.findByText(/process_cpu - cpu/)).toBeDefined();
+    await waitFor(() => {
+      expect(screen.getByText(/process_cpu - cpu/)).toBeDefined();
+    });
   });
 
   it('should render options', async () => {
