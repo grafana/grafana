@@ -277,7 +277,6 @@ type ResourceServerOptions struct {
 
 // NewSearchServer creates a standalone search server.
 func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
-	// No backend search support
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing backend implementation")
 	}
