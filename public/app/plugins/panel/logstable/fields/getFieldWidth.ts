@@ -15,7 +15,7 @@ export function getFieldWidth(
     return width;
   }
 
-  return width ?? getDefaultFieldWidth(field, fieldIndex, timeFieldName, options);
+  return getDefaultFieldWidth(field, fieldIndex, timeFieldName, options);
 }
 
 function getDefaultFieldWidth(
