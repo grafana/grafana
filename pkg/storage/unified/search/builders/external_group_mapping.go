@@ -67,6 +67,7 @@ func (u *extGroupMappingDocumentBuilder) BuildDocument(ctx context.Context, key 
 	}
 
 	doc := resource.NewIndexableDocument(key, rv, obj)
+	doc.SelectableFields = BuildSelectableFields(extGroupMapping, iamv0.ExternalGroupMappingKind())
 
 	doc.Fields = make(map[string]any)
 	if extGroupMapping.Spec.TeamRef.Name != "" {

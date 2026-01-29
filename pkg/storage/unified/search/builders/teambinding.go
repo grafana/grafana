@@ -64,6 +64,7 @@ func (b *teamBindingDocumentBuilder) BuildDocument(ctx context.Context, key *res
 	}
 
 	doc := resource.NewIndexableDocument(key, rv, obj)
+	doc.SelectableFields = BuildSelectableFields(tb, iamv0.TeamBindingKind())
 	doc.Fields = map[string]any{
 		TEAM_BINDING_SUBJECT_NAME: tb.Spec.Subject.Name,
 		TEAM_BINDING_TEAM_REF:     tb.Spec.TeamRef.Name,

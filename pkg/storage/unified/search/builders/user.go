@@ -93,6 +93,7 @@ func (u *userDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 	}
 
 	doc := resource.NewIndexableDocument(key, rv, obj)
+	doc.SelectableFields = BuildSelectableFields(user, iamv0.UserKind())
 
 	doc.Fields = make(map[string]any)
 	if user.Spec.Email != "" {

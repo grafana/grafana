@@ -15,5 +15,9 @@
     "permission": "Viewer",
     "subject_name": "user.one",
     "team_ref": "team.one"
+  },
+  "selectableFields": {
+    "spec.subject.name": "user.one",
+    "spec.teamRef.name": "team.one"
   }
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 
 	claims "github.com/grafana/authlib/types"
+	sdkResource "github.com/grafana/grafana-app-sdk/resource"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
@@ -78,4 +80,15 @@ func All(sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, e
 	}
 
 	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings}, nil
+}
+
+func BuildSelectableFields(team sdkResource.Object, kind sdkResource.Kind) map[string]string {
+	result := make(map[string]string, len(kind.SelectableFields()))
+	for _, sf := range kind.SelectableFields() {
+		val, err := sf.FieldValueFunc(team)
+		if err == nil && val != "" {
+			result[sf.FieldSelector] = val
+		}
+	}
+	return result
 }
