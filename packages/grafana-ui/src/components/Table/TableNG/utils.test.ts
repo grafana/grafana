@@ -226,6 +226,49 @@ describe('TableNG utils', () => {
       expect(records).toHaveLength(2);
       expect(records[0]).toEqual({ __depth: 0, __index: 0, time: 1, value: 10 });
     });
+
+    it('should handle nested frames', () => {
+      const childFrame1 = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 2] },
+          { name: 'value', values: [10, 20] },
+        ],
+      });
+      const childFrame2 = createDataFrame({
+        fields: [
+          { name: 'time', values: [3, 4] },
+          { name: 'value', values: [30, 40] },
+        ],
+      });
+      const parentFrame = createDataFrame({
+        fields: [
+          { name: 'id', values: [100, 200] },
+          { name: 'nested', values: [[childFrame1], [childFrame2]], type: FieldType.nestedFrames },
+        ],
+      });
+
+      const records = frameToRecords(parentFrame, 'nested');
+      expect(records).toHaveLength(4);
+      expect(records[0]).toEqual({ __depth: 0, __index: 0, id: 100 });
+      expect(records[1]).toEqual({ __depth: 1, __index: 0, data: childFrame1 });
+      expect(records[2]).toEqual({ __depth: 0, __index: 1, id: 200 });
+      expect(records[3]).toEqual({ __depth: 1, __index: 1, data: childFrame2 });
+    });
+
+    it('should render a nested row correctly', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', values: [1, 2] },
+          { name: 'value', values: [10, 20] },
+        ],
+      });
+
+      const records = frameToRecords(frame, 'nested', 3);
+
+      expect(records).toHaveLength(2);
+      expect(records[0]).toEqual({ __depth: 0, __index: 0, __parentIndex: 3, time: 1, value: 10 });
+      expect(records[1]).toEqual({ __depth: 0, __index: 1, __parentIndex: 3, time: 2, value: 20 });
+    });
   });
 
   describe('getAlignmentFactor', () => {
