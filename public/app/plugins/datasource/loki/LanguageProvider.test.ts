@@ -13,7 +13,7 @@ import {
   extractLabelKeysFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { DetectedFieldsResult, LokiLabelType } from './types';
+import { DetectedFieldsResult, LabelType } from './types';
 
 jest.mock('./responseUtils');
 
@@ -706,11 +706,11 @@ describe('Query imports', () => {
       datasource = createLokiDatasource();
       languageProvider = new LanguageProvider(datasource);
       jest.mocked(extractLabelKeysFromDataFrame).mockImplementation((_, type) => {
-        if (type === LokiLabelType.Indexed || !type) {
+        if (type === LabelType.Indexed || !type) {
           return extractedLabelKeys;
-        } else if (type === LokiLabelType.StructuredMetadata) {
+        } else if (type === LabelType.StructuredMetadata) {
           return structuredMetadataKeys;
-        } else if (type === LokiLabelType.Parsed) {
+        } else if (type === LabelType.Parsed) {
           return parsedKeys;
         } else {
           return [];

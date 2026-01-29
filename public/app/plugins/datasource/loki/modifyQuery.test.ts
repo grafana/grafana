@@ -14,7 +14,7 @@ import {
   removeCommentsFromQuery,
   removeLabelFromQuery,
 } from './modifyQuery';
-import { LokiLabelType } from './types';
+import { LabelType } from './types';
 
 describe('addLabelToQuery()', () => {
   it.each`
@@ -90,27 +90,27 @@ describe('addLabelToQuery()', () => {
   );
 
   it('should always add label as labelFilter if label type is parsed', () => {
-    expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', LokiLabelType.Parsed)).toEqual(
+    expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', LabelType.Parsed)).toEqual(
       '{foo="bar"} | forcedLabel=`value`'
     );
   });
 
   it('should always add label as labelFilter if label type is parsed with parser', () => {
-    expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', LokiLabelType.Parsed)).toEqual(
+    expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', LabelType.Parsed)).toEqual(
       '{foo="bar"} | logfmt | forcedLabel=`value`'
     );
   });
 
   it('should always add label as labelFilter if label type is structured', () => {
-    expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', LokiLabelType.StructuredMetadata)).toEqual(
+    expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', LabelType.StructuredMetadata)).toEqual(
       '{foo="bar"} | forcedLabel=`value`'
     );
   });
 
   it('should always add label as labelFilter if label type is structured with parser', () => {
-    expect(
-      addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', LokiLabelType.StructuredMetadata)
-    ).toEqual('{foo="bar"} | logfmt | forcedLabel=`value`');
+    expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', LabelType.StructuredMetadata)).toEqual(
+      '{foo="bar"} | logfmt | forcedLabel=`value`'
+    );
   });
 
   it('should add label as labelFilter to multiple places if label is StructuredMetadata', () => {
@@ -120,7 +120,7 @@ describe('addLabelToQuery()', () => {
         'forcedLabel',
         '=',
         'value',
-        LokiLabelType.StructuredMetadata
+        LabelType.StructuredMetadata
       )
     ).toEqual('rate({foo="bar"} | forcedLabel=`value` [$__auto]) / rate({foo="bar"} | forcedLabel=`value` [$__auto])');
   });

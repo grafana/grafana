@@ -14,7 +14,7 @@ import {
   extractLogParserFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import { DetectedFieldsResult, LokiLabelType, LokiQuery, ParserAndLabelKeysResult } from './types';
+import { DetectedFieldsResult, LabelType, LokiQuery, ParserAndLabelKeysResult } from './types';
 
 const NS_IN_MS = 1000000;
 const EMPTY_SELECTOR = '{}';
@@ -495,10 +495,10 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     return {
       extractedLabelKeys: [
-        ...extractLabelKeysFromDataFrame(series[0], LokiLabelType.Indexed),
-        ...extractLabelKeysFromDataFrame(series[0], LokiLabelType.Parsed),
+        ...extractLabelKeysFromDataFrame(series[0], LabelType.Indexed),
+        ...extractLabelKeysFromDataFrame(series[0], LabelType.Parsed),
       ],
-      structuredMetadataKeys: extractLabelKeysFromDataFrame(series[0], LokiLabelType.StructuredMetadata),
+      structuredMetadataKeys: extractLabelKeysFromDataFrame(series[0], LabelType.StructuredMetadata),
       unwrapLabelKeys: extractUnwrapLabelKeysFromDataFrame(series[0]),
       hasJSON,
       hasPack,

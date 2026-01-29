@@ -8,7 +8,7 @@ import {
   processLabels,
   unescapeLabelValue,
 } from './languageUtils';
-import { LokiLabelType } from './types';
+import { LabelType } from './types';
 
 describe('isBytesString', () => {
   it('correctly matches bytes string with integers', () => {
@@ -86,25 +86,25 @@ describe('getLabelTypeFromFrame', () => {
     ],
   });
   it('returns structuredMetadata if given correct index', () => {
-    expect(getLokiLabelTypeFromFrame('structured', frameWithTypes, 0)).toBe(LokiLabelType.StructuredMetadata);
+    expect(getLokiLabelTypeFromFrame('structured', frameWithTypes, 0)).toBe(LabelType.StructuredMetadata);
   });
   it('returns null if given index to value without label', () => {
     expect(getLokiLabelTypeFromFrame('structured', frameWithTypes, 1)).toBe(null);
   });
   it('returns structuredMetadata if index arg is null, searches through all labels to find a match', () => {
-    expect(getLokiLabelTypeFromFrame('structured', frameWithTypes, null)).toBe(LokiLabelType.StructuredMetadata);
+    expect(getLokiLabelTypeFromFrame('structured', frameWithTypes, null)).toBe(LabelType.StructuredMetadata);
   });
   it('returns indexed', () => {
-    expect(getLokiLabelTypeFromFrame('indexed', frameWithTypes, 0)).toBe(LokiLabelType.Indexed);
+    expect(getLokiLabelTypeFromFrame('indexed', frameWithTypes, 0)).toBe(LabelType.Indexed);
   });
   it('returns indexed if null', () => {
-    expect(getLokiLabelTypeFromFrame('indexed', frameWithTypes, null)).toBe(LokiLabelType.Indexed);
+    expect(getLokiLabelTypeFromFrame('indexed', frameWithTypes, null)).toBe(LabelType.Indexed);
   });
   it('returns parsed', () => {
-    expect(getLokiLabelTypeFromFrame('parsed', frameWithTypes, 0)).toBe(LokiLabelType.Parsed);
+    expect(getLokiLabelTypeFromFrame('parsed', frameWithTypes, 0)).toBe(LabelType.Parsed);
   });
   it('returns parsed if null', () => {
-    expect(getLokiLabelTypeFromFrame('parsed', frameWithTypes, null)).toBe(LokiLabelType.Parsed);
+    expect(getLokiLabelTypeFromFrame('parsed', frameWithTypes, null)).toBe(LabelType.Parsed);
   });
   it('returns null for unknown field', () => {
     expect(getLokiLabelTypeFromFrame('unknown', frameWithTypes, 0)).toBe(null);

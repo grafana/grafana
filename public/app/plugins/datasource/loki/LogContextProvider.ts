@@ -30,7 +30,7 @@ import {
   isQueryWithParser,
 } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
-import { ContextFilter, LokiLabelType, LokiQuery } from './types';
+import { ContextFilter, LabelType, LokiQuery } from './types';
 
 export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
 export const SHOULD_INCLUDE_PIPELINE_OPERATIONS = 'lokiLogContextShouldIncludePipelineOperations';
@@ -269,7 +269,7 @@ export class LogContextProvider {
             parsedLabel.label,
             '=',
             parsedLabel.value,
-            hasParser ? LokiLabelType.Parsed : LokiLabelType.StructuredMetadata
+            hasParser ? LabelType.Parsed : LabelType.StructuredMetadata
           );
         }
       }
@@ -358,7 +358,7 @@ export class LogContextProvider {
         label,
         value: value,
         enabled: allLabels.includes(label),
-        nonIndexed: labelType !== null && labelType !== LokiLabelType.Indexed,
+        nonIndexed: labelType !== null && labelType !== LabelType.Indexed,
       };
 
       contextFilters.push(filter);

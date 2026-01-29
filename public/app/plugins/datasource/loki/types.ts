@@ -16,7 +16,7 @@ export enum LokiResultType {
   Matrix = 'matrix',
 }
 
-export enum LokiLabelType {
+export enum LabelType {
   Indexed = 'I',
   StructuredMetadata = 'S',
   Parsed = 'P',

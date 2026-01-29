@@ -28,7 +28,7 @@ import { unescapeLabelValue } from './languageUtils';
 import { getNodePositionsFromQuery } from './queryUtils';
 import { lokiQueryModeller as modeller } from './querybuilder/LokiQueryModeller';
 import { buildVisualQueryFromString, handleQuotes } from './querybuilder/parsing';
-import { LokiLabelType } from './types';
+import { LabelType } from './types';
 
 export class NodePosition {
   from: number;
@@ -149,7 +149,7 @@ export function addLabelToQuery(
   key: string,
   operator: string,
   value: string,
-  labelType?: LokiLabelType | null
+  labelType?: LabelType | null
 ): string {
   if (!key) {
     throw new Error('Need label to add to query.');
@@ -171,7 +171,7 @@ export function addLabelToQuery(
     const identifierSelectorMatchers = getIdentifierInStreamPositions(query);
     const indexedKeys = identifierSelectorMatchers.map((match) => match.getExpression(query));
     if (indexedKeys.includes(key)) {
-      labelType = LokiLabelType.Indexed;
+      labelType = LabelType.Indexed;
     }
   }
 
@@ -183,7 +183,7 @@ export function addLabelToQuery(
   );
 
   const filter = toLabelFilter(key, value, operator);
-  if (labelType === LokiLabelType.Parsed || labelType === LokiLabelType.StructuredMetadata) {
+  if (labelType === LabelType.Parsed || labelType === LabelType.StructuredMetadata) {
     const lastPositionsPerExpression = getLastPositionPerExpression(query, [
       ...streamSelectorPositions,
       ...labelFilterPositions,
@@ -192,7 +192,7 @@ export function addLabelToQuery(
     ]);
 
     return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter);
-  } else if (labelType === LokiLabelType.Indexed) {
+  } else if (labelType === LabelType.Indexed) {
     return addFilterToStreamSelector(query, streamSelectorPositions, filter);
   } else {
     // labelType is not set, so we need to figure out where to add the label

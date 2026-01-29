@@ -2,7 +2,7 @@ import { invert } from 'lodash';
 
 import { AbstractLabelMatcher, AbstractLabelOperator, AbstractQuery, DataFrame, TimeRange } from '@grafana/data';
 
-import { DATAPLANE_LABEL_TYPES_NAME, LokiLabelType } from './types';
+import { DATAPLANE_LABEL_TYPES_NAME, LabelType } from './types';
 
 function roundMsToMin(milliseconds: number): number {
   return roundSecToMin(milliseconds / 1000);
@@ -103,7 +103,7 @@ export function getLokiLabelTypeFromFrame(
   labelKey: string,
   frame: DataFrame | undefined,
   index: number | null
-): null | LokiLabelType {
+): null | LabelType {
   if (!frame) {
     return null;
   }
@@ -121,11 +121,11 @@ export function getLokiLabelTypeFromFrame(
   const valueTypes = typeField?.values[index];
   switch (valueTypes?.[labelKey]) {
     case 'I':
-      return LokiLabelType.Indexed;
+      return LabelType.Indexed;
     case 'S':
-      return LokiLabelType.StructuredMetadata;
+      return LabelType.StructuredMetadata;
     case 'P':
-      return LokiLabelType.Parsed;
+      return LabelType.Parsed;
     default:
       return null;
   }

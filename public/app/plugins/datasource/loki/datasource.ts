@@ -91,7 +91,7 @@ import { replaceVariables, returnVariables } from './querybuilder/parsingUtils';
 import { runShardSplitQuery } from './shardQuerySplitting';
 import { convertToWebSocketUrl, doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
-import { LokiLabelType, LokiOptions, LokiQuery, LokiVariableQuery, LokiVariableQueryType, QueryStats } from './types';
+import { LabelType, LokiOptions, LokiQuery, LokiVariableQuery, LokiVariableQueryType, QueryStats } from './types';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -208,11 +208,11 @@ export class LokiDatasource
     const lokiLabelType = getLokiLabelTypeFromFrame(labelKey, frame, index);
 
     switch (lokiLabelType) {
-      case LokiLabelType.Indexed:
+      case LabelType.Indexed:
         return t('logs.fields.type.loki.indexed-labels', 'Indexed labels');
-      case LokiLabelType.Parsed:
+      case LabelType.Parsed:
         return t('logs.fields.type.loki.structured-metadata', 'Structured metadata');
-      case LokiLabelType.StructuredMetadata:
+      case LabelType.StructuredMetadata:
         return t('logs.fields.type.loki.parsed-labels', 'Parsed fields');
       default:
         return null;

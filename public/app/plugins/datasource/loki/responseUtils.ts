@@ -2,7 +2,7 @@ import { DataFrame, DataQueryResponse, FieldType, isValidGoDuration, Labels } fr
 
 import { isBytesString, processLabels } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
-import { LokiLabelType } from './types';
+import { LabelType } from './types';
 
 export const LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX = 'the query would read too many bytes';
 export const LOKI_TIMEOUT_ERROR_MSG =
@@ -49,7 +49,7 @@ export function extractLogParserFromDataFrame(frame: DataFrame): {
   return { hasLogfmt, hasJSON, hasPack };
 }
 
-export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LokiLabelType = LokiLabelType.Indexed): string[] {
+export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LabelType = LabelType.Indexed): string[] {
   const labelsArray: Array<{ [key: string]: string }> | undefined =
     frame?.fields?.find((field) => field.name === 'labels')?.values ?? [];
   const labelTypeArray: Array<{ [key: string]: string }> | undefined =
@@ -61,7 +61,7 @@ export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LokiLabelT
 
   // if there are no label types and type is LabelType.Indexed return all label keys
   if (!labelTypeArray?.length) {
-    if (type === LokiLabelType.Indexed) {
+    if (type === LabelType.Indexed) {
       const { keys: labelKeys } = processLabels(labelsArray);
       return labelKeys;
     }
