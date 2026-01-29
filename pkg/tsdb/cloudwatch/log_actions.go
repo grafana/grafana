@@ -246,18 +246,9 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 	}
 
 	// Expand $__logGroups macro for SQL queries
-	if *logsQuery.QueryLanguage == dataquery.LogsQueryLanguageSQL {
-		if strings.Contains(finalQueryString, logGroupsMacro) {
-			if len(logGroupIdentifiers) == 0 {
-				return nil, backend.DownstreamError(fmt.Errorf("query contains %s but no log groups are selected", logGroupsMacro))
-			}
-			quoted := make([]string, len(logGroupIdentifiers))
-			for i, id := range logGroupIdentifiers {
-				quoted[i] = fmt.Sprintf("'%s'", id)
-			}
-			replacement := fmt.Sprintf("logGroups(logGroupIdentifier: [%s])", strings.Join(quoted, ", "))
-			finalQueryString = strings.Replace(finalQueryString, logGroupsMacro, replacement, 1)
-		}
+	finalQueryString, err := expandLogGroupsMacro(*logsQuery.QueryLanguage, finalQueryString, logGroupIdentifiers)
+	if err != nil {
+		return nil, err
 	}
 
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
@@ -302,6 +293,25 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 		err = backend.DownstreamError(err)
 	}
 	return resp, err
+}
+
+func expandLogGroupsMacro(queryLanguage dataquery.LogsQueryLanguage, queryString string, logGroupIdentifiers []string) (string, error) {
+	if queryLanguage != dataquery.LogsQueryLanguageSQL {
+		return queryString, nil
+	}
+	if !strings.Contains(queryString, logGroupsMacro) {
+		return queryString, nil
+	}
+	if len(logGroupIdentifiers) == 0 {
+		return "", backend.DownstreamError(fmt.Errorf("query contains %s but no log groups are selected", logGroupsMacro))
+	}
+
+	quoted := make([]string, len(logGroupIdentifiers))
+	for i, id := range logGroupIdentifiers {
+		quoted[i] = fmt.Sprintf("'%s'", id)
+	}
+	replacement := fmt.Sprintf("logGroups(logGroupIdentifier: [%s])", strings.Join(quoted, ", "))
+	return strings.Replace(queryString, logGroupsMacro, replacement, 1), nil
 }
 
 func (ds *DataSource) handleStartQuery(ctx context.Context, logsClient models.CWLogsClient,
