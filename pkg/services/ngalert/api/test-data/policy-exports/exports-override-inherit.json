@@ -1,0 +1,87 @@
+{
+ "apiVersion": 1,
+ "policies": [
+  {
+   "orgId": 1,
+   "receiver": "provisioned-contact-point",
+   "group_by": [
+    "alertname"
+   ],
+   "routes": [
+    {
+     "receiver": "lotsa-emails",
+     "group_by": [
+      "alertname",
+      "grafana_folder"
+     ],
+     "object_matchers": [
+      [
+       "severity",
+       "=",
+       "critical"
+      ]
+     ],
+     "mute_time_intervals": [
+      "A provisioned interval"
+     ],
+     "active_time_intervals": [
+      "Some interval"
+     ],
+     "continue": true,
+     "routes": [
+      {
+       "receiver": "lotsa-emails-override",
+       "group_by": [
+        "alertname",
+        "grafana_folder",
+        "one_more_group"
+       ],
+       "object_matchers": [
+        [
+         "severity",
+         "!=",
+         "critical"
+        ]
+       ],
+       "mute_time_intervals": [
+        "A provisioned interval override"
+       ],
+       "active_time_intervals": [
+        "Some interval override"
+       ],
+       "group_wait": "1m40s",
+       "group_interval": "1h40m",
+       "repeat_interval": "4d4h"
+      }
+     ],
+     "group_wait": "10s",
+     "group_interval": "10m",
+     "repeat_interval": "10h"
+    },
+    {
+     "object_matchers": [
+      [
+       "severity",
+       "=",
+       "warn"
+      ]
+     ],
+     "routes": [
+      {
+       "object_matchers": [
+        [
+         "severity",
+         "=",
+         "warn"
+        ]
+       ]
+      }
+     ]
+    }
+   ],
+   "group_wait": "1s",
+   "group_interval": "1m",
+   "repeat_interval": "1h"
+  }
+ ]
+}

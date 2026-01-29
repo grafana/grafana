@@ -218,7 +218,9 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
               </Text>
             </Box>
 
-            {hasStepError && 'error' in stepStatusInfo && <ProvisioningAlert error={stepStatusInfo.error} />}
+            {hasStepError && 'error' in stepStatusInfo && (
+              <ProvisioningAlert error={stepStatusInfo.error} retry={stepStatusInfo.retry} />
+            )}
             {hasStepWarning && 'warning' in stepStatusInfo && <ProvisioningAlert warning={stepStatusInfo.warning} />}
             {isStepSuccess && 'success' in stepStatusInfo && <ProvisioningAlert success={stepStatusInfo.success} />}
 

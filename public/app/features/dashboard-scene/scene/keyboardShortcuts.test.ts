@@ -172,6 +172,7 @@ describe('setupKeyboardShortcuts', () => {
 
   describe('other keyboard shortcuts', () => {
     beforeEach(() => {
+      config.featureToggles.newTimeRangeZoomShortcuts = false;
       setupKeyboardShortcuts(mockScene);
     });
 

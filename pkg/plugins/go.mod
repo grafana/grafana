@@ -9,7 +9,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/authlib/types v0.0.0-20260119104241-f33edcf42077
-	github.com/grafana/grafana-plugin-sdk-go v0.285.0
+	github.com/grafana/grafana-plugin-sdk-go v0.286.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/grafana/grafana/pkg/semconv v0.0.0
 	github.com/hashicorp/go-hclog v1.6.3

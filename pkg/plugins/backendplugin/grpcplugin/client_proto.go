@@ -118,6 +118,14 @@ func (r *protoClient) QueryData(ctx context.Context, in *pluginv2.QueryDataReque
 	return c.DataClient.QueryData(ctx, in, opts...)
 }
 
+func (r *protoClient) QueryChunkedData(ctx context.Context, in *pluginv2.QueryChunkedDataRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv2.QueryChunkedDataResponse], error) {
+	c, exists := r.client(ctx)
+	if !exists {
+		return nil, errClientNotAvailable
+	}
+	return c.DataClient.QueryChunkedData(ctx, in, opts...)
+}
+
 func (r *protoClient) CallResource(ctx context.Context, in *pluginv2.CallResourceRequest, opts ...grpc.CallOption) (pluginv2.Resource_CallResourceClient, error) {
 	c, exists := r.client(ctx)
 	if !exists {
