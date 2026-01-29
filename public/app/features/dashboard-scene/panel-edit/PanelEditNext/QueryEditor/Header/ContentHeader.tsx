@@ -1,68 +1,61 @@
 import { css } from '@emotion/css';
-import { useCallback } from 'react';
+import { useRef } from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
-import { useStyles2, Icon, Button, Text } from '@grafana/ui';
+import { useStyles2, Icon, Text } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { isExpressionQuery } from 'app/features/expressions/guards';
-import { InspectTab } from 'app/features/inspector/types';
 
-import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
-import { getDashboardSceneFor } from '../../../../utils/utils';
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
-import {
-  useActionsContext,
-  usePanelContext,
-  useQueryEditorUIContext,
-  useQueryRunnerContext,
-} from '../QueryEditorContext';
+import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { getEditorType } from '../utils';
 
 import { EditableQueryName } from './EditableQueryName';
+import { HeaderActions } from './HeaderActions';
 
-export function ContentHeader() {
-  const { panel } = usePanelContext();
+interface ContentHeaderProps {
+  /**
+   * Optional callback to render additional elements in the header's left section.
+   *
+   * Used for feature parity with legacy QueryEditorRow's renderHeaderExtras prop.
+   * In the legacy component, this is used by Alerting to inject:
+   * - Query options (max data points, min interval)
+   * - Alert condition indicators
+   * - Alerting-specific tooltips
+   *
+   * Currently not wired up in the v2 dashboard query editor flow.
+   * Will be needed when/if Alerting or other contexts adopt the v2 experience.
+   */
+  renderHeaderExtras?: () => React.ReactNode;
+}
+
+export function ContentHeader({ renderHeaderExtras }: ContentHeaderProps = {}) {
   const { selectedCard } = useQueryEditorUIContext();
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
 
-  // TODO: Add transformation support
-  const cardType = isExpressionQuery(selectedCard ?? undefined) ? QueryEditorType.Expression : QueryEditorType.Query;
+  // This ref is used downstream for the saved queries experience. It's used specifically within
+  // renderSavedQueryButtons to determine the width of the container for positioning the saved queries dropdown.
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  const cardType = getEditorType(selectedCard);
   const styles = useStyles2(getStyles, { cardType });
 
-  const onOpenInspector = useCallback(() => {
-    const dashboard = getDashboardSceneFor(panel);
-    dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Query }));
-  }, [panel]);
-
-  // We have to do defensive null checks since queries might be an empty array :(
   if (!selectedCard) {
     return null;
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.queryHeaderWrapper}>
+    <div className={styles.container} ref={containerRef}>
+      <div className={styles.leftSection}>
         <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />
         {cardType === QueryEditorType.Query && (
           <DatasourceSection selectedCard={selectedCard} onChange={(ds) => changeDataSource(ds, selectedCard.refId)} />
         )}
         <EditableQueryName query={selectedCard} queries={queries} onQueryUpdate={updateSelectedQuery} />
+        {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
       </div>
-
-      {/* TODO: Will fix up buttons in header actions ticket */}
-      <Button
-        size="sm"
-        fill="text"
-        icon="brackets-curly"
-        variant="secondary"
-        onClick={onOpenInspector}
-        tooltip={t('query-editor.action.inspector', 'Query inspector')}
-      >
-        <Trans i18nKey="query-editor.action.inspector">Inspector</Trans>
-      </Button>
+      <HeaderActions cardType={cardType} query={selectedCard} queries={queries} containerRef={containerRef} />
     </div>
   );
 }
@@ -87,27 +80,35 @@ function DatasourceSection({ selectedCard, onChange }: DatasourceSectionProps) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, { cardType }: { cardType: QueryEditorType }) => ({
-  container: css({
-    borderLeft: `4px solid ${QUERY_EDITOR_TYPE_CONFIG[cardType].color}`,
-    backgroundColor: theme.colors.background.secondary,
-    padding: theme.spacing(0.5),
-    borderTopLeftRadius: theme.shape.radius.default,
-    borderTopRightRadius: theme.shape.radius.default,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.spacing(1),
-    minHeight: theme.spacing(5),
-  }),
-  queryHeaderWrapper: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    padding: `0 ${theme.spacing(0.5)}`,
-  }),
-});
+const getStyles = (theme: GrafanaTheme2, { cardType }: { cardType: QueryEditorType }) => {
+  return {
+    container: css({
+      borderLeft: `4px solid ${QUERY_EDITOR_TYPE_CONFIG[cardType].color}`,
+      backgroundColor: theme.colors.background.secondary,
+      padding: theme.spacing(0.5),
+      borderTopLeftRadius: theme.shape.radius.default,
+      borderTopRightRadius: theme.shape.radius.default,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(1),
+      minHeight: theme.spacing(5),
+    }),
+    leftSection: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      padding: `0 ${theme.spacing(0.5)}`,
+    }),
+    headerExtras: css({
+      display: 'flex',
+      alignItems: 'center',
+      marginLeft: theme.spacing(1),
+    }),
+  };
+};
 
+// TODO: This is a hacky solution to create an inline datasource picker.
 const getDatasourceSectionStyles = (theme: GrafanaTheme2) => ({
   dataSourcePickerWrapper: css({
     // Target the Input component inside the picker

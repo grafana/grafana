@@ -6389,6 +6389,9 @@
     "query-editor": {
       "query": "Query"
     },
+    "query-editor-content": {
+      "content-body-goes-here": "Content body goes here!"
+    },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1> ).",
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
@@ -12627,9 +12630,21 @@
   },
   "query-editor": {
     "action": {
-      "inspector": "Query inspector"
+      "coming-soon": "Transformation actions coming soon",
+      "duplicate": "Duplicate query",
+      "hide": "Hide response",
+      "hide-help": "Hide data source help",
+      "inspector": "Query inspector",
+      "more-actions": "More query actions",
+      "remove": "Remove transformation",
+      "show": "Show response",
+      "show-help": "Show data source help"
     },
     "edit-query-name": "Edit query name",
+    "help": {
+      "close": "Close help",
+      "close-aria": "Close help panel"
+    },
     "validation": {
       "duplicate-name": "Query name already exists",
       "empty-name": "An empty query name is not allowed"

@@ -1,6 +1,8 @@
 import { ReactNode, useMemo, useState } from 'react';
+import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { CustomTransformerDefinition, SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 
@@ -25,7 +27,9 @@ export function QueryEditorContextWrapper({
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
   const [selectedCardRefId, setSelectedCardRefId] = useState<string | null>(null);
+  const [showingDatasourceHelp, setShowingDatasourceHelp] = useState(false);
 
+  // NOTE: This is the datasource for the panel, not the query
   const dsState = useMemo(
     () => ({
       datasource,
@@ -35,13 +39,18 @@ export function QueryEditorContextWrapper({
     [datasource, dsSettings, dsError]
   );
 
+  const queryError = useMemo(() => {
+    return queryRunnerState?.data?.errors?.find(({ refId }) => refId === selectedCardRefId);
+  }, [queryRunnerState?.data?.errors, selectedCardRefId]);
+
   const qrState = useMemo(
     () => ({
       queries: queryRunnerState?.queries ?? [],
       data: queryRunnerState?.data,
       isLoading: queryRunnerState?.data?.state === LoadingState.Loading,
+      queryError,
     }),
-    [queryRunnerState?.queries, queryRunnerState?.data]
+    [queryRunnerState?.queries, queryRunnerState?.data, queryError]
   );
 
   const panelState = useMemo(() => {
@@ -71,14 +80,33 @@ export function QueryEditorContextWrapper({
     return queries.length > 0 ? queries[0] : null;
   }, [queryRunnerState?.queries, selectedCardRefId]);
 
+  const { value: selectedCardDsData, loading: selectedCardDsLoading } = useAsync(async () => {
+    if (!selectedCard?.datasource) {
+      return undefined;
+    }
+
+    try {
+      const dsSettings = getDataSourceSrv().getInstanceSettings(selectedCard.datasource);
+      const datasource = await getDataSourceSrv().get(selectedCard.datasource);
+      return { datasource, dsSettings };
+    } catch (err) {
+      console.error('Failed to load datasource for selected card:', err);
+      return undefined;
+    }
+  }, [selectedCard?.datasource?.uid, selectedCard?.datasource?.type]);
+
   const uiState = useMemo(
     () => ({
       selectedCard,
       setSelectedCard: (query: DataQuery | null) => {
         setSelectedCardRefId(query?.refId ?? null);
       },
+      selectedCardDsData: selectedCardDsData ?? null,
+      selectedCardDsLoading,
+      showingDatasourceHelp,
+      toggleDatasourceHelp: () => setShowingDatasourceHelp((prev) => !prev),
     }),
-    [selectedCard]
+    [selectedCard, selectedCardDsData, selectedCardDsLoading, showingDatasourceHelp]
   );
 
   const actions = useMemo(
@@ -90,6 +118,7 @@ export function QueryEditorContextWrapper({
       addQuery: dataPane.addQuery,
       deleteQuery: dataPane.deleteQuery,
       duplicateQuery: dataPane.duplicateQuery,
+      toggleQueryHide: dataPane.toggleQueryHide,
       runQueries: dataPane.runQueries,
       changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);

@@ -6,10 +6,10 @@ import { DataQuery } from '@grafana/schema';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
-import { isExpressionQuery } from 'app/features/expressions/guards';
 
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useQueryRunnerContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { getEditorType } from '../utils';
 
 const Header = ({ editorType, styles }: { editorType: QueryEditorType; styles: ReturnType<typeof getStyles> }) => {
   const typeText =
@@ -30,9 +30,6 @@ const Header = ({ editorType, styles }: { editorType: QueryEditorType; styles: R
   );
 };
 
-const getEditorType = (query: DataQuery): QueryEditorType =>
-  isExpressionQuery(query) ? QueryEditorType.Expression : QueryEditorType.Query;
-
 interface SidebarCardProps {
   query: DataQuery;
 }
@@ -40,12 +37,11 @@ interface SidebarCardProps {
 export const SidebarCard = ({ query }: SidebarCardProps) => {
   const editorType = getEditorType(query);
   const queryDsSettings = useDatasource(query.datasource);
-  const { data } = useQueryRunnerContext();
+  const { queryError } = useQueryRunnerContext();
   const { selectedCard, setSelectedCard } = useQueryEditorUIContext();
 
-  const hasError = data?.errors?.some((e) => e.refId === query.refId) ?? false;
   const isSelected = selectedCard?.refId === query.refId;
-  const styles = useStyles2(getStyles, editorType, hasError, isSelected);
+  const styles = useStyles2(getStyles, editorType, Boolean(queryError), isSelected);
 
   const handleClick = () => {
     // We don't allow deselecting cards so don't do anything if already selected
