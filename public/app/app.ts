@@ -95,6 +95,7 @@ import {
   getObservablePluginComponents,
   getObservablePluginLinks,
 } from './features/plugins/extensions/getPluginExtensions';
+import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
@@ -265,6 +266,8 @@ export class GrafanaApp {
         preloadPlugins(appPluginsToPreload);
         await preloadPlugins(appPluginsToAwait);
       }
+
+      getPluginExtensionRegistries();
 
       setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);

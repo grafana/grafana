@@ -8,7 +8,7 @@ import { ExposedComponentsRegistry } from 'app/features/plugins/extensions/regis
 import { PluginExtensionRegistries } from './registry/types';
 
 export interface ExtensionRegistriesContextType {
-  registries: PluginExtensionRegistries;
+  registries?: PluginExtensionRegistries;
 }
 
 // Using a different context for each registry to avoid unnecessary re-renders
@@ -53,6 +53,10 @@ export const ExtensionRegistriesProvider = ({
   registries,
   children,
 }: PropsWithChildren<ExtensionRegistriesContextType>) => {
+  if (!registries) {
+    return null;
+  }
+
   return (
     <AddedLinksRegistryContext.Provider value={registries.addedLinksRegistry}>
       <AddedComponentsRegistryContext.Provider value={registries.addedComponentsRegistry}>
