@@ -662,6 +662,7 @@ describe('DashboardScene', () => {
         });
 
         it('Should copy panel styles when feature flag is enabled', () => {
+          const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
           const timeseriesPanel = createTimeseriesPanel();
 
           scene.copyPanelStyles(timeseriesPanel);
@@ -670,6 +671,7 @@ describe('DashboardScene', () => {
           const stored = JSON.parse(store.get(LS_STYLES_COPY_KEY) || '{}');
           expect(stored.panelType).toBe('timeseries');
           expect(stored.styles).toBeDefined();
+          expect(spy).not.toHaveBeenCalled(); // Analytics only called from menu
         });
 
         it('Should not copy panel styles when feature flag is disabled', () => {
@@ -712,6 +714,7 @@ describe('DashboardScene', () => {
         });
 
         it('Should paste panel styles when feature flag is enabled', () => {
+          const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
           const timeseriesPanel = createTimeseriesPanel();
           const mockOnFieldConfigChange = jest.fn();
           timeseriesPanel.onFieldConfigChange = mockOnFieldConfigChange;
@@ -736,6 +739,7 @@ describe('DashboardScene', () => {
 
           expect(mockOnFieldConfigChange).toHaveBeenCalled();
           expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
+          expect(spy).not.toHaveBeenCalled();
         });
 
         it('Should not paste panel styles when feature flag is disabled', () => {
@@ -766,6 +770,7 @@ describe('DashboardScene', () => {
         });
 
         it('Should not paste styles to different panel type', () => {
+          const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
           const timeseriesPanel = createTimeseriesPanel();
           const mockOnFieldConfigChange = jest.fn();
           timeseriesPanel.onFieldConfigChange = mockOnFieldConfigChange;
@@ -779,9 +784,11 @@ describe('DashboardScene', () => {
           scene.pastePanelStyles(timeseriesPanel);
 
           expect(mockOnFieldConfigChange).not.toHaveBeenCalled();
+          expect(spy).not.toHaveBeenCalled();
         });
 
         it('Should allow pasting styles multiple times', () => {
+          const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
           const timeseriesPanel1 = createTimeseriesPanel();
           const timeseriesPanel2 = createTimeseriesPanel();
           const mockOnFieldConfigChange1 = jest.fn();
@@ -802,6 +809,7 @@ describe('DashboardScene', () => {
           scene.pastePanelStyles(timeseriesPanel2);
           expect(mockOnFieldConfigChange2).toHaveBeenCalled();
           expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
+          expect(spy).not.toHaveBeenCalled();
         });
 
         it('Should report analytics on paste error', () => {
