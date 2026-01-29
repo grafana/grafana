@@ -232,7 +232,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 2025-06-24,tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false
 2025-06-25,newInfluxDSConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
-2025-06-30,enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
+2025-06-29,enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-10-13,enableDashboardEmptyExtensions,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-03,foldersAppPlatformAPI,experimental,@grafana/grafana-search-navigate-organise,false,false,true
 2025-07-16,otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
@@ -256,6 +256,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-10-24,pluginInstallAPISync,experimental,@grafana/plugins-platform-backend,false,false,false
 2025-10-20,newGauge,preview,@grafana/dataviz-squad,false,false,true
 2025-11-12,newVizSuggestions,preview,@grafana/dataviz-squad,false,false,true
+2026-01-28,panelStyleActions,experimental,@grafana/dataviz-squad,false,false,true
 2025-12-01,externalVizSuggestions,experimental,@grafana/dataviz-squad,false,false,true
 2025-12-18,heatmapRowsAxisOptions,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-17,preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
