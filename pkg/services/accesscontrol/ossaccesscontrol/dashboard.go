@@ -4,9 +4,15 @@ import (
 	"context"
 	"errors"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -169,9 +175,28 @@ func ProvideDashboardPermissions(
 			"Edit":  getDashboardEditActions(features),
 			"Admin": getDashboardAdminActions(features),
 		},
-		ReaderRoleName:     "Permission reader",
-		WriterRoleName:     "Permission writer",
-		RoleGroup:          "Dashboards",
+		ReaderRoleName: "Permission reader",
+		WriterRoleName: "Permission writer",
+		RoleGroup:      "Dashboards",
+		GetParentFolder: func(ctx context.Context, namespace string, dashboardUID string, dynamicClient dynamic.Interface) (string, error) {
+			dashboardsGVR := schema.GroupVersionResource{
+				Group:    dashboardv1.APIGroup,
+				Version:  dashboardv1.APIVersion,
+				Resource: dashboardv1.DASHBOARD_RESOURCE,
+			}
+
+			dashboardResource := dynamicClient.Resource(dashboardsGVR).Namespace(namespace)
+			unstructuredDash, err := dashboardResource.Get(ctx, dashboardUID, metav1.GetOptions{})
+			if err != nil {
+				if k8serrors.IsNotFound(err) {
+					return "", nil
+				}
+				return "", err
+			}
+
+			parentFolderUID := unstructuredDash.GetAnnotations()[utils.AnnoKeyFolder]
+			return parentFolderUID, nil
+		},
 		RestConfigProvider: restConfigProvider,
 	}
 
