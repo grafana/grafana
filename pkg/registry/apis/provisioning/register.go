@@ -899,6 +899,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.tracer,
 				10,
 				informerFactoryResyncInterval,
+				b.minSyncInterval,
 				quotaGetter,
 			)
 			if err != nil {

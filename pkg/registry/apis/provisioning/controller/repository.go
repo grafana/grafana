@@ -71,8 +71,9 @@ type RepositoryController struct {
 	enqueueRepository func(obj any)
 	keyFunc           func(obj any) (string, error)
 
-	queue          workqueue.TypedRateLimitingInterface[*queueItem]
-	resyncInterval time.Duration
+	queue           workqueue.TypedRateLimitingInterface[*queueItem]
+	resyncInterval  time.Duration
+	minSyncInterval time.Duration
 
 	registry    prometheus.Registerer
 	tracer      tracing.Tracer
@@ -97,6 +98,7 @@ func NewRepositoryController(
 	tracer tracing.Tracer,
 	parallelOperations int,
 	resyncInterval time.Duration,
+	minSyncInterval time.Duration,
 	quotaGetter quotas.QuotaGetter,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
@@ -121,12 +123,13 @@ func NewRepositoryController(
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
 		},
-		jobs:           jobs,
-		logger:         logging.DefaultLogger.With("logger", loggerName),
-		registry:       registry,
-		tracer:         tracer,
-		resyncInterval: resyncInterval,
-		quotaGetter:    quotaGetter,
+		jobs:            jobs,
+		logger:          logging.DefaultLogger.With("logger", loggerName),
+		registry:        registry,
+		tracer:          tracer,
+		resyncInterval:  resyncInterval,
+		minSyncInterval: minSyncInterval,
+		quotaGetter:     quotaGetter,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -295,6 +298,11 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
 	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
+	if syncInterval < rc.minSyncInterval {
+		// In case the sync interval is lower than the minimum sync interval set by the system
+		// we should default to the latter
+		syncInterval = rc.minSyncInterval
+	}
 	tolerance := time.Second
 
 	// Check for stale sync status - if sync status indicates a job is running but the job no longer exists
