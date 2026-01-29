@@ -252,6 +252,67 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 				assert.Equal(t, "C", panel.Spec.Data.Spec.Queries[2].Spec.RefId)
 			},
 		},
+		{
+			name: "panels without IDs should not overwrite each other",
+			createV1beta1: func() *dashv1.Dashboard {
+				return &dashv1.Dashboard{
+					Spec: dashv1.DashboardSpec{
+						Object: map[string]interface{}{
+							"title":         "Test Dashboard Without Panel IDs",
+							"schemaVersion": float64(42),
+							"panels": []interface{}{
+								map[string]interface{}{
+									// No "id" field - should get unique element name
+									"type":  "stat",
+									"title": "Panel 1 - No ID",
+									"gridPos": map[string]interface{}{
+										"h": float64(4), "w": float64(6), "x": float64(0), "y": float64(0),
+									},
+									"targets": []interface{}{
+										map[string]interface{}{"refId": "A"},
+									},
+								},
+								map[string]interface{}{
+									// No "id" field - should get unique element name
+									"type":  "stat",
+									"title": "Panel 2 - No ID",
+									"gridPos": map[string]interface{}{
+										"h": float64(4), "w": float64(6), "x": float64(6), "y": float64(0),
+									},
+									"targets": []interface{}{
+										map[string]interface{}{"refId": "A"},
+									},
+								},
+								map[string]interface{}{
+									// No "id" field - should get unique element name
+									"type":  "timeseries",
+									"title": "Panel 3 - No ID",
+									"gridPos": map[string]interface{}{
+										"h": float64(8), "w": float64(12), "x": float64(0), "y": float64(4),
+									},
+									"targets": []interface{}{
+										map[string]interface{}{"refId": "A"},
+									},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
+				// All 3 panels should be preserved, not overwritten
+				assert.Len(t, v2alpha1.Spec.Elements, 3, "All 3 panels should be preserved, but some were lost due to ID collision")
+
+				// Verify we have 3 unique panels with their queries
+				totalQueries := 0
+				for _, element := range v2alpha1.Spec.Elements {
+					if element.PanelKind != nil {
+						totalQueries += len(element.PanelKind.Spec.Data.Spec.Queries)
+					}
+				}
+				assert.Equal(t, 3, totalQueries, "All 3 queries should be preserved")
+			},
+		},
 	}
 
 	for _, tt := range testCases {
