@@ -134,8 +134,7 @@ func TestConfigRevision_ValidateRoute(t *testing.T) {
 
 func testConfig() *ConfigRevision {
 	rev := &ConfigRevision{
-		Config:                 policy_exports.Config(),
-		managedRoutesSupported: true,
+		Config: policy_exports.Config(),
 	}
 	return rev
 }

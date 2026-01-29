@@ -33,10 +33,9 @@ func SerializeAlertmanagerConfig(config definitions.PostableUserConfig) ([]byte,
 }
 
 type ConfigRevision struct {
-	Config                 *definitions.PostableUserConfig
-	ConcurrencyToken       string
-	Version                string
-	managedRoutesSupported bool
+	Config           *definitions.PostableUserConfig
+	ConcurrencyToken string
+	Version          string
 }
 type alertmanagerConfigStoreImpl struct {
 	store    amConfigStore
@@ -73,8 +72,6 @@ func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*Con
 		Config:           cfg,
 		ConcurrencyToken: concurrencyToken,
 		Version:          alertManagerConfig.ConfigurationVersion,
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		managedRoutesSupported: a.features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies),
 	}, nil
 }
 
