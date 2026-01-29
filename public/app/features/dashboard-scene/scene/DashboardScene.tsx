@@ -655,7 +655,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       }
     }
 
-    // custom props (lineWidth, fillOpacity, etc)
+    // custom props (lineWidth, fillOpacity, etc.)
     if (panel.state.fieldConfig.defaults.custom && defaultGraphStyleConfig.fieldConfig?.defaults) {
       /* eslint-disable @typescript-eslint/consistent-type-assertions */
       const customDefaults = {} as Record<string, unknown>;

@@ -44,6 +44,7 @@ export const defaultGraphConfig: GraphFieldConfig = {
   showValues: false,
 };
 
+// from GraphFieldConfig
 export const defaultGraphStyleConfig = {
   fieldConfig: {
     defaultsProps: ['color'],
