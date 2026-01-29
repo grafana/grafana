@@ -30,7 +30,10 @@ export function QueryEditorContextWrapper({
 
   const transformations = useMemo(() => {
     if (panel.state.$data instanceof SceneDataTransformer) {
-      return panel.state.$data.state.transformations;
+      // Filter to only include DataTransformerConfig items (exclude CustomTransformerDefinition)
+      return panel.state.$data.state.transformations.filter((t): t is DataTransformerConfig =>
+        isDataTransformerConfig(t)
+      );
     }
     return [];
   }, [panel]);

@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useContext } from 'react';
 
 import { DataSourceApi, DataSourceInstanceSettings, PanelData } from '@grafana/data';
-import { CustomTransformerDefinition, VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 
 export interface DatasourceState {
@@ -18,7 +18,7 @@ export interface QueryRunnerState {
 
 export interface PanelState {
   panel: VizPanel;
-  transformations: Array<DataTransformerConfig | CustomTransformerDefinition>;
+  transformations: DataTransformerConfig[];
 }
 
 export interface QueryEditorUIState {
