@@ -62,7 +62,6 @@ type kvStorageBackend struct {
 	dataStore                    *dataStore
 	eventStore                   *eventStore
 	notifier                     notifier
-	builder                      DocumentBuilder
 	log                          log.Logger
 	withPruner                   bool
 	eventRetentionPeriod         time.Duration
@@ -73,6 +72,9 @@ type kvStorageBackend struct {
 	//reg           prometheus.Registerer
 
 	rvManager *rvmanager.ResourceVersionManager
+
+	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
+	dbKeepAlive any
 }
 
 var _ KVBackend = &kvStorageBackend{}
@@ -96,6 +98,10 @@ type KVBackendOptions struct {
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
+
+	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
+	// needed for sqlkv
+	DBKeepAlive any
 }
 
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
@@ -130,12 +136,12 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		eventStore:                   eventStore,
 		notifier:                     newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
 		snowflake:                    s,
-		builder:                      StandardDocumentBuilder(), // For now we use the standard document builder.
 		log:                          logger,
 		eventRetentionPeriod:         eventRetentionPeriod,
 		eventPruningInterval:         eventPruningInterval,
 		withExperimentalClusterScope: opts.WithExperimentalClusterScope,
 		rvManager:                    opts.RvManager,
+		dbKeepAlive:                  opts.DBKeepAlive,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
@@ -341,7 +347,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		dataKey.GUID = uuid.New().String()
 		var err error
 		rv, err = k.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
-			if err := k.dataStore.Save(rvmanager.ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value)); err != nil {
+			if err := k.dataStore.Save(ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value)); err != nil {
 				return "", fmt.Errorf("failed to write data: %w", err)
 			}
 

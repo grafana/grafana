@@ -96,6 +96,10 @@ export type ConnectionFormErrorTuple = GenericFormErrorTuple<ConnectionFormPath>
 
 export const getConnectionFormErrors = (errors?: ErrorDetails[]): ConnectionFormErrorTuple => {
   const fieldMap: Record<string, ConnectionFormPath> = {
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+    title: 'title',
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+    description: 'description',
     appID: 'appID',
     installationID: 'installationID',
     'github.appID': 'appID',

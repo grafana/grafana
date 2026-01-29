@@ -32,7 +32,7 @@ type RenderingService struct {
 	renderAction        renderFunc
 	renderCSVAction     renderCSVFunc
 	domain              string
-	inProgressCount     int32
+	inProgressCount     atomic.Int32
 	version             string
 	versionMutex        sync.RWMutex
 	capabilities        []Capability
@@ -280,7 +280,9 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 		return rs.renderUnavailableImage(), nil
 	}
 
-	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
+	inProgressCount := rs.inProgressCount.Load()
+	newInProgressCount := inProgressCount + 1
+	if int(newInProgressCount) > opts.ConcurrentLimit || !rs.inProgressCount.CompareAndSwap(inProgressCount, newInProgressCount) {
 		logger.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
 		if opts.ErrorConcurrentLimitReached {
 			return nil, ErrConcurrentLimitReached
@@ -297,9 +299,9 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 	}
 
 	defer func() {
-		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
+		metrics.MRenderingQueue.Set(float64(rs.inProgressCount.Add(-1)))
 	}()
-	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
+	metrics.MRenderingQueue.Set(float64(newInProgressCount))
 
 	if renderType == RenderPDF {
 		if err := rs.IsCapabilitySupported(ctx, PDFRendering); err != nil {
@@ -350,7 +352,9 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderK
 		return nil, ErrRenderUnavailable
 	}
 
-	if int(atomic.LoadInt32(&rs.inProgressCount)) > opts.ConcurrentLimit {
+	inProgressCount := rs.inProgressCount.Load()
+	newInProgressCount := inProgressCount + 1
+	if int(newInProgressCount) > opts.ConcurrentLimit || !rs.inProgressCount.CompareAndSwap(inProgressCount, newInProgressCount) {
 		return nil, ErrConcurrentLimitReached
 	}
 
@@ -363,10 +367,10 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderK
 	defer renderKeyProvider.afterRequest(ctx, opts.AuthOpts, renderKey)
 
 	defer func() {
-		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
+		metrics.MRenderingQueue.Set(float64(rs.inProgressCount.Add(-1)))
 	}()
 
-	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
+	metrics.MRenderingQueue.Set(float64(newInProgressCount))
 	return rs.renderCSVAction(ctx, renderKey, opts)
 }
 
