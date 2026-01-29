@@ -83,70 +83,40 @@ Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/g
 
 This section includes instructions for how to view permissions associated with roles, create custom roles, and update and delete roles.
 
-The following example includes the base64 username:password Basic Authorization. You cannot use authorization tokens in the request.
+## View basic role definitions
 
-## List permissions associated with roles
+You can retrieve the full definition of a basic role, including all associated permissions, using the API or by navigating directly to the endpoint URL in your browser while logged in as an Admin.
 
-Use a `GET` command to see the actions and scopes associated with a role. For more information about seeing a list of permissions for each role, refer to [Get a role](ref:api-rbac-get-a-role).
+### Using the API
 
-To see the permissions associated with basic roles, refer to the following basic role UIDs:
+To get the definition of a basic role:
 
-| Basic role      | UID                   |
-| --------------- | --------------------- |
-| `None`          | `basic_none`          |
-| `Viewer`        | `basic_viewer`        |
-| `Editor`        | `basic_editor`        |
-| `Admin`         | `basic_admin`         |
-| `Grafana Admin` | `basic_grafana_admin` |
-
-**Example request**
-
-```
-curl --location --request GET '<grafana_url>/api/access-control/roles/qQui_LCMk' --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ='
+```bash
+GET /api/access-control/roles/basic_<role>
 ```
 
-**Example response**
+Where `<role>` is one of: `viewer`, `editor`, `admin`, or `grafana_admin`.
 
-```
-{
-    "version": 2,
-    "uid": "qQui_LCMk",
-    "name": "fixed:users:writer",
-    "displayName": "User writer",
-    "description": "Read and update all attributes and settings for all users in Grafana: update user information, read user information, create or enable or disable a user, make a user a Grafana administrator, sign out a user, update a user’s authentication token, or update quotas for all users.",
-    "global": true,
-    "permissions": [
-        {
-            "action": "org.users:add",
-            "scope": "users:*",
-            "updated": "2021-05-17T20:49:18+02:00",
-            "created": "2021-05-17T20:49:18+02:00"
-        },
-        {
-            "action": "org.users:read",
-            "scope": "users:*",
-            "updated": "2021-05-17T20:49:18+02:00",
-            "created": "2021-05-17T20:49:18+02:00"
-        },
-        {
-            "action": "org.users:remove",
-            "scope": "users:*",
-            "updated": "2021-05-17T20:49:18+02:00",
-            "created": "2021-05-17T20:49:18+02:00"
-        },
-        {
-            "action": "org.users:write",
-            "scope": "users:*",
-            "updated": "2021-05-17T20:49:18+02:00",
-            "created": "2021-05-17T20:49:18+02:00"
-        }
-    ],
-    "updated": "2021-05-17T20:49:18+02:00",
-    "created": "2021-05-13T16:24:26+02:00"
-}
+For example, to get the Viewer role definition:
+
+```bash
+curl --location 'https://<your-stack-name>.grafana.net/api/access-control/roles/basic_viewer' \
+  --header 'Authorization: Bearer <service-account-token>'
 ```
 
-Refer to the [RBAC HTTP API](ref:api-rbac-get-a-role) for more details.
+### Using the browser
+
+You can also view the role definition directly in your browser by navigating to:
+
+```
+https://<your-stack-name>.grafana.net/api/access-control/roles/basic_viewer
+```
+
+This works when logged in as an Admin user.
+
+For more information, refer to [Get a role](ref:api-rbac-get-a-role).
+
+For a reference of basic and fixed role assignments, refer to [RBAC role definitions](ref:rbac-role-definitions).
 
 ## Create custom roles
 

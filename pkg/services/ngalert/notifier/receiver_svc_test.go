@@ -1784,7 +1784,7 @@ func withInvalidExtraConfig(t *testing.T, sut *ReceiverService) {
 	extra.AlertmanagerConfig = "yaml:invalid"
 	cfg := createEncryptedConfig(t, sut.encryptionService, extra)
 	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
-	sut.cfgStore = legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(sut.encryptionService))
+	sut.cfgStore = legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(sut.encryptionService), featuremgmt.WithFeatures())
 }
 
 func withImportedIncluded(_ *testing.T, sut *ReceiverService) {
@@ -1799,7 +1799,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...cr
 
 	sut := NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), false),
-		legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(encryptSvc)),
+		legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(encryptSvc), featuremgmt.WithFeatures()),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},
 		encryptSvc,
