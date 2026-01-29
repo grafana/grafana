@@ -1958,3 +1958,641 @@ func (f *fakeIdentityStore) ListTeams(ctx context.Context, namespace types.Names
 	}
 	return &legacy.ListTeamResult{Teams: f.teams}, nil
 }
+
+func TestService_BatchCheck(t *testing.T) {
+	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+		},
+		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+
+	type testCase struct {
+		name        string
+		req         *authzv1.BatchCheckRequest
+		permissions []accesscontrol.Permission
+		folders     []store.Folder
+		expected    map[string]bool
+		expectErr   map[string]bool
+	}
+
+	t.Run("Require auth info", func(t *testing.T) {
+		s := setupService()
+		ctx := context.Background()
+		_, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				{
+					CorrelationId: "check1",
+					Namespace:     "org-12",
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					Verb:          "get",
+					Name:          "dash1",
+				},
+			},
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "could not get auth info")
+	})
+
+	t.Run("Empty checks list", func(t *testing.T) {
+		s := setupService()
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Subject: "user:test-uid",
+			Checks:  []*authzv1.BatchCheckItem{},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Equal(t, 0, len(resp.Results))
+	})
+
+	t.Run("Invalid subject", func(t *testing.T) {
+		s := setupService()
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Subject: "", // Empty subject
+			Checks: []*authzv1.BatchCheckItem{
+				{
+					CorrelationId: "check1",
+					Namespace:     "org-12",
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					Verb:          "get",
+					Name:          "dash1",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Equal(t, 1, len(resp.Results))
+		require.False(t, resp.Results["check1"].Allowed)
+		require.Contains(t, resp.Results["check1"].Error, "subject is required")
+	})
+
+	testCases := []testCase{
+		{
+			name: "should handle single check",
+			req: &authzv1.BatchCheckRequest{
+				Subject: "user:test-uid",
+				Checks: []*authzv1.BatchCheckItem{
+					{
+						CorrelationId: "check1",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash1",
+					},
+				},
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
+			},
+			expected: map[string]bool{
+				"check1": true,
+			},
+		},
+		{
+			name: "should handle multiple checks with same action and namespace",
+			req: &authzv1.BatchCheckRequest{
+				Subject: "user:test-uid",
+				Checks: []*authzv1.BatchCheckItem{
+					{
+						CorrelationId: "check1",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash1",
+					},
+					{
+						CorrelationId: "check2",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash2",
+					},
+					{
+						CorrelationId: "check3",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash3",
+					},
+				},
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash2"},
+			},
+			expected: map[string]bool{
+				"check1": true,
+				"check2": true,
+				"check3": false,
+			},
+		},
+		{
+			name: "should handle multiple checks with different actions",
+			req: &authzv1.BatchCheckRequest{
+				Subject: "user:test-uid",
+				Checks: []*authzv1.BatchCheckItem{
+					{
+						CorrelationId: "check1",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash1",
+					},
+					{
+						CorrelationId: "check2",
+						Namespace:     "org-12",
+						Group:         "folder.grafana.app",
+						Resource:      "folders",
+						Verb:          "get",
+						Name:          "folder1",
+					},
+					{
+						CorrelationId: "check3",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "delete",
+						Name:          "dash1",
+					},
+				},
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
+				{Action: "folders:read", Scope: "folders:uid:folder1"},
+			},
+			expected: map[string]bool{
+				"check1": true,
+				"check2": true,
+				"check3": false,
+			},
+		},
+		{
+			name: "should handle wildcard permissions",
+			req: &authzv1.BatchCheckRequest{
+				Subject: "user:test-uid",
+				Checks: []*authzv1.BatchCheckItem{
+					{
+						CorrelationId: "check1",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash1",
+					},
+					{
+						CorrelationId: "check2",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash2",
+					},
+					{
+						CorrelationId: "check3",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash3",
+					},
+				},
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:*"},
+			},
+			expected: map[string]bool{
+				"check1": true,
+				"check2": true,
+				"check3": true,
+			},
+		},
+		{
+			name: "should handle folder inheritance",
+			req: &authzv1.BatchCheckRequest{
+				Subject: "user:test-uid",
+				Checks: []*authzv1.BatchCheckItem{
+					{
+						CorrelationId: "check1",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash1",
+						Folder:        "folder1",
+					},
+					{
+						CorrelationId: "check2",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash2",
+						Folder:        "folder2",
+					},
+				},
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "folders:uid:folder1"},
+			},
+			folders: []store.Folder{
+				{UID: "folder1", ParentUID: nil},
+				{UID: "folder2", ParentUID: nil},
+			},
+			expected: map[string]bool{
+				"check1": true,
+				"check2": false,
+			},
+		},
+		{
+			name: "should handle mixed namespaces",
+			req: &authzv1.BatchCheckRequest{
+				Subject: "user:test-uid",
+				Checks: []*authzv1.BatchCheckItem{
+					{
+						CorrelationId: "check1",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash1",
+					},
+					{
+						CorrelationId: "check2",
+						Namespace:     "org-13",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash2",
+					},
+				},
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
+			},
+			expected: map[string]bool{
+				"check1": true,
+			},
+			expectErr: map[string]bool{
+				"check2": true,
+			},
+		},
+		{
+			name: "should handle invalid group in one check",
+			req: &authzv1.BatchCheckRequest{
+				Subject: "user:test-uid",
+				Checks: []*authzv1.BatchCheckItem{
+					{
+						CorrelationId: "check1",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash1",
+					},
+					{
+						CorrelationId: "check2",
+						Namespace:     "org-12",
+						Group:         "invalid.grafana.app",
+						Resource:      "invalid",
+						Verb:          "get",
+						Name:          "invalid1",
+					},
+				},
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
+			},
+			expected: map[string]bool{
+				"check1": true,
+			},
+			expectErr: map[string]bool{
+				"check2": true,
+			},
+		},
+		{
+			name: "should use action sets",
+			req: &authzv1.BatchCheckRequest{
+				Subject: "user:test-uid",
+				Checks: []*authzv1.BatchCheckItem{
+					{
+						CorrelationId: "check1",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "get",
+						Name:          "dash1",
+					},
+					{
+						CorrelationId: "check2",
+						Namespace:     "org-12",
+						Group:         "dashboard.grafana.app",
+						Resource:      "dashboards",
+						Verb:          "update",
+						Name:          "dash1",
+					},
+				},
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:admin", Scope: "dashboards:uid:dash1"},
+			},
+			expected: map[string]bool{
+				"check1": true,
+				"check2": true,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := setupService()
+			ctx := types.WithAuthInfo(context.Background(), callingService)
+			userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+			store := &fakeStore{
+				userID:          userID,
+				userPermissions: tc.permissions,
+				folders:         tc.folders,
+			}
+			s.store = store
+			s.permissionStore = store
+			s.folderStore = store
+			s.identityStore = &fakeIdentityStore{}
+
+			resp, err := s.BatchCheck(ctx, tc.req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			require.NotNil(t, resp.Results)
+
+			// Check expected allowed results
+			for checkID, expectedAllowed := range tc.expected {
+				result, ok := resp.Results[checkID]
+				require.True(t, ok, "Expected result for %s", checkID)
+				assert.Equal(t, expectedAllowed, result.Allowed, "Check %s: expected %v, got %v", checkID, expectedAllowed, result.Allowed)
+				if result.Error != "" {
+					t.Logf("Check %s error: %s", checkID, result.Error)
+				}
+			}
+
+			// Check expected error results
+			for checkID, expectError := range tc.expectErr {
+				result, ok := resp.Results[checkID]
+				require.True(t, ok, "Expected result for %s", checkID)
+				if expectError {
+					assert.False(t, result.Allowed, "Check %s should be denied", checkID)
+					assert.NotEmpty(t, result.Error, "Check %s should have an error", checkID)
+				}
+			}
+		})
+	}
+
+	t.Run("should batch permission lookups efficiently", func(t *testing.T) {
+		s := setupService()
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+		userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+		fStore := &fakeStore{
+			userID: userID,
+			userPermissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:*"},
+			},
+		}
+		s.store = fStore
+		s.permissionStore = fStore
+		s.folderStore = fStore
+		s.identityStore = &fakeIdentityStore{}
+
+		// Make multiple checks with the same action and namespace
+		// Should only fetch permissions once per (namespace, action) group
+		resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				{
+					CorrelationId: "check1",
+					Namespace:     "org-12",
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					Verb:          "get",
+					Name:          "dash1",
+				},
+				{
+					CorrelationId: "check2",
+					Namespace:     "org-12",
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					Verb:          "get",
+					Name:          "dash2",
+				},
+				{
+					CorrelationId: "check3",
+					Namespace:     "org-12",
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					Verb:          "get",
+					Name:          "dash3",
+				},
+			},
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+
+		// All should be allowed
+		require.True(t, resp.Results["check1"].Allowed)
+		require.True(t, resp.Results["check2"].Allowed)
+		require.True(t, resp.Results["check3"].Allowed)
+
+		// Should have called GetUserPermissions only once (plus GetBasicRoles and GetUserIdentifiers once each)
+		// Total calls should be 3: GetUserIdentifiers(1), GetBasicRoles(1), GetUserPermissions(1)
+		assert.LessOrEqual(t, fStore.calls, 3, "Should batch permission lookups efficiently")
+	})
+
+	t.Run("should skip cache when freshness_timestamp is recent", func(t *testing.T) {
+		s := setupService()
+		s.settings.CacheTTL = 30 * time.Second
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+		userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+		fStore := &fakeStore{
+			userID: userID,
+			userPermissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
+			},
+		}
+		s.store = fStore
+		s.permissionStore = fStore
+		s.folderStore = fStore
+		s.identityStore = &fakeIdentityStore{}
+
+		// First call to populate cache
+		resp1, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				{
+					CorrelationId: "check1",
+					Namespace:     "org-12",
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					Verb:          "get",
+					Name:          "dash1",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.True(t, resp1.Results["check1"].Allowed)
+		initialCalls := fStore.calls
+
+		// Second call with fresh timestamp (within cache TTL) should skip cache
+		freshTimestamp := time.Now().Add(-10 * time.Second).UnixMilli()
+		resp2, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				{
+					CorrelationId:      "check2",
+					Namespace:          "org-12",
+					Group:              "dashboard.grafana.app",
+					Resource:           "dashboards",
+					Verb:               "get",
+					Name:               "dash1",
+					FreshnessTimestamp: freshTimestamp,
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.True(t, resp2.Results["check2"].Allowed)
+
+		// Should have made additional calls to fetch fresh data
+		assert.Greater(t, fStore.calls, initialCalls, "Should skip cache and fetch fresh data")
+	})
+
+	t.Run("should use cache when freshness_timestamp is old", func(t *testing.T) {
+		s := setupService()
+		s.settings.CacheTTL = 30 * time.Second
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+		userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+		fStore := &fakeStore{
+			userID: userID,
+			userPermissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:dash1"},
+			},
+		}
+		s.store = fStore
+		s.permissionStore = fStore
+		s.folderStore = fStore
+		s.identityStore = &fakeIdentityStore{}
+
+		// First call to populate cache
+		resp1, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				{
+					CorrelationId: "check1",
+					Namespace:     "org-12",
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					Verb:          "get",
+					Name:          "dash1",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.True(t, resp1.Results["check1"].Allowed)
+		initialCalls := fStore.calls
+
+		// Second call with old timestamp (outside cache TTL) should use cache
+		oldTimestamp := time.Now().Add(-60 * time.Second).UnixMilli()
+		resp2, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				{
+					CorrelationId:      "check2",
+					Namespace:          "org-12",
+					Group:              "dashboard.grafana.app",
+					Resource:           "dashboards",
+					Verb:               "get",
+					Name:               "dash1",
+					FreshnessTimestamp: oldTimestamp,
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.True(t, resp2.Results["check2"].Allowed)
+
+		// Should not have made additional calls (used cache)
+		assert.Equal(t, initialCalls, fStore.calls, "Should use cache for old freshness timestamp")
+	})
+
+	t.Run("should skip cache for entire group if any item requires fresh data", func(t *testing.T) {
+		s := setupService()
+		s.settings.CacheTTL = 30 * time.Second
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+		userID := &store.UserIdentifiers{UID: "test-uid", ID: 1}
+		fStore := &fakeStore{
+			userID: userID,
+			userPermissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:*"},
+			},
+		}
+		s.store = fStore
+		s.permissionStore = fStore
+		s.folderStore = fStore
+		s.identityStore = &fakeIdentityStore{}
+
+		// First call to populate cache
+		resp1, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				{
+					CorrelationId: "check1",
+					Namespace:     "org-12",
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					Verb:          "get",
+					Name:          "dash1",
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.True(t, resp1.Results["check1"].Allowed)
+		initialCalls := fStore.calls
+
+		// Second call with multiple items, one with fresh timestamp
+		freshTimestamp := time.Now().Add(-10 * time.Second).UnixMilli()
+		resp2, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+			Subject: "user:test-uid",
+			Checks: []*authzv1.BatchCheckItem{
+				{
+					CorrelationId: "check2",
+					Namespace:     "org-12",
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					Verb:          "get",
+					Name:          "dash2",
+					// No freshness timestamp - would normally use cache
+				},
+				{
+					CorrelationId:      "check3",
+					Namespace:          "org-12",
+					Group:              "dashboard.grafana.app",
+					Resource:           "dashboards",
+					Verb:               "get",
+					Name:               "dash3",
+					FreshnessTimestamp: freshTimestamp, // Fresh timestamp - skip cache
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.True(t, resp2.Results["check2"].Allowed)
+		require.True(t, resp2.Results["check3"].Allowed)
+
+		// Should have made additional calls because one item required fresh data
+		assert.Greater(t, fStore.calls, initialCalls, "Should skip cache for entire group if any item requires fresh data")
+	})
+}
