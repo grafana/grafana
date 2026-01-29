@@ -48,7 +48,7 @@ type ServerOptions struct {
 	SecureValues     secrets.InlineSecureValueSupport
 	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
 
-	// Used only on search server to disable rvManager, pruner, notifier, ...
+	// DisableStorageServices is used for standalone search server
 	DisableStorageServices bool
 }
 
@@ -75,7 +75,6 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 
 // NewSearchServer creates a new SearchServer with only search capabilities enabled.
 func NewSearchServer(opts ServerOptions) (resource.SearchServer, error) {
-	// In case we build the backend, create without storage-specific services
 	opts.DisableStorageServices = true
 	resourceOpts, err := buildResourceServerOptions(&opts,
 		withBlobConfig,
@@ -123,6 +122,30 @@ func withSecureValueService(opts *ServerOptions, resourceOpts *resource.Resource
 		return fmt.Errorf("failed to create inline secure value service: %w", err)
 	}
 	resourceOpts.SecureValues = inlineSecureValueService
+	return nil
+}
+
+func withAccessClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	if opts.AccessClient != nil {
+		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
+	}
+	return nil
+}
+
+func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
+	resourceOpts.Blob = resource.BlobConfig{
+		URL: apiserverCfg.Key("blob_url").MustString(""),
+	}
+	// Support local file blob
+	if strings.HasPrefix(resourceOpts.Blob.URL, "./data/") {
+		dir := strings.Replace(resourceOpts.Blob.URL, "./data", opts.Cfg.DataPath, 1)
+		err := os.MkdirAll(dir, 0700)
+		if err != nil {
+			return err
+		}
+		resourceOpts.Blob.URL = "file:///" + dir
+	}
 	return nil
 }
 
@@ -234,30 +257,6 @@ func withQOSQueue(opts *ServerOptions, resourceOpts *resource.ResourceServerOpti
 
 func withOverridesService(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.OverridesService = opts.OverridesService
-	return nil
-}
-
-func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
-	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
-	resourceOpts.Blob = resource.BlobConfig{
-		URL: apiserverCfg.Key("blob_url").MustString(""),
-	}
-	// Support local file blob
-	if strings.HasPrefix(resourceOpts.Blob.URL, "./data/") {
-		dir := strings.Replace(resourceOpts.Blob.URL, "./data", opts.Cfg.DataPath, 1)
-		err := os.MkdirAll(dir, 0700)
-		if err != nil {
-			return err
-		}
-		resourceOpts.Blob.URL = "file:///" + dir
-	}
-	return nil
-}
-
-func withAccessClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
-	if opts.AccessClient != nil {
-		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
-	}
 	return nil
 }
 

@@ -52,24 +52,23 @@ type UnifiedStorageGrpcService interface {
 type service struct {
 	*services.BasicService
 
+	// Subservices manager
+	subservices        []services.Service
+	subservicesMngr    *services.Manager
+	subservicesWatcher *services.FailureWatcher
+	hasSubservices     bool
+
 	// -- Shared Components
 	backend       resource.StorageBackend
 	serverStopper resource.ResourceServerStopper
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
 	db            infraDB.DB
-	tracing       trace.Tracer
-	authenticator func(ctx context.Context) (context.Context, error)
 	log           log.Logger
 	reg           prometheus.Registerer
-	// Handler for the gRPC server
-	handler grpcserver.Provider
-
-	// Subservices manager
-	subservices        []services.Service
-	subservicesMngr    *services.Manager
-	subservicesWatcher *services.FailureWatcher
-	hasSubservices     bool
+	handler       grpcserver.Provider
+	tracing       trace.Tracer
+	authenticator func(ctx context.Context) (context.Context, error)
 
 	// -- Storage Services
 	queue          QOSEnqueueDequeuer
@@ -84,7 +83,7 @@ type service struct {
 	searchStandalone bool
 }
 
-func ProvideSearchGRCPService(cfg *setting.Cfg,
+func ProvideSearchGRPCService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
 	log log.Logger,
@@ -98,7 +97,7 @@ func ProvideSearchGRCPService(cfg *setting.Cfg,
 ) (UnifiedStorageGrpcService, error) {
 	s := newBaseService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend)
 	s.searchStandalone = true
-	if !cfg.EnableSharding {
+	if cfg.EnableSharding {
 		err := s.withRingLifecycle(memberlistKVConfig, httpServerRouter)
 		if err != nil {
 			return nil, err
@@ -343,7 +342,6 @@ func (s *service) starting(ctx context.Context) error {
 		serverOptions.OverridesService = overridesSvc
 	}
 
-	// Create gRPC handler first
 	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, interceptors.AuthenticatorFunc(s.authenticator), s.tracing, prometheus.DefaultRegisterer)
 	if err != nil {
 		return err

@@ -36,25 +36,20 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
-	resourcepb.DiagnosticsServer
 	SearchServer
-	StorageServer
-	ResourceServerStopper
-}
-
-type SearchServer interface {
-	LifecycleHooks
-	resourcepb.ResourceIndexServer
-	resourcepb.ManagedObjectIndexServer
-	resourcepb.DiagnosticsServer
-}
-
-type StorageServer interface {
-	LifecycleHooks
 	resourcepb.ResourceStoreServer
 	resourcepb.BulkStoreServer
 	resourcepb.BlobStoreServer
 	resourcepb.QuotasServer
+	resourcepb.DiagnosticsServer
+	ResourceServerStopper
+}
+
+// SearchServer implements the search-related gRPC services
+type SearchServer interface {
+	LifecycleHooks
+	resourcepb.ResourceIndexServer
+	resourcepb.ManagedObjectIndexServer
 	resourcepb.DiagnosticsServer
 }
 
@@ -281,7 +276,6 @@ type ResourceServerOptions struct {
 }
 
 // NewSearchServer creates a standalone search server.
-// This returns a SearchServer that only handles search operations.
 func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
 	// No backend search support
 	if opts.Backend == nil {
@@ -305,12 +299,8 @@ func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
 	searchServer.lifecycle = opts.Lifecycle
 	searchServer.backendDiagnostics = opts.Diagnostics
 
-	// Initialize the backend server
-	ctx := context.Background()
-	if err := opts.Lifecycle.Init(ctx); err != nil {
-		return nil, fmt.Errorf("failed to initialize lifecycle hooks: %w", err)
-	}
 	// Initialize the search server
+	ctx := context.Background()
 	if err := searchServer.Init(ctx); err != nil {
 		return nil, fmt.Errorf("failed to initialize search server: %w", err)
 	}
@@ -434,7 +424,6 @@ func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 }
 
 var _ ResourceServer = &server{}
-var _ StorageServer = &server{}
 
 type server struct {
 	log              log.Logger
