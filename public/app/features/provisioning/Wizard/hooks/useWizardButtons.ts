@@ -14,7 +14,6 @@ export interface UseWizardButtonsParams {
   isCancelling: boolean;
   isStepRunning: boolean;
   isStepSuccess: boolean;
-  hasStepError: boolean;
   hasStepWarning: boolean;
   isCreatingSkipJob: boolean;
   showCancelConfirmation: boolean;
@@ -37,7 +36,6 @@ export function useWizardButtons({
   isCancelling,
   isStepRunning,
   isStepSuccess,
-  hasStepError,
   hasStepWarning,
   isCreatingSkipJob,
   showCancelConfirmation,
