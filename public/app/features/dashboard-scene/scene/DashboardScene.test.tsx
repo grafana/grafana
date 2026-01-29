@@ -40,6 +40,7 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import * as utils from '../utils/utils';
 
@@ -794,6 +795,20 @@ describe('DashboardScene', () => {
           scene.pastePanelStyles(timeseriesPanel2);
           expect(mockOnFieldConfigChange2).toHaveBeenCalled();
           expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
+        });
+
+        it('Should report analytics on paste error', () => {
+          const timeseriesPanel = createTimeseriesPanel();
+          const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
+          const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+          store.set(LS_STYLES_COPY_KEY, 'invalid json');
+
+          scene.pastePanelStyles(timeseriesPanel);
+
+          expect(spy).toHaveBeenCalledWith('paste', 'timeseries', expect.any(Number), true);
+          spy.mockRestore();
+          consoleErrorSpy.mockRestore();
         });
       });
 
