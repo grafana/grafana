@@ -28,6 +28,26 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/
+  query-editor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/
+  template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/
+  annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/annotations/
+  alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/
 ---
 
 # Configure the OpenTSDB data source
@@ -260,3 +280,13 @@ Replace the following placeholders:
 - _`<YOUR_SERVICE_ACCOUNT_TOKEN>`_: A service account token with data source permissions
 - _`<USERNAME>`_: The username for basic authentication
 - _`<PASSWORD>`_: The password for basic authentication
+
+## Next steps
+
+Now that you've configured OpenTSDB, you can:
+
+- [Query OpenTSDB data](ref:query-editor) to build dashboards and visualizations
+- [Use template variables](ref:template-variables) to create dynamic, reusable dashboards
+- [Add annotations](ref:annotations) to overlay events on your graphs
+- [Set up alerting](ref:alerting) to get notified when metrics cross thresholds
+- [Troubleshoot issues](ref:troubleshooting-opentsdb) if you encounter problems
