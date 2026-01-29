@@ -8010,6 +8010,43 @@
   "gauge": {
     "category-gauge": "Medidor",
     "category-radial-bar": "",
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    },
     "description-min-height": "Altura mínima da linha (orientação horizontal)",
     "description-min-width": "Largura mínima da coluna (orientação vertical)",
     "description-neutral": "Deixe em branco para usar Mín. como ponto neutro",
@@ -10033,6 +10070,8 @@
       "no-more-logs-available": "Não há mais registos disponíveis.",
       "older-logs": "mais antigos",
       "open-in-split-view": "Abrir na vista dividida",
+      "show-original-log": "",
+      "show-original-log-tooltip": "",
       "time-window-label": "Janela de tempo de contexto",
       "time-window-tooltip": "Quantidade de tempo antes e depois do registo referenciado",
       "title-log-context": "Contexto do registo",
@@ -11791,6 +11830,8 @@
       "description-clear-repository-connection": "Adicione um nome claro para esta ligação de repositório",
       "empty": "Esvaziar",
       "error-field-required": "Este campo é obrigatório.",
+      "error-repository-status-unhealthy-message": "",
+      "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Nome do visor",
       "placeholder-my-repository-connection": "A minha ligação de repositório",
@@ -11817,13 +11858,16 @@
       "alert-repository-settings-updated": "Definições do repositório atualizadas",
       "button-save": "Guardar",
       "button-saving": "A guardar...",
+      "description-connection": "",
       "description-enabled": "Assim que a extração automática estiver ativada, o alvo não pode ser alterado.",
       "description-read-only": "Os recursos não podem ser modificados através da Grafana.",
       "description-title": "Um nome legível para a configuração",
+      "error-connection-required": "",
       "error-fetch-branches": "",
       "error-required": "Este campo é obrigatório.",
       "error-save-repository": "Não foi possível guardar as definições do repositório",
       "label-automatic-pulling": "Extração automática",
+      "label-connection": "",
       "label-enabled": "Ativado",
       "label-interval-seconds": "Intervalo (segundos)",
       "label-repository-type": "Tipo de repositório",
@@ -11857,24 +11901,36 @@
       "button-save": "",
       "button-saving": "",
       "description-app-id": "",
+      "description-description": "",
       "description-installation-id": "",
       "description-private-key": "",
       "description-provider": "",
+      "description-title": "",
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
       "label-app-id": "",
+      "label-description": "",
       "label-installation-id": "",
       "label-private-key": "",
       "label-provider": "",
+      "label-title": "",
       "not-found": "",
       "not-found-description": "",
       "page-subtitle": "",
       "page-title-create": "",
       "page-title-edit": "",
       "placeholder-app-id": "",
+      "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": ""
+      "placeholder-private-key": "",
+      "placeholder-title": ""
+    },
+    "connection-options": {
+      "loading": "",
+      "no-repos": "",
+      "repos-truncated_one": "",
+      "repos-truncated_other": ""
     },
     "connections": {
       "add-connection": "",
@@ -11888,6 +11944,7 @@
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
+      "status-pending": "",
       "status-unknown": "",
       "view": ""
     },
@@ -12398,6 +12455,9 @@
       "push-to-existing-branch": ""
     }
   },
+  "provisioning-alert": {
+    "retry": ""
+  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "Antes de tornar o painel de controlo público, tenha em atenção o seguinte:",
@@ -12602,8 +12662,17 @@
       "title-data-source-help": "Ajuda da origem de dados"
     }
   },
+  "query-editor": {
+    "action": {
+      "inspector": ""
+    },
+    "edit-query-name": "",
+    "validation": {
+      "duplicate-name": "",
+      "empty-name": ""
+    }
+  },
   "query-editor-next": {
-    "detail-placeholder": "",
     "sidebar": {
       "card-click": "",
       "expression": "",
