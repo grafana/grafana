@@ -1,6 +1,6 @@
 package resource
 
-//go:generate sh -c "cd ../../../.. && pwd && bash pkg/storage/unified/resource/generate_manifests.sh"
+//go:generate sh -c "cd ../../../.. && bash pkg/storage/unified/resource/generate_manifests.sh"
 
 import (
 	"github.com/grafana/grafana-app-sdk/app"
