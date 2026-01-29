@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
+	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
 
@@ -76,6 +78,12 @@ func newModuleServer(opts Options,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
+	searchClient, err := unified.NewStorageApiSearchClient(cfg, features)
+	if err != nil {
+		shutdownFn()
+		return nil, fmt.Errorf("failed to create storage api search client: %w", err)
+	}
+
 	s := &ModuleServer{
 		opts:             opts,
 		apiOpts:          apiOpts,
@@ -97,6 +105,7 @@ func newModuleServer(opts Options,
 		moduleRegisterer: moduleRegisterer,
 		storageBackend:   storageBackend,
 		hooksService:     hooksService,
+		searchClient:     searchClient,
 	}
 
 	return s, nil
@@ -119,6 +128,7 @@ type ModuleServer struct {
 	isInitialized    bool
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
+	searchClient     resourcepb.ResourceIndexClient
 	storageMetrics   *resource.StorageMetrics
 	indexMetrics     *resource.BleveIndexMetrics
 	license          licensing.Licensing
@@ -202,7 +212,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {

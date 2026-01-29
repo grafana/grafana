@@ -624,6 +624,7 @@ type Cfg struct {
 	HttpsSkipVerify                            bool
 	ResourceServerJoinRingTimeout              time.Duration
 	EnableSearch                               bool
+	EnableSearchClient                         bool
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
 	EnableSQLKVBackend                         bool

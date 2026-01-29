@@ -98,6 +98,35 @@ func TestUnifiedStorageClient(t *testing.T) {
 	})
 }
 
+func TestNewSearchClient(t *testing.T) {
+	t.Run("new search client fails when address is empty", func(t *testing.T) {
+		cfg := setting.NewCfg()
+
+		_, err := NewSearchClient(cfg, featuremgmt.WithFeatures())
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "search_server_address")
+	})
+
+	t.Run("returns nil when creating storage api search client when EnableSearchClient is false", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.EnableSearchClient = false
+
+		client, err := NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures())
+		require.NoError(t, err)
+		require.Nil(t, client)
+	})
+
+	t.Run("new search client succeeds when address is provided", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.EnableSearchClient = true
+		cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue("localhost:12345")
+
+		client, err := NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures())
+		require.NoError(t, err)
+		require.NotNil(t, client)
+	})
+}
+
 func testCallAllMethods(client resource.ResourceClient) {
 	_, _ = client.Read(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ReadRequest{})
 	_, _ = client.Create(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.CreateRequest{})
