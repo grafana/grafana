@@ -248,7 +248,8 @@ func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptio
 }
 
 func withSearchClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
-	serverOptions.SearchClient = opts.SearchClient
+	resourceOpts.SearchClient = opts.SearchClient
+	return nil
 }
 
 func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {

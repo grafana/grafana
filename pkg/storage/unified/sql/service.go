@@ -97,7 +97,7 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
 ) (UnifiedStorageGrpcService, error) {
-	s := newBaseService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend)
+	s := newBaseService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
 	s.searchStandalone = true
 	if cfg.EnableSharding {
 		err := s.withRingLifecycle(memberlistKVConfig, httpServerRouter)
@@ -127,7 +127,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
 ) (UnifiedStorageGrpcService, error) {
-	s := newBaseService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend)
+	s := newBaseService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
 
 	// TODO: move to standalone search once we only use sharding in search servers
 	if cfg.EnableSharding {
@@ -177,6 +177,7 @@ func newBaseService(
 	indexMetrics *resource.BleveIndexMetrics,
 	searchRing *ring.Ring,
 	backend resource.StorageBackend,
+	searchClient resourcepb.ResourceIndexClient,
 ) *service {
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
