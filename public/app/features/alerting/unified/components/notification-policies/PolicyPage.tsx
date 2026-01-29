@@ -24,7 +24,7 @@ const PoliciesTreeWrapper = () => {
 
 function PolicyPage() {
   const { name = '' } = useParams();
-  const routeName = name === ROOT_ROUTE_NAME ? "Default Policy" : decodeURIComponent(name);
+  const routeName = name === ROOT_ROUTE_NAME ? 'Default Policy' : decodeURIComponent(name);
 
   const pageNav = {
     text: routeName,

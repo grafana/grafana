@@ -63,21 +63,21 @@ export const useNotificationPolicyRoute = (
     {
       skip: skip || !k8sApiSupported,
       selectFromResult: (result) => {
-          const { data, currentData, ...rest } = result;
+        const { data, currentData, ...rest } = result;
 
-          const transformed = useMemo(() => {
-            return data ? k8sRouteToRoute(data) : data;
-          }, [data]);
+        const transformed = useMemo(() => {
+          return data ? k8sRouteToRoute(data) : data;
+        }, [data]);
 
-          const transformedCurrent = useMemo(() => {
-            return currentData ? k8sRouteToRoute(currentData) : currentData;
-          }, [currentData]);
+        const transformedCurrent = useMemo(() => {
+          return currentData ? k8sRouteToRoute(currentData) : currentData;
+        }, [currentData]);
 
-          return {
-            ...rest,
-            data: transformed,
-            currentData: transformedCurrent,
-          };
+        return {
+          ...rest,
+          data: transformed,
+          currentData: transformedCurrent,
+        };
       },
     }
   );
@@ -395,7 +395,6 @@ export function createKubernetesRoutingTreeSpec(
     },
   };
 }
-
 
 export const NAMED_ROOT_LABEL_NAME = '__grafana_managed_route__';
 

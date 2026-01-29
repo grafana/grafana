@@ -68,14 +68,14 @@ const getNamespacedRoutingTreeHandler = () =>
   );
 
 const createNamespacedRoutingTreeHandler = () =>
-  http.post<{ namespace: string; name: string }, ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree>(
-    `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees`,
-    async ({ params: { name }, request }) => {
-      const routingTree = await request.json();
-      setRoutingTree(name, routingTree);
-      return HttpResponse.json(routingTree);
-    }
-  );
+  http.post<
+    { namespace: string; name: string },
+    ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree
+  >(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees`, async ({ params: { name }, request }) => {
+    const routingTree = await request.json();
+    setRoutingTree(name, routingTree);
+    return HttpResponse.json(routingTree);
+  });
 
 const deleteNamespacedRoutingTreeHandler = () =>
   http.delete<{ namespace: string; name: string }>(
@@ -85,7 +85,7 @@ const deleteNamespacedRoutingTreeHandler = () =>
       if (!routingTree) {
         return HttpResponse.json({ message: 'NotFound' }, { status: 404 });
       }
-      if ( name === ROOT_ROUTE_NAME ) {
+      if (name === ROOT_ROUTE_NAME) {
         // Reset instead.
         resetDefaultRoutingTree();
       } else {
@@ -94,7 +94,6 @@ const deleteNamespacedRoutingTreeHandler = () =>
       return HttpResponse.json({});
     }
   );
-
 
 const handlers = [
   listNamespacedRoutingTreesHandler(),

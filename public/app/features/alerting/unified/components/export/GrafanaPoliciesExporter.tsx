@@ -51,7 +51,7 @@ export const GrafanaPoliciesExporter = ({ routeName = '', onClose }: GrafanaPoli
       onClose={onClose}
       formatProviders={Object.values(allGrafanaExportProviders)}
     >
-      <GrafanaPoliciesExporterPreview exportFormat={activeTab} onClose={onClose} routeName={routeName}/>
+      <GrafanaPoliciesExporterPreview exportFormat={activeTab} onClose={onClose} routeName={routeName} />
     </GrafanaExportDrawer>
   );
 };

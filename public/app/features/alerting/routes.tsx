@@ -96,7 +96,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         () =>
           import(
             /* webpackChunkName: "PolicyPage" */ 'app/features/alerting/unified/components/notification-policies/PolicyPage'
-            )
+          )
       ),
     },
     {

@@ -33,10 +33,7 @@ const RoutingTreeFilter = () => {
 
   return (
     <Stack direction="row" alignItems="end" gap={0.5}>
-      <Field
-        className={styles.noBottom}
-        label={'Search by name or receiver'}
-      >
+      <Field className={styles.noBottom} label={'Search by name or receiver'}>
         <Input
           aria-label={'search routing trees'}
           placeholder={t('alerting.contact-points-filter.placeholder-search', 'Search')}

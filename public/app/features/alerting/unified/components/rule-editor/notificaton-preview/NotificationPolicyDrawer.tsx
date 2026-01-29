@@ -97,7 +97,11 @@ export function NotificationPolicyDrawer({
               )}
             </Stack>
 
-            <TextLink href={createRelativeUrl(`/alerting/routes/policy/${encodeURIComponent(policyName ?? '')}/edit`)} external inline={false}>
+            <TextLink
+              href={createRelativeUrl(`/alerting/routes/policy/${encodeURIComponent(policyName ?? '')}/edit`)}
+              external
+              inline={false}
+            >
               <Trans i18nKey="alerting.notification-policy-drawer.view-notification-policy-tree">
                 View notification policy tree
               </Trans>

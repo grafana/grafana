@@ -33,7 +33,13 @@ export interface AmRootRouteFormProps {
   showNameField?: boolean;
 }
 
-export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmit, route, showNameField }: AmRootRouteFormProps) => {
+export const AmRootRouteForm = ({
+  actionButtons,
+  alertManagerSourceName,
+  onSubmit,
+  route,
+  showNameField,
+}: AmRootRouteFormProps) => {
   const styles = useStyles2(getFormStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
   const { isGrafanaAlertmanager } = useAlertmanager();
@@ -56,31 +62,30 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
   });
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      {showNameField && (<Field
-        required
-        label={t('alerting.am-root-route-form.name', 'Name')}
-        description={t(
-          'alerting.am-root-route-form.description-unique-route',
-          'A unique name for the routing tree'
-        )}
-        invalid={!!errors.name}
-        error={errors.name?.message}
-      >
-        <Input
-          {...register('name', {
-            required: true,
-            validate: (value) => {
-              if (!value || value.trim().length === 0) {
-                return 'Name is required';
-              }
-              return true
-            },
-          })}
-          className={styles.input}
-          data-testid="routing-tree-name"
-          aria-label={t('alerting.am-root-route-form.aria-label-name', 'Name')}
-        />
-      </Field>)}
+      {showNameField && (
+        <Field
+          required
+          label={t('alerting.am-root-route-form.name', 'Name')}
+          description={t('alerting.am-root-route-form.description-unique-route', 'A unique name for the routing tree')}
+          invalid={!!errors.name}
+          error={errors.name?.message}
+        >
+          <Input
+            {...register('name', {
+              required: true,
+              validate: (value) => {
+                if (!value || value.trim().length === 0) {
+                  return 'Name is required';
+                }
+                return true;
+              },
+            })}
+            className={styles.input}
+            data-testid="routing-tree-name"
+            aria-label={t('alerting.am-root-route-form.aria-label-name', 'Name')}
+          />
+        </Field>
+      )}
       <Field
         label={t('alerting.am-root-route-form.label-default-contact-point', 'Default contact point')}
         invalid={Boolean(errors.receiver) ? true : undefined}

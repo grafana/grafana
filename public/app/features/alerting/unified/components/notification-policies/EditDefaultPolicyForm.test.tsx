@@ -134,18 +134,18 @@ describe('EditDefaultPolicyForm', function () {
     it('should render policy name in form inputs if showNameField=true', async function () {
       const onSubmit = jest.fn();
       renderRouteForm(
-      {
-        id: '0',
-        name: 'custom policy name',
-      },
-      onSubmit,
-      true);
+        {
+          id: '0',
+          name: 'custom policy name',
+        },
+        onSubmit,
+        true
+      );
 
       expect(ui.routeNameInput.get()).toHaveValue('custom policy name');
     });
     it('should not render policy name in form inputs if showNameField omitted', async function () {
-      renderRouteForm(
-      {
+      renderRouteForm({
         id: '0',
         name: 'custom policy name',
       });
@@ -155,7 +155,11 @@ describe('EditDefaultPolicyForm', function () {
   });
 });
 
-function renderRouteForm(route: RouteWithID, onSubmit: (route: Partial<FormAmRoute>) => void = noop, showNameField?: boolean) {
+function renderRouteForm(
+  route: RouteWithID,
+  onSubmit: (route: Partial<FormAmRoute>) => void = noop,
+  showNameField?: boolean
+) {
   return render(
     <AlertmanagerProvider accessType="instance">
       <AmRootRouteForm

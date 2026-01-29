@@ -402,7 +402,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       }),
       keepUnusedDataFor: 0,
     }),
-    exportPolicies: build.query<string, { routeName?: string, format: ExportFormats }>({
+    exportPolicies: build.query<string, { routeName?: string; format: ExportFormats }>({
       query: ({ routeName, format }) => ({
         url: `/api/v1/provisioning/policies/export/`,
         params: { format: format, routeName: routeName },

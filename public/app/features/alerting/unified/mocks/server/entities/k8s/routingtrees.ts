@@ -69,8 +69,12 @@ export const getUserDefinedRoutingTree: (
 const routingTreeFromSpec: (
   routeName: string,
   spec: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec,
-  provenance?: string,
-) => ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree = (routeName, spec, provenance = KnownProvenance.None) => ({
+  provenance?: string
+) => ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree = (
+  routeName,
+  spec,
+  provenance = KnownProvenance.None
+) => ({
   kind: 'RoutingTree',
   metadata: {
     name: routeName,
@@ -88,79 +92,107 @@ const routingTreeFromSpec: (
 const getDefaultRoutingTreeMap = () =>
   new Map([
     [ROOT_ROUTE_NAME, getUserDefinedRoutingTree(grafanaAlertmanagerConfig)],
-    ['Managed Policy - Empty Provisioned', routingTreeFromSpec("Managed Policy - Empty Provisioned", {
-      defaults: {
-        receiver: grafanaAlertmanagerConfig?.alertmanager_config?.receivers![0].name, // grafana-default-email
-      },
-      routes: [],
-    }, 'api')],
-    ['Managed Policy - Override + Inherit', routingTreeFromSpec("Managed Policy - Override + Inherit", {
-      defaults: {
-        receiver: grafanaAlertmanagerConfig?.alertmanager_config?.receivers![1].name, // provisioned-contact-point
-        group_by: ['alertname'],
-        group_wait: '1s',
-        group_interval: '1m',
-        repeat_interval: '1h'
-      },
-      routes: [{ // Override.
-        receiver: grafanaAlertmanagerConfig?.alertmanager_config?.receivers![2].name, // lotsa-emails
-        group_by: ['alertname', 'grafana_folder'],
-        group_wait: '10s',
-        group_interval: '10m',
-        repeat_interval: '10h',
-        continue: true,
-        active_time_intervals: [grafanaAlertmanagerConfig?.alertmanager_config?.time_intervals![0].name], // Some interval
-        mute_time_intervals: [grafanaAlertmanagerConfig?.alertmanager_config?.time_intervals![1].name], // A provisioned interval
-        matchers: [
-          { label: 'severity', type: MatcherOperator.equal, value: 'critical' },
-        ],
-      }, { // Inherit.
-        matchers: [
-          { label: 'severity', type: MatcherOperator.equal, value: 'warn' },
-        ],
-      }],
-    })],
-    ['Managed Policy - Many Top-Level', routingTreeFromSpec("Managed Policy - Many Top-Level", {
-      defaults: {
-        receiver: grafanaAlertmanagerConfig?.alertmanager_config?.receivers![2].name, // lotsa-emails
-        group_by: ['alertname'],
-        group_wait: '2s',
-        group_interval: '2m',
-        repeat_interval: '2h'
-      },
-      routes: [ // Many top-level routes.
-        { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'warn' }] },
-        { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'critical' }] },
-        { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'info' }] },
-        { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'debug' }] },
-        { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'unknown' }] },
-      ],
-    })],
-    ['Managed Policy - Deeply Nested', routingTreeFromSpec("Managed Policy - Deeply Nested", {
-      defaults: {
-        receiver: grafanaAlertmanagerConfig?.alertmanager_config?.receivers![3].name, // Slack with multiple channels
-        group_by: ['...'],
-        group_wait: '3s',
-        group_interval: '3m',
-        repeat_interval: '3h'
-      },
-      routes: [ // Deeply nested route.
+    [
+      'Managed Policy - Empty Provisioned',
+      routingTreeFromSpec(
+        'Managed Policy - Empty Provisioned',
         {
-          matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'one' }],
-          routes: [{
-              matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'two' }],
-              routes: [{
-                  matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'three' }],
-                  routes: [{
-                      matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'four' }],
-                      routes: [{
-                          matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'five' }],
-                        }],
-                    }],
-                }],
-            }]
-        }],
-    })],
+          defaults: {
+            receiver: grafanaAlertmanagerConfig?.alertmanager_config?.receivers![0].name, // grafana-default-email
+          },
+          routes: [],
+        },
+        'api'
+      ),
+    ],
+    [
+      'Managed Policy - Override + Inherit',
+      routingTreeFromSpec('Managed Policy - Override + Inherit', {
+        defaults: {
+          receiver: grafanaAlertmanagerConfig?.alertmanager_config?.receivers![1].name, // provisioned-contact-point
+          group_by: ['alertname'],
+          group_wait: '1s',
+          group_interval: '1m',
+          repeat_interval: '1h',
+        },
+        routes: [
+          {
+            // Override.
+            receiver: grafanaAlertmanagerConfig?.alertmanager_config?.receivers![2].name, // lotsa-emails
+            group_by: ['alertname', 'grafana_folder'],
+            group_wait: '10s',
+            group_interval: '10m',
+            repeat_interval: '10h',
+            continue: true,
+            active_time_intervals: [grafanaAlertmanagerConfig?.alertmanager_config?.time_intervals![0].name], // Some interval
+            mute_time_intervals: [grafanaAlertmanagerConfig?.alertmanager_config?.time_intervals![1].name], // A provisioned interval
+            matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'critical' }],
+          },
+          {
+            // Inherit.
+            matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'warn' }],
+          },
+        ],
+      }),
+    ],
+    [
+      'Managed Policy - Many Top-Level',
+      routingTreeFromSpec('Managed Policy - Many Top-Level', {
+        defaults: {
+          receiver: grafanaAlertmanagerConfig?.alertmanager_config?.receivers![2].name, // lotsa-emails
+          group_by: ['alertname'],
+          group_wait: '2s',
+          group_interval: '2m',
+          repeat_interval: '2h',
+        },
+        routes: [
+          // Many top-level routes.
+          { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'warn' }] },
+          { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'critical' }] },
+          { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'info' }] },
+          { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'debug' }] },
+          { matchers: [{ label: 'severity', type: MatcherOperator.equal, value: 'unknown' }] },
+        ],
+      }),
+    ],
+    [
+      'Managed Policy - Deeply Nested',
+      routingTreeFromSpec('Managed Policy - Deeply Nested', {
+        defaults: {
+          receiver: grafanaAlertmanagerConfig?.alertmanager_config?.receivers![3].name, // Slack with multiple channels
+          group_by: ['...'],
+          group_wait: '3s',
+          group_interval: '3m',
+          repeat_interval: '3h',
+        },
+        routes: [
+          // Deeply nested route.
+          {
+            matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'one' }],
+            routes: [
+              {
+                matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'two' }],
+                routes: [
+                  {
+                    matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'three' }],
+                    routes: [
+                      {
+                        matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'four' }],
+                        routes: [
+                          {
+                            matchers: [{ label: 'level', type: MatcherOperator.equal, value: 'five' }],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    ],
   ]);
 
 let ROUTING_TREE_MAP = getDefaultRoutingTreeMap();

@@ -85,7 +85,7 @@ const emptyRouteWithID = {
   id: '',
   name: '',
   group_by: defaultGroupBy,
-}
+};
 
 /**
  * This hook controls the create modal for routing trees, showing loading and error states when appropriate
