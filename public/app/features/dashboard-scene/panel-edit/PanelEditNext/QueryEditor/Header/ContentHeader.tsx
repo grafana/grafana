@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
-import { useStyles2, Icon, Button, Text } from '@grafana/ui';
+import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { InspectTab } from 'app/features/inspector/types';
 
