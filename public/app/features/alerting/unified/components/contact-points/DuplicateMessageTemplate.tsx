@@ -1,10 +1,12 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
 import { isNotFoundError } from '../../api/util';
+import { useTemplatesNav } from '../../navigation/useTemplatesNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { generateCopiedName } from '../../utils/duplicate';
 import { stringifyErrorLike } from '../../utils/misc';
@@ -89,9 +91,18 @@ const DuplicateMessageTemplateComponent = () => {
 };
 
 function DuplicateMessageTemplate() {
+  const { navId } = useTemplatesNav();
+  const useV2Nav = config.featureToggles.alertingNavigationV2;
+
+  // For V2 nav, the parent URL points to the dedicated Templates tab
+  // For legacy nav, Templates is accessed via the Contact Points page with tab parameter
+  const parentUrl = useV2Nav
+    ? '/alerting/notifications/templates'
+    : createRelativeUrl('/alerting/notifications', { tab: ActiveTab.NotificationTemplates });
+
   return (
     <AlertmanagerPageWrapper
-      navId="receivers"
+      navId={navId}
       accessType="notification"
       pageNav={{
         id: 'templates',
@@ -102,9 +113,7 @@ function DuplicateMessageTemplate() {
         ),
         parentItem: {
           text: t('alerting.common.titles.notification-templates', 'Notification Templates'),
-          url: createRelativeUrl('/alerting/notifications', {
-            tab: ActiveTab.NotificationTemplates,
-          }),
+          url: parentUrl,
         },
       }}
     >

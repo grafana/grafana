@@ -1,9 +1,7 @@
-import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, LinkButton, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, LinkButton, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { MuteTimingActionsButtons } from 'app/features/alerting/unified/components/mute-timings/MuteTimingActionsButtons';
 import {
   ALL_MUTE_TIMINGS,
@@ -31,7 +29,6 @@ type TableItem = {
 export const TimeIntervalsTable = () => {
   const { selectedAlertmanager: alertManagerSourceName = '', hasConfigurationAPI } = useAlertmanager();
   const hideActions = !hasConfigurationAPI;
-  const styles = useStyles2(getStyles);
   const [ExportAllDrawer, showExportAllDrawer] = useExportMuteTimingsDrawer();
 
   const { data, isLoading, error } = useMuteTimings({ alertmanager: alertManagerSourceName ?? '' });
@@ -73,17 +70,18 @@ export const TimeIntervalsTable = () => {
   }
 
   return (
-    <div className={styles.container}>
+    <Stack direction="column" gap={3}>
       <Stack direction="row" alignItems="center">
-        <Trans i18nKey="alerting.time-intervals.description">
-          Enter specific time intervals when not to send notifications or freeze notifications for recurring periods of
-          time.
-        </Trans>
+        <Text variant="body" color="secondary">
+          <Trans i18nKey="alerting.time-intervals.description">
+            Enter specific time intervals when not to send notifications or freeze notifications for recurring periods
+            of time.
+          </Trans>
+        </Text>
         <Spacer />
         {!hideActions && items.length > 0 && (
           <Authorize actions={[AlertmanagerAction.CreateTimeInterval]}>
             <LinkButton
-              className={styles.muteTimingsButtons}
               icon="plus"
               variant="primary"
               href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
@@ -96,7 +94,6 @@ export const TimeIntervalsTable = () => {
           <>
             <Button
               icon="download-alt"
-              className={styles.muteTimingsButtons}
               variant="secondary"
               disabled={!exportMuteTimingsAllowed}
               onClick={() => showExportAllDrawer(ALL_MUTE_TIMINGS)}
@@ -134,7 +131,7 @@ export const TimeIntervalsTable = () => {
           )}
         </>
       )}
-    </div>
+    </Stack>
   );
 };
 
@@ -185,13 +182,3 @@ function useColumns(alertManagerSourceName: string, hideActions = false) {
     return columns;
   }, [showActions, alertManagerSourceName]);
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    display: 'flex',
-    flexFlow: 'column nowrap',
-  }),
-  muteTimingsButtons: css({
-    marginBottom: theme.spacing(2),
-  }),
-});
