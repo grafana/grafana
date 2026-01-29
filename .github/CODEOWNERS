@@ -676,6 +676,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/toDataQueryError.ts @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/userStorage* @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/useFavoriteDatasources* @grafana/plugins-platform-frontend
+/packages/grafana-runtime/src/utils/getCachedPromise* @grafana/plugins-platform-frontend @grafana/grafana-frontend-platform
 
 # @grafana/schema
 /packages/grafana-schema/ @grafana/grafana-app-platform-squad
