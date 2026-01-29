@@ -211,6 +211,13 @@ func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.
 	_, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
 	defer span.End()
 	obj, _, err := s.codec.Decode(data, nil, obj)
+	// TODO!!! Replace empty folder with "general" on read (this was not a requirement early on)
+	// if s.opts.EnableFolderSupport {
+	// 	m, _ := utils.MetaAccessor(obj)
+	// 	if m != nil && m.GetFolder() == "" {
+	// 		m.SetFolder(folder.GeneralFolderUID)
+	// 	}
+	// }
 	return obj, err
 }
 
