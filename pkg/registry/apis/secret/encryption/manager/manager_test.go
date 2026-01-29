@@ -648,6 +648,105 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 	require.Contains(t, encMgr.providerConfig.AvailableProviders, encryption.ProviderID("fakeProvider.v1"))
 }
 
+// stubCache tracks whether cache read methods were called.
+type stubCache struct {
+	getByLabelCalled bool
+	getByIdCalled    bool
+}
+
+func (c *stubCache) GetByLabel(namespace, label string) (encryption.DataKeyCacheEntry, bool) {
+	c.getByLabelCalled = true
+	return encryption.DataKeyCacheEntry{}, false
+}
+
+func (c *stubCache) GetById(namespace, id string) (encryption.DataKeyCacheEntry, bool) {
+	c.getByIdCalled = true
+	return encryption.DataKeyCacheEntry{}, false
+}
+
+func (c *stubCache) Set(namespace string, entry encryption.DataKeyCacheEntry) {}
+func (c *stubCache) Flush(namespace string)                                   {}
+func (c *stubCache) RemoveExpired()                                           {}
+
+func TestEncryptionService_WithSkipCache(t *testing.T) {
+	ctx := context.Background()
+	namespace := xkube.Namespace("test-namespace")
+	plaintext := []byte("secret data")
+
+	setup := func(t *testing.T, cache encryption.DataKeyCache) (contracts.EncryptionManager, contracts.DataKeyStorage) {
+		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+		tracer := noop.NewTracerProvider().Tracer("test")
+
+		cfg := &setting.Cfg{
+			SecretsManagement: setting.SecretsManagerSettings{
+				CurrentEncryptionProvider: "secret_key.v1",
+				ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
+			},
+		}
+
+		store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
+		require.NoError(t, err)
+
+		usageStats := &usagestats.UsageStatsMock{T: t}
+		enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
+		require.NoError(t, err)
+
+		ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
+		require.NoError(t, err)
+
+		svc, err := ProvideEncryptionManager(tracer, store, usageStats, enc, ossProviders, cache, cfg)
+		require.NoError(t, err)
+
+		return svc, store
+	}
+
+	t.Run("Encrypt with WithSkipCache should not read from cache", func(t *testing.T) {
+		cache := &stubCache{}
+		svc, _ := setup(t, cache)
+
+		_, err := svc.Encrypt(ctx, namespace, plaintext, WithSkipCache)
+		require.NoError(t, err)
+		assert.False(t, cache.getByLabelCalled, "cache should not be accessed with WithSkipCache")
+	})
+
+	t.Run("Encrypt without WithSkipCache should read from cache", func(t *testing.T) {
+		cache := &stubCache{}
+		svc, _ := setup(t, cache)
+
+		_, err := svc.Encrypt(ctx, namespace, plaintext)
+		require.NoError(t, err)
+		assert.True(t, cache.getByLabelCalled, "cache should be accessed without WithSkipCache")
+	})
+
+	t.Run("Decrypt with WithSkipCache should not read from cache", func(t *testing.T) {
+		// First encrypt to create a data key
+		cache := &stubCache{}
+		svc, _ := setup(t, cache)
+		encrypted, err := svc.Encrypt(ctx, namespace, plaintext)
+		require.NoError(t, err)
+
+		// Reset and test decrypt
+		cache.getByIdCalled = false
+		_, err = svc.Decrypt(ctx, namespace, encrypted, WithSkipCache)
+		require.NoError(t, err)
+		assert.False(t, cache.getByIdCalled, "cache should not be accessed with WithSkipCache")
+	})
+
+	t.Run("Decrypt without WithSkipCache should read from cache", func(t *testing.T) {
+		// First encrypt to create a data key
+		cache := &stubCache{}
+		svc, _ := setup(t, cache)
+		encrypted, err := svc.Encrypt(ctx, namespace, plaintext)
+		require.NoError(t, err)
+
+		// Reset and test decrypt
+		cache.getByIdCalled = false
+		_, err = svc.Decrypt(ctx, namespace, encrypted)
+		require.NoError(t, err)
+		assert.True(t, cache.getByIdCalled, "cache should be accessed without WithSkipCache")
+	})
+}
+
 func TestEncryptionService_FlushCache(t *testing.T) {
 	ctx := context.Background()
 	namespace := xkube.Namespace("test-namespace")
