@@ -81,7 +81,7 @@ func setupEvaluationLoop(t *testing.T, coordinator *testEvaluationCoordinator, o
 func setupEvaluationLoopWithSchedule(t *testing.T, coordinator *testEvaluationCoordinator, sched *testSchedule, opts ...alertNGOption) *evaluationLoop {
 	t.Helper()
 	ng := createTestAlertNG(sched, coordinator, opts...)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	done := make(chan error, 1)
 	runner := &evaluationRunner{ng: ng}
 	go func() { done <- runner.run(ctx) }()

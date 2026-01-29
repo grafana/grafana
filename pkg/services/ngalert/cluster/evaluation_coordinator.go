@@ -10,7 +10,7 @@ import (
 
 // checkInterval is how often we check cluster position to determine if this node
 // should evaluate alert rules.
-const checkInterval = 1 * time.Second
+const checkInterval = 5 * time.Second
 
 type ClusterPositionProvider interface {
 	Position() int
