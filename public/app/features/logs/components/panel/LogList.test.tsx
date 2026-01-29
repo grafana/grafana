@@ -34,10 +34,10 @@ jest.mock('@grafana/assistant', () => ({
 const FIELDS_LABEL = 'TestLabelType';
 
 const tempoDS: TempoDatasource & {
-  getLabelTypeFromFrame?: (key: string, frame: DataFrame | undefined, index: number | null) => string | null;
+  getLabelDisplayTypeFromFrame?: (key: string, frame: DataFrame | undefined, index: number | null) => string | null;
 } = createTempoDatasource(undefined, { uid: 'abc-123' });
-// Test-only override: Mocked data source does not expose getLabelTypeFromFrame, so we patch it here to show that the viz should work with any data source that returns logs.
-tempoDS.getLabelTypeFromFrame = () => {
+// Test-only override: Mocked data source does not expose getLabelDisplayTypeFromFrame, so we patch it here to show that the viz should work with any data source that returns logs.
+tempoDS.getLabelDisplayTypeFromFrame = () => {
   return FIELDS_LABEL;
 };
 

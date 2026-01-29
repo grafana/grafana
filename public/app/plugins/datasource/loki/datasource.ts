@@ -204,7 +204,7 @@ export class LokiDatasource
    * @param frame
    * @param index
    */
-  getLabelTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null) {
+  getLabelDisplayTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null) {
     const lokiLabelType = getLokiLabelTypeFromFrame(labelKey, frame, index);
 
     switch (lokiLabelType) {

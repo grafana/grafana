@@ -88,7 +88,7 @@ export const LogLineDetailsComponent = memo(
       }
       return groupBy(
         labelsWithLinks,
-        (label) => ds.getLabelTypeFromFrame(label.key, log.dataFrame, log.rowIndex) ?? ''
+        (label) => ds.getLabelDisplayTypeFromFrame(label.key, log.dataFrame, log.rowIndex) ?? ''
       );
     }, [ds, labelsWithLinks, log.dataFrame, log.rowIndex]);
 

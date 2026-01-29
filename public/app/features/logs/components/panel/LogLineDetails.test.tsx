@@ -46,13 +46,13 @@ jest.mock('@grafana/assistant', () => {
 
 const FIELDS_LABEL = 'TestLabelType';
 const tempoDS: TempoDatasource & {
-  getLabelTypeFromFrame?: (key: string, frame: DataFrame | undefined, index: number | null) => string | null;
+  getLabelDisplayTypeFromFrame?: (key: string, frame: DataFrame | undefined, index: number | null) => string | null;
 } = createTempoDatasource(undefined, { uid: 'abc-123' });
-const getMockTempoDS = jest.fn().mockImplementation((getLabelTypeFromFrame) => {
-  tempoDS.getLabelTypeFromFrame = jest
+const getMockTempoDS = jest.fn().mockImplementation((getLabelDisplayTypeFromFrame) => {
+  tempoDS.getLabelDisplayTypeFromFrame = jest
     .fn()
     .mockImplementation((key: string, frame: DataFrame | undefined, index: number | null) => {
-      return getLabelTypeFromFrame(key, frame, index) ?? FIELDS_LABEL;
+      return getLabelDisplayTypeFromFrame(key, frame, index) ?? FIELDS_LABEL;
     });
   return tempoDS;
 });

@@ -53,7 +53,7 @@ describe('unescapeLabelValueInExactSelector', () => {
   });
 });
 
-describe('getLabelTypeFromFrame', () => {
+describe('getLabelDisplayTypeFromFrame', () => {
   const frameWithTypes = toDataFrame({
     fields: [
       { name: 'Time', type: FieldType.time, values: [0, 1] },

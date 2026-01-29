@@ -200,7 +200,7 @@ export const hasLogsLabelTypesSupport = (datasource: unknown): datasource is Dat
   if (!datasource || typeof datasource !== 'object') {
     return false;
   }
-  return 'getLabelTypeFromFrame' in datasource;
+  return 'getLabelDisplayTypeFromFrame' in datasource;
 };
 
 /**
@@ -381,7 +381,7 @@ export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery
  * If this method is defined, the return value will be used to group fields in the Logs Panel.
  */
 export interface DataSourceWithLogsLabelTypesSupport {
-  getLabelTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null): null | string;
+  getLabelDisplayTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null): null | string;
 }
 
 /**

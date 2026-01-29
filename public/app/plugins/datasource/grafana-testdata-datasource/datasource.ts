@@ -62,7 +62,7 @@ export class TestDataDataSource
     };
   }
 
-  getLabelTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null): string | null {
+  getLabelDisplayTypeFromFrame(labelKey: string, frame: DataFrame | undefined, index: number | null): string | null {
     if (!frame) {
       return null;
     }
