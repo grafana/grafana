@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { camelCase, Dictionary, groupBy } from 'lodash';
+import { camelCase, groupBy } from 'lodash';
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -42,7 +42,6 @@ export const LogLineDetailsComponent = memo(
       useLogListContext();
     const [search, setSearch] = useState('');
     const [ds, setDs] = useState<DataSourceWithLogsLabelTypesSupport | null>(null);
-    const [groupedLabels, setGroupedLabels] = useState<Dictionary<LabelWithLinks[]>>();
     const inputRef = useRef('');
     const styles = useStyles2(getStyles);
 
@@ -59,12 +58,15 @@ export const LogLineDetailsComponent = memo(
       };
     }, [log.entryFieldIndex, log.fields]);
 
-    const fieldsWithoutLinks =
-      log.dataFrame.meta?.type === DataFrameType.LogLines
-        ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
-          []
-        : // for other frames, do not show the log message unless there is a link attached
-          log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort();
+    const fieldsWithoutLinks = useMemo(
+      () =>
+        log.dataFrame.meta?.type === DataFrameType.LogLines
+          ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
+            []
+          : // for other frames, do not show the log message unless there is a link attached
+            log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort(),
+      [log.dataFrame.meta?.type, log.entryFieldIndex, log.fields]
+    );
 
     const labelsWithLinks: LabelWithLinks[] = useMemo(
       () =>
@@ -80,12 +82,17 @@ export const LogLineDetailsComponent = memo(
 
     const trace = useMemo(() => getTempoTraceFromLinks(fieldsWithLinks.links), [fieldsWithLinks.links]);
 
-    const labelGroups = useMemo(() => {
-      if (!groupedLabels) {
-        return [];
+    const groupedLabels = useMemo(() => {
+      if (!ds) {
+        return {};
       }
-      return Object.keys(groupedLabels);
-    }, [groupedLabels]);
+      return groupBy(
+        labelsWithLinks,
+        (label) => ds.getLabelTypeFromFrame(label.key, log.dataFrame, log.rowIndex) ?? ''
+      );
+    }, [ds, labelsWithLinks, log.dataFrame, log.rowIndex]);
+
+    const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
 
     const logLineOpen = logOptionsStorageKey
       ? store.getBool(`${logOptionsStorageKey}.log-details.logLineOpen`, false)
@@ -160,16 +167,6 @@ export const LogLineDetailsComponent = memo(
       setDatasource();
     }, [log.datasourceUid]);
 
-    useEffect(() => {
-      const grouped = groupBy(labelsWithLinks, (label) => {
-        if (ds) {
-          return ds.getLabelTypeFromFrame(label.key, log.dataFrame, log.rowIndex);
-        }
-        return null;
-      });
-      setGroupedLabels(grouped);
-    }, [ds, labelsWithLinks, log.dataFrame, log.rowIndex, setGroupedLabels]);
-
     return (
       <>
         <LogLineDetailsHeader focusLogLine={focusLogLine} log={log} search={search} onSearch={handleSearch} />
@@ -219,12 +216,7 @@ export const LogLineDetailsComponent = memo(
                 isOpen={fieldsOpen}
                 onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
               >
-                <LogLineDetailsLabelFields
-                  log={log}
-                  logs={logs}
-                  fields={groupedLabels?.[group] ?? []}
-                  search={search}
-                />
+                <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
                 <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
               </ControlledCollapse>
             ) : (
@@ -235,12 +227,7 @@ export const LogLineDetailsComponent = memo(
                 isOpen={store.getBool(`${logOptionsStorageKey}.log-details.${groupOptionName(group)}`, true)}
                 onToggle={(isOpen: boolean) => handleToggle(groupOptionName(group), isOpen)}
               >
-                <LogLineDetailsLabelFields
-                  log={log}
-                  logs={logs}
-                  fields={groupedLabels?.[group] ?? []}
-                  search={search}
-                />
+                <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
               </ControlledCollapse>
             )
           )}
