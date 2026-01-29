@@ -663,13 +663,16 @@
       "aria-label-group-by": "Group by",
       "aria-label-group-interval": "Group interval",
       "aria-label-group-wait": "Group wait",
+      "aria-label-name": "Name",
       "aria-label-repeat-interval": "Repeat interval",
       "create-a-contact-point": "Create a contact point",
+      "description-unique-route": "A unique name for the routing tree",
       "label-default-contact-point": "Default contact point",
       "label-timing-options": "Timing options",
       "message": {
         "required": "Required."
       },
+      "name": "Name",
       "or": "or"
     },
     "am-routes-expanded-form": {
