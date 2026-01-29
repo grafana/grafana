@@ -697,6 +697,13 @@ function getStyles(theme: GrafanaTheme2) {
         flexGrow: `0 !important`,
         minHeight: 1,
       },
+      // The react-grid-layout library sets an inline `height` style on .react-grid-layout
+      // based on the grid items' positions. When the last item is removed, this inline
+      // height is not recalculated, leaving the container at its previous size.
+      // This override clears the stale inline height when the grid is empty.
+      '.react-grid-layout:not(:has(.react-grid-item))': {
+        height: 'unset !important',
+      },
       ...dashboardCanvasAddButtonHoverStyles,
     }),
     actionsWrapper: css({
