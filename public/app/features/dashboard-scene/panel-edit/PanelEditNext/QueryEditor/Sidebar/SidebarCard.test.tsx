@@ -1,39 +1,12 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen } from '@testing-library/react';
 
-import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 
 import { QueryEditorProvider } from '../QueryEditorContext';
+import { ds1SettingsMock, mockActions, setup } from '../testUtils';
 
 import { SidebarCard } from './SidebarCard';
-
-const ds1SettingsMock: DataSourceInstanceSettings = {
-  id: 1,
-  uid: 'test',
-  name: 'Test DS',
-  type: 'test',
-  meta: {
-    id: 'test',
-    name: 'Test',
-    type: PluginType.datasource,
-    info: {
-      author: { name: '' },
-      description: '',
-      links: [],
-      logos: { small: 'test-logo.png', large: '' },
-      screenshots: [],
-      updated: '',
-      version: '',
-    },
-    module: '',
-    baseUrl: '',
-  },
-  access: 'proxy',
-  readOnly: false,
-  jsonData: {},
-};
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -41,16 +14,6 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: () => ds1SettingsMock,
   }),
 }));
-
-const mockActions = {
-  updateQueries: jest.fn(),
-  updateSelectedQuery: jest.fn(),
-  addQuery: jest.fn(),
-  deleteQuery: jest.fn(),
-  duplicateQuery: jest.fn(),
-  runQueries: jest.fn(),
-  changeDataSource: jest.fn(),
-};
 
 describe('SidebarCard', () => {
   it('should select query card and deselect transformation when clicking query card', async () => {
@@ -60,7 +23,7 @@ describe('SidebarCard', () => {
     const setSelectedQuery = jest.fn();
     const setSelectedTransformation = jest.fn();
 
-    render(
+    const { user } = setup(
       <QueryEditorProvider
         dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
         qrState={{ queries: [query], data: undefined, isLoading: false }}
@@ -78,7 +41,7 @@ describe('SidebarCard', () => {
     );
 
     const queryCard = screen.getByRole('button', { name: /select card A/i });
-    await userEvent.click(queryCard);
+    await user.click(queryCard);
 
     expect(setSelectedQuery).toHaveBeenCalledWith(query);
     expect(setSelectedTransformation).not.toHaveBeenCalled();
@@ -91,7 +54,7 @@ describe('SidebarCard', () => {
     const setSelectedQuery = jest.fn();
     const setSelectedTransformation = jest.fn();
 
-    render(
+    const { user } = setup(
       <QueryEditorProvider
         dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
         qrState={{ queries: [query], data: undefined, isLoading: false }}
@@ -109,7 +72,7 @@ describe('SidebarCard', () => {
     );
 
     const transformCard = screen.getByRole('button', { name: /select card organize/i });
-    await userEvent.click(transformCard);
+    await user.click(transformCard);
 
     expect(setSelectedTransformation).toHaveBeenCalledWith(transformation);
     expect(setSelectedQuery).not.toHaveBeenCalled();
@@ -121,7 +84,7 @@ describe('SidebarCard', () => {
     const setSelectedQuery = jest.fn();
     const setSelectedTransformation = jest.fn();
 
-    render(
+    const { user } = setup(
       <QueryEditorProvider
         dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
         qrState={{ queries: [query], data: undefined, isLoading: false }}
@@ -139,7 +102,7 @@ describe('SidebarCard', () => {
     );
 
     const queryCard = screen.getByRole('button', { name: /select card A/i });
-    await userEvent.click(queryCard);
+    await user.click(queryCard);
 
     // Should not call setSelectedQuery again since it's already selected
     expect(setSelectedQuery).not.toHaveBeenCalled();

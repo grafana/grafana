@@ -1,38 +1,12 @@
 import { render, screen } from '@testing-library/react';
 
-import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 
 import { QueryEditorProvider } from '../QueryEditorContext';
+import { ds1SettingsMock, mockActions } from '../testUtils';
 
 import { QueryEditorSidebar, SidebarSize } from './QueryEditorSidebar';
-
-const ds1SettingsMock: DataSourceInstanceSettings = {
-  id: 1,
-  uid: 'test',
-  name: 'Test DS',
-  type: 'test',
-  meta: {
-    id: 'test',
-    name: 'Test',
-    type: PluginType.datasource,
-    info: {
-      author: { name: '' },
-      description: '',
-      links: [],
-      logos: { small: 'test-logo.png', large: '' },
-      screenshots: [],
-      updated: '',
-      version: '',
-    },
-    module: '',
-    baseUrl: '',
-  },
-  access: 'proxy',
-  readOnly: false,
-  jsonData: {},
-};
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -40,16 +14,6 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: () => ds1SettingsMock,
   }),
 }));
-
-const mockActions = {
-  updateQueries: jest.fn(),
-  updateSelectedQuery: jest.fn(),
-  addQuery: jest.fn(),
-  deleteQuery: jest.fn(),
-  duplicateQuery: jest.fn(),
-  runQueries: jest.fn(),
-  changeDataSource: jest.fn(),
-};
 
 describe('QueryEditorSidebar', () => {
   it('should render empty transformations section when no transformations exist', () => {
