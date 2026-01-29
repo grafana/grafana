@@ -4,7 +4,7 @@ import { ThresholdsMode, FieldType, VisualizationSuggestion, VisualizationSugges
 import { t } from '@grafana/i18n';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
-import { Options } from './panelcfg.gen';
+import { Options } from '../panelcfg.gen';
 
 const withDefaults = (suggestion: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
   defaultsDeep(suggestion, {

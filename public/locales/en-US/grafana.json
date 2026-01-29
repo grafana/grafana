@@ -8010,6 +8010,43 @@
   "gauge": {
     "category-gauge": "Gauge",
     "category-radial-bar": "Gauge",
+    "config": {
+      "bar-shape": "Bar Style",
+      "bar-shape-flat": "Flat",
+      "bar-shape-rounded": "Rounded",
+      "bar-width": "Bar width",
+      "effects": {
+        "bar-glow": "Bar glow",
+        "center-glow": "Center glow",
+        "gradient": "Gradient",
+        "label": "Effects"
+      },
+      "endpoint-marker": "Endpoint marker",
+      "endpoint-marker-description": "Glow is only supported in dark mode",
+      "endpoint-marker-glow": "Glow",
+      "endpoint-marker-none": "None",
+      "endpoint-marker-point": "Point",
+      "neutral": {
+        "description": "Leave empty to use Min as neutral point",
+        "placeholder": "none",
+        "title": "Neutral value"
+      },
+      "segment-count": "Segments",
+      "segment-spacing": "Segment spacing",
+      "shape": "Style",
+      "shape-circle": "Circle",
+      "shape-gauge": "Arc",
+      "sparkline": "Show sparkline",
+      "text-mode": "Text mode",
+      "text-mode-auto": "Auto",
+      "text-mode-name": "Name",
+      "text-mode-none": "None",
+      "text-mode-value": "Value",
+      "text-mode-value-and-name": "Value and Name",
+      "threshold-labels": "Show labels",
+      "threshold-labels-description": "Display threshold and neutral values",
+      "threshold-markers": "Show thresholds"
+    },
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
     "description-neutral": "Leave empty to use Min as neutral point",
@@ -12675,45 +12712,6 @@
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
   },
-  "radialbar": {
-    "config": {
-      "bar-shape": "Bar Style",
-      "bar-shape-flat": "Flat",
-      "bar-shape-rounded": "Rounded",
-      "bar-width": "Bar width",
-      "effects": {
-        "bar-glow": "Bar glow",
-        "center-glow": "Center glow",
-        "gradient": "Gradient",
-        "label": "Effects"
-      },
-      "endpoint-marker": "Endpoint marker",
-      "endpoint-marker-description": "Glow is only supported in dark mode",
-      "endpoint-marker-glow": "Glow",
-      "endpoint-marker-none": "None",
-      "endpoint-marker-point": "Point",
-      "neutral": {
-        "description": "Leave empty to use Min as neutral point",
-        "placeholder": "none",
-        "title": "Neutral value"
-      },
-      "segment-count": "Segments",
-      "segment-spacing": "Segment spacing",
-      "shape": "Style",
-      "shape-circle": "Circle",
-      "shape-gauge": "Arc",
-      "sparkline": "Show sparkline",
-      "text-mode": "Text mode",
-      "text-mode-auto": "Auto",
-      "text-mode-name": "Name",
-      "text-mode-none": "None",
-      "text-mode-value": "Value",
-      "text-mode-value-and-name": "Value and Name",
-      "threshold-labels": "Show labels",
-      "threshold-labels-description": "Display threshold and neutral values",
-      "threshold-markers": "Show thresholds"
-    }
-  },
   "recently-deleted": {
     "buttons": {
       "restore": "Restore"
@@ -14841,6 +14839,9 @@
       "description": {
         "variable-values-fetched-datasource-query": "Variable values are fetched from a datasource query"
       }
+    },
+    "create-switch-variable-adapter": {
+      "description": "A variable that can be toggled on and off"
     },
     "data-source-variable-slice": {
       "text": {
