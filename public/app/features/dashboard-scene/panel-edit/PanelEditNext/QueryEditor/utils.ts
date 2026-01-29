@@ -1,4 +1,5 @@
 import { DataTransformerConfig } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { CustomTransformerDefinition } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -21,6 +22,17 @@ export function getEditorType(card: DataQuery | DataTransformerConfig | null): Q
 
   return QueryEditorType.Query;
 }
+
+export const getEditorTypeText = (editorType: QueryEditorType) => {
+  switch (editorType) {
+    case QueryEditorType.Transformation:
+      return t('query-editor-next.sidebar.transformation', 'Transformation');
+    case QueryEditorType.Expression:
+      return t('query-editor-next.sidebar.expression', 'Expression');
+    default:
+      return t('query-editor-next.sidebar.query', 'Query');
+  }
+};
 
 export function isDataTransformerConfig(
   transformation: DataTransformerConfig | DataQuery | CustomTransformerDefinition | null

@@ -8,22 +8,11 @@ import { DataSourceLogo } from 'app/features/datasources/components/picker/DataS
 import { useDatasource } from 'app/features/datasources/hooks';
 
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
-import { useQueryRunnerContext, useQueryEditorUIContext } from '../QueryEditorContext';
-import { getEditorType, isDataTransformerConfig } from '../utils';
-
-const getTypeText = (editorType: QueryEditorType) => {
-  switch (editorType) {
-    case QueryEditorType.Transformation:
-      return t('query-editor-next.sidebar.transformation', 'Transformation');
-    case QueryEditorType.Expression:
-      return t('query-editor-next.sidebar.expression', 'Expression');
-    default:
-      return t('query-editor-next.sidebar.query', 'Query');
-  }
-};
+import { useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { getEditorType, getEditorTypeText, isDataTransformerConfig } from '../utils';
 
 const Header = ({ editorType, styles }: { editorType: QueryEditorType; styles: ReturnType<typeof getStyles> }) => {
-  const typeText = getTypeText(editorType);
+  const typeText = getEditorTypeText(editorType);
 
   return (
     <div className={styles.cardHeader}>
