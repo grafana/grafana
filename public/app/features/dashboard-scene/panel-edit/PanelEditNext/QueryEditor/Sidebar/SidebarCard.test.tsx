@@ -16,6 +16,10 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('SidebarCard', () => {
+  afterAll(() => {
+    jest.clearAllMocks();
+  });
+
   it('should select query card and deselect transformation when clicking query card', async () => {
     const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
     const transformation: DataTransformerConfig = { id: 'organize', options: {} };

@@ -16,6 +16,10 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('QueryEditorSidebar', () => {
+  afterAll(() => {
+    jest.clearAllMocks();
+  });
+
   it('should render empty transformations section when no transformations exist', () => {
     const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
 
