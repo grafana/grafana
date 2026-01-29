@@ -94,7 +94,7 @@ function mapErrorsToField<T extends GenericFormPath>(
 
 // Wizard form errors
 export type FormErrors = GenericFormErrors<RepositoryFormPath>;
-export const getFormErrors = (data: unknown): FormErrors => {
+export const getFormErrors = (data: object): FormErrors => {
   const fieldMap: Record<string, RepositoryFormPath> = {
     'local.path': 'repository.path',
     'github.branch': 'repository.branch',
@@ -118,7 +118,7 @@ export const getFormErrors = (data: unknown): FormErrors => {
 export type ConfigFormPath = Path<RepositoryFormData>;
 export type ConfigFormErrors = GenericFormErrors<ConfigFormPath>;
 
-export const getConfigFormErrors = (data: unknown): ConfigFormErrors => {
+export const getConfigFormErrors = (data: object): ConfigFormErrors => {
   const fieldMap: Record<string, ConfigFormPath> = {
     path: 'path',
     branch: 'branch',
@@ -136,7 +136,7 @@ export const getConfigFormErrors = (data: unknown): ConfigFormErrors => {
 export type ConnectionFormPath = Path<ConnectionFormData>;
 export type ConnectionFormErrors = GenericFormErrors<ConnectionFormPath>;
 
-export const getConnectionFormErrors = (data: unknown): ConnectionFormErrors => {
+export const getConnectionFormErrors = (data: object): ConnectionFormErrors => {
   const fieldMap: Record<string, ConnectionFormPath> = {
     // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     title: 'title',
