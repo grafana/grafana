@@ -4,44 +4,44 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import {
   AbstractQuery,
+  AdHocVariableFilter,
   AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
+  CustomVariableModel,
   DataFrame,
   DataFrameView,
   DataQueryRequest,
   DataQueryResponse,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
-  DataSourceWithSupplementaryQueriesSupport,
-  SupplementaryQueryType,
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
+  DataSourceWithQueryModificationSupport,
+  DataSourceWithSupplementaryQueriesSupport,
+  DataSourceWithToggleableQueryFiltersSupport,
   Labels,
+  LegacyMetricFindQueryOptions,
   LoadingState,
+  LogRowContextOptions,
   LogRowModel,
+  LogsSampleOptions,
+  LogsVolumeOption,
+  MetricFindValue,
+  QueryFilterOptions,
   QueryFixAction,
   QueryHint,
+  QueryVariableModel,
   rangeUtil,
+  renderLegendFormat,
   ScopedVars,
   SupplementaryQueryOptions,
+  SupplementaryQueryType,
   TimeRange,
-  LogRowContextOptions,
-  DataSourceWithToggleableQueryFiltersSupport,
   ToggleFilterAction,
-  QueryFilterOptions,
-  renderLegendFormat,
-  LegacyMetricFindQueryOptions,
-  AdHocVariableFilter,
   urlUtil,
-  MetricFindValue,
-  DataSourceGetTagValuesOptions,
-  DataSourceGetTagKeysOptions,
-  DataSourceWithQueryModificationSupport,
-  LogsVolumeOption,
-  LogsSampleOptions,
-  QueryVariableModel,
-  CustomVariableModel,
 } from '@grafana/data';
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -55,22 +55,22 @@ import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
 import { LokiQueryType, SupportingQueryType } from './dataquery.gen';
-import { escapeLabelValueInSelector, isRegexSelector, getLabelTypeFromFrame } from './languageUtils';
+import { escapeLabelValueInSelector, getLabelTypeFromFrame, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
+  addFilterAsLabelFilter,
   addLabelFormatToQuery,
   addLabelToQuery,
+  addLineFilter,
   addNoPipelineErrorToQuery,
   addParserToQuery,
-  removeCommentsFromQuery,
-  addFilterAsLabelFilter,
-  getParserPositions,
-  toLabelFilter,
-  addLineFilter,
   findLastPosition,
   getLabelFilterPositions,
+  getParserPositions,
   queryHasFilter,
+  removeCommentsFromQuery,
   removeLabelFromQuery,
+  toLabelFilter,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { runSplitQuery } from './querySplitting';
@@ -86,10 +86,11 @@ import {
   requestSupportsSplitting,
 } from './queryUtils';
 import { replaceVariables, returnVariables } from './querybuilder/parsingUtils';
+import { getDataFrameFromSerializedSceneObject } from './scenes/utils';
 import { runShardSplitQuery } from './shardQuerySplitting';
 import { convertToWebSocketUrl, doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
-import { LokiOptions, LokiQuery, LokiVariableQuery, LokiVariableQueryType, QueryStats } from './types';
+import { LabelType, LokiOptions, LokiQuery, LokiVariableQuery, LokiVariableQueryType, QueryStats } from './types';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -1088,7 +1089,7 @@ export class LokiDatasource
    * @returns The query expression with ad hoc filters and correctly escaped values.
    * @todo this.templateSrv.getAdhocFilters() is deprecated
    */
-  addAdHocFilters(queryExpr: string, adhocFilters?: AdHocVariableFilter[]) {
+  addAdHocFilters(queryExpr: string, adhocFilters?: AdHocVariableFilter[], dataFrame?: DataFrame) {
     if (!adhocFilters?.length) {
       return queryExpr;
     }
@@ -1102,7 +1103,12 @@ export class LokiDatasource
         // We want to escape special characters in value for non-regex selectors to match the same char in the log line as the user types in the input
         value = escapeLabelValueInSelector(value, operator);
       }
-      return addLabelToQuery(acc, key, operator, value);
+
+      let labelType: LabelType | null = null;
+      if (dataFrame) {
+        labelType = getLabelTypeFromFrame(key, dataFrame, 0);
+      }
+      return addLabelToQuery(acc, key, operator, value, labelType);
     }, expr);
 
     return returnVariables(expr);
@@ -1142,9 +1148,12 @@ export class LokiDatasource
       },
     };
 
+    const dataFrame = getDataFrameFromSerializedSceneObject(scopedVars?.__sceneObject, target.refId);
+
     const exprWithAdHoc = this.addAdHocFilters(
       this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr),
-      adhocFilters
+      adhocFilters,
+      dataFrame
     );
 
     const step = this.templateSrv.replace(target.step, variables);

@@ -21,6 +21,8 @@ import {
   LogfmtExpressionParser,
   Expr,
   LabelFormatExpr,
+  Json,
+  Logfmt,
 } from '@grafana/lezer-logql';
 import { QueryBuilderLabelFilter } from '@grafana/plugin-ui';
 
@@ -162,6 +164,7 @@ export function addLabelToQuery(
 
   const parserPositions = getParserPositions(query);
   const labelFilterPositions = getLabelFilterPositions(query);
+  const metadataFilterPositions = getMetadataFilterPositions(query);
   const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
   // For non-indexed labels we want to add them after label_format to, for example, allow ad-hoc filters to use formatted labels
   const labelFormatPositions = getNodePositionsFromQuery(query, [LabelFormatExpr]);
@@ -183,7 +186,7 @@ export function addLabelToQuery(
   );
 
   const filter = toLabelFilter(key, value, operator);
-  if (labelType === LabelType.Parsed || labelType === LabelType.StructuredMetadata) {
+  if (labelType === LabelType.Parsed) {
     const lastPositionsPerExpression = getLastPositionPerExpression(query, [
       ...streamSelectorPositions,
       ...labelFilterPositions,
@@ -192,6 +195,10 @@ export function addLabelToQuery(
     ]);
 
     return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter);
+  } else if (labelType === LabelType.StructuredMetadata) {
+    const lastPositionsPerExpression = getLastPositionPerExpression(query, [...streamSelectorPositions]);
+
+    return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter, metadataFilterPositions);
   } else if (labelType === LabelType.Indexed) {
     return addFilterToStreamSelector(query, streamSelectorPositions, filter);
   } else {
@@ -384,6 +391,27 @@ export function getParserPositions(query: string): NodePosition[] {
 }
 
 /**
+ * Get the position of metadata filters (after stream selector, before parsers)
+ * @param query
+ */
+export function getMetadataFilterPositions(query: string): NodePosition[] {
+  const tree = parser.parse(query);
+  const parserPositions: NodePosition[] = [];
+  // Get the first parser position
+  tree.iterate({
+    enter: ({ type, node }): false | void => {
+      if (type.id === Json || type.id === Logfmt) {
+        parserPositions.push(NodePosition.fromNode(node));
+        return false;
+      }
+    },
+  });
+
+  const to = parserPositions.length ? parserPositions[parserPositions.length - 1].from : query.length;
+  return getLabelFilterPositions(query.substring(0, to));
+}
+
+/**
  * Parse the string and get all LabelFilter positions in the query.
  * @param query
  */
@@ -507,11 +535,13 @@ function addFilterToStreamSelector(
  * @param query
  * @param positionsToAddAfter
  * @param filter
+ * @param existingFilterPositions
  */
 export function addFilterAsLabelFilter(
   query: string,
   positionsToAddAfter: NodePosition[],
-  filter: QueryBuilderLabelFilter
+  filter: QueryBuilderLabelFilter,
+  existingFilterPositions?: NodePosition[]
 ): string {
   let newQuery = '';
   let prev = 0;
@@ -519,22 +549,37 @@ export function addFilterAsLabelFilter(
   for (let i = 0; i < positionsToAddAfter.length; i++) {
     // This is basically just doing splice on a string for each matched vector selector.
     const match = positionsToAddAfter[i];
+    let existingFilters = [];
+    if (existingFilterPositions && existingFilterPositions.length) {
+      for (let j = 0; j < existingFilterPositions.length; j++) {
+        existingFilters.push(query.substring(existingFilterPositions[j].from, existingFilterPositions[j].to));
+      }
+    }
+
     const isLast = i === positionsToAddAfter.length - 1;
 
     const start = query.substring(prev, match.to);
     const end = isLast ? query.substring(match.to) : '';
 
-    let labelFilter = '';
-    // For < and >, if the value is number, we don't add quotes around it and use it as number
-    if (!Number.isNaN(Number(filter.value)) && (filter.op === '<' || filter.op === '>')) {
-      labelFilter = ` | ${filter.label}${filter.op}${Number(filter.value)}`;
-    } else {
-      // we now unescape all escaped values again, because we are using backticks which can handle those cases.
-      // we also don't care about the operator here, because we need to unescape for both, regex and equal.
-      labelFilter = ` | ${filter.label}${filter.op}\`${unescapeLabelValue(filter.value)}\``;
-    }
+    let labelFilterStage = '';
+    const matchVisQuery = buildVisualQueryFromString(query.substring(match.from, match.to));
+    if (!labelExists(matchVisQuery.query.labels, filter)) {
+      let labelFilter;
+      // For < and >, if the value is number, we don't add quotes around it and use it as number
+      if (!Number.isNaN(Number(filter.value)) && (filter.op === '<' || filter.op === '>')) {
+        labelFilter = `${filter.label}${filter.op}${Number(filter.value)}`;
+      } else {
+        // we now unescape all escaped values again, because we are using backticks which can handle those cases.
+        // we also don't care about the operator here, because we need to unescape for both, regex and equal.
+        labelFilter = `${filter.label}${filter.op}\`${unescapeLabelValue(filter.value)}\``;
+      }
 
-    newQuery += start + labelFilter + end;
+      if (!existingFilters.includes(labelFilter)) {
+        labelFilterStage = ` | ${labelFilter}`;
+      }
+    }
+    newQuery += start + labelFilterStage + end;
+
     prev = match.to;
   }
   return newQuery;
