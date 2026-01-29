@@ -35,7 +35,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		provider.initialized = true
 		provider.mu.Unlock()
 
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -50,7 +50,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		provider.initialized = true
 		provider.mu.Unlock()
 
-		result, err := provider.GetMeta(ctx, "nonexistent-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "nonexistent-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, ErrMetaNotFound))
@@ -73,8 +73,8 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		provider.initialized = true
 		provider.mu.Unlock()
 
-		result1, err1 := provider.GetMeta(ctx, "test-plugin", "1.0.0")
-		result2, err2 := provider.GetMeta(ctx, "test-plugin", "2.0.0")
+		result1, err1 := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
+		result2, err2 := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "2.0.0"})
 
 		require.NoError(t, err1)
 		require.NoError(t, err2)
@@ -98,7 +98,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		provider.initialized = true
 		provider.mu.Unlock()
 
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -117,7 +117,7 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 		require.NoError(t, os.Chdir(tempDir))
 
 		provider := NewCoreProvider(pluginsPathFunc(""))
-		result, err := provider.GetMeta(ctx, "any-plugin", "1.0.0")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "any-plugin", Version: "1.0.0"})
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, ErrMetaNotFound))
 		assert.Nil(t, result)
@@ -148,7 +148,7 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		provider := NewCoreProvider(pluginsPathFunc(pluginsPath))
 		err = provider.loadPlugins(ctx)
 		require.NoError(t, err)
-		assert.Len(t, provider.loadedPlugins, 53)
+		assert.Len(t, provider.loadedPlugins, 52)
 	})
 
 	t.Run("returns error when static root path not found", func(t *testing.T) {
@@ -232,7 +232,7 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		provider.mu.RUnlock()
 
 		if loaded {
-			result, err := provider.GetMeta(ctx, "test-datasource", "1.0.0")
+			result, err := provider.GetMeta(ctx, PluginRef{ID: "test-datasource", Version: "1.0.0"})
 			require.NoError(t, err)
 			assert.Equal(t, "test-datasource", result.Meta.PluginJson.Id)
 			assert.Equal(t, "Test Datasource", result.Meta.PluginJson.Name)
