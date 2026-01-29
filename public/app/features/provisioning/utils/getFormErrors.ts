@@ -1,7 +1,6 @@
 import { Path } from 'react-hook-form';
 
-import { isObject } from '@grafana/data';
-import { ErrorDetails, StatusCause } from 'app/api/clients/provisioning/v0alpha1';
+import { ErrorDetails, StatusCause, Status } from 'app/api/clients/provisioning/v0alpha1';
 import { extractStatusCauses } from 'app/api/utils';
 
 import { WizardFormData } from '../Wizard/types';
@@ -27,15 +26,15 @@ function statusCauseToErrorDetails(cause: StatusCause): ErrorDetails {
 /**
  * Type guard to check if data has an errors array
  */
-function hasErrorsArray(data: unknown): data is { errors: ErrorDetails[] } {
-  return isObject(data) && 'errors' in data && Array.isArray(data.errors);
+function hasErrorsArray(data: object): data is { errors: ErrorDetails[] } {
+  return 'errors' in data && Array.isArray(data.errors);
 }
 
 /**
  * Extract errors from either the Kubernetes Status format or the standard errors array.
  * Returns errors in ErrorDetails[] format.
  */
-export function extractFormErrors(data: unknown): ErrorDetails[] {
+export function extractFormErrors(data: ErrorDetails[] | Status): ErrorDetails[] {
   const causes = extractStatusCauses<StatusCause>(data);
   if (causes.length > 0) {
     return causes.map(statusCauseToErrorDetails);
@@ -94,7 +93,7 @@ function mapErrorsToField<T extends GenericFormPath>(
 
 // Wizard form errors
 export type FormErrors = GenericFormErrors<RepositoryFormPath>;
-export const getFormErrors = (data: object): FormErrors => {
+export const getFormErrors = (data: ErrorDetails[] | Status): FormErrors => {
   const fieldMap: Record<string, RepositoryFormPath> = {
     'local.path': 'repository.path',
     'github.branch': 'repository.branch',
@@ -118,7 +117,7 @@ export const getFormErrors = (data: object): FormErrors => {
 export type ConfigFormPath = Path<RepositoryFormData>;
 export type ConfigFormErrors = GenericFormErrors<ConfigFormPath>;
 
-export const getConfigFormErrors = (data: object): ConfigFormErrors => {
+export const getConfigFormErrors = (data: ErrorDetails[] | Status): ConfigFormErrors => {
   const fieldMap: Record<string, ConfigFormPath> = {
     path: 'path',
     branch: 'branch',
@@ -136,7 +135,7 @@ export const getConfigFormErrors = (data: object): ConfigFormErrors => {
 export type ConnectionFormPath = Path<ConnectionFormData>;
 export type ConnectionFormErrors = GenericFormErrors<ConnectionFormPath>;
 
-export const getConnectionFormErrors = (data: object): ConnectionFormErrors => {
+export const getConnectionFormErrors = (data: ErrorDetails[] | Status): ConnectionFormErrors => {
   const fieldMap: Record<string, ConnectionFormPath> = {
     // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     title: 'title',

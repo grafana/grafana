@@ -45,7 +45,7 @@ export function isResourceList<T = object, S = object, K = string>(value: unknow
  * Type guard to check if an item looks like a K8sStatusCause.
  */
 export function isStatusCause(item: unknown): item is K8sStatusCause {
-  return isObject(item) && ('field' in item || 'message' in item || 'reason' in item);
+  return isObject(item) && 'field' in item && 'message' in item && 'reason' in item;
 }
 
 /**
