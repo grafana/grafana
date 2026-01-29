@@ -147,26 +147,6 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	return *route, nil
 }
 
-func (nps *NotificationPolicyService) ensureDefaultReceiverExists(cfg *definitions.PostableUserConfig, defaultCfg *definitions.PostableUserConfig) error {
-	defaultRcv := cfg.AlertmanagerConfig.Route.Receiver
-
-	for _, rcv := range cfg.AlertmanagerConfig.Receivers {
-		if rcv.Name == defaultRcv {
-			return nil
-		}
-	}
-
-	for _, rcv := range defaultCfg.AlertmanagerConfig.Receivers {
-		if rcv.Name == defaultRcv {
-			cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, rcv)
-			return nil
-		}
-	}
-
-	nps.log.Error("Grafana Alerting has been configured with a default configuration that is internally inconsistent! The default configuration's notification policy must have a corresponding receiver.")
-	return fmt.Errorf("inconsistent default configuration")
-}
-
 func calculateRouteFingerprint(route definitions.Route) string {
 	return legacy_storage.CalculateRouteFingerprint(route)
 }
