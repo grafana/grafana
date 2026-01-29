@@ -15,9 +15,20 @@ import {
 
 import { DashboardScene } from './DashboardScene';
 
+function setDashboardEditingFlag(context: PanelContext, isEditing: boolean) {
+  // PoC: attach a temporary flag for panels to detect dashboard edit mode.
+  // We intentionally avoid type assertions here because of lint rules.
+  Object.defineProperty(context, 'isDashboardEditing', {
+    value: isEditing,
+    configurable: true,
+    writable: true,
+  });
+}
+
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
   context.app = dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard;
+  setDashboardEditingFlag(context, Boolean(dashboard.state.isEditing));
 
   dashboard.subscribeToState((state) => {
     if (state.editPanel) {
@@ -25,6 +36,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     } else {
       context.app = CoreApp.Dashboard;
     }
+    setDashboardEditingFlag(context, Boolean(state.isEditing));
   });
 
   context.canAddAnnotations = () => {
