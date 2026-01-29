@@ -14,7 +14,6 @@ import { t, Trans } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { ControlledCollapse, useStyles2 } from '@grafana/ui';
 
-import { getLabelTypeFromRow } from '../../utils';
 import { useAttributesExtensionLinks } from '../LogDetails';
 import { createLogLineLinks } from '../logParser';
 
@@ -168,10 +167,10 @@ export const LogLineDetailsComponent = memo(
         if (ds) {
           return ds.getLabelTypeFromFrame(label.key, log.dataFrame, log.rowIndex);
         }
-        return getLabelTypeFromRow(label.key, log, true) ?? '';
+        return null;
       });
       setGroupedLabels(grouped);
-    }, [ds, labelsWithLinks, log, setGroupedLabels]);
+    }, [ds, labelsWithLinks, log.dataFrame, log.rowIndex, setGroupedLabels]);
 
     if (!groupedLabels || !labelGroups) {
       return;

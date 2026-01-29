@@ -213,7 +213,7 @@ export class LokiDatasource
       case LokiLabelType.Parsed:
         return t('logs.fields.type.loki.structured-metadata', 'Structured metadata');
       case LokiLabelType.StructuredMetadata:
-        return t('logs.fields.type.loki.parsedl-label', 'Parsed field');
+        return t('logs.fields.type.loki.parsed-labels', 'Parsed fields');
       default:
         return null;
     }
