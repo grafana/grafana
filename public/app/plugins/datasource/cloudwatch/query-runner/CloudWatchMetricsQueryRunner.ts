@@ -59,7 +59,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
 
     const validMetricsQueries = metricQueries.filter(this.filterMetricQuery).map((q) => {
       const migratedQuery = migrateMetricQuery(q);
-      const migratedAndIterpolatedQuery = this.replaceMetricQueryVars(migratedQuery, options.scopedVars);
+      const migratedAndIterpolatedQuery = this.interpolateMetricsQueryVariables(migratedQuery, options.scopedVars);
 
       return {
         timezoneUTCOffset,
@@ -85,21 +85,20 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
     return this.performTimeSeriesQuery(request, queryFn);
   };
 
-  interpolateMetricsQueryVariables(
-    query: CloudWatchMetricsQuery,
-    scopedVars: ScopedVars
-  ): Pick<
-    CloudWatchMetricsQuery,
-    'alias' | 'metricName' | 'namespace' | 'period' | 'dimensions' | 'sqlExpression' | 'expression'
-  > {
+  interpolateMetricsQueryVariables(query: CloudWatchMetricsQuery, scopedVars: ScopedVars): CloudWatchMetricsQuery {
     return {
-      alias: this.replaceVariableAndDisplayWarningIfMulti(query.alias, scopedVars),
-      metricName: this.replaceVariableAndDisplayWarningIfMulti(query.metricName, scopedVars),
-      namespace: this.replaceVariableAndDisplayWarningIfMulti(query.namespace, scopedVars),
-      period: this.replaceVariableAndDisplayWarningIfMulti(query.period, scopedVars),
+      ...query,
+      region: this.templateSrv.replace(this.getActualRegion(query.region), scopedVars),
+      alias: this.templateSrv.replace(query.alias, scopedVars),
+      metricName: this.replaceVariableAndDisplayWarningIfMulti(query.metricName, scopedVars, true, 'metric name'),
+      namespace: this.replaceVariableAndDisplayWarningIfMulti(query.namespace, scopedVars, true, 'namespace'),
+      period: String(this.getPeriod(query, scopedVars)),
       expression: this.templateSrv.replace(query.expression, scopedVars),
-      sqlExpression: this.replaceVariableAndDisplayWarningIfMulti(query.sqlExpression, scopedVars),
+      sqlExpression: this.templateSrv.replace(query.sqlExpression, scopedVars, 'raw'),
       dimensions: this.convertDimensionFormat(query.dimensions ?? {}, scopedVars),
+      statistic: this.templateSrv.replace(query.statistic, scopedVars),
+      id: this.templateSrv.replace(query.id, scopedVars),
+      accountId: query.accountId ? this.templateSrv.replace(query.accountId, scopedVars) : query.accountId,
     };
   }
 
@@ -180,23 +179,6 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
 
   filterMetricQuery(query: CloudWatchMetricsQuery): boolean {
     return filterMetricsQuery(query);
-  }
-
-  replaceMetricQueryVars(query: CloudWatchMetricsQuery, scopedVars: ScopedVars): CloudWatchMetricsQuery {
-    query.region = this.templateSrv.replace(this.getActualRegion(query.region), scopedVars);
-    query.namespace = this.replaceVariableAndDisplayWarningIfMulti(query.namespace, scopedVars, true, 'namespace');
-    query.metricName = this.replaceVariableAndDisplayWarningIfMulti(query.metricName, scopedVars, true, 'metric name');
-    query.dimensions = this.convertDimensionFormat(query.dimensions ?? {}, scopedVars);
-    query.statistic = this.templateSrv.replace(query.statistic, scopedVars);
-    query.period = String(this.getPeriod(query, scopedVars)); // use string format for period in graph query, and alerting
-    query.id = this.templateSrv.replace(query.id, scopedVars);
-    query.expression = this.templateSrv.replace(query.expression, scopedVars);
-    query.sqlExpression = this.templateSrv.replace(query.sqlExpression, scopedVars, 'raw');
-    if (query.accountId) {
-      query.accountId = this.templateSrv.replace(query.accountId, scopedVars);
-    }
-
-    return query;
   }
 
   getPeriod(target: CloudWatchMetricsQuery, scopedVars: ScopedVars) {
