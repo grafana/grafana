@@ -308,24 +308,10 @@ func NewMapperRegistry() MapperRegistry {
 	return mapper
 }
 
-// groupMatchesWildcard returns true if group matches the wildcard key.
-// wildcardKey must start with exactly one "*" (e.g. "*.datasource.grafana.app").
-// The group matches if it has the same suffix as wildcardKey after the "*".
-// Wildcard groups (group starting with "*") never match.
-func groupMatchesWildcard(group, wildcardKey string) bool {
-	if strings.HasPrefix(group, "*") {
-		return false
-	}
-	if len(wildcardKey) < 2 || wildcardKey[0] != '*' || wildcardKey[1] != '.' {
-		return false
-	}
-	suffix := wildcardKey[1:] // everything after "*"
-	return len(group) > len(suffix) && strings.HasSuffix(group, suffix)
-}
-
 // findGroupKey returns the registry key for group, using exact match first,
-// then wildcard match (e.g. "*.datasource.grafana.app" matches "loki.datasource.grafana.app").
-// Wildcard groups (e.g. "*.datasource.grafana.app") are disallowed as input and never match.
+// then wildcard match. A wildcard key has the form "*.<suffix>" (e.g. "*.datasource.grafana.app");
+// group matches if it has that suffix and is longer than the suffix (non-empty prefix).
+// Group starting with "*" never matches (so we never exact-match a wildcard registry key as input).
 func (m mapper) findGroupKey(group string) (string, bool) {
 	if strings.HasPrefix(group, "*") {
 		return "", false
@@ -334,7 +320,13 @@ func (m mapper) findGroupKey(group string) (string, bool) {
 		return group, true
 	}
 	for key := range m {
-		if strings.HasPrefix(key, "*") && groupMatchesWildcard(group, key) {
+		// is this a wildcard key?
+		if len(key) < 2 || key[0] != '*' || key[1] != '.' {
+			continue
+		}
+		// does the requested group have the same suffix as the wildcard key?
+		suffix := key[1:]
+		if len(group) > len(suffix) && strings.HasSuffix(group, suffix) {
 			return key, true
 		}
 	}

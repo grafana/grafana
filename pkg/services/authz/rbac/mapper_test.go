@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,26 +31,42 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 	assert.False(t, ok, "Get(datasource group, \"dashboards\") must not return a mapping")
 }
 
-func TestGroupMatchesWildcard(t *testing.T) {
+// TestFindGroupKey_WildcardMatching exercises findGroupKey via a minimal mapper.
+// It covers: exact match, wildcard match, group starts with *, key not wildcard (continue),
+// suffix mismatch, empty group, and no match.
+func TestFindGroupKey_WildcardMatching(t *testing.T) {
 	tests := []struct {
-		group   string
-		pattern string
-		want    bool
+		requestedGroup string
+		keys           []string // keys in mapper (exact and/or wildcard)
+		expectedKey    string
+		matches        bool
 	}{
-		{"foo.test.grafana.app", testWildcardPattern, true},
-		{"bar.test.grafana.app", testWildcardPattern, true},
-		{"baz.test.grafana.app", testWildcardPattern, true},
-		{"dashboard.grafana.app", testWildcardPattern, false},
-		{"test.grafana.app", testWildcardPattern, false},
-		{"foo.test.grafana.app", "dashboard.grafana.app", false},
-		{"", testWildcardPattern, false},
-		{"foo.test.grafana.app", "*", false},
-		{"*.test.grafana.app", testWildcardPattern, false},
+		// Exact match: requested group is a key in the mapper
+		{"exact.grafana.app", []string{"exact.grafana.app"}, "exact.grafana.app", true},
+		// Wildcard match: group has suffix of wildcard key and is longer than suffix
+		{"foo.test.grafana.app", []string{testWildcardPattern}, testWildcardPattern, true},
+		{"bar.test.grafana.app", []string{testWildcardPattern}, testWildcardPattern, true},
+		// Group starts with *: never matches
+		{"*.test.grafana.app", []string{testWildcardPattern}, "", false},
+		// Key not a wildcard (no *.): iterate and continue, no match
+		{"foo.test.grafana.app", []string{"dashboard.grafana.app"}, "", false},
+		{"foo.test.grafana.app", []string{"*"}, "", false},
+		// Suffix mismatch or group not longer than suffix
+		{"dashboard.grafana.app", []string{testWildcardPattern}, "", false},
+		{"test.grafana.app", []string{testWildcardPattern}, "", false},
+		{"", []string{testWildcardPattern}, "", false},
+		// Exact match preferred over wildcard when both exist
+		{"foo.test.grafana.app", []string{"foo.test.grafana.app", testWildcardPattern}, "foo.test.grafana.app", true},
 	}
 	for _, tt := range tests {
-		t.Run(tt.group+"_"+tt.pattern, func(t *testing.T) {
-			got := groupMatchesWildcard(tt.group, tt.pattern)
-			assert.Equal(t, tt.want, got)
+		t.Run(tt.requestedGroup+"_"+strings.Join(tt.keys, ","), func(t *testing.T) {
+			m := make(mapper)
+			for _, k := range tt.keys {
+				m[k] = map[string]translation{"r": newResourceTranslation("r", "uid", false, nil)}
+			}
+			key, ok := m.findGroupKey(tt.requestedGroup)
+			assert.Equal(t, tt.matches, ok)
+			assert.Equal(t, tt.expectedKey, key)
 		})
 	}
 }
