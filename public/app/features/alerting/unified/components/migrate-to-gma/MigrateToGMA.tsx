@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Button, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -15,6 +15,7 @@ import { AlertingPageWrapper } from '../AlertingPageWrapper';
 
 import { DryRunValidationModal, DryRunValidationResult } from './DryRunValidationModal';
 import { MigrationPreviewModal } from './MigrationPreviewModal';
+import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
@@ -605,9 +606,7 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
             {t('alerting.migrate-to-gma.review.start', 'Start migration')}
           </Button>
         </Stack>
-        <LinkButton variant="secondary" fill="text" href="/alerting/list">
-          {t('alerting.migrate-to-gma.cancel', 'Cancel')}
-        </LinkButton>
+        <CancelButton />
       </Stack>
     </Stack>
   );
