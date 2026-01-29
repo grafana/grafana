@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	unstructuredv1 "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -38,19 +39,21 @@ import (
 
 // The DTO returns everything the UI needs in a single request
 type SearchHandler struct {
-	log      log.Logger
-	client   resourcepb.ResourceIndexClient
-	tracer   trace.Tracer
-	features featuremgmt.FeatureToggles
+	log            log.Logger
+	client         resourcepb.ResourceIndexClient
+	resourceClient resource.ResourceClient
+	tracer         trace.Tracer
+	features       featuremgmt.FeatureToggles
 }
 
 func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboardSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
 	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), dashboardv0alpha1.DashboardResourceInfo.GroupResource(), resourceClient, legacyDashboardSearcher, features)
 	return &SearchHandler{
-		client:   searchClient,
-		log:      log.New("grafana-apiserver.dashboards.search"),
-		tracer:   tracer,
-		features: features,
+		client:         searchClient,
+		resourceClient: resourceClient,
+		log:            log.New("grafana-apiserver.dashboards.search"),
+		tracer:         tracer,
+		features:       features,
 	}
 }
 
@@ -419,6 +422,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	s.addOwnerReferences(ctx, result, &parsedResults)
+
 	s.write(w, parsedResults)
 }
 
@@ -760,4 +765,45 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 	return sharedDashboards, nil
+}
+
+func (s *SearchHandler) addOwnerReferences(ctx context.Context, searchResult *resourcepb.ResourceSearchResponse, parsedResults *dashboardv0alpha1.SearchResults) {
+	if s.resourceClient == nil || searchResult == nil || parsedResults == nil {
+		return
+	}
+
+	if searchResult.Results == nil || len(searchResult.Results.Rows) == 0 {
+		return
+	}
+
+	if len(searchResult.Results.Rows) != len(parsedResults.Hits) {
+		return
+	}
+
+	for i, row := range searchResult.Results.Rows {
+		key := row.Key
+		if key == nil {
+			continue
+		}
+
+		readResp, err := s.resourceClient.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		if err != nil {
+			s.log.Debug("failed to read resource while adding owner references", "resource", key.Resource, "name", key.Name, "err", err)
+			continue
+		}
+
+		if readResp == nil || readResp.Error != nil || len(readResp.Value) == 0 {
+			continue
+		}
+
+		var obj unstructuredv1.Unstructured
+		if err := obj.UnmarshalJSON(readResp.Value); err != nil {
+			s.log.Debug("failed to unmarshal resource while adding owner references", "resource", key.Resource, "name", key.Name, "err", err)
+			continue
+		}
+
+		if refs := obj.GetOwnerReferences(); len(refs) > 0 {
+			parsedResults.Hits[i].OwnerReferences = refs
+		}
+	}
 }
