@@ -3,6 +3,10 @@ package grpcplugin
 import (
 	"context"
 	"errors"
+	"os/exec"
+
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin/runner"
 
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -49,6 +53,7 @@ type ProtoClientOpts struct {
 	ExecutableArgs  []string
 	Env             []string
 	ContainerMode   ContainerModeOpts
+	RunnerFunc      func(l hclog.Logger, cmd *exec.Cmd, tmpDir string) (runner.Runner, error)
 	SkipHostEnvVars bool
 	Logger          log.Logger
 	Tracer          trace.Tracer
@@ -73,6 +78,7 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 				image:   opts.ContainerMode.Image,
 				tag:     opts.ContainerMode.Tag,
 			},
+			runnerFunc:      opts.RunnerFunc,
 			skipHostEnvVars: opts.SkipHostEnvVars,
 		},
 		opts.Logger,
