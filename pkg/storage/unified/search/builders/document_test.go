@@ -164,5 +164,12 @@ func TestBuildSelectableFields(t *testing.T) {
 		"spec.teamRef.name": "teamref name",
 	}
 
-	require.Equal(t, expected, BuildSelectableFields(tb, iamv0.TeamBindingKind()))
+	res, err := BuildSelectableFields(tb, iamv0.TeamBindingKind())
+	require.NoError(t, err)
+	require.Equal(t, expected, res)
+
+	// Test passing mixed type and kind.
+	user := &iamv0.User{}
+	_, err = BuildSelectableFields(user, iamv0.TeamBindingKind())
+	require.Error(t, err)
 }
