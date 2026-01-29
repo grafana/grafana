@@ -53,7 +53,7 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
     <form
       name="addFolder"
       onSubmit={handleSubmit((form) => {
-        reportInteraction('browse-dashboards-action-new-folder-as-team-folder', {
+        reportInteraction('grafana_browse_dashboards_page_action_create_folder', {
           teamFolder: !!selectedTeam,
         });
 
