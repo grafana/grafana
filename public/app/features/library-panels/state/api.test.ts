@@ -1,6 +1,7 @@
 import { VizPanel } from '@grafana/scenes';
 import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { AutoGridItem } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridItem';
+import { vizPanelToPanel } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModel';
 
 import { libraryVizPanelToSaveModel } from './api';
 
@@ -15,9 +16,8 @@ describe('libraryVizPanelToSaveModel', () => {
       _loadedPanel: {
         uid: 'uid',
         name: 'name',
-        title: 'Title',
         type: 'text',
-        model: {},
+        model: vizPanelToPanel(panel),
         version: 1,
       },
     });
@@ -27,6 +27,6 @@ describe('libraryVizPanelToSaveModel', () => {
 
     const saveModel = libraryVizPanelToSaveModel(panel);
 
-    expect(saveModel.model.gridPos).toEqual({ x: 0, y: 0, w: 0, h: 0 });
+    expect(saveModel.model.gridPos).toEqual({ x: 0, y: 0, w: 6, h: 3 });
   });
 });

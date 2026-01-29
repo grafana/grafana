@@ -172,7 +172,7 @@ export function libraryVizPanelToSaveModel(vizPanel: VizPanel) {
           h: layoutItem.state.height ?? 0,
         }
       : layoutItem instanceof AutoGridItem
-        ? { x: 0, y: 0, w: 0, h: 0 }
+        ? { x: 0, y: 0, w: 6, h: 3 }
         : undefined;
 
   if (!gridPos) {
