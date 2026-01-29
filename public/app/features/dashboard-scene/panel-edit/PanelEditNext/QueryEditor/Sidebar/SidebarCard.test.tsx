@@ -6,7 +6,8 @@ import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 import { QueryEditorProvider } from '../QueryEditorContext';
 import { ds1SettingsMock, mockActions, setup } from '../testUtils';
 
-import { SidebarCard } from './SidebarCard';
+import { QueryCard } from './QueryCard';
+import { TransformationCard } from './TransformationCard';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -40,7 +41,7 @@ describe('SidebarCard', () => {
         }}
         actions={mockActions}
       >
-        <SidebarCard item={query} />
+        <QueryCard query={query} />
       </QueryEditorProvider>
     );
 
@@ -71,7 +72,7 @@ describe('SidebarCard', () => {
         }}
         actions={mockActions}
       >
-        <SidebarCard item={transformation} />
+        <TransformationCard transformation={transformation} />
       </QueryEditorProvider>
     );
 
@@ -101,7 +102,7 @@ describe('SidebarCard', () => {
         }}
         actions={mockActions}
       >
-        <SidebarCard item={query} />
+        <QueryCard query={query} />
       </QueryEditorProvider>
     );
 

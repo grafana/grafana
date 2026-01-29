@@ -8,8 +8,9 @@ import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { SidebarSize } from '../../constants';
 import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
 
+import { QueryCard } from './QueryCard';
 import { QuerySidebarCollapsableHeader } from './QuerySidebarCollapsableHeader';
-import { SidebarCard } from './SidebarCard';
+import { TransformationCard } from './TransformationCard';
 
 interface QueryEditorSidebarProps {
   sidebarSize: SidebarSize;
@@ -47,12 +48,12 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
         label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
       >
         {queries.map((query) => (
-          <SidebarCard key={query.refId} item={query} />
+          <QueryCard key={query.refId} query={query} />
         ))}
       </QuerySidebarCollapsableHeader>
       <QuerySidebarCollapsableHeader label={t('query-editor-next.sidebar.transformations', 'Transformations')}>
         {transformations.map((transformation) => (
-          <SidebarCard key={transformation.id} item={transformation} />
+          <TransformationCard key={transformation.id} transformation={transformation} />
         ))}
       </QuerySidebarCollapsableHeader>
     </div>

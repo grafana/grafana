@@ -1,109 +1,45 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, standardTransformersRegistry } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
-import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
-import { useDatasource } from 'app/features/datasources/hooks';
 
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
-import { useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
-import { getEditorType, getEditorTypeText, isDataTransformerConfig } from '../utils';
+import { getEditorTypeText } from '../utils';
 
-const Header = ({ editorType, styles }: { editorType: QueryEditorType; styles: ReturnType<typeof getStyles> }) => {
+interface SidebarCardProps {
+  editorType: QueryEditorType;
+  isSelected: boolean;
+  hasError: boolean;
+  id: string;
+  children: React.ReactNode;
+  onClick: () => void;
+}
+
+export const SidebarCard = ({ editorType, isSelected, hasError, id, children, onClick }: SidebarCardProps) => {
+  const styles = useStyles2(getStyles, editorType, hasError, isSelected);
   const typeText = getEditorTypeText(editorType);
 
   return (
-    <div className={styles.cardHeader}>
-      <Stack direction="row" alignItems="center" gap={1}>
-        <Icon name={QUERY_EDITOR_TYPE_CONFIG[editorType].icon} />
-        <Text weight="light" variant="body">
-          {typeText}
-        </Text>
-      </Stack>
-      {editorType !== QueryEditorType.Transformation && <Icon name="circle-mono" className={styles.dsStatusIcon} />}
-    </div>
-  );
-};
-
-interface SidebarCardProps {
-  query: DataQuery;
-}
-
-const TransformationCard = ({ transformation }: { transformation: DataTransformerConfig }) => {
-  const { selectedTransformation, setSelectedTransformation } = useQueryEditorUIContext();
-
-  const isSelected = selectedTransformation?.id === transformation.id;
-  const styles = useStyles2(getStyles, QueryEditorType.Transformation, false, isSelected);
-  const transformationName = standardTransformersRegistry.getIfExists(transformation.id)?.name || transformation.id;
-
-  const handleClick = () => {
-    // We don't allow deselecting cards so don't do anything if already selected
-    if (!isSelected) {
-      setSelectedTransformation(transformation);
-    }
-  };
-
-  return (
     <button
       className={styles.card}
-      onClick={handleClick}
+      onClick={onClick}
       type="button"
-      aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id: transformation.id })}
+      aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
       aria-pressed={isSelected}
     >
-      <Header editorType={QueryEditorType.Transformation} styles={styles} />
-      <div className={styles.cardContent}>
-        <Text weight="light" variant="body" color="secondary">
-          {transformationName}
-        </Text>
+      <div className={styles.cardHeader}>
+        <Stack direction="row" alignItems="center" gap={1}>
+          <Icon name={QUERY_EDITOR_TYPE_CONFIG[editorType].icon} />
+          <Text weight="light" variant="body">
+            {typeText}
+          </Text>
+        </Stack>
+        {editorType !== QueryEditorType.Transformation && <Icon name="circle-mono" className={styles.dsStatusIcon} />}
       </div>
+      <div className={styles.cardContent}>{children}</div>
     </button>
   );
-};
-
-const QueryCard = ({ query }: SidebarCardProps) => {
-  const editorType = getEditorType(query);
-  const queryDsSettings = useDatasource(query.datasource);
-  const { data } = useQueryRunnerContext();
-  const { selectedQuery, setSelectedQuery } = useQueryEditorUIContext();
-
-  const hasError = data?.errors?.some((e) => e.refId === query.refId) ?? false;
-  const isSelected = selectedQuery?.refId === query.refId;
-  const styles = useStyles2(getStyles, editorType, hasError, isSelected);
-
-  const handleClick = () => {
-    // We don't allow deselecting cards so don't do anything if already selected
-    if (!isSelected) {
-      setSelectedQuery(query);
-    }
-  };
-
-  return (
-    <button
-      className={styles.card}
-      onClick={handleClick}
-      type="button"
-      aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{refId}}', { refId: query.refId })}
-      aria-pressed={isSelected}
-    >
-      <Header editorType={editorType} styles={styles} />
-      <div className={styles.cardContent}>
-        <DataSourceLogo dataSource={queryDsSettings} />
-        <Text weight="light" variant="body" color="secondary">
-          {query.refId}
-        </Text>
-      </div>
-    </button>
-  );
-};
-
-export const SidebarCard = ({ item }: { item: DataQuery | DataTransformerConfig }) => {
-  if (isDataTransformerConfig(item)) {
-    return <TransformationCard transformation={item} />;
-  }
-  return <QueryCard query={item} />;
 };
 
 function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: boolean, isSelected?: boolean) {
