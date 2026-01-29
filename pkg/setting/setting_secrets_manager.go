@@ -91,6 +91,11 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	// If empty, a random key will be generated at startup for encrypting cached data keys.
 	cfg.SecretsManagement.DataKeysCacheEncryptionKey = secretsMgmt.Key("data_keys_cache_encryption_key").MustString("")
 
+	if cfg.SecretsManagement.DataKeysCacheUseRedis && cfg.SecretsManagement.DataKeysCacheEncryptionKey == "" {
+		cfg.Logger.Error("DataKeysCacheEncryptionKey must be set when using Redis cache for data keys. Falling back to the OSS cache.")
+		cfg.SecretsManagement.DataKeysCacheUseRedis = false
+	}
+
 	// Extract available KMS providers from configuration sections
 	providers := make(map[string]map[string]string)
 	for _, section := range cfg.Raw.Sections() {
