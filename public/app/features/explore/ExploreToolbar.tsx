@@ -26,6 +26,7 @@ import { contextSrv } from '../../core/core';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
+import { CustomExploreButton } from './CustomExploreButton';
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
@@ -239,6 +240,11 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
           >
             <Trans i18nKey="explore.explore-toolbar.outline">Outline</Trans>
           </ToolbarButton>,
+          <CustomExploreButton
+            key="custom-explore-button"
+            exploreId={exploreId}
+            splitted={splitted}
+          />,
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
             mixed={!isCorrelationsEditorMode}
