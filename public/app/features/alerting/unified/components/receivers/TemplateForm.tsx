@@ -8,7 +8,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { isFetchError, locationService } from '@grafana/runtime';
+import { config, isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Box,
@@ -162,9 +162,13 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   } = formApi;
 
   const submit = async (values: TemplateFormValues) => {
-    const returnLink = makeAMLink('/alerting/notifications', alertmanager, {
-      tab: ContactPointsActiveTabs.NotificationTemplates,
-    });
+    // V2 nav has dedicated templates page, legacy nav uses tab parameter
+    const useV2Nav = config.featureToggles.alertingNavigationV2;
+    const returnLink = useV2Nav
+      ? makeAMLink('/alerting/notifications/templates', alertmanager)
+      : makeAMLink('/alerting/notifications', alertmanager, {
+          tab: ContactPointsActiveTabs.NotificationTemplates,
+        });
 
     try {
       if (!originalTemplate) {

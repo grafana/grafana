@@ -3,7 +3,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Alert, Button, Field, FieldSet, Input, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import {
   MuteTiming,
@@ -72,7 +72,11 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance, editMode }
 
   const updating = formApi.formState.isSubmitting;
 
-  const returnLink = makeAMLink('/alerting/routes/', selectedAlertmanager!, { tab: 'time_intervals' });
+  // V2 nav has dedicated time intervals page, legacy nav uses tab parameter
+  const useV2Nav = config.featureToggles.alertingNavigationV2;
+  const returnLink = useV2Nav
+    ? makeAMLink('/alerting/routes/mute-timing', selectedAlertmanager!)
+    : makeAMLink('/alerting/routes/', selectedAlertmanager!, { tab: 'time_intervals' });
 
   const onSubmit = async (values: MuteTimingFields) => {
     const interval = createMuteTiming(values);
