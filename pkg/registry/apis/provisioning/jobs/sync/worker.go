@@ -40,8 +40,8 @@ type SyncWorker struct {
 
 	tracer tracing.Tracer
 
-	maxSyncWorkers int
-	quotaLimits    quotas.QuotaLimits
+	maxSyncWorkers      int
+	quotaLimitsProvider quotas.QuotaLimitsProvider
 }
 
 func NewSyncWorker(
@@ -52,6 +52,7 @@ func NewSyncWorker(
 	metrics jobs.JobMetrics,
 	tracer tracing.Tracer,
 	maxSyncWorkers int,
+	quotaLimitsProvider quotas.QuotaLimitsProvider,
 ) *SyncWorker {
 	return &SyncWorker{
 		clients:             clients,
@@ -61,15 +62,8 @@ func NewSyncWorker(
 		metrics:             metrics,
 		tracer:              tracer,
 		maxSyncWorkers:      maxSyncWorkers,
+		quotaLimitsProvider: quotaLimitsProvider,
 	}
-}
-
-// SetQuotaLimits sets the quota limits (including repository limits).
-// HACK: This is a workaround to avoid changing NewSyncWorker signature which would require
-// changes in the enterprise repository. This should be moved to NewSyncWorker parameters
-// once we can coordinate the change across repositories.
-func (r *SyncWorker) SetQuotaLimits(limits quotas.QuotaLimits) {
-	r.quotaLimits = limits
 }
 
 func (r *SyncWorker) IsSupported(ctx context.Context, job provisioning.Job) bool {
@@ -230,7 +224,13 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	//    the natural place to evaluate quotas against those stats.
 	// 3. This ensures quota conditions reflect the actual resource state after reconciliation,
 	//    not just what the controller thinks should exist.
-	quotaCondition := r.quotaLimits.EvaluateCondition(repoStats)
+	quotaStatus, err := r.quotaLimitsProvider.GetQuotaStatus(finalCtx, cfg.Namespace)
+	if err != nil {
+		logger.Error("failed to get quota status", "error", err)
+		finalSpan.SetAttributes(attribute.String("quota_limits.error", err.Error()))
+		return tracing.Error(span, err)
+	}
+	quotaCondition := quotas.EvaluateCondition(quotaStatus, quotas.NewQuotaUsageFromStats(repoStats))
 	if quotaConditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition); quotaConditionOps != nil {
 		patchOperations = append(patchOperations, quotaConditionOps...)
 	}

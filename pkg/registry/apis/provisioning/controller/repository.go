@@ -74,9 +74,9 @@ type RepositoryController struct {
 	queue          workqueue.TypedRateLimitingInterface[*queueItem]
 	resyncInterval time.Duration
 
-	registry    prometheus.Registerer
-	tracer      tracing.Tracer
-	quotaGetter quotas.QuotaGetter
+	registry            prometheus.Registerer
+	tracer              tracing.Tracer
+	quotaLimitsProvider quotas.QuotaLimitsProvider
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -97,7 +97,7 @@ func NewRepositoryController(
 	tracer tracing.Tracer,
 	parallelOperations int,
 	resyncInterval time.Duration,
-	quotaGetter quotas.QuotaGetter,
+	quotaLimitsProvider quotas.QuotaLimitsProvider,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 
@@ -121,12 +121,12 @@ func NewRepositoryController(
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
 		},
-		jobs:           jobs,
-		logger:         logging.DefaultLogger.With("logger", loggerName),
-		registry:       registry,
-		tracer:         tracer,
-		resyncInterval: resyncInterval,
-		quotaGetter:    quotaGetter,
+		jobs:                jobs,
+		logger:              logging.DefaultLogger.With("logger", loggerName),
+		registry:            registry,
+		tracer:              tracer,
+		resyncInterval:      resyncInterval,
+		quotaLimitsProvider: quotaLimitsProvider,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -619,15 +619,20 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Set quota information from configuration (only if changed)
-	newQuota := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
-	// Only update if the quota has changed
-	if obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
-		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/quota",
-			"value": newQuota,
-		})
+	newQuota, err := rc.quotaLimitsProvider.GetQuotaStatus(ctx, namespace)
+	if err != nil {
+		logger.Error("failed to get quota status", "error", err)
+		// Continue without updating quota status if there's an error
+	} else {
+		// Only update if the quota has changed
+		if obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
+			obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository {
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/quota",
+				"value": newQuota,
+			})
+		}
 	}
 
 	// determine the sync strategy and sync status to apply
