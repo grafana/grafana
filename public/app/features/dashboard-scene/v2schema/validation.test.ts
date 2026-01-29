@@ -3,9 +3,10 @@ import {
   defaultQueryGroupKind,
   defaultPanelQueryKind,
   defaultVizConfigKind,
+  defaultGridLayoutItemKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-import { isPanelKindV2 } from './validation';
+import { isGridLayoutItemKind, isPanelKindV2 } from './validation';
 
 describe('v2schema validation', () => {
   it('isPanelKindV2 returns true for a minimal valid PanelKind', () => {
@@ -56,5 +57,49 @@ describe('v2schema validation', () => {
     // @ts-expect-error wrong type
     panel.spec.transparent = 'yes';
     expect(isPanelKindV2(panel)).toBe(false);
+  });
+});
+
+describe('isGridLayoutItemKind', () => {
+  it('returns true for a valid GridLayoutItemKind', () => {
+    const item = defaultGridLayoutItemKind();
+    item.spec.x = 0;
+    item.spec.y = 0;
+    item.spec.width = 12;
+    item.spec.height = 8;
+    item.spec.element = { kind: 'ElementReference', name: 'panel-1' };
+
+    expect(isGridLayoutItemKind(item)).toBe(true);
+  });
+
+  it.each([
+    ['kind is not GridLayoutItem', { kind: 'NotAGridLayoutItem' }],
+    ['x is not a number', { spec: { x: '0' } }],
+    ['y is not a number', { spec: { y: null } }],
+    ['width is not a number', { spec: { width: undefined } }],
+    ['height is not a number', { spec: { height: {} } }],
+    ['element is missing', { spec: { element: undefined } }],
+    ['element.kind is not ElementReference', { spec: { element: { kind: 'WrongKind', name: 'panel-1' } } }],
+    ['element.name is not a string', { spec: { element: { kind: 'ElementReference', name: 123 } } }],
+  ])('returns false when %s', (_, override) => {
+    const item = {
+      ...defaultGridLayoutItemKind(),
+      spec: {
+        ...defaultGridLayoutItemKind().spec,
+        element: { kind: 'ElementReference', name: 'panel-1' },
+        ...((override as Record<string, unknown>).spec ?? {}),
+      },
+      ...Object.fromEntries(Object.entries(override).filter(([key]) => key !== 'spec')),
+    };
+    expect(isGridLayoutItemKind(item)).toBe(false);
+  });
+
+  it.each([
+    ['null', null],
+    ['undefined', undefined],
+    ['string', 'string'],
+    ['number', 123],
+  ])('returns false for %s', (_, value) => {
+    expect(isGridLayoutItemKind(value)).toBe(false);
   });
 });
