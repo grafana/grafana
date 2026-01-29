@@ -179,7 +179,6 @@ type AlertNG struct {
 
 	evaluationCoordinator EvaluationCoordinator
 	schedCfg              schedule.SchedulerCfg
-	stateManagerCfg       state.ManagerCfg
 }
 
 func (ng *AlertNG) init() error {
@@ -400,7 +399,6 @@ func (ng *AlertNG) init() error {
 	}
 	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
 	ng.stateManager = state.NewManager(stateManagerCfg, statePersister)
-	ng.stateManagerCfg = stateManagerCfg
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
 	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {

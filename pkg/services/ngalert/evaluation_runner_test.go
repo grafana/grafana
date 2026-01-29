@@ -203,7 +203,6 @@ func TestEvaluationRunner_PersisterIsActive(t *testing.T) {
 	stateManager := state.NewManager(stateManagerCfg, state.NewSyncStatePersisiter(log.NewNopLogger(), stateManagerCfg))
 
 	h := setupEvaluationLoop(t, newTestCoordinator(true),
-		withStateManagerCfg(stateManagerCfg),
 		withStateManager(stateManager),
 	)
 	waitStarted(t, h.sched)
@@ -226,12 +225,6 @@ func TestEvaluationRunner_PersisterIsActive(t *testing.T) {
 }
 
 type alertNGOption func(*AlertNG)
-
-func withStateManagerCfg(cfg state.ManagerCfg) alertNGOption {
-	return func(ng *AlertNG) {
-		ng.stateManagerCfg = cfg
-	}
-}
 
 func withStateManager(mgr *state.Manager) alertNGOption {
 	return func(ng *AlertNG) {
@@ -259,7 +252,6 @@ func createTestAlertNG(sched *testSchedule, coordinator *testEvaluationCoordinat
 		schedule:              sched,
 		stateManager:          stateManager,
 		evaluationCoordinator: coordinator,
-		stateManagerCfg:       defaultCfg,
 	}
 
 	for _, opt := range opts {
