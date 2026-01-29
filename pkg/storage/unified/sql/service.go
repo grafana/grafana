@@ -83,6 +83,7 @@ type service struct {
 	searchStandalone bool
 }
 
+// ProvideSearchGRPCService provides a gRPC service that only serves search requests.
 func ProvideSearchGRPCService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,

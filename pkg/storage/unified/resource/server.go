@@ -293,8 +293,8 @@ func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
 
 	// Create the search server using the search.go factory
 	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.AccessClient, blobstore, opts.IndexMetrics, opts.OwnsIndexFn)
-	if err != nil {
-		return nil, err
+	if err != nil || searchServer == nil {
+		return nil, fmt.Errorf("search server could not be created: %w", err)
 	}
 	searchServer.lifecycle = opts.Lifecycle
 	searchServer.backendDiagnostics = opts.Diagnostics

@@ -676,7 +676,10 @@ func (s *searchServer) Stop(ctx context.Context) error {
 
 // IsHealthy returns the health status of the search server.
 func (s *searchServer) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
-	// if needed, add search-specific health checks here
+	// add search-specific health checks here if needed
+	if s.backendDiagnostics == nil {
+		return resourcepb.UnimplementedDiagnosticsServer{}.IsHealthy(ctx, req)
+	}
 	return s.backendDiagnostics.IsHealthy(ctx, req)
 }
 
