@@ -568,29 +568,26 @@ func initAPIStateReaders(
 
 func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
 	logger := log.New("ngalert.state.manager.persist")
-	var statePersister state.StatePersister
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
-		logger.Info("Using rule state persister")
+	compressed := featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	periodic := featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic)
 
-		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
-			logger.Info("Compressed storage with periodic save enabled")
-			ticker := clock.New().Ticker(cfg.StatePeriodicSaveInterval)
-			statePersister = state.NewSyncRuleStatePersisiter(logger, ticker, cfg)
-		} else {
-			logger.Info("Compressed storage FullSync disabled")
-			statePersister = state.NewSyncRuleStatePersisiter(logger, nil, cfg)
-		}
-	} else if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
-		logger.Info("Using periodic state persister")
-		ticker := clock.New().Ticker(uaCfg.StatePeriodicSaveInterval)
-		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
-	} else {
+	switch {
+	case compressed && periodic:
+		logger.Info("Using async rule state persister (compressed + periodic)")
+		return state.NewAsyncRuleStatePersister(logger, clock.New(), cfg.StatePeriodicSaveInterval, cfg)
+	case compressed:
+		logger.Info("Using sync rule state persister (compressed)")
+		return state.NewSyncRuleStatePersister(logger, cfg)
+	case periodic:
+		logger.Info("Using async state persister (periodic)")
+		return state.NewAsyncStatePersister(logger, clock.New(), uaCfg.StatePeriodicSaveInterval, cfg)
+	default:
 		logger.Info("Using sync state persister")
-		statePersister = state.NewSyncStatePersisiter(logger, cfg)
+		return state.NewSyncStatePersisiter(logger, cfg)
 	}
-
-	return statePersister
 }
 
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {

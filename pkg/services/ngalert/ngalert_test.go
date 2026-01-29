@@ -470,7 +470,7 @@ func TestInitStatePersister(t *testing.T) {
 				featuremgmt.FlagAlertingSaveStateCompressed,
 				featuremgmt.FlagAlertingSaveStatePeriodic,
 			),
-			expectedStatePersisterType: &state.SyncRuleStatePersister{},
+			expectedStatePersisterType: &state.AsyncRuleStatePersister{},
 		},
 	}
 

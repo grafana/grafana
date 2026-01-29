@@ -10,23 +10,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func TestAsyncStatePersister_Async(t *testing.T) {
+func TestAsyncRuleStatePersister_Async(t *testing.T) {
 	t.Run("should save on tick", func(t *testing.T) {
 		mockClock := clock.NewMock()
 		store := &FakeInstanceStore{}
-		logger := log.New("async.test")
+		logger := log.New("async.rule.test")
 
-		persister := NewAsyncStatePersister(logger, mockClock, 1*time.Second, ManagerCfg{
+		persister := NewAsyncRuleStatePersister(logger, mockClock, 1*time.Second, ManagerCfg{
 			InstanceStore: store,
 		})
 
 		ctx, cancel := context.WithCancel(context.Background())
-
-		defer func() {
-			cancel()
-		}()
+		defer cancel()
 
 		cache := newCache()
 
@@ -45,12 +43,13 @@ func TestAsyncStatePersister_Async(t *testing.T) {
 			return len(store.RecordedOps()) == 1
 		}, time.Second*5, 10*time.Millisecond)
 	})
+
 	t.Run("should save on context done", func(t *testing.T) {
 		mockClock := clock.NewMock()
 		store := &FakeInstanceStore{}
-		logger := log.New("async.test")
+		logger := log.New("async.rule.test")
 
-		persister := NewAsyncStatePersister(logger, mockClock, 1*time.Second, ManagerCfg{
+		persister := NewAsyncRuleStatePersister(logger, mockClock, 1*time.Second, ManagerCfg{
 			InstanceStore: store,
 		})
 
@@ -76,12 +75,12 @@ func TestAsyncStatePersister_Async(t *testing.T) {
 	})
 }
 
-func TestAsyncStatePersister_Async_StopsOnContextCancel(t *testing.T) {
+func TestAsyncRuleStatePersister_Async_StopsOnContextCancel(t *testing.T) {
 	mockClock := clock.NewMock()
 	store := &FakeInstanceStore{}
-	logger := log.New("async.test")
+	logger := log.New("async.rule.test")
 
-	persister := NewAsyncStatePersister(logger, mockClock, 1*time.Second, ManagerCfg{
+	persister := NewAsyncRuleStatePersister(logger, mockClock, 1*time.Second, ManagerCfg{
 		InstanceStore: store,
 	})
 
@@ -109,4 +108,21 @@ func TestAsyncStatePersister_Async_StopsOnContextCancel(t *testing.T) {
 	initialOps := len(store.RecordedOps())
 	mockClock.Add(5 * time.Second)
 	require.Equal(t, initialOps, len(store.RecordedOps()), "no more saves should happen after context cancel")
+}
+
+func TestAsyncRuleStatePersister_Sync(t *testing.T) {
+	t.Run("sync is a no-op", func(t *testing.T) {
+		store := &FakeInstanceStore{}
+		logger := log.New("async.rule.test")
+
+		persister := NewAsyncRuleStatePersister(logger, clock.NewMock(), 1*time.Second, ManagerCfg{
+			InstanceStore: store,
+		})
+
+		persister.Sync(context.Background(), nil, models.AlertRuleKeyWithGroup{}, StateTransitions{
+			{State: &State{OrgID: 1, AlertRuleUID: "1"}},
+		})
+
+		require.Empty(t, store.RecordedOps(), "Sync should be a no-op for async persister")
+	})
 }
