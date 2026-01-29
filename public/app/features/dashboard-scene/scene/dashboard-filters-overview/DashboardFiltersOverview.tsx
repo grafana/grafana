@@ -34,24 +34,7 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: Dash
   const [singleValuesByKey, setSingleValuesByKey] = useState<Record<string, string>>({});
   const [multiValuesByKey, setMultiValuesByKey] = useState<Record<string, string[]>>({});
   const [valueOptionsByKey, setValueOptionsByKey] = useState<Record<string, Array<ComboboxOption<string>>>>({});
-
-  void groupByVariable;
-
-  useEffect(() => {
-    async function getKeys() {
-      if (!adhocFilters) {
-        return;
-      }
-
-      const keys = await adhocFilters._getKeys(null);
-      for (const key of keys) {
-        key.group = Math.random() < 0.5 ? 'Group A' : 'Group B';
-      }
-      setKeys(keys);
-    }
-
-    getKeys();
-  }, [adhocFilters]);
+  const [isGrouped, setIsGrouped] = useState<Record<string, boolean>>({});
 
   const operatorOptions = useMemo<OperatorDefinition[]>(() => OPERATORS, []);
   const operatorComboboxOptions = useMemo(
@@ -62,10 +45,80 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: Dash
       })),
     [operatorOptions]
   );
+
   const multiOperatorValues = useMemo(
     () => new Set(operatorOptions.filter((option: OperatorDefinition) => option.isMulti).map((option) => option.value)),
     [operatorOptions]
   );
+
+  useEffect(() => {
+    async function getKeys() {
+      if (!adhocFilters) {
+        return;
+      }
+
+      const keys = [];
+      const operatorsByKey: Record<string, string> = {};
+      const multiValuesByKey: Record<string, string[]> = {};
+      const singleValuesByKey: Record<string, string> = {};
+
+      for (const originFilter of adhocFilters.state.originFilters ?? []) {
+        keys.push({ label: originFilter.keyLabel, value: originFilter.key });
+        operatorsByKey[originFilter.key] = originFilter.operator;
+        if (originFilter.values && originFilter.values.length > 0 && multiOperatorValues.has(originFilter.operator)) {
+          multiValuesByKey[originFilter.key] = originFilter.values!;
+        } else {
+          singleValuesByKey[originFilter.key] = originFilter.value!;
+        }
+      }
+
+      for (const selectedFilter of adhocFilters.state.filters) {
+        keys.push({ label: selectedFilter.keyLabel, value: selectedFilter.key });
+        operatorsByKey[selectedFilter.key] = selectedFilter.operator;
+        if (
+          selectedFilter.values &&
+          selectedFilter.values.length > 0 &&
+          multiOperatorValues.has(selectedFilter.operator)
+        ) {
+          multiValuesByKey[selectedFilter.key] = selectedFilter.values!;
+        } else {
+          singleValuesByKey[selectedFilter.key] = selectedFilter.value!;
+        }
+      }
+
+      keys.push(...(await adhocFilters._getKeys(null)));
+
+      setKeys(keys);
+      setOperatorsByKey(operatorsByKey);
+      setMultiValuesByKey(multiValuesByKey);
+      setSingleValuesByKey(singleValuesByKey);
+    }
+
+    getKeys();
+  }, [adhocFilters, multiOperatorValues]);
+
+  useEffect(() => {
+    async function getGroupByKeys() {
+      if (!groupByVariable) {
+        return;
+      }
+
+      const groupByValues = Array.isArray(groupByVariable.state.value)
+        ? groupByVariable.state.value
+        : groupByVariable.state.value
+          ? [groupByVariable.state.value]
+          : [];
+
+      const keyIsGrouped: Record<string, boolean> = {};
+      for (const selectedKey of groupByValues) {
+        keyIsGrouped[selectedKey.toString()] = true;
+      }
+
+      setIsGrouped(keyIsGrouped);
+    }
+
+    getGroupByKeys();
+  }, [groupByVariable]);
 
   const { groupNames, groupedKeys, ungroupedKeys } = useMemo(() => {
     const groups = new Map<string, Array<SelectableValue<string>>>();
@@ -154,6 +207,7 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: Dash
     const isMultiOperator = multiOperatorValues.has(operatorValue);
     const singleValue = singleValuesByKey[keyValue] ?? '';
     const multiValues = multiValuesByKey[keyValue] ?? [];
+    const isGroupBy = isGrouped[keyValue] ?? false;
 
     return (
       <div key={keyValue} className={styles.row}>
@@ -171,8 +225,6 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: Dash
                 return;
               }
               setOperatorsByKey((prev) => ({ ...prev, [keyValue]: option.value }));
-              setSingleValuesByKey((prev) => ({ ...prev, [keyValue]: '' }));
-              setMultiValuesByKey((prev) => ({ ...prev, [keyValue]: [] }));
             }}
           />
         </div>
@@ -205,10 +257,40 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: Dash
         {groupByVariable ? (
           <div className={styles.groupByCell}>
             <Checkbox
-              value={false}
+              value={isGroupBy}
               label={t('dashboard.filters-overview.groupby', 'GroupBy')}
               onChange={() => {
-                console.log('TODO');
+                const currentValues = Array.isArray(groupByVariable.state.value)
+                  ? groupByVariable.state.value.map(String)
+                  : groupByVariable.state.value
+                    ? [String(groupByVariable.state.value)]
+                    : [];
+
+                const currentText = Array.isArray(groupByVariable.state.text)
+                  ? groupByVariable.state.text.map(String)
+                  : groupByVariable.state.text
+                    ? [String(groupByVariable.state.text)]
+                    : [];
+
+                const textByValue = new Map(currentValues.map((value, idx) => [value, currentText[idx] ?? value]));
+
+                setIsGrouped((prev) => ({ ...prev, [keyValue]: !isGroupBy }));
+                let nextValues = currentValues;
+
+                if (isGroupBy) {
+                  if (!currentValues.includes(keyValue)) {
+                    nextValues = [...currentValues, keyValue];
+                    textByValue.set(keyValue, keyOption.label ?? keyValue);
+                  }
+                } else {
+                  if (!currentValues.includes(keyValue)) {
+                    return;
+                  }
+                  nextValues = currentValues.filter((value) => value !== keyValue);
+                }
+
+                const nextText = nextValues.map((value) => textByValue.get(value) ?? value);
+                groupByVariable.changeValueTo(nextValues, nextText, true);
               }}
             />
           </div>
