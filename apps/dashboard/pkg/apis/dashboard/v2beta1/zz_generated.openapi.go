@@ -4113,6 +4113,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardSpec(ref common.ReferenceCallbac
 							Format:      "",
 						},
 					},
+					"connectLiveToAutoRefresh": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When set to true, live panels will not stream data if auto refresh is set to Off",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"preload": {
 						SchemaProps: spec.SchemaProps{
 							Description: "When set to true, the dashboard will load all panels in the dashboard when it's loaded.",

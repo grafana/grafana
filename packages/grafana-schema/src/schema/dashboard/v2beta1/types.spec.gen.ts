@@ -1546,6 +1546,8 @@ export interface Spec {
 	// This will keep data "moving left" regardless of the query refresh rate. This setting helps
 	// avoid dashboards presenting stale live data.
 	liveNow?: boolean;
+	// When set to true, live panels will not stream data if auto refresh is set to Off
+	connectLiveToAutoRefresh?: boolean;
 	// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
 	preload: boolean;
 	// Plugins only. The version of the dashboard installed together with the plugin.

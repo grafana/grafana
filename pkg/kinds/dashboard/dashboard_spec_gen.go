@@ -53,6 +53,8 @@ type Spec struct {
 	// This will keep data "moving left" regardless of the query refresh rate. This setting helps
 	// avoid dashboards presenting stale live data
 	LiveNow *bool `json:"liveNow,omitempty"`
+	// When set to true, live panels will not stream data if auto refresh is set to Off
+	ConnectLiveToAutoRefresh *bool `json:"connectLiveToAutoRefresh,omitempty"`
 	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
 	WeekStart *string `json:"weekStart,omitempty"`
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".

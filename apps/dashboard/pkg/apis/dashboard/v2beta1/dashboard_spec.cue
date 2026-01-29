@@ -31,6 +31,9 @@ DashboardSpec: {
 	// avoid dashboards presenting stale live data.
 	liveNow?: bool
 
+	// When set to true, live panels will not stream data if auto refresh is set to Off
+	connectLiveToAutoRefresh?: bool
+
 	// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
 	preload: bool | *false
 
