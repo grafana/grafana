@@ -99,7 +99,7 @@ import { usePluginComponent } from './features/plugins/extensions/usePluginCompo
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
-import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins/extensions/utils';
+import { getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
@@ -259,13 +259,7 @@ export class GrafanaApp {
       const skipAppPluginsPreload =
         config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render';
       if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
-        const [appPluginsToAwait, appPluginsToPreload] = await Promise.all([
-          getAppPluginsToAwait(),
-          getAppPluginsToPreload(),
-        ]);
-
-        preloadPlugins(appPluginsToPreload);
-        await preloadPlugins(appPluginsToAwait);
+        preloadPlugins(await getAppPluginsToPreload());
       }
 
       setHelpNavItemHook(useHelpNode);
