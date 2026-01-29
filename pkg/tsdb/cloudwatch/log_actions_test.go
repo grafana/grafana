@@ -518,6 +518,42 @@ func Test_executeStartQuery(t *testing.T) {
 		}, cli.calls.startQuery)
 	})
 
+	t.Run("skips empty log group identifiers after trimming", func(t *testing.T) {
+		cli = fakeCWLogsClient{}
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.monitoringAccountCache.Store("us-east-1", true)
+		})
+
+		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					RefID:     "A",
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "StartQuery",
+						"limit":   12,
+						"queryString":"fields @message",
+						"logGroups":[{"arn": "*"}],
+						"region": "us-east-1"
+					}`),
+				},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, []*cloudwatchlogs.StartQueryInput{
+			{
+				StartTime:     aws.Int64(0),
+				EndTime:       aws.Int64(1),
+				Limit:         aws.Int32(12),
+				QueryString:   aws.String("fields @timestamp,ltrim(@log) as __log__grafana_internal__,ltrim(@logStream) as __logstream__grafana_internal__|fields @message"),
+				QueryLanguage: cloudwatchlogstypes.QueryLanguageCwli,
+			},
+		}, cli.calls.startQuery)
+	})
+
 	t.Run("queries by LogGroupNames on StartQueryInput when queried region is not a monitoring account region for the data source", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		ds := newTestDatasource(func(ds *DataSource) {

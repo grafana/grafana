@@ -211,8 +211,12 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 		if useARN {
 			for _, lg := range logsQuery.LogGroups {
 				if lg.Arn != "" {
-					// The startQuery api does not support arns with a trailing * so we need to remove it
-					logGroupIdentifiers = append(logGroupIdentifiers, strings.TrimSuffix(lg.Arn, "*"))
+					// The startQuery api does not support ARNs with a trailing * so we need to remove it.
+					trimmedArn := strings.TrimSuffix(lg.Arn, "*")
+					if trimmedArn == "" {
+						continue
+					}
+					logGroupIdentifiers = append(logGroupIdentifiers, trimmedArn)
 				}
 			}
 		} else {
@@ -222,11 +226,10 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 				if lg.Name == "" {
 					continue
 				}
-				if _, exists := seen[lg.Name]; exists {
-					continue
+				if _, exists := seen[lg.Name]; !exists {
+					seen[lg.Name] = struct{}{}
+					logGroupIdentifiers = append(logGroupIdentifiers, lg.Name)
 				}
-				seen[lg.Name] = struct{}{}
-				logGroupIdentifiers = append(logGroupIdentifiers, lg.Name)
 			}
 		}
 	}
