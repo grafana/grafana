@@ -231,9 +231,7 @@ This table summarizes common Metrics Insights query keywords:
 
 ## Query CloudWatch Logs
 
-The logs query editor helps you write CloudWatch Logs Query Language queries across specified regions and log groups.
-
-Use the Log group selector to choose the target log groups for your query. When the Monitoring account badge appears in the query editor header, you can search and select log groups across multiple accounts. Use the `Account` field to filter log groups by account, and for large numbers of log groups, use prefix search to narrow the selection.
+The logs query editor helps you write CloudWatch Logs queries across a selected region and set of log groups.
 
 You can query CloudWatch Logs using three supported query language options:
 
@@ -245,7 +243,7 @@ You can query CloudWatch Logs using three supported query language options:
 
 1. Select a region.
 1. Select **CloudWatch Logs** from the query type drop-down.
-1. Select the Logs Mode depending on whether you would like to query CloudWatch Logs Insights or Log Anomalies
+1. Select the Logs Mode depending on whether you want to query CloudWatch Logs Insights or Log Anomalies.
 
 **Log Anomalies**
 
@@ -258,17 +256,38 @@ In addition to this, you can use the Logs Insights QL editor and the `anomaly` c
 
 **Logs Insights**
 
-1. Select the query language you would like to use in the **Query Language** drop-down.
-1. Click **Select log groups** and choose up to 20 log groups to query.
+The **Query language** drop-down is available only when **Logs Mode** is set to Logs Insights.
+
+1. Select the query language you want to use in the **Query language** drop-down.
+1. Specify the log groups you want to query.
 1. Use the main input area to write your logs query. Amazon CloudWatch only supports a subset of OpenSearch SQL and PPL commands. To find out more about the syntax supported, consult [Amazon CloudWatch Logs documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData_Languages.html)
 
-   {{< admonition type="note" >}}
-   You must specify the region and log groups when querying with **Logs Insights QL** and **OpenSearch PPL**. **OpenSearch SQL** doesn't require log group selection. However, selecting log groups simplifies query writing by populating syntax suggestions with discovered log group fields.
-   {{< /admonition >}}
+### Specify log groups to query
+
+You must specify a set of log groups to target for your query using one of the following methods:
+
+- **Log group name**: Select specific log groups. This is the default behavior. You can select up to 50 log groups.
+  Click **Select log groups** to choose the target log groups for your query.
+  When the **Monitoring account** badge appears in the query editor header, you can search and select log groups across multiple accounts.
+  Use the **Accounts** filter to narrow results by account.
+  For large lists, use prefix search to narrow the selection.
+- **Name prefix**: Select the **Name prefix** query scope and provide up to five log group name prefixes. The query will run against log groups that have names that start with the specified prefixes. Each prefix must be at least three characters and must not include `*`. This option is only available for **Logs Insights QL**.
+- **All log groups**: Select the **All log groups** query scope. This queries all log groups in the selected region. This option is only available for **Logs Insights QL**.
+
+You can also apply optional filters when specifying log groups with the **Name prefix** or **All log groups** query scopes:
+
+- **Class**: Filter by [log group class](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html). Choose **Standard** or **Infrequent Access**.
+- **Accounts**: Filter by AWS account. This option is only available when the **Monitoring account** badge appears in the query editor header. You can select up to 20 accounts.
+
+{{< admonition type="note" >}}
+You must specify the region and log groups when querying with **Logs Insights QL**, **OpenSearch PPL**, and **OpenSearch SQL**.
+In **OpenSearch SQL**, you can specify log groups in multiple ways.
+For details, refer to the [Query log groups with OpenSearch SQL](#query-log-groups-with-opensearch-sql) section.
+{{< /admonition >}}
 
 Click **View in CloudWatch console** to interactively view, search, and analyze your log data in the CloudWatch Logs Insights console. If you're not logged in to the CloudWatch console, the link forwards you to the login page.
 
-### Query Log groups with OpenSearch SQL
+### Query log groups with OpenSearch SQL
 
 When querying log groups with OpenSearch SQL, you can use the `$__logGroups` macro to automatically reference log groups selected in the query editor's log group selector. This is the recommended approach as it allows you to manage log groups through the UI.
 
