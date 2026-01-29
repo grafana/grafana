@@ -49,7 +49,7 @@ export const RepoTypeDisplay: { [key in RepoType]: string } = {
 export type StepStatusInfo =
   | { status: 'idle' | 'running' }
   | { status: 'success'; success?: string | StatusInfo }
-  | { status: 'error'; error: string | StatusInfo }
+  | { status: 'error'; error: string | StatusInfo; retry?: () => void }
   | { status: 'warning'; warning: string | StatusInfo };
 
 export type ConnectionCreationResult = { success: true; connectionName: string } | { success: false; error: string };

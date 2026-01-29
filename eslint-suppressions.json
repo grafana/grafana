@@ -4165,12 +4165,12 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/gauge/GaugeMigrations.ts": {
+  "public/app/plugins/panel/gauge/v1/GaugeMigrations.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
-  "public/app/plugins/panel/gauge/GaugePanel.tsx": {
+  "public/app/plugins/panel/gauge/v1/GaugePanel.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }

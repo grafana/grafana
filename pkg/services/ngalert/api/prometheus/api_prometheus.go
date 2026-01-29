@@ -369,9 +369,47 @@ func RuleStatusMutatorGenerator(statusReader StatusReader) RuleStatusMutator {
 	}
 }
 
+// ComputeRuleState computes the rule state from alert instance states.
+// Priority: Alerting > Pending/Recovering > Normal.
+func ComputeRuleState(alertStates []*state.State) eval.State {
+	ruleState := eval.Normal
+	for _, alertState := range alertStates {
+		switch alertState.State {
+		case eval.Alerting:
+			return eval.Alerting
+		case eval.Pending:
+			if ruleState == eval.Normal {
+				ruleState = eval.Pending
+			}
+		case eval.Recovering:
+			if ruleState == eval.Normal {
+				ruleState = eval.Recovering
+			}
+		case eval.Normal, eval.NoData, eval.Error:
+			// These states don't change the rule state
+		}
+	}
+	return ruleState
+}
+
+// RuleStateToAPIString converts eval.State to API response string.
+func RuleStateToAPIString(s eval.State) string {
+	switch s {
+	case eval.Alerting:
+		return "firing"
+	case eval.Pending:
+		return "pending"
+	case eval.Recovering:
+		return "recovering"
+	default:
+		return "inactive"
+	}
+}
+
 func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAlertStateMutator {
 	return func(ctx context.Context, source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, limitAlerts int64) (map[string]int64, map[string]int64) {
 		states := manager.GetStatesForRuleUID(ctx, source.OrgID, source.UID)
+		toMutate.State = RuleStateToAPIString(ComputeRuleState(states))
 		totals := make(map[string]int64)
 		totalsFiltered := make(map[string]int64)
 		for _, alertState := range states {
@@ -383,26 +421,11 @@ func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAler
 				totals["error"] += 1
 			}
 
-			// Set the state of the rule based on the state of its alerts.
-			// Only update the rule state with 'pending' or 'recovering' if the current state is 'inactive'.
-			// This prevents overwriting a higher-severity 'firing' state in the case of a rule with multiple alerts.
-			switch alertState.State {
-			case eval.Normal:
-			case eval.Pending:
-				if toMutate.State == "inactive" {
-					toMutate.State = "pending"
-				}
-			case eval.Recovering:
-				if toMutate.State == "inactive" {
-					toMutate.State = "recovering"
-				}
-			case eval.Alerting:
+			// Track earliest ActiveAt for firing alerts
+			if alertState.State == eval.Alerting {
 				if toMutate.ActiveAt == nil || toMutate.ActiveAt.After(activeAt) {
 					toMutate.ActiveAt = &activeAt
 				}
-				toMutate.State = "firing"
-			case eval.Error:
-			case eval.NoData:
 			}
 
 			if len(stateFilterSet) > 0 {

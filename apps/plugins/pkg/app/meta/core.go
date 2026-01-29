@@ -54,10 +54,10 @@ func NewCoreProviderWithTTL(pluginsPathFunc func() (string, error), ttl time.Dur
 }
 
 // GetMeta retrieves plugin metadata for core plugins.
-func (p *CoreProvider) GetMeta(ctx context.Context, pluginID, _ string) (*Result, error) {
+func (p *CoreProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, error) {
 	// Check cache first
 	p.mu.RLock()
-	if meta, found := p.loadedPlugins[pluginID]; found {
+	if meta, found := p.loadedPlugins[ref.ID]; found {
 		p.mu.RUnlock()
 		return &Result{
 			Meta: meta,
@@ -71,7 +71,7 @@ func (p *CoreProvider) GetMeta(ctx context.Context, pluginID, _ string) (*Result
 	defer p.mu.Unlock()
 
 	// Double-check after acquiring write lock
-	if meta, found := p.loadedPlugins[pluginID]; found {
+	if meta, found := p.loadedPlugins[ref.ID]; found {
 		return &Result{
 			Meta: meta,
 			TTL:  p.ttl,
@@ -88,7 +88,7 @@ func (p *CoreProvider) GetMeta(ctx context.Context, pluginID, _ string) (*Result
 		p.initialized = true
 	}
 
-	if spec, found := p.loadedPlugins[pluginID]; found {
+	if spec, found := p.loadedPlugins[ref.ID]; found {
 		return &Result{
 			Meta: spec,
 			TTL:  p.ttl,
