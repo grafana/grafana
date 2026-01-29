@@ -9,6 +9,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -36,7 +37,7 @@ func setupTestEventStoreSqlKv(t *testing.T) *eventStore {
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(context.Background())
 	require.NoError(t, err)
-	kv, err := NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	require.NoError(t, err)
 	return newEventStore(kv)
 }
