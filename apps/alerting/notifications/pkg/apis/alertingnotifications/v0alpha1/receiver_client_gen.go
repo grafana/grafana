@@ -1,7 +1,12 @@
 package v0alpha1
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 )
@@ -77,4 +82,31 @@ func (c *ReceiverClient) Patch(ctx context.Context, identifier resource.Identifi
 
 func (c *ReceiverClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
 	return c.client.Delete(ctx, identifier, opts)
+}
+
+type CreateReceiverIntegrationTestRequest struct {
+	Body    CreateReceiverIntegrationTestRequestBody
+	Headers http.Header
+}
+
+func (c *ReceiverClient) CreateReceiverIntegrationTest(ctx context.Context, identifier resource.Identifier, request CreateReceiverIntegrationTestRequest) (*CreateReceiverIntegrationTest, error) {
+	body, err := json.Marshal(request.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
+	}
+	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
+		Path:    "test",
+		Verb:    "POST",
+		Body:    io.NopCloser(bytes.NewReader(body)),
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := CreateReceiverIntegrationTest{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateReceiverIntegrationTest: %w", err)
+	}
+	return &cast, nil
 }

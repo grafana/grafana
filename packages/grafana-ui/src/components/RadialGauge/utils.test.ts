@@ -156,13 +156,16 @@ describe('RadialGauge utils', () => {
       expect(withGlow.radius).toBeLessThan(withoutGlow.radius); // glow reduces available space
     });
 
-    it('should adjust radius for rounded bars when endAngle < 180', () => {
+    it('should adjust radius and centerY for rounded bars when endAngle < 180', () => {
       const sharpBars = calc({});
-      const roundedBars = calc({ roundedBars: true });
-      const roundedGauge = calc({ roundedBars: true, shape: 'gauge' });
+      const roundedCircle = calc({ roundedBars: true, shape: 'circle' });
+      const roundedArc = calc({ roundedBars: true, shape: 'gauge' });
 
-      expect(roundedBars.radius).toEqual(sharpBars.radius);
-      expect(roundedGauge.radius).toBeLessThan(sharpBars.radius);
+      expect(roundedCircle.radius).toEqual(sharpBars.radius);
+      expect(roundedArc.radius).toBeLessThan(sharpBars.radius);
+
+      expect(roundedCircle.centerY).toEqual(sharpBars.centerY);
+      expect(roundedArc.centerY).not.toEqual(sharpBars.centerY);
     });
 
     it('should handle threshold bars', () => {
@@ -355,7 +358,6 @@ describe('RadialGauge utils', () => {
       { description: 'quarter arc', startAngle: 0, endAngle: 90 },
       { description: 'half arc', startAngle: 0, endAngle: 180 },
       { description: 'three quarter arc', startAngle: 0, endAngle: 270 },
-      { description: 'rounded bars', startAngle: 0, endAngle: 270, roundedBars: true },
       { description: 'wide bar width', startAngle: 0, endAngle: 180, dimensions: { barWidth: 50 } },
       { description: 'narrow bar width', startAngle: 0, endAngle: 180, dimensions: { barWidth: 5 } },
       { description: 'narrow radius', startAngle: 0, endAngle: 180, dimensions: { radius: 50 } },
@@ -363,11 +365,10 @@ describe('RadialGauge utils', () => {
         description: 'center x and y',
         startAngle: 0,
         endAngle: 360,
-        roundedBars: true,
         dimensions: { centerX: 150, centerY: 200 },
       },
-    ])(`should draw correct path for $description`, ({ startAngle, endAngle, dimensions, roundedBars }) => {
-      const path = drawRadialArcPath(startAngle, endAngle, { ...defaultDims, ...dimensions }, roundedBars);
+    ])(`should draw correct path for $description`, ({ startAngle, endAngle, dimensions }) => {
+      const path = drawRadialArcPath(startAngle, endAngle, { ...defaultDims, ...dimensions });
       expect(path).toMatchSnapshot();
     });
 

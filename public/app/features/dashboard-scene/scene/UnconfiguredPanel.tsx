@@ -36,9 +36,15 @@ function UnconfiguredPanelComp(props: PanelProps) {
   const styles = useStyles2(getStyles);
   const { openDrawer: openQueryLibraryDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
-  const onMenuClick = useCallback((isOpen: boolean) => {
-    setIsOpen(isOpen);
-  }, []);
+  const onMenuClick = useCallback(
+    (isOpen: boolean) => {
+      if (isOpen) {
+        DashboardInteractions.panelActionClicked('configure_dropdown', props.id, 'panel');
+      }
+      setIsOpen(isOpen);
+    },
+    [props.id]
+  );
 
   const onConfigure = () => {
     locationService.partial({ editPanel: props.id });

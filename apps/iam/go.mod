@@ -156,7 +156,7 @@ require (
 	github.com/dlmiddlecote/sqlstats v1.0.2 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2 // indirect
-	github.com/dolthub/go-icu-regex v0.0.0-20250327004329-6799764f2dad // indirect
+	github.com/dolthub/go-icu-regex v0.0.0-20250916051405-78a38d478790 // indirect
 	github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e // indirect
 	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
 	github.com/dolthub/vitess v0.0.0-20250930230441-70c2c6a98e33 // indirect
@@ -226,17 +226,33 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/alerting v0.0.0-20260126083543-e67cba6048e1 // indirect
+	github.com/grafana/alerting v0.0.0-20260129164026-85d7010c64b8 // indirect
 	github.com/grafana/authlib v0.0.0-20260119104241-f33edcf42077 // indirect
 	github.com/grafana/authlib/types v0.0.0-20260119104241-f33edcf42077 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/grafana/grafana-aws-sdk v1.4.2 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.3.1 // indirect
-	github.com/grafana/grafana-plugin-sdk-go v0.285.0 // indirect
+	github.com/grafana/grafana-plugin-sdk-go v0.286.0 // indirect
+	github.com/grafana/grafana/apps/advisor v0.0.0 // indirect
+	github.com/grafana/grafana/apps/alerting/historian v0.0.0 // indirect
+	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // indirect
+	github.com/grafana/grafana/apps/alerting/rules v0.0.0 // indirect
+	github.com/grafana/grafana/apps/annotation v0.0.0 // indirect
+	github.com/grafana/grafana/apps/collections v0.0.0 // indirect
+	github.com/grafana/grafana/apps/correlations v0.0.0 // indirect
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // indirect
+	github.com/grafana/grafana/apps/dashvalidator v0.0.0-20260127080522-461c3f3f9fb6 // indirect
+	github.com/grafana/grafana/apps/example v0.0.0-20260119093047-426e55f358f5 // indirect
+	github.com/grafana/grafana/apps/live v0.0.0 // indirect
+	github.com/grafana/grafana/apps/logsdrilldown v0.0.0 // indirect
+	github.com/grafana/grafana/apps/playlist v0.0.0 // indirect
+	github.com/grafana/grafana/apps/plugins v0.0.0 // indirect
+	github.com/grafana/grafana/apps/preferences v0.0.0 // indirect
 	github.com/grafana/grafana/apps/provisioning v0.0.0 // indirect
+	github.com/grafana/grafana/apps/quotas v0.0.0-20251209183543-1013d74f13f2 // indirect
 	github.com/grafana/grafana/apps/secret v0.0.0 // indirect
+	github.com/grafana/grafana/apps/shorturl v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/aggregator v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/apiserver v0.0.0 // indirect
 	github.com/grafana/grafana/pkg/plugins v0.0.0 // indirect
@@ -374,7 +390,6 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/tetratelabs/wazero v1.8.2 // indirect
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // indirect
 	github.com/tjhop/slog-gokit v0.1.5 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
@@ -433,7 +448,6 @@ require (
 	golang.org/x/text v0.33.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	golang.org/x/tools v0.41.0 // indirect
-	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect

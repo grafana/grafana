@@ -18,12 +18,13 @@ import { CombinedRule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting'
 import { GrafanaPromRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
+import { useGetPluginSettingsQuery } from '../api/pluginsApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
 import { getGroupOriginName, groupIdentifier } from '../utils/groupIdentifier';
 import { isAdmin } from '../utils/misc';
 import {
-  isPluginProvidedRule,
+  getRulePluginOrigin,
   isProvisionedPromRule,
   isProvisionedRule,
   prometheusRuleType,
@@ -283,23 +284,38 @@ export function useAllRulerRuleAbilities(
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
   const canSilence = useCanSilence(rule);
 
+  const pluginOrigin = getRulePluginOrigin(rule);
+  // Check plugin installation - use skipToken to prevent query when no pluginId
+  const { data: pluginSettings, isLoading: pluginCheckLoading } = useGetPluginSettingsQuery(
+    pluginOrigin?.pluginId ?? '',
+    {
+      skip: !pluginOrigin?.pluginId,
+    }
+  );
+  const isPluginInstalled = pluginSettings?.enabled ?? false;
+
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
     const isProvisioned = rule ? isProvisionedRule(rule) : false;
     // TODO: Add support for federated rules
     // const isFederated = isFederatedRuleGroup();
     const isFederated = false;
     const isGrafanaManagedAlertRule = rulerRuleType.grafana.rule(rule);
-    const isPluginProvided = isPluginProvidedRule(rule);
+
+    // Treat as plugin-provided only if:
+    // 1. Rule has origin label (pluginOrigin exists)
+    // 2. Plugin is currently installed (or still loading to be safe)
+    // If no pluginOrigin, short-circuit to false without checking plugin installation
+    const isPluginManaged = pluginOrigin ? pluginCheckLoading || isPluginInstalled : false;
 
     // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
-    const immutableRule = isProvisioned || isFederated || isPluginProvided;
+    const immutableRule = isProvisioned || isFederated || isPluginManaged;
 
     // while we gather info, pretend it's not supported
     const MaybeSupported = loading ? NotSupported : isRulerAvailable;
     const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
 
     // Creating duplicates of plugin-provided rules does not seem to make a lot of sense
-    const duplicateSupported = isPluginProvided ? NotSupported : MaybeSupported;
+    const duplicateSupported = isPluginManaged ? NotSupported : MaybeSupported;
 
     const rulesPermissions = getRulesPermissions(rulesSourceName);
 
@@ -320,7 +336,19 @@ export function useAllRulerRuleAbilities(
     };
 
     return abilities;
-  }, [rule, loading, isRulerAvailable, rulesSourceName, isEditable, isRemovable, canSilence, exportAllowed]);
+  }, [
+    rule,
+    loading,
+    isRulerAvailable,
+    rulesSourceName,
+    isEditable,
+    isRemovable,
+    canSilence,
+    exportAllowed,
+    pluginOrigin,
+    pluginCheckLoading,
+    isPluginInstalled,
+  ]);
 
   return abilities;
 }
@@ -337,6 +365,17 @@ export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefi
   const silenceSupported = useGrafanaRulesSilenceSupport();
   const canSilenceInFolder = useCanSilenceInFolder(rule?.folderUid);
 
+  const promPluginOrigin = getRulePluginOrigin(rule);
+  // Only check plugin installation if rule has a plugin origin label
+  // Skip the query if no pluginId to avoid unnecessary API calls
+  const { data: promPluginSettings, isLoading: promPluginCheckLoading } = useGetPluginSettingsQuery(
+    promPluginOrigin?.pluginId ?? '',
+    {
+      skip: !promPluginOrigin?.pluginId,
+    }
+  );
+  const isPromPluginInstalled = promPluginSettings?.enabled ?? false;
+
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
     const isProvisioned = rule ? isProvisionedPromRule(rule) : false;
 
@@ -345,7 +384,9 @@ export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefi
     const isFederated = false;
     // All GrafanaPromRuleDTO rules are Grafana-managed by definition
     const isAlertingRule = prometheusRuleType.grafana.alertingRule(rule);
-    const isPluginProvided = isPluginProvidedRule(rule);
+    // Treat as plugin-provided only if both: has origin label AND plugin is currently installed
+    // During loading, default to immutable for safety
+    const isPluginProvided = Boolean(promPluginOrigin && (promPluginCheckLoading || isPromPluginInstalled));
 
     // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
     const immutableRule = isProvisioned || isFederated || isPluginProvided;
@@ -376,7 +417,18 @@ export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefi
     };
 
     return abilities;
-  }, [rule, loading, isEditable, isRemovable, canSilenceInFolder, exportAllowed, silenceSupported]);
+  }, [
+    rule,
+    loading,
+    isEditable,
+    isRemovable,
+    canSilenceInFolder,
+    exportAllowed,
+    silenceSupported,
+    promPluginOrigin,
+    promPluginCheckLoading,
+    isPromPluginInstalled,
+  ]);
 
   return abilities;
 }

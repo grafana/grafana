@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +35,7 @@ func setupTestNotifierSqlKv(t *testing.T) (*pollingNotifier, *eventStore) {
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(context.Background())
 	require.NoError(t, err)
-	kv, err := NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	require.NoError(t, err)
 	eventStore := newEventStore(kv)
 	notifier := newNotifier(eventStore, notifierOptions{log: log.NewNopLogger()})
