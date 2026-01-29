@@ -96,15 +96,12 @@ const FlameGraphTopTableContainer = memo(
       onTableSortRef.current = onTableSort;
     }, [onTableSort]);
 
-    const handleSortChange = useCallback(
-      (s?: TableSortByFieldState[]) => {
-        if (s && s.length) {
-          onTableSortRef.current?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
-        }
-        setSort(s ?? []);
-      },
-      []
-    );
+    const handleSortChange = useCallback((s?: TableSortByFieldState[]) => {
+      if (s && s.length) {
+        onTableSortRef.current?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+      }
+      setSort(s ?? []);
+    }, []);
 
     return (
       <div className={styles.topTableContainer} data-testid="topTable">
