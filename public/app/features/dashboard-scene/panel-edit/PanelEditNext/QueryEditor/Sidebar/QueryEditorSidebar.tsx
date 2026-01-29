@@ -5,15 +5,39 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { CollapsableSection, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { SidebarSize } from '../../constants';
 import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
-import { isDataTransformerConfig } from '../utils';
 
 import { SidebarCard } from './SidebarCard';
 
-export enum SidebarSize {
-  Mini = 'mini',
-  Full = 'full',
-}
+const Collapse = ({
+  label,
+  styles,
+  children,
+}: {
+  label: string;
+  styles: ReturnType<typeof getStyles>;
+  children: React.ReactNode;
+}) => {
+  const [isOpen, setIsOpen] = useState(true);
+
+  return (
+    <CollapsableSection
+      label={
+        <Text color="secondary" variant="body">
+          {label}
+        </Text>
+      }
+      isOpen={isOpen}
+      onToggle={setIsOpen}
+      contentClassName={styles.collapsableSectionContent}
+    >
+      <Stack direction="column" gap={1}>
+        {children}
+      </Stack>
+    </CollapsableSection>
+  );
+};
 interface QueryEditorSidebarProps {
   sidebarSize: SidebarSize;
   setSidebarSize: (size: SidebarSize) => void;
@@ -27,8 +51,6 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
   const isMini = sidebarSize === SidebarSize.Mini;
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
-  const [queriesIsOpen, setQueriesIsOpen] = useState(true);
-  const [transformationsIsOpen, setTransformationsIsOpen] = useState(true);
 
   const toggleSize = () => {
     setSidebarSize(isMini ? SidebarSize.Full : SidebarSize.Mini);
@@ -48,38 +70,16 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           {t('query-editor-next.sidebar.query-stack', 'Query Stack')}
         </Text>
       </Stack>
-      <CollapsableSection
-        label={
-          <Text color="secondary" variant="body">
-            {t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
-          </Text>
-        }
-        isOpen={queriesIsOpen}
-        onToggle={setQueriesIsOpen}
-        contentClassName={styles.collapsableSectionContent}
-      >
-        <Stack direction="column" gap={1}>
-          {queries.map((query) => (
-            <SidebarCard key={query.refId} query={query} />
-          ))}
-        </Stack>
-      </CollapsableSection>
-      <CollapsableSection
-        label={
-          <Text color="secondary" variant="body">
-            {t('query-editor-next.sidebar.transformations', 'Transformations')}
-          </Text>
-        }
-        isOpen={transformationsIsOpen}
-        onToggle={setTransformationsIsOpen}
-        contentClassName={styles.collapsableSectionContent}
-      >
-        <Stack direction="column" gap={1}>
-          {transformations.map((transformation) => (
-            <SidebarCard key={transformation.id} query={transformation} />
-          ))}
-        </Stack>
-      </CollapsableSection>
+      <Collapse label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')} styles={styles}>
+        {queries.map((query) => (
+          <SidebarCard key={query.refId} item={query} />
+        ))}
+      </Collapse>
+      <Collapse label={t('query-editor-next.sidebar.transformations', 'Transformations')} styles={styles}>
+        {transformations.map((transformation) => (
+          <SidebarCard key={transformation.id} item={transformation} />
+        ))}
+      </Collapse>
     </div>
   );
 });

@@ -6,6 +6,11 @@ export enum QueryEditorType {
   Transformation = 'transformation',
 }
 
+export enum SidebarSize {
+  Mini = 'mini',
+  Full = 'full',
+}
+
 export interface QueryEditorTypeConfig {
   icon: IconName;
   color: string;

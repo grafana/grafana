@@ -110,11 +110,11 @@ const QueryCard = ({ query }: SidebarCardProps) => {
   );
 };
 
-export const SidebarCard = ({ query }: { query: DataQuery | DataTransformerConfig }) => {
-  if (isDataTransformerConfig(query)) {
-    return <TransformationCard transformation={query} />;
+export const SidebarCard = ({ item }: { item: DataQuery | DataTransformerConfig }) => {
+  if (isDataTransformerConfig(item)) {
+    return <TransformationCard transformation={item} />;
   }
-  return <QueryCard query={query} />;
+  return <QueryCard query={item} />;
 };
 
 function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: boolean, isSelected?: boolean) {
