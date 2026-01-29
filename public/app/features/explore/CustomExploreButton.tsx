@@ -8,30 +8,30 @@ interface CustomExploreButtonProps {
 
 export function CustomExploreButton({ exploreId, splitted }: CustomExploreButtonProps) {
   const handleClick = () => {
-    // Custom button logic - you can modify this as needed
-    console.log('Custom button clicked for explore pane:', exploreId);
+    // Convert to Sigma button logic - you can modify this as needed
+    console.log('Convert to Sigma clicked for explore pane:', exploreId);
     
     // Example: Show an alert with the explore pane ID
-    alert(`Custom action triggered for explore pane: ${exploreId}`);
+    alert(`Converting to Sigma for explore pane: ${exploreId}`);
     
     // Here you could:
-    // - Dispatch Redux actions
-    // - Open modals or drawers
-    // - Trigger API calls
-    // - Navigate to other views
-    // - Export data
+    // - Dispatch Redux actions to convert query to Sigma format
+    // - Open Sigma conversion modal or drawer
+    // - Trigger API calls to Sigma service
+    // - Navigate to Sigma view
+    // - Export data in Sigma format
     // - etc.
   };
 
   return (
     <ToolbarButton
       variant="canvas"
-      tooltip={t('explore.custom-button.tooltip', 'Trigger custom action')}
-      icon="rocket" // Using rocket icon for the custom action
+      tooltip={t('explore.sigma-button.tooltip', 'Convert to Sigma')}
+      icon="arrow-right" // Using arrow-right icon for conversion action
       iconOnly={splitted} // Hide text when in split view to save space
       onClick={handleClick}
     >
-      <Trans i18nKey="explore.custom-button.text">Custom Action</Trans>
+      <Trans i18nKey="explore.sigma-button.text">Convert to Sigma</Trans>
     </ToolbarButton>
   );
 }
