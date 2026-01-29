@@ -48,7 +48,6 @@ func TestOSSDataKeyCache(t *testing.T) {
 		assert.Equal(t, namespace, retrieved.Namespace)
 		assert.True(t, retrieved.Expiration.After(time.Now()), "expiration should be in the future")
 	})
-
 }
 
 func TestOSSDataKeyCache_FalseConditions(t *testing.T) {
