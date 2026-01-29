@@ -79,7 +79,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       await submitData(spec, form.privateKey);
     } catch (err) {
       if (isFetchError(err)) {
-        const [field, errorMessage] = getConnectionFormErrors(err.data?.errors);
+        const [field, errorMessage] = getConnectionFormErrors(err.data);
 
         if (field && errorMessage) {
           setError(field, errorMessage);

@@ -1,4 +1,4 @@
-import { Resource, ResourceList } from './types';
+import { K8sStatusCause, Resource, ResourceList } from './types';
 
 /**
  * Helper function to safely check if a value is a non-null object
@@ -42,4 +42,29 @@ export function isResourceList<T = object, S = object, K = string>(value: unknow
   }
 
   return typeof metadata.resourceVersion === 'string' && Array.isArray(value.items);
+}
+
+/**
+ * Type guard to check if an item looks like a K8sStatusCause.
+ */
+export function isStatusCause(item: unknown): item is K8sStatusCause {
+  return isObject(item) && ('field' in item || 'message' in item || 'reason' in item);
+}
+
+/**
+ * Type guard to check if data is a Kubernetes Status failure response.
+ */
+export function isStatusFailure(
+  data: unknown
+): data is { kind: string; status: string; details?: { causes?: K8sStatusCause[] } } {
+  if (isObject(data) && 'kind' in data && 'status' in data && data.kind === 'Status' && data.status === 'Failure') {
+    if ('details' in data && isObject(data.details)) {
+      if ('causes' in data.details) {
+        const causes = data.details.causes;
+        return Array.isArray(causes) && causes.every(isStatusCause);
+      }
+    }
+    return true;
+  }
+  return false;
 }

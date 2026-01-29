@@ -1,6 +1,8 @@
 import { Path } from 'react-hook-form';
 
-import { ErrorDetails } from 'app/api/clients/provisioning/v0alpha1';
+import { isObject } from '@grafana/data';
+import { ErrorDetails, StatusCause } from 'app/api/clients/provisioning/v0alpha1';
+import { extractStatusCauses } from 'app/api/utils';
 
 import { WizardFormData } from '../Wizard/types';
 import { ConnectionFormData, RepositoryFormData } from '../types';
@@ -10,6 +12,42 @@ export type RepositoryFormPath = `repository.${RepositoryField}` | 'repository.s
 
 type GenericFormPath = string;
 type GenericFormErrorTuple<T extends GenericFormPath> = [T | null, { message: string } | null];
+
+/**
+ * Convert StatusCause to ErrorDetails format
+ */
+function statusCauseToErrorDetails(cause: StatusCause): ErrorDetails {
+  return {
+    field: cause.field,
+    detail: cause.message,
+    type: cause.reason ?? 'Unknown',
+  };
+}
+
+/**
+ * Type guard to check if data has an errors array
+ */
+function hasErrorsArray(data: unknown): data is { errors: ErrorDetails[] } {
+  return isObject(data) && 'errors' in data && Array.isArray(data.errors);
+}
+
+/**
+ * Extract errors from either the Kubernetes Status format or the standard errors array.
+ * Returns errors in ErrorDetails[] format.
+ */
+export function extractFormErrors(data: unknown): ErrorDetails[] {
+  const causes = extractStatusCauses<StatusCause>(data);
+  if (causes.length > 0) {
+    return causes.map(statusCauseToErrorDetails);
+  }
+
+  // Fall back to standard errors array format
+  if (hasErrorsArray(data)) {
+    return data.errors;
+  }
+
+  return [];
+}
 
 /**
  * Normalize API field name by removing "spec." prefix.
@@ -54,7 +92,7 @@ function mapErrorsToField<T extends GenericFormPath>(
 
 // Wizard form errors
 export type FormErrorTuple = GenericFormErrorTuple<RepositoryFormPath>;
-export const getFormErrors = (errors: ErrorDetails[]): FormErrorTuple => {
+export const getFormErrors = (data: unknown): FormErrorTuple => {
   const fieldMap: Record<string, RepositoryFormPath> = {
     'local.path': 'repository.path',
     'github.branch': 'repository.branch',
@@ -70,6 +108,7 @@ export const getFormErrors = (errors: ErrorDetails[]): FormErrorTuple => {
     'sync.intervalSeconds': 'repository.sync.intervalSeconds',
   };
 
+  const errors = extractFormErrors(data);
   return mapErrorsToField(errors, fieldMap, { allowPartial: true });
 };
 
@@ -77,7 +116,7 @@ export const getFormErrors = (errors: ErrorDetails[]): FormErrorTuple => {
 export type ConfigFormPath = Path<RepositoryFormData>;
 export type ConfigFormErrorTuple = GenericFormErrorTuple<ConfigFormPath>;
 
-export const getConfigFormErrors = (errors?: ErrorDetails[]): ConfigFormErrorTuple => {
+export const getConfigFormErrors = (data: unknown): ConfigFormErrorTuple => {
   const fieldMap: Record<string, ConfigFormPath> = {
     path: 'path',
     branch: 'branch',
@@ -87,6 +126,7 @@ export const getConfigFormErrors = (errors?: ErrorDetails[]): ConfigFormErrorTup
     'sync.intervalSeconds': 'sync.intervalSeconds',
   };
 
+  const errors = extractFormErrors(data);
   return mapErrorsToField(errors, fieldMap, { allowPartial: true });
 };
 
@@ -94,7 +134,7 @@ export const getConfigFormErrors = (errors?: ErrorDetails[]): ConfigFormErrorTup
 export type ConnectionFormPath = Path<ConnectionFormData>;
 export type ConnectionFormErrorTuple = GenericFormErrorTuple<ConnectionFormPath>;
 
-export const getConnectionFormErrors = (errors?: ErrorDetails[]): ConnectionFormErrorTuple => {
+export const getConnectionFormErrors = (data: unknown): ConnectionFormErrorTuple => {
   const fieldMap: Record<string, ConnectionFormPath> = {
     // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     title: 'title',
@@ -108,5 +148,6 @@ export const getConnectionFormErrors = (errors?: ErrorDetails[]): ConnectionForm
     privateKey: 'privateKey',
   };
 
+  const errors = extractFormErrors(data);
   return mapErrorsToField(errors, fieldMap, { allowPartial: true });
 };

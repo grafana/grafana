@@ -129,7 +129,7 @@ export function useWizardSubmission({
       } catch (error) {
         const formData = getValues();
         if (isFetchError(error)) {
-          const [field, errorMessage] = getFormErrors(error.data.errors);
+          const [field, errorMessage] = getFormErrors(error.data);
           if (field === 'repository.token' && activeStep === 'connection' && formData.githubAuthType !== 'pat') {
             setStepStatusInfo({
               status: 'error',
