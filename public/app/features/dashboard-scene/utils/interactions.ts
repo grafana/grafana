@@ -99,7 +99,7 @@ export const DashboardInteractions = {
   // dashboards_edit_action_clicked: when user adds or removes an item in edit mode
   // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab
   trackAddPanelClick(
-    source?: 'sidebar' | 'canvas',
+    source: 'sidebar' | 'canvas' = 'canvas',
     target?: 'row' | 'tab' | 'dashboard',
     action: 'drop' | 'click' = 'click'
   ) {
@@ -250,6 +250,12 @@ export const DashboardInteractions = {
   },
   copyImageUrlClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('dashboard_image_url_copied', properties);
+  },
+
+  // move item interactions
+  trackMoveItem: (item: 'panel' | 'row' | 'tab', action: 'drag' | 'drop', context: { isCrossLayout: boolean }) => {
+    const properties = { item, action, context };
+    reportDashboardInteraction('move_item', properties);
   },
 };
 
