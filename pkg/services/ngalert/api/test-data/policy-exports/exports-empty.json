@@ -3,6 +3,7 @@
  "policies": [
   {
    "orgId": 1,
+   "name": "empty",
    "receiver": "default-receiver"
   }
  ]

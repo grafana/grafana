@@ -3,6 +3,7 @@
  "policies": [
   {
    "orgId": 1,
+   "name": "override-inherit",
    "receiver": "provisioned-contact-point",
    "group_by": [
     "alertname"

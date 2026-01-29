@@ -6,7 +6,8 @@ import { t } from '@grafana/i18n';
 import { Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
-import { NotificationPoliciesList } from 'app/features/alerting/unified/components/notification-policies/NotificationPoliciesList';
+import { PoliciesList } from 'app/features/alerting/unified/components/notification-policies/PoliciesList';
+import { PoliciesTree } from 'app/features/alerting/unified/components/notification-policies/PoliciesTree';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
@@ -15,6 +16,7 @@ import { InhibitionRulesAlert } from './components/InhibitionRulesAlert';
 import { TimeIntervalsTable } from './components/mute-timings/MuteTimingsTable';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
+import { config } from '@grafana/runtime';
 
 enum ActiveTab {
   NotificationPolicies = 'notification_policies',
@@ -75,11 +77,24 @@ const NotificationPoliciesTabs = () => {
         )}
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {policyTreeTabActive && <NotificationPoliciesList />}
+        {policyTreeTabActive && <PolicyTreeTab />}
         {muteTimingsTabActive && <TimeIntervalsTable />}
       </TabContent>
     </>
   );
+};
+
+const PolicyTreeTab = () => {
+  const { isGrafanaAlertmanager } = useAlertmanager();
+
+  const useMultiplePoliciesView = config.featureToggles.alertingMultiplePolicies;
+
+  // Render just the single main tree if not Grafana Alertmanager or the multiple policies view is disabled.
+  if (!isGrafanaAlertmanager || !useMultiplePoliciesView) {
+    return <PoliciesTree />;
+  }
+
+  return <PoliciesList />;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({

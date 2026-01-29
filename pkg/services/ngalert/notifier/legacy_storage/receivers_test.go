@@ -423,32 +423,38 @@ func TestReceiverUseByName(t *testing.T) {
 }
 
 func TestRenameReceiverInRoutes(t *testing.T) {
+	routeGen := func() *definitions.Route {
+		return &definitions.Route{
+			Receiver: "receiver1",
+			Routes: []*definitions.Route{
+				{
+					Receiver: "receiver1",
+					Routes: []*definitions.Route{
+						{
+							Receiver: "missing-receiver",
+						},
+					},
+				},
+				{
+					Receiver: "dupe-receiver",
+					Routes: []*definitions.Route{
+						{
+							Receiver: "receiver1",
+						},
+					},
+				},
+			},
+		}
+	}
 	rev := getConfigRevisionForTest()
-	rev.Config.AlertmanagerConfig.Route.Routes = append(rev.Config.AlertmanagerConfig.Route.Routes, &definitions.Route{
-		Receiver: "receiver1",
-		Routes: []*definitions.Route{
-			{
-				Receiver: "receiver1",
-				Routes: []*definitions.Route{
-					{
-						Receiver: "missing-receiver",
-					},
-				},
-			},
-			{
-				Receiver: "dupe-receiver",
-				Routes: []*definitions.Route{
-					{
-						Receiver: "receiver1",
-					},
-				},
-			},
-		},
-	})
+	rev.Config.AlertmanagerConfig.Route.Routes = append(rev.Config.AlertmanagerConfig.Route.Routes, routeGen())
+	rev.Config.ManagedRoutes = map[string]*definitions.Route{
+		"named_route": routeGen(),
+	}
 
 	t.Run("should do nothing if receiver is not used by routes ", func(t *testing.T) {
 		result := rev.RenameReceiverInRoutes("not-found", "found")
-		require.Zero(t, result)
+		require.Empty(t, result)
 		expected := map[string]int{
 			"receiver1":        4,
 			"missing-receiver": 1,
@@ -459,13 +465,44 @@ func TestRenameReceiverInRoutes(t *testing.T) {
 
 	t.Run("should rename all references", func(t *testing.T) {
 		result := rev.RenameReceiverInRoutes("receiver1", "found")
-		require.Equal(t, result, 4)
+		require.Equal(t, result[rev.Config.AlertmanagerConfig.Route], 4)
 		expected := map[string]int{
 			"found":            4,
 			"missing-receiver": 1,
 			"dupe-receiver":    1,
 		}
 		require.Equal(t, expected, rev.ReceiverUseByName())
+	})
+
+	t.Run("managedRoutesSupported=true", func(t *testing.T) {
+		rev := getConfigRevisionForTest()
+		rev.Config.AlertmanagerConfig.Route.Routes = append(rev.Config.AlertmanagerConfig.Route.Routes, routeGen())
+		rev.Config.ManagedRoutes = map[string]*definitions.Route{
+			"named_route": routeGen(),
+		}
+		rev.managedRoutesSupported = true
+		t.Run("should do nothing if receiver is not used by routes ", func(t *testing.T) {
+			result := rev.RenameReceiverInRoutes("not-found", "found")
+			require.Empty(t, result)
+			expected := map[string]int{
+				"receiver1":        7,
+				"missing-receiver": 2,
+				"dupe-receiver":    2,
+			}
+			require.Equal(t, expected, rev.ReceiverUseByName())
+		})
+
+		t.Run("should rename all references", func(t *testing.T) {
+			result := rev.RenameReceiverInRoutes("receiver1", "found")
+			require.Equal(t, 4, result[rev.Config.AlertmanagerConfig.Route])
+			require.Equal(t, 3, result[rev.Config.ManagedRoutes["named_route"]])
+			expected := map[string]int{
+				"found":            7,
+				"missing-receiver": 2,
+				"dupe-receiver":    2,
+			}
+			require.Equal(t, expected, rev.ReceiverUseByName())
+		})
 	})
 }
 

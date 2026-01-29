@@ -1,4 +1,5 @@
 resource "grafana_notification_policy" "notification_policy_1" {
+  name          = "special-cases"
   contact_point = "default-receiver"
   group_by      = ["..."]
 

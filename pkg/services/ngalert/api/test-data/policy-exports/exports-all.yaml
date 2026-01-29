@@ -1,0 +1,159 @@
+apiVersion: 1
+policies:
+    - orgId: 1
+      name: deeply-nested
+      receiver: slack-multi-channel
+      group_by:
+        - alertname
+      routes:
+        - object_matchers:
+            - - level
+              - =
+              - one
+          routes:
+            - object_matchers:
+                - - level
+                  - =
+                  - two
+              routes:
+                - object_matchers:
+                    - - level
+                      - =
+                      - three
+                  routes:
+                    - object_matchers:
+                        - - level
+                          - =
+                          - four
+                      routes:
+                        - object_matchers:
+                            - - level
+                              - =
+                              - five
+      group_wait: 3s
+      group_interval: 3m
+      repeat_interval: 3h
+    - orgId: 1
+      name: empty
+      receiver: default-receiver
+    - orgId: 1
+      name: matcher-variety
+      receiver: lotsa-emails
+      group_by:
+        - alertname
+      routes:
+        - object_matchers:
+            - - severity
+              - =
+              - warn
+        - object_matchers:
+            - - severity
+              - =~
+              - critical
+        - object_matchers:
+            - - severity
+              - '!~'
+              - info
+        - object_matchers:
+            - - severity
+              - '!='
+              - debug
+      group_wait: 2s
+      group_interval: 2m
+      repeat_interval: 2h
+    - orgId: 1
+      name: override-inherit
+      receiver: provisioned-contact-point
+      group_by:
+        - alertname
+      routes:
+        - receiver: lotsa-emails
+          group_by:
+            - alertname
+            - grafana_folder
+          object_matchers:
+            - - severity
+              - =
+              - critical
+          mute_time_intervals:
+            - A provisioned interval
+          active_time_intervals:
+            - Some interval
+          continue: true
+          routes:
+            - receiver: lotsa-emails-override
+              group_by:
+                - alertname
+                - grafana_folder
+                - one_more_group
+              object_matchers:
+                - - severity
+                  - '!='
+                  - critical
+              mute_time_intervals:
+                - A provisioned interval override
+              active_time_intervals:
+                - Some interval override
+              group_wait: 1m40s
+              group_interval: 1h40m
+              repeat_interval: 4d4h
+          group_wait: 10s
+          group_interval: 10m
+          repeat_interval: 10h
+        - object_matchers:
+            - - severity
+              - =
+              - warn
+          routes:
+            - object_matchers:
+                - - severity
+                  - =
+                  - warn
+      group_wait: 1s
+      group_interval: 1m
+      repeat_interval: 1h
+    - orgId: 1
+      name: special-cases
+      receiver: default-receiver
+      group_by:
+        - '...'
+      routes:
+        - object_matchers:
+            - - utf8
+              - =
+              - "\U0001F916\U0001F525✨\U0001F469\U0001F3FD‍\U0001F4BB\U0001F680\U0001F9EA\U0001F9E0\U0001F602\U0001F4A5\U0001FAE0\U0001F1E8\U0001F1E6"
+        - {}
+        - object_matchers:
+            - - path
+              - =~
+              - ^/api/v[0-9]+/\p{L}[\p{L}\p{N}_\-]*$
+            - - special_regex_chars
+              - =
+              - .*+?^()|[]\
+    - orgId: 1
+      receiver: default-receiver
+      group_by:
+        - g1
+        - g2
+      routes:
+        - receiver: nested-receiver
+          group_by:
+            - g3
+            - g4
+          matchers:
+            - a="b"
+          object_matchers:
+            - - foo
+              - =
+              - bar
+          mute_time_intervals:
+            - interval
+          active_time_intervals:
+            - active
+          continue: true
+          group_wait: 5m
+          group_interval: 5m
+          repeat_interval: 5m
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 1h

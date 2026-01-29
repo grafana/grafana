@@ -1,4 +1,5 @@
 resource "grafana_notification_policy" "notification_policy_1" {
+  name          = "matcher-variety"
   contact_point = "lotsa-emails"
   group_by      = ["alertname"]
 

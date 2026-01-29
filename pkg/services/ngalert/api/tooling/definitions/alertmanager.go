@@ -773,11 +773,30 @@ func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingCon
 	return config
 }
 
+// ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate
+// GroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to
+// definitions.Route explicit.
+type ManagedRoutes map[string]*definition.Route
+
+func (mr *ManagedRoutes) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain ManagedRoutes
+	if err := unmarshal((*plain)(mr)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (mr *ManagedRoutes) UnmarshalJSON(b []byte) error {
+	// Divert to the yaml unmarshaller as downstream Routes only define UnmarshalYAML.
+	return yaml.Unmarshal(b, &mr)
+}
+
 // swagger:model
 type PostableUserConfig struct {
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 	ExtraConfigs       []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
+	ManagedRoutes      ManagedRoutes             `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"` // TODO: Move to ConfigRevision?
 	amSimple           map[string]interface{}    `yaml:"-" json:"-"`
 }
 

@@ -2072,16 +2072,27 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 }
 
 func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
-	// These tests are focused on exports using featuremgmt.FlagAlertingMultiplePolicies, but are using the `user-defined` for now.
+	// These tests are focused on exports using featuremgmt.FlagAlertingMultiplePolicies.
 	env := createTestEnv(t, testConfig) // testConfig should be unused here, we're overriding the policy service.
-	sut := createProvisioningSrvSutFromEnv(t, &env)
+	env.features = featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 
-	for policyName, route := range policy_exports.AllRoutes() {
+	sut := createProvisioningSrvSutFromEnv(t, &env)
+	sut.policies = createFakeNotificationPolicyService()
+
+	policies := []string{legacy_storage.UserDefinedRoutingTreeName, "all"} // "all" is a placeholder for the empty name export all api call.
+	for policy := range policy_exports.Config().ManagedRoutes {
+		policies = append(policies, policy)
+	}
+
+	for _, policyName := range policies {
 		t.Run(fmt.Sprintf("policy=%s", policyName), func(t *testing.T) {
-			sut.policies = newFakeNotificationPolicyService(route)
 			for _, exportType := range []string{"json", "yaml", "hcl"} {
 				t.Run(fmt.Sprintf("exportType=%s", exportType), func(t *testing.T) {
 					rc := createTestRequestCtx()
+
+					if policyName != "all" { // All export requires an empty route name query param.
+						rc.Req.Form.Add("routeName", policyName)
+					}
 
 					switch exportType {
 					case "yaml":
@@ -2264,7 +2275,7 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) ProvisioningSrv {
 	t.Helper()
 	tracer := tracing.InitializeTracerForTest()
-	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs, notifier.NewExtraConfigsCrypto(env.secrets))
+	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs, notifier.NewExtraConfigsCrypto(env.secrets), env.features)
 	receiverSvc := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
 		configStore,
@@ -2278,10 +2289,8 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		false,
 	)
 	return ProvisioningSrv{
-		log: env.log,
-		policies: newFakeNotificationPolicyService(&definitions.Route{
-			Receiver: "some-receiver",
-		}),
+		log:                 env.log,
+		policies:            newFakeNotificationPolicyService(),
 		contactPointService: provisioning.NewContactPointService(configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService()),
 		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store),
@@ -2316,13 +2325,15 @@ type fakeNotificationPolicyService struct {
 	prov   models.Provenance
 }
 
-func newFakeNotificationPolicyService(route *definitions.Route) *fakeNotificationPolicyService {
+func newFakeNotificationPolicyService() *fakeNotificationPolicyService {
 	return &fakeNotificationPolicyService{
 		config: legacy_storage.ConfigRevision{
 			Config: &definitions.PostableUserConfig{
 				AlertmanagerConfig: definitions.PostableApiAlertingConfig{
 					Config: definitions.Config{
-						Route: route,
+						Route: &definitions.Route{
+							Receiver: "some-receiver",
+						},
 					},
 				},
 			},
@@ -2363,7 +2374,20 @@ func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, org
 	return definitions.Route{}, nil
 }
 
-type fakeFailingNotificationPolicyService struct{}
+func (f *fakeNotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string) (legacy_storage.ManagedRoute, error) {
+	r := f.config.GetManagedRoute(name)
+	if r == nil {
+		return legacy_storage.ManagedRoute{}, provisioning.ErrRouteNotFound.Errorf("route %q not found", name)
+	}
+	return *r, nil
+}
+func (f *fakeNotificationPolicyService) GetManagedRoutes(ctx context.Context, orgID int64) (legacy_storage.ManagedRoutes, error) {
+	return f.config.GetManagedRoutes(), nil
+}
+
+type fakeFailingNotificationPolicyService struct {
+	NotificationPolicyService
+}
 
 func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
 	return definitions.Route{}, "", fmt.Errorf("something went wrong")
@@ -2377,7 +2401,9 @@ func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Conte
 	return definitions.Route{}, fmt.Errorf("something went wrong")
 }
 
-type fakeRejectingNotificationPolicyService struct{}
+type fakeRejectingNotificationPolicyService struct {
+	NotificationPolicyService
+}
 
 type fakeRejectingNotificationSettingsValidatorProvider struct{}
 

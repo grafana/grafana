@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/hcl"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
@@ -58,6 +59,9 @@ type NotificationPolicyService interface {
 	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error)
 	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance, version string) (definitions.Route, string, error)
 	ResetPolicyTree(ctx context.Context, orgID int64, provenance alerting_models.Provenance) (definitions.Route, error)
+
+	GetManagedRoute(ctx context.Context, orgID int64, name string) (legacy_storage.ManagedRoute, error)
+	GetManagedRoutes(ctx context.Context, orgID int64) (legacy_storage.ManagedRoutes, error)
 }
 
 type MuteTimingService interface {
@@ -96,19 +100,43 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) respo
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext) response.Response {
-	policies, _, err := srv.policies.GetPolicyTree(c.Req.Context(), c.GetOrgID())
-	if err != nil {
-		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-			return ErrResp(http.StatusNotFound, err, "")
+	if !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
+		// Default to the old behavior of exporting the single user-defined policy tree without a "name" field.
+		policy, _, err := srv.policies.GetPolicyTree(c.Req.Context(), c.GetOrgID())
+		if err != nil {
+			if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+				return ErrResp(http.StatusNotFound, err, "")
+			}
+			return ErrResp(http.StatusInternalServerError, err, "")
 		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		e, err := AlertingFileExportFromRoute(c.GetOrgID(), policy)
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
+		}
+		return exportResponse(c, e)
 	}
 
-	e, err := AlertingFileExportFromRoute(c.GetOrgID(), policies)
+	routeName := c.Query("routeName")
+	var routesToExport legacy_storage.ManagedRoutes
+	if routeName == "" {
+		// Interpreted as Export All.
+		var err error
+		routesToExport, err = srv.policies.GetManagedRoutes(c.Req.Context(), c.GetOrgID())
+		if err != nil {
+			return response.ErrOrFallback(http.StatusInternalServerError, "failed to export all notification policy trees", err)
+		}
+	} else {
+		managedRoute, err := srv.policies.GetManagedRoute(c.Req.Context(), c.GetOrgID(), routeName)
+		if err != nil {
+			return response.ErrOrFallback(http.StatusInternalServerError, "failed to export notification policy tree", err)
+		}
+		routesToExport = legacy_storage.ManagedRoutes{&managedRoute}
+	}
+
+	e, err := AlertingFileExportFromManagedRoutes(c.GetOrgID(), routesToExport)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
-
 	return exportResponse(c, e)
 }
 
@@ -596,6 +624,9 @@ func escapeAlertingFileExport(body definitions.AlertingFileExport) definitions.A
 }
 
 func escapeRouteExport(r *definitions.RouteExport) {
+	if r.Name != nil {
+		r.Name = util.Pointer(addEscapeCharactersToString(*r.Name))
+	}
 	r.Receiver = addEscapeCharactersToString(r.Receiver)
 	if r.GroupByStr != nil {
 		groupByStr := make([]string, len(*r.GroupByStr))

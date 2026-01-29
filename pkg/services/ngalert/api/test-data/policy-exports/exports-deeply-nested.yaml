@@ -1,6 +1,7 @@
 apiVersion: 1
 policies:
     - orgId: 1
+      name: deeply-nested
       receiver: slack-multi-channel
       group_by:
         - alertname
