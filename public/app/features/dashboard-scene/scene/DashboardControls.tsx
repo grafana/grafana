@@ -185,7 +185,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   } = model.useState();
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();
-  const styles = useStyles2(getStyles);
+  const isQueryEditorNext = Boolean(config.featureToggles.queryEditorNext);
+  const styles = useStyles2(getStyles, isQueryEditorNext);
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
 
@@ -293,8 +294,9 @@ function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
   const canEditDashboard = dashboard.canEditDashboard();
   const hasUid = Boolean(uid);
   const isSnapshot = Boolean(meta.isSnapshot);
+  const isEmbedded = meta.isEmbedded;
   const isEditable = Boolean(editable);
-  const showShareButton = hasUid && !isSnapshot && !isPlaying;
+  const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying;
 
   return (
     <>
@@ -332,7 +334,7 @@ function renderHiddenVariables(dashboard: DashboardScene) {
   return null;
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
   return {
     // Original controls style
     controls: css({
@@ -355,7 +357,10 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     controlsPanelEdit: css({
       flexWrap: 'wrap-reverse',
-      // In panel edit we do not need any right padding as the splitter is providing it
+      ...(isQueryEditorNext && {
+        padding: 0,
+        marginBottom: theme.spacing(1),
+      }),
       paddingRight: 0,
     }),
     // New layout styles (used when feature toggle is on)

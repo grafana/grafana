@@ -144,8 +144,8 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 	adminClient, err := v0alpha1.NewReceiverClientFromGenerator(admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	writeACMetadata := []string{"canWrite", "canDelete"}
-	allACMetadata := []string{"canWrite", "canDelete", "canReadSecrets", "canAdmin", "canModifyProtected"}
+	writeACMetadata := []string{"canWrite", "canDelete", "canTest"}
+	allACMetadata := []string{"canWrite", "canDelete", "canReadSecrets", "canAdmin", "canModifyProtected", "canTest"}
 
 	mustID := func(user apis.User) int64 {
 		id, err := user.Identity.GetInternalID()
@@ -416,6 +416,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 		canDelete          bool
 		canReadSecrets     bool
 		canAdmin           bool
+		canTest            bool
 	}
 	// region users
 	unauthorized := helper.CreateUser("unauthorized", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
@@ -436,6 +437,13 @@ func TestIntegrationAccessControl(t *testing.T) {
 		createWildcardPermission(
 			accesscontrol.ActionAlertingReceiversRead,
 			accesscontrol.ActionAlertingReceiversUpdate,
+		),
+	})
+	updaterAndTester := helper.CreateUser("updaterAndTester", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversRead,
+			accesscontrol.ActionAlertingReceiversUpdate,
+			accesscontrol.ActionAlertingReceiversTest,
 		),
 	})
 	deleter := helper.CreateUser("deleter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
@@ -494,6 +502,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canDelete:          true,
 			canAdmin:           true,
 			canReadSecrets:     true,
+			canTest:            true,
 		},
 		{
 			user:      org1.Editor,
@@ -501,6 +510,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canUpdate: true,
 			canCreate: true,
 			canDelete: true,
+			canTest:   true,
 		},
 		{
 			user:    org1.Viewer,
@@ -526,6 +536,12 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canUpdate: true,
 		},
 		{
+			user:      updaterAndTester,
+			canRead:   true,
+			canUpdate: true,
+			canTest:   true,
+		},
+		{
 			user:      deleter,
 			canRead:   true,
 			canDelete: true,
@@ -540,6 +556,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canCreate: true,
 			canUpdate: true,
 			canDelete: true,
+			canTest:   true,
 		},
 		{
 			user:               adminLikeUser,
@@ -550,6 +567,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canDelete:          true,
 			canAdmin:           true,
 			canReadSecrets:     true,
+			canTest:            true,
 		},
 		{
 			user:               adminLikeUserLongName,
@@ -560,6 +578,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canDelete:          true,
 			canAdmin:           true,
 			canReadSecrets:     true,
+			canTest:            true,
 		},
 	}
 
@@ -619,6 +638,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 				expectedWithMetadata.SetCanUse(true)
 				if tc.canUpdate {
 					expectedWithMetadata.SetAccessControl("canWrite")
+				}
+				if tc.canTest {
+					expectedWithMetadata.SetAccessControl("canTest")
 				}
 				if tc.canUpdateProtected {
 					expectedWithMetadata.SetAccessControl("canModifyProtected")
@@ -801,7 +823,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	ruleGen := func() definitions.PostableGrafanaRule { return *ruleGroup.Rules[0].GrafanaManagedAlert }
 	rule2 := ruleGen()
 	rule2.Title = "Rule2"
-	rule2.NotificationSettings = &definitions.AlertRuleNotificationSettings{Receiver: "grafana-default-email"}
+	rule2.NotificationSettings = &definitions.AlertRuleNotificationSettings{Receiver: "empty"}
 	rule3 := ruleGen()
 	rule3.Title = "Rule3"
 	ruleGroup.Rules = append(ruleGroup.Rules,
@@ -848,7 +870,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	checkInUse(t, receiverListed, receiverGet, 4, 2)
 
 	// Verify the default.
-	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
+	receiverListed, receiverGet = requestReceivers(t, "empty")
 	checkInUse(t, receiverListed, receiverGet, 1, 1)
 
 	// Removing the new extra route should leave only 1.
@@ -871,7 +893,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
 	checkInUse(t, receiverListed, receiverGet, 1, 1)
 
-	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
+	receiverListed, receiverGet = requestReceivers(t, "empty")
 	checkInUse(t, receiverListed, receiverGet, 1, 0)
 
 	// Remove the remaining routes.
@@ -889,7 +911,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
 	checkInUse(t, receiverListed, receiverGet, 0, 0)
 
-	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
+	receiverListed, receiverGet = requestReceivers(t, "empty")
 	checkInUse(t, receiverListed, receiverGet, 1, 0)
 }
 
@@ -1259,7 +1281,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, items.Items, 1)
 		defaultReceiver = &items.Items[0]
-		assert.Equal(t, "grafana-default-email", defaultReceiver.Spec.Title)
+		assert.Equal(t, "empty", defaultReceiver.Spec.Title)
 		assert.NotEmpty(t, defaultReceiver.UID)
 		assert.NotEmpty(t, defaultReceiver.Name)
 		assert.NotEmpty(t, defaultReceiver.ResourceVersion)
@@ -1269,7 +1291,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		assert.NotEmpty(t, defaultReceiver.UID)
 		assert.NotEmpty(t, defaultReceiver.Name)
 		assert.NotEmpty(t, defaultReceiver.ResourceVersion)
-		assert.Len(t, defaultReceiver.Spec.Integrations, 1)
+		assert.Len(t, defaultReceiver.Spec.Integrations, 0)
 	})
 
 	t.Run("should be able to update default receiver", func(t *testing.T) {
@@ -1281,16 +1303,15 @@ func TestIntegrationCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		expected := newDefault.Copy().(*v0alpha1.Receiver)
-		expected.Spec.Integrations[0].Uid = updatedReceiver.Spec.Integrations[0].Uid // default integration does not have UID before first update
-		lineIntegration := expected.Spec.Integrations[1]
+		lineIntegration := expected.Spec.Integrations[0]
 		lineIntegration.SecureFields = map[string]bool{
 			"token": true,
 		}
 		delete(lineIntegration.Settings, "token")
-		assert.Equal(t, "LINE", updatedReceiver.Spec.Integrations[1].Type) // this type is in the schema but not in backend
+		assert.Equal(t, "LINE", updatedReceiver.Spec.Integrations[0].Type) // this type is in the schema but not in backend
 		lineIntegration.Type = "LINE"
-		lineIntegration.Uid = updatedReceiver.Spec.Integrations[1].Uid
-		expected.Spec.Integrations[1] = lineIntegration
+		lineIntegration.Uid = updatedReceiver.Spec.Integrations[0].Uid
+		expected.Spec.Integrations[0] = lineIntegration
 
 		assert.Equal(t, expected.Spec, updatedReceiver.Spec)
 	})
@@ -1342,6 +1363,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		receiver.SetAccessControl("canReadSecrets")
 		receiver.SetAccessControl("canAdmin")
 		receiver.SetAccessControl("canModifyProtected")
+		receiver.SetAccessControl("canTest")
 		receiver.SetInUse(0, nil)
 		receiver.SetCanUse(true)
 
@@ -1524,7 +1546,7 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 	receiverClient, err := v0alpha1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 	for _, receiver := range amConfig.AlertmanagerConfig.Receivers {
-		if receiver.Name == "grafana-default-email" {
+		if receiver.Name == "empty" {
 			continue
 		}
 

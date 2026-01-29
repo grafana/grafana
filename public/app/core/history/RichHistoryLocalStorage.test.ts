@@ -1,5 +1,4 @@
-import { DataQuery } from '@grafana/data';
-import store from 'app/core/store';
+import { DataQuery, store } from '@grafana/data';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
