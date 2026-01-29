@@ -394,8 +394,8 @@ describe('LokiDatasource', () => {
 
     it('should return label type', () => {
       expect(ds.getLabelTypeFromFrame('label', dataplaneTestFrame, 0)).toEqual('Indexed labels');
-      expect(ds.getLabelTypeFromFrame('label2', dataplaneTestFrame, 0)).toEqual('Parsed fields');
-      expect(ds.getLabelTypeFromFrame('label3', dataplaneTestFrame, 1)).toEqual('Structured metadata');
+      expect(ds.getLabelTypeFromFrame('label2', dataplaneTestFrame, 0)).toEqual('Structured metadata');
+      expect(ds.getLabelTypeFromFrame('label3', dataplaneTestFrame, 1)).toEqual('Parsed fields');
     });
 
     it('should return a number', () => {

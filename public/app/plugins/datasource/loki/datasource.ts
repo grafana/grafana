@@ -211,9 +211,9 @@ export class LokiDatasource
       case LabelType.Indexed:
         return t('logs.fields.type.loki.indexed-labels', 'Indexed labels');
       case LabelType.Parsed:
-        return t('logs.fields.type.loki.structured-metadata', 'Structured metadata');
-      case LabelType.StructuredMetadata:
         return t('logs.fields.type.loki.parsed-labels', 'Parsed fields');
+      case LabelType.StructuredMetadata:
+        return t('logs.fields.type.loki.structured-metadata', 'Structured metadata');
       default:
         return null;
     }
