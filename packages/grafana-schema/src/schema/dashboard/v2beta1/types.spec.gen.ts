@@ -1573,3 +1573,4 @@ export const defaultSpec = (): Spec => ({
 	title: "",
 	variables: [],
 });
+
