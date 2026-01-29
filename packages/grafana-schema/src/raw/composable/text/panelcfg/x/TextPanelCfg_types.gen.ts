@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/text/panelcfg.cue file.
+
 export const pluginVersion = "12.4.0-pre";
 
 export enum TextMode {

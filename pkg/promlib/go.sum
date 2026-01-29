@@ -138,8 +138,8 @@ github.com/googleapis/gax-go/v2 v2.15.0 h1:SyjDc1mGgZU5LncH8gimWo9lW1DtIfPibOG81
 github.com/googleapis/gax-go/v2 v2.15.0/go.mod h1:zVVkkxAQHa1RQpg9z2AUCMnKhi0Qld9rcmyfL1OZhoc=
 github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e h1:zP30ZbtnWjy0KJxToqCLARauAtgFD+TAEB/sk4IBb9s=
 github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e/go.mod h1:Tl9i4F2CPp3cOiXo06JObTh05tENG/NV/ombn2XOY7Y=
-github.com/grafana/grafana-plugin-sdk-go v0.285.0 h1:kUWK/eo+t9UxVShS6OzpaYCXXv7egOks8k28FeicX3w=
-github.com/grafana/grafana-plugin-sdk-go v0.285.0/go.mod h1:cNFa2EpURNF5Hy15kH7HfVdprNu+UEmNZx7TMWVdctY=
+github.com/grafana/grafana-plugin-sdk-go v0.286.0 h1:nrG/XLDpYuUONVpVVGIUxPJdWeXGHM/47qIAnuDkdjg=
+github.com/grafana/grafana-plugin-sdk-go v0.286.0/go.mod h1:cNFa2EpURNF5Hy15kH7HfVdprNu+UEmNZx7TMWVdctY=
 github.com/grafana/grafana/apps/scope v0.0.0-20251007093103-792853df9134 h1:xly75v5lFNR37q+wXnwA5yU/fPW9IOSYbhFpt4tQyt8=
 github.com/grafana/grafana/apps/scope v0.0.0-20251007093103-792853df9134/go.mod h1:zijsUNa1zi476JJIR2Lcm/Paz1nRCno9XCp6hbS6G9o=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6 h1:Meoq0neEejGlmclgCInZM7EXl3Dw27zlGGwvEmJwvaY=

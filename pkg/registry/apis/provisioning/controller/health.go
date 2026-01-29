@@ -201,8 +201,9 @@ func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 	}
 
 	// Update Ready condition based on health status
-	readyCondition := buildReadyConditionFromHealth(newHealthStatus)
-	if conditionPatchOps := buildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), readyCondition); conditionPatchOps != nil {
+	// Repository health checks don't classify error types, so we use InvalidSpec as the default reason
+	readyCondition := buildReadyConditionWithReason(newHealthStatus, provisioning.ReasonInvalidSpec)
+	if conditionPatchOps := BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), readyCondition); conditionPatchOps != nil {
 		patchOps = append(patchOps, conditionPatchOps...)
 	}
 

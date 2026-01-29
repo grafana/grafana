@@ -31,3 +31,28 @@ export const addFilteredDisplayName = (role: RoleDto): Role => {
     filteredDisplayName,
   };
 };
+
+/**
+ * Global state store for picker open/closed state that survives component remounts.
+ *
+ * This store uses the observer pattern to notify React components when state changes.
+ * Each picker instance has a unique ID, and the store maintains the open/closed state
+ * for all pickers, allowing the state to persist even when components remount due to
+ * parent re-renders.
+ */
+export const pickerStateStore = (() => {
+  const states = new Map<string, boolean>();
+  const listeners = new Set<() => void>();
+
+  return {
+    getState: (key: string) => states.get(key) ?? false,
+    setState: (key: string, value: boolean) => {
+      states.set(key, value);
+      listeners.forEach((listener) => listener());
+    },
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  };
+})();

@@ -4284,6 +4284,7 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionSpec": {
         "type": "object",
         "required": [
+          "title",
           "type"
         ],
         "properties": {
@@ -4294,6 +4295,10 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.BitbucketConnectionConfig"
               }
             ]
+          },
+          "description": {
+            "description": "The connection description",
+            "type": "string"
           },
           "github": {
             "description": "GitHub connection configuration Only applicable when provider is \"github\"",
@@ -4310,6 +4315,11 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.GitlabConnectionConfig"
               }
             ]
+          },
+          "title": {
+            "description": "The connection display name (shown in the UI)",
+            "type": "string",
+            "default": ""
           },
           "type": {
             "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
@@ -4332,7 +4342,6 @@
         "type": "object",
         "required": [
           "observedGeneration",
-          "state",
           "health"
         ],
         "properties": {
@@ -4381,15 +4390,6 @@
             "type": "integer",
             "format": "int64",
             "default": 0
-          },
-          "state": {
-            "description": "Connection state\n\nPossible enum values:\n - `\"connected\"`\n - `\"disconnected\"`",
-            "type": "string",
-            "default": "",
-            "enum": [
-              "connected",
-              "disconnected"
-            ]
           }
         }
       },
@@ -5247,6 +5247,22 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.QuotaStatus": {
+        "description": "QuotaStatus represents the quota limits configured for this repository. These values come from static configuration and are read-only.",
+        "type": "object",
+        "properties": {
+          "maxRepositories": {
+            "description": "MaxRepositories is the maximum number of repositories allowed. 0 means unlimited.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "maxResourcesPerRepository": {
+            "description": "MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited.",
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RefItem": {
         "type": "object",
         "required": [
@@ -5568,6 +5584,15 @@
             "format": "int64",
             "default": 0
           },
+          "quota": {
+            "description": "Quota contains the configured quota limits for this repository",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.QuotaStatus"
+              }
+            ]
+          },
           "stats": {
             "description": "The object count when sync last ran",
             "type": "array",
@@ -5702,6 +5727,7 @@
         "type": "object",
         "required": [
           "allowImageRendering",
+          "maxRepositories",
           "items"
         ],
         "properties": {
@@ -5755,6 +5781,12 @@
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
+          },
+          "maxRepositories": {
+            "description": "MaxRepositories is the maximum number of repositories allowed per namespace (0 = unlimited)",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           }
         }
       },
@@ -6191,7 +6223,7 @@
             "default": false
           },
           "intervalSeconds": {
-            "description": "When non-zero, the sync will run periodically",
+            "description": "The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one.",
             "type": "integer",
             "format": "int64"
           },
