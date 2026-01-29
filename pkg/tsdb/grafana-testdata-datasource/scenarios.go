@@ -722,6 +722,7 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 	return resp, nil
 }
 
+// Adapted from /pkg/tsdb/loki/frame.go
 func adjustDataplaneLogsFrame(frame *data.Frame, query *backend.DataQuery) error {
 	// we check if the fields are of correct type and length
 	fields := frame.Fields
