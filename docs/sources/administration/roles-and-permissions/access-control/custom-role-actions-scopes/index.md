@@ -33,6 +33,15 @@ A permission is comprised of an action and a scope. When creating a custom role,
 
 To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions](ref:rbac-fixed-roles).
 
+{{< admonition type="note" >}}
+**Before creating custom roles**, consider whether you can meet your access requirements using:
+
+- **[Folder permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/folder-access-control/)**: Control access to dashboards, alert rules, and other resources by folder
+- **[Fixed roles](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/)**: Pre-built roles for common access patterns
+
+Custom roles are most useful when you need fine-grained control that these options don't provide.
+{{< /admonition >}}
+
 - **Action:** An action describes what tasks a user can perform on a resource.
 - **Scope:** A scope describes where an action can be performed, such as reading a specific user profile. In this example, a permission is associated with the scope `users:<userId>` to the relevant role.
 
@@ -188,37 +197,6 @@ The following list contains role-based access control actions.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-### Grafana Adaptive Metrics action definitions
-
-The following list contains role-based access control actions used by Grafana Adaptive Metrics.
-
-| Action                                               | Applicable scopes | Description                                           |
-| ---------------------------------------------------- | ----------------- | ----------------------------------------------------- |
-| `grafana-adaptive-metrics-app.plugin:access`         | None              | Access the Adaptive Metrics plugin in Grafana Cloud.  |
-| `grafana-adaptive-metrics-app.config:read`           | None              | Read the Adaptive Metrics app configuration.          |
-| `grafana-adaptive-metrics-app.config:write`          | None              | Update the Adaptive Metrics app configuration.        |
-| `grafana-adaptive-metrics-app.recommendations:read`  | None              | Read aggregation recommendations.                     |
-| `grafana-adaptive-metrics-app.recommendations:apply` | None              | Apply aggregation recommendations.                    |
-| `grafana-adaptive-metrics-app.rules:read`            | None              | Read aggregation rules.                               |
-| `grafana-adaptive-metrics-app.rules:write`           | None              | Create aggregation rules.                             |
-| `grafana-adaptive-metrics-app.rules:delete`          | None              | Delete aggregation rules.                             |
-| `grafana-adaptive-metrics-app.exemptions:read`       | None              | Read recommendation exemptions.                       |
-| `grafana-adaptive-metrics-app.exemptions:write`      | None              | Create, update, and delete recommendation exemptions. |
-
-### Cloud Access Policies action definitions
-
-The following list contains role-based access control actions used by Cloud Access Policies.
-
-| Action                   | Applicable scopes | Description                                                         |
-| ------------------------ | ----------------- | ------------------------------------------------------------------- |
-| `grafana-auth-app:write` | None              | Create, read, update, and delete access policies for Grafana Cloud. |
-
-{{< admonition type="warning" >}}
-Granting the `grafana-auth-app:write` permission is equivalent to assigning the Admin role to a user in Grafana, as it allows them to manage all stack service accounts. This provides significant privileges and should be assigned with caution.
-{{< /admonition >}}
-
-For more information on Cloud Access Policies and how to use them, see [Access policies](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/).
-
 ### Grafana Alerting Notification action definitions
 
 | Action                                          | Applicable scopes                                          | Description                                                                                                                                                                                                                                          |
@@ -242,28 +220,6 @@ For more information on Cloud Access Policies and how to use them, see [Access p
 | `alert.notifications.templates.test:write`      | None                                                       | Test templates with custom payloads (preview and payload editor functionality).                                                                                                                                                                      |
 | `alert.notifications.routes:read`               | None                                                       | Read notification policies.                                                                                                                                                                                                                          |
 | `alert.notifications.routes:write`              | None                                                       | Create new, update or delete notification policies                                                                                                                                                                                                   |
-
-### Grafana Synthetic Monitoring action definitions
-
-The following list contains role-based access control actions used by Grafana Synthetic Monitoring.
-
-| Action                                                 | Applicable scopes | Description                                                 |
-| ------------------------------------------------------ | ----------------- | ----------------------------------------------------------- |
-| `grafana-synthetic-monitoring-app:read`                | None              | Read synthetic monitoring app.                              |
-| `grafana-synthetic-monitoring-app:write`               | None              | Write synthetic monitoring app.                             |
-| `grafana-synthetic-monitoring-app.checks:read`         | None              | Read checks in the Synthetic Monitoring app.                |
-| `grafana-synthetic-monitoring-app.checks:write`        | None              | Create and edit checks in the Synthetic Monitoring app.     |
-| `grafana-synthetic-monitoring-app.checks:delete`       | None              | Delete checks in the Synthetic Monitoring app.              |
-| `grafana-synthetic-monitoring-app.probes:read`         | None              | Read probes in the Synthetic Monitoring app.                |
-| `grafana-synthetic-monitoring-app.probes:write`        | None              | Create and edit probes in the Synthetic Monitoring app.     |
-| `grafana-synthetic-monitoring-app.probes:delete`       | None              | Delete probes in the Synthetic Monitoring app.              |
-| `grafana-synthetic-monitoring-app.alerts:read`         | None              | Read alerts in the Synthetic Monitoring app.                |
-| `grafana-synthetic-monitoring-app.alerts:write`        | None              | Create and edit alerts in the Synthetic Monitoring app.     |
-| `grafana-synthetic-monitoring-app.alerts:delete`       | None              | Delete alerts in the Synthetic Monitoring app.              |
-| `grafana-synthetic-monitoring-app.thresholds:read`     | None              | Read thresholds in the Synthetic Monitoring app.            |
-| `grafana-synthetic-monitoring-app.thresholds:write`    | None              | Create and edit thresholds in the Synthetic Monitoring app. |
-| `grafana-synthetic-monitoring-app.thresholds:delete`   | None              | Delete thresholds in the Synthetic Monitoring app.          |
-| `grafana-synthetic-monitoring-app.access-tokens:write` | None              | Create and delete synthetic monitoring access tokens.       |
 
 ## Scope definitions
 
@@ -293,3 +249,18 @@ The following list contains role-based access control scopes.
 | <ul><li>None</li><ul>                                                | If an action has "None" specified for the scope, then the action doesn't require a scope. For example, the `teams:create` action doesn't require a scope and allows users to create teams.                                                         |
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
+
+## Discovering plugin actions
+
+The action definitions table above lists actions for core Grafana features. App plugins can define their own actions, which follow the pattern `<plugin-id>.<resource>:<operation>`.
+
+To discover which actions a plugin supports, query an existing role that has plugin permissions. For example, to see what actions are available for a plugin, you can query the basic Admin role:
+
+```bash
+curl -X GET "https://your-grafana-instance/api/access-control/roles/basic_admin" \
+  -H "Authorization: Bearer <your-service-account-token>"
+```
+
+The response includes all permissions granted to that role, including plugin-specific actions. Plugin actions typically use `None` for their scope because they operate at the organization level.
+
+For a centralized reference of plugin roles and their default permissions, refer to [Grafana Cloud app plugin role definitions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plugin-role-definitions/).

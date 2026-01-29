@@ -37,11 +37,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plugin-role-definitions/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plugin-role-definitions/
-  rbac-http-api:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/
 ---
 
 # Grafana RBAC role definitions
@@ -67,38 +62,7 @@ The following tables list permissions associated with basic and fixed roles. Thi
 Grafana Cloud stacks include additional plugin role assignments not shown here. Refer to [Grafana Cloud app plugin role definitions](ref:plugin-role-definitions) for a complete list.
 {{< /admonition >}}
 
-## View basic role definitions
-
-You can retrieve the full definition of a basic role, including all associated permissions, using the API or by navigating directly to the endpoint URL in your browser while logged in as an Admin.
-
-### Using the API
-
-To get the definition of a basic role:
-
-```bash
-GET /api/access-control/roles/basic_<role>
-```
-
-Where `<role>` is one of: `viewer`, `editor`, `admin`, or `grafana_admin`.
-
-For example, to get the Viewer role definition:
-
-```bash
-curl --location 'https://<your-stack-name>.grafana.net/api/access-control/roles/basic_viewer' \
-  --header 'Authorization: Bearer <service-account-token>'
-```
-
-### Using the browser
-
-You can also view the role definition directly in your browser by navigating to:
-
-```
-https://<your-stack-name>.grafana.net/api/access-control/roles/basic_viewer
-```
-
-This works when logged in as an Admin user.
-
-For more information, refer to the [RBAC HTTP API](ref:rbac-http-api).
+To view the full definition of a basic role including all permissions, refer to [Manage RBAC roles](ref:rbac-manage-rbac-roles).
 
 ## Fixed role definitions
 
