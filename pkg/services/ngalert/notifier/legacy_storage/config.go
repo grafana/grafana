@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -32,17 +33,19 @@ func SerializeAlertmanagerConfig(config definitions.PostableUserConfig) ([]byte,
 }
 
 type ConfigRevision struct {
-	Config           *definitions.PostableUserConfig
-	ConcurrencyToken string
-	Version          string
+	Config                 *definitions.PostableUserConfig
+	ConcurrencyToken       string
+	Version                string
+	managedRoutesSupported bool
 }
 type alertmanagerConfigStoreImpl struct {
-	store  amConfigStore
-	crypto crypto
+	store    amConfigStore
+	crypto   crypto
+	features featuremgmt.FeatureToggles
 }
 
-func NewAlertmanagerConfigStore(store amConfigStore, crypto crypto) *alertmanagerConfigStoreImpl {
-	return &alertmanagerConfigStoreImpl{store: store, crypto: crypto}
+func NewAlertmanagerConfigStore(store amConfigStore, crypto crypto, features featuremgmt.FeatureToggles) *alertmanagerConfigStoreImpl {
+	return &alertmanagerConfigStoreImpl{store: store, crypto: crypto, features: features}
 }
 
 func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*ConfigRevision, error) {
@@ -70,6 +73,8 @@ func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*Con
 		Config:           cfg,
 		ConcurrencyToken: concurrencyToken,
 		Version:          alertManagerConfig.ConfigurationVersion,
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		managedRoutesSupported: a.features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies),
 	}, nil
 }
 
