@@ -59,7 +59,7 @@ export function ContentHeader() {
           <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={updateSelectedQuery} />
         )}
         {selectedTransformation && (
-          <Text weight="light" variant="body" color="secondary">
+          <Text weight="light" variant="body" color="primary">
             {selectedTransformation.id}
           </Text>
         )}
