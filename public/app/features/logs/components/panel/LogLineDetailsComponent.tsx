@@ -1,13 +1,19 @@
 import { css } from '@emotion/css';
-import { camelCase, groupBy } from 'lodash';
+import { camelCase, Dictionary, groupBy } from 'lodash';
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { DataFrameType, GrafanaTheme2, store, TimeRange } from '@grafana/data';
+import {
+  DataFrameType,
+  DataSourceWithLogsLabelTypesSupport,
+  GrafanaTheme2,
+  hasLogsLabelTypesSupport,
+  store,
+  TimeRange,
+} from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { ControlledCollapse, useStyles2 } from '@grafana/ui';
 
-import { getLabelTypeFromRow } from '../../utils';
 import { useAttributesExtensionLinks } from '../LogDetails';
 import { createLogLineLinks } from '../logParser';
 
@@ -35,6 +41,8 @@ export const LogLineDetailsComponent = memo(
     const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
       useLogListContext();
     const [search, setSearch] = useState('');
+    const [ds, setDs] = useState<DataSourceWithLogsLabelTypesSupport | null>(null);
+    const [groupedLabels, setGroupedLabels] = useState<Dictionary<LabelWithLinks[]>>();
     const inputRef = useRef('');
     const styles = useStyles2(getStyles);
 
@@ -72,11 +80,12 @@ export const LogLineDetailsComponent = memo(
 
     const trace = useMemo(() => getTempoTraceFromLinks(fieldsWithLinks.links), [fieldsWithLinks.links]);
 
-    const groupedLabels = useMemo(
-      () => groupBy(labelsWithLinks, (label) => getLabelTypeFromRow(label.key, log, true) ?? ''),
-      [labelsWithLinks, log]
-    );
-    const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
+    const labelGroups = useMemo(() => {
+      if (!groupedLabels) {
+        return [];
+      }
+      return Object.keys(groupedLabels);
+    }, [groupedLabels]);
 
     const logLineOpen = logOptionsStorageKey
       ? store.getBool(`${logOptionsStorageKey}.log-details.logLineOpen`, false)
@@ -140,6 +149,27 @@ export const LogLineDetailsComponent = memo(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    useEffect(() => {
+      const setDatasource = async () => {
+        const datasource = await getDataSourceSrv().get(log.datasourceUid);
+        if (datasource && hasLogsLabelTypesSupport(datasource)) {
+          setDs(datasource);
+        }
+      };
+
+      setDatasource();
+    }, [log.datasourceUid]);
+
+    useEffect(() => {
+      const grouped = groupBy(labelsWithLinks, (label) => {
+        if (ds) {
+          return ds.getLabelTypeFromFrame(label.key, log.dataFrame, log.rowIndex);
+        }
+        return null;
+      });
+      setGroupedLabels(grouped);
+    }, [ds, labelsWithLinks, log.dataFrame, log.rowIndex, setGroupedLabels]);
+
     return (
       <>
         <LogLineDetailsHeader focusLogLine={focusLogLine} log={log} search={search} onSearch={handleSearch} />
@@ -189,7 +219,12 @@ export const LogLineDetailsComponent = memo(
                 isOpen={fieldsOpen}
                 onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
               >
-                <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
+                <LogLineDetailsLabelFields
+                  log={log}
+                  logs={logs}
+                  fields={groupedLabels?.[group] ?? []}
+                  search={search}
+                />
                 <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
               </ControlledCollapse>
             ) : (
@@ -200,7 +235,12 @@ export const LogLineDetailsComponent = memo(
                 isOpen={store.getBool(`${logOptionsStorageKey}.log-details.${groupOptionName(group)}`, true)}
                 onToggle={(isOpen: boolean) => handleToggle(groupOptionName(group), isOpen)}
               >
-                <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
+                <LogLineDetailsLabelFields
+                  log={log}
+                  logs={logs}
+                  fields={groupedLabels?.[group] ?? []}
+                  search={search}
+                />
               </ControlledCollapse>
             )
           )}

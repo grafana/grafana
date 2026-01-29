@@ -795,6 +795,8 @@ export {
   type LogRowContextOptions,
   LogRowContextQueryDirection,
   type DataSourceWithLogsContextSupport,
+  type DataSourceWithLogsLabelTypesSupport,
+  hasLogsLabelTypesSupport,
   hasLogsContextSupport,
   SupplementaryQueryType,
   type SupplementaryQueryOptions,

@@ -73,7 +73,7 @@ interface LogLineDetailsLabelFieldsProps {
   search?: string;
 }
 
-export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLineDetailsLabelFieldsProps) => {
+export const LogLineDetailsLabelFields = ({ fields = [], log, logs, search }: LogLineDetailsLabelFieldsProps) => {
   const styles = useStyles2(getFieldsStyles);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);

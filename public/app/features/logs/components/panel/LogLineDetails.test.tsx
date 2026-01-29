@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
@@ -19,6 +19,7 @@ import {
 import { setPluginLinksHook } from '@grafana/runtime';
 import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
+import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { getFieldSelectorWidth } from '../fieldSelector/FieldSelector';
 import { createLogLine } from '../mocks/logRow';
@@ -41,8 +42,12 @@ jest.mock('@grafana/assistant', () => {
     }),
   };
 });
-
-const tempoDS = createTempoDatasource();
+const tempoDS = createTempoDatasource(undefined, { uid: 'abc-123' });
+const FIELDS_LABEL = 'TestLabelType';
+// @ts-expect-error @todo better mocking
+tempoDS.getLabelTypeFromFrame = () => {
+  return FIELDS_LABEL;
+};
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -68,7 +73,14 @@ const setup = (
   logListcontextOverrides?: Partial<LogListContextData>,
   logDetailsContextOverrides?: Partial<LogDetailsContextData>
 ) => {
-  const logs = [createLogLine({ logLevel: LogLevel.error, timeEpochMs: 1546297200000, ...rowOverrides })];
+  const logs = [
+    createLogLine({
+      logLevel: LogLevel.error,
+      timeEpochMs: 1546297200000,
+      datasourceUid: tempoDS.uid,
+      ...rowOverrides,
+    }),
+  ];
 
   const props: Props = {
     containerElement: document.createElement('div'),
@@ -112,17 +124,22 @@ const setup = (
 
 describe('LogLineDetails', () => {
   describe('when fields are present', () => {
-    test('should render the fields and the log line', () => {
+    test('should render the fields and the log line', async () => {
       setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
-      expect(screen.getByText('Log line')).toBeInTheDocument();
-      expect(screen.getByText('Fields')).toBeInTheDocument();
+      waitFor(() => {
+        expect(screen.getByText('Log line')).toBeInTheDocument();
+        expect(screen.getByText('Fields')).toBeInTheDocument();
+      });
     });
-    test('fields should be visible by default', () => {
+
+    test('fields should be visible by default', async () => {
       setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
-      expect(screen.getByText('key1')).toBeInTheDocument();
-      expect(screen.getByText('label1')).toBeInTheDocument();
-      expect(screen.getByText('key2')).toBeInTheDocument();
-      expect(screen.getByText('label2')).toBeInTheDocument();
+      waitFor(() => {
+        expect(screen.getByText('key1')).toBeInTheDocument();
+        expect(screen.getByText('label1')).toBeInTheDocument();
+        expect(screen.getByText('key2')).toBeInTheDocument();
+        expect(screen.getByText('label2')).toBeInTheDocument();
+      });
     });
     test('should show an option to display the log line when displayed fields are used', async () => {
       const onClickShowField = jest.fn();
@@ -132,8 +149,10 @@ describe('LogLineDetails', () => {
         { labels: { key1: 'label1' } },
         { displayedFields: ['key1'], onClickShowField, onClickHideField: jest.fn() }
       );
-      expect(screen.getByText('key1')).toBeInTheDocument();
-      expect(screen.getByLabelText('Show log line')).toBeInTheDocument();
+      waitFor(() => {
+        expect(screen.getByText('key1')).toBeInTheDocument();
+        expect(screen.getByLabelText('Show log line')).toBeInTheDocument();
+      });
 
       await userEvent.click(screen.getByLabelText('Show log line'));
 
@@ -147,8 +166,10 @@ describe('LogLineDetails', () => {
         { labels: { key1: 'label1' } },
         { displayedFields: ['key1', LOG_LINE_BODY_FIELD_NAME], onClickHideField, onClickShowField: jest.fn() }
       );
-      expect(screen.getByText('key1')).toBeInTheDocument();
-      expect(screen.getByLabelText('Hide log line')).toBeInTheDocument();
+      waitFor(() => {
+        expect(screen.getByText('key1')).toBeInTheDocument();
+        expect(screen.getByLabelText('Hide log line')).toBeInTheDocument();
+      });
 
       await userEvent.click(screen.getByLabelText('Hide log line'));
 
@@ -180,6 +201,7 @@ describe('LogLineDetails', () => {
           logLevel: LogLevel.error,
           timeEpochMs: 1546297200000,
           labels: { key1: 'label1' },
+          datasourceUid: tempoDS.uid,
         });
 
         setup(
@@ -369,7 +391,7 @@ describe('LogLineDetails', () => {
     setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
     expect(screen.getByText('Log line')).toBeInTheDocument();
-    expect(screen.getByText('Fields')).toBeInTheDocument();
+    expect(screen.getByText(FIELDS_LABEL)).toBeInTheDocument();
     expect(screen.getByText('Links')).toBeInTheDocument();
 
     // Don't show additional fields for DataFrameType.LogLines
@@ -424,12 +446,12 @@ describe('LogLineDetails', () => {
         { name: 'body', type: FieldType.string, values: [entry] },
         { name: 'id', type: FieldType.string, values: ['1'] },
         {
-          name: 'labels',
+          name: DATAPLANE_LABELS_NAME,
           type: FieldType.other,
           values: [labels],
         },
         {
-          name: 'labelTypes',
+          name: DATAPLANE_LABEL_TYPES_NAME,
           type: FieldType.other,
           values: [
             {

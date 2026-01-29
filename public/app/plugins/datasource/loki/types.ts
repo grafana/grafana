@@ -7,6 +7,9 @@ import {
   LokiQueryDirection,
 } from './dataquery.gen';
 
+// @todo import from core
+export const DATAPLANE_LABEL_TYPES_NAME = 'labelTypes';
+
 export enum LokiResultType {
   Stream = 'streams',
   Vector = 'vector',
