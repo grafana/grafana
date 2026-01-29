@@ -1,7 +1,7 @@
 import { PanelModel } from '@grafana/data';
 import { sharedSingleStatPanelChangedHandler, sharedSingleStatMigrationHandler } from '@grafana/ui';
 
-import { Options } from './panelcfg.gen';
+import { Options } from '../panelcfg.gen';
 
 // This is called when the panel first loads
 export const gaugePanelMigrationHandler = (panel: PanelModel<Options>): Partial<Options> => {
