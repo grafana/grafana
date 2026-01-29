@@ -94,12 +94,12 @@ export function LogsTableRowActionButtons(props: Props) {
   );
 }
 
-const getLineValue = memoize((bodyFieldName: string, frame: DataFrame, rowIndex: number) => {
+const getLineValue = (bodyFieldName: string, frame: DataFrame, rowIndex: number) => {
   const bodyField = bodyFieldName
     ? frame.fields.find((field) => field.name === bodyFieldName)
     : frame.fields.find((field) => field.type === 'string');
   return bodyField?.values[rowIndex];
-});
+};
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
