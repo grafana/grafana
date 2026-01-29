@@ -55,6 +55,13 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
+jest.mock('@grafana/runtime/internal', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime/internal'),
+    evaluateBooleanFlag: jest.fn().mockReturnValue(false),
+  };
+});
+
 function render(ui: Parameters<typeof testRender>[0], options: Parameters<typeof testRender>[1] = {}) {
   return testRender(ui, {
     preloadedState: {
@@ -111,6 +118,30 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     it('shows the "New" button', async () => {
       render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
+    });
+
+    it('shows the "Recently deleted" button when restore is enabled and user can delete dashboards', async () => {
+      const previousFlag = config.featureToggles.restoreDashboards;
+      config.featureToggles.restoreDashboards = true;
+
+      render(<BrowseDashboardsPage queryParams={{}} />);
+      await screen.findByPlaceholderText('Search for dashboards and folders');
+      expect(await screen.findByRole('link', { name: 'Recently deleted' })).toBeInTheDocument();
+
+      config.featureToggles.restoreDashboards = previousFlag;
+    });
+
+    it('does not show the "Recently deleted" button when user cannot delete dashboards', async () => {
+      const previousFlag = config.featureToggles.restoreDashboards;
+      config.featureToggles.restoreDashboards = true;
+      mockPermissions.canDeleteDashboards = false;
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+      render(<BrowseDashboardsPage queryParams={{}} />);
+      await screen.findByPlaceholderText('Search for dashboards and folders');
+      expect(screen.queryByRole('link', { name: 'Recently deleted' })).not.toBeInTheDocument();
+
+      config.featureToggles.restoreDashboards = previousFlag;
     });
 
     it('does not show the "New" button if the user does not have permissions', async () => {
