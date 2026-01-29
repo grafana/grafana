@@ -136,7 +136,7 @@ Finally, install the app:
 1. Choose for which user you need to install it, you’ll be redirected to the repository selection screen
 1. Choose for which repositories you want to install the app
 1. Click **Install**.
-1. On the installation page, copy the **installationID** from the page URL https://github.com/settings/installations/**<installationID>**
+1. On the installation page, copy the **`installationID`** from the page URL https://github.com/settings/installations/`installationID`
 
 ## Set up Git Sync using the UI
 
