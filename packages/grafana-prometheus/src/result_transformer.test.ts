@@ -9,6 +9,7 @@ import {
 } from '@grafana/data';
 
 import {
+  getOriginalMetricName,
   parseSampleValue,
   sortSeriesByLabel,
   transformDFToTable,
@@ -1231,5 +1232,37 @@ describe('Prometheus Result Transformer', () => {
 
     const tableDf = transformDFToTable([df])[0];
     expect(tableDf.fields[0].config.interval).toEqual(1);
+  });
+});
+
+describe('getOriginalMetricName', () => {
+  it('formats legacy metric name outside braces', () => {
+    const labelData = { __name__: 'http_requests_total', method: 'GET', status: '200' };
+    expect(getOriginalMetricName(labelData)).toBe('http_requests_total{method="GET",status="200"}');
+  });
+
+  it('formats legacy metric name without labels', () => {
+    const labelData = { __name__: 'up' };
+    expect(getOriginalMetricName(labelData)).toBe('up');
+  });
+
+  it('formats UTF-8 metric name inside braces with quotes', () => {
+    const labelData = { __name__: 'http.requests-total', method: 'GET' };
+    expect(getOriginalMetricName(labelData)).toBe('{"http.requests-total", method="GET"}');
+  });
+
+  it('formats UTF-8 metric name with emoji inside braces', () => {
+    const labelData = { __name__: 'a.utf8.metric 🤘' };
+    expect(getOriginalMetricName(labelData)).toBe('{"a.utf8.metric 🤘"}');
+  });
+
+  it('handles empty metric name', () => {
+    const labelData = { method: 'GET' };
+    expect(getOriginalMetricName(labelData)).toBe('{method="GET"}');
+  });
+
+  it('handles metric name with spaces inside braces', () => {
+    const labelData = { __name__: 'metric with spaces', label: 'value' };
+    expect(getOriginalMetricName(labelData)).toBe('{"metric with spaces", label="value"}');
   });
 });
