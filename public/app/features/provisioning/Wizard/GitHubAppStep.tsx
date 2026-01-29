@@ -2,6 +2,7 @@ import { forwardRef, useImperativeHandle } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
+import { isFetchError } from '@grafana/runtime';
 import { Alert, Field, RadioButtonGroup, Spinner, Stack } from '@grafana/ui';
 import { ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
@@ -11,6 +12,7 @@ import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFie
 import { useConnectionList } from '../hooks/useConnectionList';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { ConnectionFormData } from '../types';
+import { getConnectionFormErrors } from '../utils/getFormErrors';
 
 import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
 import { ConnectionCreationResult, WizardFormData } from './types';
@@ -81,15 +83,36 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
           'Failed to create connection'
         );
 
+        // Returns true if form errors were set (caller should return early)
+        const handleFormErrors = (error: unknown): boolean => {
+          if (isFetchError(error)) {
+            const formErrors = getConnectionFormErrors(error.data);
+            if (formErrors.length > 0) {
+              for (const [field, errorMessage] of formErrors) {
+                credentialForm.setError(field, errorMessage);
+              }
+              return true;
+            }
+          }
+          return false;
+        };
+
         try {
           const result = await createConnection(spec, privateKey);
           if (result.data?.metadata?.name) {
             onSubmit({ success: true, connectionName: result.data.metadata.name });
+          } else if (result.error) {
+            if (handleFormErrors(result.error)) {
+              return;
+            }
+            onSubmit({ success: false, error: extractErrorMessage(result.error) });
           } else {
-            const errorMessage = result.error ? extractErrorMessage(result.error) : defaultErrorMessage;
-            onSubmit({ success: false, error: errorMessage });
+            onSubmit({ success: false, error: defaultErrorMessage });
           }
         } catch (error) {
+          if (handleFormErrors(error)) {
+            return;
+          }
           onSubmit({ success: false, error: extractErrorMessage(error) });
         }
       },

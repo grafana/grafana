@@ -242,7 +242,7 @@ func (ng *AlertNG) init() error {
 		if remotePrimary {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
-			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer)
+			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer, ng.FeatureToggles)
 		} else {
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
@@ -255,6 +255,7 @@ func (ng *AlertNG) init() error {
 				m,
 				ng.tracer,
 				remoteSecondaryWithRemoteState,
+				ng.FeatureToggles,
 			)
 		}
 
@@ -362,6 +363,7 @@ func (ng *AlertNG) init() error {
 	history, err := configureHistorianBackend(
 		initCtx,
 		ng.Cfg.UnifiedAlerting.StateHistory,
+		ng.Cfg.AnnotationMaximumTagsLength,
 		ng.annotationsRepo,
 		ng.dashboardService,
 		ng.store,
@@ -434,7 +436,7 @@ func (ng *AlertNG) init() error {
 		apiStatusReader = ng.schedule
 	}
 
-	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService))
+	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService), ng.FeatureToggles)
 	receiverAccess := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false)
 	receiverService := notifier.NewReceiverService(
 		receiverAccess,
@@ -645,6 +647,7 @@ type Historian interface {
 func configureHistorianBackend(
 	ctx context.Context,
 	cfg setting.UnifiedAlertingStateHistorySettings,
+	annotationMaxTagsLength int64,
 	ar annotations.Repository,
 	ds dashboards.DashboardService,
 	rs historian.RuleStore,
@@ -672,7 +675,7 @@ func configureHistorianBackend(
 	if backend == historian.BackendTypeMultiple {
 		primaryCfg := cfg
 		primaryCfg.Backend = cfg.MultiPrimary
-		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, pluginContextProvider, clock, mw)
+		primary, err := configureHistorianBackend(ctx, primaryCfg, annotationMaxTagsLength, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, pluginContextProvider, clock, mw)
 		if err != nil {
 			return nil, fmt.Errorf("multi-backend target \"%s\" was misconfigured: %w", cfg.MultiPrimary, err)
 		}
@@ -681,7 +684,7 @@ func configureHistorianBackend(
 		for _, b := range cfg.MultiSecondaries {
 			secCfg := cfg
 			secCfg.Backend = b
-			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, pluginContextProvider, clock, mw)
+			sec, err := configureHistorianBackend(ctx, secCfg, annotationMaxTagsLength, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, pluginContextProvider, clock, mw)
 			if err != nil {
 				return nil, fmt.Errorf("multi-backend target \"%s\" was miconfigured: %w", b, err)
 			}
@@ -695,7 +698,7 @@ func configureHistorianBackend(
 		store := historian.NewAnnotationStore(ar, ds, met)
 		logCtx := log.WithContextualAttributes(ctx, []any{"backend", "annotations"})
 		annotationBackendLogger := log.New("ngalert.state.historian").FromContext(logCtx)
-		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met, ac), nil
+		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met, ac, annotationMaxTagsLength), nil
 	}
 	if backend == historian.BackendTypeLoki {
 		lcfg, err := lokiconfig.NewLokiConfig(cfg.LokiSettings)
