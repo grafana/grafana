@@ -662,7 +662,8 @@ func TestEncryptionService_FlushCache(t *testing.T) {
 		SecretsManagement: setting.SecretsManagerSettings{
 			CurrentEncryptionProvider: "secret_key.v1",
 			ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
-			DataKeysCacheTTL:          time.Hour, // Long TTL to ensure keys don't expire during test
+			// TODO: If this is flaky, consider having IsExpired() take a time.Time that we can override for testing
+			DataKeysCacheTTL: time.Hour, // Long TTL to ensure keys don't expire during test.
 		},
 	}
 
