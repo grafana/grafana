@@ -28,6 +28,10 @@ import {
 } from './ConnectionAnchors';
 import { ConnectionAnchors } from './ConnectionAnchors2';
 import { ConnectionSVG } from './ConnectionSVG2';
+import {
+  updateConnectionsAfterIndividualMove as sharedUpdateIndividual,
+  updateConnectionsAfterGroupMove as sharedUpdateGroup,
+} from './connectionMovementUtils';
 
 export const CONNECTION_VERTEX_ID = 'vertex';
 export const CONNECTION_VERTEX_ADD_ID = 'vertexAdd';
@@ -646,6 +650,26 @@ export class Connections2 {
   // used for moveable actions
   connectionsNeedUpdate = (element: ElementState): boolean => {
     return isConnectionSource(element) || isConnectionTarget(element, this.scene.byName);
+  };
+
+  // Update connection coordinates when an individual element is moved
+  updateConnectionsAfterIndividualMove = (movedElement: ElementState) => {
+    // Adapter for calculateCoordinates2 to match the shared utility signature
+    const calculateCoords = (source: ElementState, target: ElementState, connectionState: ConnectionState) => {
+      return calculateCoordinates2(source, target, connectionState.info);
+    };
+
+    sharedUpdateIndividual(movedElement, this.state, calculateCoords);
+  };
+
+  // Update connection coordinates based on what's selected in a group move
+  updateConnectionsAfterGroupMove = (movedElements: ElementState[], selectedTargets: Array<HTMLElement | SVGElement>) => {
+    // Adapter for calculateCoordinates2 to match the shared utility signature
+    const calculateCoords = (source: ElementState, target: ElementState, connectionState: ConnectionState) => {
+      return calculateCoordinates2(source, target, connectionState.info);
+    };
+
+    sharedUpdateGroup(movedElements, selectedTargets, this.state, calculateCoords);
   };
 
   renderElement() {
