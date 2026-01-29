@@ -277,10 +277,6 @@ func resourceKey(name string) *resourcepb.ResourceKey {
 func TestIntegrationSearchClientServer(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	//if db.IsTestDbSQLite() {
-	//	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
-	//}
-
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	dbstore := db.InitTestDB(t)
 

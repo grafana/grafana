@@ -105,7 +105,7 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 		}
 		err = s.registerSubservices()
 		if err != nil {
-			return nil, fmt.Errorf("failed to register subservices: %s", err)
+			return nil, fmt.Errorf("failed to register subservices: %w", err)
 		}
 	}
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.SearchServer)
@@ -156,7 +156,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 
 	err := s.registerSubservices()
 	if err != nil {
-		return nil, fmt.Errorf("failed to register subservices: %s", err)
+		return nil, fmt.Errorf("failed to register subservices: %w", err)
 	}
 
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.StorageServer)
@@ -221,12 +221,12 @@ func (s *service) withRingLifecycle(memberlistKVConfig kv.Config, httpServerRout
 		s.log,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create KV store client: %s", err)
+		return fmt.Errorf("failed to create KV store client: %w", err)
 	}
 
 	lifecyclerCfg, err := toLifecyclerConfig(s.cfg, s.log)
 	if err != nil {
-		return fmt.Errorf("failed to initialize storage-ring lifecycler config: %s", err)
+		return fmt.Errorf("failed to initialize storage-ring lifecycler config: %w", err)
 	}
 
 	// Define lifecycler delegates in reverse order (last to be called defined first because they're
@@ -245,7 +245,7 @@ func (s *service) withRingLifecycle(memberlistKVConfig kv.Config, httpServerRout
 		s.reg,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to initialize storage-ring lifecycler: %s", err)
+		return fmt.Errorf("failed to initialize storage-ring lifecycler: %w", err)
 	}
 
 	s.ringLifecycler.SetKeepInstanceInTheRingOnShutdown(true)
