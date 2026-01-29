@@ -29,6 +29,7 @@ export interface AutoGridItemState extends SceneObjectState {
   hideWhenNoData?: boolean;
   repeatedPanels?: VizPanel[];
   variableName?: string;
+  splitSeriesByLabel?: string;
   isHidden?: boolean;
   conditionalRendering?: ConditionalRenderingGroup;
   repeatedConditionalRendering?: ConditionalRenderingGroup[];
@@ -159,6 +160,9 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
 
     if (!variableName) {
       stateUpdate.repeatedPanels = undefined;
+    } else {
+      // Repeat modes are mutually exclusive; clear split-by-label when variable repeat is enabled.
+      stateUpdate.splitSeriesByLabel = undefined;
     }
 
     if (this.state.body.state.$variables) {

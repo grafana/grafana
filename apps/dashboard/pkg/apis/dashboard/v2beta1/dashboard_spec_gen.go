@@ -896,7 +896,7 @@ func NewDashboardElementReference() *DashboardElementReference {
 
 // +k8s:openapi-gen=true
 type DashboardRepeatOptions struct {
-	Mode      string                           `json:"mode"`
+	Mode      DashboardRepeatMode              `json:"mode"`
 	Value     string                           `json:"value"`
 	Direction *DashboardRepeatOptionsDirection `json:"direction,omitempty"`
 	MaxPerRow *int64                           `json:"maxPerRow,omitempty"`
@@ -904,14 +904,17 @@ type DashboardRepeatOptions struct {
 
 // NewDashboardRepeatOptions creates a new DashboardRepeatOptions object.
 func NewDashboardRepeatOptions() *DashboardRepeatOptions {
-	return &DashboardRepeatOptions{
-		Mode: DashboardRepeatMode,
-	}
+	return &DashboardRepeatOptions{}
 }
 
 // other repeat modes will be added in the future: label, frame
 // +k8s:openapi-gen=true
-const DashboardRepeatMode = "variable"
+type DashboardRepeatMode string
+
+const (
+	DashboardRepeatModeVariable     DashboardRepeatMode = "variable"
+	DashboardRepeatModeSplitByLabel DashboardRepeatMode = "splitByLabel"
+)
 
 // +k8s:openapi-gen=true
 type DashboardRowsLayoutKind struct {
@@ -1075,15 +1078,13 @@ func NewDashboardConditionalRenderingTimeRangeSizeSpec() *DashboardConditionalRe
 
 // +k8s:openapi-gen=true
 type DashboardRowRepeatOptions struct {
-	Mode  string `json:"mode"`
-	Value string `json:"value"`
+	Mode  DashboardRepeatMode `json:"mode"`
+	Value string              `json:"value"`
 }
 
 // NewDashboardRowRepeatOptions creates a new DashboardRowRepeatOptions object.
 func NewDashboardRowRepeatOptions() *DashboardRowRepeatOptions {
-	return &DashboardRowRepeatOptions{
-		Mode: DashboardRepeatMode,
-	}
+	return &DashboardRowRepeatOptions{}
 }
 
 // +k8s:openapi-gen=true
@@ -1152,15 +1153,13 @@ func NewDashboardAutoGridLayoutItemSpec() *DashboardAutoGridLayoutItemSpec {
 
 // +k8s:openapi-gen=true
 type DashboardAutoGridRepeatOptions struct {
-	Mode  string `json:"mode"`
-	Value string `json:"value"`
+	Mode  DashboardRepeatMode `json:"mode"`
+	Value string              `json:"value"`
 }
 
 // NewDashboardAutoGridRepeatOptions creates a new DashboardAutoGridRepeatOptions object.
 func NewDashboardAutoGridRepeatOptions() *DashboardAutoGridRepeatOptions {
-	return &DashboardAutoGridRepeatOptions{
-		Mode: DashboardRepeatMode,
-	}
+	return &DashboardAutoGridRepeatOptions{}
 }
 
 // +k8s:openapi-gen=true
@@ -1220,15 +1219,13 @@ func NewDashboardTabsLayoutTabSpec() *DashboardTabsLayoutTabSpec {
 
 // +k8s:openapi-gen=true
 type DashboardTabRepeatOptions struct {
-	Mode  string `json:"mode"`
-	Value string `json:"value"`
+	Mode  DashboardRepeatMode `json:"mode"`
+	Value string              `json:"value"`
 }
 
 // NewDashboardTabRepeatOptions creates a new DashboardTabRepeatOptions object.
 func NewDashboardTabRepeatOptions() *DashboardTabRepeatOptions {
-	return &DashboardTabRepeatOptions{
-		Mode: DashboardRepeatMode,
-	}
+	return &DashboardTabRepeatOptions{}
 }
 
 // Links with references to other dashboards or external resources
