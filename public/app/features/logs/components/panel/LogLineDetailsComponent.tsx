@@ -41,10 +41,10 @@ export const LogLineDetailsComponent = memo(
     const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
       useLogListContext();
     const [search, setSearch] = useState('');
+    const [ds, setDs] = useState<DataSourceWithLogsLabelTypesSupport | null>(null);
+    const [groupedLabels, setGroupedLabels] = useState<Dictionary<LabelWithLinks[]>>();
     const inputRef = useRef('');
     const styles = useStyles2(getStyles);
-
-    const [ds, setDs] = useState<DataSourceWithLogsLabelTypesSupport | null>(null);
 
     const extensionLinks = useAttributesExtensionLinks(log, timeRange);
 
@@ -80,11 +80,9 @@ export const LogLineDetailsComponent = memo(
 
     const trace = useMemo(() => getTempoTraceFromLinks(fieldsWithLinks.links), [fieldsWithLinks.links]);
 
-    const [groupedLabels, setGroupedLabels] = useState<Dictionary<LabelWithLinks[]> | null>(null);
-
     const labelGroups = useMemo(() => {
-      if (groupedLabels === null) {
-        return null;
+      if (!groupedLabels) {
+        return [];
       }
       return Object.keys(groupedLabels);
     }, [groupedLabels]);
@@ -128,7 +126,7 @@ export const LogLineDetailsComponent = memo(
     const noDetails =
       !fieldsWithLinks.links.length &&
       !fieldsWithLinks.linksFromVariableMap.length &&
-      !labelGroups?.length &&
+      !labelGroups.length &&
       !fieldsWithoutLinks.length;
 
     const allLinks = useMemo(
@@ -145,7 +143,7 @@ export const LogLineDetailsComponent = memo(
         trace: trace !== undefined,
         fields: fieldsWithoutLinks.length,
         labels: labelsWithLinks.length,
-        labelGroups: labelGroups?.join(', '),
+        labelGroups: labelGroups.join(', '),
       });
       // Once
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -171,10 +169,6 @@ export const LogLineDetailsComponent = memo(
       });
       setGroupedLabels(grouped);
     }, [ds, labelsWithLinks, log.dataFrame, log.rowIndex, setGroupedLabels]);
-
-    if (!groupedLabels || !labelGroups) {
-      return;
-    }
 
     return (
       <>
@@ -225,7 +219,12 @@ export const LogLineDetailsComponent = memo(
                 isOpen={fieldsOpen}
                 onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
               >
-                <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
+                <LogLineDetailsLabelFields
+                  log={log}
+                  logs={logs}
+                  fields={groupedLabels?.[group] ?? []}
+                  search={search}
+                />
                 <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
               </ControlledCollapse>
             ) : (
@@ -236,7 +235,12 @@ export const LogLineDetailsComponent = memo(
                 isOpen={store.getBool(`${logOptionsStorageKey}.log-details.${groupOptionName(group)}`, true)}
                 onToggle={(isOpen: boolean) => handleToggle(groupOptionName(group), isOpen)}
               >
-                <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
+                <LogLineDetailsLabelFields
+                  log={log}
+                  logs={logs}
+                  fields={groupedLabels?.[group] ?? []}
+                  search={search}
+                />
               </ControlledCollapse>
             )
           )}
