@@ -68,7 +68,7 @@ func (f *Fetcher) FetchMetrics(ctx context.Context, datasourceURL string, client
 		// Network or connection error - datasource is unreachable
 		return nil, validator.NewDatasourceUnreachableError("", datasourceURL, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Read response body for error reporting
 	body, readErr := io.ReadAll(resp.Body)

@@ -191,7 +191,7 @@ func executeValidationRequest(t *testing.T, body checkRequest) *httptest.Respons
 	func() {
 		defer func() {
 			// Recover from nil pointer dereference that occurs after validation passes
-			recover()
+			_ = recover()
 		}()
 		_ = handler(context.Background(), recorder, req)
 	}()

@@ -77,7 +77,6 @@ func (c *MetricsCache) Run(ctx context.Context) error {
 // On cache miss or expiration, fetches from provider and caches the result.
 func (c *MetricsCache) GetMetrics(ctx context.Context, dsType, datasourceUID, datasourceURL string,
 	client *http.Client) ([]string, error) {
-
 	// Check cache first (read lock)
 	c.mu.RLock()
 	cached, exists := c.entries[datasourceUID]

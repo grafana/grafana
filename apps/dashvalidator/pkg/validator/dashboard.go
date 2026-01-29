@@ -103,14 +103,8 @@ func ValidateDashboardCompatibility(ctx context.Context, req DashboardCompatibil
 
 		fmt.Printf("[DEBUG] Got validator for type %s, starting validation\n", dsMapping.Type)
 
-		// Build Datasource struct
-		ds := Datasource{
-			UID:        dsMapping.UID,
-			Type:       dsMapping.Type,
-			Name:       dsMapping.Name,
-			URL:        dsMapping.URL,
-			HTTPClient: dsMapping.HTTPClient,
-		}
+		// Convert DatasourceMapping to Datasource (identical field layout)
+		ds := Datasource(dsMapping)
 
 		// Validate queries
 		validationResult, err := v.ValidateQueries(ctx, dsQueries, ds)
@@ -230,17 +224,18 @@ func isV1Dashboard(dashboard map[string]interface{}) bool {
 
 // extractQueriesFromPanel extracts all queries/targets from a single panel
 func extractQueriesFromPanel(panel map[string]interface{}) []DashboardQuery {
-	var queries []DashboardQuery
+	// Extract targets array (queries) first to know capacity
+	targets, hasTargets := panel["targets"].([]interface{})
+	if !hasTargets {
+		return nil
+	}
+
+	// Pre-allocate with capacity since we know max size
+	queries := make([]DashboardQuery, 0, len(targets))
 
 	// Get panel info for context
 	panelTitle := getStringValue(panel, "title", "Untitled Panel")
 	panelID := getIntValue(panel, "id", 0)
-
-	// Extract targets array (queries)
-	targets, hasTargets := panel["targets"].([]interface{})
-	if !hasTargets {
-		return queries
-	}
 
 	// Iterate through each target/query
 	for _, targetInterface := range targets {
@@ -314,7 +309,75 @@ func getDatasourceUIDFromValue(ds interface{}) string {
 	}
 }
 
-// isVariableReference checks if a string is a template variable reference
+// isWordChar checks if a character is a valid variable name character.
+// Matches \w in regex: [A-Za-z0-9_] (alphanumeric + underscore, NO dashes)
+func isWordChar(ch rune) bool {
+	return (ch >= 'a' && ch <= 'z') ||
+		(ch >= 'A' && ch <= 'Z') ||
+		(ch >= '0' && ch <= '9') ||
+		ch == '_'
+}
+
+// isDollarBraceVar checks if string matches ${varname} pattern.
+// Supports ${var}, ${var.field}, and ${var:format} syntax.
+func isDollarBraceVar(s string) bool {
+	if len(s) <= 3 || s[0] != '$' || s[1] != '{' || s[len(s)-1] != '}' {
+		return false
+	}
+	content := s[2 : len(s)-1]
+	if len(content) == 0 {
+		return false
+	}
+	for i, ch := range content {
+		if ch == '.' || ch == ':' {
+			return i > 0
+		}
+		if !isWordChar(ch) {
+			return false
+		}
+	}
+	return true
+}
+
+// isDollarVar checks if string matches $varname pattern.
+func isDollarVar(s string) bool {
+	if len(s) <= 1 || s[0] != '$' {
+		return false
+	}
+	// Avoid matching ${...} pattern
+	if s[1] == '{' {
+		return false
+	}
+	for i := 1; i < len(s); i++ {
+		if !isWordChar(rune(s[i])) {
+			return false
+		}
+	}
+	return true
+}
+
+// isDoubleBracketVar checks if string matches [[varname]] pattern.
+// Supports [[var]] and [[var:format]] syntax.
+func isDoubleBracketVar(s string) bool {
+	if len(s) <= 4 || s[0] != '[' || s[1] != '[' || s[len(s)-2] != ']' || s[len(s)-1] != ']' {
+		return false
+	}
+	content := s[2 : len(s)-2]
+	if len(content) == 0 {
+		return false
+	}
+	for i, ch := range content {
+		if ch == ':' {
+			return i > 0
+		}
+		if !isWordChar(ch) {
+			return false
+		}
+	}
+	return true
+}
+
+// isVariableReference checks if a string is a template variable reference.
 // Matches patterns: ${varname}, $varname, [[varname]]
 // Follows Grafana's frontend regex: /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g
 // where \w = [A-Za-z0-9_] (alphanumeric + underscore, NO dashes)
@@ -322,68 +385,7 @@ func isVariableReference(uid string) bool {
 	if uid == "" {
 		return false
 	}
-
-	// Match ${...} pattern - requires at least one \w character inside braces
-	if len(uid) > 3 && uid[0] == '$' && uid[1] == '{' && uid[len(uid)-1] == '}' {
-		// Extract content between ${ and }
-		content := uid[2 : len(uid)-1]
-		if len(content) == 0 {
-			return false // Empty braces ${} not allowed
-		}
-		// Check if content starts with \w+ (before any . or :)
-		for i, ch := range content {
-			if ch == '.' || ch == ':' {
-				// Found delimiter, check if we had at least one \w before it
-				return i > 0
-			}
-			// Must be alphanumeric or underscore
-			if !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
-				(ch >= '0' && ch <= '9') || ch == '_') {
-				return false
-			}
-		}
-		return true // All characters were valid \w
-	}
-
-	// Match $varname pattern - requires at least one \w character after $
-	// \w = alphanumeric + underscore (digits ARE allowed, dashes are NOT)
-	if uid[0] == '$' && len(uid) > 1 {
-		for i := 1; i < len(uid); i++ {
-			ch := uid[i]
-			// \w = [A-Za-z0-9_] only (NO dashes)
-			if !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
-				(ch >= '0' && ch <= '9') || ch == '_') {
-				return false
-			}
-		}
-		return true
-	}
-
-	// Match [[varname]] pattern - requires at least one \w character inside brackets
-	// Also supports [[varname:format]] syntax
-	if len(uid) > 4 && uid[0] == '[' && uid[1] == '[' &&
-		uid[len(uid)-2] == ']' && uid[len(uid)-1] == ']' {
-		// Extract content between [[ and ]]
-		content := uid[2 : len(uid)-2]
-		if len(content) == 0 {
-			return false // Empty brackets [[]] not allowed
-		}
-		// Check if content starts with \w+ (before any :)
-		for i, ch := range content {
-			if ch == ':' {
-				// Found format delimiter, check if we had at least one \w before it
-				return i > 0
-			}
-			// Must be alphanumeric or underscore
-			if !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
-				(ch >= '0' && ch <= '9') || ch == '_') {
-				return false
-			}
-		}
-		return true // All characters were valid \w
-	}
-
-	return false
+	return isDollarBraceVar(uid) || isDollarVar(uid) || isDoubleBracketVar(uid)
 }
 
 // extractVariableName extracts the variable name from a variable reference
