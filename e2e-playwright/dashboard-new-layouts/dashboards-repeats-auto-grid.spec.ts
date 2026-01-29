@@ -405,6 +405,7 @@ test.describe(
         )
       ).toBeVisible();
     });
+
     test('can remove repeats', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
@@ -431,6 +432,7 @@ test.describe(
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(0)}`))
+        .getByTestId(selectors.components.Panels.Panel.headerContainer)
         .click();
 
       const repeatOptionsGroup = dashboardPage.getByGrafanaSelector(
