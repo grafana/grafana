@@ -360,7 +360,35 @@ describe('TableNG', () => {
           height={10}
         />
       );
-      expect(jestScrollIntoView).toHaveBeenCalled();
+      expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
+      expect(container.querySelector('[aria-selected="true"]')).toBeVisible();
+    });
+
+    it('sorting should not retrigger initialRowIndex scroll', async () => {
+      const { container } = render(
+        <TableNG
+          initialRowIndex={4}
+          enableVirtualization={true}
+          data={createSortingTestDataFrame()}
+          width={100}
+          height={10}
+        />
+      );
+
+      const columnHeader = container.querySelector('[role="columnheader"]');
+
+      // Find the sort button within the first header
+      if (!columnHeader) {
+        throw new Error('No column header found');
+      }
+
+      // Look for a button inside the header
+      const sortButton = columnHeader.querySelector('button') || columnHeader;
+
+      // Click the sort button
+      await user.click(sortButton);
+
+      expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
       expect(container.querySelector('[aria-selected="true"]')).toBeVisible();
     });
   });

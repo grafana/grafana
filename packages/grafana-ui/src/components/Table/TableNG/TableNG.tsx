@@ -253,9 +253,10 @@ export function TableNG(props: TableNGProps) {
     rowHeight,
   });
 
+  const [scrollToIndex, setScrollToIndex] = useState(initialRowIndex);
   useEffect(() => {
-    if (sortedRows && initialRowIndex !== undefined && gridRef.current?.scrollToCell) {
-      const rowIdx = sortedRows.findIndex((row) => row.__index === initialRowIndex);
+    if (scrollToIndex !== undefined && sortedRows && gridRef.current?.scrollToCell) {
+      const rowIdx = sortedRows.findIndex((row) => row.__index === scrollToIndex);
       gridRef.current.scrollToCell({
         rowIdx,
       });
@@ -264,8 +265,9 @@ export function TableNG(props: TableNGProps) {
         rowIdx,
         idx: 0,
       });
+      setScrollToIndex(undefined);
     }
-  }, [initialRowIndex, sortedRows]);
+  }, [scrollToIndex, sortedRows]);
 
   const [footers, isUniformFooter] = useMemo(() => {
     const footers: Array<TableFooterOptions | undefined> = [];
