@@ -1,6 +1,14 @@
+import { config } from '@grafana/runtime';
 import { Dashboard, Panel, RowPanel } from '@grafana/schema';
 
-import { isValidLibraryPanelRef, hasLibraryPanelsInV1Dashboard } from './utils';
+import {
+  isDashboardSceneEnabled,
+  isDashboardSceneForViewersEnabled,
+  isDashboardSceneSoloEnabled,
+  isPublicDashboardsSceneEnabled,
+  isValidLibraryPanelRef,
+  hasLibraryPanelsInV1Dashboard,
+} from './utils';
 
 describe('utils', () => {
   describe('isValidLibraryPanelRef', () => {
@@ -368,5 +376,77 @@ describe('utils', () => {
 
       expect(hasLibraryPanelsInV1Dashboard(dashboard)).toBe(true);
     });
+  });
+
+  describe('isDashboardSceneEnabled', () => {
+    it.each([
+      { dashboardScene: true, dashboardNewLayouts: false, expected: true },
+      { dashboardScene: false, dashboardNewLayouts: true, expected: true },
+      { dashboardScene: true, dashboardNewLayouts: true, expected: true },
+      { dashboardScene: false, dashboardNewLayouts: false, expected: false },
+    ])(
+      'should return $expected when dashboardScene=$dashboardScene and dashboardNewLayouts=$dashboardNewLayouts',
+      ({ dashboardScene, dashboardNewLayouts, expected }) => {
+        config.featureToggles = {
+          dashboardScene,
+          dashboardNewLayouts,
+        };
+        expect(isDashboardSceneEnabled()).toBe(expected);
+      }
+    );
+  });
+
+  describe('isPublicDashboardsSceneEnabled', () => {
+    it.each([
+      { publicDashboardsScene: true, dashboardNewLayouts: false, expected: true },
+      { publicDashboardsScene: false, dashboardNewLayouts: true, expected: true },
+      { publicDashboardsScene: true, dashboardNewLayouts: true, expected: true },
+      { publicDashboardsScene: false, dashboardNewLayouts: false, expected: false },
+    ])(
+      'should return $expected when publicDashboardsScene=$publicDashboardsScene and dashboardNewLayouts=$dashboardNewLayouts',
+      ({ publicDashboardsScene, dashboardNewLayouts, expected }) => {
+        config.featureToggles = {
+          publicDashboardsScene,
+          dashboardNewLayouts,
+        };
+        expect(isPublicDashboardsSceneEnabled()).toBe(expected);
+      }
+    );
+  });
+
+  describe('isDashboardSceneForViewersEnabled', () => {
+    it.each([
+      { dashboardSceneForViewers: true, dashboardNewLayouts: false, expected: true },
+      { dashboardSceneForViewers: false, dashboardNewLayouts: true, expected: true },
+      { dashboardSceneForViewers: true, dashboardNewLayouts: true, expected: true },
+      { dashboardSceneForViewers: false, dashboardNewLayouts: false, expected: false },
+    ])(
+      'should return $expected when dashboardSceneForViewers=$dashboardSceneForViewers and dashboardNewLayouts=$dashboardNewLayouts',
+      ({ dashboardSceneForViewers, dashboardNewLayouts, expected }) => {
+        config.featureToggles = {
+          dashboardSceneForViewers,
+          dashboardNewLayouts,
+        };
+        expect(isDashboardSceneForViewersEnabled()).toBe(expected);
+      }
+    );
+  });
+
+  describe('isDashboardSceneSoloEnabled', () => {
+    it.each([
+      { dashboardSceneSolo: true, dashboardNewLayouts: false, expected: true },
+      { dashboardSceneSolo: false, dashboardNewLayouts: true, expected: true },
+      { dashboardSceneSolo: true, dashboardNewLayouts: true, expected: true },
+      { dashboardSceneSolo: false, dashboardNewLayouts: false, expected: false },
+    ])(
+      'should return $expected when dashboardSceneSolo=$dashboardSceneSolo and dashboardNewLayouts=$dashboardNewLayouts',
+      ({ dashboardSceneSolo, dashboardNewLayouts, expected }) => {
+        config.featureToggles = {
+          dashboardSceneSolo,
+          dashboardNewLayouts,
+        };
+        expect(isDashboardSceneSoloEnabled()).toBe(expected);
+      }
+    );
   });
 });
