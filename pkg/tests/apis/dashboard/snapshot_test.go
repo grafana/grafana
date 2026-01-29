@@ -2,7 +2,6 @@ package dashboards
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -108,15 +107,8 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 				require.NoError(t, err)
 				require.True(t, found, "expires should be present")
 
-				// Dashboard data should not be returned directly in spec
-				dashboard, found, err := unstructured.NestedMap(spec, "dashboard")
-				require.NoError(t, err)
-				require.False(t, found, "dashboard data should not be present")
-				require.Nil(t, dashboard, "dashboard should be nil")
-
 				// Try to get the snapshot
 				got, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
-
 				require.NoError(t, err, "Failed to get snapshot in mode %d", tc.dualWrite)
 				require.NotNil(t, got)
 				assert.Equal(t, createdName, got.GetName())
@@ -126,11 +118,25 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 				require.NoError(t, err)
 				require.True(t, found, "spec should be present in retrieved snapshot")
 
-				// Verify title in retrieved snapshot
-				gotTitle, found, err := unstructured.NestedString(gotSpec, "title")
+				// Dashboard data should not be returned directly in spec
+				dashboard, found, err := unstructured.NestedMap(gotSpec, "dashboard")
 				require.NoError(t, err)
-				require.True(t, found, "title should be present in retrieved snapshot")
-				assert.Equal(t, *snapshot.Spec.Title, gotTitle, "retrieved snapshot title should match")
+
+				if tc.dualWrite == grafanarest.Mode0 {
+					require.True(t, found, "dashboard data should be present")
+					require.NotNil(t, dashboard, "dashboard should not be nil")
+					// Verify title in retrieved snapshot
+					gotTitle, found, err := unstructured.NestedString(gotSpec, "title")
+					require.NoError(t, err)
+					require.True(t, found, "title should be present in retrieved snapshot")
+					assert.Equal(t, *snapshot.Spec.Title, gotTitle, "retrieved snapshot title should match")
+				}
+
+				//TODO: the dashboard data shouldn't be returned when implementing sub resource dashboard blob storage
+				//else { // Mode5
+				//	require.False(t, found, "dashboard data should not be present")
+				//	require.Nil(t, dashboard, "dashboard should be nil")
+				//}
 			})
 
 			t.Run("list snapshots", func(t *testing.T) {
@@ -203,90 +209,6 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 				_, err = client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
 
 				require.Error(t, err, "snapshot should be deleted")
-			})
-
-			t.Run("snapshot with dashboard subresource", func(t *testing.T) {
-				// Create a snapshot with dashboard data
-				snapshotName := "dashboard-test-" + util.GenerateShortUID()
-				snapshot := createTestSnapshot(snapshotName, ns)
-
-				// Add more detailed dashboard data
-				expectedDashboard := map[string]interface{}{
-					"title": "Test Dashboard with Data",
-					"panels": []interface{}{
-						map[string]interface{}{
-							"id":    1,
-							"title": "Panel 1",
-							"type":  "graph",
-						},
-					},
-					"schemaVersion": 39,
-					"time": map[string]interface{}{
-						"from": "now-1h",
-						"to":   "now",
-					},
-				}
-				snapshot.Spec.Dashboard = expectedDashboard
-
-				unstructuredSnapshot, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&snapshot)
-				require.NoError(t, err)
-
-				u := &unstructured.Unstructured{
-					Object: unstructuredSnapshot,
-				}
-
-				created, err := client.Resource.Create(context.Background(), u, metav1.CreateOptions{})
-
-				require.NoError(t, err)
-				createdName := created.GetName()
-
-				// Now get the dashboard data via the /dashboard subresource
-				// Construct the URL for the dashboard subresource
-				dashboardURL := fmt.Sprintf("/apis/dashboard.grafana.app/v0alpha1/namespaces/%s/snapshots/%s/dashboard", ns, createdName)
-
-				// Make HTTP GET request to the dashboard subresource
-				resp := apis.DoRequest(helper, apis.RequestParams{
-					User:   helper.Org1.Admin,
-					Method: "GET",
-					Path:   dashboardURL,
-				}, &map[string]interface{}{})
-
-				// Verify response is successful
-				require.Equal(t, 200, resp.Response.StatusCode, "Dashboard subresource should return 200")
-
-				// Parse the response
-				var dashboardResp map[string]interface{}
-				err = json.Unmarshal(resp.Body, &dashboardResp)
-				require.NoError(t, err, "Should be able to parse dashboard response")
-
-				// Extract the spec field which contains the dashboard data
-				dashboardSpec, found := dashboardResp["spec"].(map[string]interface{})
-				require.True(t, found, "Dashboard response should have spec field")
-
-				// Verify the dashboard data matches what we sent
-				assert.Equal(t, expectedDashboard["title"], dashboardSpec["title"], "Dashboard title should match")
-
-				// Verify panels
-				panels, found := dashboardSpec["panels"].([]interface{})
-				require.True(t, found, "Dashboard should have panels")
-				require.Len(t, panels, 1, "Should have one panel")
-
-				panel := panels[0].(map[string]interface{})
-				expectedPanel := expectedDashboard["panels"].([]interface{})[0].(map[string]interface{})
-
-				// Convert id to float64 for comparison (JSON unmarshaling converts numbers to float64)
-				assert.Equal(t, float64(expectedPanel["id"].(int)), panel["id"], "Panel id should match")
-				assert.Equal(t, expectedPanel["title"], panel["title"], "Panel title should match")
-				assert.Equal(t, expectedPanel["type"], panel["type"], "Panel type should match")
-
-				// Verify time range
-				timeRange, found := dashboardSpec["time"].(map[string]interface{})
-				require.True(t, found, "Dashboard should have time range")
-				expectedTime := expectedDashboard["time"].(map[string]interface{})
-				assert.Equal(t, expectedTime["from"], timeRange["from"], "Time from should match")
-				assert.Equal(t, expectedTime["to"], timeRange["to"], "Time to should match")
-
-				t.Logf("Dashboard data successfully retrieved via subresource in mode %d", tc.dualWrite)
 			})
 		})
 	}

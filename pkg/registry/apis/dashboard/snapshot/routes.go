@@ -193,6 +193,7 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 					ctx = k8srequest.WithNamespace(ctx, namespace)
 
 					// Create via storage (dual-write mode decides legacy, unified, or both)
+					// TODO: split creation from Snapshot and the blob
 					_, err = creater.Create(ctx, snapshot, nil, &metav1.CreateOptions{})
 					if err != nil {
 						errhttp.Write(ctx, err, w)
