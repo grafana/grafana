@@ -35,7 +35,7 @@ export interface JSONData {
 	// +listType=atomic
 	routes?: Route[];
 	skipDataQuery?: boolean;
-	state?: "alpha" | "beta";
+	state?: "alpha" | "beta" | "stable" | "deprecated";
 	streaming?: boolean;
 	suggestions?: boolean;
 	tracing?: boolean;
@@ -43,6 +43,8 @@ export interface JSONData {
 	// +listType=atomic
 	roles?: Role[];
 	extensions?: Extensions;
+	// +listType=atomic
+	languages?: string[];
 }
 
 export const defaultJSONData = (): JSONData => ({
@@ -70,10 +72,21 @@ export interface Info {
 		url?: string;
 	};
 	description?: string;
+	build?: {
+		time?: number;
+		repo?: string;
+		branch?: string;
+		hash?: string;
+		// Quoted to avoid conflict with CUE 'number' type
+		number?: number;
+		pr?: number;
+		build?: number;
+	};
 	// +listType=atomic
 	links?: {
 		name?: string;
 		url?: string;
+		target?: "_blank" | "_self" | "_parent" | "_top";
 	}[];
 	// +listType=atomic
 	screenshots?: {
@@ -165,13 +178,29 @@ export interface Route {
 		url?: string;
 		// +listType=set
 		scopes?: string[];
-		params?: Record<string, any>;
+		params?: {
+			// Allow additional properties
+			grant_type?: string;
+			// Allow additional properties
+			client_id?: string;
+			// Allow additional properties
+			client_secret?: string;
+			// Allow additional properties
+			resource?: string;
+		};
 	};
 	jwtTokenAuth?: {
 		url?: string;
 		// +listType=set
 		scopes?: string[];
-		params?: Record<string, any>;
+		params?: {
+			// Allow additional properties
+			token_uri?: string;
+			// Allow additional properties
+			client_email?: string;
+			// Allow additional properties
+			private_key?: string;
+		};
 	};
 	// +listType=atomic
 	urlParams?: {

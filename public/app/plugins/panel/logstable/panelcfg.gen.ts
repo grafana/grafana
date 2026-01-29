@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/logstable/panelcfg.cue file.
+
 export interface Options {
   buildLinkToLogLine?: unknown;
   displayedFields?: Array<string>;

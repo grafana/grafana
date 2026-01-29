@@ -64,7 +64,6 @@ export const LogsTableFieldSelector = ({
   sidebarHeight,
   maxWidth,
 }: LogsTableFieldSelectorProps) => {
-  console.log('render::LogsTableFieldSelector');
   const dragStyles = useStyles2(getDragStyles);
 
   const setSidebarWidthWrapper = useCallback(
@@ -78,7 +77,6 @@ export const LogsTableFieldSelector = ({
 
   const collapse = useCallback(() => {
     setSidebarWidthWrapper(MIN_SIDEBAR_WIDTH);
-    console.log('collapse', MIN_SIDEBAR_WIDTH);
     reportInteraction(`${SETTING_KEY_ROOT}.field_selector_collapse_clicked`, {
       mode: 'table',
     });

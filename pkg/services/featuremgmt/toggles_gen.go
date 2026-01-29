@@ -43,10 +43,6 @@ const (
 	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
 
-	// FlagMysqlAnsiQuotes
-	// Use double quotes to escape keyword in a MySQL query
-	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
-
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
@@ -801,4 +797,8 @@ const (
 	// FlagKubernetesTeamBindings
 	// Enables search for team bindings in the app platform API
 	FlagKubernetesTeamBindings = "kubernetesTeamBindings"
+
+	// FlagAlertingMultiplePolicies
+	// Enables the ability to create multiple alerting policies
+	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 )
