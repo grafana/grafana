@@ -186,7 +186,7 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: true,
 		},
 		{
-			name: "failure - privateKey is invalid",
+			name: "failure - privateKey is invalid when validating token",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
@@ -194,6 +194,14 @@ func TestConnection_Test(t *testing.T) {
 					GitHub: &provisioning.GitHubConnectionConfig{
 						AppID:          appID,
 						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.RawSecureValue(privateKeyBase64),
+					},
+					Token: common.InlineSecureValue{
+						Create: token,
 					},
 				},
 			},
@@ -212,7 +220,37 @@ func TestConnection_Test(t *testing.T) {
 			},
 		},
 		{
-			name: "failure - token issuer is a differrent appID",
+			name: "failure - privateKey is invalid when generating token",
+			connection: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+				Spec: provisioning.ConnectionSpec{
+					Type: provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          appID,
+						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.RawSecureValue(privateKeyBase64),
+					},
+				},
+			},
+			secrets: github.ConnectionSecrets{
+				PrivateKey: "invalidPrivateKey",
+			},
+			expectedCode:  http.StatusUnauthorized,
+			expectSuccess: false,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  "secure.privateKey",
+					Detail: "invalid private key",
+				},
+			},
+		},
+		{
+			name: "failure - token issuer is a different appID",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
@@ -220,6 +258,14 @@ func TestConnection_Test(t *testing.T) {
 					GitHub: &provisioning.GitHubConnectionConfig{
 						AppID:          "678",
 						InstallationID: "456",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					PrivateKey: common.InlineSecureValue{
+						Create: common.RawSecureValue(privateKeyBase64),
+					},
+					Token: common.InlineSecureValue{
+						Create: token,
 					},
 				},
 			},

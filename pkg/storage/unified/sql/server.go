@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -41,6 +43,7 @@ type ServerOptions struct {
 	Reg              prometheus.Registerer
 	AccessClient     types.AccessClient
 	SearchOptions    resource.SearchOptions
+	SearchClient     resourcepb.ResourceIndexClient
 	StorageMetrics   *resource.StorageMetrics
 	IndexMetrics     *resource.BleveIndexMetrics
 	Features         featuremgmt.FeatureToggles
@@ -117,7 +120,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			}
 
 			// Create sqlkv with the standard library DB
-			sqlkv, err := resource.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+			sqlkv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 			if err != nil {
 				return nil, fmt.Errorf("error creating sqlkv: %s", err)
 			}
@@ -174,6 +177,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		}
 	}
 
+	serverOptions.SearchClient = opts.SearchClient
 	serverOptions.Search = opts.SearchOptions
 	serverOptions.IndexMetrics = opts.IndexMetrics
 	serverOptions.QOSQueue = opts.QOSQueue

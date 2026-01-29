@@ -109,7 +109,6 @@
           },
           "links": [],
           "mappings": [],
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -123,7 +122,7 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "cps"
         },
         "overrides": [
           {
@@ -1022,7 +1021,7 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "ops"
         },
         "overrides": []
       },
@@ -1115,7 +1114,7 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "s"
         },
         "overrides": []
       },
@@ -1287,7 +1286,7 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "eps"
         },
         "overrides": []
       },

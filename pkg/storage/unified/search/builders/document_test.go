@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -128,7 +129,7 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 		"aaa",
 	})
 
-	builder = resource.StandardDocumentBuilder()
+	builder = resource.StandardDocumentBuilder(nil)
 	doSnapshotTests(t, builder, "folder", &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "folder.grafana.app",
@@ -151,4 +152,24 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 	}, []string{
 		"aaa",
 	})
+}
+
+func TestBuildSelectableFields(t *testing.T) {
+	tb := &iamv0.TeamBinding{}
+	tb.Spec.Subject.Name = "subject name"
+	tb.Spec.TeamRef.Name = "teamref name"
+
+	expected := map[string]string{
+		"spec.subject.name": "subject name",
+		"spec.teamRef.name": "teamref name",
+	}
+
+	res, err := BuildSelectableFields(tb, iamv0.TeamBindingKind())
+	require.NoError(t, err)
+	require.Equal(t, expected, res)
+
+	// Test passing mixed type and kind.
+	user := &iamv0.User{}
+	_, err = BuildSelectableFields(user, iamv0.TeamBindingKind())
+	require.Error(t, err)
 }
