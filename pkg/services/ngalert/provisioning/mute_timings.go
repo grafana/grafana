@@ -28,10 +28,22 @@ type MuteTimingService struct {
 	log                    log.Logger
 	validator              validation.ProvenanceStatusTransitionValidator
 	ruleNotificationsStore AlertRuleNotificationSettingsStore
+	routeService           timeIntervalRouteRefService
 	includeImported        bool
 }
 
-func NewMuteTimingService(config alertmanagerConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger, ns AlertRuleNotificationSettingsStore) *MuteTimingService {
+type timeIntervalRouteRefService interface {
+	RenameTimeIntervalInRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, oldName string, newName string) map[*definitions.Route]int
+}
+
+func NewMuteTimingService(
+	config alertmanagerConfigStore,
+	prov ProvisioningStore,
+	xact TransactionManager,
+	log log.Logger,
+	ns AlertRuleNotificationSettingsStore,
+	routeService timeIntervalRouteRefService,
+) *MuteTimingService {
 	return &MuteTimingService{
 		configStore:            config,
 		provenanceStore:        prov,
@@ -39,6 +51,7 @@ func NewMuteTimingService(config alertmanagerConfigStore, prov ProvisioningStore
 		log:                    log,
 		validator:              validation.ValidateProvenanceRelaxed,
 		ruleNotificationsStore: ns,
+		routeService:           routeService,
 		includeImported:        false,
 	}
 }
@@ -51,6 +64,7 @@ func (svc *MuteTimingService) WithIncludeImported() *MuteTimingService {
 		log:                    svc.log,
 		validator:              svc.validator,
 		ruleNotificationsStore: svc.ruleNotificationsStore,
+		routeService:           svc.routeService,
 		includeImported:        true,
 	}
 }
@@ -511,25 +525,31 @@ func (svc *MuteTimingService) checkOptimisticConcurrency(current config.MuteTime
 func (svc *MuteTimingService) renameTimeIntervalInDependentResources(ctx context.Context, orgID int64, rev *legacy_storage.ConfigRevision, oldName, newName string, timeIntervalProvenance models.Provenance) error {
 	validate := validation.ValidateProvenanceOfDependentResources(timeIntervalProvenance)
 	// if there are no references to the old time interval, exit
-	updatedRoutes := rev.RenameTimeIntervalInRoutes(oldName, newName)
 	canUpdate := true
-	if updatedRoutes > 0 {
-		routeProvenance, err := svc.provenanceStore.GetProvenance(ctx, rev.Config.AlertmanagerConfig.Route, orgID)
-		if err != nil {
-			return err
+	updatedRouteCnt := 0
+	if updatedRoutes := svc.routeService.RenameTimeIntervalInRoutes(ctx, rev, oldName, newName); len(updatedRoutes) > 0 {
+		for route, updatedCnt := range updatedRoutes {
+			if updatedCnt > 0 {
+				updatedRouteCnt += updatedCnt
+				routeProvenance, err := svc.provenanceStore.GetProvenance(ctx, route, orgID)
+				if err != nil {
+					return err
+				}
+				canUpdate = validate(routeProvenance)
+			}
 		}
-		canUpdate = validate(routeProvenance)
 	}
+
 	dryRun := !canUpdate
 	affected, invalidProvenance, err := svc.ruleNotificationsStore.RenameTimeIntervalInNotificationSettings(ctx, orgID, oldName, newName, validate, dryRun)
 	if err != nil {
 		return err
 	}
 	if !canUpdate || len(invalidProvenance) > 0 {
-		return MakeErrTimeIntervalDependentResourcesProvenance(updatedRoutes > 0, invalidProvenance)
+		return MakeErrTimeIntervalDependentResourcesProvenance(updatedRouteCnt > 0, invalidProvenance)
 	}
-	if len(affected) > 0 || updatedRoutes > 0 {
-		svc.log.FromContext(ctx).Info("Updated rules and routes that use renamed time interval", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)
+	if len(affected) > 0 || updatedRouteCnt > 0 {
+		svc.log.FromContext(ctx).Info("Updated rules and routes that use renamed time interval", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRouteCnt)
 	}
 	return nil
 }
