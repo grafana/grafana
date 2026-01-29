@@ -55,6 +55,7 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
       onSubmit={handleSubmit((form) => {
         reportInteraction('grafana_browse_dashboards_page_action_create_folder', {
           teamFolder: !!selectedTeam,
+          teamUid: selectedTeam?.uid ?? 'Not a team folder',
         });
 
         onConfirm(form.folderName, createTeamFolder && selectedTeam ? [selectedTeam] : []);
