@@ -72,6 +72,8 @@ Each panel needs at least one query to display a visualization.
 
 ## Create a dashboard
 
+{{< docs/list >}}
+{{< shared id="create-dashboard" >}}
 To create a dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
@@ -134,6 +136,9 @@ To create a dashboard, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**.
+
+{{< /shared >}}
+{{< /docs/list >}}
 
 ## Dashboard edit
 
