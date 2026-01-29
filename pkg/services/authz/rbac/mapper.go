@@ -331,24 +331,24 @@ func NewMapperRegistry() MapperRegistry {
 	return mapper
 }
 
-// groupMatchesWildcard returns true if group matches the wildcard pattern.
-// Pattern must start with exactly one "*" (e.g. "*.datasource.grafana.app").
-// The group matches if it has the same suffix as the pattern after the "*".
+// groupMatchesWildcard returns true if group matches the wildcard key.
+// wildcardKey must start with exactly one "*" (e.g. "*.datasource.grafana.app").
+// The group matches if it has the same suffix as wildcardKey after the "*".
 // Wildcard groups (group starting with "*") never match.
-func groupMatchesWildcard(group, pattern string) bool {
+func groupMatchesWildcard(group, wildcardKey string) bool {
 	if strings.HasPrefix(group, "*") {
 		return false
 	}
-	if len(pattern) < 2 || pattern[0] != '*' || pattern[1] != '.' {
+	if len(wildcardKey) < 2 || wildcardKey[0] != '*' || wildcardKey[1] != '.' {
 		return false
 	}
-	suffix := pattern[1:] // everything after "*"
+	suffix := wildcardKey[1:] // everything after "*"
 	return len(group) > len(suffix) && strings.HasSuffix(group, suffix)
 }
 
 // groupPrefixForWildcard returns the prefix of group when matched against a wildcard key.
 // e.g. groupPrefixForWildcard("loki.datasource.grafana.app", "*.datasource.grafana.app") returns ("loki", true).
-// The second return is false if group does not match the wildcard pattern.
+// The second return is false if group does not match the wildcard key.
 func groupPrefixForWildcard(group, wildcardKey string) (string, bool) {
 	if len(wildcardKey) < 2 || wildcardKey[0] != '*' || wildcardKey[1] != '.' {
 		return "", false
@@ -360,7 +360,7 @@ func groupPrefixForWildcard(group, wildcardKey string) (string, bool) {
 	return group[:len(group)-len(suffix)], true
 }
 
-// translationAllowsGroupPrefix returns true if the translation allows the given group when the registry key is a wildcard.
+// translationAllowsGroupPrefix returns true if the translation allows the given group when the registry key (groupKey) is a wildcard.
 // If allowedWildcardPrefixes is nil or empty, any prefix is allowed. Otherwise the group's prefix must be in the list.
 // Security: prefix is matched by exact string equality (slices.Contains); no substring or case-insensitive match.
 func translationAllowsGroupPrefix(t translation, group, groupKey string) bool {
