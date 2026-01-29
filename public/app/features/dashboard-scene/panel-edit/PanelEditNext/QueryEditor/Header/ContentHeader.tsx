@@ -27,7 +27,6 @@ export function ContentHeader() {
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
 
-  // TODO: Add transformation support
   const cardType = selectedTransformation
     ? QueryEditorType.Transformation
     : isExpressionQuery(selectedQuery ?? undefined)
