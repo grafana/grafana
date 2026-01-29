@@ -8062,6 +8062,43 @@
   "gauge": {
     "category-gauge": "Индикатор",
     "category-radial-bar": "",
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    },
     "description-min-height": "Минимальная высота строки (горизонтальная ориентация)",
     "description-min-width": "Минимальная ширина столбца (вертикальная ориентация)",
     "description-neutral": "Оставить пустым, чтобы использовать мин. как нейтральную точку",
@@ -10121,6 +10158,8 @@
       "no-more-logs-available": "Больше нет доступных журналов.",
       "older-logs": "более старые",
       "open-in-split-view": "Открыть в комбинированном режиме",
+      "show-original-log": "",
+      "show-original-log-tooltip": "",
       "time-window-label": "Окно времени контекста",
       "time-window-tooltip": "Количество времени до и после связанного журнала",
       "title-log-context": "Контекст журнала",
@@ -11885,6 +11924,8 @@
       "description-clear-repository-connection": "Добавьте понятное имя для этого подключения к репозиторию.",
       "empty": "Пусто",
       "error-field-required": "Поле является обязательным.",
+      "error-repository-status-unhealthy-message": "",
+      "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Отображаемое имя",
       "placeholder-my-repository-connection": "Мое подключение к репозиторию",
@@ -11917,13 +11958,16 @@
       "alert-repository-settings-updated": "Параметры репозитория обновлены",
       "button-save": "Сохранить",
       "button-saving": "Сохранение...",
+      "description-connection": "",
       "description-enabled": "После включения автоматического внесения изменения целевой элемент невозможно изменить.",
       "description-read-only": "Ресурсы невозможно изменить через Grafana.",
       "description-title": "Понятное название конфигурации",
+      "error-connection-required": "",
       "error-fetch-branches": "",
       "error-required": "Поле является обязательным.",
       "error-save-repository": "Не удалось сохранить параметры репозитория",
       "label-automatic-pulling": "Автоматическое включение изменений",
+      "label-connection": "",
       "label-enabled": "Включено",
       "label-interval-seconds": "Интервал (в секундах)",
       "label-repository-type": "Тип репозитория",
@@ -11957,24 +12001,38 @@
       "button-save": "",
       "button-saving": "",
       "description-app-id": "",
+      "description-description": "",
       "description-installation-id": "",
       "description-private-key": "",
       "description-provider": "",
+      "description-title": "",
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
       "label-app-id": "",
+      "label-description": "",
       "label-installation-id": "",
       "label-private-key": "",
       "label-provider": "",
+      "label-title": "",
       "not-found": "",
       "not-found-description": "",
       "page-subtitle": "",
       "page-title-create": "",
       "page-title-edit": "",
       "placeholder-app-id": "",
+      "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": ""
+      "placeholder-private-key": "",
+      "placeholder-title": ""
+    },
+    "connection-options": {
+      "loading": "",
+      "no-repos": "",
+      "repos-truncated_one": "",
+      "repos-truncated_few": "",
+      "repos-truncated_many": "",
+      "repos-truncated_other": ""
     },
     "connections": {
       "add-connection": "",
@@ -11988,6 +12046,7 @@
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
+      "status-pending": "",
       "status-unknown": "",
       "view": ""
     },
@@ -12502,6 +12561,9 @@
       "push-to-existing-branch": ""
     }
   },
+  "provisioning-alert": {
+    "retry": ""
+  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "Прежде чем сделать дашборд общедоступным, обратите внимание на следующее:",
@@ -12708,8 +12770,17 @@
       "title-data-source-help": "Справка по источнику данных"
     }
   },
+  "query-editor": {
+    "action": {
+      "inspector": ""
+    },
+    "edit-query-name": "",
+    "validation": {
+      "duplicate-name": "",
+      "empty-name": ""
+    }
+  },
   "query-editor-next": {
-    "detail-placeholder": "",
     "sidebar": {
       "card-click": "",
       "expression": "",

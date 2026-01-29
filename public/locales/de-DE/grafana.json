@@ -8010,6 +8010,43 @@
   "gauge": {
     "category-gauge": "Anzeige",
     "category-radial-bar": "",
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    },
     "description-min-height": "Minimale Zeilenhöhe (horizontale Ausrichtung)",
     "description-min-width": "Minimale Spaltenbreite (vertikale Ausrichtung)",
     "description-neutral": "Leer lassen, um Min. als neutralen Punkt zu verwenden",
@@ -10033,6 +10070,8 @@
       "no-more-logs-available": "Keine weiteren Logs verfügbar.",
       "older-logs": "älter",
       "open-in-split-view": "In geteilter Ansicht öffnen",
+      "show-original-log": "",
+      "show-original-log-tooltip": "",
       "time-window-label": "Kontext-Zeitfenster",
       "time-window-tooltip": "Zeitraum vor und nach dem referenzierten Log",
       "title-log-context": "Log-Kontext",
@@ -11791,6 +11830,8 @@
       "description-clear-repository-connection": "Fügen Sie einen eindeutigen Namen für diese Repository-Verbindung hinzu",
       "empty": "Leer",
       "error-field-required": "Dieses Feld ist erforderlich.",
+      "error-repository-status-unhealthy-message": "",
+      "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Anzeigename",
       "placeholder-my-repository-connection": "Meine Repository-Verbindung",
@@ -11817,13 +11858,16 @@
       "alert-repository-settings-updated": "Repository-Einstellungen aktualisiert",
       "button-save": "Speichern",
       "button-saving": "Wird gespeichert …",
+      "description-connection": "",
       "description-enabled": "Sobald das automatische Abrufen aktiviert ist, kann das Ziel nicht mehr geändert werden.",
       "description-read-only": "Ressourcen können über Grafana nicht geändert werden.",
       "description-title": "Ein menschenlesbarer Name für die Konfiguration",
+      "error-connection-required": "",
       "error-fetch-branches": "",
       "error-required": "Dieses Feld ist erforderlich.",
       "error-save-repository": "Speichern der Repository-Einstellungen fehlgeschlagen",
       "label-automatic-pulling": "Automatisches Pulling",
+      "label-connection": "",
       "label-enabled": "Aktiviert",
       "label-interval-seconds": "Intervall (Sekunden)",
       "label-repository-type": "Repository-Typ",
@@ -11857,24 +11901,36 @@
       "button-save": "",
       "button-saving": "",
       "description-app-id": "",
+      "description-description": "",
       "description-installation-id": "",
       "description-private-key": "",
       "description-provider": "",
+      "description-title": "",
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
       "label-app-id": "",
+      "label-description": "",
       "label-installation-id": "",
       "label-private-key": "",
       "label-provider": "",
+      "label-title": "",
       "not-found": "",
       "not-found-description": "",
       "page-subtitle": "",
       "page-title-create": "",
       "page-title-edit": "",
       "placeholder-app-id": "",
+      "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": ""
+      "placeholder-private-key": "",
+      "placeholder-title": ""
+    },
+    "connection-options": {
+      "loading": "",
+      "no-repos": "",
+      "repos-truncated_one": "",
+      "repos-truncated_other": ""
     },
     "connections": {
       "add-connection": "",
@@ -11888,6 +11944,7 @@
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
+      "status-pending": "",
       "status-unknown": "",
       "view": ""
     },
@@ -12398,6 +12455,9 @@
       "push-to-existing-branch": ""
     }
   },
+  "provisioning-alert": {
+    "retry": ""
+  },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
       "ack-title": "Bevor Sie das Dashboard veröffentlichen, bestätigen Sie Folgendes:",
@@ -12602,8 +12662,17 @@
       "title-data-source-help": "Datenquellen-Hilfe"
     }
   },
+  "query-editor": {
+    "action": {
+      "inspector": ""
+    },
+    "edit-query-name": "",
+    "validation": {
+      "duplicate-name": "",
+      "empty-name": ""
+    }
+  },
   "query-editor-next": {
-    "detail-placeholder": "",
     "sidebar": {
       "card-click": "",
       "expression": "",
