@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import {
   CoreApp,
+  DataFrame,
   FieldType,
   getDefaultTimeRange,
   LogLevel,
@@ -13,6 +14,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { TempoDatasource } from '@grafana-plugins/tempo/datasource';
 import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
@@ -31,8 +33,10 @@ jest.mock('@grafana/assistant', () => ({
 
 const FIELDS_LABEL = 'TestLabelType';
 
-const tempoDS = createTempoDatasource(undefined, { uid: 'abc-123' });
-// @ts-expect-error @todo better mocking
+const tempoDS: TempoDatasource & {
+  getLabelTypeFromFrame?: (key: string, frame: DataFrame | undefined, index: number | null) => string | null;
+} = createTempoDatasource(undefined, { uid: 'abc-123' });
+// Test-only override: Mocked data source does not expose getLabelTypeFromFrame, so we patch it here to show that the viz should work with any data source that returns logs.
 tempoDS.getLabelTypeFromFrame = () => {
   return FIELDS_LABEL;
 };

@@ -17,6 +17,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { setPluginLinksHook } from '@grafana/runtime';
+import { TempoDatasource } from '@grafana-plugins/tempo/datasource';
 import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
@@ -44,9 +45,10 @@ jest.mock('@grafana/assistant', () => {
 });
 
 const FIELDS_LABEL = 'TestLabelType';
-const tempoDS = createTempoDatasource(undefined, { uid: 'abc-123' });
+const tempoDS: TempoDatasource & {
+  getLabelTypeFromFrame?: (key: string, frame: DataFrame | undefined, index: number | null) => string | null;
+} = createTempoDatasource(undefined, { uid: 'abc-123' });
 const getMockTempoDS = jest.fn().mockImplementation((getLabelTypeFromFrame) => {
-  // @ts-expect-error @todo better mocking
   tempoDS.getLabelTypeFromFrame = jest
     .fn()
     .mockImplementation((key: string, frame: DataFrame | undefined, index: number | null) => {
