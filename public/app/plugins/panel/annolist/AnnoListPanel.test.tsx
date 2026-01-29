@@ -114,7 +114,7 @@ describe('AnnoListPanel', () => {
     it('then it should show a no annotations message', async () => {
       await setupTestContext({ results: [] });
 
-      expect(screen.getByText(/no annotations found/i)).toBeInTheDocument();
+      expect(await screen.findByText(/no annotations found/i)).toBeInTheDocument();
     });
   });
 
@@ -124,11 +124,11 @@ describe('AnnoListPanel', () => {
 
       expect(screen.queryByText(/no annotations found/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/result email/i)).not.toBeInTheDocument();
-      expect(screen.getByText(/result text/i)).toBeInTheDocument();
-      expect(screen.getByRole('img')).toBeInTheDocument();
-      expect(screen.getByText('Result tag A')).toBeInTheDocument();
-      expect(screen.getByText('Result tag B')).toBeInTheDocument();
-      expect(screen.getByText(/2021-01-01T00:00:00.000Z/i)).toBeInTheDocument();
+      expect(await screen.findByText(/result text/i)).toBeInTheDocument();
+      expect(await screen.findByRole('img')).toBeInTheDocument();
+      expect(await screen.findByText('Result tag A')).toBeInTheDocument();
+      expect(await screen.findByText('Result tag B')).toBeInTheDocument();
+      expect(await screen.findByText(/2021-01-01T00:00:00.000Z/i)).toBeInTheDocument();
     });
 
     it("renders annotation item's html content", async () => {
@@ -146,10 +146,10 @@ describe('AnnoListPanel', () => {
         await setupTestContext({ results: [{ ...defaultResult, login: undefined }] });
 
         expect(screen.queryByRole('img')).not.toBeInTheDocument();
-        expect(screen.getByText(/result text/i)).toBeInTheDocument();
-        expect(screen.getByText('Result tag A')).toBeInTheDocument();
-        expect(screen.getByText('Result tag B')).toBeInTheDocument();
-        expect(screen.getByText(/2021-01-01T00:00:00.000Z/i)).toBeInTheDocument();
+        expect(await screen.findByText(/result text/i)).toBeInTheDocument();
+        expect(await screen.findByText('Result tag A')).toBeInTheDocument();
+        expect(await screen.findByText('Result tag B')).toBeInTheDocument();
+        expect(await screen.findByText(/2021-01-01T00:00:00.000Z/i)).toBeInTheDocument();
       });
     });
 
@@ -158,10 +158,10 @@ describe('AnnoListPanel', () => {
         await setupTestContext({ results: [{ ...defaultResult, time: undefined }] });
 
         expect(screen.queryByText(/2021-01-01T00:00:00.000Z/i)).not.toBeInTheDocument();
-        expect(screen.getByText(/result text/i)).toBeInTheDocument();
-        expect(screen.getByRole('img')).toBeInTheDocument();
-        expect(screen.getByText('Result tag A')).toBeInTheDocument();
-        expect(screen.getByText('Result tag B')).toBeInTheDocument();
+        expect(await screen.findByText(/result text/i)).toBeInTheDocument();
+        expect(await screen.findByRole('img')).toBeInTheDocument();
+        expect(await screen.findByText('Result tag A')).toBeInTheDocument();
+        expect(await screen.findByText('Result tag B')).toBeInTheDocument();
       });
     });
 
@@ -172,10 +172,10 @@ describe('AnnoListPanel', () => {
         });
 
         expect(screen.queryByRole('img')).not.toBeInTheDocument();
-        expect(screen.getByText(/result text/i)).toBeInTheDocument();
-        expect(screen.getByText('Result tag A')).toBeInTheDocument();
-        expect(screen.getByText('Result tag B')).toBeInTheDocument();
-        expect(screen.getByText(/2021-01-01T00:00:00.000Z/i)).toBeInTheDocument();
+        expect(await screen.findByText(/result text/i)).toBeInTheDocument();
+        expect(await screen.findByText('Result tag A')).toBeInTheDocument();
+        expect(await screen.findByText('Result tag B')).toBeInTheDocument();
+        expect(await screen.findByText(/2021-01-01T00:00:00.000Z/i)).toBeInTheDocument();
       });
     });
 
@@ -186,10 +186,10 @@ describe('AnnoListPanel', () => {
         });
 
         expect(screen.queryByText(/2021-01-01T00:00:00.000Z/i)).not.toBeInTheDocument();
-        expect(screen.getByText(/result text/i)).toBeInTheDocument();
-        expect(screen.getByRole('img')).toBeInTheDocument();
-        expect(screen.getByText('Result tag A')).toBeInTheDocument();
-        expect(screen.getByText('Result tag B')).toBeInTheDocument();
+        expect(await screen.findByText(/result text/i)).toBeInTheDocument();
+        expect(await screen.findByRole('img')).toBeInTheDocument();
+        expect(await screen.findByText('Result tag A')).toBeInTheDocument();
+        expect(await screen.findByText('Result tag B')).toBeInTheDocument();
       });
     });
 
@@ -201,9 +201,9 @@ describe('AnnoListPanel', () => {
 
         expect(screen.queryByText('Result tag A')).not.toBeInTheDocument();
         expect(screen.queryByText('Result tag B')).not.toBeInTheDocument();
-        expect(screen.getByText(/result text/i)).toBeInTheDocument();
-        expect(screen.getByRole('img')).toBeInTheDocument();
-        expect(screen.getByText(/2021-01-01T00:00:00.000Z/i)).toBeInTheDocument();
+        expect(await screen.findByText(/result text/i)).toBeInTheDocument();
+        expect(await screen.findByRole('img')).toBeInTheDocument();
+        expect(await screen.findByText(/2021-01-01T00:00:00.000Z/i)).toBeInTheDocument();
       });
     });
 
