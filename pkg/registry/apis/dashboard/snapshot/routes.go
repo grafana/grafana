@@ -142,6 +142,13 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 						return
 					}
 
+					if cmd.Dashboard == nil {
+						wrap.JsonApiErr(http.StatusBadRequest, "dashboard data is required", nil)
+						return
+					}
+
+					// TODO: validate dashboard exists. Need to call dashboards api, Maybe in a validation hook?
+
 					cmd.OrgID = user.GetOrgID()
 					cmd.UserID, _ = identity.UserIdentifier(user.GetID())
 
@@ -151,8 +158,6 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 					} else {
 
 					}
-
-					// TODO: validate dashboard exists. Need to call dashboards api, Maybe in a validation hook?
 
 					// Handle local snapshot creation
 					originalDashboardURL, err := dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
