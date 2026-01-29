@@ -22,7 +22,7 @@ export function initAlerting() {
       component: ({ dashboard }) =>
         alertingEnabled ? (
           <Suspense fallback={null} key="alert-rules-button">
-            {dashboard && <AlertRulesToolbarButton dashboardUid={dashboard.uid} />}
+            {dashboard && dashboard.uid && <AlertRulesToolbarButton dashboardUid={dashboard.uid} />}
           </Suspense>
         ) : null,
       index: -2,
