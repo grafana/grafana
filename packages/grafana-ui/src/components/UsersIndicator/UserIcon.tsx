@@ -128,6 +128,7 @@ export const getStyles = (theme: GrafanaTheme2, isActive: boolean) => {
       background: 'none',
       border: 'none',
       borderRadius: theme.shape.radius.circle,
+      cursor: 'default',
       '& > *': {
         borderRadius: theme.shape.radius.circle,
       },
