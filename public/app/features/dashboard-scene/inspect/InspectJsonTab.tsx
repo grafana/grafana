@@ -74,11 +74,15 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
   public getOptions(): Array<SelectableValue<ShowContent>> {
     const panel = this.state.panelRef.resolve();
+    const dashboard = getDashboardSceneFor(panel);
     const dataProvider = panel.state.$data ?? panel.parent?.state.$data;
+    const isV2 = isDashboardV2Spec(dashboard.getSaveModel());
 
     const options: Array<SelectableValue<ShowContent>> = [
       {
-        label: t('dashboard.inspect-json.panel-spec-label', 'Panel Spec'),
+        label: isV2
+          ? t('dashboard.inspect-json.panel-spec-label', 'Panel Spec')
+          : t('dashboard.inspect-json.panel-json-label', 'Panel JSON'),
         description: t(
           'dashboard.inspect-json.panel-json-description',
           'The model saved in the dashboard JSON that configures how everything works.'
@@ -87,7 +91,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       },
     ];
 
-    if (config.featureToggles.dashboardNewLayouts && panel.parent instanceof DashboardGridItem) {
+    if (isV2 && panel.parent instanceof DashboardGridItem) {
       options.push({
         label: t('dashboard.inspect-json.panel-layout-label', 'Panel Layout'),
         description: t(

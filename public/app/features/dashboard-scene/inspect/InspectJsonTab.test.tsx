@@ -239,17 +239,8 @@ describe('InspectJsonTab', () => {
   });
 
   describe('Panel Layout', () => {
-    beforeEach(() => {
-      config.featureToggles.dashboardNewLayouts = true;
-    });
-
-    afterEach(() => {
-      config.featureToggles.dashboardNewLayouts = false;
-    });
-
-    it('does not show panel-layout option when feature toggle is disabled', async () => {
-      config.featureToggles.dashboardNewLayouts = false;
-      const { tab } = await buildTestSceneWithV2Spec();
+    it('does not show panel-layout option for non-v2 spec', async () => {
+      const { tab } = await buildTestScene();
       const options = tab.getOptions();
       expect(options.some((o) => o.value === 'panel-layout')).toBe(false);
     });
