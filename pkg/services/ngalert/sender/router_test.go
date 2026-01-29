@@ -2,6 +2,7 @@ package sender
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -59,7 +60,7 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 		}),
 	}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
-		&fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures())
+		&fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false)
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, SendAlertsTo: models.AllAlertmanagers},
@@ -129,7 +130,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	}
 	fakeDs := &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
-		fakeDs, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures())
+		fakeDs, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false)
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey1.OrgID, SendAlertsTo: models.AllAlertmanagers},
@@ -288,7 +289,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 		}),
 	}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
-		10*time.Minute, &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures())
+		10*time.Minute, &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false)
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, SendAlertsTo: models.AllAlertmanagers},
@@ -390,7 +391,7 @@ func TestAlertmanagersChoiceWithDisableExternalFeatureToggle(t *testing.T) {
 
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
 		10*time.Minute, &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}},
-		fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(featuremgmt.FlagAlertingDisableSendAlertsExternal))
+		fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(featuremgmt.FlagAlertingDisableSendAlertsExternal), false)
 
 	// Test that we only send to the internal Alertmanager even though the configuration specifies AllAlertmanagers.
 
@@ -894,6 +895,79 @@ func TestDatasourceToExternalAMcfg(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, tt.expected, cfg)
+		})
+	}
+}
+
+func TestSendBroadcastAlerts(t *testing.T) {
+	alerts := definitions.PostableAlerts{
+		PostableAlerts: []models2.PostableAlert{
+			{
+				Annotations: models2.LabelSet{"summary": "test alert 1"},
+				Alert:       models2.Alert{Labels: models2.LabelSet{"alertname": "TestAlert1"}},
+			},
+			{
+				Annotations: models2.LabelSet{"summary": "test alert 2"},
+				Alert:       models2.Alert{Labels: models2.LabelSet{"alertname": "TestAlert2"}},
+			},
+		},
+	}
+
+	testCases := []struct {
+		name            string
+		broadcastAlerts bool
+		expected        *notifier.AlertBroadcastPayload
+	}{
+		{
+			name:            "broadcasts alerts when enabled",
+			broadcastAlerts: true,
+			expected: &notifier.AlertBroadcastPayload{
+				OrgID:  1,
+				Alerts: alerts,
+			},
+		},
+		{
+			name:            "does not broadcast when disabled",
+			broadcastAlerts: false,
+			expected:        nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ruleKey := models.GenerateRuleKey(1)
+
+			mockedClock := clock.NewMock()
+			mockedClock.Set(time.Now())
+
+			mockChannel := &notifier.MockBroadcastChannel{}
+			mockPeer := &notifier.MockClusterPeer{Channel: mockChannel}
+			moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1}), notifier.WithPeer(mockPeer), notifier.WithWaitReady())
+
+			appUrl := &url.URL{
+				Scheme: "http",
+				Host:   "localhost",
+			}
+
+			fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
+			fakeAdminConfigStore.EXPECT().GetAdminConfigurations().Return(nil, nil)
+
+			alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
+				10*time.Minute, &fake_ds.FakeDataSourceService{}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), tc.broadcastAlerts)
+
+			require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase(context.Background()))
+
+			alertsRouter.Send(context.Background(), ruleKey, alerts)
+
+			if tc.expected == nil {
+				require.Empty(t, mockChannel.Broadcasts())
+			} else {
+				require.Len(t, mockChannel.Broadcasts(), 1)
+				var decoded notifier.AlertBroadcastPayload
+				err := json.Unmarshal(mockChannel.Broadcasts()[0], &decoded)
+				require.NoError(t, err)
+				require.Equal(t, *tc.expected, decoded)
+			}
 		})
 	}
 }

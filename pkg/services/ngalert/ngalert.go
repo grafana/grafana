@@ -313,7 +313,8 @@ func (ng *AlertNG) init() error {
 	clk := clock.New()
 
 	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, ng.store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs,
-		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService, ng.FeatureToggles)
+		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService, ng.FeatureToggles,
+		ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation)
 
 	// Make sure we sync at least once as Grafana starts to get the router up and running before we start sending any alerts.
 	if err := alertsRouter.SyncAndApplyConfigFromDatabase(initCtx); err != nil {
