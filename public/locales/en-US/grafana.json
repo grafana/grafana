@@ -4944,6 +4944,7 @@
       },
       "variables": {
         "add-variable": "Add variable",
+        "reorder": "Drag to reorder",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
         "select-variable": "Select"
