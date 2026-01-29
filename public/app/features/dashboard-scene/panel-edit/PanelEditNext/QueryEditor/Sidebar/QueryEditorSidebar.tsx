@@ -1,43 +1,16 @@
 import { css } from '@emotion/css';
-import { memo, useState } from 'react';
+import { memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { CollapsableSection, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { SidebarSize } from '../../constants';
 import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
 
+import { CollapsableHeader } from './CollapsableHeader';
 import { SidebarCard } from './SidebarCard';
 
-const Collapse = ({
-  label,
-  styles,
-  children,
-}: {
-  label: string;
-  styles: ReturnType<typeof getStyles>;
-  children: React.ReactNode;
-}) => {
-  const [isOpen, setIsOpen] = useState(true);
-
-  return (
-    <CollapsableSection
-      label={
-        <Text color="secondary" variant="body">
-          {label}
-        </Text>
-      }
-      isOpen={isOpen}
-      onToggle={setIsOpen}
-      contentClassName={styles.collapsableSectionContent}
-    >
-      <Stack direction="column" gap={1}>
-        {children}
-      </Stack>
-    </CollapsableSection>
-  );
-};
 interface QueryEditorSidebarProps {
   sidebarSize: SidebarSize;
   setSidebarSize: (size: SidebarSize) => void;
@@ -70,16 +43,16 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           {t('query-editor-next.sidebar.query-stack', 'Query Stack')}
         </Text>
       </Stack>
-      <Collapse label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')} styles={styles}>
+      <CollapsableHeader label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}>
         {queries.map((query) => (
           <SidebarCard key={query.refId} item={query} />
         ))}
-      </Collapse>
-      <Collapse label={t('query-editor-next.sidebar.transformations', 'Transformations')} styles={styles}>
+      </CollapsableHeader>
+      <CollapsableHeader label={t('query-editor-next.sidebar.transformations', 'Transformations')}>
         {transformations.map((transformation) => (
           <SidebarCard key={transformation.id} item={transformation} />
         ))}
-      </Collapse>
+      </CollapsableHeader>
     </div>
   );
 });
