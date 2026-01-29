@@ -15,6 +15,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -437,12 +439,16 @@ func (ng *AlertNG) init() error {
 	}
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService), ng.FeatureToggles)
+
+	routeService := routes.NewService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.FeatureToggles, ng.Log, validation.ValidateProvenanceRelaxed)
+
 	receiverAccess := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false)
 	receiverService := notifier.NewReceiverService(
 		receiverAccess,
 		configStore,
 		ng.store,
 		ng.store,
+		routeService,
 		ng.SecretsService,
 		ng.store,
 		ng.Log,
@@ -463,6 +469,7 @@ func (ng *AlertNG) init() error {
 		configStore,
 		ng.store,
 		ng.store,
+		routeService,
 		ng.SecretsService,
 		ng.store,
 		ng.Log,
@@ -475,7 +482,7 @@ func (ng *AlertNG) init() error {
 	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
 	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
 	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
-	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store)
+	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store, routeService)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
@@ -499,6 +506,7 @@ func (ng *AlertNG) init() error {
 		RuleStatusReader:     apiStatusReader,
 		AccessControl:        ng.accesscontrol,
 		Policies:             policyService,
+		RouteService:         routeService,
 		ReceiverService:      receiverService,
 		ReceiverTestService:  receiverTestService,
 		ContactPointService:  contactPointService,
