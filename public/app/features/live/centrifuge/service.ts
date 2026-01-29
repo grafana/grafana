@@ -7,7 +7,7 @@ import {
   ServerPublicationContext,
   State,
 } from 'centrifuge';
-import { BehaviorSubject, Observable, of, share, startWith } from 'rxjs';
+import { BehaviorSubject, map, Observable, share, startWith, take } from 'rxjs';
 
 import {
   DataQueryError,
@@ -16,7 +16,6 @@ import {
   LiveChannelConnectionState,
   LiveChannelId,
   LoadingState,
-  StreamingDataFrame,
   toLiveChannelId,
 } from '@grafana/data';
 import {
@@ -31,7 +30,7 @@ import {
   getBackendSrv,
 } from '@grafana/runtime';
 
-import { StreamingResponseData, StreamingResponseDataType } from '../data/utils';
+import { StreamingResponseData } from '../data/utils';
 
 import { LiveDataStream } from './LiveDataStream';
 import { CentrifugeLiveChannel } from './channel';
@@ -245,29 +244,31 @@ export class CentrifugeService implements CentrifugeSrv {
   };
   /**
    * Connect to a channel and return results as DataFrames.
-   * Returns "No data" response if live streaming is blocked by dashboard settings.
+   * When live streaming is blocked by dashboard settings, collects 3 emissions
+   * before completing with LoadingState.Done so panels have data to display.
    */
   getDataStream: CentrifugeSrv['getDataStream'] = (options) => {
-    // Check if live streaming should be blocked based on dashboard settings
+    const subscriptionKey = this.createSubscriptionKey(options);
+    const stream = this.getLiveDataStream(options);
+
+    // When streaming is blocked, take 3 emissions then complete with Done state
+    // This ensures panels have some data to display instead of "No Data"
     if (this.isLiveStreamingBlocked()) {
-      const subscriptionKey = this.createSubscriptionKey(options);
-      const emptyFrame = StreamingDataFrame.empty();
-      const response: StreamingDataQueryResponse = {
-        key: subscriptionKey,
-        state: LoadingState.Done,
-        data: [
-          {
-            type: StreamingResponseDataType.FullFrame,
-            frame: emptyFrame.serialize(),
-          },
-        ],
-      };
-      return of(response);
+      return stream.get(options, subscriptionKey).pipe(
+        take(3),
+        map((response, index) => {
+          // On the 3rd emission (index 2), mark as Done to signal completion
+          if (index === 2) {
+            return {
+              ...response,
+              state: LoadingState.Done,
+            };
+          }
+          return response;
+        })
+      );
     }
 
-    const subscriptionKey = this.createSubscriptionKey(options);
-
-    const stream = this.getLiveDataStream(options);
     return stream.get(options, subscriptionKey);
   };
 
