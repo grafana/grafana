@@ -383,6 +383,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
             staticOptions: variable.spec.staticOptions.map((option) => ({
               label: String(option.text),
               value: String(option.value),
+              properties: option.properties,
             })),
           }
         : {}),
