@@ -180,7 +180,7 @@ func getMapKeys(m map[string][]string) []string {
 
 func (a *api) GetInheritedPermissions(ctx context.Context, namespace string, resourceID string, dynamicClient dynamic.Interface) (getResourcePermissionsResponse, error) {
 	if a.service.options.Resource == folderv1.RESOURCE {
-		return a.getFolderHierarchyPermissions(ctx, namespace, resourceID, dynamicClient)
+		return a.getFolderHierarchyPermissions(ctx, namespace, resourceID, dynamicClient, true)
 	} else {
 		if a.service.options.GetParentFolder == nil {
 			return getResourcePermissionsResponse{}, nil
@@ -196,12 +196,13 @@ func (a *api) GetInheritedPermissions(ctx context.Context, namespace string, res
 			return getResourcePermissionsResponse{}, nil
 		}
 
-		return a.getFolderHierarchyPermissions(ctx, namespace, parentFolderUID, dynamicClient)
+		return a.getFolderHierarchyPermissions(ctx, namespace, parentFolderUID, dynamicClient, false)
 	}
 }
 
 // getFolderHierarchyPermissions gets permissions from a folder and all its parents
-func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace string, folderUID string, dynamicClient dynamic.Interface) (getResourcePermissionsResponse, error) {
+// skipSelf: if true, skips the permissions of the folder itself (used for folders to avoid inheriting their own permissions)
+func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace string, folderUID string, dynamicClient dynamic.Interface, skipSelf bool) (getResourcePermissionsResponse, error) {
 	foldersGVR := schema.GroupVersionResource{
 		Group:    folderv1.APIGroup,
 		Version:  folderv1.APIVersion,
@@ -232,7 +233,7 @@ func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace strin
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
 
 	for _, parentFolder := range folderInfoList.Items {
-		if parentFolder.Name == folderUID {
+		if skipSelf && parentFolder.Name == folderUID {
 			continue
 		}
 
