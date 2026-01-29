@@ -35,6 +35,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -90,6 +91,8 @@ type Alertmanager struct {
 	externalURL   string
 
 	runtimeConfig remoteClient.RuntimeConfig
+
+	features featuremgmt.FeatureToggles
 }
 
 type AlertmanagerConfig struct {
@@ -135,7 +138,16 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, crypto Crypto, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
+func NewAlertmanager(
+	ctx context.Context,
+	cfg AlertmanagerConfig,
+	store stateStore,
+	crypto Crypto,
+	autogenFn AutogenFn,
+	metrics *metrics.RemoteAlertmanager,
+	tracer tracing.Tracer,
+	features featuremgmt.FeatureToggles,
+) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -211,6 +223,8 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		promoteConfig: cfg.PromoteConfig,
 		smtp:          cfg.SmtpConfig,
 		runtimeConfig: cfg.RuntimeConfig,
+
+		features: features,
 	}
 
 	// Parse the default configuration once and remember its hash so we can compare it later.

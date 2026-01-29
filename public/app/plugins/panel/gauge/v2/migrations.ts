@@ -2,7 +2,7 @@ import { PanelModel, PanelTypeChangedHandler } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema/dist/esm/index.gen';
 import { sharedSingleStatPanelChangedHandler, sharedSingleStatMigrationHandler } from '@grafana/ui';
 
-import { Options } from './panelcfg.gen';
+import { Options } from '../panelcfg.gen';
 
 // This is called when the panel first loads
 export function gaugePanelMigrationHandler(panel: PanelModel<Options>): Partial<Options> {

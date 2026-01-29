@@ -11,9 +11,9 @@ import { config, PanelDataErrorView } from '@grafana/runtime';
 import { DataLinksContextMenu, Stack, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
 
-import { Options } from './panelcfg.gen';
+import { Options } from '../panelcfg.gen';
 
-export function RadialBarPanel({
+export function GaugePanel({
   id,
   height,
   width,
