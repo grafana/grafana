@@ -19,7 +19,7 @@ export interface UseWizardSubmissionParams {
     spec: RepositorySpec,
     token?: string
   ) => Promise<{ data?: { metadata?: { name?: string } }; error?: unknown }>;
-  githubAppStepRef: RefObject<GitHubAppStepRef>;
+  githubAppStepRef: RefObject<GitHubAppStepRef | null>;
   setStepStatusInfo: (info: StepStatusInfo) => void;
   onSuccess: () => void;
 }

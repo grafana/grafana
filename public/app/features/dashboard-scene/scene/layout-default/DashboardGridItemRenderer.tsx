@@ -15,7 +15,7 @@ import { DashboardGridItem, RepeatDirection } from './DashboardGridItem';
 interface PanelWrapperProps {
   panel: VizPanel;
   isLazy: boolean;
-  containerRef?: RefObject<HTMLDivElement>;
+  containerRef?: RefObject<HTMLDivElement | null>;
 }
 
 function PanelWrapper({ panel, isLazy, containerRef }: PanelWrapperProps) {

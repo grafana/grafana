@@ -13,7 +13,7 @@ describe('useMenuFocus', () => {
 
   const testid = 'test';
   const getMenuElement = (
-    ref: RefObject<HTMLDivElement>,
+    ref: RefObject<HTMLDivElement | null>,
     handleKeys?: (event: KeyboardEvent) => void,
     handleFocus?: () => void,
     onClick?: () => void
