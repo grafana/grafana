@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { CollapsableSection as GrafanaCollapsableSection, Stack, Text } from '@grafana/ui';
+import { CollapsableSection, Stack, Text } from '@grafana/ui';
 
-export const CollapsableHeader = ({ label, children }: { label: string; children: React.ReactNode }) => {
+export const QuerySidebarCollapsableHeader = ({ label, children }: { label: string; children: React.ReactNode }) => {
   const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <GrafanaCollapsableSection
+    <CollapsableSection
       label={
         <Text color="secondary" variant="body">
           {label}
@@ -20,6 +20,6 @@ export const CollapsableHeader = ({ label, children }: { label: string; children
       <Stack direction="column" gap={1}>
         {children}
       </Stack>
-    </GrafanaCollapsableSection>
+    </CollapsableSection>
   );
 };
