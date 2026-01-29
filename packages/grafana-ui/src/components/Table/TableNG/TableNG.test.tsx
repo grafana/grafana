@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -179,15 +179,15 @@ const createNestedDataFrame = (): DataFrame => {
 };
 
 // Create a data frame specifically for testing multi-column sorting
-const createSortingTestDataFrame = (): DataFrame => {
+const createSortingTestDataFrame = (length = 5): DataFrame => {
   const frame = toDataFrame({
     name: 'SortingTestData',
-    length: 5,
+    length: length,
     fields: [
       {
         name: 'Category',
         type: FieldType.string,
-        values: ['A', 'B', 'A', 'B', 'A'],
+        values: ['A', 'B', 'A', 'B', 'A', 'C'].splice(0, length),
         config: {
           custom: {
             width: 150,
@@ -210,7 +210,7 @@ const createSortingTestDataFrame = (): DataFrame => {
       {
         name: 'Value',
         type: FieldType.number,
-        values: [5, 3, 1, 4, 2],
+        values: [5, 3, 1, 4, 2, 3].splice(0, length),
         config: {
           custom: {
             width: 150,
@@ -233,7 +233,7 @@ const createSortingTestDataFrame = (): DataFrame => {
       {
         name: 'Name',
         type: FieldType.string,
-        values: ['John', 'Jane', 'Bob', 'Alice', 'Charlie'],
+        values: ['John', 'Jane', 'Bob', 'Alice', 'Charlie', 'Emily'].splice(0, length),
         config: {
           custom: {
             width: 150,
@@ -347,9 +347,8 @@ describe('TableNG', () => {
         <TableNG enableVirtualization={true} data={createSortingTestDataFrame()} width={100} height={10} />
       );
       expect(jestScrollIntoView).not.toHaveBeenCalled();
-      expect(container.querySelector('[aria-selected="true"]')).not.toBeInTheDocument();
+      expect(container.querySelector('[aria-selected="true"][role="gridcell"]')).not.toBeInTheDocument();
     });
-
     it('initialRowIndex should scroll', async () => {
       const { container } = render(
         <TableNG
@@ -361,9 +360,8 @@ describe('TableNG', () => {
         />
       );
       expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
-      expect(container.querySelector('[aria-selected="true"]')).toBeVisible();
+      expect(container.querySelector('[aria-selected="true"][role="gridcell"]')).toBeVisible();
     });
-
     it('sorting should not retrigger initialRowIndex scroll', async () => {
       const { container } = render(
         <TableNG
@@ -375,6 +373,7 @@ describe('TableNG', () => {
         />
       );
 
+      expect(container.querySelector('[aria-selected="true"][role="gridcell"]')).toBeVisible();
       const columnHeader = container.querySelector('[role="columnheader"]');
 
       // Find the sort button within the first header
@@ -389,8 +388,34 @@ describe('TableNG', () => {
       await user.click(sortButton);
 
       expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
-      expect(container.querySelector('[aria-selected="true"]')).toBeVisible();
     });
+    it.each([true, false])(
+      'initialRowIndex should scroll to value at dataFrame index independent of table sort',
+      async (desc) => {
+        const { container } = render(
+          <TableNG
+            initialSortBy={[
+              {
+                displayName: 'Category',
+                desc,
+              },
+            ]}
+            initialRowIndex={5}
+            enableVirtualization={true}
+            data={createSortingTestDataFrame(6)}
+            width={100}
+            height={10}
+          />
+        );
+
+        // The first column in our selected row
+        const initiallySelectedCell = container.querySelector('[aria-selected="true"][role="gridcell"]');
+        const initiallySelectedCellContent = initiallySelectedCell?.textContent;
+        expect(initiallySelectedCell).toBeVisible();
+        expect(initiallySelectedCellContent).toEqual('C');
+        expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
+      }
+    );
   });
 
   describe('Basic TableNG rendering', () => {
