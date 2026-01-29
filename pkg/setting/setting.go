@@ -281,12 +281,13 @@ type Cfg struct {
 	ManagedServiceAccountsEnabled bool
 
 	// AWS Plugin Auth
-	AWSAllowedAuthProviders   []string
-	AWSAssumeRoleEnabled      bool
-	AWSSessionDuration        string
-	AWSExternalId             string
-	AWSListMetricsPageLimit   int
-	AWSForwardSettingsPlugins []string
+	AWSAllowedAuthProviders          []string
+	AWSAssumeRoleEnabled             bool
+	AWSPerDatasourceHTTPProxyEnabled bool
+	AWSSessionDuration               string
+	AWSExternalId                    string
+	AWSListMetricsPageLimit          int
+	AWSForwardSettingsPlugins        []string
 
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
@@ -1510,6 +1511,7 @@ func (cfg *Cfg) readLDAPConfig() {
 func (cfg *Cfg) handleAWSConfig() {
 	awsPluginSec := cfg.Raw.Section("aws")
 	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(true)
+	cfg.AWSPerDatasourceHTTPProxyEnabled = awsPluginSec.Key("per_datasource_http_proxy_enabled").MustBool(false)
 	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").MustString("default,keys,credentials")
 	for _, authProvider := range strings.Split(allowedAuthProviders, ",") {
 		authProvider = strings.TrimSpace(authProvider)

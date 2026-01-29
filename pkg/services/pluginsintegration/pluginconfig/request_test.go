@@ -562,6 +562,7 @@ func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
 	}
 
 	cfg.AWSAssumeRoleEnabled = false
+	cfg.AWSPerDatasourceHTTPProxyEnabled = true
 	cfg.AWSAllowedAuthProviders = []string{"grafana_assume_role", "keys"}
 	cfg.AWSExternalId = "mock_external_id"
 	cfg.AWSSessionDuration = "10m"
@@ -572,17 +573,19 @@ func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
 
 	t.Run("uses the aws settings for an AWS plugin", func(t *testing.T) {
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "cloudwatch", nil), map[string]string{
-			"AWS_AUTH_AssumeRoleEnabled":     "false",
-			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
-			"AWS_AUTH_EXTERNAL_ID":           "mock_external_id",
-			"AWS_AUTH_SESSION_DURATION":      "10m",
-			"AWS_CW_LIST_METRICS_PAGE_LIMIT": "100",
+			"AWS_AUTH_AssumeRoleEnabled":             "false",
+			"AWS_AUTH_PerDatasourceHTTPProxyEnabled": "true",
+			"AWS_AUTH_AllowedAuthProviders":          "grafana_assume_role,keys",
+			"AWS_AUTH_EXTERNAL_ID":                   "mock_external_id",
+			"AWS_AUTH_SESSION_DURATION":              "10m",
+			"AWS_CW_LIST_METRICS_PAGE_LIMIT":         "100",
 		})
 	})
 
 	t.Run("does not use the aws settings for a non-aws plugin", func(t *testing.T) {
 		m := p.PluginRequestConfig(context.Background(), "", nil)
 		require.NotContains(t, m, "AWS_AUTH_AssumeRoleEnabled")
+		require.NotContains(t, m, "AWS_AUTH_PerDatasourceHTTPProxyEnabled")
 		require.NotContains(t, m, "AWS_AUTH_AllowedAuthProviders")
 		require.NotContains(t, m, "AWS_AUTH_EXTERNAL_ID")
 		require.NotContains(t, m, "AWS_AUTH_SESSION_DURATION")
@@ -594,11 +597,12 @@ func TestRequestConfigProvider_PluginRequestConfig_aws(t *testing.T) {
 
 		p = NewRequestConfigProvider(cfg, &fakeSSOSettingsProvider{})
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "test-datasource", nil), map[string]string{
-			"AWS_AUTH_AssumeRoleEnabled":     "false",
-			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
-			"AWS_AUTH_EXTERNAL_ID":           "mock_external_id",
-			"AWS_AUTH_SESSION_DURATION":      "10m",
-			"AWS_CW_LIST_METRICS_PAGE_LIMIT": "100",
+			"AWS_AUTH_AssumeRoleEnabled":             "false",
+			"AWS_AUTH_PerDatasourceHTTPProxyEnabled": "true",
+			"AWS_AUTH_AllowedAuthProviders":          "grafana_assume_role,keys",
+			"AWS_AUTH_EXTERNAL_ID":                   "mock_external_id",
+			"AWS_AUTH_SESSION_DURATION":              "10m",
+			"AWS_CW_LIST_METRICS_PAGE_LIMIT":         "100",
 		})
 	})
 }

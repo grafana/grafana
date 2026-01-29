@@ -316,6 +316,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExpressionsEnabled:                  hs.Cfg.ExpressionsEnabled,
 		AwsAllowedAuthProviders:             hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:                hs.Cfg.AWSAssumeRoleEnabled,
+		AwsPerDatasourceHTTPProxyEnabled:    hs.Cfg.AWSPerDatasourceHTTPProxyEnabled,
 		SupportBundlesEnabled:               isSupportBundlesEnabled(hs),
 
 		Azure: dtos.FrontendSettingsAzureDTO{

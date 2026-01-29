@@ -290,7 +290,7 @@
     "@grafana/llm": "1.0.1",
     "@grafana/monaco-logql": "^0.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/plugin-ui": "^0.11.1",
+    "@grafana/plugin-ui": "^0.12.1",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/scenes": "6.52.11",
@@ -460,7 +460,8 @@
     "js-yaml@npm:4.1.0": "^4.1.0",
     "js-yaml@npm:=4.1.0": "^4.1.0",
     "nodemailer": "7.0.12",
-    "@storybook/core@npm:8.6.15": "patch:@storybook/core@npm%3A8.6.15#~/.yarn/patches/@storybook-core-npm-8.6.15-a468a35170.patch"
+    "@storybook/core@npm:8.6.15": "patch:@storybook/core@npm%3A8.6.15#~/.yarn/patches/@storybook-core-npm-8.6.15-a468a35170.patch",
+    "@grafana/aws-sdk": "portal:/Users/isabellasiu/code/grafana-aws-sdk-react"
   },
   "workspaces": {
     "packages": [
