@@ -26,6 +26,7 @@ import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
@@ -847,6 +848,59 @@ describe('panelMenuBehavior', () => {
 
     afterEach(() => {
       jest.restoreAllMocks();
+    });
+  });
+
+  describe('Panel styles menu', () => {
+    beforeEach(() => {
+      config.featureToggles.panelStyleActions = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.panelStyleActions = false;
+    });
+
+    it('should call analytics when copy styles is clicked', async () => {
+      const spy = jest.spyOn(DashboardInteractions, 'panelStylesMenuClicked');
+      const copySpy = jest.spyOn(DashboardScene.prototype, 'copyPanelStyles');
+
+      const menu = new VizPanelMenu({
+        $behaviors: [panelMenuBehavior],
+      });
+
+      const panel = new VizPanel({
+        title: 'Timeseries Panel',
+        pluginId: 'timeseries',
+        key: 'panel-ts',
+        menu,
+      });
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      new DashboardScene({
+        title: 'My dashboard',
+        uid: 'dash-1',
+        meta: { canEdit: true },
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      const stylesMenu = menu.state.items?.find((item) => item.text === 'Styles');
+      expect(stylesMenu).toBeDefined();
+
+      const copyItem = stylesMenu?.subMenu?.find((item) => item.text === 'Copy styles');
+      expect(copyItem).toBeDefined();
+
+      copyItem?.onClick?.({} as never);
+
+      expect(spy).toHaveBeenCalledWith('copy', 'timeseries', expect.any(Number));
+      expect(copySpy).toHaveBeenCalled();
+
+      spy.mockRestore();
+      copySpy.mockRestore();
     });
   });
 });
