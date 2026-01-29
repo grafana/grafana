@@ -1,9 +1,9 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
-import { Combobox, Field, Input, RadioButtonGroup, TextArea } from '@grafana/ui';
+import { Combobox, Field, Input, TextArea } from '@grafana/ui';
 import { RepositoryView, useGetRepositoryRefsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { WorkflowOption } from 'app/features/provisioning/types';
@@ -13,7 +13,6 @@ import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
 import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
 import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
-import { generateNewBranchName } from '../utils/newBranchName';
 
 interface DashboardEditFormSharedFieldsProps {
   resourceType: 'dashboard' | 'folder';
@@ -30,30 +29,12 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     const {
       control,
       register,
-      setValue,
-      clearErrors,
       formState: { errors },
     } = useFormContext();
 
     const canPushToNonConfiguredBranch = repository?.workflows?.includes('branch');
+    const canOnlyPushToConfiguredBranch = canPushToConfiguredBranch && !canPushToNonConfiguredBranch;
 
-    // always display push to existing branch and create new branch options, but disable configured branch if not allowed
-    const branchSelectionOptions: Array<{ label: string; value: 'write' | 'branch'; description?: string }> = [
-      {
-        label: t('provisioning.workflow-options-label.push-to-existing-branch', 'Push to an existing branch'),
-        value: 'write',
-      },
-      {
-        label: t('provisioning.workflow-options-label.push-to-a-new-branch', 'Push to a new branch'),
-        value: 'branch',
-        description: canPushToNonConfiguredBranch
-          ? undefined
-          : t(
-              'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch-workflow-not-allowed',
-              'Creating a new branch is not allowed for this repository.'
-            ),
-      },
-    ];
     const {
       data: branchData,
       isLoading: branchLoading,
@@ -74,8 +55,6 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       canPushToConfiguredBranch,
       canPushToNonConfiguredBranch,
     });
-
-    const newBranchDefaultName = useMemo(() => generateNewBranchName(resourceType), [resourceType]);
 
     const pathText =
       resourceType === 'dashboard'
@@ -124,45 +103,23 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
         {/* Workflow */}
         {repository?.type && isGitProvider(repository.type) && !readOnly && (
           <>
-            <Field
-              noMargin
-              style={{ overflow: 'auto' }} // TODO Fix radio button group display on smaller screens
-              label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-workflow', 'Workflow')}
-            >
-              <Controller
-                control={control}
-                name="workflow"
-                render={({ field: { ref, onChange, ...field } }) => (
-                  <RadioButtonGroup<'write' | 'branch'>
-                    id="provisioned-resource-form-workflow"
-                    {...field}
-                    options={branchSelectionOptions}
-                    // disable branch option if repo is not allowed to push to non-configured branch
-                    disabledOptions={canPushToNonConfiguredBranch ? undefined : ['branch']}
-                    onChange={(nextWorkflow) => {
-                      onChange(nextWorkflow);
-                      clearErrors('ref');
-                      if (nextWorkflow === 'branch') {
-                        setValue('ref', newBranchDefaultName);
-                      } else if (nextWorkflow === 'write' && repository?.branch) {
-                        // when allow to push to configured branch, set configured branch as default selection
-                        // when not allowed, leave it empty for user to select
-                        setValue('ref', canPushToConfiguredBranch ? repository.branch : '');
-                      }
-                    }}
-                  />
-                )}
-              />
-            </Field>
             {(workflow === 'write' || workflow === 'branch') && (
               <Field
+                disabled={canOnlyPushToConfiguredBranch}
                 htmlFor="provisioned-ref"
                 noMargin
                 label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-branch', 'Branch')}
-                description={t(
-                  'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch-name-in-git-hub',
-                  'Branch name in GitHub'
-                )}
+                description={
+                  canOnlyPushToConfiguredBranch
+                    ? t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch-restricted',
+                        'This repository is restricted to the configured branch only'
+                      )
+                    : t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch',
+                        'Select an existing branch or enter a new branch name to create a branch for your changes'
+                      )
+                }
                 invalid={Boolean(errors.ref || branchError)}
                 error={
                   errors.ref ? (
@@ -176,34 +133,22 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                   name="ref"
                   control={control}
                   rules={{ validate: validateBranchName }}
-                  render={({ field: { ref, onChange, ...field } }) =>
-                    workflow === 'write' ? (
-                      <Combobox
-                        {...field}
-                        invalid={!!errors.ref}
-                        id="provisioned-ref"
-                        onChange={(option) => onChange(option ? option.value : '')}
-                        placeholder={t(
-                          'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-branch',
-                          'Select or enter branch name'
-                        )}
-                        options={branchOptions}
-                        loading={branchLoading}
-                        isClearable
-                      />
-                    ) : (
-                      <Input
-                        {...field}
-                        invalid={!!errors.ref}
-                        id="provisioned-ref"
-                        onChange={onChange}
-                        placeholder={t(
-                          'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-new-branch',
-                          'Enter new branch name'
-                        )}
-                      />
-                    )
-                  }
+                  render={({ field: { ref, onChange, ...field } }) => (
+                    <Combobox
+                      {...field}
+                      invalid={!!errors.ref}
+                      id="provisioned-ref"
+                      onChange={(option) => onChange(option ? option.value : '')}
+                      placeholder={t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-branch',
+                        'Select or enter branch name'
+                      )}
+                      options={branchOptions}
+                      loading={branchLoading}
+                      isClearable
+                      createCustomValue
+                    />
+                  )}
                 />
               </Field>
             )}
