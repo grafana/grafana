@@ -75,12 +75,9 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
         contentClassName={styles.collapsableSectionContent}
       >
         <Stack direction="column" gap={1}>
-          {transformations.map((transformation) => {
-            if (isDataTransformerConfig(transformation)) {
-              return <SidebarCard key={transformation.id} query={transformation} />;
-            }
-            return null;
-          })}
+          {transformations.map((transformation) => (
+            <SidebarCard key={transformation.id} query={transformation} />
+          ))}
         </Stack>
       </CollapsableSection>
     </div>

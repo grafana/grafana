@@ -25,5 +25,5 @@ export function getEditorType(card: DataQuery | DataTransformerConfig | null): Q
 export function isDataTransformerConfig(
   transformation: DataTransformerConfig | DataQuery | CustomTransformerDefinition | null
 ): transformation is DataTransformerConfig {
-  return transformation !== null && 'id' in transformation;
+  return transformation !== null && 'id' in transformation && !('refId' in transformation);
 }

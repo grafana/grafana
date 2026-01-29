@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, standardTransformersRegistry } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -9,7 +9,7 @@ import { useDatasource } from 'app/features/datasources/hooks';
 
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useQueryRunnerContext, useQueryEditorUIContext } from '../QueryEditorContext';
-import { getEditorType } from '../utils';
+import { getEditorType, isDataTransformerConfig } from '../utils';
 
 const getTypeText = (editorType: QueryEditorType) => {
   switch (editorType) {
@@ -47,6 +47,7 @@ const TransformationCard = ({ transformation }: { transformation: DataTransforme
 
   const isSelected = selectedTransformation?.id === transformation.id;
   const styles = useStyles2(getStyles, QueryEditorType.Transformation, false, isSelected);
+  const transformationName = standardTransformersRegistry.getIfExists(transformation.id)?.name || transformation.id;
 
   const handleClick = () => {
     // We don't allow deselecting cards so don't do anything if already selected
@@ -66,7 +67,7 @@ const TransformationCard = ({ transformation }: { transformation: DataTransforme
       <Header editorType={QueryEditorType.Transformation} styles={styles} />
       <div className={styles.cardContent}>
         <Text weight="light" variant="body" color="secondary">
-          {transformation.id}
+          {transformationName}
         </Text>
       </div>
     </button>
@@ -110,13 +111,10 @@ const QueryCard = ({ query }: SidebarCardProps) => {
 };
 
 export const SidebarCard = ({ query }: { query: DataQuery | DataTransformerConfig }) => {
-  const editorType = getEditorType(query);
-  if (editorType === QueryEditorType.Transformation) {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return <TransformationCard transformation={query as DataTransformerConfig} />;
+  if (isDataTransformerConfig(query)) {
+    return <TransformationCard transformation={query} />;
   }
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return <QueryCard query={query as DataQuery} />;
+  return <QueryCard query={query} />;
 };
 
 function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: boolean, isSelected?: boolean) {
