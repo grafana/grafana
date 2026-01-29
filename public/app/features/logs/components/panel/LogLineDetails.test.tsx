@@ -139,6 +139,68 @@ const setup = async (
 };
 
 describe('LogLineDetails', () => {
+  describe('Toggleable filters', () => {
+    // @todo leaking - this test will fail if ran at the end.
+    test('should pass the log row to Explore filter functions', async () => {
+      const onClickFilterLabelMock = jest.fn();
+      const onClickFilterOutLabelMock = jest.fn();
+      const isLabelFilterActiveMock = jest.fn().mockResolvedValue(true);
+      const log = createLogLine({
+        logLevel: LogLevel.error,
+        timeEpochMs: 1546297200000,
+        labels: { key1: 'label1' },
+      });
+
+      await setup(
+        {
+          logs: [log],
+        },
+        undefined,
+        {
+          onClickFilterLabel: onClickFilterLabelMock,
+          onClickFilterOutLabel: onClickFilterOutLabelMock,
+          isLabelFilterActive: isLabelFilterActiveMock,
+        },
+        {
+          showDetails: [log],
+          currentLog: log,
+        }
+      );
+
+      expect(isLabelFilterActiveMock).toHaveBeenCalledWith('key1', 'label1', log.dataFrame.refId);
+
+      waitFor(() => expect(screen.getByLabelText(/Remove filter in query A/)).toBeInTheDocument());
+      await userEvent.click(screen.getByLabelText(/Remove filter in query A/));
+      expect(onClickFilterLabelMock).toHaveBeenCalledTimes(1);
+      expect(onClickFilterLabelMock).toHaveBeenCalledWith(
+        'key1',
+        'label1',
+        expect.objectContaining({
+          fields: [
+            expect.objectContaining({ values: [0] }),
+            expect.objectContaining({ values: ['line1'] }),
+            expect.objectContaining({ values: [{ app: 'app01' }] }),
+          ],
+          length: 1,
+        })
+      );
+
+      await userEvent.click(screen.getByLabelText('Filter out value in query A'));
+      expect(onClickFilterOutLabelMock).toHaveBeenCalledTimes(1);
+      expect(onClickFilterOutLabelMock).toHaveBeenCalledWith(
+        'key1',
+        'label1',
+        expect.objectContaining({
+          fields: [
+            expect.objectContaining({ values: [0] }),
+            expect.objectContaining({ values: ['line1'] }),
+            expect.objectContaining({ values: [{ app: 'app01' }] }),
+          ],
+          length: 1,
+        })
+      );
+    });
+  });
   describe('when fields are present', () => {
     test('should render the fields and the log line', async () => {
       await setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
@@ -200,68 +262,7 @@ describe('LogLineDetails', () => {
       expect(screen.getByLabelText('Filter for value in query A')).toBeInTheDocument();
       expect(screen.getByLabelText('Filter out value in query A')).toBeInTheDocument();
     });
-    describe('Toggleable filters', () => {
-      // @todo
-      test('should pass the log row to Explore filter functions', async () => {
-        const onClickFilterLabelMock = jest.fn();
-        const onClickFilterOutLabelMock = jest.fn();
-        const isLabelFilterActiveMock = jest.fn().mockResolvedValue(true);
-        const log = createLogLine({
-          logLevel: LogLevel.error,
-          timeEpochMs: 1546297200000,
-          labels: { key1: 'label1' },
-          datasourceUid: tempoDS.uid,
-        });
 
-        await setup(
-          {
-            logs: [log],
-          },
-          undefined,
-          {
-            onClickFilterLabel: onClickFilterLabelMock,
-            onClickFilterOutLabel: onClickFilterOutLabelMock,
-            isLabelFilterActive: isLabelFilterActiveMock,
-          },
-          {
-            showDetails: [log],
-            currentLog: log,
-          }
-        );
-
-        expect(isLabelFilterActiveMock).toHaveBeenCalledWith('key1', 'label1', log.dataFrame.refId);
-
-        await userEvent.click(screen.getByLabelText('Filter for value in query A'));
-        expect(onClickFilterLabelMock).toHaveBeenCalledTimes(1);
-        expect(onClickFilterLabelMock).toHaveBeenCalledWith(
-          'key1',
-          'label1',
-          expect.objectContaining({
-            fields: [
-              expect.objectContaining({ values: [0] }),
-              expect.objectContaining({ values: ['line1'] }),
-              expect.objectContaining({ values: [{ app: 'app01' }] }),
-            ],
-            length: 1,
-          })
-        );
-
-        await userEvent.click(screen.getByLabelText('Filter out value in query A'));
-        expect(onClickFilterOutLabelMock).toHaveBeenCalledTimes(1);
-        expect(onClickFilterOutLabelMock).toHaveBeenCalledWith(
-          'key1',
-          'label1',
-          expect.objectContaining({
-            fields: [
-              expect.objectContaining({ values: [0] }),
-              expect.objectContaining({ values: ['line1'] }),
-              expect.objectContaining({ values: [{ app: 'app01' }] }),
-            ],
-            length: 1,
-          })
-        );
-      });
-    });
     test('should not render filter controls when the callbacks are not provided', async () => {
       await setup(
         undefined,
