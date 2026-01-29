@@ -287,7 +287,7 @@ func (rs *RenderingService) render(ctx context.Context, renderType RenderType, o
 	}()
 	metrics.MRenderingQueue.Set(float64(newInProgressCount))
 
-	if int(newInProgressCount) > opts.ConcurrentLimit {
+	if opts.ConcurrentLimit > 0 && int(newInProgressCount) > opts.ConcurrentLimit {
 		logger.Warn("Could not render image, hit the currency limit", "concurrencyLimit", opts.ConcurrentLimit, "path", opts.Path)
 		if opts.ErrorConcurrentLimitReached {
 			return nil, ErrConcurrentLimitReached
@@ -359,7 +359,7 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderK
 	}()
 	metrics.MRenderingQueue.Set(float64(newInProgressCount))
 
-	if int(newInProgressCount) > opts.ConcurrentLimit {
+	if opts.ConcurrentLimit > 0 && int(newInProgressCount) > opts.ConcurrentLimit {
 		return nil, ErrConcurrentLimitReached
 	}
 
