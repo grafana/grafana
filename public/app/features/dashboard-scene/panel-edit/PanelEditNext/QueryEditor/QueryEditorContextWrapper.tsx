@@ -74,9 +74,14 @@ export function QueryEditorContextWrapper({
       }
     }
 
+    // If a transformation is selected, don't select any query
+    if (selectedTransformationId) {
+      return null;
+    }
+
     // Otherwise, default to the first query if available
     return queries.length > 0 ? queries[0] : null;
-  }, [queryRunnerState?.queries, selectedQueryRefId]);
+  }, [queryRunnerState?.queries, selectedQueryRefId, selectedTransformationId]);
 
   const selectedTransformation = useMemo(() => {
     // If we have a selected transformation id, try to find that transformation
