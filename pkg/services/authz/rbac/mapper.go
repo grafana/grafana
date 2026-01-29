@@ -3,6 +3,7 @@ package rbac
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -38,6 +39,10 @@ type translation struct {
 	skipScopeOnVerb map[string]bool
 	// use this option if you need to limit access to users that can access all resources
 	useWildcardScope bool
+	// when non-empty, only groups whose prefix is in this list match (for wildcard group keys only).
+	// e.g. for "*.datasource.grafana.app", allowedWildcardPrefixes ["loki","tempo"] allows only loki.* and tempo.*.
+	// nil or empty means allow any prefix.
+	allowedWildcardPrefixes []string
 }
 
 func (t translation) Action(verb string) (string, bool) {
@@ -290,6 +295,28 @@ func NewMapperRegistry() MapperRegistry {
 				skipScopeOnVerb: nil,
 			},
 		},
+		"*.datasource.grafana.app": {
+			"datasources": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:              "datasources:read",
+					utils.VerbList:             "datasources:read",
+					utils.VerbWatch:            "datasources:read",
+					utils.VerbCreate:           "datasources:create",
+					utils.VerbUpdate:           "datasources:write",
+					utils.VerbPatch:            "datasources:write",
+					utils.VerbDelete:           "datasources:delete",
+					utils.VerbDeleteCollection: "datasources:delete",
+					utils.VerbGetPermissions:   "datasources.permissions:read",
+					utils.VerbSetPermissions:   "datasources.permissions:write",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: nil,
+				// TODO support other datasource types -- these are the only ones required for TeamLBAC
+				allowedWildcardPrefixes: []string{"loki", "tempo", "prometheus"},
+			},
+		},
 		"plugins.grafana.app": {
 			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),
 			"metas":   newResourceTranslation("plugins.metas", "uid", false, nil),
@@ -304,14 +331,82 @@ func NewMapperRegistry() MapperRegistry {
 	return mapper
 }
 
+// groupMatchesWildcard returns true if group matches the wildcard pattern.
+// Pattern must start with exactly one "*" (e.g. "*.datasource.grafana.app").
+// The group matches if it has the same suffix as the pattern after the "*".
+// Wildcard groups (group starting with "*") never match.
+func groupMatchesWildcard(group, pattern string) bool {
+	if strings.HasPrefix(group, "*") {
+		return false
+	}
+	if len(pattern) < 2 || pattern[0] != '*' || pattern[1] != '.' {
+		return false
+	}
+	suffix := pattern[1:] // everything after "*"
+	return len(group) > len(suffix) && strings.HasSuffix(group, suffix)
+}
+
+// groupPrefixForWildcard returns the prefix of group when matched against a wildcard key.
+// e.g. groupPrefixForWildcard("loki.datasource.grafana.app", "*.datasource.grafana.app") returns ("loki", true).
+// The second return is false if group does not match the wildcard pattern.
+func groupPrefixForWildcard(group, wildcardKey string) (string, bool) {
+	if len(wildcardKey) < 2 || wildcardKey[0] != '*' || wildcardKey[1] != '.' {
+		return "", false
+	}
+	suffix := wildcardKey[1:]
+	if len(group) <= len(suffix) || !strings.HasSuffix(group, suffix) {
+		return "", false
+	}
+	return group[:len(group)-len(suffix)], true
+}
+
+// translationAllowsGroupPrefix returns true if the translation allows the given group when the registry key is a wildcard.
+// If allowedWildcardPrefixes is nil or empty, any prefix is allowed. Otherwise the group's prefix must be in the list.
+// Security: prefix is matched by exact string equality (slices.Contains); no substring or case-insensitive match.
+func translationAllowsGroupPrefix(t translation, group, groupKey string) bool {
+	if len(groupKey) == 0 || groupKey[0] != '*' {
+		return true
+	}
+	if len(t.allowedWildcardPrefixes) == 0 {
+		return true
+	}
+	prefix, ok := groupPrefixForWildcard(group, groupKey)
+	if !ok {
+		return false
+	}
+	return slices.Contains(t.allowedWildcardPrefixes, prefix)
+}
+
+// findGroupKey returns the registry key for group, using exact match first,
+// then wildcard match (e.g. "*.datasource.grafana.app" matches "loki.datasource.grafana.app").
+// Wildcard groups (e.g. "*.datasource.grafana.app") are disallowed as input and never match.
+func (m mapper) findGroupKey(group string) (string, bool) {
+	if strings.HasPrefix(group, "*") {
+		return "", false
+	}
+	if _, ok := m[group]; ok {
+		return group, true
+	}
+	for key := range m {
+		if strings.HasPrefix(key, "*") && groupMatchesWildcard(group, key) {
+			return key, true
+		}
+	}
+	return "", false
+}
+
 func (m mapper) Get(group, resource string) (Mapping, bool) {
-	resources, ok := m[group]
+	groupKey, ok := m.findGroupKey(group)
 	if !ok {
 		return nil, false
 	}
 
+	resources := m[groupKey]
 	t, ok := resources[resource]
 	if !ok {
+		return nil, false
+	}
+	if !translationAllowsGroupPrefix(t, group, groupKey) {
 		return nil, false
 	}
 
@@ -319,14 +414,18 @@ func (m mapper) Get(group, resource string) (Mapping, bool) {
 }
 
 func (m mapper) GetAll(group string) []Mapping {
-	resources, ok := m[group]
+	groupKey, ok := m.findGroupKey(group)
 	if !ok {
 		return nil
 	}
 
+	resources := m[groupKey]
+
 	translations := make([]Mapping, 0, len(resources))
 	for _, t := range resources {
-		translations = append(translations, &t)
+		if translationAllowsGroupPrefix(t, group, groupKey) {
+			translations = append(translations, &t)
+		}
 	}
 
 	return translations
