@@ -314,75 +314,73 @@ describe('DashboardCard', () => {
     });
   });
 
-  describe('Compatibility button', () => {
-    it('should show compatibility button when showCompatibilityButton={true} and onCheckCompatibility is provided', () => {
-      const mockOnCheckCompatibility = jest.fn();
+  describe('Compatibility badge', () => {
+    it('should show Check button when showCompatibilityBadge={true} and onCompatibilityCheck is provided', () => {
+      const mockOnCompatibilityCheck = jest.fn();
       render(
         <DashboardCard
           title="Test Dashboard"
           dashboard={createMockPluginDashboard()}
           onClick={mockOnClick}
-          showCompatibilityButton={true}
-          onCheckCompatibility={mockOnCheckCompatibility}
+          showCompatibilityBadge={true}
+          onCompatibilityCheck={mockOnCompatibilityCheck}
           kind="suggested_dashboard"
         />
       );
 
-      expect(screen.getByRole('button', { name: 'Check compatibility' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Check' })).toBeInTheDocument();
     });
 
-    it('should not show compatibility button when showCompatibilityButton={false}', () => {
-      const mockOnCheckCompatibility = jest.fn();
+    it('should not show compatibility badge when showCompatibilityBadge={false}', () => {
+      const mockOnCompatibilityCheck = jest.fn();
       render(
         <DashboardCard
           title="Test Dashboard"
           dashboard={createMockPluginDashboard()}
           onClick={mockOnClick}
-          showCompatibilityButton={false}
-          onCheckCompatibility={mockOnCheckCompatibility}
+          showCompatibilityBadge={false}
+          onCompatibilityCheck={mockOnCompatibilityCheck}
           kind="suggested_dashboard"
         />
       );
 
-      expect(screen.queryByRole('button', { name: 'Check compatibility' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Check' })).not.toBeInTheDocument();
     });
 
-    it('should not show compatibility button when onCheckCompatibility is not provided', () => {
+    it('should not show compatibility badge when onCompatibilityCheck is not provided', () => {
       render(
         <DashboardCard
           title="Test Dashboard"
           dashboard={createMockPluginDashboard()}
           onClick={mockOnClick}
-          showCompatibilityButton={true}
+          showCompatibilityBadge={true}
           kind="suggested_dashboard"
         />
       );
 
-      expect(screen.queryByRole('button', { name: 'Check compatibility' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Check' })).not.toBeInTheDocument();
     });
 
-    it('should call onCheckCompatibility with dashboard object when button is clicked', async () => {
-      const mockOnCheckCompatibility = jest.fn();
-      const mockDashboard = createMockPluginDashboard();
+    it('should call onCompatibilityCheck when Check button is clicked', async () => {
+      const mockOnCompatibilityCheck = jest.fn();
       const { user } = render(
         <DashboardCard
           title="Test Dashboard"
-          dashboard={mockDashboard}
+          dashboard={createMockPluginDashboard()}
           onClick={mockOnClick}
-          showCompatibilityButton={true}
-          onCheckCompatibility={mockOnCheckCompatibility}
+          showCompatibilityBadge={true}
+          onCompatibilityCheck={mockOnCompatibilityCheck}
           kind="suggested_dashboard"
         />
       );
 
-      await user.click(screen.getByRole('button', { name: 'Check compatibility' }));
+      await user.click(screen.getByRole('button', { name: 'Check' }));
 
-      expect(mockOnCheckCompatibility).toHaveBeenCalledTimes(1);
-      expect(mockOnCheckCompatibility).toHaveBeenCalledWith(mockDashboard);
+      expect(mockOnCompatibilityCheck).toHaveBeenCalledTimes(1);
     });
 
-    it('should prevent event propagation when compatibility button is clicked', async () => {
-      const mockOnCheckCompatibility = jest.fn();
+    it('should prevent event propagation when Check button is clicked', async () => {
+      const mockOnCompatibilityCheck = jest.fn();
       const mockParentClick = jest.fn();
       const { user } = render(
         <div onClick={mockParentClick}>
@@ -390,59 +388,53 @@ describe('DashboardCard', () => {
             title="Test Dashboard"
             dashboard={createMockPluginDashboard()}
             onClick={mockOnClick}
-            showCompatibilityButton={true}
-            onCheckCompatibility={mockOnCheckCompatibility}
+            showCompatibilityBadge={true}
+            onCompatibilityCheck={mockOnCompatibilityCheck}
             kind="suggested_dashboard"
           />
         </div>
       );
 
-      await user.click(screen.getByRole('button', { name: 'Check compatibility' }));
+      await user.click(screen.getByRole('button', { name: 'Check' }));
 
       expect(mockParentClick).not.toHaveBeenCalled();
-      expect(mockOnCheckCompatibility).toHaveBeenCalledTimes(1);
+      expect(mockOnCompatibilityCheck).toHaveBeenCalledTimes(1);
     });
 
-    it('should display compatibility tooltip on hover', async () => {
-      const mockOnCheckCompatibility = jest.fn();
-      const { user } = render(
+    it('should show success badge with score when compatibilityState has success status', () => {
+      render(
         <DashboardCard
           title="Test Dashboard"
           dashboard={createMockPluginDashboard()}
           onClick={mockOnClick}
-          showCompatibilityButton={true}
-          onCheckCompatibility={mockOnCheckCompatibility}
+          showCompatibilityBadge={true}
+          onCompatibilityCheck={jest.fn()}
+          compatibilityState={{ status: 'success', score: 85, metricsFound: 17, metricsTotal: 20 }}
           kind="suggested_dashboard"
         />
       );
 
-      const button = screen.getByRole('button', { name: 'Check compatibility' });
-      await user.hover(button);
-
-      expect(await screen.findByText('Check dashboard compatibility with your datasource')).toBeInTheDocument();
+      expect(screen.getByTestId('compatibility-badge-success')).toBeInTheDocument();
+      expect(screen.getByText('85%')).toBeInTheDocument();
     });
 
-    it('should render and work with GnetDashboard type', async () => {
-      const mockOnCheckCompatibility = jest.fn();
-      const mockDashboard = createMockGnetDashboard({ name: 'Community Dashboard' });
-      const { user } = render(
+    it('should show loading state when compatibilityState has loading status', () => {
+      render(
         <DashboardCard
-          title="Community Dashboard"
-          dashboard={mockDashboard}
+          title="Test Dashboard"
+          dashboard={createMockPluginDashboard()}
           onClick={mockOnClick}
-          showCompatibilityButton={true}
-          onCheckCompatibility={mockOnCheckCompatibility}
+          showCompatibilityBadge={true}
+          onCompatibilityCheck={jest.fn()}
+          compatibilityState={{ status: 'loading' }}
           kind="suggested_dashboard"
         />
       );
 
-      await user.click(screen.getByRole('button', { name: 'Check compatibility' }));
-
-      expect(mockOnCheckCompatibility).toHaveBeenCalledWith(mockDashboard);
+      expect(screen.getByTestId('compatibility-badge-loading')).toBeInTheDocument();
     });
 
-    it('should render buttons in correct order: primary, details, compatibility', () => {
-      const mockOnCheckCompatibility = jest.fn();
+    it('should render buttons in correct order: primary, details, compatibility badge', () => {
       const details = createMockDetails();
       render(
         <DashboardCard
@@ -450,8 +442,8 @@ describe('DashboardCard', () => {
           dashboard={createMockPluginDashboard()}
           onClick={mockOnClick}
           details={details}
-          showCompatibilityButton={true}
-          onCheckCompatibility={mockOnCheckCompatibility}
+          showCompatibilityBadge={true}
+          onCompatibilityCheck={jest.fn()}
           kind="suggested_dashboard"
         />
       );
@@ -459,7 +451,7 @@ describe('DashboardCard', () => {
       const buttons = screen.getAllByRole('button');
       expect(buttons[0]).toHaveTextContent('Use dashboard');
       expect(buttons[1]).toHaveAttribute('aria-label', 'Details');
-      expect(buttons[2]).toHaveAttribute('aria-label', 'Check compatibility');
+      expect(buttons[2]).toHaveTextContent('Check');
     });
   });
 });
