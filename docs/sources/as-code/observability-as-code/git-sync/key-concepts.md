@@ -23,11 +23,7 @@ aliases:
 
 {{< admonition type="caution" >}}
 
-Git Sync is available in [private preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions.
-
-Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
-
-You can sign up to the private preview using the [Git Sync early access form](https://forms.gle/WKkR3EVMcbqsNnkD9).
+TBC
 
 {{< /admonition >}}
 
@@ -36,7 +32,7 @@ You can sign up to the private preview using the [Git Sync early access form](ht
 Before you start using Git Sync, understand how the key Git Sync components relate:
 
 - [Grafana instance](#grafana-instance)
-- [Git repository structure](#git-repository-structure)
+- [Git repository](#git-repository)
 - [Git Sync repository resource](#git-sync-repository-resource)
 
 ### Grafana instance
@@ -48,26 +44,28 @@ A Grafana instance is a running Grafana server. Multiple instances can:
 - Sync from different paths within the same repository.
 - Sync from different repositories.
 
-### Git repository structure
+### Git repository 
+
+The Git repository is the external storage you want to sync your Grafana instance with. 
 
 You can organize your Git repository in several ways:
 
-- Single branch, multiple paths: Use different directories for different purposes (for example, `dev/`, `prod/`, `team-a/`).
-- Multiple branches: Use different branches for different environments or teams (for example, `main`, `develop`, `team-a`).
+- Single branch, multiple paths: Use different directories for different purposes. For example, `dev/`, `prod/`, or `team-a/`.
+- Multiple branches: Use different branches for different environments or teams. For example, `main`, `develop`, or `team-a`.
 - Multiple repositories: Use separate repositories for different teams or environments.
 
 ### Git Sync repository resource
 
 A repository resource is a Grafana configuration object that defines:
 
-- Which Git repository to sync with.
+- Which Git repository to sync with your Grafana instance.
 - Which branch to use.
 - Which directory path to synchronize.
 - Sync behavior and workflows.
 
 Each repository resource creates bidirectional synchronization between a Grafana instance and a specific location in Git.
 
-## Flexible configuration for your repositories
+#### Flexible configuration for your Git Sync repositories
 
 Git Sync repositories support different combinations of repository URL, branch, and path:
 
@@ -94,6 +92,16 @@ Git Sync is bidirectional, and syncs a repository resource with your Grafana ins
 6. Synchronization occurs at regular intervals (configurable), or instantly if you use webhooks.
 
 You can find the provisioned dashboards organized in folders under **Dashboards**.
+
+### Git Sync states
+
+Your Grafana instance can be in one of the following Git Sync states:
+
+- **Unprovisioned**: None of the instance's resources are being managed by Git Sync.
+- **Partially provisioned**: Some of the resources are controlled by Git Sync.
+- **Fully provisioned**: All supported resource types are managed by Git Sync. Unsupported resources are **not managed**.
+
+TBC
 
 ## Example: Relationship between repository, branch, and path
 
