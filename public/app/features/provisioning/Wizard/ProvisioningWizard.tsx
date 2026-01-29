@@ -47,6 +47,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
 
   const values = getDefaultValues({ allowedTargets: settingsData?.allowedTargets });
   const methods = useForm<WizardFormData>({
+    reValidateMode: 'onBlur',
     defaultValues: {
       repository: { ...values, type },
       migrate: {
