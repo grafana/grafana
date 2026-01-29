@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
@@ -42,6 +43,7 @@ type ServerOptions struct {
 	Reg              prometheus.Registerer
 	AccessClient     types.AccessClient
 	SearchOptions    resource.SearchOptions
+	SearchClient     resourcepb.ResourceIndexClient
 	StorageMetrics   *resource.StorageMetrics
 	IndexMetrics     *resource.BleveIndexMetrics
 	Features         featuremgmt.FeatureToggles
@@ -67,6 +69,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		withQOSQueue,
 		withOverridesService,
 		withSearch,
+		withSearchClient,
 	)
 	if err != nil {
 		return nil, err
@@ -242,6 +245,10 @@ func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptio
 	resourceOpts.Backend = kvBackend
 	resourceOpts.Diagnostics = kvBackend
 	return nil
+}
+
+func withSearchClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	serverOptions.SearchClient = opts.SearchClient
 }
 
 func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {

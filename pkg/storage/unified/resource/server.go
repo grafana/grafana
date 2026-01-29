@@ -236,6 +236,9 @@ type ResourceServerOptions struct {
 	// Search options
 	Search SearchOptions
 
+	// Search client for the storage api
+	SearchClient resourcepb.ResourceIndexClient
+
 	// Quota service
 	OverridesService *OverridesService
 

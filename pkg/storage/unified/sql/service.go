@@ -60,6 +60,7 @@ type service struct {
 
 	// -- Shared Components
 	backend       resource.StorageBackend
+	searchClient  resourcepb.ResourceIndexClient
 	serverStopper resource.ResourceServerStopper
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
@@ -124,6 +125,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
+	searchClient resourcepb.ResourceIndexClient,
 ) (UnifiedStorageGrpcService, error) {
 	s := newBaseService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend)
 
@@ -196,6 +198,7 @@ func newBaseService(
 		storageMetrics:     storageMetrics,
 		indexMetrics:       indexMetrics,
 		searchRing:         searchRing,
+		searchClient:       searchClient,
 		subservicesWatcher: services.NewFailureWatcher(),
 	}
 }
@@ -325,6 +328,7 @@ func (s *service) starting(ctx context.Context) error {
 		Reg:            s.reg,
 		AccessClient:   authzClient,
 		SearchOptions:  searchOptions,
+		SearchClient:   s.searchClient,
 		StorageMetrics: s.storageMetrics,
 		IndexMetrics:   s.indexMetrics,
 		Features:       s.features,
