@@ -18,16 +18,18 @@ import { Select, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
 import { getConfig } from 'app/core/config';
-
-import { getActions } from '../../../features/actions/utils';
+import { getActions } from 'app/features/actions/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
 
-interface Props extends PanelProps<Options> {}
+interface Props extends PanelProps<Options> {
+  initialRowIndex?: number;
+}
 
 export function TablePanel(props: Props) {
-  const { data, height, width, options, fieldConfig, id, timeRange, replaceVariables, transparent } = props;
+  const { data, height, width, options, fieldConfig, id, timeRange, replaceVariables, transparent, initialRowIndex } =
+    props;
 
   useMemo(() => {
     cacheFieldDisplayNames(data.series);
@@ -68,6 +70,7 @@ export function TablePanel(props: Props) {
 
   const tableElement = (
     <TableNG
+      initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}
       data={main}
