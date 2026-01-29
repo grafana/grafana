@@ -33,7 +33,7 @@ const Header = ({ editorType, styles }: { editorType: QueryEditorType; styles: R
           {typeText}
         </Text>
       </Stack>
-      <Icon name="circle-mono" className={styles.dsStatusIcon} />
+      {editorType !== QueryEditorType.Transformation && <Icon name="circle-mono" className={styles.dsStatusIcon} />}
     </div>
   );
 };
