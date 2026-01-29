@@ -25,13 +25,12 @@ export function CustomExploreButton({ exploreId, splitted }: CustomExploreButton
 
   return (
     <ToolbarButton
-      variant="canvas"
+      variant="primary"
       tooltip={t('explore.sigma-button.tooltip', 'Convert to Sigma')}
-      icon="arrow-right" // Using arrow-right icon for conversion action
       iconOnly={splitted} // Hide text when in split view to save space
       onClick={handleClick}
     >
-      <Trans i18nKey="explore.sigma-button.text">Convert to Sigma</Trans>
+      <Trans i18nKey="explore.sigma-button.text">🔄 Convert to Sigma</Trans>
     </ToolbarButton>
   );
 }
