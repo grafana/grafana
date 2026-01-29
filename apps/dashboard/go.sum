@@ -115,8 +115,8 @@ github.com/grafana/grafana-app-sdk v0.49.0 h1:3UF7g3tHt+unkzpmx3ZKhx+MeJf+jETRw/
 github.com/grafana/grafana-app-sdk v0.49.0/go.mod h1:bChypbGy+c+f/PDVuGE1PTzl7N/P8Wux17PAIUOKUhI=
 github.com/grafana/grafana-app-sdk/logging v0.49.0 h1:0X2QmqQk7yK48loxiXWBzi4GrDdgM2LIlCt5M40CVrM=
 github.com/grafana/grafana-app-sdk/logging v0.49.0/go.mod h1:5u3KalezoBAAo2Y3ytDYDAIIPvEqFLLDSxeiK99QxDU=
-github.com/grafana/grafana-plugin-sdk-go v0.285.0 h1:kUWK/eo+t9UxVShS6OzpaYCXXv7egOks8k28FeicX3w=
-github.com/grafana/grafana-plugin-sdk-go v0.285.0/go.mod h1:cNFa2EpURNF5Hy15kH7HfVdprNu+UEmNZx7TMWVdctY=
+github.com/grafana/grafana-plugin-sdk-go v0.286.0 h1:nrG/XLDpYuUONVpVVGIUxPJdWeXGHM/47qIAnuDkdjg=
+github.com/grafana/grafana-plugin-sdk-go v0.286.0/go.mod h1:cNFa2EpURNF5Hy15kH7HfVdprNu+UEmNZx7TMWVdctY=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6 h1:Meoq0neEejGlmclgCInZM7EXl3Dw27zlGGwvEmJwvaY=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6/go.mod h1:BpUYFztGINSLZmkzcS9dSHdNwBZAb8w1KD5unG1oNeg=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=

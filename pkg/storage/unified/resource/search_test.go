@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"net/http"
 	"sync"
 	"testing"
 	"time"
@@ -835,4 +836,57 @@ func TestRebuildIndexesForResource(t *testing.T) {
 
 	// rebuild waited for rebuild queue to process
 	require.Equal(t, 0, support.rebuildQueue.Len())
+}
+
+func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
+	opts := SearchOptions{
+		Backend: &mockSearchBackend{},
+		Resources: &TestDocumentBuilderSupplier{
+			GroupsResources: map[string]string{
+				"group": "resource",
+			},
+		},
+		InitMinCount: 1,
+	}
+
+	support, err := newSearchSupport(opts, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	t.Run("negative limit returns error", func(t *testing.T) {
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "ns",
+					Group:     "group",
+					Resource:  "resource",
+				},
+			},
+			Limit: -100,
+		}
+		rsp, err := support.Search(context.Background(), req)
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
+		require.Equal(t, "limit cannot be negative", rsp.Error.Message)
+	})
+
+	t.Run("negative offset returns error", func(t *testing.T) {
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "ns",
+					Group:     "group",
+					Resource:  "resource",
+				},
+			},
+			Limit:  10,
+			Offset: -50,
+		}
+		rsp, err := support.Search(context.Background(), req)
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
+		require.Equal(t, "offset cannot be negative", rsp.Error.Message)
+	})
 }
