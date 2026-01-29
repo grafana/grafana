@@ -284,12 +284,12 @@ func TestConfigRevision_CreateManagedRoute(t *testing.T) {
 	t.Run("rejects duplicate name", func(t *testing.T) {
 		rev := testConfig()
 		_, err := rev.CreateManagedRoute(getAnyKey(t, rev.Config.ManagedRoutes), subtree)
-		assert.ErrorIs(t, err, ErrRouteExists.Errorf(""))
+		assert.ErrorIs(t, err, models.ErrRouteExists.Errorf(""))
 	})
 
 	t.Run("rejects invalid route", func(t *testing.T) {
 		_, err := testConfig().CreateManagedRoute("test", definitions.Route{})
-		assert.ErrorIs(t, err, ErrRouteInvalidFormat)
+		assert.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
 	t.Run("creates valid managed route", func(t *testing.T) {
@@ -327,7 +327,7 @@ func TestConfigRevision_UpdateNamedRoute(t *testing.T) {
 	t.Run("rejects invalid route", func(t *testing.T) {
 		rev := testConfig()
 		_, err := rev.UpdateNamedRoute(getAnyKey(t, rev.Config.ManagedRoutes), definitions.Route{})
-		assert.ErrorIs(t, err, ErrRouteInvalidFormat)
+		assert.ErrorIs(t, err, models.ErrRouteInvalidFormat)
 	})
 
 	t.Run("updates valid managed route", func(t *testing.T) {

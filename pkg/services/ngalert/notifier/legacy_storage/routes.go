@@ -194,7 +194,7 @@ func (rev *ConfigRevision) CreateManagedRoute(name string, subtree definitions.R
 	}
 
 	if _, exists := rev.Config.ManagedRoutes[name]; exists {
-		return nil, ErrRouteExists.Errorf("")
+		return nil, models.ErrRouteExists.Errorf("")
 	}
 
 	managedRoute := NewManagedRoute(name, &subtree)
@@ -202,7 +202,7 @@ func (rev *ConfigRevision) CreateManagedRoute(name string, subtree definitions.R
 
 	err := rev.ValidateRoute(amRoute)
 	if err != nil {
-		return nil, MakeErrRouteInvalidFormat(err)
+		return nil, models.MakeErrRouteInvalidFormat(err)
 	}
 
 	if rev.Config.ManagedRoutes == nil {
@@ -227,7 +227,7 @@ func (rev *ConfigRevision) UpdateNamedRoute(name string, subtree definitions.Rou
 
 	err := rev.ValidateRoute(amRoute)
 	if err != nil {
-		return nil, MakeErrRouteInvalidFormat(err)
+		return nil, models.MakeErrRouteInvalidFormat(err)
 	}
 
 	if name == UserDefinedRoutingTreeName {

@@ -5,12 +5,6 @@ import "github.com/grafana/grafana/pkg/apimachinery/errutil"
 var (
 	ErrNoAlertmanagerConfiguration  = errutil.Internal("alerting.notification.configMissing", errutil.WithPublicMessage("No alertmanager configuration present in this organization"))
 	ErrBadAlertmanagerConfiguration = errutil.Internal("alerting.notification.configCorrupted").MustTemplate("Failed to unmarshal the Alertmanager configuration", errutil.WithPublic("Current Alertmanager configuration in the storage is corrupted. Reset the configuration or rollback to a recent valid one."))
-
-	ErrRouteExists        = errutil.Conflict("alerting.notifications.routes.exists", errutil.WithPublicMessage("Route with this name already exists. Use a different name or update an existing one."))
-	ErrRouteInvalidFormat = errutil.BadRequest("alerting.notifications.routes.invalidFormat").MustTemplate(
-		"Invalid format of the submitted route: {{.Public.Error}}.",
-		errutil.WithPublic("Invalid format of the submitted route: {{.Public.Error}}. Correct the payload and try again."),
-	)
 )
 
 func makeErrBadAlertmanagerConfiguration(err error) error {
@@ -21,13 +15,4 @@ func makeErrBadAlertmanagerConfiguration(err error) error {
 		Error: err,
 	}
 	return ErrBadAlertmanagerConfiguration.Build(data)
-}
-
-func MakeErrRouteInvalidFormat(err error) error {
-	return ErrRouteInvalidFormat.Build(errutil.TemplateData{
-		Public: map[string]any{
-			"Error": err.Error(),
-		},
-		Error: err,
-	})
 }
