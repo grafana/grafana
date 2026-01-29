@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
@@ -60,6 +60,51 @@ const FlameGraphTopTableContainer = memo(
     const theme = useTheme2();
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
+    const tableRef = useRef<typeof table>();
+    const searchRef = useRef<string | undefined>();
+    const sandwichItemRef = useRef<string | undefined>();
+    const frameRef = useRef<DataFrame | undefined>();
+    const widthRef = useRef<number>(0);
+
+    if (
+      !frameRef.current ||
+      tableRef.current !== table ||
+      searchRef.current !== search ||
+      sandwichItemRef.current !== sandwichItem
+    ) {
+      frameRef.current = buildTableDataFrame(
+        data,
+        table,
+        widthRef.current || 0,
+        onSymbolClick,
+        onSearch,
+        onSandwich,
+        theme,
+        colorScheme,
+        search,
+        sandwichItem
+      );
+      tableRef.current = table;
+      searchRef.current = search;
+      sandwichItemRef.current = sandwichItem;
+    }
+
+    const frame = frameRef.current;
+
+    const onTableSortRef = useRef(onTableSort);
+    useEffect(() => {
+      onTableSortRef.current = onTableSort;
+    }, [onTableSort]);
+
+    const handleSortChange = useCallback(
+      (s?: TableSortByFieldState[]) => {
+        if (s && s.length) {
+          onTableSortRef.current?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+        }
+        setSort(s ?? []);
+      },
+      []
+    );
 
     return (
       <div className={styles.topTableContainer} data-testid="topTable">
@@ -69,27 +114,18 @@ const FlameGraphTopTableContainer = memo(
               return null;
             }
 
-            const frame = buildTableDataFrame(
-              data,
-              table,
-              width,
-              onSymbolClick,
-              onSearch,
-              onSandwich,
-              theme,
-              colorScheme,
-              search,
-              sandwichItem
-            );
+            if (widthRef.current !== width && frame) {
+              widthRef.current = width;
+              const symbolField = frame.fields.find((f) => f.name === 'Symbol');
+              if (symbolField?.config.custom) {
+                symbolField.config.custom.width = width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * 2;
+              }
+            }
+
             return (
               <Table
                 initialSortBy={sort}
-                onSortByChange={(s) => {
-                  if (s && s.length) {
-                    onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
-                  }
-                  setSort(s);
-                }}
+                onSortByChange={handleSortChange}
                 data={frame}
                 width={width}
                 height={height}

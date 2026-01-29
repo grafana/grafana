@@ -202,6 +202,17 @@ const FlameGraphContainer = ({
     [setSearch, resetFocus, onTableSymbolClick, search]
   );
 
+  const onSearch = useCallback(
+    (str: string) => {
+      if (!str) {
+        setSearch('');
+        return;
+      }
+      setSearch(`^${escapeStringForRegex(str)}$`);
+    },
+    [setSearch]
+  );
+
   if (!dataContainer) {
     return null;
   }
@@ -243,13 +254,7 @@ const FlameGraphContainer = ({
       matchedLabels={matchedLabels}
       sandwichItem={sandwichItem}
       onSandwich={setSandwichItem}
-      onSearch={(str) => {
-        if (!str) {
-          setSearch('');
-          return;
-        }
-        setSearch(`^${escapeStringForRegex(str)}$`);
-      }}
+      onSearch={onSearch}
       onTableSort={onTableSort}
       colorScheme={colorScheme}
     />
