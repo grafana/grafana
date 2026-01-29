@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -208,7 +209,7 @@ func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptio
 	}
 
 	// Create sqlkv with the standard library DB
-	sqlkv, err := resource.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+	sqlkv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	if err != nil {
 		return fmt.Errorf("error creating sqlkv: %s", err)
 	}
