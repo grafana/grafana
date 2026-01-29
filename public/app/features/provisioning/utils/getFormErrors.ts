@@ -11,7 +11,7 @@ export type RepositoryField = keyof WizardFormData['repository'];
 export type RepositoryFormPath = `repository.${RepositoryField}` | 'repository.sync.intervalSeconds';
 
 type GenericFormPath = string;
-type GenericFormErrorTuple<T extends GenericFormPath> = [T | null, { message: string } | null];
+type GenericFormErrors<T extends GenericFormPath> = Array<[T, { message: string }]>;
 
 /**
  * Convert StatusCause to ErrorDetails format
@@ -56,43 +56,45 @@ const normalizeField = (field: string): string => field.replace(/^spec\./, '');
 
 /**
  * Given a list of error details and a field mapping,
- * returns the first matched form error tuple.
+ * returns all matched form errors.
  */
 function mapErrorsToField<T extends GenericFormPath>(
   errors: ErrorDetails[] | undefined,
   fieldMap: Record<string, T>,
   opts?: { allowPartial?: boolean }
-): GenericFormErrorTuple<T> {
+): GenericFormErrors<T> {
   if (!errors || errors.length === 0) {
-    return [null, null];
+    return [];
   }
 
-  for (const error of errors) {
-    if (!error.field) {
-      continue;
-    }
+  return errors
+    .map((error) => {
+      if (!error.field) {
+        return null;
+      }
 
-    const normalized = normalizeField(error.field);
-    const segments = normalized.split('.');
-    const lastPart = segments[segments.length - 1];
+      const normalized = normalizeField(error.field);
+      const segments = normalized.split('.');
+      const lastPart = segments[segments.length - 1];
 
-    // Direct full match (e.g. "sync.intervalSeconds")
-    if (normalized in fieldMap) {
-      return [fieldMap[normalized], { message: error.detail || `Invalid ${normalized}` }];
-    }
+      // Direct full match (e.g. "sync.intervalSeconds")
+      if (normalized in fieldMap) {
+        return [fieldMap[normalized], { message: error.detail || `Invalid ${normalized}` }] as const;
+      }
 
-    // Partial match by last key (e.g. "url" -> "repository.url")
-    if (opts?.allowPartial && lastPart in fieldMap) {
-      return [fieldMap[lastPart], { message: error.detail || `Invalid ${lastPart}` }];
-    }
-  }
+      // Partial match by last key (e.g. "url" -> "repository.url")
+      if (opts?.allowPartial && lastPart in fieldMap) {
+        return [fieldMap[lastPart], { message: error.detail || `Invalid ${lastPart}` }] as const;
+      }
 
-  return [null, null];
+      return null;
+    })
+    .filter((item): item is [T, { message: string }] => item !== null);
 }
 
 // Wizard form errors
-export type FormErrorTuple = GenericFormErrorTuple<RepositoryFormPath>;
-export const getFormErrors = (data: unknown): FormErrorTuple => {
+export type FormErrors = GenericFormErrors<RepositoryFormPath>;
+export const getFormErrors = (data: unknown): FormErrors => {
   const fieldMap: Record<string, RepositoryFormPath> = {
     'local.path': 'repository.path',
     'github.branch': 'repository.branch',
@@ -114,9 +116,9 @@ export const getFormErrors = (data: unknown): FormErrorTuple => {
 
 // Config form errors
 export type ConfigFormPath = Path<RepositoryFormData>;
-export type ConfigFormErrorTuple = GenericFormErrorTuple<ConfigFormPath>;
+export type ConfigFormErrors = GenericFormErrors<ConfigFormPath>;
 
-export const getConfigFormErrors = (data: unknown): ConfigFormErrorTuple => {
+export const getConfigFormErrors = (data: unknown): ConfigFormErrors => {
   const fieldMap: Record<string, ConfigFormPath> = {
     path: 'path',
     branch: 'branch',
@@ -132,9 +134,9 @@ export const getConfigFormErrors = (data: unknown): ConfigFormErrorTuple => {
 
 // Connection form errors
 export type ConnectionFormPath = Path<ConnectionFormData>;
-export type ConnectionFormErrorTuple = GenericFormErrorTuple<ConnectionFormPath>;
+export type ConnectionFormErrors = GenericFormErrors<ConnectionFormPath>;
 
-export const getConnectionFormErrors = (data: unknown): ConnectionFormErrorTuple => {
+export const getConnectionFormErrors = (data: unknown): ConnectionFormErrors => {
   const fieldMap: Record<string, ConnectionFormPath> = {
     // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     title: 'title',

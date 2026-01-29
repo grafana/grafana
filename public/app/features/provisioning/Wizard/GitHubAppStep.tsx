@@ -83,29 +83,35 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
           'Failed to create connection'
         );
 
+        // Returns true if form errors were set (caller should return early)
+        const handleFormErrors = (error: unknown): boolean => {
+          if (isFetchError(error)) {
+            const formErrors = getConnectionFormErrors(error.data);
+            if (formErrors.length > 0) {
+              for (const [field, errorMessage] of formErrors) {
+                credentialForm.setError(field, errorMessage);
+              }
+              return true;
+            }
+          }
+          return false;
+        };
+
         try {
           const result = await createConnection(spec, privateKey);
           if (result.data?.metadata?.name) {
             onSubmit({ success: true, connectionName: result.data.metadata.name });
           } else if (result.error) {
-            if (isFetchError(result.error)) {
-              const [field, errorMessage] = getConnectionFormErrors(result.error.data);
-              if (field && errorMessage) {
-                credentialForm.setError(field, errorMessage);
-                return;
-              }
+            if (handleFormErrors(result.error)) {
+              return;
             }
             onSubmit({ success: false, error: extractErrorMessage(result.error) });
           } else {
             onSubmit({ success: false, error: defaultErrorMessage });
           }
         } catch (error) {
-          if (isFetchError(error)) {
-            const [field, errorMessage] = getConnectionFormErrors(error.data);
-            if (field && errorMessage) {
-              credentialForm.setError(field, errorMessage);
-              return;
-            }
+          if (handleFormErrors(error)) {
+            return;
           }
           onSubmit({ success: false, error: extractErrorMessage(error) });
         }
