@@ -16,7 +16,7 @@ export const DASHBOARD_CONTROLS_MENU_TITLE = 'Dashboard controls';
 export function DashboardControlsButton({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
   const { uid } = dashboard.useState();
-  const { variables, links, annotations } = useDashboardControls(dashboard);
+  const { variables, links, annotations, isEditingNewLayouts } = useDashboardControls(dashboard);
   const dashboardControlsCount = variables.length + links.length + annotations.length;
   const hasDashboardControls = dashboardControlsCount > 0;
 
@@ -28,7 +28,13 @@ export function DashboardControlsButton({ dashboard }: { dashboard: DashboardSce
     <Dropdown
       placement="bottom-start"
       overlay={
-        <DashboardControlsMenu variables={variables} links={links} annotations={annotations} dashboardUID={uid} />
+        <DashboardControlsMenu
+          variables={variables}
+          links={links}
+          annotations={annotations}
+          dashboardUID={uid}
+          isEditingNewLayouts={isEditingNewLayouts}
+        />
       }
     >
       <ToolbarButton

@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { memo, useState, useEffect, useCallback } from 'react';
 
 import {
@@ -9,9 +10,10 @@ import {
   formattedValueToString,
   AnnotationEventFieldSource,
   getValueFormat,
+  GrafanaTheme2,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Select, Tooltip, Icon } from '@grafana/ui';
+import { Select, Tooltip, Icon, useStyles2 } from '@grafana/ui';
 
 import { getAnnotationEventNames, AnnotationFieldInfo } from '../standardAnnotationSupport';
 import { AnnotationQueryResponse } from '../types';
@@ -23,6 +25,7 @@ interface Props {
 }
 
 export const AnnotationFieldMapper = memo(({ response, mappings, change }: Props) => {
+  const styles = useStyles2(getStyles);
   const [fieldNames, setFieldNames] = useState<Array<SelectableValue<string>>>([]);
 
   useEffect(() => {
@@ -131,11 +134,19 @@ export const AnnotationFieldMapper = memo(({ response, mappings, change }: Props
               isClearable
             />
           </td>
-          <td>{`${value}`}</td>
+          <td className={styles.valueCell}>
+            {value ? (
+              <Tooltip content={String(value)} placement="left">
+                <span>{`${value}`}</span>
+              </Tooltip>
+            ) : (
+              ''
+            )}
+          </td>
         </tr>
       );
     },
-    [fieldNames, onFieldNameChange]
+    [fieldNames, onFieldNameChange, styles.valueCell]
   );
 
   const first = response?.events?.[0];
@@ -166,3 +177,12 @@ export const AnnotationFieldMapper = memo(({ response, mappings, change }: Props
 });
 
 AnnotationFieldMapper.displayName = 'AnnotationFieldMapper';
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  valueCell: css({
+    maxWidth: 200,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  }),
+});

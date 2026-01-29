@@ -12,7 +12,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
-import { Alert, AlertVariant, Button, Space, Spinner } from '@grafana/ui';
+import { Alert, AlertVariant, Button, Spinner } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -36,6 +36,7 @@ interface State {
   running?: boolean;
   response?: AnnotationQueryResponse;
   skipNextVerification?: boolean;
+  showResults?: boolean;
 }
 
 export default class StandardAnnotationQueryEditor extends PureComponent<Props, State> {
@@ -48,6 +49,10 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   componentDidUpdate(oldProps: Props) {
     if (this.props.annotation !== oldProps.annotation && !shouldUseLegacyRunner(this.props.datasource)) {
       this.verifyDataSource();
+    }
+
+    if (this.props.datasource.uid !== oldProps.datasource.uid) {
+      this.setState({ response: undefined, showResults: false });
     }
   }
 
@@ -115,6 +120,11 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       running: false,
       response,
     });
+  };
+
+  onTestQuery = () => {
+    this.setState({ showResults: true });
+    this.onRunQuery();
   };
 
   onQueryChange = (target: DataQuery) => {
@@ -204,15 +214,10 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   }
 
   renderStatus() {
-    const { response, running } = this.state;
-
-    if (!response) {
-      return null;
-    }
+    const { response, running, showResults } = this.state;
 
     return (
       <>
-        <Space v={2} />
         <div>
           {running ? (
             <Spinner />
@@ -221,7 +226,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
               data-testid={selectors.components.Annotations.editor.testButton}
               variant="secondary"
               size="xs"
-              onClick={this.onRunQuery}
+              onClick={this.onTestQuery}
             >
               <Trans i18nKey="annotations.standard-annotation-query-editor.test-annotation-query">
                 Test annotation query
@@ -229,14 +234,16 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
             </Button>
           )}
         </div>
-        <Space v={2} layout="block" />
-        <Alert
-          data-testid={selectors.components.Annotations.editor.resultContainer}
-          severity={this.getStatusSeverity(response)}
-          title={t('annotations.standard-annotation-query-editor.title-query-result', 'Query result')}
-        >
-          {this.renderStatusText(response, running)}
-        </Alert>
+        {showResults && response && (
+          <Alert
+            data-testid={selectors.components.Annotations.editor.resultContainer}
+            severity={this.getStatusSeverity(response)}
+            title={t('annotations.standard-annotation-query-editor.title-query-result', 'Query result')}
+            onRemove={() => this.setState({ showResults: false })}
+          >
+            {this.renderStatusText(response, running)}
+          </Alert>
+        )}
       </>
     );
   }
