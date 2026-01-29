@@ -127,10 +127,13 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
   },
   bitbucket: {
     token: {
-      label: t('provisioning.bitbucket.token-label', 'App Password'),
-      description: t('provisioning.bitbucket.token-description', 'Bitbucket App Password with repository permissions'),
+      label: t('provisioning.bitbucket.token-label', 'Repository Access Token'),
+      description: t(
+        'provisioning.bitbucket.token-description',
+        'Bitbucket Repository Access Token or App Password with repository permissions'
+      ),
       // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-      placeholder: 'ATBBxxxxxxxxxxxxxxxx',
+      placeholder: 'Repository Access Token or App Password',
       required: true,
       validation: {
         required: t('provisioning.bitbucket.token-required', 'Bitbucket token is required'),
@@ -140,10 +143,10 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       label: t('provisioning.bitbucket.token-user-label', 'Username'),
       description: t(
         'provisioning.bitbucket.token-user-description',
-        'The username that will be used to access the repository with the app password'
+        'Your Bitbucket username for App Passwords, or "x-token-auth" for Repository Access Tokens'
       ),
       // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-      placeholder: 'username',
+      placeholder: 'x-token-auth or your-username',
       required: true,
       validation: {
         required: t('provisioning.bitbucket.token-user-required', 'Username is required'),
