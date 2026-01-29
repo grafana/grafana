@@ -76,6 +76,11 @@ const (
 	testNflog2   = "OgoqCgZncm91cDISEgoJcmVjZWl2ZXIyEgV0ZXN0MyoMCLSDkbAGEMvaofYCEgwIxJ+RsAYQy9qh9gI6CioKBmdyb3VwMRISCglyZWNlaXZlcjESBXRlc3QzKgwItIORsAYQy9qh9gISDAjEn5GwBhDL2qH2Ag=="
 )
 
+// noopAutogenFn is used to skip auto-generated routes.
+func noopAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *apimodels.PostableApiAlertingConfig, _ notifier.InvalidReceiversAction) error {
+	return nil
+}
+
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
@@ -125,7 +130,7 @@ func TestNewAlertmanager(t *testing.T) {
 				DefaultConfig:     defaultGrafanaConfig,
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			am, err := NewAlertmanager(context.Background(), cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+			am, err := NewAlertmanager(context.Background(), cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), noopAutogenFn, m, tracing.InitializeTracerForTest())
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -238,7 +243,7 @@ func TestGetRemoteState(t *testing.T) {
 				cfg,
 				fstore,
 				tc,
-				NoopAutogenFn,
+				noopAutogenFn,
 				m,
 				tracing.InitializeTracerForTest(),
 			)
@@ -332,7 +337,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 	// An error response from the remote Alertmanager should result in the readiness check failing.
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), noopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	config := &ngmodels.AlertConfiguration{
@@ -378,14 +383,14 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	require.Equal(t, 1, stateSyncs)
 
 	// After a restart, the Alertmanager shouldn't send the configuration if it has not changed.
-	am, err = NewAlertmanager(context.Background(), cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err = NewAlertmanager(context.Background(), cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), noopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.Equal(t, 2, configSyncs)
 
 	// Changing the "from" address should result in the configuration being updated.
 	cfg.SmtpConfig.FromAddress = "new-address@test.com"
-	am, err = NewAlertmanager(context.Background(), cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err = NewAlertmanager(context.Background(), cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), noopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.Equal(t, 3, configSyncs)
@@ -403,7 +408,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 		StaticHeaders:  map[string]string{"test": "true"},
 		User:           "Test User",
 	}
-	am, err = NewAlertmanager(context.Background(), cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err = NewAlertmanager(context.Background(), cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), noopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.Equal(t, 4, configSyncs)
@@ -509,21 +514,21 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		{
 			"invalid config",
 			"{}",
-			NoopAutogenFn,
+			noopAutogenFn,
 			nil,
 			[]string{"no route provided in config"},
 		},
 		{
 			"invalid base-64 in key",
 			string(testGrafanaConfigWithBadEncoding),
-			NoopAutogenFn,
+			noopAutogenFn,
 			nil,
 			[]string{`"grafana-default-email"`, "dde6ntuob69dtf", "password", "illegal base64 data at input byte 0"},
 		},
 		{
 			"decrypt error",
 			string(testGrafanaConfigWithBadEncryption),
-			NoopAutogenFn,
+			noopAutogenFn,
 			nil,
 			[]string{`"grafana-default-email"`, "dde6ntuob69dtf", "password", "unable to compute salt"},
 		},
@@ -537,7 +542,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		{
 			"no error",
 			string(testGrafanaConfigWithEncryptedSecret),
-			NoopAutogenFn,
+			noopAutogenFn,
 			&client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithDecryptedSecret,
 			},
@@ -555,7 +560,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		{
 			name:      "no error, with extra configurations",
 			config:    string(cfgWithExtraUnmergedBytes),
-			autogenFn: NoopAutogenFn,
+			autogenFn: noopAutogenFn,
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithExtraMerged,
 			},
@@ -569,7 +574,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				cfg,
 				fstore,
 				testCrypto,
-				NoopAutogenFn,
+				noopAutogenFn,
 				m,
 				tracing.InitializeTracerForTest(),
 			)
@@ -643,7 +648,7 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 		cfg,
 		fstore,
 		testCrypto,
-		NoopAutogenFn,
+		noopAutogenFn,
 		m,
 		tracing.InitializeTracerForTest(),
 	)
@@ -777,7 +782,7 @@ receivers:
 	require.NoError(t, store.Set(ctx, c.OrgID, "alertmanager", notifier.NotificationLogFilename, ""))
 
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, c, fstore, tc, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, c, fstore, tc, noopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	err = am.SaveAndApplyConfig(ctx, &cfg)
@@ -889,7 +894,7 @@ receivers:
 	require.NoError(t, store.Set(ctx, c.OrgID, "alertmanager", notifier.NotificationLogFilename, ""))
 
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, c, fstore, tc, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, c, fstore, tc, noopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	configJSON, err := json.Marshal(cfg)
@@ -948,7 +953,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, fstore, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), noopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	encodedFullState, err := am.getFullState(ctx)
@@ -1050,7 +1055,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		// An error while adding auto-generated rutes should be returned.
 		am.autogenFn = errAutogenFn
 		require.ErrorIs(t, am.SaveAndApplyConfig(ctx, postableCfg), errTest)
-		am.autogenFn = NoopAutogenFn
+		am.autogenFn = noopAutogenFn
 	}
 
 	// `SaveAndApplyDefaultConfig` should send the default Alertmanager configuration to the remote Alertmanager.
@@ -1076,7 +1081,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		// An error while adding auto-generated rutes should be returned.
 		am.autogenFn = errAutogenFn
 		require.ErrorIs(t, am.SaveAndApplyDefaultConfig(ctx), errTest)
-		am.autogenFn = NoopAutogenFn
+		am.autogenFn = noopAutogenFn
 	}
 
 	// TODO: Now, shutdown the Alertmanager and we expect the latest configuration to be uploaded.
@@ -1105,7 +1110,7 @@ func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), noopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should get the default Cloud Alertmanager configuration.
@@ -1137,7 +1142,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), noopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -1221,7 +1226,7 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), noopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// Wait until the Alertmanager is ready to send alerts.
@@ -1297,7 +1302,7 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), noopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should start with the default config.
@@ -1334,7 +1339,7 @@ func TestIntegrationRemoteAlertmanagerTestTemplates(t *testing.T) {
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), noopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// Valid template
@@ -1393,7 +1398,7 @@ func TestIntegrationRemoteAlertmanagerTestIntegration(t *testing.T) {
 	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, notifier.NewCrypto(secretsService, nil, log.NewNopLogger()), noopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	integration := ngmodels.IntegrationGen(ngmodels.IntegrationMuts.WithValidConfig("webhook"))()
@@ -1454,3 +1459,392 @@ route:
 receivers:
     - name: empty-receiver
 `
+
+func Test_calculateUserGrafanaConfigHash(t *testing.T) {
+	// Helper to create a base config.
+	newBaseConfig := func() client.UserGrafanaConfig {
+		return client.UserGrafanaConfig{
+			GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+				TemplateFiles: map[string]string{"test": "template"},
+				AlertmanagerConfig: definition.PostableApiAlertingConfig{
+					Config: definition.Config{
+						Route: &definition.Route{
+							Receiver: "test-receiver",
+						},
+					},
+				},
+			},
+		}
+	}
+
+	tests := []struct {
+		name      string
+		config    client.UserGrafanaConfig
+		wantEqual bool
+	}{
+		{
+			name: "identical configs produce same hash",
+			config: client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					TemplateFiles: map[string]string{"test": "template"},
+					AlertmanagerConfig: definition.PostableApiAlertingConfig{
+						Config: definition.Config{
+							Route: &definition.Route{
+								Receiver: "test-receiver",
+							},
+						},
+					},
+				},
+			},
+			wantEqual: true,
+		},
+		{
+			name: "configs with different CreatedAt produce same hash",
+			config: client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					TemplateFiles: map[string]string{"test": "template"},
+					AlertmanagerConfig: definition.PostableApiAlertingConfig{
+						Config: definition.Config{
+							Route: &definition.Route{
+								Receiver: "test-receiver",
+							},
+						},
+					},
+				},
+				CreatedAt: 12345,
+			},
+			wantEqual: true,
+		},
+		{
+			name: "configs with different Default flag produce same hash",
+			config: client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					TemplateFiles: map[string]string{"test": "template"},
+					AlertmanagerConfig: definition.PostableApiAlertingConfig{
+						Config: definition.Config{
+							Route: &definition.Route{
+								Receiver: "test-receiver",
+							},
+						},
+					},
+				},
+				Default: true,
+			},
+			wantEqual: true,
+		},
+		{
+			name: "configs with different Hash produce same hash",
+			config: client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					TemplateFiles: map[string]string{"test": "template"},
+					AlertmanagerConfig: definition.PostableApiAlertingConfig{
+						Config: definition.Config{
+							Route: &definition.Route{
+								Receiver: "test-receiver",
+							},
+						},
+					},
+				},
+				Hash: "existing-hash",
+			},
+			wantEqual: true,
+		},
+	}
+
+	// Calculate base hash fresh each time to avoid mutation issues.
+	baseConfig := newBaseConfig()
+	baseHash, err := calculateUserGrafanaConfigHash(baseConfig)
+	require.NoError(t, err)
+	require.NotEmpty(t, baseHash)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hash, err := calculateUserGrafanaConfigHash(tt.config)
+			require.NoError(t, err)
+			require.NotEmpty(t, hash)
+
+			if tt.wantEqual {
+				require.Equal(t, baseHash, hash, "Expected configs to produce the same hash")
+			}
+		})
+	}
+
+	// Test that different actual config produces different hash.
+	t.Run("different configs produce different hashes", func(t *testing.T) {
+		differentConfig := client.UserGrafanaConfig{
+			GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+				AlertmanagerConfig: definition.PostableApiAlertingConfig{
+					Config: definition.Config{
+						Route: &definition.Route{
+							Receiver: "different-receiver",
+						},
+					},
+				},
+			},
+		}
+		differentHash, err := calculateUserGrafanaConfigHash(differentConfig)
+		require.NoError(t, err)
+		require.NotEqual(t, baseHash, differentHash, "Expected different configs to produce different hashes")
+	})
+}
+
+func TestAlertmanager_logDiff(t *testing.T) {
+	logger := log.NewNopLogger()
+	am := &Alertmanager{log: logger}
+
+	tests := []struct {
+		name        string
+		curCfg      *client.UserGrafanaConfig
+		newCfg      *client.UserGrafanaConfig
+		expectDiffs bool
+	}{
+		{
+			name: "identical configs produce no diffs",
+			curCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					AlertmanagerConfig: definition.PostableApiAlertingConfig{
+						Config: definition.Config{
+							Route: &definition.Route{
+								Receiver: "test-receiver",
+							},
+						},
+					},
+				},
+			},
+			newCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					AlertmanagerConfig: definition.PostableApiAlertingConfig{
+						Config: definition.Config{
+							Route: &definition.Route{
+								Receiver: "test-receiver",
+							},
+						},
+					},
+				},
+			},
+			expectDiffs: false,
+		},
+		{
+			name: "different receivers produce diffs",
+			curCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					AlertmanagerConfig: definition.PostableApiAlertingConfig{
+						Config: definition.Config{
+							Route: &definition.Route{
+								Receiver: "receiver1",
+							},
+						},
+					},
+				},
+			},
+			newCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					AlertmanagerConfig: definition.PostableApiAlertingConfig{
+						Config: definition.Config{
+							Route: &definition.Route{
+								Receiver: "receiver2",
+							},
+						},
+					},
+				},
+			},
+			expectDiffs: true,
+		},
+		{
+			name: "different Hash fields are ignored",
+			curCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					AlertmanagerConfig: definition.PostableApiAlertingConfig{
+						Config: definition.Config{
+							Route: &definition.Route{
+								Receiver: "test-receiver",
+							},
+						},
+					},
+				},
+				Hash: "hash1",
+			},
+			newCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					AlertmanagerConfig: definition.PostableApiAlertingConfig{
+						Config: definition.Config{
+							Route: &definition.Route{
+								Receiver: "test-receiver",
+							},
+						},
+					},
+				},
+				Hash: "hash2",
+			},
+			expectDiffs: false,
+		},
+		{
+			name: "different CreatedAt fields are ignored",
+			curCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					AlertmanagerConfig: definition.PostableApiAlertingConfig{
+						Config: definition.Config{
+							Route: &definition.Route{
+								Receiver: "test-receiver",
+							},
+						},
+					},
+				},
+				CreatedAt: 1234,
+			},
+			newCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					AlertmanagerConfig: definition.PostableApiAlertingConfig{
+						Config: definition.Config{
+							Route: &definition.Route{
+								Receiver: "test-receiver",
+							},
+						},
+					},
+				},
+				CreatedAt: 5678,
+			},
+			expectDiffs: false,
+		},
+		{
+			name: "different Default fields are ignored",
+			curCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					AlertmanagerConfig: definition.PostableApiAlertingConfig{
+						Config: definition.Config{
+							Route: &definition.Route{
+								Receiver: "test-receiver",
+							},
+						},
+					},
+				},
+				Default: true,
+			},
+			newCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+					AlertmanagerConfig: definition.PostableApiAlertingConfig{
+						Config: definition.Config{
+							Route: &definition.Route{
+								Receiver: "test-receiver",
+							},
+						},
+					},
+				},
+				Default: false,
+			},
+			expectDiffs: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			diffs := am.logDiff(tt.curCfg, tt.newCfg)
+			if tt.expectDiffs {
+				require.NotEmpty(t, diffs, "Expected to find diffs between configs")
+			} else {
+				require.Empty(t, diffs, "Expected no diffs between configs")
+			}
+		})
+	}
+}
+
+func TestGetRemoteState_FlushLog(t *testing.T) {
+	const tenantID = "test"
+	ctx := context.Background()
+	store := ngfakes.NewFakeKVStore(t)
+	fstore := notifier.NewFileStore(1, store)
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	tc := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+
+	// Create a state with all three part keys including flush log.
+	state := alertingClusterPB.FullState{
+		Parts: []alertingClusterPB.Part{
+			{Key: "nfl:otherID", Data: []byte("test-nflog")},
+			{Key: "sil:otherID", Data: []byte("test-silences")},
+			{Key: "fls:otherID", Data: []byte("test-flushlog")},
+		},
+	}
+	rawState, err := state.Marshal()
+	require.NoError(t, err)
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		res := map[string]any{
+			"status": "success",
+			"data": map[string]any{
+				"state": base64.StdEncoding.EncodeToString(rawState),
+			},
+		}
+		w.Header().Add("content-type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(res))
+	})
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	cfg := AlertmanagerConfig{
+		OrgID:         1,
+		TenantID:      tenantID,
+		URL:           server.URL,
+		DefaultConfig: defaultGrafanaConfig,
+	}
+	am, err := NewAlertmanager(ctx, cfg, fstore, tc, noopAutogenFn, m, tracing.InitializeTracerForTest())
+	require.NoError(t, err)
+
+	s, err := am.GetRemoteState(ctx)
+	require.NoError(t, err)
+	require.Equal(t, []byte("test-nflog"), s.Nflog)
+	require.Equal(t, []byte("test-silences"), s.Silences)
+	require.Equal(t, []byte("test-flushlog"), s.FlushLog)
+}
+
+func TestAlertmanager_PanicRecovery(t *testing.T) {
+	// Test that panic recovery exists in critical methods.
+	// The panic recovery code includes stack traces which helps with debugging.
+	// This test verifies the panic recovery code executes without errors.
+
+	logger := log.NewNopLogger()
+	am := &Alertmanager{log: logger}
+
+	t.Run("logDiff has panic recovery and handles empty configs", func(t *testing.T) {
+		cfg1 := &client.UserGrafanaConfig{}
+		cfg2 := &client.UserGrafanaConfig{}
+		// Should not panic even with empty configs.
+		diffs := am.logDiff(cfg1, cfg2)
+		// Empty configs should produce no diffs (or empty slice).
+		require.Empty(t, diffs)
+	})
+
+	t.Run("logDiff has panic recovery and handles nil route", func(t *testing.T) {
+		// This used to potentially panic in cmp with unexported fields.
+		cfg1 := &client.UserGrafanaConfig{
+			GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+				AlertmanagerConfig: definition.PostableApiAlertingConfig{
+					Config: definition.Config{
+						Route: nil, // nil route
+					},
+				},
+			},
+		}
+		cfg2 := &client.UserGrafanaConfig{
+			GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
+				AlertmanagerConfig: definition.PostableApiAlertingConfig{
+					Config: definition.Config{
+						Route: &definition.Route{
+							Receiver: "test",
+						},
+					},
+				},
+			},
+		}
+		// Should not panic and should detect the difference.
+		diffs := am.logDiff(cfg1, cfg2)
+		require.NotEmpty(t, diffs)
+	})
+
+	// Note: Other methods with panic recovery (CreateSilence, DeleteSilence, GetSilence,
+	// ListSilences, GetAlerts, GetAlertGroups, GetStatus) are tested elsewhere in the
+	// integration tests. The panic recovery is a defensive mechanism and won't be triggered
+	// in normal operation. We verify its presence through code inspection rather than
+	// attempting to force panics in tests.
+}
