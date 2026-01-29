@@ -233,6 +233,7 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 			return ErrResp(http.StatusInternalServerError, err, "failed to authorize request")
 		}
 	}
+	// TODO: Replace with receiver service.
 	if err := srv.crypto.ProcessSecureSettings(c.Req.Context(), c.GetOrgID(), body.Receivers, func(receiverName string, paths []schema.IntegrationFieldPath) error {
 		return srv.receiverAuthz.AuthorizeUpdateProtected(c.Req.Context(), c.SignedInUser, ReceiverStatus{Name: receiverName})
 	}); err != nil {

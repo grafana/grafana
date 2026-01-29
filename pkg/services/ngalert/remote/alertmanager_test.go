@@ -753,7 +753,9 @@ receivers:
 	am, err := newAlertmanagerSut(c, fstore, tc, NoopAutogenFn)
 	require.NoError(t, err)
 
-	err = am.SaveAndApplyConfig(ctx, &cfg)
+	configJSON, err := json.Marshal(cfg)
+	require.NoError(t, err)
+	err = am.ApplyConfig(ctx, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: string(configJSON)})
 	require.NoError(t, err)
 
 	require.Equal(t, len(configSent.GrafanaAlertmanagerConfig.AlertmanagerConfig.Receivers), 2)
@@ -983,45 +985,6 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		state, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 		require.NoError(t, err)
 		require.Equal(t, encodedFullState, state.State)
-	}
-
-	// `SaveAndApplyConfig` is called whenever a user manually changes the Alertmanager configuration.
-	// Calling this method should decrypt and send a configuration to the remote Alertmanager.
-	{
-		postableCfg, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
-		require.NoError(t, err)
-		encryptedReceivers, err := notifier.EncryptedReceivers(postableCfg.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
-		postableCfg.AlertmanagerConfig.Receivers = encryptedReceivers
-		require.NoError(t, err)
-
-		// The encrypted configuration should be different than the one we will send.
-		encryptedConfig, err := json.Marshal(postableCfg)
-		require.NoError(t, err)
-		require.NotEqual(t, testGrafanaConfigWithSecret, encryptedConfig)
-
-		// Call `SaveAndApplyConfig` with the encrypted configuration.
-		require.NoError(t, err)
-		require.NoError(t, am.SaveAndApplyConfig(ctx, postableCfg))
-
-		// Check that the original configuration is not modified (decrypted).
-		currentJSON, err := json.Marshal(postableCfg)
-		require.NoError(t, err)
-		require.JSONEq(t, string(encryptedConfig), string(currentJSON), "Original configuration should not be modified")
-
-		// Check that the configuration was uploaded to the remote Alertmanager.
-		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
-		require.NoError(t, err)
-		got, err := json.Marshal(config.GrafanaAlertmanagerConfig)
-		require.NoError(t, err)
-
-		require.JSONEq(t, testGrafanaConfigWithSecret, string(got))
-
-		require.False(t, config.Default)
-
-		// An error while adding auto-generated rutes should be returned.
-		am.autogenFn = errAutogenFn
-		require.ErrorIs(t, am.SaveAndApplyConfig(ctx, postableCfg), errTest)
-		am.autogenFn = NoopAutogenFn
 	}
 
 	// `SaveAndApplyDefaultConfig` should send the default Alertmanager configuration to the remote Alertmanager.

@@ -3,22 +3,24 @@ package encryption
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/grafana/alerting/receivers/oncall"
 	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	alertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -35,7 +37,7 @@ func TestIntegration_AdminApiReencrypt(t *testing.T) {
 		dataSourceTable              = "data_source"
 		secretsTable                 = "secrets"
 		secretsValueColumn           = "value"
-		alertmanagerSecureSettingKey = "secure-value"
+		alertmanagerSecureSettingKey = "password"
 		secureJsonKey                = "db-secure-key"
 	)
 
@@ -168,35 +170,14 @@ next:
 }
 
 func addAlertingConfig(t *testing.T, env *server.TestEnv) {
-	// Create alertmanager config
-	cfg := apimodels.PostableUserConfig{}
-	body := `
-		{
-			"alertmanager_config": {
-				"route": {
-					"receiver": "empty"
-				},
-				"receivers": [{
-					"name": "empty",
-					"grafana_managed_receiver_configs": [{
-						"uid": "",
-						"name": "email receiver",
-						"type": "email",
-						"isDefault": true,
-						"settings": {
-							"addresses": "<example@email.com>"
-						},
-						"secureSettings": {
-							"secure-value": "secret"
-						}
-					}]
-				}]
-			}
-		}
-		`
-	err := json.Unmarshal([]byte(body), &cfg)
-	require.NoError(t, err)
-	err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.SaveAndApplyAlertmanagerConfiguration(context.Background(), 1, cfg)
+	// Receiver has the secure field "password".
+	receiverWithSecrets := alertmodels.ReceiverGen(alertmodels.ReceiverMuts.WithName("receiver-1"), alertmodels.ReceiverMuts.WithValidIntegration(oncall.Type))()
+
+	u := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {accesscontrol.ActionAlertingReceiversCreate: nil},
+	}}
+
+	_, err := env.Server.HTTPServer.AlertNG.Api.ReceiverService.CreateReceiver(context.Background(), &receiverWithSecrets, 1, u)
 	require.NoError(t, err)
 }
 

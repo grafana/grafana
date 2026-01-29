@@ -2,12 +2,12 @@ package alerting
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -33,7 +33,6 @@ func TestIntegrationAlertmanagerExtraConfigMerging(t *testing.T) {
 
 	t.Run("retrieve merged configuration via extra config datasource", func(t *testing.T) {
 		// first upload standard alertmanager configuration
-		baseConfig := apimodels.PostableUserConfig{}
 		baseConfigJSON := `{
 			"alertmanager_config": {
 				"route": {
@@ -54,10 +53,13 @@ func TestIntegrationAlertmanagerExtraConfigMerging(t *testing.T) {
 				"base.tmpl": "{{ define \"base.template\" }}Base Template{{ end }}"
 			}
 		}`
-		err := json.Unmarshal([]byte(baseConfigJSON), &baseConfig)
-		require.NoError(t, err)
 
-		err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.SaveAndApplyAlertmanagerConfiguration(context.Background(), 1, baseConfig)
+		err := env.Server.HTTPServer.AlertNG.Api.AlertingStore.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+			AlertmanagerConfiguration: baseConfigJSON,
+			ConfigurationVersion:      "v1",
+			Default:                   false,
+			OrgID:                     1,
+		})
 		require.NoError(t, err)
 
 		//now add extra configuration
