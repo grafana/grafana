@@ -379,8 +379,10 @@
 /pkg/tsdb/influxdb/ @grafana/partner-datasources
 /pkg/tsdb/graphite/ @grafana/partner-datasources
 
-# Database migrations
+# Grafana search and storage
 /pkg/services/sqlstore/migrations/ @grafana/grafana-search-and-storage
+/pkg/services/grpcserver/ @grafana/grafana-search-and-storage
+/apps/dashboard/pkg/apis/dashboard/v0alpha1/search.go @grafana/grafana-search-and-storage
 *_mig.go @grafana/grafana-search-and-storage
 
 # Grafana app platform
@@ -388,7 +390,6 @@
 /pkg/services/store/ @grafana/grafana-app-platform-squad
 /pkg/infra/filestorage/ @grafana/grafana-app-platform-squad
 /pkg/modules/ @grafana/grafana-app-platform-squad
-/pkg/services/grpcserver/ @grafana/grafana-search-and-storage
 /pkg/generated @grafana/grafana-app-platform-squad
 
 # Alerting
@@ -1193,6 +1194,8 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apis/query @grafana/grafana-datasources-core-services
 /pkg/registry/apis/secret @grafana/grafana-operator-experience-squad
 /pkg/registry/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
+/pkg/registry/apis/dashboard/search.go @grafana/grafana-search-and-storage
+/pkg/registry/apis/dashboard/search_test.go @grafana/grafana-search-and-storage
 /pkg/registry/apps/advisor @grafana/plugins-platform-backend
 /pkg/registry/apps/alerting @grafana/alerting-backend
 /pkg/registry/apps/plugins @grafana/plugins-platform-backend
