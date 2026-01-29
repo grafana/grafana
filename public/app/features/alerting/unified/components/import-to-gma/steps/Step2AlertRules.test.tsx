@@ -10,7 +10,7 @@ import { SupportedRulesSourceType } from 'app/features/alerting/unified/utils/da
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromRulesResponse, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { MigrationFormValues } from '../MigrateToGMA';
+import { ImportFormValues } from '../ImportToGMA';
 
 import { Step2Content, useStep2Validation } from './Step2AlertRules';
 
@@ -22,9 +22,9 @@ function TestWrapper({
   defaultValues,
 }: {
   children: React.ReactNode;
-  defaultValues?: Partial<MigrationFormValues>;
+  defaultValues?: Partial<ImportFormValues>;
 }) {
-  const formAPI = useForm<MigrationFormValues>({
+  const formAPI = useForm<ImportFormValues>({
     defaultValues: {
       step1Completed: false,
       step1Skipped: false,

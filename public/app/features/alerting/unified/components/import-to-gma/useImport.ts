@@ -27,10 +27,10 @@ interface MigrateRulesParams {
 }
 
 /**
- * Hook to migrate notification resources (contact points, policies, templates, time intervals)
+ * Hook to import notification resources (contact points, policies, templates, time intervals)
  * Uses the /api/convert/api/v1/alerts endpoint via RTK Query
  */
-export function useMigrateNotifications() {
+export function useImportNotifications() {
   const [convertAlertmanagerConfig] = convertToGMAApi.useConvertAlertmanagerConfigMutation();
 
   return useCallback(
@@ -50,7 +50,7 @@ export function useMigrateNotifications() {
         alertmanagerConfig = JSON.stringify(config.alertmanager_config);
         templateFiles = config.template_files ?? {};
       } else {
-        throw new Error('Invalid migration source configuration');
+        throw new Error('Invalid import source configuration');
       }
 
       // Call the convert API for notifications using RTK Query
@@ -65,10 +65,10 @@ export function useMigrateNotifications() {
 }
 
 /**
- * Hook to migrate alert rules and recording rules
+ * Hook to import alert rules and recording rules
  * Uses the convertToGMAApi (same as ImportToGMARules)
  */
-export function useMigrateRules() {
+export function useImportRules() {
   const [convert] = convertToGMAApi.useConvertToGMAMutation();
 
   return useCallback(
@@ -232,7 +232,7 @@ export function useDryRunNotifications() {
           alertmanagerConfig = JSON.stringify(config.alertmanager_config);
           templateFiles = config.template_files ?? {};
         } else {
-          throw new Error('Invalid migration source configuration');
+          throw new Error('Invalid import source configuration');
         }
 
         // TODO: Uncomment when the backend endpoint is implemented

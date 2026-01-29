@@ -30,7 +30,7 @@ import {
 } from '../../../utils/datasource';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName } from '../../rule-editor/useAlertRuleSuggestions';
-import { MERGE_MATCHERS_LABEL_NAME, MigrationFormValues } from '../MigrateToGMA';
+import { ImportFormValues, MERGE_MATCHERS_LABEL_NAME } from '../ImportToGMA';
 
 interface Step2ContentProps {
   step1Completed: boolean;
@@ -56,7 +56,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
     watch,
     setValue,
     formState: { errors },
-  } = useFormContext<MigrationFormValues>();
+  } = useFormContext<ImportFormValues>();
 
   const [
     rulesSource,
@@ -111,9 +111,9 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
 
   const rulesSourceOptions: Array<{ label: string; description: string; value: 'datasource' | 'yaml' }> = [
     {
-      label: t('alerting.migrate-to-gma.step2.source.datasource', 'Data source'),
+      label: t('alerting.import-to-gma.step2.source.datasource', 'Data source'),
       description: t(
-        'alerting.migrate-to-gma.step2.source.datasource-desc',
+        'alerting.import-to-gma.step2.source.datasource-desc',
         'Import from a Prometheus, Mimir, or Loki data source'
       ),
       value: 'datasource',
@@ -122,18 +122,18 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
 
   if (isImportYamlEnabled) {
     rulesSourceOptions.push({
-      label: t('alerting.migrate-to-gma.step2.source.yaml', 'YAML file'),
-      description: t('alerting.migrate-to-gma.step2.source.yaml-desc', 'Import from a Prometheus rules YAML file'),
+      label: t('alerting.import-to-gma.step2.source.yaml', 'YAML file'),
+      description: t('alerting.import-to-gma.step2.source.yaml-desc', 'Import from a Prometheus rules YAML file'),
       value: 'yaml',
     });
   }
 
   const policyOptions: Array<{ label: string; value: 'default' | 'imported' | 'manual'; description: string }> = [
     {
-      label: t('alerting.migrate-to-gma.step2.policy.default', 'Use Grafana default policy'),
+      label: t('alerting.import-to-gma.step2.policy.default', 'Use Grafana default policy'),
       value: 'default',
       description: t(
-        'alerting.migrate-to-gma.step2.policy.default-desc',
+        'alerting.import-to-gma.step2.policy.default-desc',
         'Alerts will be routed using the default Grafana notification policy'
       ),
     },
@@ -141,10 +141,10 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
 
   if (step1Completed) {
     policyOptions.push({
-      label: t('alerting.migrate-to-gma.step2.policy.imported', 'Use imported policy'),
+      label: t('alerting.import-to-gma.step2.policy.imported', 'Use imported policy'),
       value: 'imported',
       description: t(
-        'alerting.migrate-to-gma.step2.policy.imported-desc',
+        'alerting.import-to-gma.step2.policy.imported-desc',
         'Use the policy tree imported in Step 1. Label {{label}}={{value}} will be added to all rules.',
         {
           label: MERGE_MATCHERS_LABEL_NAME,
@@ -155,10 +155,10 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
   }
 
   policyOptions.push({
-    label: t('alerting.migrate-to-gma.step2.policy.manual', 'Enter label manually'),
+    label: t('alerting.import-to-gma.step2.policy.manual', 'Enter label manually'),
     value: 'manual',
     description: t(
-      'alerting.migrate-to-gma.step2.policy.manual-desc',
+      'alerting.import-to-gma.step2.policy.manual-desc',
       'Specify a custom label to add to all imported rules'
     ),
   });
@@ -202,8 +202,8 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
   return (
     <Stack direction="column" gap={3}>
       {step1Skipped && (
-        <Alert severity="info" title={t('alerting.migrate-to-gma.step2.skipped-step1', 'Step 1 was skipped')}>
-          <Trans i18nKey="alerting.migrate-to-gma.step2.skipped-step1-desc">
+        <Alert severity="info" title={t('alerting.import-to-gma.step2.skipped-step1', 'Step 1 was skipped')}>
+          <Trans i18nKey="alerting.import-to-gma.step2.skipped-step1-desc">
             You skipped importing Alertmanager resources. You can still import rules and route them using the default
             Grafana policy or a custom label.
           </Trans>
@@ -214,9 +214,9 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
       {!canImport && (
         <Alert
           severity="warning"
-          title={t('alerting.migrate-to-gma.step2.no-permission-title', 'Insufficient permissions')}
+          title={t('alerting.import-to-gma.step2.no-permission-title', 'Insufficient permissions')}
         >
-          <Trans i18nKey="alerting.migrate-to-gma.step2.no-permission-desc">
+          <Trans i18nKey="alerting.import-to-gma.step2.no-permission-desc">
             You do not have permission to import alert rules. You need both <strong>alerting.rules:create</strong> and{' '}
             <strong>alerting.provisioning:write</strong> permissions. You can skip this step.
           </Trans>
@@ -227,12 +227,12 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <Text variant="h5" element="h3">
-            {t('alerting.migrate-to-gma.step2.policy-title', 'Notification Routing')}
+            {t('alerting.import-to-gma.step2.policy-title', 'Notification Routing')}
           </Text>
         </div>
         <div className={styles.cardContent}>
           <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="alerting.migrate-to-gma.step2.policy-desc">
+            <Trans i18nKey="alerting.import-to-gma.step2.policy-desc">
               Choose how imported alerts should be routed to contact points.
             </Trans>
           </Text>
@@ -254,7 +254,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
             <Box marginTop={2} paddingLeft={3}>
               <Stack direction="row" gap={2}>
                 <Field
-                  label={t('alerting.migrate-to-gma.step2.manual-label-name', 'Label name')}
+                  label={t('alerting.import-to-gma.step2.manual-label-name', 'Label name')}
                   invalid={!!errors.manualLabelName}
                   error={errors.manualLabelName?.message}
                   noMargin
@@ -263,12 +263,12 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
                     {...register('manualLabelName', {
                       required: notificationPolicyOption === 'manual' ? 'Label name is required' : false,
                     })}
-                    placeholder={t('alerting.migrate-to-gma.step2.manual-label-name-placeholder', 'team')}
+                    placeholder={t('alerting.import-to-gma.step2.manual-label-name-placeholder', 'team')}
                     width={20}
                   />
                 </Field>
                 <Field
-                  label={t('alerting.migrate-to-gma.step2.manual-label-value', 'Label value')}
+                  label={t('alerting.import-to-gma.step2.manual-label-value', 'Label value')}
                   invalid={!!errors.manualLabelValue}
                   error={errors.manualLabelValue?.message}
                   noMargin
@@ -277,7 +277,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
                     {...register('manualLabelValue', {
                       required: notificationPolicyOption === 'manual' ? 'Label value is required' : false,
                     })}
-                    placeholder={t('alerting.migrate-to-gma.step2.manual-label-value-placeholder', 'backend')}
+                    placeholder={t('alerting.import-to-gma.step2.manual-label-value-placeholder', 'backend')}
                     width={20}
                   />
                 </Field>
@@ -291,7 +291,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <Text variant="h5" element="h3">
-            {t('alerting.migrate-to-gma.step2.source-title', 'Import Source')}
+            {t('alerting.import-to-gma.step2.source-title', 'Import Source')}
           </Text>
         </div>
         <div className={styles.cardContent}>
@@ -313,7 +313,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
             {rulesSource === 'datasource' && (
               <Stack direction="column" gap={2}>
                 <Field
-                  label={t('alerting.migrate-to-gma.step2.datasource', 'Data source')}
+                  label={t('alerting.import-to-gma.step2.datasource', 'Data source')}
                   invalid={!!errors.rulesDatasourceUID}
                   error={errors.rulesDatasourceUID?.message}
                   noMargin
@@ -345,8 +345,8 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
                 {rulesDatasourceUID && (
                   <Stack direction="row" gap={2}>
                     <Field
-                      label={t('alerting.migrate-to-gma.step2.namespace', 'Namespace')}
-                      description={t('alerting.migrate-to-gma.step2.namespace-desc', 'Filter by namespace (optional)')}
+                      label={t('alerting.import-to-gma.step2.namespace', 'Namespace')}
+                      description={t('alerting.import-to-gma.step2.namespace-desc', 'Filter by namespace (optional)')}
                       noMargin
                     >
                       <Controller
@@ -357,7 +357,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
                               setValue('ruleGroup', undefined);
                               onChange(value?.value);
                             }}
-                            placeholder={t('alerting.migrate-to-gma.step2.select-namespace', 'All namespaces')}
+                            placeholder={t('alerting.import-to-gma.step2.select-namespace', 'All namespaces')}
                             options={namespaceOptions}
                             width={30}
                             loading={isLoadingNamespaces}
@@ -370,8 +370,8 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
                       />
                     </Field>
                     <Field
-                      label={t('alerting.migrate-to-gma.step2.group', 'Group')}
-                      description={t('alerting.migrate-to-gma.step2.group-desc', 'Filter by group (optional)')}
+                      label={t('alerting.import-to-gma.step2.group', 'Group')}
+                      description={t('alerting.import-to-gma.step2.group-desc', 'Filter by group (optional)')}
                       noMargin
                     >
                       <Controller
@@ -383,7 +383,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
                             onChange={(value) => {
                               setValue('ruleGroup', value?.value);
                             }}
-                            placeholder={t('alerting.migrate-to-gma.step2.select-group', 'All groups')}
+                            placeholder={t('alerting.import-to-gma.step2.select-group', 'All groups')}
                             loading={isLoadingNamespaces}
                             disabled={isLoadingNamespaces || !namespace || !rulesDatasourceName}
                             isClearable
@@ -400,7 +400,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
 
             {rulesSource === 'yaml' && (
               <Field
-                label={t('alerting.migrate-to-gma.step2.yaml-file', 'Rules YAML file')}
+                label={t('alerting.import-to-gma.step2.yaml-file', 'Rules YAML file')}
                 invalid={!!errors.rulesYamlFile}
                 error={errors.rulesYamlFile?.message}
                 noMargin
@@ -419,7 +419,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
                     >
                       {rulesYamlFile
                         ? rulesYamlFile.name
-                        : t('alerting.migrate-to-gma.step2.upload', 'Upload YAML file')}
+                        : t('alerting.import-to-gma.step2.upload', 'Upload YAML file')}
                     </FileUpload>
                   )}
                   control={control}
@@ -435,15 +435,15 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <Text variant="h5" element="h3">
-            {t('alerting.migrate-to-gma.step2.settings-title', 'Additional Settings')}
+            {t('alerting.import-to-gma.step2.settings-title', 'Additional Settings')}
           </Text>
         </div>
         <div className={styles.cardContent}>
           <Stack direction="column" gap={2}>
             <Field
-              label={t('alerting.migrate-to-gma.step2.target-folder', 'Target folder')}
+              label={t('alerting.import-to-gma.step2.target-folder', 'Target folder')}
               description={t(
-                'alerting.migrate-to-gma.step2.target-folder-desc',
+                'alerting.import-to-gma.step2.target-folder-desc',
                 'Folder where imported rules will be stored'
               )}
               noMargin
@@ -477,9 +477,9 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
             {/* Target data source for recording rules */}
             <Field
               required
-              label={t('alerting.migrate-to-gma.step2.target-datasource', 'Target data source')}
+              label={t('alerting.import-to-gma.step2.target-datasource', 'Target data source')}
               description={t(
-                'alerting.migrate-to-gma.step2.target-datasource-desc',
+                'alerting.import-to-gma.step2.target-datasource-desc',
                 'The Prometheus data source to store recording rules in'
               )}
               invalid={!!errors.targetDatasourceUID}
@@ -505,7 +505,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
                   required: {
                     value: true,
                     message: t(
-                      'alerting.migrate-to-gma.step2.target-datasource-required',
+                      'alerting.import-to-gma.step2.target-datasource-required',
                       'Please select a target data source'
                     ),
                   },
@@ -516,7 +516,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
             <Box marginTop={1}>
               <InlineField
                 transparent
-                label={t('alerting.migrate-to-gma.step2.pause-alerting', 'Pause imported alert rules')}
+                label={t('alerting.import-to-gma.step2.pause-alerting', 'Pause imported alert rules')}
                 labelWidth={30}
               >
                 <InlineSwitch transparent id="pause-alerting-rules" {...register('pauseAlertingRules')} />
@@ -524,7 +524,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
 
               <InlineField
                 transparent
-                label={t('alerting.migrate-to-gma.step2.pause-recording', 'Pause imported recording rules')}
+                label={t('alerting.import-to-gma.step2.pause-recording', 'Pause imported recording rules')}
                 labelWidth={30}
               >
                 <InlineSwitch transparent id="pause-recording-rules" {...register('pauseRecordingRules')} />
@@ -541,7 +541,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport, onValida
  * Hook to check if Step 2 form is valid
  */
 export function useStep2Validation(canImport: boolean): boolean {
-  const { watch } = useFormContext<MigrationFormValues>();
+  const { watch } = useFormContext<ImportFormValues>();
   const [
     rulesSource,
     rulesDatasourceUID,

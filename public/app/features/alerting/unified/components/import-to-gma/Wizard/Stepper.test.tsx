@@ -21,7 +21,7 @@ describe('Stepper', () => {
 
     expect(screen.getByText(/notification resources/i)).toBeInTheDocument();
     expect(screen.getByText(/alert rules/i)).toBeInTheDocument();
-    expect(screen.getByText(/review & migrate/i)).toBeInTheDocument();
+    expect(screen.getByText(/review & import/i)).toBeInTheDocument();
   });
 
   it('should highlight the active step', () => {

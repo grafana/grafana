@@ -9,21 +9,21 @@ import { StepKey, WizardStep } from './types';
 export const getWizardSteps = (): WizardStep[] => [
   {
     id: StepKey.Notifications,
-    name: t('alerting.migrate-to-gma.wizard.step-notifications', 'Notification resources'),
-    description: t('alerting.migrate-to-gma.wizard.step-notifications-desc', 'Contact points, policies, templates'),
-    url: '/alerting/migrate-to-gma/notifications',
+    name: t('alerting.import-to-gma.wizard.step-notifications', 'Notification resources'),
+    description: t('alerting.import-to-gma.wizard.step-notifications-desc', 'Contact points, policies, templates'),
+    url: '/alerting/import-to-gma/notifications',
   },
   {
     id: StepKey.Rules,
-    name: t('alerting.migrate-to-gma.wizard.step-rules', 'Alert rules'),
-    description: t('alerting.migrate-to-gma.wizard.step-rules-desc', 'Alert and recording rules'),
-    url: '/alerting/migrate-to-gma/rules',
+    name: t('alerting.import-to-gma.wizard.step-rules', 'Alert rules'),
+    description: t('alerting.import-to-gma.wizard.step-rules-desc', 'Alert and recording rules'),
+    url: '/alerting/import-to-gma/rules',
   },
   {
     id: StepKey.Review,
-    name: t('alerting.migrate-to-gma.wizard.step-review', 'Review & migrate'),
-    description: t('alerting.migrate-to-gma.wizard.step-review-desc', 'Preview and confirm migration'),
-    url: '/alerting/migrate-to-gma/review',
+    name: t('alerting.import-to-gma.wizard.step-review', 'Review & import'),
+    description: t('alerting.import-to-gma.wizard.step-review-desc', 'Preview and confirm import'),
+    url: '/alerting/import-to-gma/review',
   },
 ];
 

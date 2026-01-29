@@ -14,7 +14,7 @@ import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 
 import { DryRunValidationModal, DryRunValidationResult } from './DryRunValidationModal';
-import { MigrationPreviewModal } from './MigrationPreviewModal';
+import { ImportPreviewModal } from './ImportPreviewModal';
 import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
@@ -22,7 +22,7 @@ import { WizardStep } from './Wizard/WizardStep';
 import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
-import { useDryRunNotifications } from './useMigration';
+import { useDryRunNotifications } from './useImport';
 
 /**
  * Label name used in X-Grafana-Alerting-Merge-Matchers header.
@@ -31,7 +31,7 @@ import { useDryRunNotifications } from './useMigration';
  */
 export const MERGE_MATCHERS_LABEL_NAME = '__grafana_managed_route__';
 
-export interface MigrationFormValues {
+export interface ImportFormValues {
   // Step 1: Alertmanager resources
   step1Completed: boolean;
   step1Skipped: boolean;
@@ -65,16 +65,16 @@ export interface MigrationFormValues {
   targetDatasourceUID?: string;
 }
 
-const MigrateToGMA = () => {
+const ImportToGMA = () => {
   return (
     <AlertingPageWrapper
       navId="alert-list"
       pageNav={{
-        text: t('alerting.migrate-to-gma.pageTitle', 'Migrate to Grafana Alerting'),
+        text: t('alerting.import-to-gma.pageTitle', 'Import to Grafana Alerting'),
       }}
     >
       <StepperStateProvider>
-        <MigrationWizardContent />
+        <ImportWizardContent />
       </StepperStateProvider>
     </AlertingPageWrapper>
   );
@@ -83,7 +83,7 @@ const MigrateToGMA = () => {
 /**
  * Inner content component that uses the stepper state
  */
-function MigrationWizardContent() {
+function ImportWizardContent() {
   const { activeStep, setStepCompleted, setStepSkipped, setActiveStep, setVisitedStep, setStepErrors } =
     useStepperState();
 
@@ -94,7 +94,7 @@ function MigrationWizardContent() {
 
   const { runDryRun, reset: resetDryRun } = useDryRunNotifications();
 
-  const formAPI = useForm<MigrationFormValues>({
+  const formAPI = useForm<ImportFormValues>({
     defaultValues: {
       // Step 1
       step1Completed: false,
@@ -238,8 +238,8 @@ function MigrationWizardContent() {
   return (
     <>
       <Box marginBottom={3}>
-        <Alert severity="info" title={t('alerting.migrate-to-gma.info-title', 'Migration wizard')}>
-          <Trans i18nKey="alerting.migrate-to-gma.info-description">
+        <Alert severity="info" title={t('alerting.import-to-gma.info-title', 'Import wizard')}>
+          <Trans i18nKey="alerting.import-to-gma.info-description">
             This wizard helps you migrate alert rules and notification resources from external sources to Grafana
             Alerting. For more information, refer to the{' '}
             <a href={DOCS_URL_ALERTING_MIGRATION} target="_blank" rel="noreferrer">
@@ -277,7 +277,7 @@ function MigrationWizardContent() {
 
       {/* Preview Modal */}
       {showPreviewModal && (
-        <MigrationPreviewModal formData={formAPI.getValues()} onDismiss={() => setShowPreviewModal(false)} />
+        <ImportPreviewModal formData={formAPI.getValues()} onDismiss={() => setShowPreviewModal(false)} />
       )}
 
       {/* Dry-run Validation Modal */}
@@ -307,16 +307,16 @@ function Step1Wrapper({ canImport, onNext, onSkip }: Step1WrapperProps) {
   return (
     <WizardStep
       stepId={StepKey.Notifications}
-      label={t('alerting.migrate-to-gma.step1.heading', 'Import Notification Resources')}
+      label={t('alerting.import-to-gma.step1.heading', 'Import Notification Resources')}
       subHeader={
-        <Trans i18nKey="alerting.migrate-to-gma.step1.subtitle">
+        <Trans i18nKey="alerting.import-to-gma.step1.subtitle">
           Import contact points, notification policies, templates, and mute timings from an external Alertmanager.
         </Trans>
       }
       onNext={onNext}
       onSkip={onSkip}
       canSkip
-      skipLabel={t('alerting.migrate-to-gma.step1.skip', 'Skip this step')}
+      skipLabel={t('alerting.import-to-gma.step1.skip', 'Skip this step')}
       disableNext={!isStep1Valid}
     >
       <Step1Content canImport={canImport} />
@@ -341,16 +341,16 @@ function Step2Wrapper({ step1Completed, step1Skipped, canImport, onNext, onSkip 
   return (
     <WizardStep
       stepId={StepKey.Rules}
-      label={t('alerting.migrate-to-gma.step2.heading', 'Import Alert Rules')}
+      label={t('alerting.import-to-gma.step2.heading', 'Import Alert Rules')}
       subHeader={
-        <Trans i18nKey="alerting.migrate-to-gma.step2.subtitle">
+        <Trans i18nKey="alerting.import-to-gma.step2.subtitle">
           Import alert rules and recording rules from an external source.
         </Trans>
       }
       onNext={onNext}
       onSkip={onSkip}
       canSkip
-      skipLabel={t('alerting.migrate-to-gma.step2.skip', 'Skip this step')}
+      skipLabel={t('alerting.import-to-gma.step2.skip', 'Skip this step')}
       disableNext={!isStep2Valid}
     >
       <Step2Content step1Completed={step1Completed} step1Skipped={step1Skipped} canImport={canImport} />
@@ -361,15 +361,15 @@ function Step2Wrapper({ step1Completed, step1Skipped, canImport, onNext, onSkip 
 // Helper function for pause rules label
 function getPauseRulesLabel(pauseAlertingRules: boolean, pauseRecordingRules: boolean): string {
   if (pauseAlertingRules && pauseRecordingRules) {
-    return t('alerting.migrate-to-gma.review.pause-all', 'All rules paused');
+    return t('alerting.import-to-gma.review.pause-all', 'All rules paused');
   }
   if (pauseAlertingRules) {
-    return t('alerting.migrate-to-gma.review.pause-alerting', 'Alert rules paused');
+    return t('alerting.import-to-gma.review.pause-alerting', 'Alert rules paused');
   }
   if (pauseRecordingRules) {
-    return t('alerting.migrate-to-gma.review.pause-recording', 'Recording rules paused');
+    return t('alerting.import-to-gma.review.pause-recording', 'Recording rules paused');
   }
-  return t('alerting.migrate-to-gma.review.pause-none', 'No rules paused');
+  return t('alerting.import-to-gma.review.pause-none', 'No rules paused');
 }
 
 // Validation Status Indicator Component
@@ -388,7 +388,7 @@ function ValidationStatusIndicator({ result, styles }: ValidationStatusIndicator
       <Stack direction="row" gap={1} alignItems="center">
         <Icon name="check-circle" className={styles.successIcon} />
         <Text color="success">
-          {t('alerting.migrate-to-gma.review.validation-ok', 'No conflicts found. Ready to import.')}
+          {t('alerting.import-to-gma.review.validation-ok', 'No conflicts found. Ready to import.')}
         </Text>
       </Stack>
     );
@@ -401,21 +401,21 @@ function ValidationStatusIndicator({ result, styles }: ValidationStatusIndicator
           <Icon name="exclamation-triangle" className={styles.warningIcon} />
           <Text color="warning">
             {t(
-              'alerting.migrate-to-gma.review.validation-warning',
+              'alerting.import-to-gma.review.validation-warning',
               'Some resources will be renamed to avoid conflicts.'
             )}
           </Text>
         </Stack>
         {result.renamedReceivers.length > 0 && (
           <Text color="secondary" variant="bodySmall">
-            {t('alerting.migrate-to-gma.review.renamed-receivers', 'Receivers renamed: {{count}}', {
+            {t('alerting.import-to-gma.review.renamed-receivers', 'Receivers renamed: {{count}}', {
               count: result.renamedReceivers.length,
             })}
           </Text>
         )}
         {result.renamedTimeIntervals.length > 0 && (
           <Text color="secondary" variant="bodySmall">
-            {t('alerting.migrate-to-gma.review.renamed-intervals', 'Time intervals renamed: {{count}}', {
+            {t('alerting.import-to-gma.review.renamed-intervals', 'Time intervals renamed: {{count}}', {
               count: result.renamedTimeIntervals.length,
             })}
           </Text>
@@ -429,7 +429,7 @@ function ValidationStatusIndicator({ result, styles }: ValidationStatusIndicator
     <Stack direction="row" gap={1} alignItems="center">
       <Icon name="exclamation-circle" className={styles.errorIcon} />
       <Text color="error">
-        {result.error || t('alerting.migrate-to-gma.review.validation-error', 'Validation failed.')}
+        {result.error || t('alerting.import-to-gma.review.validation-error', 'Validation failed.')}
       </Text>
     </Stack>
   );
@@ -437,7 +437,7 @@ function ValidationStatusIndicator({ result, styles }: ValidationStatusIndicator
 
 // Review Step Component
 interface ReviewStepProps {
-  formData: MigrationFormValues;
+  formData: ImportFormValues;
   onStartMigration: () => void;
   dryRunResult?: DryRunValidationResult;
 }
@@ -458,18 +458,18 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
     <Stack direction="column" gap={3}>
       <Box>
         <Text variant="h4" element="h2">
-          {t('alerting.migrate-to-gma.review.heading', 'Review Migration')}
+          {t('alerting.import-to-gma.review.heading', 'Review Import')}
         </Text>
         <Text color="secondary">
-          <Trans i18nKey="alerting.migrate-to-gma.review.subtitle">
+          <Trans i18nKey="alerting.import-to-gma.review.subtitle">
             Review each section and once you are happy, start the migration.
           </Trans>
         </Text>
       </Box>
 
       {nothingToMigrate ? (
-        <Alert severity="warning" title={t('alerting.migrate-to-gma.review.nothing', 'Nothing to migrate')}>
-          <Trans i18nKey="alerting.migrate-to-gma.review.nothing-desc">
+        <Alert severity="warning" title={t('alerting.import-to-gma.review.nothing', 'Nothing to import')}>
+          <Trans i18nKey="alerting.import-to-gma.review.nothing-desc">
             Both steps were skipped. Go back and configure at least one import source.
           </Trans>
         </Alert>
@@ -479,20 +479,20 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <Text variant="h5" element="h3">
-                {t('alerting.migrate-to-gma.review.notifications-title', 'Notification Resources')}
+                {t('alerting.import-to-gma.review.notifications-title', 'Notification Resources')}
               </Text>
               {willMigrateNotifications && (
-                <span className={styles.badge}>{t('alerting.migrate-to-gma.review.will-import', 'Will import')}</span>
+                <span className={styles.badge}>{t('alerting.import-to-gma.review.will-import', 'Will import')}</span>
               )}
               {formData.step1Skipped && (
-                <span className={styles.badgeSkipped}>{t('alerting.migrate-to-gma.review.skipped', 'Skipped')}</span>
+                <span className={styles.badgeSkipped}>{t('alerting.import-to-gma.review.skipped', 'Skipped')}</span>
               )}
             </div>
             <div className={styles.cardContent}>
               {willMigrateNotifications ? (
                 <Stack direction="column" gap={1}>
                   <div className={styles.row}>
-                    <Text color="secondary">{t('alerting.migrate-to-gma.review.source', 'Source')}</Text>
+                    <Text color="secondary">{t('alerting.import-to-gma.review.source', 'Source')}</Text>
                     <Text>
                       {formData.notificationsSource === 'yaml'
                         ? formData.notificationsYamlFile?.name || 'YAML file'
@@ -500,7 +500,7 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
                     </Text>
                   </div>
                   <div className={styles.row}>
-                    <Text color="secondary">{t('alerting.migrate-to-gma.review.policy-tree', 'Policy tree')}</Text>
+                    <Text color="secondary">{t('alerting.import-to-gma.review.policy-tree', 'Policy tree')}</Text>
                     <Text weight="medium">
                       {MERGE_MATCHERS_LABEL_NAME}={formData.policyTreeName}
                     </Text>
@@ -513,7 +513,7 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
                 </Stack>
               ) : (
                 <Text color="secondary">
-                  <Trans i18nKey="alerting.migrate-to-gma.review.notifications-skipped">
+                  <Trans i18nKey="alerting.import-to-gma.review.notifications-skipped">
                     Notification resources will not be imported.
                   </Trans>
                 </Text>
@@ -525,20 +525,20 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <Text variant="h5" element="h3">
-                {t('alerting.migrate-to-gma.review.rules-title', 'Alert Rules')}
+                {t('alerting.import-to-gma.review.rules-title', 'Alert Rules')}
               </Text>
               {willMigrateRules && (
-                <span className={styles.badge}>{t('alerting.migrate-to-gma.review.will-import', 'Will import')}</span>
+                <span className={styles.badge}>{t('alerting.import-to-gma.review.will-import', 'Will import')}</span>
               )}
               {formData.step2Skipped && (
-                <span className={styles.badgeSkipped}>{t('alerting.migrate-to-gma.review.skipped', 'Skipped')}</span>
+                <span className={styles.badgeSkipped}>{t('alerting.import-to-gma.review.skipped', 'Skipped')}</span>
               )}
             </div>
             <div className={styles.cardContent}>
               {willMigrateRules ? (
                 <Stack direction="column" gap={1}>
                   <div className={styles.row}>
-                    <Text color="secondary">{t('alerting.migrate-to-gma.review.source', 'Source')}</Text>
+                    <Text color="secondary">{t('alerting.import-to-gma.review.source', 'Source')}</Text>
                     <Text>
                       {formData.rulesSource === 'yaml'
                         ? formData.rulesYamlFile?.name || 'YAML file'
@@ -546,17 +546,17 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
                     </Text>
                   </div>
                   <div className={styles.row}>
-                    <Text color="secondary">{t('alerting.migrate-to-gma.review.routing', 'Notification routing')}</Text>
+                    <Text color="secondary">{t('alerting.import-to-gma.review.routing', 'Notification routing')}</Text>
                     <Text>
                       {formData.notificationPolicyOption === 'default' &&
-                        t('alerting.migrate-to-gma.review.routing-default', 'Default Grafana policy')}
+                        t('alerting.import-to-gma.review.routing-default', 'Default Grafana policy')}
                       {formData.notificationPolicyOption === 'imported' &&
-                        t('alerting.migrate-to-gma.review.routing-imported', 'Imported policy ({{label}}={{value}})', {
+                        t('alerting.import-to-gma.review.routing-imported', 'Imported policy ({{label}}={{value}})', {
                           label: MERGE_MATCHERS_LABEL_NAME,
                           value: formData.policyTreeName,
                         })}
                       {formData.notificationPolicyOption === 'manual' &&
-                        t('alerting.migrate-to-gma.review.routing-manual', 'Manual label ({{label}}={{value}})', {
+                        t('alerting.import-to-gma.review.routing-manual', 'Manual label ({{label}}={{value}})', {
                           label: formData.manualLabelName,
                           value: formData.manualLabelValue,
                         })}
@@ -564,31 +564,29 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
                   </div>
                   {(formData.namespace || formData.ruleGroup) && (
                     <div className={styles.row}>
-                      <Text color="secondary">{t('alerting.migrate-to-gma.review.filter', 'Filter')}</Text>
+                      <Text color="secondary">{t('alerting.import-to-gma.review.filter', 'Filter')}</Text>
                       <Text>
                         {formData.namespace &&
                           !formData.ruleGroup &&
-                          `${t('alerting.migrate-to-gma.review.namespace', 'Namespace')}: ${formData.namespace}`}
+                          `${t('alerting.import-to-gma.review.namespace', 'Namespace')}: ${formData.namespace}`}
                         {formData.namespace && formData.ruleGroup && `${formData.namespace} / ${formData.ruleGroup}`}
                       </Text>
                     </div>
                   )}
                   {formData.targetFolder && (
                     <div className={styles.row}>
-                      <Text color="secondary">{t('alerting.migrate-to-gma.review.folder', 'Target folder')}</Text>
+                      <Text color="secondary">{t('alerting.import-to-gma.review.folder', 'Target folder')}</Text>
                       <Text>{formData.targetFolder.title}</Text>
                     </div>
                   )}
                   <div className={styles.row}>
-                    <Text color="secondary">{t('alerting.migrate-to-gma.review.pause', 'Pause rules')}</Text>
+                    <Text color="secondary">{t('alerting.import-to-gma.review.pause', 'Pause rules')}</Text>
                     <Text>{getPauseRulesLabel(formData.pauseAlertingRules, formData.pauseRecordingRules)}</Text>
                   </div>
                 </Stack>
               ) : (
                 <Text color="secondary">
-                  <Trans i18nKey="alerting.migrate-to-gma.review.rules-skipped">
-                    Alert rules will not be imported.
-                  </Trans>
+                  <Trans i18nKey="alerting.import-to-gma.review.rules-skipped">Alert rules will not be imported.</Trans>
                 </Text>
               )}
             </div>
@@ -600,10 +598,10 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Stack direction="row" gap={1}>
           <Button variant="secondary" icon="arrow-left" onClick={handleBack}>
-            {t('alerting.migrate-to-gma.review.back', 'Alert rules')}
+            {t('alerting.import-to-gma.review.back', 'Alert rules')}
           </Button>
           <Button variant="primary" icon="upload" onClick={onStartMigration} disabled={nothingToMigrate}>
-            {t('alerting.migrate-to-gma.review.start', 'Start migration')}
+            {t('alerting.import-to-gma.review.start', 'Start import')}
           </Button>
         </Stack>
         <CancelButton />
@@ -663,4 +661,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export default withPageErrorBoundary(MigrateToGMA);
+export default withPageErrorBoundary(ImportToGMA);

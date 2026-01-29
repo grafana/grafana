@@ -19,7 +19,7 @@ export const CancelButton = ({ redirectUrl = '/alerting/list' }: CancelButtonPro
       href={createRelativeUrl(redirectUrl)}
       data-testid="wizard-cancel-button"
     >
-      {t('alerting.migrate-to-gma.wizard.cancel', 'Cancel')}
+      {t('alerting.import-to-gma.wizard.cancel', 'Cancel')}
     </LinkButton>
   );
 };

@@ -1,6 +1,6 @@
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import type { DryRunValidationResult } from '../components/migrate-to-gma/DryRunValidationModal';
+import type { DryRunValidationResult } from '../components/import-to-gma/DryRunValidationModal';
 
 import { alertingApi } from './alertingApi';
 

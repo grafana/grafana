@@ -91,9 +91,9 @@ export function RuleListActions() {
           )}
           {canAccessMigrationWizardUI && (
             <Menu.Item
-              label={t('alerting.rule-list-v2.migrate-to-gma', 'Migrate to Grafana Alerting')}
+              label={t('alerting.rule-list-v2.import-to-gma', 'Import to Grafana Alerting')}
               icon="exchange-alt"
-              url="/alerting/migrate-to-gma"
+              url="/alerting/import-to-gma"
             />
           )}
         </Menu.Group>

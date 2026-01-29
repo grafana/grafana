@@ -14,11 +14,11 @@ import { stringifyErrorLike } from '../../utils/misc';
 import { createListFilterLink } from '../../utils/navigation';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
-import { MERGE_MATCHERS_LABEL_NAME, MigrationFormValues } from './MigrateToGMA';
-import { filterRulerRulesConfig, useMigrateNotifications, useMigrateRules } from './useMigration';
+import { ImportFormValues, MERGE_MATCHERS_LABEL_NAME } from './ImportToGMA';
+import { filterRulerRulesConfig, useImportNotifications, useImportRules } from './useImport';
 
-interface MigrationPreviewModalProps {
-  formData: MigrationFormValues;
+interface ImportPreviewModalProps {
+  formData: ImportFormValues;
   onDismiss: () => void;
 }
 
@@ -147,7 +147,7 @@ function countRules(rules: RulerRulesConfigDTO): {
   return { alertRules, recordingRules, namespaces, groups };
 }
 
-export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewModalProps) {
+export function ImportPreviewModal({ formData, onDismiss }: ImportPreviewModalProps) {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
   const [migrationStatus, setMigrationStatus] = useState<'preview' | 'migrating' | 'success' | 'error'>('preview');
@@ -155,8 +155,8 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
   const [showRulesDetails, setShowRulesDetails] = useState(true);
   const [showNotificationsDetails, setShowNotificationsDetails] = useState(true);
 
-  const migrateNotifications = useMigrateNotifications();
-  const migrateRules = useMigrateRules();
+  const importNotifications = useImportNotifications();
+  const importRules = useImportRules();
 
   // Determine what to migrate based on wizard steps
   const willMigrateNotifications = formData.step1Completed && !formData.step1Skipped;
@@ -250,9 +250,9 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
     try {
       const notificationsLabel = `${MERGE_MATCHERS_LABEL_NAME}=${formData.policyTreeName}`;
 
-      // Migrate notifications first (if step 1 was completed)
+      // Import notifications first (if step 1 was completed)
       if (willMigrateNotifications) {
-        await migrateNotifications({
+        await importNotifications({
           source: formData.notificationsSource,
           datasourceName: formData.notificationsDatasourceName ?? undefined,
           yamlFile: formData.notificationsYamlFile,
@@ -260,7 +260,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
         });
       }
 
-      // Then migrate rules (if step 2 was completed)
+      // Then import rules (if step 2 was completed)
       if (willMigrateRules && formData.rulesDatasourceUID) {
         // Get the filtered rules payload
         let rulesPayload: RulerRulesConfigDTO = {};
@@ -284,7 +284,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
         }
         // 'default' policy: no labels added
 
-        await migrateRules({
+        await importRules({
           dataSourceUID: formData.rulesDatasourceUID,
           targetFolderUID: formData.targetFolder?.uid,
           pauseAlertingRules: formData.pauseAlertingRules,
@@ -298,7 +298,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
       setMigrationStatus('success');
 
       // Show success notification
-      notifyApp.success(t('alerting.migrate-to-gma.success', 'Successfully migrated resources to Grafana Alerting.'));
+      notifyApp.success(t('alerting.import-to-gma.success', 'Successfully imported resources to Grafana Alerting.'));
 
       // Build redirect URL with folder filter (like ImportToGMARules)
       const targetFolder = formData.targetFolder;
@@ -322,7 +322,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
   return (
     <Modal
       isOpen={true}
-      title={t('alerting.migrate-to-gma.preview.title', 'Confirm Migration')}
+      title={t('alerting.import-to-gma.preview.title', 'Confirm Import')}
       onDismiss={onDismiss}
       className={styles.modal}
     >
@@ -330,8 +330,8 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
         {migrationStatus === 'preview' && (
           <>
             {nothingToMigrate && (
-              <Alert severity="warning" title={t('alerting.migrate-to-gma.preview.nothing', 'Nothing to migrate')}>
-                <Trans i18nKey="alerting.migrate-to-gma.preview.nothing-desc">
+              <Alert severity="warning" title={t('alerting.import-to-gma.preview.nothing', 'Nothing to import')}>
+                <Trans i18nKey="alerting.import-to-gma.preview.nothing-desc">
                   Both steps were skipped. There is nothing to migrate.
                 </Trans>
               </Alert>
@@ -340,7 +340,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
               <Stack direction="row" gap={2} alignItems="center" justifyContent="center">
                 <Spinner />
                 <Text>
-                  <Trans i18nKey="alerting.migrate-to-gma.preview.loading">Loading preview...</Trans>
+                  <Trans i18nKey="alerting.import-to-gma.preview.loading">Loading preview...</Trans>
                 </Text>
               </Stack>
             )}
@@ -354,7 +354,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                         <Stack direction="row" gap={1} alignItems="center">
                           <Icon name="bell" />
                           <Text weight="medium">
-                            {t('alerting.migrate-to-gma.preview.step1', 'Step 1: Alertmanager Resources')}
+                            {t('alerting.import-to-gma.preview.step1', 'Step 1: Alertmanager Resources')}
                           </Text>
                           <Text color="secondary">
                             {formData.notificationsSource === 'datasource'
@@ -370,7 +370,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                         {notificationsPreview ? (
                           <Stack direction="column" gap={2}>
                             <Text color="secondary">
-                              <Trans i18nKey="alerting.migrate-to-gma.preview.label-used">
+                              <Trans i18nKey="alerting.import-to-gma.preview.label-used">
                                 Policy tree:{' '}
                                 <strong>
                                   {MERGE_MATCHERS_LABEL_NAME}={formData.policyTreeName}
@@ -381,7 +381,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                             {notificationsPreview.contactPoints.length > 0 && (
                               <Box>
                                 <Text weight="medium">
-                                  {t('alerting.migrate-to-gma.preview.contact-points', 'Contact Points')} (
+                                  {t('alerting.import-to-gma.preview.contact-points', 'Contact Points')} (
                                   {notificationsPreview.contactPoints.length})
                                 </Text>
                                 <ul className={styles.list}>
@@ -394,7 +394,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
 
                             {notificationsPreview.hasPolicy && (
                               <Text>
-                                <Trans i18nKey="alerting.migrate-to-gma.preview.policy-info">
+                                <Trans i18nKey="alerting.import-to-gma.preview.policy-info">
                                   Notification policy with {notificationsPreview.policyRoutesCount} nested routes
                                 </Trans>
                               </Text>
@@ -402,14 +402,14 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
 
                             {notificationsPreview.templates.length > 0 && (
                               <Text>
-                                {t('alerting.migrate-to-gma.preview.templates-count', 'Templates')}:{' '}
+                                {t('alerting.import-to-gma.preview.templates-count', 'Templates')}:{' '}
                                 {notificationsPreview.templates.length}
                               </Text>
                             )}
 
                             {notificationsPreview.timeIntervals.length > 0 && (
                               <Text>
-                                {t('alerting.migrate-to-gma.preview.time-intervals-count', 'Time intervals')}:{' '}
+                                {t('alerting.import-to-gma.preview.time-intervals-count', 'Time intervals')}:{' '}
                                 {notificationsPreview.timeIntervals.length}
                               </Text>
                             )}
@@ -419,7 +419,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                               <Icon name="check-circle" className={styles.successIcon} />
                               <Text color="success">
                                 {t(
-                                  'alerting.migrate-to-gma.preview.no-conflicts',
+                                  'alerting.import-to-gma.preview.no-conflicts',
                                   'No conflicts found. Configuration is ready to import.'
                                 )}
                               </Text>
@@ -427,7 +427,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                           </Stack>
                         ) : (
                           <Text color="secondary">
-                            <Trans i18nKey="alerting.migrate-to-gma.preview.notifications-loading">
+                            <Trans i18nKey="alerting.import-to-gma.preview.notifications-loading">
                               Loading Alertmanager configuration...
                             </Trans>
                           </Text>
@@ -445,7 +445,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                         <Stack direction="row" gap={1} alignItems="center">
                           <Icon name="file-alt" />
                           <Text weight="medium">
-                            {t('alerting.migrate-to-gma.preview.step2', 'Step 2: Alert Rules')}
+                            {t('alerting.import-to-gma.preview.step2', 'Step 2: Alert Rules')}
                           </Text>
                           <Text color="secondary">
                             {formData.rulesSource === 'datasource'
@@ -462,12 +462,12 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                           {/* Policy option info */}
                           <Text color="secondary">
                             {formData.notificationPolicyOption === 'default' && (
-                              <Trans i18nKey="alerting.migrate-to-gma.preview.policy-default">
+                              <Trans i18nKey="alerting.import-to-gma.preview.policy-default">
                                 Routing: Using Grafana default policy (no label added)
                               </Trans>
                             )}
                             {formData.notificationPolicyOption === 'imported' && (
-                              <Trans i18nKey="alerting.migrate-to-gma.preview.policy-imported">
+                              <Trans i18nKey="alerting.import-to-gma.preview.policy-imported">
                                 Routing: Using imported policy. Label{' '}
                                 <strong>
                                   {MERGE_MATCHERS_LABEL_NAME}={formData.policyTreeName}
@@ -476,7 +476,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                               </Trans>
                             )}
                             {formData.notificationPolicyOption === 'manual' && (
-                              <Trans i18nKey="alerting.migrate-to-gma.preview.policy-manual">
+                              <Trans i18nKey="alerting.import-to-gma.preview.policy-manual">
                                 Routing: Manual label{' '}
                                 <strong>
                                   {formData.manualLabelName}={formData.manualLabelValue}
@@ -489,10 +489,10 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                           {/* Filter info */}
                           {(formData.namespace || formData.ruleGroup) && (
                             <Text color="info">
-                              🔍 {t('alerting.migrate-to-gma.preview.filter-info', 'Filtering by')}:{' '}
+                              🔍 {t('alerting.import-to-gma.preview.filter-info', 'Filtering by')}:{' '}
                               {formData.namespace && !formData.ruleGroup && (
                                 <strong>
-                                  {t('alerting.migrate-to-gma.preview.namespace-filter', 'Namespace')}:{' '}
+                                  {t('alerting.import-to-gma.preview.namespace-filter', 'Namespace')}:{' '}
                                   {formData.namespace}
                                 </strong>
                               )}
@@ -508,25 +508,25 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                             <>
                               {'fileName' in rulesPreview ? (
                                 <Text>
-                                  <Trans i18nKey="alerting.migrate-to-gma.preview.rules-yaml-info">
+                                  <Trans i18nKey="alerting.import-to-gma.preview.rules-yaml-info">
                                     Rules from file: {rulesPreview.fileName}
                                   </Trans>
                                 </Text>
                               ) : (
                                 <>
                                   <Text>
-                                    {t('alerting.migrate-to-gma.preview.namespaces', 'Namespaces')}:{' '}
+                                    {t('alerting.import-to-gma.preview.namespaces', 'Namespaces')}:{' '}
                                     {rulesPreview.namespaces}
                                   </Text>
                                   <Text>
-                                    {t('alerting.migrate-to-gma.preview.groups', 'Groups')}: {rulesPreview.groups}
+                                    {t('alerting.import-to-gma.preview.groups', 'Groups')}: {rulesPreview.groups}
                                   </Text>
                                   <Text>
-                                    {t('alerting.migrate-to-gma.preview.alert-rules', 'Alert rules')}:{' '}
+                                    {t('alerting.import-to-gma.preview.alert-rules', 'Alert rules')}:{' '}
                                     {rulesPreview.alertRules}
                                   </Text>
                                   <Text>
-                                    {t('alerting.migrate-to-gma.preview.recording-rules', 'Recording rules')}:{' '}
+                                    {t('alerting.import-to-gma.preview.recording-rules', 'Recording rules')}:{' '}
                                     {rulesPreview.recordingRules}
                                   </Text>
                                 </>
@@ -534,14 +534,14 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
 
                               {formData.targetFolder && (
                                 <Text>
-                                  {t('alerting.migrate-to-gma.preview.target-folder', 'Target folder')}:{' '}
+                                  {t('alerting.import-to-gma.preview.target-folder', 'Target folder')}:{' '}
                                   {formData.targetFolder.title}
                                 </Text>
                               )}
 
                               {formData.pauseAlertingRules && (
                                 <Text color="secondary">
-                                  ⏸️ {t('alerting.migrate-to-gma.preview.pause-alerting', 'Alert rules will be paused')}
+                                  ⏸️ {t('alerting.import-to-gma.preview.pause-alerting', 'Alert rules will be paused')}
                                 </Text>
                               )}
 
@@ -549,7 +549,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                                 <Text color="secondary">
                                   ⏸️{' '}
                                   {t(
-                                    'alerting.migrate-to-gma.preview.pause-recording',
+                                    'alerting.import-to-gma.preview.pause-recording',
                                     'Recording rules will be paused'
                                   )}
                                 </Text>
@@ -566,12 +566,12 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                 {formData.step1Skipped && (
                   <Text color="secondary">
                     ℹ️{' '}
-                    {t('alerting.migrate-to-gma.preview.step1-skipped', 'Step 1 (Alertmanager resources) was skipped')}
+                    {t('alerting.import-to-gma.preview.step1-skipped', 'Step 1 (Alertmanager resources) was skipped')}
                   </Text>
                 )}
                 {formData.step2Skipped && (
                   <Text color="secondary">
-                    ℹ️ {t('alerting.migrate-to-gma.preview.step2-skipped', 'Step 2 (Alert rules) was skipped')}
+                    ℹ️ {t('alerting.import-to-gma.preview.step2-skipped', 'Step 2 (Alert rules) was skipped')}
                   </Text>
                 )}
               </>
@@ -583,21 +583,21 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
           <Stack direction="row" gap={2} alignItems="center" justifyContent="center">
             <Spinner />
             <Text>
-              <Trans i18nKey="alerting.migrate-to-gma.confirm.migrating">Migration in progress...</Trans>
+              <Trans i18nKey="alerting.import-to-gma.confirm.importing">Import in progress...</Trans>
             </Text>
           </Stack>
         )}
 
         {migrationStatus === 'success' && (
-          <Alert severity="success" title={t('alerting.migrate-to-gma.confirm.success-title', 'Migration completed')}>
-            <Trans i18nKey="alerting.migrate-to-gma.confirm.success">
-              Your resources have been successfully migrated to Grafana Alerting. Redirecting to alert rules...
+          <Alert severity="success" title={t('alerting.import-to-gma.confirm.success-title', 'Import completed')}>
+            <Trans i18nKey="alerting.import-to-gma.confirm.success">
+              Your resources have been successfully imported to Grafana Alerting. Redirecting to alert rules...
             </Trans>
           </Alert>
         )}
 
         {migrationStatus === 'error' && error && (
-          <Alert severity="error" title={t('alerting.migrate-to-gma.confirm.error-title', 'Migration failed')}>
+          <Alert severity="error" title={t('alerting.import-to-gma.confirm.error-title', 'Import failed')}>
             {error}
           </Alert>
         )}
@@ -605,11 +605,11 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
         {/* Action Buttons */}
         <Modal.ButtonRow>
           <Button variant="secondary" onClick={onDismiss} disabled={migrationStatus === 'migrating'}>
-            {t('alerting.migrate-to-gma.preview.cancel', 'Cancel')}
+            {t('alerting.import-to-gma.preview.cancel', 'Cancel')}
           </Button>
           {migrationStatus === 'preview' && !nothingToMigrate && (
             <Button variant="primary" onClick={handleConfirm} disabled={isLoading}>
-              {t('alerting.migrate-to-gma.preview.start', 'Start Migration')}
+              {t('alerting.import-to-gma.preview.start', 'Start Import')}
             </Button>
           )}
           {migrationStatus === 'success' && (
@@ -625,7 +625,7 @@ export function MigrationPreviewModal({ formData, onDismiss }: MigrationPreviewM
                 locationService.push(ruleListUrl);
               }}
             >
-              {t('alerting.migrate-to-gma.preview.done', 'Go to Alert Rules')}
+              {t('alerting.import-to-gma.preview.done', 'Go to Alert Rules')}
             </Button>
           )}
         </Modal.ButtonRow>

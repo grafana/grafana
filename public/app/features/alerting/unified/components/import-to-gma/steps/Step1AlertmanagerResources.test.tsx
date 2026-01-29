@@ -9,7 +9,7 @@ import { SupportedRulesSourceType } from 'app/features/alerting/unified/utils/da
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { MigrationFormValues } from '../MigrateToGMA';
+import { ImportFormValues } from '../ImportToGMA';
 
 import { Step1Content, useStep1Validation } from './Step1AlertmanagerResources';
 
@@ -21,9 +21,9 @@ function TestWrapper({
   defaultValues,
 }: {
   children: React.ReactNode;
-  defaultValues?: Partial<MigrationFormValues>;
+  defaultValues?: Partial<ImportFormValues>;
 }) {
-  const formAPI = useForm<MigrationFormValues>({
+  const formAPI = useForm<ImportFormValues>({
     defaultValues: {
       step1Completed: false,
       step1Skipped: false,

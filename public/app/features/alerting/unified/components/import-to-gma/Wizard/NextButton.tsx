@@ -51,7 +51,7 @@ export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled }: Nex
     <Stack direction="row" gap={1}>
       {canSkip && (
         <Button variant="secondary" onClick={handleSkip} data-testid="wizard-skip-button">
-          {skipLabel || t('alerting.migrate-to-gma.wizard.skip', 'Skip')}
+          {skipLabel || t('alerting.import-to-gma.wizard.skip', 'Skip')}
         </Button>
       )}
       <Button

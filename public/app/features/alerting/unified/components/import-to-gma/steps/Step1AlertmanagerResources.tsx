@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Field, FileUpload, Input, RadioButtonList, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { getAlertManagerDataSources } from '../../../utils/datasource';
-import { MigrationFormValues } from '../MigrateToGMA';
+import { ImportFormValues } from '../ImportToGMA';
 
 interface Step1ContentProps {
   /** Whether the user has permission to import notifications */
@@ -29,7 +29,7 @@ export function Step1Content({ canImport, onValidationChange }: Step1ContentProp
     watch,
     setValue,
     formState: { errors },
-  } = useFormContext<MigrationFormValues>();
+  } = useFormContext<ImportFormValues>();
 
   const [notificationsSource, policyTreeName, notificationsDatasourceUID, notificationsYamlFile] = watch([
     'notificationsSource',
@@ -40,16 +40,16 @@ export function Step1Content({ canImport, onValidationChange }: Step1ContentProp
 
   const sourceOptions = [
     {
-      label: t('alerting.migrate-to-gma.step1.source.yaml', 'YAML file'),
+      label: t('alerting.import-to-gma.step1.source.yaml', 'YAML file'),
       description: t(
-        'alerting.migrate-to-gma.step1.source.yaml-desc',
+        'alerting.import-to-gma.step1.source.yaml-desc',
         'Import from an Alertmanager configuration YAML file'
       ),
       value: 'yaml' as const,
     },
     {
-      label: t('alerting.migrate-to-gma.step1.source.datasource', 'Data source'),
-      description: t('alerting.migrate-to-gma.step1.source.datasource-desc', 'Import from an Alertmanager data source'),
+      label: t('alerting.import-to-gma.step1.source.datasource', 'Data source'),
+      description: t('alerting.import-to-gma.step1.source.datasource-desc', 'Import from an Alertmanager data source'),
       value: 'datasource' as const,
     },
   ];
@@ -83,9 +83,9 @@ export function Step1Content({ canImport, onValidationChange }: Step1ContentProp
       {!canImport && (
         <Alert
           severity="warning"
-          title={t('alerting.migrate-to-gma.step1.no-permission-title', 'Insufficient permissions')}
+          title={t('alerting.import-to-gma.step1.no-permission-title', 'Insufficient permissions')}
         >
-          <Trans i18nKey="alerting.migrate-to-gma.step1.no-permission-desc">
+          <Trans i18nKey="alerting.import-to-gma.step1.no-permission-desc">
             You do not have permission to import notification resources. You need the{' '}
             <strong>alerting.notifications:write</strong> permission. You can skip this step.
           </Trans>
@@ -96,26 +96,26 @@ export function Step1Content({ canImport, onValidationChange }: Step1ContentProp
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <Text variant="h5" element="h3">
-            {t('alerting.migrate-to-gma.step1.policy-tree-title', 'Policy Tree Name')}
+            {t('alerting.import-to-gma.step1.policy-tree-title', 'Policy Tree Name')}
           </Text>
         </div>
         <div className={styles.cardContent}>
           <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="alerting.migrate-to-gma.step1.policy-tree-desc">
+            <Trans i18nKey="alerting.import-to-gma.step1.policy-tree-desc">
               Name for the imported notification policy tree. Alerts with the label{' '}
               <code>__grafana_managed_route__</code> matching this name will be routed through this policy tree.
             </Trans>
           </Text>
           <Box marginTop={2}>
             <Field
-              label={t('alerting.migrate-to-gma.step1.policy-tree-name', 'Policy tree name')}
+              label={t('alerting.import-to-gma.step1.policy-tree-name', 'Policy tree name')}
               invalid={!!errors.policyTreeName}
               error={errors.policyTreeName?.message}
               noMargin
             >
               <Input
                 {...register('policyTreeName', { required: 'Policy tree name is required' })}
-                placeholder={t('alerting.migrate-to-gma.step1.policy-tree-placeholder', 'prometheus-prod')}
+                placeholder={t('alerting.import-to-gma.step1.policy-tree-placeholder', 'prometheus-prod')}
                 width={40}
               />
             </Field>
@@ -127,7 +127,7 @@ export function Step1Content({ canImport, onValidationChange }: Step1ContentProp
       <div className={styles.card}>
         <div className={styles.cardHeader}>
           <Text variant="h5" element="h3">
-            {t('alerting.migrate-to-gma.step1.source-title', 'Import Source')}
+            {t('alerting.import-to-gma.step1.source-title', 'Import Source')}
           </Text>
         </div>
         <div className={styles.cardContent}>
@@ -148,7 +148,7 @@ export function Step1Content({ canImport, onValidationChange }: Step1ContentProp
           <Box marginTop={2}>
             {notificationsSource === 'yaml' && (
               <Field
-                label={t('alerting.migrate-to-gma.step1.yaml-file', 'Alertmanager config YAML')}
+                label={t('alerting.import-to-gma.step1.yaml-file', 'Alertmanager config YAML')}
                 invalid={!!errors.notificationsYamlFile}
                 error={errors.notificationsYamlFile?.message}
                 noMargin
@@ -167,7 +167,7 @@ export function Step1Content({ canImport, onValidationChange }: Step1ContentProp
                     >
                       {notificationsYamlFile
                         ? notificationsYamlFile.name
-                        : t('alerting.migrate-to-gma.step1.upload', 'Upload YAML file')}
+                        : t('alerting.import-to-gma.step1.upload', 'Upload YAML file')}
                     </FileUpload>
                   )}
                   control={control}
@@ -188,7 +188,7 @@ export function Step1Content({ canImport, onValidationChange }: Step1ContentProp
  * Hook to check if Step 1 form is valid
  */
 export function useStep1Validation(canImport: boolean): boolean {
-  const { watch } = useFormContext<MigrationFormValues>();
+  const { watch } = useFormContext<ImportFormValues>();
   const [notificationsSource, policyTreeName, notificationsDatasourceUID, notificationsYamlFile] = watch([
     'notificationsSource',
     'policyTreeName',
@@ -221,7 +221,7 @@ function AlertmanagerDataSourceSelect() {
     control,
     setValue,
     formState: { errors },
-  } = useFormContext<MigrationFormValues>();
+  } = useFormContext<ImportFormValues>();
 
   // Get external Alertmanager data sources (same function used by AlertManagerPicker)
   const alertmanagerOptions: Array<SelectableValue<string>> = useMemo(() => {
@@ -236,7 +236,7 @@ function AlertmanagerDataSourceSelect() {
 
   return (
     <Field
-      label={t('alerting.migrate-to-gma.step1.datasource', 'Alertmanager data source')}
+      label={t('alerting.import-to-gma.step1.datasource', 'Alertmanager data source')}
       invalid={!!errors.notificationsDatasourceUID}
       error={errors.notificationsDatasourceUID?.message}
       noMargin
@@ -254,9 +254,9 @@ function AlertmanagerDataSourceSelect() {
                 setValue('notificationsDatasourceName', ds?.name ?? null);
               }
             }}
-            placeholder={t('alerting.migrate-to-gma.step1.select-datasource', 'Select data source')}
+            placeholder={t('alerting.import-to-gma.step1.select-datasource', 'Select data source')}
             width={40}
-            noOptionsMessage={t('alerting.migrate-to-gma.step1.no-datasources', 'No Alertmanager data sources found')}
+            noOptionsMessage={t('alerting.import-to-gma.step1.no-datasources', 'No Alertmanager data sources found')}
           />
         )}
         control={control}

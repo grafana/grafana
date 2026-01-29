@@ -48,13 +48,13 @@ export function DryRunValidationModal({ isOpen, onDismiss, onConfirm, state, res
   const getTitle = () => {
     switch (state) {
       case 'loading':
-        return t('alerting.migrate-to-gma.dry-run.title-loading', 'Validating configuration...');
+        return t('alerting.import-to-gma.dry-run.title-loading', 'Validating configuration...');
       case 'success':
-        return t('alerting.migrate-to-gma.dry-run.title-success', 'Validation successful');
+        return t('alerting.import-to-gma.dry-run.title-success', 'Validation successful');
       case 'warning':
-        return t('alerting.migrate-to-gma.dry-run.title-warning', 'Validation passed with warnings');
+        return t('alerting.import-to-gma.dry-run.title-warning', 'Validation passed with warnings');
       case 'error':
-        return t('alerting.migrate-to-gma.dry-run.title-error', 'Validation failed');
+        return t('alerting.import-to-gma.dry-run.title-error', 'Validation failed');
     }
   };
 
@@ -64,7 +64,7 @@ export function DryRunValidationModal({ isOpen, onDismiss, onConfirm, state, res
         <Stack direction="column" alignItems="center" gap={2}>
           <Spinner size="xl" />
           <Text color="secondary">
-            <Trans i18nKey="alerting.migrate-to-gma.dry-run.loading-text">
+            <Trans i18nKey="alerting.import-to-gma.dry-run.loading-text">
               Checking your Alertmanager configuration for conflicts...
             </Trans>
           </Text>
@@ -73,11 +73,11 @@ export function DryRunValidationModal({ isOpen, onDismiss, onConfirm, state, res
 
       {state === 'error' && result && (
         <Stack direction="column" gap={2}>
-          <Alert severity="error" title={t('alerting.migrate-to-gma.dry-run.error-title', 'Configuration error')}>
-            {result.error || t('alerting.migrate-to-gma.dry-run.error-unknown', 'An unknown error occurred')}
+          <Alert severity="error" title={t('alerting.import-to-gma.dry-run.error-title', 'Configuration error')}>
+            {result.error || t('alerting.import-to-gma.dry-run.error-unknown', 'An unknown error occurred')}
           </Alert>
           <Text color="secondary">
-            <Trans i18nKey="alerting.migrate-to-gma.dry-run.error-help">
+            <Trans i18nKey="alerting.import-to-gma.dry-run.error-help">
               Please fix the configuration errors and try again.
             </Trans>
           </Text>
@@ -90,7 +90,7 @@ export function DryRunValidationModal({ isOpen, onDismiss, onConfirm, state, res
             <Icon name="check-circle" size="xxl" />
           </div>
           <Text color="secondary" textAlignment="center">
-            <Trans i18nKey="alerting.migrate-to-gma.dry-run.success-text">
+            <Trans i18nKey="alerting.import-to-gma.dry-run.success-text">
               Your Alertmanager configuration is valid and ready to be imported. No conflicts were detected.
             </Trans>
           </Text>
@@ -101,9 +101,9 @@ export function DryRunValidationModal({ isOpen, onDismiss, onConfirm, state, res
         <Stack direction="column" gap={2}>
           <Alert
             severity="warning"
-            title={t('alerting.migrate-to-gma.dry-run.warning-title', 'Some resources will be renamed')}
+            title={t('alerting.import-to-gma.dry-run.warning-title', 'Some resources will be renamed')}
           >
-            <Trans i18nKey="alerting.migrate-to-gma.dry-run.warning-text">
+            <Trans i18nKey="alerting.import-to-gma.dry-run.warning-text">
               The following resources have names that conflict with existing resources in Grafana. They will be renamed
               automatically during import.
             </Trans>
@@ -111,13 +111,13 @@ export function DryRunValidationModal({ isOpen, onDismiss, onConfirm, state, res
 
           {result.renamedReceivers.length > 0 && (
             <div className={styles.renameSection}>
-              <Text variant="h6">{t('alerting.migrate-to-gma.dry-run.renamed-receivers', 'Renamed receivers')}</Text>
+              <Text variant="h6">{t('alerting.import-to-gma.dry-run.renamed-receivers', 'Renamed receivers')}</Text>
               <table className={styles.renameTable}>
                 <thead>
                   <tr>
-                    <th>{t('alerting.migrate-to-gma.dry-run.original-name', 'Original name')}</th>
+                    <th>{t('alerting.import-to-gma.dry-run.original-name', 'Original name')}</th>
                     <th aria-hidden="true" />
-                    <th>{t('alerting.migrate-to-gma.dry-run.new-name', 'New name')}</th>
+                    <th>{t('alerting.import-to-gma.dry-run.new-name', 'New name')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -142,14 +142,14 @@ export function DryRunValidationModal({ isOpen, onDismiss, onConfirm, state, res
           {result.renamedTimeIntervals.length > 0 && (
             <div className={styles.renameSection}>
               <Text variant="h6">
-                {t('alerting.migrate-to-gma.dry-run.renamed-time-intervals', 'Renamed time intervals')}
+                {t('alerting.import-to-gma.dry-run.renamed-time-intervals', 'Renamed time intervals')}
               </Text>
               <table className={styles.renameTable}>
                 <thead>
                   <tr>
-                    <th>{t('alerting.migrate-to-gma.dry-run.original-name', 'Original name')}</th>
+                    <th>{t('alerting.import-to-gma.dry-run.original-name', 'Original name')}</th>
                     <th aria-hidden="true" />
-                    <th>{t('alerting.migrate-to-gma.dry-run.new-name', 'New name')}</th>
+                    <th>{t('alerting.import-to-gma.dry-run.new-name', 'New name')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -176,14 +176,14 @@ export function DryRunValidationModal({ isOpen, onDismiss, onConfirm, state, res
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onDismiss}>
           {state === 'error'
-            ? t('alerting.migrate-to-gma.dry-run.btn-close', 'Close')
-            : t('alerting.migrate-to-gma.dry-run.btn-cancel', 'Cancel')}
+            ? t('alerting.import-to-gma.dry-run.btn-close', 'Close')
+            : t('alerting.import-to-gma.dry-run.btn-cancel', 'Cancel')}
         </Button>
         {state !== 'loading' && state !== 'error' && (
           <Button variant="primary" onClick={onConfirm}>
             {state === 'warning'
-              ? t('alerting.migrate-to-gma.dry-run.btn-continue-anyway', 'Continue anyway')
-              : t('alerting.migrate-to-gma.dry-run.btn-continue', 'Continue')}
+              ? t('alerting.import-to-gma.dry-run.btn-continue-anyway', 'Continue anyway')
+              : t('alerting.import-to-gma.dry-run.btn-continue', 'Continue')}
           </Button>
         )}
       </Modal.ButtonRow>
