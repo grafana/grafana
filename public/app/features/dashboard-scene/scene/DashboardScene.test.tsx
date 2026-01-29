@@ -83,11 +83,6 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
   },
 }));
 
-jest.mock('app/features/manage-dashboards/state/actions', () => ({
-  ...jest.requireActual('app/features/manage-dashboards/state/actions'),
-  deleteDashboard: jest.fn().mockResolvedValue({}),
-}));
-
 locationUtil.initialize({
   config: { appSubUrl: '/subUrl' } as GrafanaConfig,
   getVariablesUrlParams: jest.fn(),

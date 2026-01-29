@@ -19,6 +19,7 @@ import { reportInteraction, config } from '@grafana/runtime';
 import { getAppPluginMetas } from '@grafana/runtime/internal';
 import { Modal } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { isRecord } from 'app/core/utils/isRecord';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import {
   CloseExtensionSidebarEvent,
@@ -380,10 +381,6 @@ export function writableProxy<T>(value: T, options?: ProxyOptions): T {
 
   // Default: we return a proxy of a deep-cloned version of the original object, which logs warnings when mutation is attempted
   return getMutationObserverProxy(cloneDeep(value), { log, pluginId, pluginVersion, source });
-}
-
-function isRecord(value: unknown): value is Record<string | number | symbol, unknown> {
-  return typeof value === 'object' && value !== null;
 }
 
 export function isReadOnlyProxy(value: unknown): boolean {

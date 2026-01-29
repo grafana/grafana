@@ -1,6 +1,6 @@
 {
   "apiVersion": "dashboard.grafana.app/v2beta1",
-  "kind": "Dashboard",
+  "kind": "DashboardWithAccessInfo",
   "metadata": {
     "name": "addwm76",
     "namespace": "default",
