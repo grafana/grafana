@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/provisioning/components/defaults';
+import { getCanPushToConfiguredBranch, getDefaultWorkflow } from 'app/features/provisioning/components/defaults';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { generateTimestamp } from '../components/utils/timestamp';
@@ -17,7 +17,7 @@ interface UseProvisionedFolderFormDataProps {
 export interface ProvisionedFolderFormDataResult {
   repository?: RepositoryView;
   folder?: Folder;
-  workflowOptions: Array<{ label: string; value: string }>;
+  canPushToConfiguredBranch: boolean;
   initialValues?: BaseProvisionedFormData;
   isReadOnlyRepo: boolean;
 }
@@ -32,7 +32,7 @@ export function useProvisionedFolderFormData({
   const { repository, folder, isLoading, isReadOnlyRepo } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const timestamp = generateTimestamp();
-  const workflowOptions = getWorkflowOptions(repository);
+  const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
 
   const initialValues = useMemo(() => {
     // Only create initial values when we have the data
@@ -54,7 +54,7 @@ export function useProvisionedFolderFormData({
   return {
     repository,
     folder,
-    workflowOptions,
+    canPushToConfiguredBranch,
     initialValues,
     isReadOnlyRepo,
   };
