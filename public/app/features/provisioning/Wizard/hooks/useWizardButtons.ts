@@ -90,7 +90,7 @@ export function useWizardButtons({
     // Finish step should not be blocked by isCreatingSkipJob since we only
     // reach finish after the skip job was successfully created
     if (activeStep === 'finish') {
-      return isSubmitting || isCancelling || isStepRunning;
+      return isSubmitting || isCancelling;
     }
     return isSubmitting || isCancelling || isStepRunning || isCreatingSkipJob;
   }, [
