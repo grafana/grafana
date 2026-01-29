@@ -93,7 +93,6 @@ Use this data source to create dashboards, explore SQL data, and monitor MySQL-b
 This data source supports the following MySQL-compatible databases:
 
 - MySQL 5.7 and newer
-- MySQL 8.0 and newer
 - MariaDB 10.2 and newer
 - Percona Server 5.7 and newer
 - Amazon Aurora MySQL
