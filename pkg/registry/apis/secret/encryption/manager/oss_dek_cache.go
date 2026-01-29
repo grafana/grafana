@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -20,6 +21,8 @@ type ossDataKeyCache struct {
 	byId     map[namespacedKey]encryption.DataKeyCacheEntry
 	byLabel  map[namespacedKey]encryption.DataKeyCacheEntry
 	cacheTTL time.Duration
+
+	log log.Logger
 }
 
 func ProvideOSSDataKeyCache(cfg *setting.Cfg) encryption.DataKeyCache {
@@ -27,6 +30,7 @@ func ProvideOSSDataKeyCache(cfg *setting.Cfg) encryption.DataKeyCache {
 		byId:     make(map[namespacedKey]encryption.DataKeyCacheEntry),
 		byLabel:  make(map[namespacedKey]encryption.DataKeyCacheEntry),
 		cacheTTL: cfg.SecretsManagement.DataKeysCacheTTL,
+		log:      log.New("oss_dek_cache"),
 	}
 }
 
@@ -47,7 +51,11 @@ func (c *ossDataKeyCache) GetById(namespace, id string) (_ encryption.DataKeyCac
 	if !exists {
 		return entry, false
 	}
-	if entry.IsExpired() || entry.Namespace != namespace {
+	if entry.Namespace != namespace {
+		c.log.Error("Broken invariant!!! Expected %s but got %s. ID: %s", namespace, entry.Namespace, id)
+		return encryption.DataKeyCacheEntry{}, false
+	}
+	if entry.IsExpired() {
 		return entry, false
 	}
 
@@ -71,7 +79,11 @@ func (c *ossDataKeyCache) GetByLabel(namespace, label string) (_ encryption.Data
 	if !exists {
 		return entry, false
 	}
-	if entry.IsExpired() || entry.Namespace != namespace {
+	if entry.Namespace != namespace {
+		c.log.Error("Broken invariant!!! Expected %s but got %s. Label: %s", namespace, entry.Namespace, label)
+		return encryption.DataKeyCacheEntry{}, false
+	}
+	if entry.IsExpired() {
 		return entry, false
 	}
 	return entry, true

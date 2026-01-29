@@ -197,7 +197,7 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 	// 0. Get data key from in-memory cache (stored encrypted).
 	if entry, exists := s.dataKeyCache.GetByLabel(namespace, label); exists && entry.Active {
 		// Decrypt the cached data key before returning.
-		decrypted, err := s.decryptCachedDataKey(entry.EncryptedDataKey)
+		decrypted, err := s.decryptCachedDataKey(ctx, entry.EncryptedDataKey)
 		if err != nil {
 			s.log.Error("Failed to decrypt cached data key, fetching from database", "error", err)
 			// Fall through to fetch from database
@@ -228,7 +228,7 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 	}
 
 	// 3. Store the data key into the in-memory cache.
-	s.cacheDataKey(namespace, dataKey, decrypted)
+	s.cacheDataKey(ctx, namespace, dataKey, decrypted)
 
 	return dataKey.UID, decrypted, nil
 }
@@ -277,7 +277,7 @@ func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, la
 	}
 
 	// 4. Store the decrypted data key into the in-memory cache.
-	s.cacheDataKey(namespace, &dbDataKey, dataKey)
+	s.cacheDataKey(ctx, namespace, &dbDataKey, dataKey)
 
 	return id, dataKey, nil
 }
@@ -345,7 +345,7 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 	// 0. Get data key from in-memory cache (stored encrypted).
 	if entry, exists := s.dataKeyCache.GetById(namespace, id); exists && entry.Active {
 		// Decrypt the cached data key before returning.
-		decrypted, err := s.decryptCachedDataKey(entry.EncryptedDataKey)
+		decrypted, err := s.decryptCachedDataKey(ctx, entry.EncryptedDataKey)
 		if err != nil {
 			s.log.Error("Failed to decrypt cached data key, fetching from database", "error", err)
 			// Fall through to fetch from database
@@ -373,7 +373,7 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 	}
 
 	// 3. Store the data key into the in-memory cache.
-	s.cacheDataKey(namespace, dataKey, decrypted)
+	s.cacheDataKey(ctx, namespace, dataKey, decrypted)
 
 	return decrypted, nil
 }
@@ -406,28 +406,11 @@ func (s *EncryptionManager) Run(ctx context.Context) error {
 	}
 }
 
-// NB: Much of this was copied or derived from the original implementation in the legacy SecretsService.
-//
-// Caching a data key is tricky, because at SecretsService level we cannot guarantee
-// that a newly created data key has actually been persisted, depending on the different
-// use cases that rely on SecretsService encryption and different database engines that
-// we have support for, because the data key creation may have happened within a DB TX,
-// that may fail afterwards.
-//
-// Therefore, if we cache a data key that hasn't been persisted with success (and won't),
-// and later that one is used for a encryption operation (aside from the DB TX that created
-// it), we may end up with data encrypted by a non-persisted data key, which could end up
-// in (unrecoverable) data corruption.
-//
-// So, we cache the data key by id and/or by label, depending on the data key's lifetime,
-// assuming that a data key older than a "caution period" should have been persisted.
-//
-// Look at the comments inline for further details.
-// You can also take a look at the issue below for more context:
-// https://github.com/grafana/grafana-enterprise/issues/4252
-func (s *EncryptionManager) cacheDataKey(namespace string, dataKey *contracts.SecretDataKey, decrypted []byte) {
+// cacheDataKey caches stores an encrypted data key in the cache.
+// Warning: It should not be called from within a transaction, as we cannot guarantee that a newly created data key has actually been persisted when the key is retrieved.
+func (s *EncryptionManager) cacheDataKey(ctx context.Context, namespace string, dataKey *contracts.SecretDataKey, decrypted []byte) {
 	// Encrypt the decrypted data key with configured secret before storing in cache.
-	encryptedForCache, err := s.cipher.Encrypt(context.Background(), decrypted, s.cacheEncryptionKey)
+	encryptedForCache, err := s.cipher.Encrypt(ctx, decrypted, s.cacheEncryptionKey)
 	if err != nil {
 		s.log.Error("Failed to encrypt data key for cache, skipping cache", "error", err)
 		return
@@ -446,6 +429,6 @@ func (s *EncryptionManager) cacheDataKey(namespace string, dataKey *contracts.Se
 }
 
 // decryptCachedDataKey decrypts a data key retrieved from the cache.
-func (s *EncryptionManager) decryptCachedDataKey(encryptedDataKey []byte) ([]byte, error) {
-	return s.cipher.Decrypt(context.Background(), encryptedDataKey, s.cacheEncryptionKey)
+func (s *EncryptionManager) decryptCachedDataKey(ctx context.Context, encryptedDataKey []byte) ([]byte, error) {
+	return s.cipher.Decrypt(ctx, encryptedDataKey, s.cacheEncryptionKey)
 }
