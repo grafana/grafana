@@ -50,9 +50,9 @@ func New(cfg app.Config) (app.App, error) {
 			"v0alpha1": {
 				{
 					Namespaced: true,
-					Path:       "/receivers/schema",
+					Path:       "/integrationtypeschemas",
 					Method:     "GET",
-				}: customCfg.ReceiverSchemasHandler.HandleGetSchemas,
+				}: customCfg.IntegrationTypeSchemaHandler.HandleGetSchemas,
 			},
 		},
 	}

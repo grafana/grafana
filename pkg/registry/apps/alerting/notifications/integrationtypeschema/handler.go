@@ -1,4 +1,4 @@
-package receiverschema
+package integrationtypeschema
 
 import (
 	"context"
@@ -45,9 +45,9 @@ func (h *Handler) HandleGetSchemas(ctx context.Context, writer app.CustomRouteRe
 		return strings.Compare(string(a.Type), string(b.Type))
 	})
 
-	// Wrap in response object for consistency with other app platform APIs
+	// Return as items array for compatibility with K8s list format
 	response := map[string]interface{}{
-		"schemas": schemas,
+		"items": schemas,
 	}
 
 	writer.Header().Set("Content-Type", "application/json")

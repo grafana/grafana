@@ -16,7 +16,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver"
-	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiverschema"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/integrationtypeschema"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/templategroup"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
@@ -56,8 +56,8 @@ func RegisterAppInstaller(
 	}
 
 	customCfg := notificationsApp.Config{
-		ReceiverTestingHandler: receiver.New(ng.Api.ReceiverTestService),
-		ReceiverSchemasHandler: receiverschema.New(),
+		ReceiverTestingHandler:        receiver.New(ng.Api.ReceiverTestService),
+		IntegrationTypeSchemaHandler: integrationtypeschema.New(),
 	}
 
 	localManifest := apis.LocalManifest()

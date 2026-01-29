@@ -17,10 +17,10 @@ manifest: {
 			]
 			routes: {
 				namespaced: {
-					"/receivers/schema": {
+					"/integrationtypeschemas": {
 						"GET": {
 							response: {
-								schemas: [...#IntegrationTypeSchema]
+								items: [...#IntegrationTypeSchema]
 							}
 							responseMetadata: typeMeta: false
 						}
@@ -31,15 +31,15 @@ manifest: {
 	}
 }
 
-// Schema definitions for receiver schema endpoint response
+// Schema definitions for integration type schema endpoint response
 
 #Field: {
-	element:        string
-	inputType:      string
-	label:          string
-	description:    string
-	placeholder:    string
-	propertyName:   string
+	element:      string
+	inputType:    string
+	label:        string
+	description:  string
+	placeholder:  string
+	propertyName: string
 	selectOptions?: [...#SelectOption] | null
 	showWhen:       #ShowWhen
 	required:       bool
@@ -69,11 +69,11 @@ manifest: {
 	heading?:       string
 	description?:   string
 	info?:          string
-	versions: [...#IntegrationSchemaVersion]
+	versions: [...#IntegrationTypeSchemaVersion]
 	deprecated?: bool
 }
 
-#IntegrationSchemaVersion: {
+#IntegrationTypeSchemaVersion: {
 	typeAlias?: string
 	version:    string
 	canCreate:  bool

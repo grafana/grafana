@@ -30,6 +30,45 @@
         }
       }
     },
+    "/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/integrationtypeschemas": {
+      "get": {
+        "operationId": "getIntegrationtypeschemas",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemas"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemas"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemas"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/receivers": {
       "get": {
         "tags": [
@@ -426,45 +465,6 @@
           "name": "pretty",
           "in": "query",
           "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/receivers/schema": {
-      "get": {
-        "operationId": "getReceiversschema",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetReceiversschema"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetReceiversschema"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetReceiversschema"
-                }
-              }
-            }
-          }
-        }
-      },
-      "parameters": [
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
           "schema": {
             "type": "string",
             "uniqueItems": true
@@ -3173,16 +3173,16 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetReceiversschema": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemas": {
         "type": "object",
         "required": [
-          "schemas"
+          "items"
         ],
         "properties": {
-          "schemas": {
+          "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/getReceiversschemaIntegrationTypeSchema"
+              "$ref": "#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchema"
             }
           }
         }

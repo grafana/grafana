@@ -51,7 +51,7 @@ func TestIntegrationReceiverSchemas(t *testing.T) {
 		require.Equal(t, 200, oldResp.StatusCode)
 
 		// Test new K8s API endpoint
-		newReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr), nil)
+		newReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receiverschema", grafanaListedAddr), nil)
 		require.NoError(t, err)
 
 		newResp, err := http.DefaultClient.Do(newReq)
@@ -85,7 +85,7 @@ func TestIntegrationReceiverSchemas(t *testing.T) {
 
 	t.Run("app platform api endpoint requires authentication", func(t *testing.T) {
 		// Test without authentication
-		newReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr), nil)
+		newReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receiverschema", grafanaListedAddr), nil)
 		require.NoError(t, err)
 
 		resp, err := http.DefaultClient.Do(newReq)
@@ -103,7 +103,7 @@ func TestIntegrationReceiverSchemas(t *testing.T) {
 		// return identical schema data.
 
 		// Test with "default" namespace
-		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr), nil)
+		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receiverschema", grafanaListedAddr), nil)
 		require.NoError(t, err)
 
 		resp, err := http.DefaultClient.Do(req)
@@ -124,7 +124,7 @@ func TestIntegrationReceiverSchemas(t *testing.T) {
 	})
 
 	t.Run("app platform api returns well-known integration types", func(t *testing.T) {
-		newReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers/schema", grafanaListedAddr), nil)
+		newReq, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://grafana:password@%s/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receiverschema", grafanaListedAddr), nil)
 		require.NoError(t, err)
 
 		resp, err := http.DefaultClient.Do(newReq)

@@ -10,25 +10,25 @@ import (
 // IntegrationTypeSchema - receiver integration schema format
 // +k8s:openapi-gen=true
 type IntegrationTypeSchema struct {
-	Type           string                     `json:"type"`
-	CurrentVersion string                     `json:"currentVersion"`
-	Name           string                     `json:"name"`
-	Heading        *string                    `json:"heading,omitempty"`
-	Description    *string                    `json:"description,omitempty"`
-	Info           *string                    `json:"info,omitempty"`
-	Versions       []IntegrationSchemaVersion `json:"versions"`
-	Deprecated     *bool                      `json:"deprecated,omitempty"`
+	Type           string                         `json:"type"`
+	CurrentVersion string                         `json:"currentVersion"`
+	Name           string                         `json:"name"`
+	Heading        *string                        `json:"heading,omitempty"`
+	Description    *string                        `json:"description,omitempty"`
+	Info           *string                        `json:"info,omitempty"`
+	Versions       []IntegrationTypeSchemaVersion `json:"versions"`
+	Deprecated     *bool                          `json:"deprecated,omitempty"`
 }
 
 // NewIntegrationTypeSchema creates a new IntegrationTypeSchema object.
 func NewIntegrationTypeSchema() *IntegrationTypeSchema {
 	return &IntegrationTypeSchema{
-		Versions: []IntegrationSchemaVersion{},
+		Versions: []IntegrationTypeSchemaVersion{},
 	}
 }
 
 // +k8s:openapi-gen=true
-type IntegrationSchemaVersion struct {
+type IntegrationTypeSchemaVersion struct {
 	TypeAlias  *string `json:"typeAlias,omitempty"`
 	Version    string  `json:"version"`
 	CanCreate  bool    `json:"canCreate"`
@@ -37,9 +37,9 @@ type IntegrationSchemaVersion struct {
 	Deprecated *bool   `json:"deprecated,omitempty"`
 }
 
-// NewIntegrationSchemaVersion creates a new IntegrationSchemaVersion object.
-func NewIntegrationSchemaVersion() *IntegrationSchemaVersion {
-	return &IntegrationSchemaVersion{
+// NewIntegrationTypeSchemaVersion creates a new IntegrationTypeSchemaVersion object.
+func NewIntegrationTypeSchemaVersion() *IntegrationTypeSchemaVersion {
+	return &IntegrationTypeSchemaVersion{
 		Options: []Field{},
 	}
 }
@@ -95,14 +95,14 @@ func NewShowWhen() *ShowWhen {
 }
 
 // +k8s:openapi-gen=true
-type GetReceiversschema struct {
-	Schemas []IntegrationTypeSchema `json:"schemas"`
+type GetIntegrationtypeschemas struct {
+	Items []IntegrationTypeSchema `json:"items"`
 }
 
-// NewGetReceiversschema creates a new GetReceiversschema object.
-func NewGetReceiversschema() *GetReceiversschema {
-	return &GetReceiversschema{
-		Schemas: []IntegrationTypeSchema{},
+// NewGetIntegrationtypeschemas creates a new GetIntegrationtypeschemas object.
+func NewGetIntegrationtypeschemas() *GetIntegrationtypeschemas {
+	return &GetIntegrationtypeschemas{
+		Items: []IntegrationTypeSchema{},
 	}
 }
 
