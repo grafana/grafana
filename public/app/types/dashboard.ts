@@ -126,6 +126,7 @@ export enum DashboardRoutes {
   Public = 'public-dashboard',
   Embedded = 'embedded-dashboard',
   Report = 'report-dashboard',
+  AssistantPreview = 'assistant-preview',
 }
 
 export enum DashboardInitPhase {

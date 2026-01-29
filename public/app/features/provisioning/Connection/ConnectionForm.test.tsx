@@ -42,6 +42,7 @@ const createMockRequestState = (overrides: Partial<MockRequestState> = {}): Mock
 const createMockConnection = (overrides: Partial<Connection> = {}): Connection => ({
   metadata: { name: 'test-connection' },
   spec: {
+    title: 'Test Connection',
     type: 'github',
     url: 'https://github.com/settings/installations/12345678',
     github: {
@@ -55,7 +56,6 @@ const createMockConnection = (overrides: Partial<Connection> = {}): Connection =
   status: {
     health: { healthy: true },
     observedGeneration: 1,
-    state: 'connected',
     conditions: [
       {
         type: 'Ready',
@@ -100,6 +100,8 @@ describe('ConnectionForm', () => {
       setup();
 
       expect(screen.getByLabelText(/^Provider/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Title/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Description/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^GitHub App ID/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^GitHub Installation ID/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^Private Key \(PEM\)/)).toBeInTheDocument();
@@ -153,7 +155,8 @@ describe('ConnectionForm', () => {
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(screen.getAllByText('This field is required')).toHaveLength(3);
+        // Title, App ID, Installation ID, and Private Key are all required
+        expect(screen.getAllByText('This field is required')).toHaveLength(4);
       });
 
       expect(mockSubmitData).not.toHaveBeenCalled();
@@ -164,6 +167,7 @@ describe('ConnectionForm', () => {
     it('should call submitData with correct data on valid submission', async () => {
       const { user, mockSubmitData } = setup();
 
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
@@ -174,6 +178,7 @@ describe('ConnectionForm', () => {
       await waitFor(() => {
         expect(mockSubmitData).toHaveBeenCalledWith(
           {
+            title: 'My GitHub App',
             type: 'github',
             github: {
               appID: '123456',
@@ -196,6 +201,7 @@ describe('ConnectionForm', () => {
       await waitFor(() => {
         expect(mockSubmitData).toHaveBeenCalledWith(
           {
+            title: 'Test Connection',
             type: 'github',
             github: {
               appID: '123456',
@@ -232,6 +238,7 @@ describe('ConnectionForm', () => {
         data: { errors: [{ field: 'appID', detail: 'Invalid App ID' }] },
       });
 
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
@@ -252,6 +259,7 @@ describe('ConnectionForm', () => {
         data: { errors: [{ field: 'installationID', detail: 'Invalid Installation ID' }] },
       });
 
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
@@ -272,6 +280,7 @@ describe('ConnectionForm', () => {
         data: { errors: [{ field: 'secure.privateKey', detail: 'Invalid Private Key format' }] },
       });
 
+      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), 'invalid-key');
