@@ -96,12 +96,8 @@ func (c *ossDataKeyCache) Set(namespace string, entry encryption.DataKeyCacheEnt
 	entry.Expiration = time.Now().Add(c.cacheTTL)
 	entry.Namespace = namespace
 
-	if _, exists := c.byId[namespacedKey{namespace, entry.Id}]; !exists {
-		c.byId[namespacedKey{namespace, entry.Id}] = entry
-	}
-	if _, exists := c.byLabel[namespacedKey{namespace, entry.Label}]; !exists {
-		c.byLabel[namespacedKey{namespace, entry.Label}] = entry
-	}
+	c.byId[namespacedKey{namespace, entry.Id}] = entry
+	c.byLabel[namespacedKey{namespace, entry.Label}] = entry
 }
 
 func (c *ossDataKeyCache) RemoveExpired() {
