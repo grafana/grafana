@@ -1,8 +1,11 @@
 import { store } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { SceneGridItemLike } from '@grafana/scenes';
 import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 import { DashboardInteractions } from './interactions';
@@ -103,4 +106,13 @@ export function trackDashboardSceneCreatedOrSaved(
           ...dashboardLibraryProperties,
         }),
   });
+}
+
+export function trackDropItemCrossLayout(gridItem: SceneGridItemLike) {
+  // only track panels for now
+  if (gridItem instanceof AutoGridItem || gridItem instanceof DashboardGridItem) {
+    DashboardInteractions.trackMoveItem('panel', 'drop', {
+      isCrossLayout: true,
+    });
+  }
 }
