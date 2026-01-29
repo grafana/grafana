@@ -561,13 +561,27 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       $behaviors: [new LibraryPanelBehavior({ uid: libPanel.uid, name: libPanel.name })],
     });
 
-    const gridItem = panelToReplace.parent;
+    const parent = panelToReplace.parent;
 
-    if (!(gridItem instanceof DashboardGridItem)) {
-      throw new Error("Trying to replace a panel that doesn't have a parent grid item");
+    if (parent instanceof DashboardGridItem) {
+      parent.setState({ body });
+      return;
     }
 
-    gridItem.setState({ body });
+    if (parent instanceof AutoGridItem) {
+      // Replace the main panel
+      if (parent.state.body === panelToReplace) {
+        parent.setState({ body });
+        parent.handleEditChange();
+        return;
+      }
+
+      throw new Error(
+        'Trying to create a library panel from an auto grid repeated panel clone. This action is not supported.'
+      );
+    }
+
+    throw new Error("Trying to replace a panel that doesn't have a parent layout item");
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
