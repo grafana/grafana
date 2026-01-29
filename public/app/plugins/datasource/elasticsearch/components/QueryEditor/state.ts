@@ -3,6 +3,8 @@ import { Action, createAction } from '@reduxjs/toolkit';
 import { ElasticsearchDataQuery } from '../../dataquery.gen';
 import { QueryType } from '../../types';
 
+import { changeMetricType } from './MetricAggregationsEditor/state/actions';
+
 /**
  * When the `initQuery` Action is dispatched, the query gets populated with default values where values are not present.
  * This means it won't override any existing value in place, but just ensure the query is in a "runnable" state.
@@ -43,6 +45,12 @@ export const rawDSLQueryReducer = (prevRawDSLQuery: ElasticsearchDataQuery['rawD
   }
 
   if (changeEditorTypeAndResetQuery.match(action)) {
+    return '';
+  }
+
+  // Clear raw DSL query when switching query types while using the code editor.
+  // Metric queries and log queries are not the same, so the code editor should be cleared.
+  if (changeMetricType.match(action)) {
     return '';
   }
 

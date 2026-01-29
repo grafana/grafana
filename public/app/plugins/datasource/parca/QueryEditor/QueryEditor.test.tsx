@@ -60,7 +60,6 @@ function setup(options: { props: Partial<Props> } = { props: {} }) {
     uid: 'test',
     type: PluginType.datasource,
     access: 'proxy',
-    id: 1,
     jsonData: {},
     meta: {} as unknown as DataSourcePluginMeta,
     readOnly: false,

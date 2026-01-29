@@ -37,6 +37,7 @@ import {
   testDashboardV2,
 } from '../testfiles/testDashboard';
 
+import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab, PanelDataQueriesTabRendered } from './PanelDataQueriesTab';
 
 async function createModelMock() {
@@ -369,7 +370,6 @@ describe('PanelDataQueriesTab', () => {
       // arrange
       const modelMock = await createModelMock();
       const dsSettingsMock: DataSourceInstanceSettings<DataSourceJsonData> = {
-        id: 1,
         uid: 'gdev-testdata',
         name: 'testDs1',
         type: 'grafana-testdata-datasource',
@@ -919,7 +919,11 @@ async function setupScene(panelId: string) {
   deactivators.push(dashboard.activate());
   deactivators.push(panelEditor.activate());
 
-  const queriesTab = panelEditor.state.dataPane!.state.tabs[0] as PanelDataQueriesTab;
+  const dataPane = panelEditor.state.dataPane;
+  if (!dataPane || !(dataPane instanceof PanelDataPane)) {
+    throw new Error('Expected PanelDataPane for this test');
+  }
+  const queriesTab = dataPane.state.tabs[0] as PanelDataQueriesTab;
   deactivators.push(queriesTab.activate());
 
   await Promise.resolve();
@@ -940,7 +944,11 @@ async function setupV2Scene(panelKey: string) {
   deactivators.push(dashboard.activate());
   deactivators.push(panelEditor.activate());
 
-  const queriesTab = panelEditor.state.dataPane!.state.tabs[0] as PanelDataQueriesTab;
+  const dataPane = panelEditor.state.dataPane;
+  if (!dataPane || !(dataPane instanceof PanelDataPane)) {
+    throw new Error('Expected PanelDataPane for this test');
+  }
+  const queriesTab = dataPane.state.tabs[0] as PanelDataQueriesTab;
   deactivators.push(queriesTab.activate());
 
   await Promise.resolve();

@@ -90,11 +90,10 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 		if change.Action != repository.FileActionDeleted && progress.HasDirPathFailedCreation(change.Path) {
 			// Skip this resource since its parent folder failed to be created
 			skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.incremental.skip_nested_resource")
-			progress.Record(skipCtx, jobs.JobResourceResult{
-				Path:    change.Path,
-				Action:  repository.FileActionIgnored,
-				Warning: fmt.Errorf("resource was not processed because the parent folder could not be created"),
-			})
+			progress.Record(skipCtx, jobs.NewPathOnlyResult(change.Path).
+				WithError(fmt.Errorf("resource was not processed because the parent folder could not be created")).
+				AsSkipped().
+				Build())
 			skipSpan.End()
 			continue
 		}
@@ -113,39 +112,27 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 					ensureFolderSpan.RecordError(err)
 					ensureFolderSpan.End()
 
-					progress.Record(ensureFolderCtx, jobs.JobResourceResult{
-						Path:   change.Path,
-						Action: repository.FileActionIgnored,
-						Group:  resources.FolderKind.Group,
-						Kind:   resources.FolderKind.Kind,
-						Error:  err,
-					})
+					progress.Record(ensureFolderCtx, jobs.NewFolderResult(change.Path).
+						WithError(err).
+						WithAction(repository.FileActionIgnored).
+						Build())
 					continue
 				}
 
-				progress.Record(ensureFolderCtx, jobs.JobResourceResult{
-					Path:   safeSegment,
-					Action: repository.FileActionCreated,
-					Group:  resources.FolderResource.Group,
-					Kind:   resources.FolderKind.Kind,
-					Name:   folder,
-				})
+				progress.Record(ensureFolderCtx, jobs.NewFolderResult(folder).
+					WithPath(safeSegment).
+					WithAction(repository.FileActionCreated).
+					Build())
 				ensureFolderSpan.End()
 				continue
 			}
 
-			progress.Record(ensureFolderCtx, jobs.JobResourceResult{
-				Path:   change.Path,
-				Action: repository.FileActionIgnored,
-			})
+			progress.Record(ensureFolderCtx, jobs.NewPathOnlyResult(change.Path).WithAction(repository.FileActionIgnored).Build())
 			ensureFolderSpan.End()
 			continue
 		}
 
-		result := jobs.JobResourceResult{
-			Path:   change.Path,
-			Action: change.Action,
-		}
+		resultBuilder := jobs.NewPathOnlyResult(change.Path).WithAction(change.Action)
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
@@ -153,22 +140,18 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			if err != nil {
 				writeSpan.RecordError(err)
-				result.Error = fmt.Errorf("writing resource from file %s: %w", change.Path, err)
+				resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
 			}
-			result.Name = name
-			result.Kind = gvk.Kind
-			result.Group = gvk.Group
+			resultBuilder.WithName(name).WithGVK(gvk)
 			writeSpan.End()
 		case repository.FileActionDeleted:
 			removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_resource_from_file")
 			name, folderName, gvk, err := repositoryResources.RemoveResourceFromFile(removeCtx, change.Path, change.PreviousRef)
 			if err != nil {
 				removeSpan.RecordError(err)
-				result.Error = fmt.Errorf("removing resource from file %s: %w", change.Path, err)
+				resultBuilder.WithError(fmt.Errorf("removing resource from file %s: %w", change.Path, err))
 			}
-			result.Name = name
-			result.Kind = gvk.Kind
-			result.Group = gvk.Group
+			resultBuilder.WithName(name).WithGVK(gvk)
 
 			if folderName != "" {
 				affectedFolders[safepath.Dir(change.Path)] = folderName
@@ -180,11 +163,9 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
 			if err != nil {
 				renameSpan.RecordError(err)
-				result.Error = fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err)
+				resultBuilder.WithError(fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err))
 			}
-			result.Name = name
-			result.Kind = gvk.Kind
-			result.Group = gvk.Group
+			resultBuilder.WithName(name).WithGVK(gvk)
 
 			if oldFolderName != "" {
 				affectedFolders[safepath.Dir(change.Path)] = oldFolderName
@@ -194,7 +175,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 		case repository.FileActionIgnored:
 			// do nothing
 		}
-		progress.Record(ctx, result)
+		progress.Record(ctx, resultBuilder.Build())
 	}
 
 	return affectedFolders, nil

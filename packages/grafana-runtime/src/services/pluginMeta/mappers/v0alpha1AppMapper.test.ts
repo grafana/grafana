@@ -77,7 +77,7 @@ describe('v0alpha1AppMapper', () => {
   it('should only map specs with type app', () => {
     const result = v0alpha1AppMapper(v0alpha1Response);
 
-    expect(v0alpha1Response.items).toHaveLength(58);
+    expect(v0alpha1Response.items).toHaveLength(57);
     expect(Object.keys(result)).toHaveLength(5);
     expect(Object.keys(result)).toEqual(Object.keys(apps));
   });

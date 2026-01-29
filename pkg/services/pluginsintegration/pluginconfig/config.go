@@ -77,6 +77,8 @@ type PluginInstanceCfg struct {
 
 	SigV4AuthEnabled    bool
 	SigV4VerboseLogging bool
+
+	LiveClientQueueMaxSize int
 }
 
 // ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
@@ -124,6 +126,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		ResponseLimit:                       cfg.ResponseLimit,
 		SigV4AuthEnabled:                    cfg.SigV4AuthEnabled,
 		SigV4VerboseLogging:                 cfg.SigV4VerboseLogging,
+		LiveClientQueueMaxSize:              cfg.LiveClientQueueMaxSize,
 	}, nil
 }
 

@@ -44,8 +44,8 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProvider(server.URL + "/api/plugins")
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -59,8 +59,8 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProvider(server.URL + "/api/plugins")
-		result, err := provider.GetMeta(ctx, "nonexistent-plugin", "1.0.0")
+		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "nonexistent-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, ErrMetaNotFound))
@@ -73,8 +73,8 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProvider(server.URL + "/api/plugins")
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "unexpected status code 500")
@@ -89,8 +89,8 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProvider(server.URL + "/api/plugins")
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to decode response")
@@ -98,8 +98,8 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 	})
 
 	t.Run("returns error for invalid API URL", func(t *testing.T) {
-		provider := NewCatalogProvider("://invalid-url")
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		provider := NewCatalogProvider("://invalid-url", "")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid grafana.com API URL")
@@ -127,8 +127,8 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		}))
 		defer server.Close()
 
-		provider := NewCatalogProviderWithTTL(server.URL+"/api/plugins", customTTL)
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		provider := NewCatalogProviderWithTTL(server.URL+"/api/plugins", "", customTTL)
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -145,24 +145,61 @@ func TestCatalogProvider_GetMeta(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
 
-		provider := NewCatalogProvider(server.URL + "/api/plugins")
-		result, err := provider.GetMeta(ctx, "test-plugin", "1.0.0")
+		provider := NewCatalogProvider(server.URL+"/api/plugins", "")
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
 
 		assert.Error(t, err)
 		assert.Nil(t, result)
+	})
+
+	t.Run("sends gcom token in Authorization header", func(t *testing.T) {
+		expectedToken := "test-gcom-token-12345" //nolint:gosec // G101: test token value
+		expectedMeta := pluginsv0alpha1.MetaJSONData{
+			Id:   "test-plugin",
+			Name: "Test Plugin",
+			Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, http.MethodGet, r.Method)
+			assert.Equal(t, "/api/plugins/test-plugin/versions/1.0.0", r.URL.Path)
+			assert.Equal(t, "application/json", r.Header.Get("Accept"))
+			assert.Equal(t, "grafana-plugins-app", r.Header.Get("User-Agent"))
+			assert.Equal(t, "Bearer "+expectedToken, r.Header.Get("Authorization"))
+
+			response := grafanaComPluginVersionMeta{
+				PluginID:    "test-plugin",
+				Version:     "1.0.0",
+				JSON:        expectedMeta,
+				Description: "Test description",
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			require.NoError(t, json.NewEncoder(w).Encode(response))
+		}))
+		defer server.Close()
+
+		provider := NewCatalogProvider(server.URL+"/api/plugins", expectedToken)
+		result, err := provider.GetMeta(ctx, PluginRef{ID: "test-plugin", Version: "1.0.0"})
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		assert.Equal(t, expectedMeta, result.Meta.PluginJson)
+		assert.Equal(t, defaultCatalogTTL, result.TTL)
 	})
 }
 
 func TestNewCatalogProvider(t *testing.T) {
 	t.Run("creates provider with default TTL", func(t *testing.T) {
-		provider := NewCatalogProvider("https://grafana.com/api/plugins")
+		provider := NewCatalogProvider("https://grafana.com/api/plugins", "")
 		assert.Equal(t, defaultCatalogTTL, provider.ttl)
 		assert.NotNil(t, provider.httpClient)
 		assert.Equal(t, "https://grafana.com/api/plugins", provider.grafanaComAPIURL)
 	})
 
 	t.Run("uses default URL when empty", func(t *testing.T) {
-		provider := NewCatalogProvider("")
+		provider := NewCatalogProvider("", "")
 		assert.Equal(t, "https://grafana.com/api/plugins", provider.grafanaComAPIURL)
 	})
 }
@@ -170,17 +207,17 @@ func TestNewCatalogProvider(t *testing.T) {
 func TestNewCatalogProviderWithTTL(t *testing.T) {
 	t.Run("creates provider with custom TTL", func(t *testing.T) {
 		customTTL := 2 * time.Hour
-		provider := NewCatalogProviderWithTTL("https://grafana.com/api/plugins", customTTL)
+		provider := NewCatalogProviderWithTTL("https://grafana.com/api/plugins", "", customTTL)
 		assert.Equal(t, customTTL, provider.ttl)
 	})
 
 	t.Run("accepts zero TTL", func(t *testing.T) {
-		provider := NewCatalogProviderWithTTL("https://grafana.com/api/plugins", 0)
+		provider := NewCatalogProviderWithTTL("https://grafana.com/api/plugins", "", 0)
 		assert.Equal(t, time.Duration(0), provider.ttl)
 	})
 
 	t.Run("uses default URL when empty", func(t *testing.T) {
-		provider := NewCatalogProviderWithTTL("", defaultCatalogTTL)
+		provider := NewCatalogProviderWithTTL("", "", defaultCatalogTTL)
 		assert.Equal(t, "https://grafana.com/api/plugins", provider.grafanaComAPIURL)
 	})
 }

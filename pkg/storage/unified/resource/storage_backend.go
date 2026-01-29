@@ -22,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -62,7 +63,6 @@ type kvStorageBackend struct {
 	dataStore                    *dataStore
 	eventStore                   *eventStore
 	notifier                     notifier
-	builder                      DocumentBuilder
 	log                          log.Logger
 	withPruner                   bool
 	eventRetentionPeriod         time.Duration
@@ -73,6 +73,9 @@ type kvStorageBackend struct {
 	//reg           prometheus.Registerer
 
 	rvManager *rvmanager.ResourceVersionManager
+
+	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
+	dbKeepAlive any
 }
 
 var _ KVBackend = &kvStorageBackend{}
@@ -96,6 +99,10 @@ type KVBackendOptions struct {
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
+
+	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
+	// needed for sqlkv
+	DBKeepAlive any
 }
 
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
@@ -130,12 +137,12 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		eventStore:                   eventStore,
 		notifier:                     newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
 		snowflake:                    s,
-		builder:                      StandardDocumentBuilder(), // For now we use the standard document builder.
 		log:                          logger,
 		eventRetentionPeriod:         eventRetentionPeriod,
 		eventPruningInterval:         eventPruningInterval,
 		withExperimentalClusterScope: opts.WithExperimentalClusterScope,
 		rvManager:                    opts.RvManager,
+		dbKeepAlive:                  opts.DBKeepAlive,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
@@ -294,7 +301,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 	obj := event.Object
 	// Write data.
-	var action DataAction
+	var action kv.DataAction
 	switch event.Type {
 	case resourcepb.WatchEvent_ADDED:
 		action = DataActionCreated
@@ -341,7 +348,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		dataKey.GUID = uuid.New().String()
 		var err error
 		rv, err = k.rvManager.ExecWithRV(ctx, event.Key, func(tx db.Tx) (string, error) {
-			if err := k.dataStore.Save(rvmanager.ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value)); err != nil {
+			if err := k.dataStore.Save(kv.ContextWithTx(ctx, tx), dataKey, bytes.NewReader(event.Value)); err != nil {
 				return "", fmt.Errorf("failed to write data: %w", err)
 			}
 
@@ -836,7 +843,7 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	return latestEvent.ResourceVersion, k.listModifiedSinceEventStore(ctx, key, sinceRv)
 }
 
-func convertEventType(action DataAction) resourcepb.WatchEvent_Type {
+func convertEventType(action kv.DataAction) resourcepb.WatchEvent_Type {
 	switch action {
 	case DataActionCreated:
 		return resourcepb.WatchEvent_ADDED
@@ -1405,7 +1412,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 		rsp.Processed++
 
-		var action DataAction
+		var action kv.DataAction
 		switch resourcepb.WatchEvent_Type(req.Action) {
 		case resourcepb.WatchEvent_ADDED:
 			action = DataActionCreated

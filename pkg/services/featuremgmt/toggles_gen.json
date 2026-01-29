@@ -209,6 +209,20 @@
     },
     {
       "metadata": {
+        "name": "alertingDisableDMAinUI",
+        "resourceVersion": "1769428796156",
+        "creationTimestamp": "2026-01-26T11:59:56Z"
+      },
+      "spec": {
+        "description": "Disables the DMA feature in the UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingDisableSendAlertsExternal",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-05-23T12:29:19Z",
@@ -378,6 +392,20 @@
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingMultiplePolicies",
+        "resourceVersion": "1769532687968",
+        "creationTimestamp": "2026-01-27T16:51:27Z"
+      },
+      "spec": {
+        "description": "Enables the ability to create multiple alerting policies",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -1289,6 +1317,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardValidatorApp",
+        "resourceVersion": "1768995060416",
+        "creationTimestamp": "2026-01-21T11:31:00Z"
+      },
+      "spec": {
+        "description": "Enables dashboard validator app to run compatibility checks between a dashboard and data source",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashgpt",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2023-08-30T20:22:05Z"
@@ -1374,6 +1415,7 @@
         "name": "disableClassicHTTPHistogram",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2024-06-18T19:37:44Z",
+        "deletionTimestamp": "2026-01-20T11:46:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -1559,6 +1601,7 @@
         "name": "enableNativeHTTPHistogram",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2023-10-03T18:23:55Z",
+        "deletionTimestamp": "2026-01-20T11:37:01Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -1574,17 +1617,17 @@
     {
       "metadata": {
         "name": "enableSCIM",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1769542829648",
         "creationTimestamp": "2024-11-07T14:38:46Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-01-27 19:40:29.648759061 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables SCIM support for user and group management",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -2420,6 +2463,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzTeamLBACRuleApi",
+        "resourceVersion": "1768589823498",
+        "creationTimestamp": "2026-01-14T23:12:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-16 18:57:03.498879 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Registers AuthZ TeamLBACRule /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthzZanzanaSync",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-10-13T19:37:13Z",
@@ -2616,6 +2676,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesTeamBindings",
+        "resourceVersion": "1768904135898",
+        "creationTimestamp": "2026-01-20T09:57:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-20 10:15:35.898172 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables search for team bindings in the app platform API",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesUnifiedStorageQuotas",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2025-12-09T15:40:34Z",
@@ -2653,15 +2730,15 @@
     {
       "metadata": {
         "name": "localeFormatPreference",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1769012601213",
         "creationTimestamp": "2025-03-31T13:59:07Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-01-21 16:23:21.21319 +0000 UTC"
         }
       },
       "spec": {
         "description": "Specifies the locale so the correct format for numbers and dates can be shown",
-        "stage": "preview",
+        "stage": "deprecated",
         "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "false"
       }
@@ -2688,6 +2765,7 @@
         "name": "logRequestsInstrumentedAsUnknown",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-06-10T08:56:55Z",
+        "deletionTimestamp": "2026-01-16T14:10:42Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -2956,6 +3034,7 @@
         "name": "mysqlAnsiQuotes",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-10-12T11:43:35Z",
+        "deletionTimestamp": "2026-01-27T13:45:10Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
         }
@@ -3106,18 +3185,18 @@
     {
       "metadata": {
         "name": "newTimeRangeZoomShortcuts",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1769547504177",
         "creationTimestamp": "2025-11-20T21:14:27Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-01-27 20:58:24.177524 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables new keyboard shortcuts for time range zoom operations",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3629,6 +3708,23 @@
     },
     {
       "metadata": {
+        "name": "queryEditorNext",
+        "resourceVersion": "1768869177305",
+        "creationTimestamp": "2026-01-13T18:26:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-20 00:32:57.305391 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables next generation query editor experience",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryLibrary",
         "resourceVersion": "1768498862515",
         "creationTimestamp": "2022-10-07T18:31:45Z",
@@ -3935,6 +4031,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "savedQueriesRBAC",
+        "resourceVersion": "1768828040599",
+        "creationTimestamp": "2026-01-19T13:07:20Z"
+      },
+      "spec": {
+        "description": "Enables Saved queries (query library) RBAC permissions",
+        "stage": "preview",
+        "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
     },
@@ -4323,18 +4432,18 @@
     {
       "metadata": {
         "name": "timeRangePan",
-        "resourceVersion": "1768498862515",
+        "resourceVersion": "1769547328567",
         "creationTimestamp": "2025-11-05T01:39:46Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-01-15 17:41:02.515355 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-01-27 20:55:28.567609 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables time range panning functionality",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4551,14 +4660,18 @@
     {
       "metadata": {
         "name": "useMTPlugins",
-        "resourceVersion": "1764913709691",
-        "creationTimestamp": "2025-12-05T07:09:41Z"
+        "resourceVersion": "1768554119948",
+        "creationTimestamp": "2025-12-05T07:09:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-01-16 09:01:59.948292 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

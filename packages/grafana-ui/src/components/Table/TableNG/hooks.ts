@@ -463,7 +463,7 @@ export function useColumnResize(
   return dataGridResizeHandler;
 }
 
-export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number) {
+export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number) {
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
   useLayoutEffect(() => {

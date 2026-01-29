@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -41,6 +43,7 @@ type ServerOptions struct {
 	Reg              prometheus.Registerer
 	AccessClient     types.AccessClient
 	SearchOptions    resource.SearchOptions
+	SearchClient     resourcepb.ResourceIndexClient
 	StorageMetrics   *resource.StorageMetrics
 	IndexMetrics     *resource.BleveIndexMetrics
 	Features         featuremgmt.FeatureToggles
@@ -104,19 +107,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 			opts.Cfg.SectionWithEnvOverrides("resource_api"))
 
 		if opts.Cfg.EnableSQLKVBackend {
-			sqlkv, err := resource.NewSQLKV(eDB)
-			if err != nil {
-				return nil, fmt.Errorf("error creating sqlkv: %s", err)
-			}
-
-			kvBackendOpts := resource.KVBackendOptions{
-				KvStore:            sqlkv,
-				Tracer:             opts.Tracer,
-				Reg:                opts.Reg,
-				UseChannelNotifier: !isHA,
-				Log:                log.New("storage-backend"),
-			}
-
+			// Initialize database connection first
 			ctx := context.Background()
 			dbConn, err := eDB.Init(ctx)
 			if err != nil {
@@ -128,16 +119,33 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 				return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
 			}
 
-			rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-				Dialect: dialect,
-				DB:      dbConn,
-			})
+			// Create sqlkv with the standard library DB
+			sqlkv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 			if err != nil {
-				return nil, fmt.Errorf("failed to create resource version manager: %w", err)
+				return nil, fmt.Errorf("error creating sqlkv: %s", err)
 			}
 
-			// TODO add config to decide whether to pass RvManager or not
-			kvBackendOpts.RvManager = rvManager
+			kvBackendOpts := resource.KVBackendOptions{
+				KvStore:            sqlkv,
+				Tracer:             opts.Tracer,
+				Reg:                opts.Reg,
+				UseChannelNotifier: !isHA,
+				Log:                log.New("storage-backend"),
+				DBKeepAlive:        eDB,
+			}
+
+			if opts.Cfg.EnableSQLKVCompatibilityMode {
+				rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
+					Dialect: dialect,
+					DB:      dbConn,
+				})
+				if err != nil {
+					return nil, fmt.Errorf("failed to create resource version manager: %w", err)
+				}
+
+				kvBackendOpts.RvManager = rvManager
+			}
+
 			kvBackend, err := resource.NewKVStorageBackend(kvBackendOpts)
 			if err != nil {
 				return nil, fmt.Errorf("error creating kv backend: %s", err)
@@ -152,6 +160,13 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 				IsHA:                 isHA,
 				storageMetrics:       opts.StorageMetrics,
 				LastImportTimeMaxAge: opts.SearchOptions.MaxIndexAge, // No need to keep last_import_times older than max index age.
+				GarbageCollection: GarbageCollectionConfig{
+					Enabled:          opts.Cfg.EnableGarbageCollection,
+					Interval:         opts.Cfg.GarbageCollectionInterval,
+					BatchSize:        opts.Cfg.GarbageCollectionBatchSize,
+					MaxAge:           opts.Cfg.GarbageCollectionMaxAge,
+					DashboardsMaxAge: opts.Cfg.DashboardsGarbageCollectionMaxAge,
+				},
 			})
 			if err != nil {
 				return nil, err
@@ -162,6 +177,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 		}
 	}
 
+	serverOptions.SearchClient = opts.SearchClient
 	serverOptions.Search = opts.SearchOptions
 	serverOptions.IndexMetrics = opts.IndexMetrics
 	serverOptions.QOSQueue = opts.QOSQueue

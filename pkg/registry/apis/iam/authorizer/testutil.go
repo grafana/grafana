@@ -2,6 +2,7 @@ package authorizer
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/grafana/authlib/authn"
@@ -45,4 +46,8 @@ func (m *fakeAccessClient) Check(ctx context.Context, id types.AuthInfo, req typ
 func (m *fakeAccessClient) Compile(ctx context.Context, id types.AuthInfo, req types.ListRequest) (types.ItemChecker, types.Zookie, error) {
 	m.compileCalled = true
 	return m.compileFunc(id, req)
+}
+
+func (m *fakeAccessClient) BatchCheck(ctx context.Context, id types.AuthInfo, req types.BatchCheckRequest) (types.BatchCheckResponse, error) {
+	return types.BatchCheckResponse{}, errors.New("not implemented")
 }
