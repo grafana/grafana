@@ -14,6 +14,7 @@ export interface UseWizardButtonsParams {
   isCancelling: boolean;
   isStepRunning: boolean;
   isStepSuccess: boolean;
+  hasStepError: boolean;
   hasStepWarning: boolean;
   isCreatingSkipJob: boolean;
   showCancelConfirmation: boolean;
@@ -36,6 +37,7 @@ export function useWizardButtons({
   isCancelling,
   isStepRunning,
   isStepSuccess,
+  hasStepError,
   hasStepWarning,
   isCreatingSkipJob,
   showCancelConfirmation,
@@ -73,15 +75,34 @@ export function useWizardButtons({
   }, [isCancelling, shouldUseCancelBehavior, activeStep, repoName]);
 
   const isNextDisabled = useMemo(() => {
-    // Synchronize step requires success or warning to proceed (async operation result)
+    // AuthType step is always enabled (user just needs to select an option)
+    if (activeStep === 'authType') {
+      return false;
+    }
+    // Don't block on hasStepError for connection/githubApp steps - users can fix their input and retry
+    if (!['connection', 'githubApp'].includes(activeStep) && hasStepError) {
+      return true;
+    }
+    // Synchronize step requires success or warning to proceed
     if (activeStep === 'synchronize') {
       return !(isStepSuccess || hasStepWarning);
     }
-    // For all other steps, rely on RHF validation - don't block based on hasStepError
-    // so users can fix their input and retry
+    // Finish step should not be blocked by isCreatingSkipJob since we only
+    // reach finish after the skip job was successfully created
+    if (activeStep === 'finish') {
+      return isSubmitting || isCancelling || isStepRunning;
+    }
     return isSubmitting || isCancelling || isStepRunning || isCreatingSkipJob;
-  }, [activeStep, isStepSuccess, hasStepWarning, isSubmitting, isCancelling, isStepRunning, isCreatingSkipJob]);
-
+  }, [
+    activeStep,
+    hasStepError,
+    isStepSuccess,
+    hasStepWarning,
+    isSubmitting,
+    isCancelling,
+    isStepRunning,
+    isCreatingSkipJob,
+  ]);
   const isPreviousDisabled = isSubmitting || isCancelling || isStepRunning || showCancelConfirmation;
 
   return {

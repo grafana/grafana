@@ -154,6 +154,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     isStepRunning,
     isStepSuccess,
     hasStepWarning,
+    hasStepError,
     isCreatingSkipJob,
     showCancelConfirmation,
     shouldUseCancelBehavior,
