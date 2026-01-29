@@ -4278,17 +4278,6 @@
     "search": "Search",
     "view": "View"
   },
-  "compatibility-modal": {
-    "checking": "Checking compatibility...",
-    "datasource-not-found": "Datasource not found with UID: {{uid}}",
-    "error-description": "Failed to check dashboard compatibility. Please try again.",
-    "error-title": "Error checking compatibility",
-    "parse-errors-note": "Note: Some queries failed to parse. Check browser console for details.",
-    "retry": "Retry",
-    "score-title": "Compatibility Score: {{score}}%",
-    "title": "Dashboard Compatibility Check for {{dashboardName}}",
-    "v2-not-supported": "Dashboard v2 schema is not yet supported. Compatibility checking is currently only available for v1 dashboards. Support for v2 dashboards is coming soon."
-  },
   "configuration-tracker": {
     "config-card": {
       "complete": "complete"
@@ -5835,8 +5824,6 @@
     "browse-grafana-com": "Browse Grafana.com",
     "browse-plugins": "Browse plugins",
     "card": {
-      "check-compatibility-button": "Check compatibility",
-      "check-compatibility-tooltip": "Check dashboard compatibility with your datasource",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
       "no-preview": "No preview available",
@@ -5861,8 +5848,14 @@
     "community-search-placeholder": "Search community dashboards...",
     "community-search-placeholder-with-datasource": "Search {{datasourceType}} community dashboards...",
     "compatibility-auto-map-failed": "Unable to automatically map all datasource inputs for this dashboard. Compatibility check requires all datasource variables to be resolved.",
-    "compatibility-check-error-description": "Failed to load dashboard for compatibility check. Please try again.",
-    "compatibility-check-error-title": "Error loading dashboard",
+    "compatibility-badge": {
+      "check": "Check",
+      "check-failed": "Check failed · Click to retry",
+      "checking": "Checking",
+      "score-only-tooltip": "{{score}}% metric availability",
+      "score-text": "{{score}}%",
+      "score-tooltip": "{{score}}% metric availability · {{found}}/{{total}} metrics exist in your datasource"
+    },
     "dashboard-card": {
       "details": {
         "datasource": "Datasource",
