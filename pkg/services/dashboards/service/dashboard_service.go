@@ -925,37 +925,72 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 		dr.log.Error("Failed to delete duplicate provisioned dashboards", "error", err)
 	}
 
-	currentNames := make([]string, 0, len(cmd.Config))
+	currentNames := make(map[string]bool, len(cmd.Config))
 	for _, cfg := range cmd.Config {
-		currentNames = append(currentNames, cfg.Name)
+		currentNames[cfg.Name] = true
 	}
 
 	for _, org := range orgs {
 		ctx, _ := identity.WithServiceIdentity(ctx, org.ID)
-		// find all dashboards in the org that have a file repo set that is not in the given readers list
-		foundDashs, err := dr.searchProvisionedDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
-			ManagedBy:            utils.ManagerKindClassicFP, //nolint:staticcheck
-			ManagerIdentityNotIn: currentNames,
-			OrgId:                org.ID,
-		})
-		if err != nil {
-			return err
+		
+		// Iteratively list all dashboards to find orphaned ones.
+		// We use List instead of Search to avoid eventual consistency issues with the search index.
+		listOptions := v1.ListOptions{
+			Limit: 500,
 		}
-		dr.log.Debug("Found dashboards to be deleted", "orgId", org.ID, "count", len(foundDashs))
 
-		// delete them
 		var deletedUids []string
-		for _, foundDash := range foundDashs {
-			if err = dr.deleteDashboard(ctx, foundDash.DashboardID, foundDash.DashboardUID, org.ID, false); err != nil {
-				return err
+
+		for {
+			list, err := dr.k8sclient.List(ctx, org.ID, listOptions)
+			if err != nil {
+				return fmt.Errorf("failed to list dashboards for cleanup: %w", err)
 			}
-			deletedUids = append(deletedUids, foundDash.DashboardUID)
+
+			for _, item := range list.Items {
+				metaAccessor, err := utils.MetaAccessor(&item)
+				if err != nil {
+					dr.log.Warn("Failed to parse dashboard metadata during cleanup", "uid", item.GetName(), "error", err)
+					continue
+				}
+
+				managerProps, hasManager := metaAccessor.GetManagerProperties()
+				if !hasManager {
+					continue
+				}
+
+				// Only process dashboards managed by Classic File Provisioning
+				if managerProps.Kind != utils.ManagerKindClassicFP {
+					continue
+				}
+
+				// If the provisioner name is NOT in our current config, it's an orphan.
+				if !currentNames[managerProps.Identity] {
+					uid := item.GetName()
+					dr.log.Debug("Deleting orphaned provisioned dashboard", "uid", uid, "orgId", org.ID, "managerId", managerProps.Identity)
+					
+					// Delete using 0 as ID since we have UID. 
+					// validateProvisionedDashboard=false because we *want* to delete a provisioned dashboard.
+					if err := dr.deleteDashboard(ctx, 0, uid, org.ID, false); err != nil {
+						return fmt.Errorf("failed to delete orphaned dashboard %s: %w", uid, err)
+					}
+					deletedUids = append(deletedUids, uid)
+				}
+			}
+
+			if list.Continue == "" {
+				break
+			}
+			listOptions.Continue = list.Continue
 		}
+
 		if len(deletedUids) > 0 {
-			// wait for deleted dashboards to be removed from the index
+			// wait for deleted dashboards to be removed from the index to ensure consistency for subsequent queries
 			err = dr.waitForSearchQuery(ctx, &dashboards.FindPersistedDashboardsQuery{OrgId: org.ID, DashboardUIDs: deletedUids}, 5, 0)
 			if err != nil {
-				return err
+				// We don't return error here to avoid blocking startup if index is lagging,
+				// but we log it. The dashboard is deleted from source of truth (DB/K8s).
+				dr.log.Warn("Timed out waiting for search index to update after provisioned dashboard deletion", "count", len(deletedUids), "error", err)
 			}
 		}
 	}
