@@ -25,6 +25,8 @@ import {
   Logfmt,
   Json,
   JsonExpressionParser,
+  LogfmtParser,
+  LogfmtExpressionParser,
 } from '@grafana/lezer-logql';
 
 import { LokiContextUi } from './components/LokiContextUi';
@@ -265,8 +267,13 @@ export class LogContextProvider {
       const parserInfo = isQueryWithParser(query.expr);
       if (parserInfo.parserCount >= 1) {
         hasParser = true;
-        // Extract parsers and drop operations separately
-        const parserNodes = getNodesFromQuery(query.expr, [LabelParser, JsonExpressionParser, Logfmt]);
+        // Extract parsers
+        const parserNodes = getNodesFromQuery(query.expr, [
+          LabelParser,
+          JsonExpressionParser,
+          LogfmtParser,
+          LogfmtExpressionParser,
+        ]);
 
         // Add parsers first
         for (const node of parserNodes) {

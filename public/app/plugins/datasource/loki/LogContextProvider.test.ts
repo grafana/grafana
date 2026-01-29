@@ -334,6 +334,87 @@ describe('LogContextProvider', () => {
       expect(contextQuery.query.expr).toEqual(`{level="info"} | logfmt | json | drop __error__, __error_details__`);
     });
 
+    it('should apply logfmt (with args) and regexp label parser from original query', async () => {
+      logContextProvider.cachedContextFilters = [
+        { value: 'baz', enabled: true, nonIndexed: false, label: 'bar' },
+        { value: 'abc', enabled: true, nonIndexed: false, label: 'xyz' },
+      ];
+
+      const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
+        defaultLogRow,
+        10,
+        LogRowContextQueryDirection.Backward,
+        {
+          expr: '{bar="baz"} | logfmt --strict field="otherField", label | regexp "(?P<foo>bar)"',
+          refId: 'A',
+        }
+      );
+
+      // Parsers are added after the selector; when multiple parsers exist, the later insertion ends up earlier.
+      expect(contextQuery.query.expr).toEqual(
+        '{bar="baz",xyz="abc"} | regexp "(?P<foo>bar)" | logfmt --strict field="otherField", label'
+      );
+    });
+
+    it('should apply logfmt + regexp and append parsed labels when a parser exists', async () => {
+      logContextProvider.cachedContextFilters = [
+        { value: 'baz', enabled: true, nonIndexed: false, label: 'bar' },
+        { value: 'abc', enabled: true, nonIndexed: false, label: 'xyz' },
+        { value: 'uniqueParsedLabel', enabled: true, nonIndexed: true, label: 'foo' },
+      ];
+
+      const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
+        defaultLogRow,
+        10,
+        LogRowContextQueryDirection.Backward,
+        {
+          expr: '{bar="baz"} | logfmt --strict field="otherField", label | regexp "(?P<foo>bar)"',
+          refId: 'A',
+        }
+      );
+
+      expect(contextQuery.query.expr).toEqual(
+        '{bar="baz",xyz="abc"} | regexp "(?P<foo>bar)" | logfmt --strict field="otherField", label | foo=`uniqueParsedLabel`'
+      );
+    });
+
+    it('should apply logfmt (with args) and pattern label parser from original query', async () => {
+      logContextProvider.cachedContextFilters = [
+        { value: 'baz', enabled: true, nonIndexed: false, label: 'bar' },
+        { value: 'abc', enabled: true, nonIndexed: false, label: 'xyz' },
+      ];
+
+      const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
+        defaultLogRow,
+        10,
+        LogRowContextQueryDirection.Backward,
+        {
+          expr: '{bar="baz"} | logfmt --strict field="otherField", label | pattern `<foo> <bar>`',
+          refId: 'A',
+        }
+      );
+
+      expect(contextQuery.query.expr).toEqual(
+        '{bar="baz",xyz="abc"} | pattern `<foo> <bar>` | logfmt --strict field="otherField", label'
+      );
+    });
+
+    it('should preserve logfmt with arguments (LogfmtExpressionParser variant)', async () => {
+      logContextProvider.cachedContextFilters = [{ value: 'baz', enabled: true, nonIndexed: false, label: 'bar' }];
+
+      const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
+        defaultLogRow,
+        10,
+        LogRowContextQueryDirection.Backward,
+        {
+          expr: '{bar="baz"} | logfmt --strict field="otherField", label',
+          refId: 'A',
+        }
+      );
+
+      expect(contextQuery.query.expr).toEqual('{bar="baz"} | logfmt --strict field="otherField", label');
+    });
+
     it('should not apply line_format if flag is not set by default', async () => {
       logContextProvider.cachedContextFilters = [{ value: 'baz', enabled: true, nonIndexed: false, label: 'bar' }];
       const contextQuery = await logContextProvider.prepareLogRowContextQueryTarget(
