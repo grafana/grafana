@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -339,7 +338,7 @@ func TestSearchHandler(t *testing.T) {
 			}
 		}()
 
-		p := &dashboardv0alpha1.SearchResults{}
+		p := &v0alpha1.SearchResults{}
 		err := json.NewDecoder(resp.Body).Decode(p)
 		require.NoError(t, err)
 		assert.Equal(t, len(mockResults), len(p.Hits))
@@ -377,7 +376,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 			}
 		}()
 
-		p := &dashboardv0alpha1.SearchResults{}
+		p := &v0alpha1.SearchResults{}
 		err := json.NewDecoder(resp.Body).Decode(p)
 		require.NoError(t, err)
 		assert.Equal(t, 0, len(p.Hits))
@@ -467,7 +466,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 			}
 		}()
 
-		p := &dashboardv0alpha1.SearchResults{}
+		p := &v0alpha1.SearchResults{}
 		err := json.NewDecoder(resp.Body).Decode(p)
 		require.NoError(t, err)
 		assert.Equal(t, 0, len(p.Hits))
@@ -622,7 +621,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 			}
 		}()
 
-		p := &dashboardv0alpha1.SearchResults{}
+		p := &v0alpha1.SearchResults{}
 		err := json.NewDecoder(resp.Body).Decode(p)
 		require.NoError(t, err)
 		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
@@ -1208,12 +1207,6 @@ type MockClient struct {
 	MockResponses []*resourcepb.ResourceSearchResponse
 	MockCalls     []*resourcepb.ResourceSearchRequest
 	CallCount     int
-
-	ReadResponses        map[string]*resourcepb.ReadResponse
-	DefaultReadResponse  *resourcepb.ReadResponse
-	LastReadRequests     []*resourcepb.ReadRequest
-	ReadError            error
-	LastReadErrorRequest *resourcepb.ReadRequest
 }
 
 type MockResult struct {
@@ -1277,21 +1270,6 @@ func (m *MockClient) Update(ctx context.Context, in *resourcepb.UpdateRequest, o
 	return nil, nil
 }
 func (m *MockClient) Read(ctx context.Context, in *resourcepb.ReadRequest, opts ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
-	m.LastReadRequests = append(m.LastReadRequests, in)
-	if m.ReadError != nil {
-		m.LastReadErrorRequest = in
-		return nil, m.ReadError
-	}
-
-	if in != nil && in.Key != nil && m.ReadResponses != nil {
-		if resp, ok := m.ReadResponses[in.Key.Name]; ok {
-			return resp, nil
-		}
-	}
-
-	if m.DefaultReadResponse != nil {
-		return m.DefaultReadResponse, nil
-	}
 	return nil, nil
 }
 func (m *MockClient) GetBlob(ctx context.Context, in *resourcepb.GetBlobRequest, opts ...grpc.CallOption) (*resourcepb.GetBlobResponse, error) {

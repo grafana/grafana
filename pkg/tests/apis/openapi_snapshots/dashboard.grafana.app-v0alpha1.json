@@ -2322,10 +2322,11 @@
             "default": ""
           },
           "ownerReferences": {
-            "description": "Owner references set on the resource metadata",
+            "description": "Owner references set on the resource metadata in the format {Group}/{Kind}/{Name}",
             "type": "array",
             "items": {
-              "default": {}
+              "type": "string",
+              "default": ""
             }
           },
           "resource": {

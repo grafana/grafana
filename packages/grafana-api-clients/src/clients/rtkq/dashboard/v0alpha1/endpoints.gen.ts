@@ -1193,8 +1193,8 @@ export type DashboardHit = {
   managedBy?: ManagedBy;
   /** The k8s "name" (eg, grafana UID) */
   name: string;
-  /** Owner references set on the resource metadata */
-  ownerReferences?: any[];
+  /** Owner references set on the resource metadata in the format {Group}/{Kind}/{Name} */
+  ownerReferences?: string[];
   /** Dashboard or folder */
   resource: string;
   /** When using "real" search, this is the score */
