@@ -24,6 +24,10 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 		all := reg.GetAll(group)
 		require.Len(t, all, 1)
 	}
+
+	// Security: wildcard-matched group must not resolve to resources from other groups
+	_, ok := reg.Get("loki.datasource.grafana.app", "dashboards")
+	assert.False(t, ok, "Get(datasource group, \"dashboards\") must not return a mapping")
 }
 
 func TestGroupMatchesWildcard(t *testing.T) {
