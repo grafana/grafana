@@ -200,7 +200,34 @@ describe('createSpanLinkFactory', () => {
             datasource: 'loki1_uid',
             queries: [
               {
-                expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} | logfmt | json | drop __error__, __error_details__ | trace_id="7946b05c2e2e4e5a" | span_id="6605c7b08e715d6c"',
+                expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} | logfmt | json | drop __error__, __error_details__ | trace_id="7946b05c2e2e4e5a" or traceid="7946b05c2e2e4e5a" | span_id="6605c7b08e715d6c" or spanid="6605c7b08e715d6c"',
+                refId: '',
+                datasource: { uid: 'loki1_uid' },
+              },
+            ],
+          })
+      );
+    });
+
+    it('filters by span ID (span_id or spanid)', () => {
+      const createLink = setupSpanLinkFactory({
+        filterBySpanID: true,
+        filterByTraceID: false,
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef?.type).toBe(SpanLinkType.Logs);
+      expect(decodeURIComponent(linkDef!.href)).toBe(
+        '/explore?left=' +
+          JSON.stringify({
+            range: { from: '1602637200000', to: '1602637201000' },
+            datasource: 'loki1_uid',
+            queries: [
+              {
+                expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} | logfmt | json | drop __error__, __error_details__ | span_id="6605c7b08e715d6c" or spanid="6605c7b08e715d6c"',
                 refId: '',
                 datasource: { uid: 'loki1_uid' },
               },

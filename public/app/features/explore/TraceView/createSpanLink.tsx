@@ -446,12 +446,14 @@ function getQueryForLoki(
 
   let expr = '{${__tags}}';
   if (filterByTraceID && span.traceID) {
-    expr += ' | logfmt | json | drop __error__, __error_details__ | trace_id="${__span.traceId}"';
+    expr +=
+      ' | logfmt | json | drop __error__, __error_details__ | trace_id="${__span.traceId}" or traceid="${__span.traceId}"';
     if (filterBySpanID && span.spanID) {
-      expr += ' | span_id="${__span.spanId}"';
+      expr += ' | span_id="${__span.spanId}" or spanid="${__span.spanId}"';
     }
   } else if (filterBySpanID && span.spanID) {
-    expr += ' | logfmt | json | drop __error__, __error_details__ | span_id="${__span.spanId}"';
+    expr +=
+      ' | logfmt | json | drop __error__, __error_details__ | span_id="${__span.spanId}" or spanid="${__span.spanId}"';
   }
 
   return {
