@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -190,82 +189,6 @@ func TestSearchFallback(t *testing.T) {
 		if mockLegacyClient.LastSearchRequest != nil {
 			t.Fatalf("expected Search NOT to be called, but it was")
 		}
-	})
-
-	t.Run("Adds owner references from resource store", func(t *testing.T) {
-		mockResponse := &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: resource.SEARCH_FIELD_TITLE},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Namespace: "test",
-							Group:     dashboardv0alpha1.GROUP,
-							Resource:  dashboardv0alpha1.DASHBOARD_RESOURCE,
-							Name:      "d1",
-						},
-						Cells: [][]byte{[]byte("Dashboard 1")},
-					},
-				},
-			},
-		}
-
-		ownerRefs := []metav1.OwnerReference{
-			{
-				APIVersion: "team.grafana.app/v1beta1",
-				Kind:       "Team",
-				Name:       "team-1",
-				UID:        "uid-1",
-			},
-		}
-		value, err := json.Marshal(map[string]any{
-			"apiVersion": dashboardv0alpha1.APIVERSION,
-			"kind":       "Dashboard",
-			"metadata": map[string]any{
-				"name":            "d1",
-				"namespace":       "test",
-				"ownerReferences": ownerRefs,
-			},
-			"spec": map[string]any{
-				"title": "Dashboard 1",
-			},
-		})
-		require.NoError(t, err)
-
-		mockClient := &MockClient{
-			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse},
-			ReadResponses: map[string]*resourcepb.ReadResponse{
-				"d1": {
-					Value: value,
-				},
-			},
-		}
-
-		features := featuremgmt.WithFeatures()
-		searchHandler := SearchHandler{
-			log:            log.New("test", "ownerRefs"),
-			client:         mockClient,
-			resourceClient: mockClient,
-			tracer:         tracing.NewNoopTracerService(),
-			features:       features,
-		}
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		var result dashboardv0alpha1.SearchResults
-		require.NoError(t, json.NewDecoder(rr.Body).Decode(&result))
-
-		require.Len(t, result.Hits, 1)
-		require.Len(t, result.Hits[0].OwnerReferences, 1)
-		assert.Equal(t, ownerRefs[0].Name, result.Hits[0].OwnerReferences[0].Name)
-		assert.Equal(t, ownerRefs[0].Kind, result.Hits[0].OwnerReferences[0].Kind)
 	})
 }
 
@@ -850,7 +773,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		Resource:  "folders",
 		Namespace: "test-namespace",
 	}
-	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id"}
+	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES}
 
 	tests := map[string]struct {
 		queryString           string
