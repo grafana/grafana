@@ -33,14 +33,13 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getConfig } from 'app/core/config';
-import { DATAPLANE_LABEL_TYPES_NAME } from 'app/plugins/datasource/loki/types';
 
 import { getLogsExtractFields } from '../explore/Logs/LogsTable';
 import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/utils/download';
 
 import { getDataframeFields } from './components/logParser';
 import { GetRowContextQueryFn } from './components/panel/LogLineMenu';
-import { DATAPLANE_LABELS_NAME } from './logsFrame';
+import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME } from './logsFrame';
 
 /**
  * Returns the log level of a log line.
