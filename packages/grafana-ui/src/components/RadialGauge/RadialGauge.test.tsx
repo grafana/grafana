@@ -123,7 +123,7 @@ describe('RadialGauge', () => {
       expect(screen.queryByTestId('radial-gauge-thresholds-bar')).not.toBeInTheDocument();
     });
 
-    it.skip('should not render thresholds bar the prop is not set', () => {
+    it('should not render thresholds bar if the prop is not set', () => {
       render(
         <RadialGaugeExample
           min={50}

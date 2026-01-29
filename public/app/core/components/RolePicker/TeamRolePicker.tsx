@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { Role, AccessControlAction } from 'app/types/accessControl';
+import { AccessControlAction, Role } from 'app/types/accessControl';
 
 import { RolePicker } from './RolePicker';
 import { fetchTeamRoles, updateTeamRoles } from './api';
@@ -83,6 +83,7 @@ export const TeamRolePicker = ({
 
   return (
     <RolePicker
+      pickerId={`team-picker-${teamId}`}
       apply={apply}
       onRolesChange={onRolesChange}
       roleOptions={roleOptions}
