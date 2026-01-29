@@ -282,7 +282,7 @@ func getSelectableFieldsFromObject(tmp *unstructured.Unstructured, fields []stri
 		case bool:
 			result[field] = strconv.FormatBool(v)
 		default:
-			// In practice there should only be strings, bools an int/float selectable fields.
+			// In practice there should only be strings, bools and int/float selectable fields.
 			result[field] = fmt.Sprintf("%v", v)
 		}
 	}
