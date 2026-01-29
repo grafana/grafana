@@ -393,6 +393,18 @@ func (s *searchSupport) Search(ctx context.Context, req *resourcepb.ResourceSear
 		}, nil
 	}
 
+	if req.Limit < 0 {
+		return &resourcepb.ResourceSearchResponse{
+			Error: NewBadRequestError("limit cannot be negative"),
+		}, nil
+	}
+
+	if req.Offset < 0 {
+		return &resourcepb.ResourceSearchResponse{
+			Error: NewBadRequestError("offset cannot be negative"),
+		}, nil
+	}
+
 	stats := NewSearchStats("Search")
 	defer s.logStats(ctx, stats, span, "namespace", req.Options.Key.Namespace, "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "query", req.Query)
 

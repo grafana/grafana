@@ -6,7 +6,6 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -158,7 +157,7 @@ func convertK8sSubRouteToRoute(r model.RoutingTreeRoute, path string) (definitio
 		MuteTimeIntervals:   r.MuteTimeIntervals,
 		ActiveTimeIntervals: r.ActiveTimeIntervals,
 		Routes:              make([]*definitions.Route, 0, len(r.Routes)),
-		Matchers:            make(config.Matchers, 0, len(r.Matchers)),
+		ObjectMatchers:      make(definitions.ObjectMatchers, 0, len(r.Matchers)),
 		Continue:            r.Continue,
 	}
 	if r.Receiver != nil {
