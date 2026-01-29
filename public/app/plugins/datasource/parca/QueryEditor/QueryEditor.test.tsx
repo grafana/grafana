@@ -23,6 +23,7 @@ describe('QueryEditor', () => {
   });
 
   it('should render without error', async () => {
+    setBackendSrv({ ...origBackendSrv, fetch: fetchMock });
     setup();
 
     expect(await screen.findByText(/process_cpu - cpu/)).toBeDefined();
