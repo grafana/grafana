@@ -499,7 +499,7 @@ describe('ProvisioningWizard', () => {
         mockMutationState,
       ]);
 
-      mockSubmitData.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
+      mockSubmitData.mockImplementation(() => new Promise(() => {})); // Never resolves to simulate loading
 
       const { user } = setup(<ProvisioningWizard type="github" />);
 
