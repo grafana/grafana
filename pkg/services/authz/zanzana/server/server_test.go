@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -153,12 +152,7 @@ func TestIntegrationServer(t *testing.T) {
 func setupOpenFGAServer(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	t.Helper()
 
-	store, err := store.NewEmbeddedStore(cfg, testDB, log.NewNopLogger())
-	require.NoError(t, err)
-	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, store)
-	require.NoError(t, err)
-
-	srv, err := NewServer(cfg.ZanzanaServer, openfga, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
+	srv, err := NewEmbeddedZanzanaServer(cfg, testDB, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
 	require.NoError(t, err)
 
 	return srv
@@ -171,7 +165,7 @@ func setupOpenFGADatabase(t *testing.T, srv *Server, tuples []*openfgav1.TupleKe
 	require.NoError(t, err)
 
 	// Clean up any existing store
-	_, err = srv.openfga.DeleteStore(context.Background(), &openfgav1.DeleteStoreRequest{
+	_, err = srv.openFGAClient.DeleteStore(context.Background(), &openfgav1.DeleteStoreRequest{
 		StoreId: storeInf.ID,
 	})
 	require.NoError(t, err)
@@ -193,7 +187,7 @@ func setupOpenFGADatabase(t *testing.T, srv *Server, tuples []*openfgav1.TupleKe
 	}
 
 	// Try to delete existing tuples (ignore errors if they don't exist)
-	_, err = srv.openfga.Write(context.Background(), &openfgav1.WriteRequest{
+	_, err = srv.openFGAClient.Write(context.Background(), &openfgav1.WriteRequest{
 		StoreId:              storeInf.ID,
 		AuthorizationModelId: storeInf.ModelID,
 		Deletes: &openfgav1.WriteRequestDeletes{
@@ -204,7 +198,7 @@ func setupOpenFGADatabase(t *testing.T, srv *Server, tuples []*openfgav1.TupleKe
 	require.NoError(t, err)
 
 	// Now write the new tuples
-	_, err = srv.openfga.Write(context.Background(), &openfgav1.WriteRequest{
+	_, err = srv.openFGAClient.Write(context.Background(), &openfgav1.WriteRequest{
 		StoreId:              storeInf.ID,
 		AuthorizationModelId: storeInf.ModelID,
 		Writes:               writes,

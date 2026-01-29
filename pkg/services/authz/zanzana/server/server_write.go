@@ -73,7 +73,7 @@ func (s *Server) write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 		}
 	}
 
-	_, err = s.openfga.Write(ctx, writeReq)
+	_, err = s.openFGAClient.Write(ctx, writeReq)
 	if err != nil {
 		s.logger.Error("failed to perform openfga Write request", "error", errors.Unwrap(err))
 		return nil, err
