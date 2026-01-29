@@ -66,15 +66,41 @@ The following table describes the available configuration options:
 | **Allowed cookies** | Cookies to forward to the data source. Use this when your OpenTSDB server requires specific cookies for authentication. |
 | **Timeout** | HTTP request timeout in seconds. Increase this value for slow networks or complex queries. |
 
+## Auth settings
+
+Configure authentication if your OpenTSDB server requires it:
+
+| Setting | Description |
+| ------- | ----------- |
+| **Basic auth** | Enable to authenticate with a username and password. When enabled, enter the username and password in the fields that appear. |
+| **With Credentials** | Enable to send cookies or auth headers with cross-site requests. Use this when OpenTSDB is on a different domain and requires credentials. |
+| **TLS Client Authentication** | Enable to use client certificates for authentication. Requires configuring client certificate and key. |
+| **Skip TLS Verify** | Enable to skip verification of the OpenTSDB server's TLS certificate. Only use this in development environments. |
+| **Forward OAuth Identity** | Enable to forward the user's OAuth token to the data source. Useful when OpenTSDB is behind an OAuth-protected proxy. |
+| **Custom HTTP Headers** | Add custom headers to all requests sent to OpenTSDB. Useful for API keys or custom authentication schemes. |
+
 ## OpenTSDB settings
 
 Configure these settings based on your OpenTSDB server version and configuration:
 
 | Setting | Description |
 | ------- | ----------- |
-| **Version** | Select your OpenTSDB version. Options: `<=2.1`, `==2.2`, `==2.3`, `==2.4`. This affects available query features such as filters and fill policies. |
+| **Version** | Select your OpenTSDB version. This affects available query features. Refer to the following section for version-specific features. |
 | **Resolution** | The resolution of your metric data. Select `second` for second-precision timestamps or `millisecond` for millisecond-precision timestamps. |
 | **Lookup limit** | Maximum number of results returned by suggest and lookup API calls. Default is `1000`. Increase this if you have many metrics or tag values. |
+
+### Version-specific features
+
+The version setting enables different query features in Grafana:
+
+| Version | Available features |
+| ------- | ------------------ |
+| **<=2.1** | Basic queries with tags. Uses legacy tag-based filtering. |
+| **==2.2** | Adds filter support (literal_or, wildcard, regexp, and more). Filters replace tags for more flexible queries. |
+| **==2.3** | Adds explicit tags support for rate calculations and additional filter types. |
+| **==2.4** | Adds fill policy support for downsampling (none, null, zero, nan). Enables `arrays=true` for alerting compatibility. |
+
+Select the version that matches your OpenTSDB server. If you're unsure, check your OpenTSDB version with the `/api/version` endpoint.
 
 ## Verify the connection
 
@@ -88,7 +114,7 @@ You can define and configure the data source in YAML files as part of the Grafan
 
 ### YAML example
 
-The following example provisions an OpenTSDB data source with all available options:
+The following example provisions an OpenTSDB data source:
 
 ```yaml
 apiVersion: 1
@@ -98,7 +124,6 @@ datasources:
     type: opentsdb
     access: proxy
     url: http://localhost:4242
-    basicAuth: false
     jsonData:
       # OpenTSDB version: 1 = <=2.1, 2 = 2.2, 3 = 2.3, 4 = 2.4
       tsdbVersion: 3
@@ -108,13 +133,61 @@ datasources:
       lookupLimit: 1000
 ```
 
-The following table describes the `jsonData` fields:
+### YAML example with basic authentication
 
-| Field | Description | Values |
-| ----- | ----------- | ------ |
-| `tsdbVersion` | OpenTSDB version. | `1` (<=2.1), `2` (2.2), `3` (2.3), `4` (2.4) |
-| `tsdbResolution` | Timestamp resolution. | `1` (second), `2` (millisecond) |
-| `lookupLimit` | Maximum results for suggest and lookup API calls. | Default: `1000` |
+The following example provisions an OpenTSDB data source with basic authentication:
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: OpenTSDB
+    type: opentsdb
+    access: proxy
+    url: http://localhost:4242
+    basicAuth: true
+    basicAuthUser: <USERNAME>
+    jsonData:
+      tsdbVersion: 3
+      tsdbResolution: 1
+      lookupLimit: 1000
+    secureJsonData:
+      basicAuthPassword: <PASSWORD>
+```
+
+### YAML example with custom headers
+
+The following example provisions an OpenTSDB data source with custom HTTP headers:
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: OpenTSDB
+    type: opentsdb
+    access: proxy
+    url: http://localhost:4242
+    jsonData:
+      tsdbVersion: 3
+      tsdbResolution: 1
+      lookupLimit: 1000
+      httpHeaderName1: X-Custom-Header
+    secureJsonData:
+      httpHeaderValue1: <HEADER_VALUE>
+```
+
+The following table describes the available fields:
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `basicAuth` | boolean | Enable basic authentication. |
+| `basicAuthUser` | string | Username for basic authentication. |
+| `jsonData.tsdbVersion` | number | OpenTSDB version: `1` (<=2.1), `2` (2.2), `3` (2.3), `4` (2.4). |
+| `jsonData.tsdbResolution` | number | Timestamp resolution: `1` (second), `2` (millisecond). |
+| `jsonData.lookupLimit` | number | Maximum results for suggest and lookup API calls. Default: `1000`. |
+| `jsonData.httpHeaderName1` | string | Name of a custom HTTP header. Use incrementing numbers for multiple headers. |
+| `secureJsonData.basicAuthPassword` | string | Password for basic authentication. |
+| `secureJsonData.httpHeaderValue1` | string | Value for the custom HTTP header. |
 
 ## Provision with Terraform
 
@@ -157,7 +230,33 @@ resource "grafana_data_source" "opentsdb" {
 }
 ```
 
+### Terraform example with basic authentication
+
+The following example provisions an OpenTSDB data source with basic authentication:
+
+```hcl
+resource "grafana_data_source" "opentsdb_auth" {
+  type                = "opentsdb"
+  name                = "OpenTSDB"
+  url                 = "http://localhost:4242"
+  basic_auth_enabled  = true
+  basic_auth_username = "<USERNAME>"
+
+  json_data_encoded = jsonencode({
+    tsdbVersion    = 3
+    tsdbResolution = 1
+    lookupLimit    = 1000
+  })
+
+  secure_json_data_encoded = jsonencode({
+    basicAuthPassword = "<PASSWORD>"
+  })
+}
+```
+
 Replace the following placeholders:
 
 - _`<YOUR_GRAFANA_URL>`_: Your Grafana instance URL (for example, `https://your-org.grafana.net` for Grafana Cloud)
 - _`<YOUR_SERVICE_ACCOUNT_TOKEN>`_: A service account token with data source permissions
+- _`<USERNAME>`_: The username for basic authentication
+- _`<PASSWORD>`_: The password for basic authentication
