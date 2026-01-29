@@ -18,42 +18,71 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
+// configStore provides access to persisted Alertmanager configurations.
+// Used by the secondary forked alertmanager to fetch the latest configuration
+// when syncing to the remote Alertmanager (e.g., during shutdown).
 type configStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 }
 
 //go:generate mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
+
+// remoteAlertmanager extends the standard Alertmanager interface with methods
+// specific to remote Alertmanager operations. This interface is used by forked
+// alertmanagers to coordinate between internal and remote implementations.
 type remoteAlertmanager interface {
 	notifier.Alertmanager
+
+	// CompareAndSendConfiguration checks if the remote config differs from the provided
+	// configuration and uploads it if necessary.
 	CompareAndSendConfiguration(context.Context, *models.AlertConfiguration) error
+
+	// GetRemoteState fetches the current state (silences, notification log) from the
+	// remote Alertmanager.
 	GetRemoteState(context.Context) (notifier.ExternalState, error)
+
+	// SendState uploads the current state to the remote Alertmanager.
 	SendState(context.Context) error
 }
 
+// RemoteSecondaryForkedAlertmanager coordinates between internal and remote Alertmanagers
+// with the internal Alertmanager as the primary/source of truth.
+//
+// In this mode:
+//   - All read operations go to the internal Alertmanager.
+//   - All write operations go to the internal Alertmanager.
+//   - Configuration is periodically synced to remote in the background.
+//   - State can be fetched from remote and merged at startup (for migration).
+//   - Remote Alertmanager errors are logged but don't fail operations.
+//
+// This mode is used when running primarily on internal Alertmanager but replicating to remote.
 type RemoteSecondaryForkedAlertmanager struct {
 	log   log.Logger
 	orgID int64
-	store configStore
+	store configStore // Access to persisted configurations
 
-	internal notifier.Alertmanager
-	remote   remoteAlertmanager
+	internal notifier.Alertmanager // Internal AM that is the source of truth
+	remote   remoteAlertmanager     // Remote AM that receives replicated state
 
-	lastSync     time.Time
-	syncInterval time.Duration
+	lastSync     time.Time     // Last successful config sync to remote
+	syncInterval time.Duration // Minimum interval between config syncs
 
-	shouldFetchRemoteState bool
+	shouldFetchRemoteState bool // Whether to fetch and merge remote state at startup
 }
 
+// RemoteSecondaryConfig configures a RemoteSecondaryForkedAlertmanager.
 type RemoteSecondaryConfig struct {
 	Logger log.Logger
 	OrgID  int64
-	Store  configStore
+	Store  configStore // Access to persisted configurations
 
 	// SyncInterval determines how often we should attempt to synchronize
-	// the configuration on the remote Alertmanager.
+	// the configuration to the remote Alertmanager.
 	SyncInterval time.Duration
 
-	// WithRemoteState is used to fetch and merge the state from the remote Alertmanager before starting the internal one.
+	// WithRemoteState when true, fetches and merges state from the remote
+	// Alertmanager before starting the internal one. This is useful for
+	// graceful migration between instances.
 	WithRemoteState bool
 }
 

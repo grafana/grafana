@@ -10,6 +10,7 @@ import (
 	"maps"
 	"net/http"
 	"net/url"
+	"runtime/debug"
 	"slices"
 	"strings"
 	"time"
@@ -45,51 +46,71 @@ import (
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
+// stateStore provides access to the internal Alertmanager's persisted state.
+// State includes silences, notification log entries, and flush log entries.
+// Implementations should return the raw pieces of state as stored by the Alertmanager.
 type stateStore interface {
-	GetSilences(ctx context.Context) (string, error)
-	GetNotificationLog(ctx context.Context) (string, error)
 	GetFlushLog(ctx context.Context) (string, error)
+	GetNotificationLog(ctx context.Context) (string, error)
+	GetSilences(ctx context.Context) (string, error)
 }
 
 // AutogenFn is a function that adds auto-generated routes to a configuration.
 type AutogenFn func(ctx context.Context, logger log.Logger, orgId int64, config *apimodels.PostableApiAlertingConfig, invalidReceiverAction notifier.InvalidReceiversAction) error
 
-// NoopAutogenFn is used to skip auto-generating routes.
-func NoopAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *apimodels.PostableApiAlertingConfig, _ notifier.InvalidReceiversAction) error {
-	return nil
-}
-
+// Crypto provides encryption and decryption services for sensitive configuration data.
+// The remote Alertmanager requires decrypted configuration (e.g., receiver credentials,
+// API keys) to send notifications. This interface abstracts the encryption service
+// used by Grafana.
 type Crypto interface {
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
 	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
 	DecryptExtraConfigs(ctx context.Context, config *apimodels.PostableUserConfig) error
 }
 
+// Alertmanager is a remote Alertmanager client that synchronizes configuration and state
+// with an external Alertmanager (e.g., Mimir). It handles:
+//   - Configuration building, encryption, and synchronization
+//   - State management (silences, notification logs)
+//   - Alert sending to the remote Alertmanager
+//   - Read operations (silences, alerts, status) from the remote Alertmanager
+//
+// The Alertmanager is typically wrapped by a forked alertmanager (Primary or Secondary mode)
+// that coordinates between internal and remote implementations.
 type Alertmanager struct {
-	autogenFn         AutogenFn
-	crypto            Crypto
-	defaultConfig     string
-	defaultConfigHash string
-	log               log.Logger
-	metrics           *metrics.RemoteAlertmanager
-	orgID             int64
-	ready             bool
-	sender            *sender.ExternalAlertmanager
-	smtp              remoteClient.SmtpConfig
-	state             stateStore
-	tenantID          string
-	url               string
+	// Core dependencies.
+	autogenFn AutogenFn // Function to add auto-generated routes to configuration
+	crypto    Crypto    // Service for encrypting/decrypting sensitive configuration
+	log       log.Logger
+	metrics   *metrics.RemoteAlertmanager
+	state     stateStore // Access to internal Alertmanager state
 
-	lastConfigSync time.Time
-	syncInterval   time.Duration
+	// Organization and tenant configuration.
+	orgID    int64
+	tenantID string // Tenant ID used by the remote Alertmanager
 
-	amClient    *remoteClient.Alertmanager
+	// Remote Alertmanager connection.
+	url      string                       // Base URL of the remote Alertmanager
+	amClient *remoteClient.Alertmanager   // Client for Alertmanager API operations
+	sender   *sender.ExternalAlertmanager // Sends alerts to the remote Alertmanager
+	smtp     remoteClient.SmtpConfig      // SMTP configuration for email notifications
+	ready    bool                         // Whether the remote Alertmanager passed readiness check
+
+	// Mimir-specific client (superset of Alertmanager API).
 	mimirClient remoteClient.MimirClient
 
-	promoteConfig bool
-	externalURL   string
+	// Default configuration handling.
+	defaultConfig     string // Raw default configuration
+	defaultConfigHash string // Hash of default config for comparison
 
-	runtimeConfig remoteClient.RuntimeConfig
+	// Configuration synchronization.
+	lastConfigSync time.Time     // Last successful config sync timestamp
+	syncInterval   time.Duration // Minimum interval between config syncs
+
+	// Advanced configuration.
+	promoteConfig bool                       // Whether to promote this org's config in the remote AM
+	externalURL   string                     // External URL used in notifications
+	runtimeConfig remoteClient.RuntimeConfig // Runtime behavior settings
 }
 
 type AlertmanagerConfig struct {
@@ -226,7 +247,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		return nil
 	}()
 	if err != nil {
-		logger.Error("Unable to calculate hash of the default configuration. Remote Alertmanager will always get isDefault=false", "error", err)
+		logger.Warn("Unable to calculate hash of the default configuration. Remote Alertmanager will always get isDefault=false", "error", err)
 	}
 	// Initialize LastReadinessCheck so it's present even if the check fails.
 	metrics.LastReadinessCheck.Set(0)
@@ -243,28 +264,26 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 	if am.ready {
 		am.log.Debug("Alertmanager previously marked as ready, skipping readiness check and state sync")
 	} else {
-		am.log.Debug("Start readiness check for remote Alertmanager", "url", am.url)
+		am.log.Debug("Performing readiness check and state sync for remote Alertmanager", "url", am.url)
 		if err := am.checkReadiness(ctx); err != nil {
 			return fmt.Errorf("unable to pass the readiness check: %w", err)
 		}
-		am.log.Debug("Completed readiness check for remote Alertmanager, starting state upload", "url", am.url)
 
 		if err := am.SendState(ctx); err != nil {
 			return fmt.Errorf("unable to upload the state to the remote Alertmanager: %w", err)
 		}
-		am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
+		am.log.Debug("Completed initial readiness check and state sync", "url", am.url)
 	}
 
 	if time.Since(am.lastConfigSync) < am.syncInterval {
-		am.log.Debug("Not syncing configuration to remote Alertmanager, last sync was too recent")
+		am.log.Debug("Skipping configuration sync, last sync was too recent", "lastSync", am.lastConfigSync, "interval", am.syncInterval)
 		return nil
 	}
 
-	am.log.Debug("Start configuration upload to remote Alertmanager", "url", am.url)
+	am.log.Debug("Syncing configuration to remote Alertmanager", "url", am.url)
 	if err := am.CompareAndSendConfiguration(ctx, config); err != nil {
 		return fmt.Errorf("unable to upload the configuration to the remote Alertmanager: %w", err)
 	}
-	am.log.Debug("Completed configuration upload to remote Alertmanager", "url", am.url)
 	return nil
 }
 
@@ -348,7 +367,7 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte, crea
 
 	cfgHash, err := calculateUserGrafanaConfigHash(payload)
 	if err != nil {
-		am.log.Error("Unable to calculate hash of the configuration. Using the empty string", "error", err)
+		am.log.Warn("Unable to calculate hash of the configuration. Using the empty string", "error", err)
 		cfgHash = ""
 	}
 	payload.Hash = cfgHash
@@ -364,6 +383,7 @@ func (am *Alertmanager) sendConfiguration(ctx context.Context, cfg remoteClient.
 	}
 	am.metrics.LastConfigSync.SetToCurrentTime()
 	am.lastConfigSync = time.Now()
+	am.log.Debug("Configuration sent to remote Alertmanager", "hash", cfg.Hash, "default", cfg.Default)
 	return nil
 }
 
@@ -423,6 +443,7 @@ func (am *Alertmanager) SendState(ctx context.Context) error {
 	}
 
 	am.metrics.LastStateSync.SetToCurrentTime()
+	am.log.Debug("State sent to remote Alertmanager")
 	return nil
 }
 
@@ -459,7 +480,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 func (am *Alertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			am.log.Error("Panic while creating silence", "err", r)
+			am.log.Error("Panic while creating silence", "err", r, "stack", string(debug.Stack()))
 		}
 	}()
 
@@ -487,7 +508,7 @@ func (am *Alertmanager) CreateSilence(ctx context.Context, silence *apimodels.Po
 func (am *Alertmanager) DeleteSilence(ctx context.Context, silenceID string) error {
 	defer func() {
 		if r := recover(); r != nil {
-			am.log.Error("Panic while deleting silence", "err", r)
+			am.log.Error("Panic while deleting silence", "err", r, "stack", string(debug.Stack()))
 		}
 	}()
 
@@ -502,7 +523,7 @@ func (am *Alertmanager) DeleteSilence(ctx context.Context, silenceID string) err
 func (am *Alertmanager) GetSilence(ctx context.Context, silenceID string) (apimodels.GettableSilence, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			am.log.Error("Panic while getting silence", "err", r)
+			am.log.Error("Panic while getting silence", "err", r, "stack", string(debug.Stack()))
 		}
 	}()
 
@@ -518,7 +539,7 @@ func (am *Alertmanager) GetSilence(ctx context.Context, silenceID string) (apimo
 func (am *Alertmanager) ListSilences(ctx context.Context, filter []string) (apimodels.GettableSilences, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			am.log.Error("Panic while listing silences", "err", r)
+			am.log.Error("Panic while listing silences", "err", r, "stack", string(debug.Stack()))
 		}
 	}()
 
@@ -534,7 +555,7 @@ func (am *Alertmanager) ListSilences(ctx context.Context, filter []string) (apim
 func (am *Alertmanager) GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			am.log.Error("Panic while getting alerts", "err", r)
+			am.log.Error("Panic while getting alerts", "err", r, "stack", string(debug.Stack()))
 		}
 	}()
 
@@ -556,7 +577,7 @@ func (am *Alertmanager) GetAlerts(ctx context.Context, active, silenced, inhibit
 func (am *Alertmanager) GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			am.log.Error("Panic while getting alert groups", "err", r)
+			am.log.Error("Panic while getting alert groups", "err", r, "stack", string(debug.Stack()))
 		}
 	}()
 
@@ -576,6 +597,7 @@ func (am *Alertmanager) GetAlertGroups(ctx context.Context, active, silenced, in
 }
 
 func (am *Alertmanager) PutAlerts(ctx context.Context, alerts apimodels.PostableAlerts) error {
+	filteredLabels := 0
 	for _, a := range alerts.PostableAlerts {
 		for k, v := range a.Labels {
 			// The Grafana Alertmanager skips empty and namespace UID labels.
@@ -583,8 +605,12 @@ func (am *Alertmanager) PutAlerts(ctx context.Context, alerts apimodels.Postable
 			// https://github.com/grafana/alerting/blob/2dda1c67ec02625ac9fc8607157b3d5825d47919/notify/grafana_alertmanager.go#L722-L724
 			if len(v) == 0 || k == alertingModels.NamespaceUIDLabel {
 				delete(a.Labels, k)
+				filteredLabels++
 			}
 		}
+	}
+	if filteredLabels > 0 {
+		am.log.Debug("Filtered labels from alerts", "filteredLabels", filteredLabels, "alerts", len(alerts.PostableAlerts))
 	}
 	am.log.Debug("Sending alerts to a remote alertmanager", "url", am.url, "alerts", len(alerts.PostableAlerts))
 	am.sender.SendAlerts(alerts)
@@ -595,7 +621,7 @@ func (am *Alertmanager) PutAlerts(ctx context.Context, alerts apimodels.Postable
 func (am *Alertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			am.log.Error("Panic while getting status", "err", r)
+			am.log.Error("Panic while getting status", "err", r, "stack", string(debug.Stack()))
 		}
 	}()
 
@@ -788,7 +814,7 @@ func calculateUserGrafanaConfigHash(config remoteClient.UserGrafanaConfig) (stri
 func (am *Alertmanager) logDiff(curCfg, newCfg *remoteClient.UserGrafanaConfig) []string {
 	defer func() {
 		if r := recover(); r != nil {
-			am.log.Warn("Panic while comparing configurations", "err", r)
+			am.log.Warn("Panic while comparing configurations", "err", r, "stack", string(debug.Stack()))
 		}
 	}()
 	var reporter cmputil.DiffReporter
