@@ -7,6 +7,7 @@ import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { MultiValueVariable, VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
 import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
+import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 interface VariableState {
   options: VariableValueOption[];
@@ -42,11 +43,14 @@ function flattenProperties(properties?: VariableValueOptionProperties, path = ''
   return result;
 }
 
-// always get the properties from a non-static option
-export const useGetPropertiesFromOptions = (options: VariableValueOption[], staticOptions?: VariableValueOption[]) =>
+// Use the first non-static option which is not the "All" option to derive properties
+export const useGetPropertiesFromOptions = (
+  options: VariableValueOption[],
+  staticOptions: VariableValueOption[] = []
+) =>
   useMemo(() => {
     const staticValues = new Set(staticOptions?.map((s) => s.value) ?? []);
-    const queryOption = options.find((opt) => !staticValues.has(opt.value));
+    const queryOption = options.find((o) => o.value !== ALL_VARIABLE_VALUE && !staticValues.has(o.value));
     const flattened = flattenProperties(queryOption?.properties);
     const keys = Object.keys(flattened).filter((p) => !['text', 'value'].includes(p));
     return ['text', 'value', ...keys];
@@ -57,8 +61,8 @@ export const VariableValuesPreview = ({ variable }: VariableValuesPreviewProps) 
   const state = variable.useState();
   const options = 'getOptionsForSelect' in variable ? variable.getOptionsForSelect(false) : state.options;
   const staticOptions = 'staticOptions' in state && Array.isArray(state.staticOptions) ? state.staticOptions : [];
-  const hasOptions = options.length > 0;
   const properties = useGetPropertiesFromOptions(options, staticOptions);
+  const hasOptions = options.length > 0;
   const displayMultiPropsPreview = config.featureToggles.multiPropsVariables && hasOptions && properties.length > 2;
 
   return (
