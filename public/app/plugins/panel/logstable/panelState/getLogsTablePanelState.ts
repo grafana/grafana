@@ -6,6 +6,7 @@ interface LogsPermalinkUrlState {
   };
 }
 
+// @todo DRY with app/plugins/panel/logs/LogsPanel.tsx
 export function getLogsTablePanelState(): LogsPermalinkUrlState | undefined {
   const urlParams = urlUtil.getUrlSearchParams();
   const panelStateEncoded = urlParams?.panelState;

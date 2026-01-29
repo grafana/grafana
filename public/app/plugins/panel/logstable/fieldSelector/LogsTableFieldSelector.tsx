@@ -69,7 +69,6 @@ export const LogsTableFieldSelector = ({
 
   const setSidebarWidthWrapper = useCallback(
     (width: number) => {
-      console.log('setSidebarWidthWrapper', width);
       setSidebarWidth(width);
       // Getting value in getFieldSelectorWidth
       store.set(`${SETTING_KEY_ROOT}.fieldSelector.width`, width);

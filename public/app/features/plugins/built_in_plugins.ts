@@ -41,7 +41,7 @@ const histogramPanel = async () =>
 const livePanel = async () => await import(/* webpackChunkName: "livePanel" */ 'app/plugins/panel/live/module');
 const logsPanel = async () => await import(/* webpackChunkName: "logsPanel" */ 'app/plugins/panel/logs/module');
 const logsTablePanel = async () =>
-  await import(/* webpackChunkName: "logsPanel" */ 'app/plugins/panel/logstable/module');
+  await import(/* webpackChunkName: "logsTablePanel" */ 'app/plugins/panel/logstable/module');
 const newsPanel = async () => await import(/* webpackChunkName: "newsPanel" */ 'app/plugins/panel/news/module');
 const pieChartPanel = async () =>
   await import(/* webpackChunkName: "pieChartPanel" */ 'app/plugins/panel/piechart/module');

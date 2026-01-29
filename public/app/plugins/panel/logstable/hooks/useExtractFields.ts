@@ -32,7 +32,6 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
       return;
     }
 
-    // console.log('useExtractFields', { dataLinkPostProcessor, fieldConfig, rawTableFrame, theme, timeZone });
     const extractFields = async () => {
       return await lastValueFrom(transformDataFrame(extractLogsFieldsTransform(rawTableFrame), [rawTableFrame]));
     };

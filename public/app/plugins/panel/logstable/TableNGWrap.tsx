@@ -52,8 +52,6 @@ export function TableNGWrap({
     [onFieldConfigChange]
   );
 
-  console.log('render::TableNGWrap');
-
   return (
     <div className={styles.tableWrapper}>
       <TablePanel

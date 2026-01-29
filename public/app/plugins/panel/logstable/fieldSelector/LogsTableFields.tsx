@@ -75,8 +75,6 @@ export function LogsTableFields({
     return null;
   }
 
-  console.log('render::LogsTableFields', sidebarWidth, containerRef);
-
   return (
     <div ref={containerRef} className={styles.sidebarWrapper}>
       {containerElement && (

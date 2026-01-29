@@ -29,7 +29,7 @@ interface Props extends CustomCellRendererProps {
  * @constructor
  */
 export function LogsTableRowActionButtons(props: Props) {
-  const { field, rowIndex, frame, buildLinkToLog, bodyFieldName, showInspectLogLine, logsFrame } = props;
+  const { rowIndex, frame, buildLinkToLog, bodyFieldName, showInspectLogLine, logsFrame } = props;
   const theme = useTheme2();
   const [isInspecting, setIsInspecting] = useState(false);
   const styles = getStyles(theme);
@@ -70,20 +70,7 @@ export function LogsTableRowActionButtons(props: Props) {
               aria-label={t('explore.logs-table.action-buttons.copy-link', 'Copy link to log line')}
               getText={() => {
                 const logId = logsFrame?.idField?.values?.[rowIndex];
-                const firstFieldValueAtIndex = frame.fields?.[0]?.values[rowIndex];
-                const secondFieldValueAtIndex = frame.fields?.[1]?.values[rowIndex];
-                const logFrameBodyAtIndex = logsFrame.bodyField.values[rowIndex];
                 if (logId) {
-                  console.log('Copy link to log line', {
-                    field,
-                    frame,
-                    rowIndex,
-                    logsFrame,
-                    logId,
-                    firstFieldValueAtIndex,
-                    secondFieldValueAtIndex,
-                    logFrameBodyAtIndex,
-                  });
                   return buildLinkToLog(logId) ?? '';
                 } else {
                   console.error('failed to copy log line link!');

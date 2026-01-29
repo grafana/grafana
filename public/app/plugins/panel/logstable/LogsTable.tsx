@@ -140,7 +140,7 @@ export const LogsTable = ({
     !bodyFieldName ||
     panelData === null
   ) {
-    return;
+    return null;
   }
 
   return (
