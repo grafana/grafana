@@ -6,7 +6,6 @@ import { t, Trans } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2, Icon, Button, Text } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { isExpressionQuery } from 'app/features/expressions/guards';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
@@ -18,6 +17,7 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from '../QueryEditorContext';
+import { getEditorType } from '../utils';
 
 import { EditableQueryName } from './EditableQueryName';
 
@@ -27,11 +27,7 @@ export function ContentHeader() {
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
 
-  const cardType = selectedTransformation
-    ? QueryEditorType.Transformation
-    : isExpressionQuery(selectedQuery ?? undefined)
-      ? QueryEditorType.Expression
-      : QueryEditorType.Query;
+  const cardType = getEditorType(selectedTransformation || selectedQuery);
 
   const styles = useStyles2(getStyles, { cardType });
 
