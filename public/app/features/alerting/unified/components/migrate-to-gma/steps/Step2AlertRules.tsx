@@ -8,12 +8,10 @@ import { config } from '@grafana/runtime';
 import {
   Alert,
   Box,
-  Button,
   Combobox,
   ComboboxOption,
   Field,
   FileUpload,
-  Icon,
   InlineField,
   InlineSwitch,
   Input,
@@ -34,19 +32,23 @@ import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName } from '../../rule-editor/useAlertRuleSuggestions';
 import { MERGE_MATCHERS_LABEL_NAME, MigrationFormValues } from '../MigrateToGMA';
 
-interface Step2Props {
-  onComplete: () => void;
-  onSkip: () => void;
-  onBack: () => void;
+interface Step2ContentProps {
   step1Completed: boolean;
   step1Skipped: boolean;
   /** Whether the user has permission to import rules */
   canImport: boolean;
+  /** Callback to report validation state changes */
+  onValidationChange?: (isValid: boolean) => void;
 }
 
 const supportedImportTypes: string[] = [DataSourceType.Prometheus, DataSourceType.Loki];
 
-export function Step2AlertRules({ onComplete, onSkip, onBack, step1Completed, step1Skipped, canImport }: Step2Props) {
+/**
+ * Step2Content - Content for the alert rules import step
+ * This component contains only the form fields, without the header or action buttons
+ * The WizardStep wrapper provides those
+ */
+export function Step2Content({ step1Completed, step1Skipped, canImport, onValidationChange }: Step2ContentProps) {
   const styles = useStyles2(getStyles);
   const {
     control,
@@ -161,7 +163,8 @@ export function Step2AlertRules({ onComplete, onSkip, onBack, step1Completed, st
     ),
   });
 
-  const canProceed = () => {
+  // Validation logic - same as before
+  const isValid = useMemo(() => {
     // Can't proceed without permission
     if (!canImport) {
       return false;
@@ -180,22 +183,24 @@ export function Step2AlertRules({ onComplete, onSkip, onBack, step1Completed, st
       return false;
     }
     return true;
-  };
+  }, [
+    canImport,
+    rulesSource,
+    rulesYamlFile,
+    rulesDatasourceUID,
+    notificationPolicyOption,
+    manualLabelName,
+    manualLabelValue,
+    targetDatasourceUID,
+  ]);
+
+  // Report validation changes to parent
+  useEffect(() => {
+    onValidationChange?.(isValid);
+  }, [isValid, onValidationChange]);
 
   return (
     <Stack direction="column" gap={3}>
-      {/* Header */}
-      <Box>
-        <Text variant="h3" element="h2">
-          {t('alerting.migrate-to-gma.step2.heading', '2. Import Alert Rules')}
-        </Text>
-        <Text color="secondary">
-          <Trans i18nKey="alerting.migrate-to-gma.step2.subtitle">
-            Import alert rules and recording rules from an external source.
-          </Trans>
-        </Text>
-      </Box>
-
       {step1Skipped && (
         <Alert severity="info" title={t('alerting.migrate-to-gma.step2.skipped-step1', 'Step 1 was skipped')}>
           <Trans i18nKey="alerting.migrate-to-gma.step2.skipped-step1-desc">
@@ -528,22 +533,60 @@ export function Step2AlertRules({ onComplete, onSkip, onBack, step1Completed, st
           </Stack>
         </div>
       </div>
-
-      {/* Actions */}
-      <Stack direction="row" gap={2}>
-        <Button variant="secondary" onClick={onBack}>
-          {t('alerting.migrate-to-gma.step2.back', '← Back')}
-        </Button>
-        <Button variant="secondary" onClick={onSkip}>
-          {t('alerting.migrate-to-gma.step2.skip', 'Skip this step')}
-        </Button>
-        <Button variant="primary" onClick={onComplete} disabled={!canProceed()}>
-          <Icon name="arrow-right" />
-          {t('alerting.migrate-to-gma.step2.continue', 'Continue')}
-        </Button>
-      </Stack>
     </Stack>
   );
+}
+
+/**
+ * Hook to check if Step 2 form is valid
+ */
+export function useStep2Validation(canImport: boolean): boolean {
+  const { watch } = useFormContext<MigrationFormValues>();
+  const [
+    rulesSource,
+    rulesDatasourceUID,
+    rulesYamlFile,
+    notificationPolicyOption,
+    manualLabelName,
+    manualLabelValue,
+    targetDatasourceUID,
+  ] = watch([
+    'rulesSource',
+    'rulesDatasourceUID',
+    'rulesYamlFile',
+    'notificationPolicyOption',
+    'manualLabelName',
+    'manualLabelValue',
+    'targetDatasourceUID',
+  ]);
+
+  return useMemo(() => {
+    if (!canImport) {
+      return false;
+    }
+    if (rulesSource === 'yaml' && !rulesYamlFile) {
+      return false;
+    }
+    if (rulesSource === 'datasource' && !rulesDatasourceUID) {
+      return false;
+    }
+    if (notificationPolicyOption === 'manual' && (!manualLabelName || !manualLabelValue)) {
+      return false;
+    }
+    if (!targetDatasourceUID) {
+      return false;
+    }
+    return true;
+  }, [
+    canImport,
+    rulesSource,
+    rulesYamlFile,
+    rulesDatasourceUID,
+    notificationPolicyOption,
+    manualLabelName,
+    manualLabelValue,
+    targetDatasourceUID,
+  ]);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

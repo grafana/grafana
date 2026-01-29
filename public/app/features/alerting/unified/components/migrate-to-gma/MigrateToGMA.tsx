@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Button, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -15,8 +15,12 @@ import { AlertingPageWrapper } from '../AlertingPageWrapper';
 
 import { DryRunValidationModal, DryRunValidationResult } from './DryRunValidationModal';
 import { MigrationPreviewModal } from './MigrationPreviewModal';
-import { Step1AlertmanagerResources } from './steps/Step1AlertmanagerResources';
-import { Step2AlertRules } from './steps/Step2AlertRules';
+import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
+import { WizardLayout } from './Wizard/WizardLayout';
+import { WizardStep } from './Wizard/WizardStep';
+import { StepKey } from './Wizard/types';
+import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
+import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { useDryRunNotifications } from './useMigration';
 
 /**
@@ -60,15 +64,28 @@ export interface MigrationFormValues {
   targetDatasourceUID?: string;
 }
 
-interface StepDefinition {
-  id: number;
-  title: string;
-  description: string;
-}
-
 const MigrateToGMA = () => {
-  const styles = useStyles2(getStyles);
-  const [currentStep, setCurrentStep] = useState(0);
+  return (
+    <AlertingPageWrapper
+      navId="alert-list"
+      pageNav={{
+        text: t('alerting.migrate-to-gma.pageTitle', 'Migrate to Grafana Alerting'),
+      }}
+    >
+      <StepperStateProvider>
+        <MigrationWizardContent />
+      </StepperStateProvider>
+    </AlertingPageWrapper>
+  );
+};
+
+/**
+ * Inner content component that uses the stepper state
+ */
+function MigrationWizardContent() {
+  const { activeStep, setStepCompleted, setStepSkipped, setActiveStep, setVisitedStep, setStepErrors } =
+    useStepperState();
+
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showDryRunModal, setShowDryRunModal] = useState(false);
   const [dryRunState, setDryRunState] = useState<'loading' | 'success' | 'warning' | 'error'>('loading');
@@ -105,76 +122,18 @@ const MigrateToGMA = () => {
     },
   });
 
-  const { watch, setValue } = formAPI;
-  const [step1Completed, step1Skipped, step2Completed, step2Skipped] = watch([
-    'step1Completed',
-    'step1Skipped',
-    'step2Completed',
-    'step2Skipped',
-  ]);
+  const { watch, setValue, getValues } = formAPI;
+  const [step1Completed, step1Skipped] = watch(['step1Completed', 'step1Skipped']);
 
   // Permission checks aligned with backend authorization.go
-  // Step 1 (notifications): AlertingNotificationsWrite
-  // Step 2 (rules): AlertingRuleCreate AND AlertingProvisioningSetStatus
   const canImportNotifications = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite);
   const canImportRules =
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
-  const steps: StepDefinition[] = [
-    {
-      id: 1,
-      title: t('alerting.migrate-to-gma.step1.nav-title', 'Import notifications'),
-      description: t('alerting.migrate-to-gma.step1.nav-desc', 'Contact points, policies, templates'),
-    },
-    {
-      id: 2,
-      title: t('alerting.migrate-to-gma.step2.nav-title', 'Import alert rules'),
-      description: t('alerting.migrate-to-gma.step2.nav-desc', 'Alert and recording rules'),
-    },
-    {
-      id: 3,
-      title: t('alerting.migrate-to-gma.step3.nav-title', 'Review'),
-      description: t('alerting.migrate-to-gma.step3.nav-desc', 'Preview and confirm migration'),
-    },
-  ];
-
-  const getStepIndicatorClassName = (
-    status: 'completed' | 'current' | 'pending',
-    styleClasses: ReturnType<typeof getStyles>
-  ) => {
-    if (status === 'completed') {
-      return styleClasses.stepIndicatorCompleted;
-    }
-    if (status === 'current') {
-      return styleClasses.stepIndicatorCurrent;
-    }
-    return styleClasses.stepIndicatorPending;
-  };
-
-  const getStepStatus = (stepIndex: number): 'completed' | 'current' | 'pending' => {
-    // Determine actual completion state from form data (not just currentStep position)
-    const isStep1Done = step1Completed || step1Skipped;
-    const isStep2Done = step2Completed || step2Skipped;
-
-    if (stepIndex === currentStep) {
-      return 'current';
-    }
-
-    // Check actual completion state for each step
-    if (stepIndex === 0) {
-      return isStep1Done ? 'completed' : 'pending';
-    }
-    if (stepIndex === 1) {
-      return isStep2Done ? 'completed' : 'pending';
-    }
-    // Step 3 (Review) - only shown as completed after successful migration (handled by modal)
-    return 'pending';
-  };
-
-  const handleStep1Complete = async () => {
-    // Get current form values for dry-run
-    const formValues = formAPI.getValues();
+  // Step 1 handlers
+  const handleStep1Next = useCallback(async (): Promise<boolean> => {
+    const formValues = getValues();
     const mergeMatchers = `${MERGE_MATCHERS_LABEL_NAME}=${formValues.policyTreeName}`;
 
     // Show the dry-run modal and start validation
@@ -198,10 +157,15 @@ const MigrateToGMA = () => {
 
       if (!result.valid) {
         setDryRunState('error');
+        // Mark step as having errors
+        setStepErrors(StepKey.Notifications, true);
       } else if (result.renamedReceivers.length > 0 || result.renamedTimeIntervals.length > 0) {
         setDryRunState('warning');
+        // Warnings are not errors, step can still be completed
+        setStepErrors(StepKey.Notifications, false);
       } else {
         setDryRunState('success');
+        setStepErrors(StepKey.Notifications, false);
       }
     } catch (err) {
       setDryRunState('error');
@@ -211,169 +175,111 @@ const MigrateToGMA = () => {
         renamedReceivers: [],
         renamedTimeIntervals: [],
       });
+      setStepErrors(StepKey.Notifications, true);
     }
-  };
 
-  const handleDryRunConfirm = () => {
-    // Dry-run passed or user accepted warnings, proceed to step 2
+    // Don't auto-proceed, wait for dry-run modal confirmation
+    return false;
+  }, [getValues, runDryRun, setStepErrors]);
+
+  const handleDryRunConfirm = useCallback(() => {
     setValue('step1Completed', true);
     setValue('step1Skipped', false);
+    setStepCompleted(StepKey.Notifications, true);
+    setStepSkipped(StepKey.Notifications, false);
+    setVisitedStep(StepKey.Notifications);
     setShowDryRunModal(false);
     resetDryRun();
-    setCurrentStep(1);
-  };
+    setActiveStep(StepKey.Rules);
+  }, [setValue, setStepCompleted, setStepSkipped, setVisitedStep, setActiveStep, resetDryRun]);
 
-  const handleDryRunDismiss = () => {
-    // User cancelled, stay on step 1
+  const handleDryRunDismiss = useCallback(() => {
     setShowDryRunModal(false);
     resetDryRun();
-  };
+  }, [resetDryRun]);
 
-  const handleStep1Skip = () => {
+  const handleStep1Skip = useCallback(() => {
     setValue('step1Completed', false);
     setValue('step1Skipped', true);
     setValue('notificationPolicyOption', 'default');
-    setCurrentStep(1);
-  };
+    setStepCompleted(StepKey.Notifications, false);
+    setStepSkipped(StepKey.Notifications, true);
+    setStepErrors(StepKey.Notifications, false);
+    setVisitedStep(StepKey.Notifications);
+    setActiveStep(StepKey.Rules);
+  }, [setValue, setStepCompleted, setStepSkipped, setStepErrors, setVisitedStep, setActiveStep]);
 
-  const handleStep2Complete = () => {
+  // Step 2 handlers
+  const handleStep2Next = useCallback((): boolean => {
     setValue('step2Completed', true);
     setValue('step2Skipped', false);
-    setCurrentStep(2);
-  };
+    setStepCompleted(StepKey.Rules, true);
+    setStepSkipped(StepKey.Rules, false);
+    setStepErrors(StepKey.Rules, false);
+    setVisitedStep(StepKey.Rules);
+    return true;
+  }, [setValue, setStepCompleted, setStepSkipped, setStepErrors, setVisitedStep]);
 
-  const handleStep2Skip = () => {
+  const handleStep2Skip = useCallback(() => {
     setValue('step2Completed', false);
     setValue('step2Skipped', true);
-    setCurrentStep(2);
-  };
+    setStepCompleted(StepKey.Rules, false);
+    setStepSkipped(StepKey.Rules, true);
+    setStepErrors(StepKey.Rules, false);
+    setVisitedStep(StepKey.Rules);
+    setActiveStep(StepKey.Review);
+  }, [setValue, setStepCompleted, setStepSkipped, setStepErrors, setVisitedStep, setActiveStep]);
 
-  const handleBackToStep1 = () => {
-    setCurrentStep(0);
-  };
-
-  const handleBackToStep2 = () => {
-    setCurrentStep(1);
-  };
-
-  const handleStartMigration = () => {
+  const handleStartMigration = useCallback(() => {
     setShowPreviewModal(true);
-  };
-
-  const handleStepClick = (stepIndex: number) => {
-    // Only allow clicking on completed steps or the current step
-    if (stepIndex <= currentStep) {
-      setCurrentStep(stepIndex);
-    }
-  };
+  }, []);
 
   return (
-    <AlertingPageWrapper
-      navId="alert-list"
-      pageNav={{
-        text: t('alerting.migrate-to-gma.pageTitle', 'Migrate to Grafana Alerting'),
-      }}
-    >
-      <div className={styles.container}>
-        {/* Sidebar with steps */}
-        <div className={styles.sidebar}>
-          <div className={styles.stepsList}>
-            {steps.map((step, index) => {
-              const status = getStepStatus(index);
-              return (
-                <button
-                  key={step.id}
-                  className={styles.stepItem}
-                  onClick={() => handleStepClick(index)}
-                  disabled={index > currentStep}
-                  type="button"
-                >
-                  <div className={styles.stepIndicatorContainer}>
-                    <div className={getStepIndicatorClassName(status, styles)}>
-                      {status === 'completed' ? <Icon name="check" size="sm" /> : <span>{step.id}</span>}
-                    </div>
-                    {index < steps.length - 1 && <div className={styles.stepLine} />}
-                  </div>
-                  <div className={styles.stepContent}>
-                    <Text
-                      weight={status === 'current' ? 'bold' : 'regular'}
-                      color={status === 'pending' ? 'secondary' : undefined}
-                    >
-                      {step.title}
-                    </Text>
-                    <Text variant="bodySmall" color="secondary">
-                      {step.description}
-                    </Text>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+    <>
+      <Box marginBottom={3}>
+        <Alert severity="info" title={t('alerting.migrate-to-gma.info-title', 'Migration wizard')}>
+          <Trans i18nKey="alerting.migrate-to-gma.info-description">
+            This wizard helps you migrate alert rules and notification resources from external sources to Grafana
+            Alerting. For more information, refer to the{' '}
+            <a href={DOCS_URL_ALERTING_MIGRATION} target="_blank" rel="noreferrer">
+              documentation
+            </a>
+            .
+          </Trans>
+        </Alert>
+      </Box>
 
-        {/* Main content area */}
-        <div className={styles.mainContent}>
-          <Box marginBottom={3}>
-            <Alert severity="info" title={t('alerting.migrate-to-gma.info-title', 'Migration wizard')}>
-              <Trans i18nKey="alerting.migrate-to-gma.info-description">
-                This wizard helps you migrate alert rules and notification resources from external sources to Grafana
-                Alerting. For more information, refer to the{' '}
-                <a href={DOCS_URL_ALERTING_MIGRATION} target="_blank" rel="noreferrer">
-                  documentation
-                </a>
-                .
-              </Trans>
-            </Alert>
-          </Box>
+      <FormProvider {...formAPI}>
+        <WizardLayout>
+          {/* Step 1: Notification Resources */}
+          {activeStep === StepKey.Notifications && (
+            <Step1Wrapper canImport={canImportNotifications} onNext={handleStep1Next} onSkip={handleStep1Skip} />
+          )}
 
-          <FormProvider {...formAPI}>
-            {/* Step 1: Alertmanager Resources */}
-            {currentStep === 0 && (
-              <Step1AlertmanagerResources
-                onComplete={handleStep1Complete}
-                onSkip={handleStep1Skip}
-                canImport={canImportNotifications}
-              />
-            )}
+          {/* Step 2: Alert Rules */}
+          {activeStep === StepKey.Rules && (
+            <Step2Wrapper
+              step1Completed={step1Completed}
+              step1Skipped={step1Skipped}
+              canImport={canImportRules}
+              onNext={handleStep2Next}
+              onSkip={handleStep2Skip}
+            />
+          )}
 
-            {/* Step 2: Alert Rules */}
-            {currentStep === 1 && (
-              <Step2AlertRules
-                onComplete={handleStep2Complete}
-                onSkip={handleStep2Skip}
-                onBack={handleBackToStep1}
-                step1Completed={step1Completed}
-                step1Skipped={step1Skipped}
-                canImport={canImportRules}
-              />
-            )}
-
-            {/* Step 3: Review */}
-            {currentStep === 2 && (
-              <ReviewStep
-                formData={formAPI.getValues()}
-                onBack={handleBackToStep2}
-                onStartMigration={handleStartMigration}
-                dryRunResult={dryRunResult}
-              />
-            )}
-          </FormProvider>
-
-          {/* Cancel link */}
-          <Box marginTop={3}>
-            <LinkButton variant="secondary" href="/alerting/list" fill="text">
-              {t('alerting.migrate-to-gma.cancel', 'Cancel and go back')}
-            </LinkButton>
-          </Box>
-        </div>
-      </div>
+          {/* Step 3: Review */}
+          {activeStep === StepKey.Review && (
+            <ReviewStep formData={getValues()} onStartMigration={handleStartMigration} dryRunResult={dryRunResult} />
+          )}
+        </WizardLayout>
+      </FormProvider>
 
       {/* Preview Modal */}
       {showPreviewModal && (
         <MigrationPreviewModal formData={formAPI.getValues()} onDismiss={() => setShowPreviewModal(false)} />
       )}
 
-      {/* Dry-run Validation Modal - shown when completing Step 1 */}
+      {/* Dry-run Validation Modal */}
       <DryRunValidationModal
         isOpen={showDryRunModal}
         onDismiss={handleDryRunDismiss}
@@ -381,9 +287,75 @@ const MigrateToGMA = () => {
         state={dryRunState}
         result={dryRunResult}
       />
-    </AlertingPageWrapper>
+    </>
   );
-};
+}
+
+/**
+ * Step 1 wrapper that uses the validation hook
+ */
+interface Step1WrapperProps {
+  canImport: boolean;
+  onNext: () => Promise<boolean>;
+  onSkip: () => void;
+}
+
+function Step1Wrapper({ canImport, onNext, onSkip }: Step1WrapperProps) {
+  const isStep1Valid = useStep1Validation(canImport);
+
+  return (
+    <WizardStep
+      stepId={StepKey.Notifications}
+      label={t('alerting.migrate-to-gma.step1.heading', 'Import Notification Resources')}
+      subHeader={
+        <Trans i18nKey="alerting.migrate-to-gma.step1.subtitle">
+          Import contact points, notification policies, templates, and mute timings from an external Alertmanager.
+        </Trans>
+      }
+      onNext={onNext}
+      onSkip={onSkip}
+      canSkip
+      skipLabel={t('alerting.migrate-to-gma.step1.skip', 'Skip this step')}
+      disableNext={!isStep1Valid}
+    >
+      <Step1Content canImport={canImport} />
+    </WizardStep>
+  );
+}
+
+/**
+ * Step 2 wrapper that uses the validation hook
+ */
+interface Step2WrapperProps {
+  step1Completed: boolean;
+  step1Skipped: boolean;
+  canImport: boolean;
+  onNext: () => boolean;
+  onSkip: () => void;
+}
+
+function Step2Wrapper({ step1Completed, step1Skipped, canImport, onNext, onSkip }: Step2WrapperProps) {
+  const isStep2Valid = useStep2Validation(canImport);
+
+  return (
+    <WizardStep
+      stepId={StepKey.Rules}
+      label={t('alerting.migrate-to-gma.step2.heading', 'Import Alert Rules')}
+      subHeader={
+        <Trans i18nKey="alerting.migrate-to-gma.step2.subtitle">
+          Import alert rules and recording rules from an external source.
+        </Trans>
+      }
+      onNext={onNext}
+      onSkip={onSkip}
+      canSkip
+      skipLabel={t('alerting.migrate-to-gma.step2.skip', 'Skip this step')}
+      disableNext={!isStep2Valid}
+    >
+      <Step2Content step1Completed={step1Completed} step1Skipped={step1Skipped} canImport={canImport} />
+    </WizardStep>
+  );
+}
 
 // Helper function for pause rules label
 function getPauseRulesLabel(pauseAlertingRules: boolean, pauseRecordingRules: boolean): string {
@@ -465,24 +437,27 @@ function ValidationStatusIndicator({ result, styles }: ValidationStatusIndicator
 // Review Step Component
 interface ReviewStepProps {
   formData: MigrationFormValues;
-  onBack: () => void;
   onStartMigration: () => void;
-  /** Result from the dry-run validation (only available if step 1 was completed) */
   dryRunResult?: DryRunValidationResult;
 }
 
-function ReviewStep({ formData, onBack, onStartMigration, dryRunResult }: ReviewStepProps) {
+function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProps) {
   const styles = useStyles2(getStyles);
+  const { setActiveStep } = useStepperState();
 
   const willMigrateNotifications = formData.step1Completed && !formData.step1Skipped;
   const willMigrateRules = formData.step2Completed && !formData.step2Skipped;
   const nothingToMigrate = !willMigrateNotifications && !willMigrateRules;
 
+  const handleBack = () => {
+    setActiveStep(StepKey.Rules);
+  };
+
   return (
     <Stack direction="column" gap={3}>
       <Box>
-        <Text variant="h3" element="h2">
-          {t('alerting.migrate-to-gma.review.heading', '3. Review Migration')}
+        <Text variant="h4" element="h2">
+          {t('alerting.migrate-to-gma.review.heading', 'Review Migration')}
         </Text>
         <Text color="secondary">
           <Trans i18nKey="alerting.migrate-to-gma.review.subtitle">
@@ -529,7 +504,6 @@ function ReviewStep({ formData, onBack, onStartMigration, dryRunResult }: Review
                       {MERGE_MATCHERS_LABEL_NAME}={formData.policyTreeName}
                     </Text>
                   </div>
-                  {/* Validation status from dry-run */}
                   {dryRunResult && (
                     <Box marginTop={1}>
                       <ValidationStatusIndicator result={dryRunResult} styles={styles} />
@@ -622,105 +596,24 @@ function ReviewStep({ formData, onBack, onStartMigration, dryRunResult }: Review
       )}
 
       {/* Action buttons */}
-      <Stack direction="row" gap={2}>
-        <button type="button" className={styles.buttonSecondary} onClick={onBack}>
-          {t('alerting.migrate-to-gma.review.back', '← Back to alert rules')}
-        </button>
-        <button type="button" className={styles.buttonPrimary} onClick={onStartMigration} disabled={nothingToMigrate}>
-          <Icon name="upload" />
-          {t('alerting.migrate-to-gma.review.start', 'Start migration')}
-        </button>
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Stack direction="row" gap={1}>
+          <Button variant="secondary" icon="arrow-left" onClick={handleBack}>
+            {t('alerting.migrate-to-gma.review.back', 'Alert rules')}
+          </Button>
+          <Button variant="primary" icon="upload" onClick={onStartMigration} disabled={nothingToMigrate}>
+            {t('alerting.migrate-to-gma.review.start', 'Start migration')}
+          </Button>
+        </Stack>
+        <LinkButton variant="secondary" fill="text" href="/alerting/list">
+          {t('alerting.migrate-to-gma.cancel', 'Cancel')}
+        </LinkButton>
       </Stack>
     </Stack>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    display: 'flex',
-    gap: theme.spacing(4),
-    minHeight: '600px',
-  }),
-  sidebar: css({
-    width: '280px',
-    flexShrink: 0,
-    paddingTop: theme.spacing(2),
-  }),
-  stepsList: css({
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-  stepItem: css({
-    display: 'flex',
-    gap: theme.spacing(2),
-    padding: theme.spacing(1, 0),
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    textAlign: 'left',
-    '&:disabled': {
-      cursor: 'default',
-      opacity: 0.7,
-    },
-  }),
-  stepIndicatorContainer: css({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    position: 'relative',
-  }),
-  stepIndicatorCompleted: css({
-    width: 28,
-    height: 28,
-    borderRadius: theme.shape.radius.circle,
-    backgroundColor: theme.colors.success.main,
-    color: theme.colors.success.contrastText,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: theme.typography.fontWeightBold,
-    fontSize: theme.typography.bodySmall.fontSize,
-  }),
-  stepIndicatorCurrent: css({
-    width: 28,
-    height: 28,
-    borderRadius: theme.shape.radius.circle,
-    backgroundColor: theme.colors.primary.main,
-    color: theme.colors.primary.contrastText,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: theme.typography.fontWeightBold,
-    fontSize: theme.typography.bodySmall.fontSize,
-  }),
-  stepIndicatorPending: css({
-    width: 28,
-    height: 28,
-    borderRadius: theme.shape.radius.circle,
-    backgroundColor: theme.colors.background.secondary,
-    border: `1px solid ${theme.colors.border.medium}`,
-    color: theme.colors.text.secondary,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: theme.typography.fontWeightBold,
-    fontSize: theme.typography.bodySmall.fontSize,
-  }),
-  stepLine: css({
-    width: 2,
-    height: 40,
-    backgroundColor: theme.colors.border.medium,
-    marginTop: theme.spacing(1),
-  }),
-  stepContent: css({
-    display: 'flex',
-    flexDirection: 'column',
-    paddingTop: theme.spacing(0.5),
-  }),
-  mainContent: css({
-    flex: 1,
-    maxWidth: '800px',
-  }),
   card: css({
     backgroundColor: theme.colors.background.secondary,
     borderRadius: theme.shape.radius.default,
@@ -759,40 +652,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.warning.text,
     fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
-  }),
-  buttonPrimary: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1, 2),
-    borderRadius: theme.shape.radius.default,
-    backgroundColor: theme.colors.primary.main,
-    color: theme.colors.primary.contrastText,
-    border: 'none',
-    cursor: 'pointer',
-    fontWeight: theme.typography.fontWeightMedium,
-    '&:hover': {
-      backgroundColor: theme.colors.primary.shade,
-    },
-    '&:disabled': {
-      opacity: 0.5,
-      cursor: 'not-allowed',
-    },
-  }),
-  buttonSecondary: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1, 2),
-    borderRadius: theme.shape.radius.default,
-    backgroundColor: 'transparent',
-    color: theme.colors.text.primary,
-    border: `1px solid ${theme.colors.border.medium}`,
-    cursor: 'pointer',
-    fontWeight: theme.typography.fontWeightMedium,
-    '&:hover': {
-      backgroundColor: theme.colors.action.hover,
-    },
   }),
   successIcon: css({
     color: theme.colors.success.main,

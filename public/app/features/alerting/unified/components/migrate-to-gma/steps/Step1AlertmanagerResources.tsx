@@ -1,35 +1,27 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Alert,
-  Box,
-  Button,
-  Field,
-  FileUpload,
-  Icon,
-  Input,
-  RadioButtonList,
-  Select,
-  Stack,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Box, Field, FileUpload, Input, RadioButtonList, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { getAlertManagerDataSources } from '../../../utils/datasource';
 import { MigrationFormValues } from '../MigrateToGMA';
 
-interface Step1Props {
-  onComplete: () => void;
-  onSkip: () => void;
+interface Step1ContentProps {
   /** Whether the user has permission to import notifications */
   canImport: boolean;
+  /** Callback to report validation state changes */
+  onValidationChange?: (isValid: boolean) => void;
 }
 
-export function Step1AlertmanagerResources({ onComplete, onSkip, canImport }: Step1Props) {
+/**
+ * Step1Content - Content for the notification resources import step
+ * This component contains only the form fields, without the header or action buttons
+ * The WizardStep wrapper provides those
+ */
+export function Step1Content({ canImport, onValidationChange }: Step1ContentProps) {
   const styles = useStyles2(getStyles);
   const {
     control,
@@ -62,7 +54,8 @@ export function Step1AlertmanagerResources({ onComplete, onSkip, canImport }: St
     },
   ];
 
-  const canProceed = () => {
+  // Validation logic - same as before
+  const isValid = useMemo(() => {
     // Can't proceed without permission
     if (!canImport) {
       return false;
@@ -77,22 +70,15 @@ export function Step1AlertmanagerResources({ onComplete, onSkip, canImport }: St
       return false;
     }
     return true;
-  };
+  }, [canImport, policyTreeName, notificationsSource, notificationsYamlFile, notificationsDatasourceUID]);
+
+  // Report validation changes to parent
+  useEffect(() => {
+    onValidationChange?.(isValid);
+  }, [isValid, onValidationChange]);
 
   return (
     <Stack direction="column" gap={3}>
-      {/* Header */}
-      <Box>
-        <Text variant="h3" element="h2">
-          {t('alerting.migrate-to-gma.step1.heading', '1. Import Notification Resources')}
-        </Text>
-        <Text color="secondary">
-          <Trans i18nKey="alerting.migrate-to-gma.step1.subtitle">
-            Import contact points, notification policies, templates, and mute timings from an external Alertmanager.
-          </Trans>
-        </Text>
-      </Box>
-
       {/* Permission warning */}
       {!canImport && (
         <Alert
@@ -106,7 +92,6 @@ export function Step1AlertmanagerResources({ onComplete, onSkip, canImport }: St
         </Alert>
       )}
 
-      {/* Migration Label Card */}
       {/* Policy Tree Name Card */}
       <div className={styles.card}>
         <div className={styles.cardHeader}>
@@ -195,19 +180,37 @@ export function Step1AlertmanagerResources({ onComplete, onSkip, canImport }: St
           </Box>
         </div>
       </div>
-
-      {/* Actions */}
-      <Stack direction="row" gap={2}>
-        <Button variant="secondary" onClick={onSkip}>
-          {t('alerting.migrate-to-gma.step1.skip', 'Skip this step')}
-        </Button>
-        <Button variant="primary" onClick={onComplete} disabled={!canProceed()}>
-          <Icon name="arrow-right" />
-          {t('alerting.migrate-to-gma.step1.continue', 'Continue')}
-        </Button>
-      </Stack>
     </Stack>
   );
+}
+
+/**
+ * Hook to check if Step 1 form is valid
+ */
+export function useStep1Validation(canImport: boolean): boolean {
+  const { watch } = useFormContext<MigrationFormValues>();
+  const [notificationsSource, policyTreeName, notificationsDatasourceUID, notificationsYamlFile] = watch([
+    'notificationsSource',
+    'policyTreeName',
+    'notificationsDatasourceUID',
+    'notificationsYamlFile',
+  ]);
+
+  return useMemo(() => {
+    if (!canImport) {
+      return false;
+    }
+    if (!policyTreeName) {
+      return false;
+    }
+    if (notificationsSource === 'yaml' && !notificationsYamlFile) {
+      return false;
+    }
+    if (notificationsSource === 'datasource' && !notificationsDatasourceUID) {
+      return false;
+    }
+    return true;
+  }, [canImport, policyTreeName, notificationsSource, notificationsYamlFile, notificationsDatasourceUID]);
 }
 
 /**
