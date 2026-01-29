@@ -4,31 +4,30 @@ import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
 import { Spinner, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { Resource } from 'app/features/apiserver/types';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import {
+  DecoratedRevisionModel,
+  RevisionModel,
+  VERSIONS_FETCH_LIMIT,
+} from 'app/features/dashboard/types/revisionModels';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
-import { RevisionsModel, historySrv } from './version-history/HistorySrv';
 import { VersionsHistoryButtons } from './version-history/VersionHistoryButtons';
 import { VersionHistoryComparison } from './version-history/VersionHistoryComparison';
 import { VersionHistoryHeader } from './version-history/VersionHistoryHeader';
 import { VersionHistoryTable } from './version-history/VersionHistoryTable';
-
-export const VERSIONS_FETCH_LIMIT = 10;
-
-export type DecoratedRevisionModel = RevisionsModel & {
-  createdDateString: string;
-  ageString: string;
-};
 
 export interface VersionsEditViewState extends DashboardEditViewState {
   versions?: DecoratedRevisionModel[];
   isLoading?: boolean;
   isAppending?: boolean;
   viewMode?: 'list' | 'compare';
-  diffData?: { lhs: string; rhs: string };
+  diffData?: { lhs: object; rhs: object };
   newInfo?: DecoratedRevisionModel;
   baseInfo?: DecoratedRevisionModel;
   isNewLatest?: boolean;
@@ -37,7 +36,6 @@ export interface VersionsEditViewState extends DashboardEditViewState {
 export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> implements DashboardEditView {
   public static Component = VersionsEditorSettingsListView;
   private _limit: number = VERSIONS_FETCH_LIMIT;
-  private _start = 0;
   private _continueToken = '';
 
   constructor(state: VersionsEditViewState) {
@@ -48,10 +46,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
       isAppending: true,
       viewMode: 'list',
       isNewLatest: false,
-      diffData: {
-        lhs: '',
-        rhs: '',
-      },
+      diffData: { lhs: {}, rhs: {} },
     });
 
     this.addActivationHandler(() => {
@@ -63,8 +58,8 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     return getDashboardSceneFor(this);
   }
 
-  public get diffData(): { lhs: string; rhs: string } {
-    return this.state.diffData ?? { lhs: '', rhs: '' };
+  public get diffData(): { lhs: object; rhs: object } {
+    return this.state.diffData ?? { lhs: {}, rhs: {} };
   }
 
   public get versions(): DecoratedRevisionModel[] {
@@ -73,10 +68,6 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
   public get limit(): number {
     return this._limit;
-  }
-
-  public get start(): number {
-    return this._start;
   }
 
   public get continueToken(): string {
@@ -104,51 +95,52 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
     this.setState({ isAppending: append });
 
-    const requestOptions = this._continueToken
-      ? { limit: this._limit, start: this._start, continueToken: this._continueToken }
-      : { limit: this._limit, start: this._start };
+    const options = append ? { limit: this._limit, continueToken: this._continueToken } : { limit: this._limit };
 
-    historySrv
-      .getHistoryList(uid, requestOptions)
+    getDashboardAPI()
+      .listDashboardHistory(uid, options)
       .then((result) => {
+        const versions = this.transformToRevisionModels(result.items);
         this.setState({
           isLoading: false,
-          versions: [...(append ? (this.state.versions ?? []) : []), ...this.decorateVersions(result.versions)],
+          versions: [...(append ? (this.state.versions ?? []) : []), ...this.decorateVersions(versions)],
         });
-        this._start += this._limit;
         // Update the continueToken for the next request, if available
-        this._continueToken = result.continueToken ?? '';
+        this._continueToken = result.metadata.continue ?? '';
       })
       .catch((err) => console.log(err))
       .finally(() => this.setState({ isAppending: false }));
   };
 
-  public getDiff = async () => {
+  private transformToRevisionModels(items: Array<Resource<unknown>>): RevisionModel[] {
+    return items.map(
+      (item): RevisionModel => ({
+        id: item.metadata.generation ?? 0,
+        checked: false,
+        uid: item.metadata.name,
+        version: item.metadata.generation ?? 0,
+        created: item.metadata.creationTimestamp ?? new Date().toISOString(),
+        createdBy: item.metadata.annotations?.['grafana.app/updatedBy'] ?? '',
+        message: item.metadata.annotations?.['grafana.app/message'] ?? '',
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        data: item.spec as object,
+      })
+    );
+  }
+
+  public getDiff = () => {
     const selectedVersions = this.versions.filter((version) => version.checked);
     const [newInfo, baseInfo] = selectedVersions;
     const isNewLatest = newInfo.version === this._dashboard.state.version;
 
-    this.setState({
-      isLoading: true,
-    });
-
-    if (!this._dashboard.state.uid) {
-      return;
-    }
-    // the id here is the resource version in k8s, use this instead to get the specific version
-    let lhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, baseInfo.id);
-    let rhs = await historySrv.getDashboardVersion(this._dashboard.state.uid, newInfo.id);
-
+    // Use the already-loaded data from listDashboardHistory - no need for another API call
     this.setState({
       baseInfo,
       isLoading: false,
       isNewLatest,
       newInfo,
       viewMode: 'compare',
-      diffData: {
-        lhs: lhs.data,
-        rhs: rhs.data,
-      },
+      diffData: { lhs: baseInfo.data, rhs: newInfo.data },
     });
   };
 
@@ -156,10 +148,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     this._continueToken = '';
     this.setState({
       baseInfo: undefined,
-      diffData: {
-        lhs: '',
-        rhs: '',
-      },
+      diffData: { lhs: {}, rhs: {} },
       isNewLatest: false,
       newInfo: undefined,
       versions: this.versions.map((version) => ({ ...version, checked: false })),
@@ -175,7 +164,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     });
   };
 
-  private decorateVersions(versions: RevisionsModel[]): DecoratedRevisionModel[] {
+  private decorateVersions(versions: RevisionModel[]): DecoratedRevisionModel[] {
     const timeZone = this.getTimeRange().getTimeZone();
 
     return versions.map((version) => {

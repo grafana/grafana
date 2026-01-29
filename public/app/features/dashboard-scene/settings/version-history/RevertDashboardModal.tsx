@@ -1,9 +1,8 @@
 import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-
-import { DecoratedRevisionModel } from '../VersionsEditView';
 
 export interface RevertDashboardModalProps {
   hideModal: () => void;

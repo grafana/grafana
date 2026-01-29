@@ -3,8 +3,7 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ModalsController, CollapsableSection, useStyles2, Stack, Icon, Box } from '@grafana/ui';
-
-import { DecoratedRevisionModel } from '../VersionsEditView';
+import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 
 import { DiffGroup } from './DiffGroup';
 import { DiffViewer } from './DiffViewer';
@@ -15,7 +14,7 @@ type DiffViewProps = {
   isNewLatest: boolean;
   newInfo: DecoratedRevisionModel;
   baseInfo: DecoratedRevisionModel;
-  diffData: { lhs: string; rhs: string };
+  diffData: { lhs: object; rhs: object };
   onRestore: (version: DecoratedRevisionModel) => Promise<boolean>;
 };
 

@@ -2,14 +2,20 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { historySrv } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
+import { VERSIONS_FETCH_LIMIT } from 'app/features/dashboard/types/revisionModels';
 
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
-import { VersionsSettings, VERSIONS_FETCH_LIMIT } from './VersionsSettings';
-import { versions, diffs } from './mocks/versions';
+import { VersionsSettings } from './VersionsSettings';
+import { versionsResourceList } from './mocks/versions';
 
-jest.mock('app/features/dashboard-scene/settings/version-history/HistorySrv');
+const mockListDashboardHistory = jest.fn();
+
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: () => ({
+    listDashboardHistory: mockListDashboardHistory,
+  }),
+}));
 
 const queryByFullText = (text: string) =>
   screen.queryByText((_, node: Element | undefined | null) => {
@@ -26,8 +32,6 @@ function setup() {
   const dashboard = createDashboardModelFixture({
     id: 74,
     version: 11,
-    // formatDate: jest.fn(() => 'date'),
-    // getRelativeTime: jest.fn(() => 'time ago'),
   });
 
   const sectionNav = {
@@ -56,7 +60,7 @@ describe('VersionSettings', () => {
   });
 
   test('renders a header and a loading indicator followed by results in a table', async () => {
-    historySrv.getHistoryList = jest.fn().mockResolvedValue(versions);
+    mockListDashboardHistory.mockResolvedValue(versionsResourceList);
     setup();
 
     expect(screen.getByRole('heading', { name: /versions/i })).toBeInTheDocument();
@@ -65,7 +69,7 @@ describe('VersionSettings', () => {
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
     const tableBodyRows = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row');
 
-    expect(tableBodyRows.length).toBe(versions.versions.length);
+    expect(tableBodyRows.length).toBe(versionsResourceList.items.length);
 
     const firstRow = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row')[0];
 
@@ -74,9 +78,9 @@ describe('VersionSettings', () => {
   });
 
   test('does not render buttons if versions === 1', async () => {
-    historySrv.getHistoryList = jest.fn().mockResolvedValue({
-      continueToken: versions.continueToken,
-      versions: versions.versions.slice(0, 1),
+    mockListDashboardHistory.mockResolvedValue({
+      metadata: { continue: '' },
+      items: versionsResourceList.items.slice(0, 1),
     });
 
     setup();
@@ -91,9 +95,9 @@ describe('VersionSettings', () => {
   });
 
   test('does not render show more button if versions < VERSIONS_FETCH_LIMIT', async () => {
-    historySrv.getHistoryList = jest.fn().mockResolvedValue({
-      continueToken: versions.continueToken,
-      versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT - 5),
+    mockListDashboardHistory.mockResolvedValue({
+      metadata: { continue: '' },
+      items: versionsResourceList.items.slice(0, VERSIONS_FETCH_LIMIT - 5),
     });
 
     setup();
@@ -108,9 +112,9 @@ describe('VersionSettings', () => {
   });
 
   test('renders buttons if versions >= VERSIONS_FETCH_LIMIT', async () => {
-    historySrv.getHistoryList = jest.fn().mockResolvedValue({
-      continueToken: 'next-page-token',
-      versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT),
+    mockListDashboardHistory.mockResolvedValue({
+      metadata: { continue: 'next-page-token' },
+      items: versionsResourceList.items.slice(0, VERSIONS_FETCH_LIMIT),
     });
 
     setup();
@@ -130,24 +134,23 @@ describe('VersionSettings', () => {
   });
 
   test('clicking show more appends results to the table', async () => {
-    historySrv.getHistoryList = jest
-      .fn()
+    mockListDashboardHistory
       .mockImplementationOnce(() =>
         Promise.resolve({
-          continueToken: 'next-page-token',
-          versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT),
+          metadata: { continue: 'next-page-token' },
+          items: versionsResourceList.items.slice(0, VERSIONS_FETCH_LIMIT),
         })
       )
       .mockImplementationOnce(() =>
         Promise.resolve({
-          continueToken: '',
-          versions: versions.versions.slice(VERSIONS_FETCH_LIMIT),
+          metadata: { continue: '' },
+          items: versionsResourceList.items.slice(VERSIONS_FETCH_LIMIT),
         })
       );
 
     setup();
 
-    expect(historySrv.getHistoryList).toBeCalledTimes(1);
+    expect(mockListDashboardHistory).toHaveBeenCalledTimes(1);
 
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
 
@@ -156,21 +159,23 @@ describe('VersionSettings', () => {
     const showMoreButton = screen.getByRole('button', { name: /show more versions/i });
     await user.click(showMoreButton);
 
-    expect(historySrv.getHistoryList).toBeCalledTimes(2);
+    expect(mockListDashboardHistory).toHaveBeenCalledTimes(2);
     expect(screen.getByText(/Fetching more entries/i)).toBeInTheDocument();
     jest.advanceTimersByTime(1000);
 
     await waitFor(() => {
       expect(screen.queryByText(/Fetching more entries/i)).not.toBeInTheDocument();
-      expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(versions.versions.length);
+      expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(
+        versionsResourceList.items.length
+      );
     });
   });
 
   test('does not show more button when receiving partial page without version 1', async () => {
     // Mock a partial page response (less than VERSIONS_FETCH_LIMIT)
-    historySrv.getHistoryList = jest.fn().mockResolvedValueOnce({
-      continueToken: '',
-      versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT - 5),
+    mockListDashboardHistory.mockResolvedValueOnce({
+      metadata: { continue: '' },
+      items: versionsResourceList.items.slice(0, VERSIONS_FETCH_LIMIT - 5),
     });
 
     setup();
@@ -184,9 +189,9 @@ describe('VersionSettings', () => {
   });
 
   test('does not show more button when continueToken is empty', async () => {
-    historySrv.getHistoryList = jest.fn().mockResolvedValueOnce({
-      continueToken: '',
-      versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT - 1),
+    mockListDashboardHistory.mockResolvedValueOnce({
+      metadata: { continue: '' },
+      items: versionsResourceList.items.slice(0, VERSIONS_FETCH_LIMIT - 1),
     });
 
     setup();
@@ -198,18 +203,15 @@ describe('VersionSettings', () => {
   });
 
   test('selecting two versions and clicking compare button should render compare view', async () => {
-    historySrv.getHistoryList = jest.fn().mockResolvedValue({
-      continueToken: versions.continueToken,
-      versions: versions.versions.slice(0, VERSIONS_FETCH_LIMIT),
+    // getDiff now uses already-loaded data from versionsResourceList, no separate API call needed
+    mockListDashboardHistory.mockResolvedValue({
+      metadata: { continue: '' },
+      items: versionsResourceList.items.slice(0, VERSIONS_FETCH_LIMIT),
     });
-    historySrv.getDashboardVersion = jest
-      .fn()
-      .mockImplementationOnce(() => Promise.resolve(diffs.lhs))
-      .mockImplementationOnce(() => Promise.resolve(diffs.rhs));
 
     setup();
 
-    expect(historySrv.getHistoryList).toBeCalledTimes(1);
+    expect(mockListDashboardHistory).toHaveBeenCalledTimes(1);
 
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
 
