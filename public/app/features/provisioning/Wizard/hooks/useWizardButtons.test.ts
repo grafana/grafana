@@ -26,7 +26,6 @@ describe('useWizardButtons', () => {
     isCancelling: false,
     isStepRunning: false,
     isStepSuccess: false,
-    hasStepError: false,
     hasStepWarning: false,
     isCreatingSkipJob: false,
     showCancelConfirmation: false,
@@ -106,27 +105,11 @@ describe('useWizardButtons', () => {
   });
 
   describe('isNextDisabled', () => {
-    it('should always enable next on authType step', () => {
-      const { result } = setup({
-        activeStep: 'authType',
-        isSubmitting: true,
-        hasStepError: true,
-      });
-      expect(result.current.isNextDisabled).toBe(false);
-    });
-
-    it('should disable next when hasStepError on non-connection steps', () => {
+    it('should not disable next on non-synchronize steps when no blocking conditions', () => {
+      // For non-synchronize steps, only isSubmitting, isCancelling, isStepRunning, isCreatingSkipJob block
+      // This allows users to fix their input and retry
       const { result } = setup({
         activeStep: 'bootstrap',
-        hasStepError: true,
-      });
-      expect(result.current.isNextDisabled).toBe(true);
-    });
-
-    it('should not disable next when hasStepError on connection step', () => {
-      const { result } = setup({
-        activeStep: 'connection',
-        hasStepError: true,
       });
       expect(result.current.isNextDisabled).toBe(false);
     });
