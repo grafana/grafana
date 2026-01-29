@@ -42,7 +42,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       validation: {
         required: t('provisioning.github.url-required', 'Repository URL is required'),
         pattern: {
-          value: /^https:\/\/github\.com\/[^\/]+\/[^\/]+\/?$/,
+          value: /^https:\/\/[\w.-]+(:\d+)?(\/[\w.@+~-]+)+(\.git)?\/?$/,
           message: t('provisioning.github.url-pattern', 'Must be a valid GitHub repository URL'),
         },
       },
@@ -95,7 +95,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       validation: {
         required: t('provisioning.gitlab.url-required', 'Repository URL is required'),
         pattern: {
-          value: /^https:\/\/gitlab\.com\/[^\/]+\/[^\/]+\/?$/,
+          value: /^https:\/\/[\w.-]+(:\d+)?(\/[\w.@+~-]+)+(\.git)?\/?$/,
           message: t('provisioning.gitlab.url-pattern', 'Must be a valid GitLab repository URL'),
         },
       },
@@ -158,7 +158,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       validation: {
         required: t('provisioning.bitbucket.url-required', 'Repository URL is required'),
         pattern: {
-          value: /^https:\/\/bitbucket\.org\/[^\/]+\/[^\/]+\/?$/,
+          value: /^https:\/\/[\w.-]+(:\d+)?(\/[\w.@+~-]+)+(\.git)?\/?$/,
           message: t('provisioning.bitbucket.url-pattern', 'Must be a valid Bitbucket repository URL'),
         },
       },
@@ -221,7 +221,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
       validation: {
         required: t('provisioning.git.url-required', 'Repository URL is required'),
         pattern: {
-          value: /^https?:\/\/.+/,
+          value: /^https?:\/\/[a-zA-Z0-9.-]+(?::\d+)?(\/[a-zA-Z0-9@._+~\-]+)+(\.git)?\/?$/,
           message: t('provisioning.git.url-pattern', 'Must be a valid Git repository URL'),
         },
       },
