@@ -23,12 +23,16 @@ import { EditableQueryName } from './EditableQueryName';
 
 export function ContentHeader() {
   const { panel } = usePanelContext();
-  const { selectedCard } = useQueryEditorUIContext();
+  const { selectedQuery, selectedTransformation } = useQueryEditorUIContext();
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
 
   // TODO: Add transformation support
-  const cardType = isExpressionQuery(selectedCard ?? undefined) ? QueryEditorType.Expression : QueryEditorType.Query;
+  const cardType = selectedTransformation
+    ? QueryEditorType.Transformation
+    : isExpressionQuery(selectedQuery ?? undefined)
+      ? QueryEditorType.Expression
+      : QueryEditorType.Query;
 
   const styles = useStyles2(getStyles, { cardType });
 
@@ -38,7 +42,7 @@ export function ContentHeader() {
   }, [panel]);
 
   // We have to do defensive null checks since queries might be an empty array :(
-  if (!selectedCard) {
+  if (!selectedQuery && !selectedTransformation) {
     return null;
   }
 
@@ -46,10 +50,20 @@ export function ContentHeader() {
     <div className={styles.container}>
       <div className={styles.queryHeaderWrapper}>
         <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />
-        {cardType === QueryEditorType.Query && (
-          <DatasourceSection selectedCard={selectedCard} onChange={(ds) => changeDataSource(ds, selectedCard.refId)} />
+        {cardType === QueryEditorType.Query && selectedQuery && (
+          <DatasourceSection
+            selectedCard={selectedQuery}
+            onChange={(ds) => changeDataSource(ds, selectedQuery.refId)}
+          />
         )}
-        <EditableQueryName query={selectedCard} queries={queries} onQueryUpdate={updateSelectedQuery} />
+        {selectedQuery && (
+          <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={updateSelectedQuery} />
+        )}
+        {selectedTransformation && (
+          <Text weight="light" variant="body" color="secondary">
+            {selectedTransformation.id}
+          </Text>
+        )}
       </div>
 
       {/* TODO: Will fix up buttons in header actions ticket */}

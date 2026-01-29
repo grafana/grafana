@@ -22,8 +22,10 @@ export interface PanelState {
 }
 
 export interface QueryEditorUIState {
-  selectedCard: DataQuery | DataTransformerConfig | null;
-  setSelectedCard: (query: DataQuery | DataTransformerConfig | null) => void;
+  selectedQuery: DataQuery | null;
+  selectedTransformation: DataTransformerConfig | null;
+  setSelectedQuery: (query: DataQuery | null) => void;
+  setSelectedTransformation: (transformation: DataTransformerConfig | null) => void;
 }
 
 export interface QueryEditorActions {

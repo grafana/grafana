@@ -9,7 +9,7 @@ import { useDatasource } from 'app/features/datasources/hooks';
 
 import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useQueryRunnerContext, useQueryEditorUIContext } from '../QueryEditorContext';
-import { getEditorType, isDataTransformerConfig } from '../utils';
+import { getEditorType } from '../utils';
 
 const getTypeText = (editorType: QueryEditorType) => {
   switch (editorType) {
@@ -43,15 +43,15 @@ interface SidebarCardProps {
 }
 
 const TransformationCard = ({ transformation }: { transformation: DataTransformerConfig }) => {
-  const { selectedCard, setSelectedCard } = useQueryEditorUIContext();
+  const { selectedTransformation, setSelectedTransformation } = useQueryEditorUIContext();
 
-  const isSelected = isDataTransformerConfig(selectedCard) && selectedCard.id === transformation.id;
+  const isSelected = selectedTransformation?.id === transformation.id;
   const styles = useStyles2(getStyles, QueryEditorType.Transformation, false, isSelected);
 
   const handleClick = () => {
     // We don't allow deselecting cards so don't do anything if already selected
     if (!isSelected) {
-      setSelectedCard(transformation);
+      setSelectedTransformation(transformation);
     }
   };
 
@@ -77,16 +77,16 @@ const QueryCard = ({ query }: SidebarCardProps) => {
   const editorType = getEditorType(query);
   const queryDsSettings = useDatasource(query.datasource);
   const { data } = useQueryRunnerContext();
-  const { selectedCard, setSelectedCard } = useQueryEditorUIContext();
+  const { selectedQuery, setSelectedQuery } = useQueryEditorUIContext();
 
   const hasError = data?.errors?.some((e) => e.refId === query.refId) ?? false;
-  const isSelected = !isDataTransformerConfig(selectedCard) && selectedCard?.refId === query.refId;
+  const isSelected = selectedQuery?.refId === query.refId;
   const styles = useStyles2(getStyles, editorType, hasError, isSelected);
 
   const handleClick = () => {
     // We don't allow deselecting cards so don't do anything if already selected
     if (!isSelected) {
-      setSelectedCard(query);
+      setSelectedQuery(query);
     }
   };
 
