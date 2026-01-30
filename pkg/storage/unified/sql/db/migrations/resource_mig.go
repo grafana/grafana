@@ -383,12 +383,6 @@ func (m *FixResourceDashboardVariableQuotesMigration) SQL(dialect migrator.Diale
 
 func (m *FixResourceDashboardVariableQuotesMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	return RunFixResourceDashboardVariableQuotesMigration(sess, mg)
-	// return nil
-}
-
-// removeQuotesAroundResourceVariable is a wrapper for the shared implementation.
-func removeQuotesAroundResourceVariable(sql, variableName string) string {
-	return migrator.RemoveQuotesAroundVariableShared(sql, variableName)
 }
 
 // RunFixResourceDashboardVariableQuotesMigration performs the migration on resource and resource_history tables

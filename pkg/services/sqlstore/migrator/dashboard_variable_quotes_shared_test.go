@@ -102,7 +102,7 @@ func TestRemoveQuotesAroundVariableShared(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := RemoveQuotesAroundVariableShared(tt.sql, tt.variableName)
+			result := removeQuotesAroundVariableShared(tt.sql, tt.variableName)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -309,7 +309,7 @@ func TestProcessPanelMapShared(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			modified := ProcessPanelMapShared(tt.panelMap, tt.templatingList)
+			modified := processPanelMapShared(tt.panelMap, tt.templatingList)
 			assert.Equal(t, tt.expectedModify, modified)
 
 			// Check the rawSql if targets exist
@@ -446,7 +446,7 @@ func TestProcessPanelMapsShared(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			modified := ProcessPanelMapsShared(tt.panelsList, tt.templatingList)
+			modified := processPanelMapsShared(tt.panelsList, tt.templatingList)
 			assert.Equal(t, tt.expectedModify, modified)
 		})
 	}
@@ -536,7 +536,7 @@ func TestExtractTemplatingListShared(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ExtractTemplatingListShared(tt.data)
+			result := extractTemplatingListShared(tt.data)
 			assert.Equal(t, tt.expected, result)
 		})
 	}

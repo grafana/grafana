@@ -4,11 +4,11 @@ import (
 	"regexp"
 )
 
-// RemoveQuotesAroundVariableShared removes one set of quotes around template variable references.
+// removeQuotesAroundVariableShared removes one set of quotes around template variable references.
 // Handles both $var and ${var} formats.
 // Only removes one layer of quotes (either single or double).
 // This is the shared implementation used by both dashboard and resource migrations.
-func RemoveQuotesAroundVariableShared(sql, variableName string) string {
+func removeQuotesAroundVariableShared(sql, variableName string) string {
 	// Skip if the SQL uses any format option like ${var:csv}
 	formattedVarPattern := regexp.MustCompile(`\$\{` + regexp.QuoteMeta(variableName) + `:[^}]*\}`)
 	if formattedVarPattern.MatchString(sql) {
@@ -28,9 +28,9 @@ func RemoveQuotesAroundVariableShared(sql, variableName string) string {
 	return result
 }
 
-// ProcessPanelMapShared processes a single panel map and modifies its targets if conditions are met.
+// processPanelMapShared processes a single panel map and modifies its targets if conditions are met.
 // Returns true if any modifications were made.
-func ProcessPanelMapShared(panelMap map[string]any, templatingList []map[string]any) bool {
+func processPanelMapShared(panelMap map[string]any, templatingList []map[string]any) bool {
 	modified := false
 
 	// Check if panel has datasource
@@ -99,7 +99,7 @@ func ProcessPanelMapShared(panelMap map[string]any, templatingList []map[string]
 		}
 
 		originalSql := rawSql
-		newSql := RemoveQuotesAroundVariableShared(originalSql, repeatVar)
+		newSql := removeQuotesAroundVariableShared(originalSql, repeatVar)
 
 		if newSql != originalSql {
 			targetMap["rawSql"] = newSql
@@ -110,9 +110,9 @@ func ProcessPanelMapShared(panelMap map[string]any, templatingList []map[string]
 	return modified
 }
 
-// ProcessPanelMapsShared recursively processes all panels including nested ones.
+// processPanelMapsShared recursively processes all panels including nested ones.
 // Returns true if any modifications were made.
-func ProcessPanelMapsShared(panelsList []any, templatingList []map[string]any) bool {
+func processPanelMapsShared(panelsList []any, templatingList []map[string]any) bool {
 	modified := false
 
 	for _, panelInterface := range panelsList {
@@ -122,14 +122,14 @@ func ProcessPanelMapsShared(panelsList []any, templatingList []map[string]any) b
 		}
 
 		// Process the panel itself
-		if ProcessPanelMapShared(panelMap, templatingList) {
+		if processPanelMapShared(panelMap, templatingList) {
 			modified = true
 		}
 
 		// Process nested panels (for row panels)
 		if nestedPanelsInterface, ok := panelMap["panels"]; ok {
 			if nestedPanelsList, ok := nestedPanelsInterface.([]any); ok && len(nestedPanelsList) > 0 {
-				if ProcessPanelMapsShared(nestedPanelsList, templatingList) {
+				if processPanelMapsShared(nestedPanelsList, templatingList) {
 					modified = true
 				}
 			}
@@ -139,8 +139,8 @@ func ProcessPanelMapsShared(panelsList []any, templatingList []map[string]any) b
 	return modified
 }
 
-// ExtractTemplatingListShared extracts the templating list from a dashboard or resource spec map.
-func ExtractTemplatingListShared(data map[string]any) []map[string]any {
+// extractTemplatingListShared extracts the templating list from a dashboard or resource spec map.
+func extractTemplatingListShared(data map[string]any) []map[string]any {
 	templatingInterface, ok := data["templating"]
 	if !ok {
 		return nil
@@ -175,7 +175,7 @@ func ExtractTemplatingListShared(data map[string]any) []map[string]any {
 // Returns true if any modifications were made.
 func ProcessDashboardOrResourceSpecShared(data map[string]any) bool {
 	// Extract templating list
-	templatingList := ExtractTemplatingListShared(data)
+	templatingList := extractTemplatingListShared(data)
 
 	// Get panels
 	panelsInterface, ok := data["panels"]
@@ -189,5 +189,5 @@ func ProcessDashboardOrResourceSpecShared(data map[string]any) bool {
 	}
 
 	// Process panels
-	return ProcessPanelMapsShared(panelsList, templatingList)
+	return processPanelMapsShared(panelsList, templatingList)
 }
