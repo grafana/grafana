@@ -6,7 +6,7 @@ import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Box, Button, Stack, Text } from '@grafana/ui';
 import config from 'app/core/config';
-import { DASHBOARD_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { SqlExpressionCard } from '../../../dashboard/components/TransformationsEditor/SqlExpressionCard';
 import { TransformationCard } from '../../../dashboard/components/TransformationsEditor/TransformationCard';
@@ -121,7 +121,7 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                 imageUrl={config.theme2.isDark ? sqlDarkImage : sqlLightImage}
                 onClick={handleSqlTransformationClick}
                 testId="go-to-queries-button"
-                disabled={props.datasourceUid === DASHBOARD_DATASOURCE_NAME}
+                disabled={props.datasourceUid === SHARED_DASHBOARD_QUERY}
               />
             )}
             {hasAddTransformation &&

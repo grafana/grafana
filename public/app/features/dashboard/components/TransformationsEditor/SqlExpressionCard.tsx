@@ -15,10 +15,15 @@ export interface SqlExpressionCardProps {
 
 export function SqlExpressionCard({ name, description, imageUrl, onClick, testId, disabled }: SqlExpressionCardProps) {
   const styles = useStyles2(getCardStyles);
-  const cardClasses = cx(styles.baseCard, { [styles.cardDisabled]: disabled });
 
   return (
-    <Card className={cardClasses} data-testid={testId} onClick={onClick} noMargin disabled={disabled}>
+    <Card
+      className={cx(styles.baseCard, { [styles.cardDisabled]: disabled })}
+      data-testid={testId}
+      onClick={onClick}
+      noMargin
+      disabled={disabled}
+    >
       <Card.Heading>{name}</Card.Heading>
       <Card.Description>
         <Text variant="bodySmall">{description}</Text>
