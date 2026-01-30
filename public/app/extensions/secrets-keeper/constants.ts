@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 
-// Base URL for secrets keeper feature
-export const SECRETS_KEEPER_BASE_URL = `${config.appSubUrl}/admin/secrets`;
+// Base URL for secrets keeper feature (sub-route of /admin/secrets)
+export const SECRETS_KEEPER_BASE_URL = `${config.appSubUrl}/admin/secrets/keepers`;
 
 // Route paths
 export const SECRETS_KEEPER_LIST_URL = SECRETS_KEEPER_BASE_URL;

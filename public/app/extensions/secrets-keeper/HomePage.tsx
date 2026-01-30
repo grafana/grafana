@@ -14,7 +14,7 @@ export default function HomePage() {
   const styles = useStyles2(getStyles);
 
   return (
-    <Page navId="secrets-keeper" subTitle="Manage external secrets storage for Grafana">
+    <Page navId="secrets-management" subTitle="Manage external secrets storage for Grafana">
       <Page.Contents isLoading={isLoading}>
         <Stack direction="column" gap={3}>
           {/* Header with action */}

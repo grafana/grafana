@@ -25,7 +25,6 @@ import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 import { isDashboardSceneEnabled } from '../features/dashboard-scene/utils/utils';
 import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
-import { getSecretsKeeperRoutes } from '../features/secrets-keeper/utils/routes';
 
 const isDevEnv = config.buildInfo.env === 'development';
 export const extraRoutes: RouteDescriptor[] = [];
@@ -562,7 +561,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getPublicDashboardRoutes(),
     ...getDataConnectionsRoutes(),
     ...getProvisioningRoutes(),
-    ...getSecretsKeeperRoutes(),
     {
       path: '/goto/*',
       component: HandleGoToRedirect,

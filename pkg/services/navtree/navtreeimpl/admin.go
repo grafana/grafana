@@ -63,17 +63,6 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatformUI) {
-		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
-			Text:     "Secrets",
-			Id:       "secrets-keeper",
-			SubTitle: "Manage external secrets storage for Grafana",
-			Icon:     "lock",
-			Url:      s.cfg.AppSubURL + "/admin/secrets",
-		})
-	}
-
 	generalNode := &navtree.NavLink{
 		Text:     "General",
 		SubTitle: "Manage default preferences and settings across Grafana",
