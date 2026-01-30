@@ -822,6 +822,116 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return dashboardSceneGraph.getVizPanels(this);
   }
 
+  public getExpressionAndTransformationCounts(
+    saveModel?: Dashboard | DashboardV2Spec
+  ): Record<string, number> | undefined {
+    const model = saveModel ?? this.getSaveModel();
+
+    const expressionCounts = new Map<string, number>();
+    const transformationCounts = new Map<string, number>();
+
+    // Handle V1 dashboards
+    if ('panels' in model && model.panels) {
+      for (const panel of model.panels) {
+        // Count expressions from targets
+        if ('targets' in panel && panel.targets?.length) {
+          for (const target of panel.targets) {
+            // Only count if it's actually an expression query
+            const datasourceUid =
+              target?.datasource && typeof target.datasource === 'object' && 'uid' in target.datasource
+                ? target.datasource.uid
+                : undefined;
+
+            const targetType = target?.type;
+            if (datasourceUid === '__expr__' && typeof targetType === 'string' && targetType) {
+              expressionCounts.set(targetType, (expressionCounts.get(targetType) || 0) + 1);
+            }
+          }
+        }
+
+        // Count transformations
+        if ('transformations' in panel && Array.isArray(panel.transformations)) {
+          for (const transformation of panel.transformations) {
+            const transformId = transformation?.id;
+            if (typeof transformId === 'string' && transformId) {
+              transformationCounts.set(transformId, (transformationCounts.get(transformId) || 0) + 1);
+            }
+          }
+        }
+      }
+    }
+
+    // Handle V2 dashboards
+    if ('elements' in model && model.elements) {
+      for (const element of Object.values(model.elements)) {
+        // Check if element is a Panel (not LibraryPanel)
+        if (element.kind !== 'Panel') {
+          continue;
+        }
+
+        const dataSpec = element.spec.data?.spec;
+        if (!dataSpec || typeof dataSpec !== 'object') {
+          continue;
+        }
+
+        // Count expressions from queries
+        const queries = dataSpec.queries;
+        if (Array.isArray(queries)) {
+          for (const query of queries) {
+            const querySpec = query?.spec?.query;
+            if (!querySpec || typeof querySpec !== 'object') {
+              continue;
+            }
+
+            const datasource = querySpec.datasource;
+            const datasourceName =
+              datasource && typeof datasource === 'object' && 'name' in datasource ? datasource.name : undefined;
+
+            const spec = querySpec.spec;
+            const queryType = spec && typeof spec === 'object' && 'type' in spec ? spec.type : undefined;
+
+            if (datasourceName === '__expr__' && typeof queryType === 'string' && queryType) {
+              expressionCounts.set(queryType, (expressionCounts.get(queryType) || 0) + 1);
+            }
+          }
+        }
+
+        // Count transformations
+        const transformations = dataSpec.transformations;
+        if (Array.isArray(transformations)) {
+          for (const transformation of transformations) {
+            // V2 transformations have a 'kind' field which is the transformation id
+            const transformId = transformation?.kind || transformation?.spec?.id;
+            if (typeof transformId === 'string' && transformId) {
+              transformationCounts.set(transformId, (transformationCounts.get(transformId) || 0) + 1);
+            }
+          }
+        }
+      }
+    }
+
+    // Combine all counts by merging the maps and adding counts for duplicate keys
+    const allCounts = new Map<string, number>();
+
+    for (const [type, count] of expressionCounts) {
+      allCounts.set(type, count);
+    }
+
+    for (const [type, count] of transformationCounts) {
+      allCounts.set(type, (allCounts.get(type) || 0) + count);
+    }
+
+    if (allCounts.size === 0) {
+      return undefined;
+    }
+
+    // Convert map to object
+    return Object.fromEntries(allCounts);
+  }
+
+  /**
+   * @deprecated Use getExpressionAndTransformationCounts instead
+   */
   public getExpressionTypes(saveModel?: Dashboard | DashboardV2Spec): string[] | undefined {
     const model = saveModel ?? this.getSaveModel();
 

@@ -1141,6 +1141,209 @@ describe('DashboardScene', () => {
       expect(result).toBeUndefined();
     });
   });
+
+  describe('getExpressionAndTransformationCounts', () => {
+    it('should count expressions from V1 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = createV1DashboardWithExpressions(['sql', 'sql', 'reduce']);
+
+      const result = scene.getExpressionAndTransformationCounts(saveModel);
+
+      expect(result).toEqual({ reduce: 1, sql: 2 });
+    });
+
+    it('should count expressions from V2 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = createV2DashboardWithExpressions(['sql', 'math', 'sql']);
+
+      const result = scene.getExpressionAndTransformationCounts(saveModel);
+
+      expect(result).toEqual({ math: 1, sql: 2 });
+    });
+
+    it('should count transformations from V1 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = createV1DashboardWithTransformations(['reduce', 'calculateField', 'reduce']);
+
+      const result = scene.getExpressionAndTransformationCounts(saveModel);
+
+      expect(result).toEqual({ calculateField: 1, reduce: 2 });
+    });
+
+    it('should count transformations from V2 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = createV2DashboardWithTransformations(['filterByValue', 'organize', 'filterByValue']);
+
+      const result = scene.getExpressionAndTransformationCounts(saveModel);
+
+      expect(result).toEqual({ filterByValue: 2, organize: 1 });
+    });
+
+    it('should count both expressions and transformations from V1 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = createV1DashboardWithExpressionsAndTransformations(
+        ['sql', 'reduce'],
+        ['calculateField', 'reduce']
+      );
+
+      const result = scene.getExpressionAndTransformationCounts(saveModel);
+
+      expect(result).toEqual({ calculateField: 1, reduce: 2, sql: 1 });
+    });
+
+    it('should count both expressions and transformations from V2 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = createV2DashboardWithExpressionsAndTransformations(['sql', 'math'], ['organize', 'sql']);
+
+      const result = scene.getExpressionAndTransformationCounts(saveModel);
+
+      expect(result).toEqual({ math: 1, organize: 1, sql: 3 });
+    });
+
+    it('should return undefined when no expressions or transformations exist', () => {
+      const scene = buildTestScene();
+      const saveModelV1 = createV1DashboardWithExpressions([]);
+      const saveModelV2 = createV2DashboardWithExpressions([]);
+
+      const resultV1 = scene.getExpressionAndTransformationCounts(saveModelV1);
+      const resultV2 = scene.getExpressionAndTransformationCounts(saveModelV2);
+
+      expect(resultV1).toBeUndefined();
+      expect(resultV2).toBeUndefined();
+    });
+
+    it('should handle multiple panels with expressions and transformations in V1', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Test Dashboard',
+        schemaVersion: 30,
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            targets: [
+              {
+                refId: 'A',
+                datasource: { type: '__expr__', uid: '__expr__' },
+                type: 'sql',
+              },
+            ],
+            transformations: [
+              { id: 'reduce', options: {} },
+              { id: 'calculateField', options: {} },
+            ],
+          },
+          {
+            id: 2,
+            type: 'graph',
+            targets: [
+              {
+                refId: 'A',
+                datasource: { type: '__expr__', uid: '__expr__' },
+                type: 'math',
+              },
+            ],
+            transformations: [{ id: 'reduce', options: {} }],
+          },
+        ],
+      } as unknown as Dashboard;
+
+      const result = scene.getExpressionAndTransformationCounts(saveModel);
+
+      expect(result).toEqual({ calculateField: 1, math: 1, reduce: 2, sql: 1 });
+    });
+
+    it('should handle multiple panels with expressions and transformations in V2', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Test Dashboard V2',
+        elements: {
+          'panel-1': {
+            kind: 'Panel',
+            spec: {
+              id: 1,
+              title: 'Panel 1',
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [
+                    {
+                      kind: 'PanelQuery',
+                      spec: {
+                        query: {
+                          kind: 'DataQuery',
+                          group: '__expr__',
+                          datasource: { name: '__expr__' },
+                          spec: { type: 'sql' },
+                        },
+                        refId: 'A',
+                      },
+                    },
+                  ],
+                  transformations: [
+                    { kind: 'organize', spec: { id: 'organize', options: {} } },
+                    { kind: 'filterByValue', spec: { id: 'filterByValue', options: {} } },
+                  ],
+                  queryOptions: {},
+                },
+              },
+            },
+          },
+          'panel-2': {
+            kind: 'Panel',
+            spec: {
+              id: 2,
+              title: 'Panel 2',
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [
+                    {
+                      kind: 'PanelQuery',
+                      spec: {
+                        query: {
+                          kind: 'DataQuery',
+                          group: '__expr__',
+                          datasource: { name: '__expr__' },
+                          spec: { type: 'math' },
+                        },
+                        refId: 'A',
+                      },
+                    },
+                  ],
+                  transformations: [{ kind: 'organize', spec: { id: 'organize', options: {} } }],
+                  queryOptions: {},
+                },
+              },
+            },
+          },
+        },
+      } as unknown as DashboardV2Spec;
+
+      const result = scene.getExpressionAndTransformationCounts(saveModel);
+
+      expect(result).toEqual({ filterByValue: 1, math: 1, organize: 2, sql: 1 });
+    });
+
+    it('should return object with correct structure', () => {
+      const scene = buildTestScene();
+      const saveModel = createV1DashboardWithExpressionsAndTransformations(
+        ['reduce', 'math', 'sql'],
+        ['organize', 'calculateField', 'filterByValue']
+      );
+
+      const result = scene.getExpressionAndTransformationCounts(saveModel);
+
+      expect(result).toEqual({
+        calculateField: 1,
+        filterByValue: 1,
+        math: 1,
+        organize: 1,
+        reduce: 1,
+        sql: 1,
+      });
+    });
+  });
 });
 
 function createV1DashboardWithExpressions(expressionTypes: string[]): Dashboard {
@@ -1162,6 +1365,60 @@ function createV1DashboardWithExpressions(expressionTypes: string[]): Dashboard 
             type,
           })),
         ],
+      },
+    ],
+  };
+}
+
+function createV1DashboardWithTransformations(transformationIds: string[]): Dashboard {
+  return {
+    title: 'Test Dashboard',
+    schemaVersion: 30,
+    panels: [
+      {
+        id: 1,
+        type: 'timeseries',
+        targets: [
+          {
+            refId: 'A',
+            datasource: { type: 'prometheus', uid: 'prometheus-uid' },
+          },
+        ],
+        transformations: transformationIds.map((id) => ({
+          id,
+          options: {},
+        })),
+      },
+    ],
+  };
+}
+
+function createV1DashboardWithExpressionsAndTransformations(
+  expressionTypes: string[],
+  transformationIds: string[]
+): Dashboard {
+  return {
+    title: 'Test Dashboard',
+    schemaVersion: 30,
+    panels: [
+      {
+        id: 1,
+        type: 'timeseries',
+        targets: [
+          {
+            refId: 'A',
+            datasource: { type: 'prometheus', uid: 'prometheus-uid' },
+          },
+          ...expressionTypes.map((type, i) => ({
+            refId: String.fromCharCode(66 + i), // B, C, D...
+            datasource: { type: '__expr__', uid: '__expr__' },
+            type,
+          })),
+        ],
+        transformations: transformationIds.map((id) => ({
+          id,
+          options: {},
+        })),
       },
     ],
   };
@@ -1241,6 +1498,191 @@ function createV2DashboardWithExpressions(expressionTypes: string[]): DashboardV
               ],
               queryOptions: {},
               transformations: [],
+            },
+          },
+          vizConfig: {
+            kind: 'VizConfig',
+            version: '1.0.0',
+            group: 'timeseries',
+            spec: {
+              options: {},
+              fieldConfig: {
+                defaults: {},
+                overrides: [],
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+}
+
+function createV2DashboardWithTransformations(transformationIds: string[]): DashboardV2Spec {
+  return {
+    title: 'Test Dashboard V2',
+    annotations: [],
+    cursorSync: 'Off',
+    editable: true,
+    links: [],
+    preload: false,
+    tags: [],
+    timeSettings: {
+      timezone: 'browser',
+      from: 'now-6h',
+      to: 'now',
+      autoRefresh: '',
+      autoRefreshIntervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
+      hideTimepicker: false,
+      fiscalYearStartMonth: 0,
+    },
+    variables: [],
+    layout: {
+      kind: 'GridLayout',
+      spec: {
+        items: [],
+      },
+    },
+    elements: {
+      'panel-1': {
+        kind: 'Panel',
+        spec: {
+          id: 1,
+          title: 'Panel',
+          description: '',
+          links: [],
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: [
+                {
+                  kind: 'PanelQuery',
+                  spec: {
+                    hidden: false,
+                    query: {
+                      kind: 'DataQuery',
+                      group: 'prometheus',
+                      version: 'v0',
+                      datasource: {
+                        name: 'prometheus-uid',
+                      },
+                      spec: {},
+                    },
+                    refId: 'A',
+                  },
+                },
+              ],
+              queryOptions: {},
+              transformations: transformationIds.map((id) => ({
+                kind: id,
+                spec: {
+                  id,
+                  options: {},
+                },
+              })),
+            },
+          },
+          vizConfig: {
+            kind: 'VizConfig',
+            version: '1.0.0',
+            group: 'timeseries',
+            spec: {
+              options: {},
+              fieldConfig: {
+                defaults: {},
+                overrides: [],
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+}
+
+function createV2DashboardWithExpressionsAndTransformations(
+  expressionTypes: string[],
+  transformationIds: string[]
+): DashboardV2Spec {
+  return {
+    title: 'Test Dashboard V2',
+    annotations: [],
+    cursorSync: 'Off',
+    editable: true,
+    links: [],
+    preload: false,
+    tags: [],
+    timeSettings: {
+      timezone: 'browser',
+      from: 'now-6h',
+      to: 'now',
+      autoRefresh: '',
+      autoRefreshIntervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
+      hideTimepicker: false,
+      fiscalYearStartMonth: 0,
+    },
+    variables: [],
+    layout: {
+      kind: 'GridLayout',
+      spec: {
+        items: [],
+      },
+    },
+    elements: {
+      'panel-1': {
+        kind: 'Panel',
+        spec: {
+          id: 1,
+          title: 'Panel',
+          description: '',
+          links: [],
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              queries: [
+                {
+                  kind: 'PanelQuery',
+                  spec: {
+                    hidden: false,
+                    query: {
+                      kind: 'DataQuery',
+                      group: 'prometheus',
+                      version: 'v0',
+                      datasource: {
+                        name: 'prometheus-uid',
+                      },
+                      spec: {},
+                    },
+                    refId: 'A',
+                  },
+                },
+                ...expressionTypes.map((type, i) => ({
+                  kind: 'PanelQuery' as const,
+                  spec: {
+                    hidden: false,
+                    query: {
+                      kind: 'DataQuery' as const,
+                      group: '__expr__',
+                      version: 'v0' as const,
+                      datasource: {
+                        name: '__expr__',
+                      },
+                      spec: {
+                        type,
+                      },
+                    },
+                    refId: String.fromCharCode(66 + i), // B, C, D...
+                  },
+                })),
+              ],
+              queryOptions: {},
+              transformations: transformationIds.map((id) => ({
+                kind: id,
+                spec: {
+                  id,
+                  options: {},
+                },
+              })),
             },
           },
           vizConfig: {
