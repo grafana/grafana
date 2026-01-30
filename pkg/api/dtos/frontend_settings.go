@@ -259,6 +259,7 @@ type FrontendSettingsDTO struct {
 	ExpressionsEnabled                  bool                           `json:"expressionsEnabled"`
 	AwsAllowedAuthProviders             []string                       `json:"awsAllowedAuthProviders"`
 	AwsAssumeRoleEnabled                bool                           `json:"awsAssumeRoleEnabled"`
+	AwsPerDatasourceHTTPProxyEnabled    bool                           `json:"awsPerDatasourceHTTPProxyEnabled"`
 	SupportBundlesEnabled               bool                           `json:"supportBundlesEnabled"`
 	SnapshotEnabled                     bool                           `json:"snapshotEnabled"`
 	SecureSocksDSProxyEnabled           bool                           `json:"secureSocksDSProxyEnabled"`

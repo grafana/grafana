@@ -109,6 +109,9 @@ func (p *EnvVarsProvider) awsEnvVars(pluginID string) []string {
 	if !p.cfg.AWSAssumeRoleEnabled {
 		variables = append(variables, p.envVar(awsds.AssumeRoleEnabledEnvVarKeyName, "false"))
 	}
+	if p.cfg.AWSPerDatasourceHTTPProxyEnabled {
+		variables = append(variables, p.envVar(awsds.PerDatasourceHTTPProxyEnabledEnvVarKeyName, "true"))
+	}
 	if len(p.cfg.AWSAllowedAuthProviders) > 0 {
 		variables = append(variables, p.envVar(awsds.AllowedAuthProvidersEnvVarKeyName, strings.Join(p.cfg.AWSAllowedAuthProviders, ",")))
 	}
