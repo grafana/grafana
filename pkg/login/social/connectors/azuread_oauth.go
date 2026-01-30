@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
@@ -308,7 +307,7 @@ func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester)
 }
 
 func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client, idTokenString string) (*azureClaims, error) {
-	rawJSON, err := s.validateIDTokenSignatureWithRetrievers(ctx, client, idTokenString, s.getAzureJWKSRetrievers())
+	rawJSON, err := s.validateIDTokenSignatureWithURLs(ctx, client, idTokenString, s.getAzureJWKSURLs())
 	if err != nil {
 		return nil, fmt.Errorf("error validating id token signature: %w", err)
 	}
@@ -345,18 +344,12 @@ func (s *SocialAzureAD) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption)
 	return s.getAuthCodeURL(state, opts...)
 }
 
-// getAzureJWKSRetrievers returns JWKS retrievers for Azure AD (cache, app-specific URL, general URL).
-// Used by validateIDTokenSignatureWithRetrievers to unify ID token signature validation with other OAuth providers.
-func (s *SocialAzureAD) getAzureJWKSRetrievers() []jwksRetrieverFunc {
-	return []jwksRetrieverFunc{
-		func(ctx context.Context, client *http.Client) (*keySetJWKS, time.Duration, error) {
-			keysetURL := strings.Replace(s.Endpoint.AuthURL, "/oauth2/v2.0/authorize", "/discovery/v2.0/keys", 1) + "?appid=" + url.QueryEscape(s.ClientID)
-			return s.retrieveJWKSFromURL(ctx, client, keysetURL)
-		},
-		func(ctx context.Context, client *http.Client) (*keySetJWKS, time.Duration, error) {
-			keysetURL := strings.Replace(s.Endpoint.AuthURL, "/oauth2/v2.0/authorize", "/discovery/v2.0/keys", 1)
-			return s.retrieveJWKSFromURL(ctx, client, keysetURL)
-		},
+// getAzureJWKSURLs returns JWKS URLs for Azure AD (app-specific, then general discovery URL).
+func (s *SocialAzureAD) getAzureJWKSURLs() []string {
+	base := strings.Replace(s.Endpoint.AuthURL, "/oauth2/v2.0/authorize", "/discovery/v2.0/keys", 1)
+	return []string{
+		base + "?appid=" + url.QueryEscape(s.ClientID),
+		base,
 	}
 }
 

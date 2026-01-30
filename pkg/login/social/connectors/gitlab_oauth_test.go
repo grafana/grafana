@@ -829,8 +829,8 @@ func TestSocialGitlab_extractFromToken_WithIDTokenValidation(t *testing.T) {
 		jwkSetURL     string
 		tokenKey      *rsa.PrivateKey
 		tokenKeyID    string
-		wantError     bool
 		wantData      bool
+		wantError     error
 	}{
 		{
 			name:          "valid signature with validation enabled",
@@ -838,7 +838,6 @@ func TestSocialGitlab_extractFromToken_WithIDTokenValidation(t *testing.T) {
 			jwkSetURL:     jwksServer.URL,
 			tokenKey:      validKey,
 			tokenKeyID:    validKeyID,
-			wantError:     false,
 			wantData:      true,
 		},
 		{
@@ -847,8 +846,7 @@ func TestSocialGitlab_extractFromToken_WithIDTokenValidation(t *testing.T) {
 			jwkSetURL:     jwksServer.URL,
 			tokenKey:      invalidKey,
 			tokenKeyID:    validKeyID,
-			wantError:     false, // extractFromToken returns nil on validation error, not an error
-			wantData:      false,
+			wantError:     fmt.Errorf("signing key not found for kid: test-key-id"),
 		},
 		{
 			name:          "validation disabled should extract without signature check",
@@ -856,7 +854,6 @@ func TestSocialGitlab_extractFromToken_WithIDTokenValidation(t *testing.T) {
 			jwkSetURL:     "",
 			tokenKey:      invalidKey,
 			tokenKeyID:    validKeyID,
-			wantError:     false,
 			wantData:      true,
 		},
 	}
@@ -893,8 +890,8 @@ func TestSocialGitlab_extractFromToken_WithIDTokenValidation(t *testing.T) {
 			// Extract from token
 			data, err := s.extractFromToken(context.Background(), client, token)
 
-			if tc.wantError {
-				require.Error(t, err)
+			if tc.wantError != nil {
+				require.ErrorContains(t, err, tc.wantError.Error())
 			} else {
 				require.NoError(t, err)
 			}

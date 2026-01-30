@@ -311,7 +311,7 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 		rawJSON, err = s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.jwkSetURL)
 		if err != nil {
 			s.log.Warn("Error validating ID token signature", "error", err)
-			return nil, nil
+			return nil, err
 		}
 	} else {
 		// Otherwise, just extract the payload without signature validation

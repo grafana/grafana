@@ -246,7 +246,10 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	s.log.Debug("Getting user info")
 
 	// 1. Collect user info data from various sources
-	dataSources := s.collectUserInfoData(ctx, client, token)
+	dataSources, err := s.collectUserInfoData(ctx, client, token)
+	if err != nil {
+		return nil, err
+	}
 
 	// 2. Build user info from collected data
 	userInfo, externalOrgs, err := s.buildUserInfo(dataSources)
@@ -271,10 +274,14 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 }
 
 // collectUserInfoData gathers user information from ID token, API, and access token
-func (s *SocialGenericOAuth) collectUserInfoData(ctx context.Context, client *http.Client, token *oauth2.Token) []*UserInfoJson {
+func (s *SocialGenericOAuth) collectUserInfoData(ctx context.Context, client *http.Client, token *oauth2.Token) ([]*UserInfoJson, error) {
 	dataSources := make([]*UserInfoJson, 0, 3)
 
-	if idTokenData := s.extractFromIDToken(ctx, token); idTokenData != nil {
+	idTokenData, err := s.extractFromIDToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+	if idTokenData != nil {
 		dataSources = append(dataSources, idTokenData)
 	}
 	if apiData := s.extractFromAPI(ctx, client); apiData != nil {
@@ -284,7 +291,7 @@ func (s *SocialGenericOAuth) collectUserInfoData(ctx context.Context, client *ht
 		dataSources = append(dataSources, accessTokenData)
 	}
 
-	return dataSources
+	return dataSources, nil
 }
 
 // buildUserInfo constructs BasicUserInfo from collected data sources
@@ -419,7 +426,7 @@ func (s *SocialGenericOAuth) canFetchPrivateEmail(userinfo *social.BasicUserInfo
 	return s.info.ApiUrl != "" && userinfo.Email == ""
 }
 
-func (s *SocialGenericOAuth) extractFromIDToken(ctx context.Context, token *oauth2.Token) *UserInfoJson {
+func (s *SocialGenericOAuth) extractFromIDToken(ctx context.Context, token *oauth2.Token) (*UserInfoJson, error) {
 	s.log.Debug("Extracting user info from OAuth ID token")
 
 	idTokenAttribute := "id_token"
@@ -431,13 +438,13 @@ func (s *SocialGenericOAuth) extractFromIDToken(ctx context.Context, token *oaut
 	idToken := token.Extra(idTokenAttribute)
 	if idToken == nil {
 		s.log.Debug("No id_token found", "token", fmt.Sprintf("%+v", token))
-		return nil
+		return nil, nil
 	}
 
 	idTokenString, ok := idToken.(string)
 	if !ok {
 		s.log.Warn("ID token is not a string", "token", fmt.Sprintf("%+v", token))
-		return nil
+		return nil, nil
 	}
 
 	var rawJSON []byte
@@ -449,18 +456,18 @@ func (s *SocialGenericOAuth) extractFromIDToken(ctx context.Context, token *oaut
 		rawJSON, err = s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.jwkSetURL)
 		if err != nil {
 			s.log.Warn("Error validating ID token signature", "error", err)
-			return nil
+			return nil, err
 		}
 	} else {
 		// Otherwise, just extract the payload without signature validation
 		rawJSON, err = s.retrieveRawJWTPayload(idTokenString)
 		if err != nil {
 			s.log.Warn("Error retrieving id_token payload", "error", err, "token", fmt.Sprintf("%+v", token))
-			return nil
+			return nil, nil
 		}
 	}
 
-	return s.parseUserInfoFromJSON(rawJSON, "id_token")
+	return s.parseUserInfoFromJSON(rawJSON, "id_token"), nil
 }
 
 func (s *SocialGenericOAuth) extractFromAccessToken(token *oauth2.Token) *UserInfoJson {

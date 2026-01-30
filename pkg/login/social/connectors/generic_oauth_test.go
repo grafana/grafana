@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -918,7 +919,8 @@ func TestPayloadCompression(t *testing.T) {
 			}
 
 			token := staticToken.WithExtra(test.OAuth2Extra)
-			userInfo := provider.extractFromIDToken(ctx, token)
+			userInfo, err := provider.extractFromIDToken(ctx, token)
+			require.NoError(t, err)
 
 			if test.ExpectedEmail == "" {
 				require.Nil(t, userInfo, "Testing case %q", test.Name)
@@ -1487,6 +1489,7 @@ func TestSocialGenericOAuth_extractFromIDToken_WithIDTokenValidation(t *testing.
 		tokenKeyID    string
 		wantData      bool
 		wantEmail     string
+		wantError     error
 	}{
 		{
 			name:          "valid signature with validation enabled",
@@ -1505,6 +1508,7 @@ func TestSocialGenericOAuth_extractFromIDToken_WithIDTokenValidation(t *testing.
 			tokenKeyID:    validKeyID,
 			wantData:      false, // extractFromIDToken returns nil on validation error
 			wantEmail:     "",
+			wantError:     fmt.Errorf("signing key not found for kid: test-key-id"),
 		},
 		{
 			name:          "validation disabled should extract without signature check",
@@ -1545,7 +1549,12 @@ func TestSocialGenericOAuth_extractFromIDToken_WithIDTokenValidation(t *testing.
 			})
 
 			// Extract from ID token
-			userInfo := provider.extractFromIDToken(ctx, token)
+			userInfo, err := provider.extractFromIDToken(ctx, token)
+			if tc.wantError != nil {
+				require.ErrorContains(t, err, tc.wantError.Error())
+			} else {
+				require.NoError(t, err)
+			}
 
 			if tc.wantData {
 				require.NotNil(t, userInfo, "Expected user data but got nil")

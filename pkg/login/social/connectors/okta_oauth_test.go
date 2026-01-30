@@ -563,8 +563,8 @@ func TestSocialOkta_UserInfo_WithIDTokenValidation(t *testing.T) {
 		jwkSetURL     string
 		tokenKey      *rsa.PrivateKey
 		tokenKeyID    string
-		wantError     bool
 		wantUserInfo  bool
+		wantError     error
 	}{
 		{
 			name:          "valid signature with validation enabled",
@@ -572,7 +572,6 @@ func TestSocialOkta_UserInfo_WithIDTokenValidation(t *testing.T) {
 			jwkSetURL:     jwksServer.URL,
 			tokenKey:      validKey,
 			tokenKeyID:    validKeyID,
-			wantError:     false,
 			wantUserInfo:  true,
 		},
 		{
@@ -581,8 +580,7 @@ func TestSocialOkta_UserInfo_WithIDTokenValidation(t *testing.T) {
 			jwkSetURL:     jwksServer.URL,
 			tokenKey:      invalidKey,
 			tokenKeyID:    validKeyID,
-			wantError:     true, // Okta returns an error when validation fails
-			wantUserInfo:  false,
+			wantError:     fmt.Errorf("signing key not found for kid: test-key-id"),
 		},
 		{
 			name:          "validation disabled should extract without signature check",
@@ -590,7 +588,6 @@ func TestSocialOkta_UserInfo_WithIDTokenValidation(t *testing.T) {
 			jwkSetURL:     "",
 			tokenKey:      invalidKey,
 			tokenKeyID:    validKeyID,
-			wantError:     false,
 			wantUserInfo:  true,
 		},
 	}
@@ -639,9 +636,8 @@ func TestSocialOkta_UserInfo_WithIDTokenValidation(t *testing.T) {
 			// Get user info
 			userInfo, err := s.UserInfo(context.Background(), client, token)
 
-			if tc.wantError {
-				require.Error(t, err)
-				assert.Nil(t, userInfo)
+			if tc.wantError != nil {
+				require.ErrorContains(t, err, tc.wantError.Error())
 			} else {
 				require.NoError(t, err)
 			}

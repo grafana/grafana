@@ -848,7 +848,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				s.Endpoint.AuthURL = authURL
 			}
 
-			err = cache.Set(context.Background(), s.getJWKSCacheKey(), jwksDump, 0)
+			urls := s.getAzureJWKSURLs()
+			cacheKey := s.getJWKSCacheKeyForURL(urls[0])
+			err = cache.Set(context.Background(), cacheKey, jwksDump, 0)
 			require.NoError(t, err)
 
 			cl := jwt.Claims{
@@ -1022,7 +1024,9 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 
 			s.Endpoint.AuthURL = authURL
 
-			err = cache.Set(context.Background(), s.getJWKSCacheKey(), jwksDump, 0)
+			urls := s.getAzureJWKSURLs()
+			cacheKey := s.getJWKSCacheKeyForURL(urls[0])
+			err = cache.Set(context.Background(), cacheKey, jwksDump, 0)
 			require.NoError(t, err)
 
 			cl := jwt.Claims{

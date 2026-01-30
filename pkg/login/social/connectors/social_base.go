@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"compress/zlib"
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -289,18 +291,17 @@ func (s *SocialBase) getJWKSCacheKeyPrefix() string {
 	return s.providerName + "_oauth_jwks-"
 }
 
-// getJWKSCacheKey returns the cache key for JWKS
-func (s *SocialBase) getJWKSCacheKey() string {
-	return s.getJWKSCacheKeyPrefix() + s.ClientID
+// getJWKSCacheKeyForURL returns a cache key for the given JWKS URL (prefix + hash of URL).
+func (s *SocialBase) getJWKSCacheKeyForURL(jwkSetURL string) string {
+	sum := sha256.Sum256([]byte(jwkSetURL))
+	return s.getJWKSCacheKeyPrefix() + hex.EncodeToString(sum[:])
 }
 
-// retrieveJWKSFromCache retrieves JWKS from cache
-func (s *SocialBase) retrieveJWKSFromCache(ctx context.Context) (*keySetJWKS, time.Duration, error) {
+// retrieveJWKSFromCache retrieves JWKS from cache by cache key.
+func (s *SocialBase) retrieveJWKSFromCache(ctx context.Context, cacheKey string) (*keySetJWKS, time.Duration, error) {
 	if s.cache == nil {
 		return &keySetJWKS{}, 0, nil
 	}
-
-	cacheKey := s.getJWKSCacheKey()
 
 	if val, err := s.cache.Get(ctx, cacheKey); err == nil {
 		var jwks keySetJWKS
@@ -313,13 +314,11 @@ func (s *SocialBase) retrieveJWKSFromCache(ctx context.Context) (*keySetJWKS, ti
 	return &keySetJWKS{}, 0, nil
 }
 
-// cacheJWKS caches the JWKS
-func (s *SocialBase) cacheJWKS(ctx context.Context, jwks *keySetJWKS, cacheExpiration time.Duration) error {
+// cacheJWKS caches the JWKS under the given cache key.
+func (s *SocialBase) cacheJWKS(ctx context.Context, cacheKey string, jwks *keySetJWKS, cacheExpiration time.Duration) error {
 	if s.cache == nil {
 		return nil
 	}
-
-	cacheKey := s.getJWKSCacheKey()
 
 	var jsonBuf bytes.Buffer
 	if err := json.NewEncoder(&jsonBuf).Encode(jwks); err != nil {
@@ -383,15 +382,10 @@ func (s *SocialBase) retrieveJWKSFromURL(ctx context.Context, client *http.Clien
 	return &jwks, cacheExpiration, nil
 }
 
-// jwksRetrieverFunc is a function that retrieves a JWKS keyset. Used to unify
-// ID token signature validation across OAuth providers (e.g. generic OAuth with
-// a static JWKS URL vs Azure AD with discovery URLs derived from the auth URL).
-type jwksRetrieverFunc func(ctx context.Context, client *http.Client) (*keySetJWKS, time.Duration, error)
-
-// validateIDTokenSignatureWithRetrievers validates the JWT signature using the
-// given JWKS retrievers. It parses the token, then tries each retriever in order
-// until a key verifies the signature. Used by both generic OAuth and Azure AD.
-func (s *SocialBase) validateIDTokenSignatureWithRetrievers(ctx context.Context, client *http.Client, idTokenString string, retrievers []jwksRetrieverFunc) ([]byte, error) {
+// validateIDTokenSignatureWithURLs validates the JWT signature using JWKS from the given URLs.
+// For each URL, the cache is checked first (keyed by hash of URL), then the URL is fetched if needed.
+// Tries each URL in order until a key verifies the signature.
+func (s *SocialBase) validateIDTokenSignatureWithURLs(ctx context.Context, client *http.Client, idTokenString string, jwkSetURLs []string) ([]byte, error) {
 	parsedToken, err := jwt.ParseSigned(idTokenString, []jose.SignatureAlgorithm{
 		jose.EdDSA, jose.HS256, jose.HS384, jose.HS512,
 		jose.RS256, jose.RS384, jose.RS512,
@@ -408,18 +402,24 @@ func (s *SocialBase) validateIDTokenSignatureWithRetrievers(ctx context.Context,
 
 	keyID := parsedToken.Headers[0].KeyID
 
-	// first look for the key in the cache, then try the provided retrievers
-	retrievers = append([]jwksRetrieverFunc{
-		func(ctx context.Context, client *http.Client) (*keySetJWKS, time.Duration, error) {
-			return s.retrieveJWKSFromCache(ctx)
-		},
-	}, retrievers...)
-
-	for _, jwksFunc := range retrievers {
-		keyset, expiry, err := jwksFunc(ctx, client)
-		if err != nil {
-			s.log.Warn("Error retrieving JWKS", "error", err)
+	for _, jwkSetURL := range jwkSetURLs {
+		if jwkSetURL == "" {
 			continue
+		}
+		cacheKey := s.getJWKSCacheKeyForURL(jwkSetURL)
+
+		// Try cache first for this URL
+		keyset, expiry, err := s.retrieveJWKSFromCache(ctx, cacheKey)
+		if err != nil {
+			s.log.Warn("Error retrieving JWKS from cache", "url", jwkSetURL, "error", err)
+		}
+		// If cache miss or empty, fetch from URL
+		if keyset == nil || len(keyset.Keys) == 0 {
+			keyset, expiry, err = s.retrieveJWKSFromURL(ctx, client, jwkSetURL)
+			if err != nil {
+				s.log.Warn("Error retrieving JWKS from URL", "url", jwkSetURL, "error", err)
+				continue
+			}
 		}
 
 		keys := keyset.Key(keyID)
@@ -427,20 +427,18 @@ func (s *SocialBase) validateIDTokenSignatureWithRetrievers(ctx context.Context,
 			s.log.Debug("Trying to verify token with key", "kid", key.KeyID)
 			var claims map[string]any
 			if err := parsedToken.Claims(key, &claims); err == nil {
-				// Successfully verified, cache the keyset if we got it from URL
+				// Successfully verified, cache the keyset if we got it from URL (expiry > 0)
 				if expiry != 0 {
 					s.log.Debug("Caching key set", "kid", key.KeyID, "expiry", expiry)
-					if err := s.cacheJWKS(ctx, keyset, expiry); err != nil {
+					if err := s.cacheJWKS(ctx, cacheKey, keyset, expiry); err != nil {
 						s.log.Warn("Failed to cache key set", "err", err)
 					}
 				}
 
-				// Extract the raw JSON payload from the verified claims
 				rawJSON, err := json.Marshal(claims)
 				if err != nil {
 					return nil, fmt.Errorf("failed to marshal verified claims: %w", err)
 				}
-
 				return rawJSON, nil
 			}
 			s.log.Debug("Failed to verify token with key", "kid", key.KeyID, "err", err)
@@ -452,12 +450,7 @@ func (s *SocialBase) validateIDTokenSignatureWithRetrievers(ctx context.Context,
 
 // validateIDTokenSignature validates the JWT signature using JWKS from cache and the given URL.
 func (s *SocialBase) validateIDTokenSignature(ctx context.Context, client *http.Client, idTokenString string, jwkSetURL string) ([]byte, error) {
-	retrievers := []jwksRetrieverFunc{
-		func(ctx context.Context, client *http.Client) (*keySetJWKS, time.Duration, error) {
-			return s.retrieveJWKSFromURL(ctx, client, jwkSetURL)
-		},
-	}
-	return s.validateIDTokenSignatureWithRetrievers(ctx, client, idTokenString, retrievers)
+	return s.validateIDTokenSignatureWithURLs(ctx, client, idTokenString, []string{jwkSetURL})
 }
 
 // match grafana admin role and translate to org role and bool.
