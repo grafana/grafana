@@ -1,5 +1,6 @@
 import i18n, { InitOptions, ReactOptions, TFunction as I18NextTFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
+import React from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { initReactI18next, setDefaults, setI18n, Trans as I18NextTrans, getI18n } from 'react-i18next';
 
@@ -216,7 +217,7 @@ export const t: TFunction = (id: string, defaultMessage: string, values?: Record
   return tFunc(id, defaultMessage, values);
 };
 
-export function Trans(props: TransProps) {
+export function Trans(props: TransProps): React.ReactElement {
   initDefaultI18nInstance();
   const Component = transComponent ?? I18NextTrans;
   return <Component shouldUnescape {...props} />;
