@@ -1,25 +1,24 @@
 import { PanelOptionsEditorBuilder } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TableCellHeight } from '@grafana/schema/dist/esm/common/common.gen';
+import { TableCellHeight, TableOptions, defaultTableOptions } from '@grafana/schema/dist/esm/common/common.gen';
 
 import { PaginationEditor } from './PaginationEditor';
-import { defaultOptions, Options } from './panelcfg.gen';
 
-export const addTableCustomPanelOptions = (builder: PanelOptionsEditorBuilder<Options>) => {
+export const addTableCustomPanelOptions = <O extends TableOptions>(builder: PanelOptionsEditorBuilder<O>) => {
   const category = [t('table.category-table', 'Table')];
   builder
     .addBooleanSwitch({
       path: 'showHeader',
       name: t('table.name-show-table-header', 'Show table header'),
       category,
-      defaultValue: defaultOptions.showHeader,
+      defaultValue: defaultTableOptions.showHeader,
     })
     .addNumberInput({
       path: 'frozenColumns.left',
       name: t('table.name-frozen-columns', 'Frozen columns'),
       description: t('table.description-frozen-columns', 'Columns are frozen from the left side of the table'),
       settings: {
-        placeholder: 'none',
+        placeholder: t('table.placeholder-frozen-columns', 'none'),
       },
       category,
     })
@@ -27,7 +26,7 @@ export const addTableCustomPanelOptions = (builder: PanelOptionsEditorBuilder<Op
       path: 'cellHeight',
       name: t('table.name-cell-height', 'Cell height'),
       category,
-      defaultValue: defaultOptions.cellHeight,
+      defaultValue: defaultTableOptions.cellHeight,
       settings: {
         options: [
           { value: TableCellHeight.Sm, label: t('table.cell-height-options.label-small', 'Small') },
@@ -51,6 +50,6 @@ export const addTableCustomPanelOptions = (builder: PanelOptionsEditorBuilder<Op
       name: t('table.name-enable-pagination', 'Enable pagination'),
       category,
       editor: PaginationEditor,
-      defaultValue: defaultOptions?.enablePagination,
+      defaultValue: defaultTableOptions?.enablePagination,
     });
 };
