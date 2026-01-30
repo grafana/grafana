@@ -174,7 +174,7 @@ func (s *Server) writeTuples(ctx context.Context, store *storeInfo, writeTuples 
 		}
 	}
 
-	_, err := s.openfga.Write(ctx, writeReq)
+	_, err := s.openFGAClient.Write(ctx, writeReq)
 	return err
 }
 

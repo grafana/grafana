@@ -194,7 +194,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 }
 
 func (s *Server) openfgaCheck(ctx context.Context, store *storeInfo, subject, relation, object string, contextuals *openfgav1.ContextualTupleKeys, resourceCtx *structpb.Struct) (*openfgav1.CheckResponse, error) {
-	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
+	res, err := s.openFGAClient.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{

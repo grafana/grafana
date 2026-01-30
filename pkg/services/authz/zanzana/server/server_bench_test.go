@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -339,13 +338,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 	cfg := setting.NewCfg()
 	testStore := sqlstore.NewTestStore(b, sqlstore.WithCfg(cfg))
 
-	openFGAStore, err := store.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
-	require.NoError(b, err)
-
-	openfga, err := NewOpenFGAServer(cfg.ZanzanaServer, openFGAStore)
-	require.NoError(b, err)
-
-	srv, err := NewServer(cfg.ZanzanaServer, openfga, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
+	srv, err := NewEmbeddedZanzanaServer(cfg, testStore, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry())
 	require.NoError(b, err)
 
 	// Generate test data
@@ -403,7 +396,7 @@ func setupBenchmarkServer(b *testing.B) (*Server, *benchmarkData) {
 		}
 		batch := allTuples[i:end]
 
-		_, err = srv.openfga.Write(ctx, &openfgav1.WriteRequest{
+		_, err = srv.openFGAClient.Write(ctx, &openfgav1.WriteRequest{
 			StoreId:              storeInf.ID,
 			AuthorizationModelId: storeInf.ModelID,
 			Writes: &openfgav1.WriteRequestWrites{
