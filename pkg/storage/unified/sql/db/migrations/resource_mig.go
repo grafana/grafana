@@ -485,6 +485,30 @@ func processResourceTable(sess *xorm.Session, mg *migrator.Migrator) error {
 			newGeneration := oldGeneration + 1
 			metadataMap["generation"] = newGeneration
 
+			updateMessage := "Fixed PostgreSQL dashboard variable quotes in repeated panels"
+
+			// Update annotations with migration message
+			annotationsInterface, ok := metadataMap["annotations"]
+			if !ok {
+				// Create annotations if it doesn't exist
+				metadataMap["annotations"] = map[string]any{
+					"grafana.app/updatedBy": "migration",
+					"grafana.app/message":   updateMessage,
+				}
+			} else {
+				annotationsMap, ok := annotationsInterface.(map[string]any)
+				if ok {
+					annotationsMap["grafana.app/updatedBy"] = "migration"
+					annotationsMap["grafana.app/message"] = updateMessage
+				} else {
+					// If annotations is not a map, replace it
+					metadataMap["annotations"] = map[string]any{
+						"grafana.app/updatedBy": "migration",
+						"grafana.app/message":   updateMessage,
+					}
+				}
+			}
+
 			// Get and increment the resource_version for this resource type
 			var currentRV int64
 			sqlGetRV := `SELECT resource_version FROM resource_version WHERE "group" = ? AND resource = ?`
