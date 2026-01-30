@@ -6,6 +6,7 @@ import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Box, Button, Stack, Text } from '@grafana/ui';
 import config from 'app/core/config';
+import { DASHBOARD_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { SqlExpressionCard } from '../../../dashboard/components/TransformationsEditor/SqlExpressionCard';
 import { TransformationCard } from '../../../dashboard/components/TransformationsEditor/TransformationCard';
@@ -17,6 +18,7 @@ interface EmptyTransformationsProps {
   onGoToQueries?: () => void;
   onAddTransformation?: (transformationId: string) => void;
   data: DataFrame[];
+  datasourceUid?: string;
 }
 
 const TRANSFORMATION_IDS = [
@@ -91,7 +93,6 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
   };
 
   const showSqlCard = hasGoToQueries && config.featureToggles.sqlExpressions;
-
   return (
     <Box padding={2}>
       <Stack direction="column" alignItems="start" gap={2}>
@@ -120,6 +121,7 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                 imageUrl={config.theme2.isDark ? sqlDarkImage : sqlLightImage}
                 onClick={handleSqlTransformationClick}
                 testId="go-to-queries-button"
+                disabled={props.datasourceUid === DASHBOARD_DATASOURCE_NAME}
               />
             )}
             {hasAddTransformation &&

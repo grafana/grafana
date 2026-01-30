@@ -1,3 +1,5 @@
+import { cx } from '@emotion/css';
+
 import { Card, Text, useStyles2 } from '@grafana/ui';
 
 import { getCardStyles } from './getCardStyles';
@@ -8,13 +10,15 @@ export interface SqlExpressionCardProps {
   imageUrl?: string;
   onClick: () => void;
   testId?: string;
+  disabled?: boolean;
 }
 
-export function SqlExpressionCard({ name, description, imageUrl, onClick, testId }: SqlExpressionCardProps) {
+export function SqlExpressionCard({ name, description, imageUrl, onClick, testId, disabled }: SqlExpressionCardProps) {
   const styles = useStyles2(getCardStyles);
+  const cardClasses = cx(styles.baseCard, { [styles.cardDisabled]: disabled });
 
   return (
-    <Card className={styles.baseCard} data-testid={testId} onClick={onClick} noMargin>
+    <Card className={cardClasses} data-testid={testId} onClick={onClick} noMargin disabled={disabled}>
       <Card.Heading>{name}</Card.Heading>
       <Card.Description>
         <Text variant="bodySmall">{description}</Text>

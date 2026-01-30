@@ -6,17 +6,18 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  TestDataSourceResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
   ScopedVars,
+  TestDataSourceResponse,
 } from '@grafana/data';
 import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { CustomFormatterVariable } from '@grafana/scenes';
 
 import { SHARED_DASHBOARD_QUERY } from '../dashboard/constants';
 
+export const DASHBOARD_DATASOURCE_NAME = '-- Dashboard --';
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 export const MIXED_REQUEST_PREFIX = 'mixed-';
 
