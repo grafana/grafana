@@ -187,24 +187,24 @@ Manage Knowledge Graph trace configurations through the Grafana API.
 
 #### Arguments
 
-| Name                                     | Type           | Required | Description                                                                                  |
-| ---------------------------------------- | -------------- | -------- | -------------------------------------------------------------------------------------------- |
+| Name                                     | Type           | Required | Description                                                                                    |
+| ---------------------------------------- | -------------- | -------- | ---------------------------------------------------------------------------------------------- |
 | `name`                                   | `string`       | Yes      | The name of the trace configuration. This field is immutable and forces recreation if changed. |
-| `priority`                               | `number`       | Yes      | Priority of the trace configuration. A lower number means a higher priority.                 |
-| `default_config`                         | `bool`         | Yes      | Whether this is the default configuration. Default configurations cannot be deleted.         |
-| `data_source_uid`                        | `string`       | Yes      | DataSource UID to be queried (for example, a Tempo instance).                                 |
-| `match`                                  | `list(object)` | No       | List of match rules for entity properties. Refer to [match block](#match-block) for details. |
-| `entity_property_to_trace_label_mapping` | `map(string)`  | No       | Mapping of entity properties to trace labels for correlation.                                |
+| `priority`                               | `number`       | Yes      | Priority of the trace configuration. A lower number means a higher priority.                   |
+| `default_config`                         | `bool`         | Yes      | Whether this is the default configuration. Default configurations cannot be deleted.           |
+| `data_source_uid`                        | `string`       | Yes      | DataSource UID to be queried (for example, a Tempo instance).                                  |
+| `match`                                  | `list(object)` | No       | List of match rules for entity properties. Refer to [match block](#match-block) for details.   |
+| `entity_property_to_trace_label_mapping` | `map(string)`  | No       | Mapping of entity properties to trace labels for correlation.                                  |
 
 #### Match block
 
 Each `match` block supports the following:
 
-| Name       | Type           | Required | Description                                                                                                              |
-| ---------- | -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `property` | `string`       | Yes      | Entity property to match against.                                                                                        |
+| Name       | Type           | Required | Description                                                                                                                  |
+| ---------- | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `property` | `string`       | Yes      | Entity property to match against.                                                                                            |
 | `op`       | `string`       | Yes      | Operation to use for matching. One of: `=`, `<>`, `<`, `>`, `<=`, `>=`, `IS NULL`, `IS NOT NULL`, `STARTS WITH`, `CONTAINS`. |
-| `values`   | `list(string)` | Yes      | Values to match against. Can be empty for `IS NULL` and `IS NOT NULL` operations.                                        |
+| `values`   | `list(string)` | Yes      | Values to match against. Can be empty for `IS NULL` and `IS NOT NULL` operations.                                            |
 
 #### Example
 
