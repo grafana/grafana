@@ -59,15 +59,15 @@ describe('RepositoryHealthCard', () => {
     mockUseGetConnectionQuery.mockReturnValue({ data: undefined, isLoading: false });
   });
 
-  describe('Connection info', () => {
-    it('should not show connection row when repository has no connection', () => {
+  describe('Connection status', () => {
+    it('should not show connection status when repository has no connection', () => {
       const repo = createMockRepository();
       render(<RepositoryHealthCard repo={repo} />);
 
-      expect(screen.queryByText('Connection:')).not.toBeInTheDocument();
+      expect(screen.queryByText('Connection status:')).not.toBeInTheDocument();
     });
 
-    it('should show connection name with link when connection exists', () => {
+    it('should show connection status badge when connection exists', () => {
       const connection = createMockConnection();
       mockUseGetConnectionQuery.mockReturnValue({ data: connection, isLoading: false });
 
@@ -83,49 +83,7 @@ describe('RepositoryHealthCard', () => {
 
       render(<RepositoryHealthCard repo={repo} />);
 
-      expect(screen.getByText('Connection:')).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Test Connection' })).toHaveAttribute(
-        'href',
-        '/admin/provisioning/connections/test-connection/edit'
-      );
-    });
-
-    it('should show connection name as fallback when connection data is not loaded', () => {
-      mockUseGetConnectionQuery.mockReturnValue({ data: undefined, isLoading: false });
-
-      const repo = createMockRepository({
-        spec: {
-          title: 'Test Repository',
-          type: 'github',
-          sync: { target: 'folder', enabled: true },
-          workflows: [],
-          connection: { name: 'my-connection' },
-        },
-      });
-
-      render(<RepositoryHealthCard repo={repo} />);
-
-      expect(screen.getByText('Connection:')).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'my-connection' })).toBeInTheDocument();
-    });
-
-    it('should show ConnectionStatusBadge for connection on separate row', () => {
-      const connection = createMockConnection();
-      mockUseGetConnectionQuery.mockReturnValue({ data: connection, isLoading: false });
-
-      const repo = createMockRepository({
-        spec: {
-          title: 'Test Repository',
-          type: 'github',
-          sync: { target: 'folder', enabled: true },
-          workflows: [],
-          connection: { name: 'test-connection' },
-        },
-      });
-
-      render(<RepositoryHealthCard repo={repo} />);
-
-      expect(screen.getByText('Connection Status:')).toBeInTheDocument();
+      expect(screen.getByText('Connection status:')).toBeInTheDocument();
       expect(screen.getByText('Connected')).toBeInTheDocument();
     });
   });

@@ -2,11 +2,10 @@ import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Card, Grid, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Badge, Card, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Repository, useGetConnectionQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
-import { CONNECTIONS_URL } from '../constants';
 import { formatTimestamp } from '../utils/time';
 
 import { CheckRepository } from './CheckRepository';
@@ -24,20 +23,6 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
       </Card.Heading>
       <Card.Description>
         <Grid columns={3} gap={1} alignItems="baseline">
-          {/* Connection */}
-          {connectionName && (
-            <>
-              <Text color="secondary">
-                <Trans i18nKey="provisioning.repository-overview.connection">Connection:</Trans>
-              </Text>
-              <div className={styles.spanTwo}>
-                <TextLink href={`${CONNECTIONS_URL}/${connectionName}/edit`}>
-                  {connection?.spec?.title || connectionName}
-                </TextLink>
-              </div>
-            </>
-          )}
-
           {/* Status */}
           <Text color="secondary">
             <Trans i18nKey="provisioning.repository-overview.status">Status:</Trans>
@@ -82,11 +67,11 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
             </>
           )}
 
-          {/* Connection Status */}
+          {/* Connection status */}
           {connectionName && (
             <>
               <Text color="secondary">
-                <Trans i18nKey="provisioning.repository-overview.connection-status">Connection Status:</Trans>
+                <Trans i18nKey="provisioning.repository-overview.connection-status">Connection status:</Trans>
               </Text>
               <div className={styles.spanTwo}>
                 <ConnectionStatusBadge status={connection?.status} />

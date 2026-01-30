@@ -11898,7 +11898,7 @@
       "alert-connection-deleted": "Connection deleted",
       "alert-connection-saved": "Connection saved",
       "alert-connection-updated": "Connection updated",
-      "available-repositories": "Other allowed repositories",
+      "available-repositories": "Other available repositories",
       "back-to-connections": "Back to connections",
       "button-save": "Save",
       "button-saving": "Saving...",
@@ -12244,8 +12244,7 @@
     },
     "repository-overview": {
       "checked": "Checked:",
-      "connection": "Connection:",
-      "connection-status": "Connection Status:",
+      "connection-status": "Connection status:",
       "finished": "Last successful pull:",
       "health": "Health",
       "healthy": "Healthy",
