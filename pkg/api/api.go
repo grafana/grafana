@@ -414,16 +414,19 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Any("/proxy/uid/:uid", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 			datasourceRoute.Any("/proxy/uid/:uid/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 
-			// Deprecated Access by internal ID
-			datasourceRoute.Get("/:id", authorize(ac.EvalPermission(datasources.ActionRead, idScope)), routing.Wrap(hs.GetDataSourceById))
-			datasourceRoute.Put("/:id", authorize(ac.EvalPermission(datasources.ActionWrite, idScope)), routing.Wrap(hs.UpdateDataSourceByID))
-			datasourceRoute.Delete("/:id", authorize(ac.EvalPermission(datasources.ActionDelete, idScope)), routing.Wrap(hs.DeleteDataSourceById))
+			//nolint:staticcheck // not yet migrated to OpenFeature
+			if !hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourceDisableIdApi) {
+				// Deprecated Access by internal ID
+				datasourceRoute.Get("/:id", authorize(ac.EvalPermission(datasources.ActionRead, idScope)), routing.Wrap(hs.GetDataSourceById))
+				datasourceRoute.Put("/:id", authorize(ac.EvalPermission(datasources.ActionWrite, idScope)), routing.Wrap(hs.UpdateDataSourceByID))
+				datasourceRoute.Delete("/:id", authorize(ac.EvalPermission(datasources.ActionDelete, idScope)), routing.Wrap(hs.DeleteDataSourceById))
 
-			datasourceRoute.Any("/:id/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealth))
-			datasourceRoute.Any("/:id/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
-			datasourceRoute.Any("/:id/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
-			datasourceRoute.Any("/proxy/:id", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
-			datasourceRoute.Any("/proxy/:id/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
+				datasourceRoute.Any("/:id/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealth))
+				datasourceRoute.Any("/:id/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
+				datasourceRoute.Any("/:id/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
+				datasourceRoute.Any("/proxy/:id", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
+				datasourceRoute.Any("/proxy/:id/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
+			}
 
 			// Deprecated access by name (title)
 			datasourceRoute.Get("/name/:name", authorize(ac.EvalPermission(datasources.ActionRead, nameScope)), routing.Wrap(hs.GetDataSourceByName))
