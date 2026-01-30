@@ -1,11 +1,18 @@
 import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alerting';
 
-import { ActiveTab } from '../components/contact-points/ContactPoints';
 import { createReturnTo } from '../hooks/useReturnTo';
 
 import { stringifyIdentifier } from './rule-id';
 import { RelativeUrl, createRelativeUrl } from './url';
+
+/**
+ * Tab values for contact points page - duplicated here to avoid circular dependency
+ * with ContactPoints.tsx which has a heavy import chain
+ */
+const ContactPointsTab = {
+  NotificationTemplates: 'templates',
+} as const;
 
 /**
  * Navigation IDs used for Alerting pages
@@ -34,7 +41,7 @@ export function getTemplateParentUrl(useV2Nav: boolean | undefined): string {
   return useV2Nav
     ? ALERTING_PATHS.TEMPLATES
     : createRelativeUrl(ALERTING_PATHS.NOTIFICATIONS, {
-        tab: ActiveTab.NotificationTemplates,
+        tab: ContactPointsTab.NotificationTemplates,
       });
 }
 

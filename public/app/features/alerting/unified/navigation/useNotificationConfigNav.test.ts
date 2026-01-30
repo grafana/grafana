@@ -1,3 +1,5 @@
+import { renderHook } from '@testing-library/react';
+
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -57,22 +59,28 @@ describe('useNotificationConfigNav', () => {
     it('should return navId notification-config', () => {
       mockHasPermission.mockReturnValue(true);
 
-      const result = useNotificationConfigNav();
+      const { result } = renderHook(() => useNotificationConfigNav());
 
-      expect(result.navId).toBe('notification-config');
+      expect(result.current.navId).toBe('notification-config');
     });
 
     it('should return pageNav with tabs when user has all permissions', () => {
       mockHasPermission.mockReturnValue(true);
 
-      const result = useNotificationConfigNav();
+      const { result } = renderHook(() => useNotificationConfigNav());
 
-      expect(result.pageNav).toBeDefined();
-      expect(result.pageNav?.children).toHaveLength(4);
-      expect(result.pageNav?.children?.[0].id).toBe('notification-config-contact-points');
-      expect(result.pageNav?.children?.[1].id).toBe('notification-config-policies');
-      expect(result.pageNav?.children?.[2].id).toBe('notification-config-templates');
-      expect(result.pageNav?.children?.[3].id).toBe('notification-config-time-intervals');
+      expect(result.current.pageNav).toBeDefined();
+      // Note: children here refers to NavModelItem.children (tab items), not DOM children
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children).toHaveLength(4);
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children?.[0].id).toBe('notification-config-contact-points');
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children?.[1].id).toBe('notification-config-policies');
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children?.[2].id).toBe('notification-config-templates');
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children?.[3].id).toBe('notification-config-time-intervals');
     });
 
     it('should filter tabs based on permissions', () => {
@@ -83,11 +91,14 @@ describe('useNotificationConfigNav', () => {
         );
       });
 
-      const result = useNotificationConfigNav();
+      const { result } = renderHook(() => useNotificationConfigNav());
 
-      expect(result.pageNav?.children).toHaveLength(2);
-      expect(result.pageNav?.children?.[0].id).toBe('notification-config-contact-points');
-      expect(result.pageNav?.children?.[1].id).toBe('notification-config-templates');
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children).toHaveLength(2);
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children?.[0].id).toBe('notification-config-contact-points');
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children?.[1].id).toBe('notification-config-templates');
     });
 
     it('should not show tabs bar when only one tab is visible', () => {
@@ -96,9 +107,10 @@ describe('useNotificationConfigNav', () => {
         return action === AccessControlAction.AlertingReceiversRead;
       });
 
-      const result = useNotificationConfigNav();
+      const { result } = renderHook(() => useNotificationConfigNav());
 
-      expect(result.pageNav?.children).toBeUndefined();
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(result.current.pageNav?.children).toBeUndefined();
     });
   });
 
@@ -108,10 +120,10 @@ describe('useNotificationConfigNav', () => {
     });
 
     it('should return the legacy navId', () => {
-      const result = useNotificationConfigNav();
+      const { result } = renderHook(() => useNotificationConfigNav());
 
-      expect(result.navId).toBe('receivers');
-      expect(result.pageNav).toBeUndefined();
+      expect(result.current.navId).toBe('receivers');
+      expect(result.current.pageNav).toBeUndefined();
     });
   });
 });
@@ -152,23 +164,23 @@ describe('consolidated navigation hooks', () => {
     });
 
     it('useContactPointsNav should return notification-config navId', () => {
-      const result = useContactPointsNav();
-      expect(result.navId).toBe('notification-config');
+      const { result } = renderHook(() => useContactPointsNav());
+      expect(result.current.navId).toBe('notification-config');
     });
 
     it('useNotificationPoliciesNav should return notification-config navId', () => {
-      const result = useNotificationPoliciesNav();
-      expect(result.navId).toBe('notification-config');
+      const { result } = renderHook(() => useNotificationPoliciesNav());
+      expect(result.current.navId).toBe('notification-config');
     });
 
     it('useTemplatesNav should return notification-config navId', () => {
-      const result = useTemplatesNav();
-      expect(result.navId).toBe('notification-config');
+      const { result } = renderHook(() => useTemplatesNav());
+      expect(result.current.navId).toBe('notification-config');
     });
 
     it('useTimeIntervalsNav should return notification-config navId', () => {
-      const result = useTimeIntervalsNav();
-      expect(result.navId).toBe('notification-config');
+      const { result } = renderHook(() => useTimeIntervalsNav());
+      expect(result.current.navId).toBe('notification-config');
     });
   });
 
@@ -178,23 +190,23 @@ describe('consolidated navigation hooks', () => {
     });
 
     it('useContactPointsNav should return receivers navId', () => {
-      const result = useContactPointsNav();
-      expect(result.navId).toBe('receivers');
+      const { result } = renderHook(() => useContactPointsNav());
+      expect(result.current.navId).toBe('receivers');
     });
 
     it('useNotificationPoliciesNav should return am-routes navId', () => {
-      const result = useNotificationPoliciesNav();
-      expect(result.navId).toBe('am-routes');
+      const { result } = renderHook(() => useNotificationPoliciesNav());
+      expect(result.current.navId).toBe('am-routes');
     });
 
     it('useTemplatesNav should return receivers navId', () => {
-      const result = useTemplatesNav();
-      expect(result.navId).toBe('receivers');
+      const { result } = renderHook(() => useTemplatesNav());
+      expect(result.current.navId).toBe('receivers');
     });
 
     it('useTimeIntervalsNav should return am-routes navId', () => {
-      const result = useTimeIntervalsNav();
-      expect(result.navId).toBe('am-routes');
+      const { result } = renderHook(() => useTimeIntervalsNav());
+      expect(result.current.navId).toBe('am-routes');
     });
   });
 });
