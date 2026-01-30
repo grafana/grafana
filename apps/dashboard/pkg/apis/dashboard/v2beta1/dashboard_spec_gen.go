@@ -49,9 +49,10 @@ func NewDashboardAnnotationQuerySpec() *DashboardAnnotationQuerySpec {
 
 // +k8s:openapi-gen=true
 type DashboardDataQueryKind struct {
-	Kind    string `json:"kind"`
-	Group   string `json:"group"`
-	Version string `json:"version"`
+	Kind    string  `json:"kind"`
+	Group   string  `json:"group"`
+	Version string  `json:"version"`
+	Label   *string `json:"label,omitempty"`
 	// New type for datasource reference
 	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
 	Datasource *DashboardV2beta1DataQueryKindDatasource `json:"datasource,omitempty"`

@@ -170,14 +170,29 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
     return inputs;
   }
 
-  const dsTypes = new Set<string>();
+  const dsTypes: { [label: string]: string } = {};
+
+  if (dashboard.elements) {
+    for (const element of Object.values(dashboard.elements)) {
+      if (element.kind === 'Panel' && element.spec.data?.kind === 'QueryGroup') {
+        for (const query of element.spec.data.spec.queries) {
+          if (query.kind === 'PanelQuery') {
+            const dsType = query.spec.query?.group;
+            if (dsType && query.spec.query?.label) {
+              dsTypes[query.spec.query?.label] = dsType;
+            }
+          }
+        }
+      }
+    }
+  }
 
   if (dashboard.variables) {
     for (const variable of dashboard.variables) {
       if (variable.kind === 'QueryVariable') {
         const dsType = variable.spec.query?.group;
-        if (dsType) {
-          dsTypes.add(dsType);
+        if (dsType && variable.spec.query?.label) {
+          dsTypes[variable.spec.query?.label] = dsType;
         }
       }
     }
@@ -191,8 +206,8 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
       }
 
       const dsType = annotation.spec.query?.group;
-      if (dsType) {
-        dsTypes.add(dsType);
+      if (dsType && annotation.spec.query?.label) {
+        dsTypes[annotation.spec.query?.label] = dsType;
       }
     }
   }
@@ -203,8 +218,8 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
         for (const query of element.spec.data.spec.queries) {
           if (query.kind === 'PanelQuery') {
             const dsType = query.spec.query?.group;
-            if (dsType) {
-              dsTypes.add(dsType);
+            if (dsType && query.spec.query?.label) {
+              dsTypes[query.spec.query?.label] = dsType;
             }
           }
         }
@@ -212,11 +227,11 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
     }
   }
 
-  for (const dsType of dsTypes) {
+  for (const [label, dsType] of Object.entries(dsTypes)) {
     const dsInfo = getDataSourceSrv().getList({ pluginId: dsType });
     inputs.dataSources.push({
-      name: dsType,
-      label: dsType,
+      name: label,
+      label: label,
       info: dsInfo.length > 0 ? `Select a ${dsType} data source` : `No ${dsType} data sources found`,
       description: `${dsType} data source`,
       value: '',

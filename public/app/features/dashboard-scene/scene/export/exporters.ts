@@ -6,11 +6,9 @@ import { Panel } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   PanelKind,
-  PanelQueryKind,
-  AnnotationQueryKind,
-  QueryVariableKind,
   LibraryPanelRef,
   LibraryPanelKind,
+  DataQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -416,6 +414,7 @@ async function convertLibraryPanelToInlinePanel(libraryPanelElement: LibraryPane
 
 export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExternally = false) {
   const variableLookup: { [key: string]: any } = {};
+  const dataQueryLabels: { [key: string]: Set<string> } = {};
 
   // get all datasource variables
   const datasourceVariables = dashboard.variables.filter((v) => v.kind === 'DatasourceVariable');
@@ -424,12 +423,14 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     variableLookup[variable.spec.name] = variable.spec;
   }
 
-  const removeDataSourceRefs = (
-    obj: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
-  ) => {
-    const datasourceUid = obj.query?.datasource?.name;
+  const removeDataSourceRefs = (dataQueryKind: DataQueryKind) => {
+    if (!dataQueryKind.datasource?.name) {
+      return;
+    }
 
-    if (datasourceUid?.startsWith('${') && datasourceUid?.endsWith('}')) {
+    const datasourceUid = dataQueryKind.datasource.name;
+
+    if (datasourceUid.startsWith('${') && datasourceUid.endsWith('}')) {
       const varName = datasourceUid.slice(2, -1);
       // if there's a match we don't want to remove the datasource ref
       const match = datasourceVariables.find((v) => v.spec.name === varName);
@@ -438,13 +439,26 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
       }
     }
 
-    obj.query && (obj.query.datasource = undefined);
+    // check if the obj.query.group matches any of the key in dataQueryLabels
+    const group = dataQueryLabels[dataQueryKind.group];
+    if (group) {
+      const matchingUid = group.has(datasourceUid);
+      if (!matchingUid) {
+        group.add(datasourceUid);
+      }
+    } else {
+      dataQueryLabels[dataQueryKind.group] = new Set([datasourceUid]);
+    }
+
+    dataQueryKind.label = `${dataQueryKind.group}-${group?.size || 1}`;
+
+    dataQueryKind.datasource = undefined;
   };
 
   const processPanel = (panel: PanelKind) => {
     if (panel.spec.data.spec.queries) {
       for (const query of panel.spec.data.spec.queries) {
-        removeDataSourceRefs(query.spec);
+        removeDataSourceRefs(query.spec.query);
       }
     }
   };
@@ -472,7 +486,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     // process template variables
     for (const variable of dashboard.variables) {
       if (variable.kind === 'QueryVariable') {
-        removeDataSourceRefs(variable.spec);
+        removeDataSourceRefs(variable.spec.query);
         variable.spec.options = [];
         variable.spec.current = {
           text: '',
@@ -488,7 +502,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
 
     // process annotations vars
     for (const annotation of dashboard.annotations) {
-      removeDataSourceRefs(annotation.spec);
+      removeDataSourceRefs(annotation.spec.query);
     }
 
     return dashboard;
