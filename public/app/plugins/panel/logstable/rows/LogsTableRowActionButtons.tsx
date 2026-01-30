@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { memoize } from 'lodash';
 import { useState } from 'react';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
