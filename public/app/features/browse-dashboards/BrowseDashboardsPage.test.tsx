@@ -9,6 +9,7 @@ import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import BrowseDashboardsPage from './BrowseDashboardsPage';
 import * as permissions from './permissions';
@@ -78,6 +79,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
   beforeEach(() => {
     config.unifiedAlertingEnabled = true;
     jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
   afterEach(() => {
