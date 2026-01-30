@@ -5854,6 +5854,7 @@
       "check-failed": "Check failed · Click to retry",
       "check-tooltip": "Check if the metrics used by this dashboard exist in your datasource",
       "checking": "Checking",
+      "error-text": "Error",
       "score-only-tooltip": "{{score}}% metric availability",
       "score-text": "{{score}}%",
       "score-tooltip": "{{score}}% metric availability · {{found}}/{{total}} metrics exist in your datasource"

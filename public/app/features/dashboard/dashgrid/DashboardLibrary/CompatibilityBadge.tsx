@@ -117,7 +117,12 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
             }
           }}
         >
-          <Badge text="" icon="exclamation-circle" color="red" className={styles.clickableBadge} />
+          <Badge
+            text={t('dashboard-library.compatibility-badge.error-text', 'Error')}
+            icon="exclamation-circle"
+            color="red"
+            className={styles.clickableBadge}
+          />
         </span>
       </Tooltip>
     );
