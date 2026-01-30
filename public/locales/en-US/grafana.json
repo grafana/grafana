@@ -12680,13 +12680,17 @@
     }
   },
   "query-editor-next": {
-    "sidebar": {
-      "card-click": "Select query {{refId}}",
+    "labels": {
       "expression": "Expression",
-      "queries-expressions": "Queries & Expressions",
       "query": "Query",
+      "transformation": "Transformation"
+    },
+    "sidebar": {
+      "card-click": "Select card {{id}}",
+      "queries-expressions": "Queries & Expressions",
       "query-stack": "Query Stack",
-      "toggle-size": "Toggle sidebar size"
+      "toggle-size": "Toggle sidebar size",
+      "transformations": "Transformations"
     }
   },
   "query-library": {
