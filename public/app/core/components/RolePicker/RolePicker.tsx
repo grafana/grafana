@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useState, useRef, type JSX } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState, useSyncExternalStore, type JSX } from 'react';
 
 import { OrgRole } from '@grafana/data';
 import { ClickOutsideWrapper, Portal, useTheme2 } from '@grafana/ui';
@@ -12,6 +12,7 @@ import {
   ROLE_PICKER_MENU_MAX_WIDTH,
   ROLE_PICKER_WIDTH,
 } from './constants';
+import { pickerStateStore } from './utils';
 
 export interface Props {
   basicRole?: OrgRole;
@@ -31,6 +32,8 @@ export interface Props {
   apply?: boolean;
   maxWidth?: string | number;
   width?: string | number;
+  /** Unique identifier for this picker instance to persist open/closed state across remounts */
+  pickerId?: string;
 }
 
 export const RolePicker = ({
@@ -48,8 +51,22 @@ export const RolePicker = ({
   apply = false,
   maxWidth = ROLE_PICKER_WIDTH,
   width,
+  pickerId,
 }: Props): JSX.Element | null => {
-  const [isOpen, setOpen] = useState(false);
+  // Generate stable picker ID if not provided
+  const stablePickerIdRef = useRef(pickerId || crypto.randomUUID());
+  const stablePickerId = stablePickerIdRef.current;
+
+  // Use external store for isOpen state so it survives remounts
+  const isOpen = useSyncExternalStore(pickerStateStore.subscribe, () => pickerStateStore.getState(stablePickerId));
+
+  const setOpen = useCallback(
+    (value: boolean) => {
+      pickerStateStore.setState(stablePickerId, value);
+    },
+    [stablePickerId]
+  );
+
   const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(basicRole);
   const [query, setQuery] = useState('');
@@ -59,10 +76,11 @@ export const RolePicker = ({
   const theme = useTheme2();
   const widthPx = typeof width === 'number' ? theme.spacing(width) : width;
 
+  // Sync internal state only when picker closes (transitions from open to closed)
   useEffect(() => {
     setSelectedBuiltInRole(basicRole);
     setSelectedRoles(appliedRoles);
-  }, [appliedRoles, basicRole, onBasicRoleChange]);
+  }, [appliedRoles, basicRole]);
 
   const setMenuPosition = useCallback(() => {
     const { horizontal, vertical, menuToLeft } = calculateMenuPosition();
@@ -129,7 +147,7 @@ export const RolePicker = ({
         setOpen(true);
       }
     },
-    [disabled, setMenuPosition]
+    [disabled, setMenuPosition, setOpen]
   );
 
   const onClose = useCallback(() => {
@@ -137,7 +155,7 @@ export const RolePicker = ({
     setQuery('');
     setSelectedRoles(appliedRoles);
     setSelectedBuiltInRole(basicRole);
-  }, [appliedRoles, basicRole]);
+  }, [appliedRoles, basicRole, setOpen]);
 
   // Only call onClose if menu is open. Prevent unnecessary calls for multiple pickers on the page.
   const onClickOutside = () => isOpen && onClose();
