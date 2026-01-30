@@ -47,8 +47,8 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
       <QuerySidebarCollapsableHeader
         label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
       >
-        {queries.map((query, index) => (
-          <QueryCard key={`${query.refId}-${index}`} query={query} />
+        {queries.map((query) => (
+          <QueryCard key={query.refId} query={query} />
         ))}
       </QuerySidebarCollapsableHeader>
       {transformations.length > 0 && (
