@@ -77,5 +77,14 @@ export {
   getCorrelationsService,
   setCorrelationsService,
 } from './services/CorrelationsService';
+export {
+  getDashboardMutationAPI,
+  setDashboardMutationAPI,
+  type DashboardMutationAPI,
+  type MutationResult,
+  type MutationChange,
+  type MutationRequest,
+  type MCPToolDefinition,
+} from './services/dashboardMutationAPI';
 export { getAppPluginVersion, isAppPluginInstalled } from './services/pluginMeta/apps';
 export { useAppPluginInstalled, useAppPluginVersion } from './services/pluginMeta/hooks';
