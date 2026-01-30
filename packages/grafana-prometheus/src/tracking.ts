@@ -1,8 +1,27 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/tracking.ts
+import { Identifier, NumberDurationLiteral, parser, StringLiteral } from '@prometheus-io/lezer-promql';
+
 import { CoreApp, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 
 import { PromQuery } from './types';
+
+const tagsToObscure = [StringLiteral, Identifier, NumberDurationLiteral];
+const partsToKeep = ['__name__', '__interval', '__interval_ms', '__rate_interval', '__range', '__range_s', '__range_ms'];
+
+export function obfuscate(query: string): string {
+  let obfuscatedQuery: string = query;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: ({ type, from, to }): false | void => {
+      const queryPart = query.substring(from, to);
+      if (tagsToObscure.includes(type.id) && !partsToKeep.includes(queryPart)) {
+        obfuscatedQuery = obfuscatedQuery.replace(queryPart, type.name);
+      }
+    },
+  });
+  return obfuscatedQuery;
+}
 
 export function trackQuery(
   response: DataQueryResponse,
@@ -24,6 +43,7 @@ export function trackQuery(
       has_data: response.data.some((frame) => frame.length > 0),
       has_error: response.error !== undefined,
       expr: query.expr,
+      obfuscated_query: obfuscate(query.expr),
       format: query.format,
       instant: query.instant,
       range: query.range,
