@@ -150,7 +150,6 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend:     ret,
 			Diagnostics: ret,
-			Lifecycle:   ret,
 		})
 		require.NoError(t, err)
 	default:

@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/testutil"
 
 	"github.com/grafana/dskit/kv"
@@ -136,8 +137,14 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 	// UnifiedStorageOverGRPC
 	var storage sql.UnifiedStorageGrpcService
 	if runstore {
+		registerer := prometheus.NewPedanticRegistry()
+		storageMetrics := resource.ProvideStorageMetrics(registerer)
+		tracingService := tracing.NewNoopTracerService()
+		storageBackend, err := sql.ProvideStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, tracingService)
+		require.NoError(t, err)
+
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
+			env.Cfg.Logger, registerer, nil, storageMetrics, nil, nil, kv.Config{}, nil, storageBackend, nil)
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)

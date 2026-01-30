@@ -1782,7 +1782,7 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	hooksService := hooks.ProvideService()
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	moduleRegisterer := ProvideNoopModuleRegisterer()
-	storageBackend, err := sql.ProvideStorageBackend(cfg)
+	storageBackend, err := sql.ProvideStorageBackend(cfg, nil, registerer, storageMetrics, tracingService)
 	if err != nil {
 		return nil, err
 	}

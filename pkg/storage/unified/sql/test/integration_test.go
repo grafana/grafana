@@ -203,7 +203,13 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
+	registerer := prometheus.NewPedanticRegistry()
+	storageMetrics := resource.ProvideStorageMetrics(registerer)
+	tracingService := tracing.NewNoopTracerService()
+	backend, err := sql.ProvideStorageBackend(cfg, dbstore, registerer, storageMetrics, tracingService)
+	require.NoError(t, err)
+
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, registerer, nil, storageMetrics, nil, nil, kv.Config{}, nil, backend, nil)
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 
@@ -296,7 +302,13 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 		},
 	}
 
-	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), prometheus.NewPedanticRegistry(), docBuilders, nil, nil, kv.Config{}, nil, nil)
+	registerer := prometheus.NewPedanticRegistry()
+	storageMetrics := resource.ProvideStorageMetrics(registerer)
+	tracingService := tracing.NewNoopTracerService()
+	backend, err := sql.ProvideStorageBackend(cfg, dbstore, registerer, storageMetrics, tracingService)
+	require.NoError(t, err)
+
+	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), registerer, docBuilders, nil, nil, kv.Config{}, nil, backend)
 	require.NoError(t, err)
 
 	var client resource.SearchClient

@@ -111,22 +111,7 @@ func newClient(opts options.StorageOptions,
 
 	switch opts.StorageType {
 	case options.StorageTypeFile:
-		if opts.DataPath == "" {
-			opts.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
-		}
-
-		// Create BadgerDB instance
-		db, err := badger.Open(badger.DefaultOptions(filepath.Join(opts.DataPath, "badger")).
-			WithLogger(nil))
-		if err != nil {
-			return nil, err
-		}
-
-		kv := resource.NewBadgerKV(db)
-		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
-			KvStore: kv,
-			Log:     log.New(),
-		})
+		backend, err := newFileBackend(opts, cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -178,7 +163,19 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
+		backend, err := sql.ProvideStorageBackend(cfg, db, reg, storageMetrics, tracer)
+		if err != nil {
+			return nil, err
+		}
+
+		if backendService, ok := backend.(services.Service); ok {
+			if err := services.StartAndAwaitRunning(ctx, backendService); err != nil {
+				return nil, fmt.Errorf("failed to start storage backend: %w", err)
+			}
+		}
+
 		serverOptions := sql.ServerOptions{
+			Backend:        backend,
 			DB:             db,
 			Cfg:            cfg,
 			Tracer:         tracer,
@@ -235,6 +232,24 @@ func newClient(opts options.StorageOptions,
 		}
 		return resource.NewLocalResourceClient(server), nil
 	}
+}
+
+func newFileBackend(opts options.StorageOptions, cfg *setting.Cfg) (resource.StorageBackend, error) {
+	if opts.DataPath == "" {
+		opts.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
+	}
+
+	db, err := badger.Open(badger.DefaultOptions(filepath.Join(opts.DataPath, "badger")).
+		WithLogger(nil))
+	if err != nil {
+		return nil, err
+	}
+
+	kv := resource.NewBadgerKV(db)
+	return resource.NewKVStorageBackend(resource.KVBackendOptions{
+		KvStore: kv,
+		Log:     log.New(),
+	})
 }
 
 func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {

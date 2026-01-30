@@ -96,6 +96,9 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
 ) (UnifiedStorageGrpcService, error) {
+	if backend == nil {
+		return nil, fmt.Errorf("missing storage backend")
+	}
 	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
 	s.searchStandalone = true
 	if cfg.EnableSharding {
@@ -103,7 +106,9 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 		if err != nil {
 			return nil, err
 		}
-		err = s.initializeSubservicesManager()
+	}
+	if len(s.subservices) > 0 {
+		err := s.initializeSubservicesManager()
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 		}
@@ -126,6 +131,9 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
 ) (UnifiedStorageGrpcService, error) {
+	if backend == nil {
+		return nil, fmt.Errorf("missing storage backend")
+	}
 	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
 
 	// TODO: move to standalone search once we only use sharding in search servers
@@ -185,7 +193,7 @@ func newService(
 		return auth.Authenticate(ctx)
 	})
 
-	return &service{
+	svc := &service{
 		backend:            backend,
 		cfg:                cfg,
 		features:           features,
@@ -201,6 +209,12 @@ func newService(
 		searchClient:       searchClient,
 		subservicesWatcher: services.NewFailureWatcher(),
 	}
+
+	if backendService, ok := backend.(services.Service); ok {
+		svc.subservices = append(svc.subservices, backendService)
+	}
+
+	return svc
 }
 
 func (s *service) initializeSubservicesManager() error {
