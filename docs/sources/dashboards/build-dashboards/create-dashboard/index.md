@@ -67,6 +67,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
+
    - [Configure value mappings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-value-mappings/)
    - [Visualization-specific options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/)
    - [Override field values](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-overrides/)
