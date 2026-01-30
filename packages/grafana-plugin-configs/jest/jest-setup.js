@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import { MessageChannel } from 'node:worker_threads';
 import { TextEncoder, TextDecoder } from 'util';
 
 import { matchers } from '@grafana/test-utils/matchers';
@@ -84,3 +85,5 @@ global.ResizeObserver = class ResizeObserver {
     this.#isObserving = false;
   }
 };
+
+global.MessageChannel = MessageChannel;
