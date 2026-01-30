@@ -167,6 +167,9 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 	if jsonData.Tracing {
 		meta.Tracing = &jsonData.Tracing
 	}
+	if jsonData.Suggestions {
+		meta.Suggestions = &jsonData.Suggestions
+	}
 
 	// Map category
 	if jsonData.Category != "" {
@@ -217,6 +220,11 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 	// Map executable
 	if jsonData.Executable != "" {
 		meta.Executable = &jsonData.Executable
+	}
+
+	// Map buildMode
+	if jsonData.BuildMode != "" {
+		meta.BuildMode = &jsonData.BuildMode
 	}
 
 	// Map QueryOptions
@@ -557,7 +565,7 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, moduleHash string) plugi
 	metaSpec.Class = c
 
 	if plugin.Module != "" {
-		module := &pluginsv0alpha1.MetaV0alpha1SpecModule{
+		module := pluginsv0alpha1.MetaV0alpha1SpecModule{
 			Path: plugin.Module,
 		}
 		if moduleHash != "" {
@@ -571,17 +579,17 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, moduleHash string) plugi
 			case plugins.LoadingStrategyScript:
 				ls = pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript
 			}
-			module.LoadingStrategy = &ls
+			module.LoadingStrategy = ls
 		}
 		metaSpec.Module = module
 	}
 
 	if plugin.BaseURL != "" {
-		metaSpec.BaseURL = &plugin.BaseURL
+		metaSpec.BaseURL = plugin.BaseURL
 	}
 
 	if plugin.Signature != "" {
-		signature := &pluginsv0alpha1.MetaV0alpha1SpecSignature{
+		signature := pluginsv0alpha1.MetaV0alpha1SpecSignature{
 			Status: convertSignatureStatus(plugin.Signature),
 		}
 
@@ -661,23 +669,23 @@ func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
 
 	// Set module information
 	if plugin.Module != "" {
-		module := &pluginsv0alpha1.MetaV0alpha1SpecModule{
+		module := pluginsv0alpha1.MetaV0alpha1SpecModule{
 			Path: plugin.Module,
 		}
 
 		loadingStrategy := pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyScript
-		module.LoadingStrategy = &loadingStrategy
+		module.LoadingStrategy = loadingStrategy
 
 		metaSpec.Module = module
 	}
 
 	// Set BaseURL
 	if plugin.BaseURL != "" {
-		metaSpec.BaseURL = &plugin.BaseURL
+		metaSpec.BaseURL = plugin.BaseURL
 	}
 
 	// Set signature information
-	signature := &pluginsv0alpha1.MetaV0alpha1SpecSignature{
+	signature := pluginsv0alpha1.MetaV0alpha1SpecSignature{
 		Status: convertSignatureStatus(plugin.Signature),
 	}
 
@@ -776,7 +784,7 @@ func grafanaComPluginVersionMetaToMetaSpec(gcomMeta grafanaComPluginVersionMeta)
 	}
 
 	if gcomMeta.SignatureType != "" {
-		signature := &pluginsv0alpha1.MetaV0alpha1SpecSignature{
+		signature := pluginsv0alpha1.MetaV0alpha1SpecSignature{
 			Status: pluginsv0alpha1.MetaV0alpha1SpecSignatureStatusValid,
 		}
 
