@@ -104,7 +104,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
       aria-label={getButtonAriaLabel(ariaLabel, tooltip)}
       aria-expanded={isOpen}
       type="button"
-      data-testId={testId}
+      data-testid={testId}
       {...rest}
     >
       {renderIcon(icon, iconSize)}
