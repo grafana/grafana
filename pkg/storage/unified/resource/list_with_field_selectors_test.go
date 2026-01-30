@@ -19,76 +19,92 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 	tests := []struct {
 		name            string
 		withSearch      bool
-		source          resourcepb.ListRequest_Source
-		withFields      bool
-		versionMatchV2  resourcepb.ResourceVersionMatchV2
+		req             *resourcepb.ListRequest
 		expectedAllowed bool
 	}{
 		{
-			name:            "false when no search client",
-			withSearch:      false,
-			source:          resourcepb.ListRequest_STORE,
-			withFields:      true,
+			name:       "false when no search client",
+			withSearch: false,
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+				},
+			},
 			expectedAllowed: false,
 		},
 		{
-			name:            "false when source is not store",
-			withSearch:      true,
-			source:          resourcepb.ListRequest_HISTORY,
-			withFields:      true,
+			name:       "false when source is not store",
+			withSearch: true,
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_HISTORY,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+				},
+			},
 			expectedAllowed: false,
 		},
 		{
-			name:            "false when no field selectors",
-			withSearch:      true,
-			source:          resourcepb.ListRequest_STORE,
-			withFields:      false,
+			name:       "false when no field selectors",
+			withSearch: true,
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "ns"},
+				},
+			},
 			expectedAllowed: false,
 		},
 		{
-			name:            "false when version match exact",
-			withSearch:      true,
-			source:          resourcepb.ListRequest_STORE,
-			withFields:      true,
-			versionMatchV2:  resourcepb.ResourceVersionMatchV2_Exact,
+			name:       "false when version match exact",
+			withSearch: true,
+			req: &resourcepb.ListRequest{
+				Source:         resourcepb.ListRequest_STORE,
+				VersionMatchV2: resourcepb.ResourceVersionMatchV2_Exact,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+				},
+			},
 			expectedAllowed: false,
 		},
 		{
-			name:            "false when version match not older than",
-			withSearch:      true,
-			source:          resourcepb.ListRequest_STORE,
-			withFields:      true,
-			versionMatchV2:  resourcepb.ResourceVersionMatchV2_NotOlderThan,
+			name:       "false when version match not older than",
+			withSearch: true,
+			req: &resourcepb.ListRequest{
+				Source:         resourcepb.ListRequest_STORE,
+				VersionMatchV2: resourcepb.ResourceVersionMatchV2_NotOlderThan,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+				},
+			},
 			expectedAllowed: false,
 		},
 		{
-			name:            "true when store, fields, and search client",
-			withSearch:      true,
-			source:          resourcepb.ListRequest_STORE,
-			withFields:      true,
+			name:       "true when store, fields, and search client",
+			withSearch: true,
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+				},
+			},
 			expectedAllowed: true,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			req := &resourcepb.ListRequest{
-				Source:         tc.source,
-				VersionMatchV2: tc.versionMatchV2,
-				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "ns"},
-				},
-			}
-			if tc.withFields {
-				req.Options.Fields = []*resourcepb.Requirement{{Key: "spec.foo"}}
-			}
-
 			s := &server{}
 			if tc.withSearch {
 				s.searchClient = &stubSearchClient{}
 			}
 
-			require.Equal(t, tc.expectedAllowed, s.useFieldSelectorSearch(req))
+			require.Equal(t, tc.expectedAllowed, s.useFieldSelectorSearch(tc.req))
 		})
 	}
 }
@@ -96,25 +112,32 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 func TestFilterFieldSelectors(t *testing.T) {
 	tests := []struct {
 		name          string
-		namespace     string
-		fields        []*resourcepb.Requirement
+		req           *resourcepb.ListRequest
 		wantFieldKeys []string
 	}{
 		{
-			name:      "removes metadata.namespace and keep valid field",
-			namespace: "ns",
-			fields: []*resourcepb.Requirement{
-				{Key: "metadata.namespace", Operator: "=", Values: []string{"ns"}},
-				{Key: "spec.foo"},
+			name: "removes metadata.namespace and keep valid field",
+			req: &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "ns"},
+					Fields: []*resourcepb.Requirement{
+						{Key: "metadata.namespace", Operator: "=", Values: []string{"ns"}},
+						{Key: "spec.foo", Operator: "="},
+					},
+				},
 			},
 			wantFieldKeys: []string{"spec.foo"},
 		},
 		{
-			name:      "removes multiple unsupported fields",
-			namespace: "ns",
-			fields: []*resourcepb.Requirement{
-				{Key: "metadata.namespace", Operator: "=", Values: []string{"ns", "other"}},
-				{Key: "spec.foo", Operator: "!="},
+			name: "removes multiple unsupported fields",
+			req: &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "ns"},
+					Fields: []*resourcepb.Requirement{
+						{Key: "metadata.namespace", Operator: "=", Values: []string{"ns", "other"}},
+						{Key: "spec.foo", Operator: "!="},
+					},
+				},
 			},
 			wantFieldKeys: []string{},
 		},
@@ -122,14 +145,7 @@ func TestFilterFieldSelectors(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			req := &resourcepb.ListRequest{
-				Options: &resourcepb.ListOptions{
-					Key:    &resourcepb.ResourceKey{Namespace: tc.namespace},
-					Fields: tc.fields,
-				},
-			}
-
-			out := filterFieldSelectors(req)
+			out := filterFieldSelectors(tc.req)
 
 			gotKeys := make([]string, 0, len(out.Options.Fields))
 			for _, f := range out.Options.Fields {
