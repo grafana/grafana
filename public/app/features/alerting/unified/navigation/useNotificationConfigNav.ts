@@ -143,11 +143,19 @@ export function useNotificationConfigNav() {
 }
 
 /**
+ * Return type for navigation hooks
+ */
+interface NavHookResult {
+  navId: string;
+  pageNav?: NavModelItem;
+}
+
+/**
  * Factory function to create navigation hooks for notification configuration pages.
  * This allows us to have consistent navigation behavior across all notification config pages.
  */
 function createNavHook(legacyNavId: string) {
-  return function useNavHook() {
+  return function useNavHook(): NavHookResult {
     const notificationConfigNav = useNotificationConfigNav();
     const useV2Nav = config.featureToggles.alertingNavigationV2;
 
