@@ -29,20 +29,25 @@ export function ToolbarExtensionPointMenu({ extensions, onSelect }: Props): Reac
 }
 
 function renderItems(extensions: PluginExtensionLink[], onSelect: (link: PluginExtensionLink) => void): JSX.Element[] {
-  return extensions.map((extension) => (
-    <Menu.Item
-      ariaLabel={extension.title}
-      icon={extension?.icon || 'plug'}
-      key={extension.id}
-      label={truncateTitle(extension.title, 25)}
-      onClick={(event) => {
-        if (extension.path) {
-          return onSelect(extension);
-        }
-        extension.onClick?.(event);
-      }}
-    />
-  ));
+  return extensions.map((extension) => {
+    const dataTestId = `testid ${extension.title}`
+
+    return (
+      <Menu.Item
+        testId={dataTestId}
+        ariaLabel={extension.title}
+        icon={extension?.icon || 'plug'}
+        key={extension.id}
+        label={truncateTitle(extension.title, 25)}
+        onClick={(event) => {
+          if (extension.path) {
+            return onSelect(extension);
+          }
+          extension.onClick?.(event);
+        }}
+      />
+    );
+  });
 }
 
 type ExtensionLinksResult = {
