@@ -37,19 +37,94 @@ describe('Sidebar', () => {
     act(() => screen.getByLabelText('Settings').click());
     expect(screen.getByLabelText('Undock')).toBeInTheDocument();
   });
+
+  describe('auto-hide behavior', () => {
+    let onClosePaneMock = jest.fn();
+
+    beforeEach(() => {
+      onClosePaneMock = jest.fn();
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should auto-hide sidebar after inactivity timeout', async () => {
+      render(<TestSetup autoHide={true} onClosePaneMock={onClosePaneMock} />);
+      act(() => screen.getByLabelText('Settings').click());
+      expect(screen.getByTestId('sidebar-pane-header-title')).toBeInTheDocument();
+      act(() => jest.advanceTimersByTime(10000));
+      expect(onClosePaneMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should respect auto-hide timer configuration', async () => {
+      render(<TestSetup autoHide={true} autoHideTimeout={5000} onClosePaneMock={onClosePaneMock} />);
+      act(() => screen.getByLabelText('Settings').click());
+      expect(screen.getByTestId('sidebar-pane-header-title')).toBeInTheDocument();
+      act(() => jest.advanceTimersByTime(5000));
+      expect(onClosePaneMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should reset auto-hide timer on user interaction', async () => {
+      render(<TestSetup autoHide={true} onClosePaneMock={onClosePaneMock} />);
+      act(() => screen.getByLabelText('Settings').click());
+      expect(screen.getByTestId('sidebar-pane-header-title')).toBeInTheDocument();
+      act(() => jest.advanceTimersByTime(9500));
+      act(() => screen.getByTestId('sidebar-pane-header-title').click());
+      act(() => jest.advanceTimersByTime(9500));
+      expect(screen.getByTestId('sidebar-pane-header-title')).toBeInTheDocument();
+      expect(onClosePaneMock).not.toHaveBeenCalled();
+      act(() => jest.advanceTimersByTime(500));
+      expect(onClosePaneMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not auto-hide when autoHide is disabled', async () => {
+      render(<TestSetup autoHide={false} onClosePaneMock={onClosePaneMock} />);
+      act(() => screen.getByLabelText('Settings').click());
+      act(() => jest.advanceTimersByTime(20000));
+      expect(screen.getByTestId('sidebar-pane-header-title')).toBeInTheDocument();
+      expect(onClosePaneMock).not.toHaveBeenCalled();
+    });
+
+    it('should clear auto-hide timer when pane is closed manually', async () => {
+      render(<TestSetup autoHide={true} onClosePaneMock={onClosePaneMock} />);
+      act(() => screen.getByLabelText('Settings').click());
+      act(() => screen.getByLabelText('Close').click());
+      act(() => jest.advanceTimersByTime(20000));
+      expect(onClosePaneMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not auto-hide when sidebar is docked', async () => {
+      render(<TestSetup autoHide={true} onClosePaneMock={onClosePaneMock} />);
+      act(() => screen.getByLabelText('Settings').click());
+      act(() => screen.getByLabelText('Dock').click());
+      act(() => jest.advanceTimersByTime(20000));
+      expect(screen.getByTestId('sidebar-pane-header-title')).toBeInTheDocument();
+      expect(onClosePaneMock).not.toHaveBeenCalled();
+    });
+  });
 });
 
 interface TestSetupProps {
   persistanceKey?: string;
+  autoHide?: boolean;
+  autoHideTimeout?: number;
+  onClosePaneMock?: jest.Mock;
 }
 
-function TestSetup({ persistanceKey }: TestSetupProps) {
+function TestSetup({ persistanceKey, autoHide, autoHideTimeout, onClosePaneMock }: TestSetupProps) {
   const [openPane, setOpenPane] = React.useState('');
   const contextValue = useSidebar({
     position: 'right',
     hasOpenPane: openPane !== '',
     persistanceKey,
-    onClosePane: () => setOpenPane(''),
+    onClosePane: () => {
+      setOpenPane('');
+      onClosePaneMock?.();
+    },
+    autoHide,
+    autoHideTimeout,
   });
 
   return (

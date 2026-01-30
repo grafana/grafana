@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode, useContext } from 'react';
+import { ReactNode, useContext, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -22,7 +22,7 @@ export interface Props {
 export function SidebarComp({ children, contextValue }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const { isDocked, position, tabsMode, hasOpenPane, edgeMargin, bottomMargin } = contextValue;
+  const { isDocked, position, tabsMode, hasOpenPane, edgeMargin, bottomMargin, onActivity } = contextValue;
 
   const className = cx({
     [styles.container]: true,
@@ -43,6 +43,47 @@ export function SidebarComp({ children, contextValue }: Props) {
       contextValue.onClosePane?.();
     }
   });
+
+  useEffect(() => {
+    if (!onActivity || !ref.current) {
+      return;
+    }
+
+    const element = ref.current;
+    const events = [
+      'pointerdown',
+      'pointerup',
+      'pointermove',
+      'pointerenter',
+      'mousedown',
+      'mouseup',
+      'mousemove',
+      'mouseenter',
+      'click',
+      'touchstart',
+      'touchmove',
+      'touchend',
+      'keydown',
+      'keyup',
+      'keypress',
+      'scroll',
+      'wheel',
+    ];
+
+    const handleActivity = () => {
+      onActivity();
+    };
+
+    events.forEach((event) => {
+      element.addEventListener(event, handleActivity);
+    });
+
+    return () => {
+      events.forEach((event) => {
+        element.removeEventListener(event, handleActivity);
+      });
+    };
+  }, [onActivity, ref]);
 
   return (
     <SidebarContext.Provider value={contextValue}>

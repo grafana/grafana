@@ -81,6 +81,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     position: 'right',
     persistanceKey: 'dashboard',
     onClosePane: () => editPane.closePane(),
+    autoHide: true,
   });
 
   /**
