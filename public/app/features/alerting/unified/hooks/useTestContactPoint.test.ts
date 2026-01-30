@@ -185,12 +185,12 @@ describe('useTestContactPoint', () => {
       server.resetHandlers();
     });
 
-    it('should use K8s API when alertingImportAlertmanagerUI is enabled', async () => {
+    it('should use K8s API when alertingImportAlertmanagerAPI is enabled', async () => {
       // Suppress expected RTK Query async state update warnings
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
       try {
-        config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerUI: true };
+        config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerAPI: true };
 
         let requestUrl: string | undefined;
         server.use(createK8sTestHandler({ onRequestUrl: (url) => (requestUrl = url) }));
@@ -224,12 +224,12 @@ describe('useTestContactPoint', () => {
       }
     });
 
-    it('should use old API when alertingImportAlertmanagerUI is disabled', async () => {
+    it('should use old API when alertingImportAlertmanagerAPI is disabled', async () => {
       // Suppress expected RTK Query async state update warnings
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
       try {
-        config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerUI: false };
+        config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerAPI: false };
 
         let requestUrl: string | undefined;
         server.use(
@@ -280,7 +280,7 @@ describe('useTestContactPoint', () => {
     const originalFeatureToggles = config.featureToggles;
 
     beforeEach(() => {
-      config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerUI: true };
+      config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerAPI: true };
       server.resetHandlers();
     });
 
@@ -543,7 +543,7 @@ describe('useTestContactPoint', () => {
     const originalFeatureToggles = config.featureToggles;
 
     beforeEach(() => {
-      config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerUI: true };
+      config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerAPI: true };
       server.resetHandlers();
     });
 
@@ -619,7 +619,7 @@ describe('useTestContactPoint', () => {
     const originalFeatureToggles = config.featureToggles;
 
     beforeEach(() => {
-      config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerUI: true };
+      config.featureToggles = { ...originalFeatureToggles, alertingImportAlertmanagerAPI: true };
     });
 
     afterEach(() => {
