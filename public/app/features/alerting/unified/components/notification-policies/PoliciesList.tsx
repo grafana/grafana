@@ -37,7 +37,7 @@ import {
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { usePagination } from '../../hooks/usePagination';
 import { useCreateRoutingTreeModal, useDeleteRoutingTreeModal } from './components/Modals';
-import { ALL_ROUTING_TREES, useExportRoutingTree } from './useExportRoutingTree';
+import { useExportRoutingTree } from './useExportRoutingTree';
 import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import ConditionalWrap from '../../components/ConditionalWrap';
 import { ProvisioningBadge } from '../Provisioning';
@@ -55,15 +55,11 @@ const DEFAULT_PAGE_SIZE = 10;
 export const PoliciesList = () => {
   const [queryParams] = useURLSearchParams();
 
-  const [[createPoliciesSupported, createPoliciesAllowed], [exportPoliciesSupported, exportPoliciesAllowed]] =
-    useAlertmanagerAbilities([
-      AlertmanagerAction.CreateNotificationPolicy,
-      AlertmanagerAction.ExportNotificationPolicies,
-    ]);
+  const [createPoliciesSupported, createPoliciesAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.CreateNotificationPolicy
+  );
 
   const { currentData: allPolicies, isLoading, error: fetchPoliciesError } = useListNotificationPolicyRoutes();
-
-  const [ExportDrawer, showExportDrawer] = useExportRoutingTree();
 
   const [createTrigger] = useCreateRoutingTree();
   const [CreateModal, showCreateModal] = useCreateRoutingTreeModal(createTrigger.execute);
@@ -101,18 +97,6 @@ export const PoliciesList = () => {
               Create policy
             </Button>
           )}
-          {exportPoliciesSupported && (
-            <Button
-              data-testid="export-all-policy-button"
-              icon="download-alt"
-              variant="secondary"
-              aria-label={'export all'}
-              disabled={!exportPoliciesAllowed}
-              onClick={() => showExportDrawer(ALL_ROUTING_TREES)}
-            >
-              Export all
-            </Button>
-          )}
         </Stack>
       </Stack>
       {fetchPoliciesError ? (
@@ -126,7 +110,6 @@ export const PoliciesList = () => {
         />
       )}
       {CreateModal}
-      {ExportDrawer}
     </Stack>
   );
 };
@@ -224,7 +207,7 @@ interface RoutingTreeHeaderProps {
 }
 
 export const RoutingTreeHeader = ({ route, onDelete }: RoutingTreeHeaderProps) => {
-  const provisioned = isRouteProvisioned(route)
+  const provisioned = isRouteProvisioned(route);
   const styles = useStyles2(getStyles);
 
   const [

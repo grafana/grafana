@@ -3,12 +3,10 @@ import { useToggle } from 'react-use';
 
 import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
-export const ALL_ROUTING_TREES = Symbol('all routing trees');
-
-type ExportProps = [JSX.Element | null, (routeName: string | typeof ALL_ROUTING_TREES) => void];
+type ExportProps = [JSX.Element | null, (routeName: string) => void];
 
 export const useExportRoutingTree = (): ExportProps => {
-  const [routeName, setRouteName] = useState<string | typeof ALL_ROUTING_TREES | null>(null);
+  const [routeName, setRouteName] = useState<string | null>(null);
   const [isExportDrawerOpen, toggleShowExportDrawer] = useToggle(false);
 
   const handleClose = useCallback(() => {
@@ -16,7 +14,7 @@ export const useExportRoutingTree = (): ExportProps => {
     toggleShowExportDrawer(false);
   }, [toggleShowExportDrawer]);
 
-  const handleOpen = (routeName: string | typeof ALL_ROUTING_TREES) => {
+  const handleOpen = (routeName: string) => {
     setRouteName(routeName);
     toggleShowExportDrawer(true);
   };
@@ -26,13 +24,7 @@ export const useExportRoutingTree = (): ExportProps => {
       return null;
     }
 
-    if (routeName === ALL_ROUTING_TREES) {
-      // use this drawer when we want to export all policies
-      return <GrafanaPoliciesExporter onClose={handleClose} />;
-    } else {
-      // use this one for exporting a single policy
-      return <GrafanaPoliciesExporter routeName={routeName} onClose={handleClose} />;
-    }
+    return <GrafanaPoliciesExporter routeName={routeName} onClose={handleClose} />;
   }, [isExportDrawerOpen, handleClose, routeName]);
 
   return [drawer, handleOpen];

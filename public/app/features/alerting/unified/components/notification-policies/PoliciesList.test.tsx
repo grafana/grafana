@@ -210,27 +210,6 @@ describe('PoliciesList', () => {
         expect(ui.createPolicyButton.query()).toBeDisabled();
       });
     });
-    describe('Export all', () => {
-      it('enable if user has permission', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.ExportNotificationPolicies,
-        ]);
-
-        renderNotificationPolicies();
-        await getRoute(ROOT_ROUTE_NAME);
-        expect(await ui.exportAllButton.find()).toBeInTheDocument();
-        expect(ui.exportAllButton.query()).not.toBeDisabled();
-      });
-      it('disable if user does not have permission', async () => {
-        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
-
-        renderNotificationPolicies();
-        await getRoute(ROOT_ROUTE_NAME);
-        expect(ui.exportAllButton.query()).toBeInTheDocument();
-        expect(ui.exportAllButton.query()).toBeDisabled();
-      });
-    });
     describe('View/Edit', () => {
       it('shows view if user has no edit permission', async () => {
         grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
