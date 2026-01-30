@@ -66,23 +66,32 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
   if (state.status === 'idle' || state.status === 'loading') {
     const buttonText = isLoading
       ? t('dashboard-library.compatibility-badge.checking', 'Checking')
-      : t('dashboard-library.compatibility-badge.check', 'Check');
+      : t('dashboard-library.compatibility-badge.check', 'Check compatibility');
+
+    const tooltipContent = t(
+      'dashboard-library.compatibility-badge.check-tooltip',
+      'Check if the metrics used by this dashboard exist in your datasource'
+    );
 
     return (
-      <Button
-        variant="secondary"
-        disabled={isLoading}
-        onClick={(e) => {
-          e.stopPropagation();
-          onCheck();
-        }}
-        aria-label={buttonText}
-        data-testid={isLoading ? 'compatibility-badge-loading' : undefined}
-        className={styles.button}
-      >
-        {buttonText}
-        {isLoading && <Spinner size="xs" inline className={styles.spinner} />}
-      </Button>
+      <Tooltip interactive={true} content={tooltipContent}>
+        <Button
+          variant="secondary"
+          fill="outline"
+          disabled={isLoading}
+          onClick={(e) => {
+            e.stopPropagation();
+            onCheck();
+          }}
+          aria-label={buttonText}
+          data-testid={isLoading ? 'compatibility-badge-loading' : undefined}
+          className={styles.button}
+          icon="info-circle"
+        >
+          {buttonText}
+          {isLoading && <Spinner size="xs" inline className={styles.spinner} />}
+        </Button>
+      </Tooltip>
     );
   }
 
@@ -140,6 +149,7 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
             text={t('dashboard-library.compatibility-badge.score-text', '{{score}}%', { score: state.score })}
             icon={icon}
             color={color}
+            className={styles.badge}
           />
         </span>
       </Tooltip>
@@ -164,7 +174,16 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'inline-flex',
       alignItems: 'center',
     }),
+    // Match button height (md = 32px) with vertical padding
+    // Badge default is ~22px, button md is 32px, so add ~6.4px padding each side
+    // theme.spacing(0.8) = 6.4px (close to 6.38px)
+    badge: css({
+      paddingTop: theme.spacing(0.8),
+      paddingBottom: theme.spacing(0.8),
+    }),
     clickableBadge: css({
+      paddingTop: theme.spacing(0.8),
+      paddingBottom: theme.spacing(0.8),
       cursor: 'pointer',
       '&:hover': {
         opacity: 0.8,

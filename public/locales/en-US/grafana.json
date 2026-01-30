@@ -5849,8 +5849,9 @@
     "community-search-placeholder-with-datasource": "Search {{datasourceType}} community dashboards...",
     "compatibility-auto-map-failed": "Unable to automatically map all datasource inputs for this dashboard. Compatibility check requires all datasource variables to be resolved.",
     "compatibility-badge": {
-      "check": "Check",
+      "check": "Check compatibility",
       "check-failed": "Check failed · Click to retry",
+      "check-tooltip": "Check if the metrics used by this dashboard exist in your datasource",
       "checking": "Checking",
       "score-only-tooltip": "{{score}}% metric availability",
       "score-text": "{{score}}%",

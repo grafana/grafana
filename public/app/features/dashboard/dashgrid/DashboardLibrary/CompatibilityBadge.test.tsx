@@ -17,14 +17,14 @@ describe('CompatibilityBadge', () => {
       const state: CompatibilityState = { status: 'idle' };
       render(<CompatibilityBadge state={state} onCheck={mockOnCheck} />);
 
-      expect(screen.getByRole('button', { name: 'Check' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Check compatibility' })).toBeInTheDocument();
     });
 
     it('should call onCheck when "Check" button is clicked', async () => {
       const state: CompatibilityState = { status: 'idle' };
       render(<CompatibilityBadge state={state} onCheck={mockOnCheck} />);
 
-      await userEvent.click(screen.getByRole('button', { name: 'Check' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Check compatibility' }));
 
       expect(mockOnCheck).toHaveBeenCalledTimes(1);
     });
@@ -39,7 +39,7 @@ describe('CompatibilityBadge', () => {
         </div>
       );
 
-      await userEvent.click(screen.getByRole('button', { name: 'Check' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Check compatibility' }));
 
       expect(mockOnCheck).toHaveBeenCalledTimes(1);
       expect(mockParentClick).not.toHaveBeenCalled();

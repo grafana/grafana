@@ -3,6 +3,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Badge, Box, Button, Card, IconButton, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, SkeletonComponent } from '@grafana/ui/unstable';
 import { PluginDashboard } from 'app/types/plugins';
@@ -52,10 +53,26 @@ function DashboardCardComponent({
   onCompatibilityCheck,
 }: Props) {
   const styles = useStyles2(getStyles);
+  const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
+
+  const detailsButton = details && (
+    <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
+      <IconButton name="info-circle" size="sm" aria-label={t('dashboard-library.card.details-tooltip', 'Details')} />
+    </Tooltip>
+  );
 
   return (
     <Card className={styles.card} noMargin>
-      <Card.Heading className={styles.title}>{title}</Card.Heading>
+      <Card.Heading className={styles.title}>
+        {isCompatibilityAppEnabled ? (
+          <span className={styles.titleWithInfo}>
+            <span className={styles.titleText}>{title}</span>
+            {detailsButton}
+          </span>
+        ) : (
+          title
+        )}
+      </Card.Heading>
       <div className={isLogo ? styles.logoContainer : styles.thumbnailContainer}>
         {imageUrl ? (
           <img
@@ -100,15 +117,7 @@ function DashboardCardComponent({
             <Trans i18nKey="dashboard-library.card.use-dashboard-button">Use dashboard</Trans>
           )}
         </Button>
-        {details && (
-          <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
-            <IconButton
-              name="info-circle"
-              size="xl"
-              aria-label={t('dashboard-library.card.details-tooltip', 'Details')}
-            />
-          </Tooltip>
-        )}
+        {!isCompatibilityAppEnabled && detailsButton}
         {showCompatibilityBadge && onCompatibilityCheck && (
           <CompatibilityBadge
             state={compatibilityState ?? { status: 'idle' }}
@@ -243,6 +252,19 @@ function getStyles(theme: GrafanaTheme2) {
       WebkitBoxOrient: 'vertical',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
+    }),
+    titleWithInfo: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      maxWidth: '100%',
+    }),
+    titleText: css({
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      flexShrink: 1,
+      minWidth: 0,
     }),
     description: css({
       display: '-webkit-box',

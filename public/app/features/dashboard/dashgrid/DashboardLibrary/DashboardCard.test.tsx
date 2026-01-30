@@ -328,7 +328,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('button', { name: 'Check' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Check compatibility' })).toBeInTheDocument();
     });
 
     it('should not show compatibility badge when showCompatibilityBadge={false}', () => {
@@ -344,7 +344,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.queryByRole('button', { name: 'Check' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Check compatibility' })).not.toBeInTheDocument();
     });
 
     it('should not show compatibility badge when onCompatibilityCheck is not provided', () => {
@@ -358,7 +358,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.queryByRole('button', { name: 'Check' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Check compatibility' })).not.toBeInTheDocument();
     });
 
     it('should call onCompatibilityCheck when Check button is clicked', async () => {
@@ -374,7 +374,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      await user.click(screen.getByRole('button', { name: 'Check' }));
+      await user.click(screen.getByRole('button', { name: 'Check compatibility' }));
 
       expect(mockOnCompatibilityCheck).toHaveBeenCalledTimes(1);
     });
@@ -395,7 +395,7 @@ describe('DashboardCard', () => {
         </div>
       );
 
-      await user.click(screen.getByRole('button', { name: 'Check' }));
+      await user.click(screen.getByRole('button', { name: 'Check compatibility' }));
 
       expect(mockParentClick).not.toHaveBeenCalled();
       expect(mockOnCompatibilityCheck).toHaveBeenCalledTimes(1);
@@ -451,7 +451,7 @@ describe('DashboardCard', () => {
       const buttons = screen.getAllByRole('button');
       expect(buttons[0]).toHaveTextContent('Use dashboard');
       expect(buttons[1]).toHaveAttribute('aria-label', 'Details');
-      expect(buttons[2]).toHaveTextContent('Check');
+      expect(buttons[2]).toHaveTextContent('Check compatibility');
     });
   });
 });
