@@ -101,8 +101,6 @@ Your Grafana instance can be in one of the following Git Sync states:
 - **Partially provisioned**: Some of the resources are controlled by Git Sync.
 - **Fully provisioned**: All supported resource types are managed by Git Sync. Unsupported resources are **not managed**.
 
-TBC
-
 ## Example: Relationship between repository, branch, and path
 
 Here's an example showing how the three concepts work together:
