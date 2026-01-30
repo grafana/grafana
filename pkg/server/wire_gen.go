@@ -1790,12 +1790,21 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	hooksService := hooks.ProvideService()
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	moduleRegisterer := ProvideNoopModuleRegisterer()
-	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, hooksService)
+	db := _wireDBValue
+	storageBackend, err := sql.ProvideStorageBackend(cfg, db, registerer, storageMetrics, tracingService)
+	if err != nil {
+		return nil, err
+	}
+	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, storageBackend, hooksService)
 	if err != nil {
 		return nil, err
 	}
 	return moduleServer, nil
 }
+
+var (
+	_wireDBValue = (db.DB)(nil)
+)
 
 // Initialize the standalone APIServer factory
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {

@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	badger "github.com/dgraph-io/badger/v4"
 	"github.com/fullstorydev/grpchan"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -26,7 +25,6 @@ import (
 	"github.com/grafana/dskit/services"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -219,24 +217,6 @@ func newClient(opts options.StorageOptions,
 		}
 		return resource.NewLocalResourceClient(server), nil
 	}
-}
-
-func newFileBackend(opts options.StorageOptions, cfg *setting.Cfg) (resource.StorageBackend, error) {
-	if opts.DataPath == "" {
-		opts.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
-	}
-
-	db, err := badger.Open(badger.DefaultOptions(filepath.Join(opts.DataPath, "badger")).
-		WithLogger(nil))
-	if err != nil {
-		return nil, err
-	}
-
-	kv := resource.NewBadgerKV(db)
-	return resource.NewKVStorageBackend(resource.KVBackendOptions{
-		KvStore: kv,
-		Log:     log.New(),
-	})
 }
 
 func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {

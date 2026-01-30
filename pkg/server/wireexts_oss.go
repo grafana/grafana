@@ -6,6 +6,9 @@ package server
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -195,11 +198,14 @@ var wireExtsModuleServerSet = wire.NewSet(
 	tracing.ProvideTracingConfig,
 	tracing.ProvideService,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
+	wire.Bind(new(trace.Tracer), new(*tracing.TracingService)),
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
-	// Overriden by enterprise
+	wire.InterfaceValue(new(db.DB), (db.DB)(nil)),
+	// Overridden by enterprise
 	ProvideNoopModuleRegisterer,
+	sql.ProvideStorageBackend,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(

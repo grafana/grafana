@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	test "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/stretchr/testify/require"
@@ -395,9 +396,10 @@ func newTestBackend(t *testing.T, gcConfig GarbageCollectionConfig) (resource.St
 	})
 	require.NoError(t, err)
 	require.NotNil(t, backend)
-
-	err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
-	require.NoError(t, err)
+	ctx := testutil.NewTestContext(t, time.Now().Add(1*time.Minute))
+	svc, ok := backend.(services.Service)
+	require.True(t, ok)
+	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
 
 	sqlDB, err := eDB.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
 	require.NoError(t, err)

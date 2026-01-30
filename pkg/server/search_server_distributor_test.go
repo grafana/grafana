@@ -359,7 +359,7 @@ func initModuleServerForTest(
 	tracer := tracing.InitializeTracerForTest()
 	hooksService := hooks.ProvideService()
 	license := &licensing.OSSLicensingService{}
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), hooksService)
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, hooksService)
 	require.NoError(t, err)
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
@@ -391,16 +391,18 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
 	require.NoError(t, err)
+	backend, err := sql.ProvideStorageBackend(cfg, nil, nil, nil, tracer)
+	require.NoError(t, err)
 	server, err := sql.NewResourceServer(sql.ServerOptions{
-		Cfg:            cfg,
-		Tracer:         tracer,
-		Reg:            nil,
-		AccessClient:   nil,
-		SearchOptions:  searchOpts,
-		StorageMetrics: nil,
-		IndexMetrics:   nil,
-		Features:       features,
-		QOSQueue:       nil,
+		Backend:       backend,
+		Cfg:           cfg,
+		Tracer:        tracer,
+		Reg:           nil,
+		AccessClient:  nil,
+		SearchOptions: searchOpts,
+		IndexMetrics:  nil,
+		Features:      features,
+		QOSQueue:      nil,
 	})
 	require.NoError(t, err)
 

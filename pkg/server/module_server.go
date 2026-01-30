@@ -48,9 +48,10 @@ func NewModule(opts Options,
 	tracer tracing.Tracer, // Ensures tracing is initialized
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
+	storageBackend resource.StorageBackend, // Ensures unified storage backend is initialized
 	hooksService *hooks.HooksService,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, hooksService)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, moduleRegisterer, storageBackend, hooksService)
 	if err != nil {
 		return nil, err
 	}
@@ -72,6 +73,7 @@ func newModuleServer(opts Options,
 	promGatherer prometheus.Gatherer,
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
+	storageBackend resource.StorageBackend,
 	hooksService *hooks.HooksService,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
@@ -101,6 +103,7 @@ func newModuleServer(opts Options,
 		registerer:       reg,
 		license:          license,
 		moduleRegisterer: moduleRegisterer,
+		storageBackend:   storageBackend,
 		hooksService:     hooksService,
 		searchClient:     searchClient,
 	}
@@ -124,6 +127,7 @@ type ModuleServer struct {
 	shutdownFinished chan struct{}
 	isInitialized    bool
 	mtx              sync.Mutex
+	storageBackend   resource.StorageBackend
 	searchClient     resourcepb.ResourceIndexClient
 	storageMetrics   *resource.StorageMetrics
 	indexMetrics     *resource.BleveIndexMetrics
@@ -204,9 +208,12 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		backend, err := sql.ProvideStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, nil) // ensure storage backend is initialized
-		if err != nil {
-			return nil, err
+		var err error
+		if s.storageBackend == nil {
+			s.storageBackend, err = sql.ProvideStorageBackend(s.cfg, nil, s.registerer, s.storageMetrics, nil) // ensure storage backend is initialized
+			if err != nil {
+				return nil, err
+			}
 		}
 		if s.cfg.EnableSearch {
 			s.log.Warn("Support for 'enable_search' config with 'storage-server' target is deprecated and will be removed in a future release. Please use the 'search-server' target instead.")
@@ -214,22 +221,25 @@ func (s *ModuleServer) Run() error {
 			if err != nil {
 				return nil, err
 			}
-			return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, backend, s.searchClient)
+			return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, nil, nil, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, backend, s.searchClient)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, s.log, s.registerer, nil, nil, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.searchClient)
 	})
 
 	m.RegisterModule(modules.SearchServer, func() (services.Service, error) {
-		s.cfg.DisableStorageServices = true
-		backend, err := sql.ProvideStorageBackend(s.cfg, nil, s.registerer, nil, nil) // ensure storage backend is initialized
-		if err != nil {
-			return nil, err
+		var err error
+		if s.storageBackend == nil {
+			s.cfg.DisableStorageServices = true
+			s.storageBackend, err = sql.ProvideStorageBackend(s.cfg, nil, s.registerer, nil, nil)
+			if err != nil {
+				return nil, err
+			}
 		}
 		docBuilders, err := InitializeDocumentBuilders(s.cfg)
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, backend)
+		return sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, docBuilders, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
