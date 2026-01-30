@@ -2,15 +2,15 @@ import { css, cx } from '@emotion/css';
 import { ReactElement, useCallback, useState, useRef, useImperativeHandle, CSSProperties, AriaRole } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, LinkTarget } from '@grafana/data';
+import { GrafanaTheme2, IconName, isIconName, LinkTarget } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getInternalRadius } from '../../themes/mixins';
-import { IconName } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 
+import { MenuItemPrefix } from './MenuItemPrefix';
 import { SubMenu } from './SubMenu';
 
 /** @internal */
@@ -28,8 +28,12 @@ export interface MenuItemProps<T = unknown> {
   ariaChecked?: boolean;
   /** Target of the menu item (i.e. new window)  */
   target?: LinkTarget;
-  /** Icon of the menu item */
+  /**
+   * @deprecated Use `prefix` instead. This property will be removed in a future release.
+   */
   icon?: IconName;
+  /** A React element or IconName that will be displayed before the title */
+  prefix?: React.ReactElement | IconName;
   /** Role of the menu item */
   role?: AriaRole;
   /** Url of the menu item */
@@ -79,6 +83,7 @@ export const MenuItem = React.memo(
       customSubMenuContainerStyles,
       shortcut,
       testId,
+      prefix,
     } = props;
     const styles = useStyles2(getStyles);
     const [isActive, setIsActive] = useState(active);
@@ -176,7 +181,7 @@ export const MenuItem = React.memo(
         {...disabledProps}
       >
         <Stack direction="row" justifyContent="flex-start" alignItems="center">
-          {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
+          <MenuItemPrefix prefix={isIconName(icon) ? icon : prefix} />
           <span className={cx(styles.ellipsis, styles.label)}>{label}</span>
           <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
             {hasShortcut && (
@@ -272,9 +277,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: 'none',
         color: theme.colors.action.disabledText,
       },
-    }),
-    icon: css({
-      opacity: 0.7,
     }),
     rightWrapper: css({
       display: 'flex',
