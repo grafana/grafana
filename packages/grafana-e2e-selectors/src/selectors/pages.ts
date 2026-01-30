@@ -1005,6 +1005,9 @@ export const versionedPages = {
       live: {
         '12.4.0': 'data-testid explore-toolbar-live-button',
       },
+      refreshPicker: {
+        '12.4.0': 'data-testid explore-toolbar-refresh-picker',
+      },
       add: {
         '12.4.0': (key: string) => `data-testid explore-toolbar-add-button ${key}`,
       },
