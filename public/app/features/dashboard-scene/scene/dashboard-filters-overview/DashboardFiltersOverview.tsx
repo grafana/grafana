@@ -11,6 +11,7 @@ import {
   OperatorDefinition,
 } from '@grafana/scenes';
 import {
+  Button,
   Checkbox,
   Collapse,
   Combobox,
@@ -24,9 +25,10 @@ import {
 interface DashboardFiltersOverviewState {
   adhocFilters?: AdHocFiltersVariable;
   groupByVariable?: GroupByVariable;
+  onClose: () => void;
 }
 
-export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: DashboardFiltersOverviewState) => {
+export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable, onClose }: DashboardFiltersOverviewState) => {
   const styles = useStyles2(getStyles);
   const [keys, setKeys] = useState<Array<SelectableValue<string>>>([]);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -35,6 +37,7 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: Dash
   const [multiValuesByKey, setMultiValuesByKey] = useState<Record<string, string[]>>({});
   const [valueOptionsByKey, setValueOptionsByKey] = useState<Record<string, Array<ComboboxOption<string>>>>({});
   const [isGrouped, setIsGrouped] = useState<Record<string, boolean>>({});
+  const [isOriginByKey, setIsOriginByKey] = useState<Record<string, boolean>>({});
 
   const operatorOptions = useMemo<OperatorDefinition[]>(() => OPERATORS, []);
   const operatorComboboxOptions = useMemo(
@@ -61,10 +64,15 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: Dash
       const operatorsByKey: Record<string, string> = {};
       const multiValuesByKey: Record<string, string[]> = {};
       const singleValuesByKey: Record<string, string> = {};
+      const isOriginByKey: Record<string, boolean> = {};
 
       for (const originFilter of adhocFilters.state.originFilters ?? []) {
+        if (originFilter.nonApplicable) {
+          continue;
+        }
         keys.push({ label: originFilter.keyLabel, value: originFilter.key });
         operatorsByKey[originFilter.key] = originFilter.operator;
+        isOriginByKey[originFilter.key] = true;
         if (originFilter.values && originFilter.values.length > 0 && multiOperatorValues.has(originFilter.operator)) {
           multiValuesByKey[originFilter.key] = originFilter.values!;
         } else {
@@ -73,8 +81,12 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: Dash
       }
 
       for (const selectedFilter of adhocFilters.state.filters) {
+        if (selectedFilter.nonApplicable) {
+          continue;
+        }
         keys.push({ label: selectedFilter.keyLabel, value: selectedFilter.key });
         operatorsByKey[selectedFilter.key] = selectedFilter.operator;
+        isOriginByKey[selectedFilter.key] = false;
         if (
           selectedFilter.values &&
           selectedFilter.values.length > 0 &&
@@ -92,6 +104,7 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: Dash
       setOperatorsByKey(operatorsByKey);
       setMultiValuesByKey(multiValuesByKey);
       setSingleValuesByKey(singleValuesByKey);
+      setIsOriginByKey(isOriginByKey);
     }
 
     getKeys();
@@ -189,6 +202,106 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: Dash
     return options.filter((option) => (option.label ?? option.value).toLowerCase().includes(lowered));
   };
 
+  const applyChanges = () => {
+    if (groupByVariable) {
+      const keyLabels = new Map<string, string>();
+      for (const keyOption of keys) {
+        const keyValue = keyOption.value ?? keyOption.label;
+        if (!keyValue) {
+          continue;
+        }
+        keyLabels.set(keyValue, keyOption.label ?? keyValue);
+      }
+
+      const nextValues = Object.entries(isGrouped)
+        .filter(([, enabled]) => enabled)
+        .map(([keyValue]) => keyValue);
+      const nextText = nextValues.map((value) => keyLabels.get(value) ?? value);
+
+      groupByVariable.changeValueTo(nextValues, nextText, true);
+    }
+
+    if (adhocFilters) {
+      const nextFilters: AdHocFilterWithLabels[] = [];
+      const nextOriginFilters: AdHocFilterWithLabels[] = [];
+      const seenKeys = new Set<string>();
+      const existingOriginFilters = adhocFilters.state.originFilters ?? [];
+      const existingFilters = adhocFilters.state.filters ?? [];
+      const nonApplicableOriginFilters = existingOriginFilters.filter((filter) => filter.nonApplicable);
+      const nonApplicableFilters = existingFilters.filter((filter) => filter.nonApplicable);
+
+      for (const keyOption of keys) {
+        const keyValue = keyOption.value ?? keyOption.label;
+        if (!keyValue || seenKeys.has(keyValue)) {
+          continue;
+        }
+        seenKeys.add(keyValue);
+
+        const isOrigin = isOriginByKey[keyValue] ?? false;
+        const existingOrigin = existingOriginFilters.find((filter) => filter.key === keyValue && !filter.nonApplicable);
+        const existingFilter = existingFilters.find((filter) => filter.key === keyValue && !filter.nonApplicable);
+
+        const operatorValue = operatorsByKey[keyValue] ?? '=';
+        const isMultiOperator = multiOperatorValues.has(operatorValue);
+        const singleValue = singleValuesByKey[keyValue] ?? '';
+        const multiValues = multiValuesByKey[keyValue] ?? [];
+
+        if (isMultiOperator) {
+          if (multiValues.length === 0) {
+            continue;
+          }
+          const filter: AdHocFilterWithLabels = {
+            ...(isOrigin ? existingOrigin : existingFilter),
+            key: keyValue,
+            keyLabel: keyOption.label ?? keyValue,
+            operator: operatorValue,
+            value: multiValues[0],
+            values: multiValues,
+            valueLabels: multiValues,
+          };
+          if (isOrigin) {
+            nextOriginFilters.push(filter);
+          } else {
+            nextFilters.push(filter);
+          }
+        } else {
+          if (!singleValue) {
+            continue;
+          }
+          const filter: AdHocFilterWithLabels = {
+            ...(isOrigin ? existingOrigin : existingFilter),
+            key: keyValue,
+            keyLabel: keyOption.label ?? keyValue,
+            operator: operatorValue,
+            value: singleValue,
+            values: undefined,
+            valueLabels: undefined,
+          };
+          if (isOrigin) {
+            nextOriginFilters.push(filter);
+          } else {
+            nextFilters.push(filter);
+          }
+        }
+      }
+
+      const validatedOriginFilters = adhocFilters.validateOriginFilters([
+        ...nextOriginFilters,
+        ...nonApplicableOriginFilters,
+      ]);
+
+      adhocFilters.setState({
+        filters: [...nextFilters, ...nonApplicableFilters],
+        originFilters: validatedOriginFilters,
+      });
+    }
+  };
+
+  const applyAndClose = () => {
+    applyChanges();
+    onClose();
+  };
+
   if (!adhocFilters) {
     return <div>{t('dashboard.filters-overview.missing-adhoc', 'No ad hoc filters available')}</div>;
   }
@@ -208,6 +321,7 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: Dash
     const singleValue = singleValuesByKey[keyValue] ?? '';
     const multiValues = multiValuesByKey[keyValue] ?? [];
     const isGroupBy = isGrouped[keyValue] ?? false;
+    const isOrigin = isOriginByKey[keyValue] ?? false;
 
     return (
       <div key={keyValue} className={styles.row}>
@@ -220,6 +334,7 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: Dash
             options={operatorComboboxOptions}
             value={operatorValue}
             placeholder={t('dashboard.filters-overview.operator.placeholder', 'Select operator')}
+            disabled={isOrigin}
             onChange={(option: ComboboxOption<string>) => {
               if (!option?.value) {
                 return;
@@ -260,37 +375,7 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: Dash
               value={isGroupBy}
               label={t('dashboard.filters-overview.groupby', 'GroupBy')}
               onChange={() => {
-                const currentValues = Array.isArray(groupByVariable.state.value)
-                  ? groupByVariable.state.value.map(String)
-                  : groupByVariable.state.value
-                    ? [String(groupByVariable.state.value)]
-                    : [];
-
-                const currentText = Array.isArray(groupByVariable.state.text)
-                  ? groupByVariable.state.text.map(String)
-                  : groupByVariable.state.text
-                    ? [String(groupByVariable.state.text)]
-                    : [];
-
-                const textByValue = new Map(currentValues.map((value, idx) => [value, currentText[idx] ?? value]));
-
                 setIsGrouped((prev) => ({ ...prev, [keyValue]: !isGroupBy }));
-                let nextValues = currentValues;
-
-                if (isGroupBy) {
-                  if (!currentValues.includes(keyValue)) {
-                    nextValues = [...currentValues, keyValue];
-                    textByValue.set(keyValue, keyOption.label ?? keyValue);
-                  }
-                } else {
-                  if (!currentValues.includes(keyValue)) {
-                    return;
-                  }
-                  nextValues = currentValues.filter((value) => value !== keyValue);
-                }
-
-                const nextText = nextValues.map((value) => textByValue.get(value) ?? value);
-                groupByVariable.changeValueTo(nextValues, nextText, true);
               }}
             />
           </div>
@@ -319,6 +404,19 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable }: Dash
           );
         })}
       </Stack>
+      <div className={styles.footer}>
+        <Stack direction="row" gap={1} justifyContent="flex-end">
+          <Button variant="primary" onClick={applyChanges}>
+            {t('dashboard.filters-overview.apply', 'Apply')}
+          </Button>
+          <Button variant="secondary" onClick={applyAndClose}>
+            {t('dashboard.filters-overview.apply-close', 'Apply and close')}
+          </Button>
+          <Button variant="secondary" onClick={onClose}>
+            {t('dashboard.filters-overview.close', 'Close')}
+          </Button>
+        </Stack>
+      </div>
     </div>
   );
 };
@@ -356,6 +454,11 @@ const getStyles = () => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
+    }),
+    footer: css({
+      marginTop: '16px',
+      paddingTop: '12px',
+      borderTop: '1px solid var(--border-weak)',
     }),
   };
 };

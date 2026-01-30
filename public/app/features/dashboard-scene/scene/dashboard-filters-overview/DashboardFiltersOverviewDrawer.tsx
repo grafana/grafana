@@ -44,7 +44,7 @@ function DashboardFiltersOverviewDrawerRenderer({ model }: SceneComponentProps<D
 
   return (
     <Drawer title={t('dashboard.filters-verview.title', 'Edit filters')} onClose={model.onClose} size="sm">
-      <DashboardFiltersOverview adhocFilters={adHocVar} groupByVariable={groupByVar} />
+      <DashboardFiltersOverview adhocFilters={adHocVar} groupByVariable={groupByVar} onClose={model.onClose} />
     </Drawer>
   );
 }
