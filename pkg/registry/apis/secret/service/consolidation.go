@@ -69,15 +69,15 @@ func (s *ConsolidationService) Consolidate(ctx context.Context) (err error) {
 			flushedNamespaces[ev.Namespace] = true
 		}
 
-		// Decrypt the value using its old data key.
-		decryptedValue, err := s.encryptionManager.Decrypt(ctx, xkube.Namespace(ev.Namespace), ev.EncryptedPayload)
+		// Decrypt the value using its old data key. Skip the cache to avoid overloading it during consolidation.
+		decryptedValue, err := s.encryptionManager.Decrypt(ctx, xkube.Namespace(ev.Namespace), ev.EncryptedPayload, contracts.EncryptOption{SkipCache: true})
 		if err != nil {
 			logging.FromContext(ctx).Error("Failed to decrypt value", "namespace", ev.Namespace, "name", ev.Name, "error", err)
 			continue
 		}
 
-		// Re-encrypt the value using a new data key.
-		reEncryptedValue, err := s.encryptionManager.Encrypt(ctx, xkube.Namespace(ev.Namespace), decryptedValue)
+		// Re-encrypt the value using a new data key. Skip the cache to avoid overloading it during consolidation.
+		reEncryptedValue, err := s.encryptionManager.Encrypt(ctx, xkube.Namespace(ev.Namespace), decryptedValue, contracts.EncryptOption{SkipCache: true})
 		if err != nil {
 			logging.FromContext(ctx).Error("Failed to re-encrypt value", "namespace", ev.Namespace, "name", ev.Name, "error", err)
 			continue

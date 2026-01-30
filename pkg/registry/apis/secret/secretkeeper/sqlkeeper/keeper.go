@@ -65,7 +65,7 @@ func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, n
 	defer span.End()
 
 	start := time.Now()
-	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef))
+	encryptedData, err := s.encryptionManager.Encrypt(ctx, namespace, []byte(exposedValueOrRef), contracts.EncryptOption{})
 	if err != nil {
 		return "", fmt.Errorf("unable to encrypt value: %w", err)
 	}
@@ -96,7 +96,7 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 		return "", fmt.Errorf("unable to get encrypted value: %w", err)
 	}
 
-	exposedBytes, err := s.encryptionManager.Decrypt(ctx, namespace, encryptedValue.EncryptedPayload)
+	exposedBytes, err := s.encryptionManager.Decrypt(ctx, namespace, encryptedValue.EncryptedPayload, contracts.EncryptOption{})
 	if err != nil {
 		return "", fmt.Errorf("unable to decrypt value: %w", err)
 	}

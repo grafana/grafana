@@ -41,10 +41,10 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 	t.Run("encrypting should create DEK", func(t *testing.T) {
 		plaintext := []byte("very secret string")
 
-		encrypted, err := svc.Encrypt(context.Background(), namespace, plaintext)
+		encrypted, err := svc.Encrypt(context.Background(), namespace, plaintext, contracts.EncryptOption{})
 		require.NoError(t, err)
 
-		decrypted, err := svc.Decrypt(context.Background(), namespace, encrypted)
+		decrypted, err := svc.Decrypt(context.Background(), namespace, encrypted, contracts.EncryptOption{})
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
@@ -56,10 +56,10 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 	t.Run("encrypting another secret should use the same DEK", func(t *testing.T) {
 		plaintext := []byte("another very secret string")
 
-		encrypted, err := svc.Encrypt(context.Background(), namespace, plaintext)
+		encrypted, err := svc.Encrypt(context.Background(), namespace, plaintext, contracts.EncryptOption{})
 		require.NoError(t, err)
 
-		decrypted, err := svc.Decrypt(context.Background(), namespace, encrypted)
+		decrypted, err := svc.Decrypt(context.Background(), namespace, encrypted, contracts.EncryptOption{})
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decrypted)
 
@@ -217,7 +217,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		encryptionManager.providerConfig.CurrentProvider = encryption.ProviderID("fakeProvider.v1")
 
 		namespace := xkube.Namespace("test-namespace")
-		encrypted, _ := encryptionManager.Encrypt(context.Background(), namespace, []byte{})
+		encrypted, _ := encryptionManager.Encrypt(context.Background(), namespace, []byte{}, contracts.EncryptOption{})
 		assert.True(t, fake.encryptCalled)
 		assert.False(t, fake.decryptCalled)
 
@@ -240,7 +240,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		}
 		svcDecrypt.providerConfig.CurrentProvider = encryption.ProviderID("fakeProvider.v1")
 
-		_, _ = svcDecrypt.Decrypt(context.Background(), namespace, encrypted)
+		_, _ = svcDecrypt.Decrypt(context.Background(), namespace, encrypted, contracts.EncryptOption{})
 		assert.True(t, fake.decryptCalled, "fake provider's decrypt should be called")
 	})
 }
@@ -287,11 +287,11 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 
 		// Step 2: Encrypt something with v1
 		plaintext := []byte("secret data from v1")
-		encryptedV1, err := svcV1.Encrypt(ctx, namespace, plaintext)
+		encryptedV1, err := svcV1.Encrypt(ctx, namespace, plaintext, contracts.EncryptOption{})
 		require.NoError(t, err)
 
 		// Verify v1 can decrypt its own data
-		decryptedV1, err := svcV1.Decrypt(ctx, namespace, encryptedV1)
+		decryptedV1, err := svcV1.Decrypt(ctx, namespace, encryptedV1, contracts.EncryptOption{})
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decryptedV1)
 
@@ -327,10 +327,10 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 
 		// Step 4: Ensure we can encrypt and decrypt with the new key (v2)
 		newPlaintext := []byte("secret data from v2")
-		encryptedV2, err := svcV2.Encrypt(ctx, namespace, newPlaintext)
+		encryptedV2, err := svcV2.Encrypt(ctx, namespace, newPlaintext, contracts.EncryptOption{})
 		require.NoError(t, err)
 
-		decryptedV2, err := svcV2.Decrypt(ctx, namespace, encryptedV2)
+		decryptedV2, err := svcV2.Decrypt(ctx, namespace, encryptedV2, contracts.EncryptOption{})
 		require.NoError(t, err)
 		assert.Equal(t, newPlaintext, decryptedV2)
 
@@ -339,7 +339,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 		assert.Equal(t, encryption.ProviderID("secret_key.v2"), encMgrV2.providerConfig.CurrentProvider)
 
 		// Step 5: Ensure we can decrypt the old value encrypted with v1
-		decryptedOldWithV2, err := svcV2.Decrypt(ctx, namespace, encryptedV1)
+		decryptedOldWithV2, err := svcV2.Decrypt(ctx, namespace, encryptedV1, contracts.EncryptOption{})
 		require.NoError(t, err)
 		assert.Equal(t, plaintext, decryptedOldWithV2)
 
@@ -382,7 +382,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		rsp, err := svcV1.Encrypt(ctx, namespace, []byte("test"))
+		rsp, err := svcV1.Encrypt(ctx, namespace, []byte("test"), contracts.EncryptOption{})
 		require.NoError(t, err)
 
 		cfgV2 := &setting.Cfg{
@@ -408,7 +408,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		_, err = svcV2.Decrypt(ctx, namespace, rsp)
+		_, err = svcV2.Decrypt(ctx, namespace, rsp, contracts.EncryptOption{})
 		require.Error(t, err)
 	})
 }
@@ -437,7 +437,7 @@ func TestEncryptionService_Decrypt(t *testing.T) {
 		_, err := svc.Decrypt(context.Background(), namespace, contracts.EncryptedPayload{
 			DataKeyID:     "test-data-key-id",
 			EncryptedData: []byte(""),
-		})
+		}, contracts.EncryptOption{})
 		require.Error(t, err)
 
 		assert.Equal(t, "unable to decrypt empty payload", err.Error())
@@ -448,7 +448,7 @@ func TestEncryptionService_Decrypt(t *testing.T) {
 		_, err := svc.Decrypt(context.Background(), namespace, contracts.EncryptedPayload{
 			DataKeyID:     "",
 			EncryptedData: []byte("some payload"),
-		})
+		}, contracts.EncryptOption{})
 		require.Error(t, err)
 
 		assert.Equal(t, "unable to decrypt empty data key id", err.Error())
@@ -456,10 +456,10 @@ func TestEncryptionService_Decrypt(t *testing.T) {
 
 	t.Run("ee encrypted payload with ee enabled should work", func(t *testing.T) {
 		svc := setupTestService(t)
-		ciphertext, err := svc.Encrypt(ctx, namespace, []byte("grafana"))
+		ciphertext, err := svc.Encrypt(ctx, namespace, []byte("grafana"), contracts.EncryptOption{})
 		require.NoError(t, err)
 
-		plaintext, err := svc.Decrypt(ctx, namespace, ciphertext)
+		plaintext, err := svc.Decrypt(ctx, namespace, ciphertext, contracts.EncryptOption{})
 		assert.NoError(t, err)
 		assert.Equal(t, []byte("grafana"), plaintext)
 	})
@@ -475,13 +475,13 @@ func TestIntegration_SecretsService(t *testing.T) {
 	tcs := map[string]func(*testing.T, db.DB, contracts.EncryptionManager){
 		"regular": func(t *testing.T, _ db.DB, svc contracts.EncryptionManager) {
 			// We encrypt some data normally, no transactions implied.
-			_, err := svc.Encrypt(ctx, namespace, someData)
+			_, err := svc.Encrypt(ctx, namespace, someData, contracts.EncryptOption{})
 			require.NoError(t, err)
 		},
 		"within successful InTransaction": func(t *testing.T, store db.DB, svc contracts.EncryptionManager) {
 			require.NoError(t, store.InTransaction(ctx, func(ctx context.Context) error {
 				// We encrypt some data within a transaction that shares the db session.
-				_, err := svc.Encrypt(ctx, namespace, someData)
+				_, err := svc.Encrypt(ctx, namespace, someData, contracts.EncryptOption{})
 				require.NoError(t, err)
 
 				// And the transition succeeds.
@@ -491,7 +491,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 		"within unsuccessful InTransaction": func(t *testing.T, store db.DB, svc contracts.EncryptionManager) {
 			require.NotNil(t, store.InTransaction(ctx, func(ctx context.Context) error {
 				// We encrypt some data within a transaction that shares the db session.
-				_, err := svc.Encrypt(ctx, namespace, someData)
+				_, err := svc.Encrypt(ctx, namespace, someData, contracts.EncryptOption{})
 				require.NoError(t, err)
 
 				// But the transaction fails.
@@ -501,7 +501,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 		"within unsuccessful InTransaction (plus forced db fetch)": func(t *testing.T, store db.DB, svc contracts.EncryptionManager) {
 			require.NotNil(t, store.InTransaction(ctx, func(ctx context.Context) error {
 				// We encrypt some data within a transaction that shares the db session.
-				encrypted, err := svc.Encrypt(ctx, namespace, someData)
+				encrypted, err := svc.Encrypt(ctx, namespace, someData, contracts.EncryptOption{})
 				require.NoError(t, err)
 
 				// At this point the data key is not cached yet because
@@ -509,7 +509,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 				// and won't, so we do a decrypt operation within the
 				// transaction to force the data key to be
 				// (potentially) cached (it shouldn't to prevent issues).
-				decrypted, err := svc.Decrypt(ctx, namespace, encrypted)
+				decrypted, err := svc.Decrypt(ctx, namespace, encrypted, contracts.EncryptOption{})
 				require.NoError(t, err)
 				assert.Equal(t, someData, decrypted)
 
@@ -520,7 +520,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 		"within successful WithTransactionalDbSession": func(t *testing.T, store db.DB, svc contracts.EncryptionManager) {
 			require.NoError(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 				// We encrypt some data within a transaction that does not share the db session.
-				_, err := svc.Encrypt(ctx, namespace, someData)
+				_, err := svc.Encrypt(ctx, namespace, someData, contracts.EncryptOption{})
 				require.NoError(t, err)
 
 				// And the transition succeeds.
@@ -530,7 +530,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 		"within unsuccessful WithTransactionalDbSession": func(t *testing.T, store db.DB, svc contracts.EncryptionManager) {
 			require.NotNil(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 				// We encrypt some data within a transaction that does not share the db session.
-				_, err := svc.Encrypt(ctx, namespace, someData)
+				_, err := svc.Encrypt(ctx, namespace, someData, contracts.EncryptOption{})
 				require.NoError(t, err)
 
 				// But the transaction fails.
@@ -540,7 +540,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 		"within unsuccessful WithTransactionalDbSession (plus forced db fetch)": func(t *testing.T, store db.DB, svc contracts.EncryptionManager) {
 			require.NotNil(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 				// We encrypt some data within a transaction that does not share the db session.
-				encrypted, err := svc.Encrypt(ctx, namespace, someData)
+				encrypted, err := svc.Encrypt(ctx, namespace, someData, contracts.EncryptOption{})
 				require.NoError(t, err)
 
 				// At this point the data key is not cached yet because
@@ -548,7 +548,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 				// and won't, so we do a decrypt operation within the
 				// transaction to force the data key to be
 				// (potentially) cached (it shouldn't to prevent issues).
-				decrypted, err := svc.Decrypt(ctx, namespace, encrypted)
+				decrypted, err := svc.Decrypt(ctx, namespace, encrypted, contracts.EncryptOption{})
 				require.NoError(t, err)
 				assert.Equal(t, someData, decrypted)
 
@@ -567,6 +567,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 				SecretsManagement: setting.SecretsManagerSettings{
 					CurrentEncryptionProvider: "secret_key.v1",
 					ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
+					DataKeysCacheTTL:          15 * time.Minute,
 				},
 			}
 			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
@@ -580,13 +581,18 @@ func TestIntegration_SecretsService(t *testing.T) {
 			ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
 			require.NoError(t, err)
 
+			// Use the real cache to properly test the caching behavior.
+			// This is important because the test verifies that phantom data keys
+			// (created within a rolled-back transaction) don't cause data corruption.
+			cache := ProvideOSSDataKeyCache(cfg)
+
 			svc, err := ProvideEncryptionManager(
 				tracer,
 				store,
 				usageStats,
 				enc,
 				ossProviders,
-				&NoopDataKeyCache{},
+				cache,
 				cfg,
 			)
 			require.NoError(t, err)
@@ -601,17 +607,25 @@ func TestIntegration_SecretsService(t *testing.T) {
 			// cached in memory for the next encryption operations, which caused some data to be
 			// encrypted with a data key that haven't actually been persisted into the database.
 			tc(t, testDB, svc)
+
+			// Flush the cache to simulate a restart. This is critical because the bug we're
+			// testing against only manifests after a restart when the phantom data key
+			// (created within a rolled-back transaction) is no longer in memory.
+			// Without flushing, the test would pass trivially because the phantom key
+			// would still be in the cache.
+			svc.FlushCache(namespace)
+
 			// Therefore, the data encrypted after this point, become unrecoverable after a restart.
 			// So, the different test cases here are there to prevent that from happening again
 			// in the future, whatever it is what happens.
 
 			// So, we proceed with an encryption operation:
 			toEncrypt := []byte(`data-to-encrypt`)
-			encrypted, err := svc.Encrypt(ctx, namespace, toEncrypt)
+			encrypted, err := svc.Encrypt(ctx, namespace, toEncrypt, contracts.EncryptOption{})
 			require.NoError(t, err)
 
 			// And then, we MUST still be able to decrypt the previously encrypted data:
-			decrypted, err := svc.Decrypt(ctx, namespace, encrypted)
+			decrypted, err := svc.Decrypt(ctx, namespace, encrypted, contracts.EncryptOption{})
 			require.NoError(t, err)
 			assert.Equal(t, toEncrypt, decrypted)
 		})
@@ -652,6 +666,7 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 type stubCache struct {
 	getByLabelCalled bool
 	getByIdCalled    bool
+	setCalled        bool
 }
 
 func (c *stubCache) GetByLabel(namespace, label string) (encryption.DataKeyCacheEntry, bool) {
@@ -664,9 +679,11 @@ func (c *stubCache) GetById(namespace, id string) (encryption.DataKeyCacheEntry,
 	return encryption.DataKeyCacheEntry{}, false
 }
 
-func (c *stubCache) Set(namespace string, entry encryption.DataKeyCacheEntry) {}
-func (c *stubCache) Flush(namespace string)                                   {}
-func (c *stubCache) RemoveExpired()                                           {}
+func (c *stubCache) Set(namespace string, entry encryption.DataKeyCacheEntry) {
+	c.setCalled = true
+}
+func (c *stubCache) Flush(namespace string) {}
+func (c *stubCache) RemoveExpired()         {}
 
 func TestEncryptionService_WithSkipCache(t *testing.T) {
 	ctx := context.Background()
@@ -700,50 +717,52 @@ func TestEncryptionService_WithSkipCache(t *testing.T) {
 		return svc, store
 	}
 
-	t.Run("Encrypt with WithSkipCache should not read from cache", func(t *testing.T) {
+	t.Run("Encrypt with WithSkipCache should not read or write to cache", func(t *testing.T) {
 		cache := &stubCache{}
 		svc, _ := setup(t, cache)
 
-		_, err := svc.Encrypt(ctx, namespace, plaintext, WithSkipCache)
+		_, err := svc.Encrypt(ctx, namespace, plaintext, contracts.EncryptOption{SkipCache: true})
 		require.NoError(t, err)
-		assert.False(t, cache.getByLabelCalled, "cache should not be accessed with WithSkipCache")
+		assert.False(t, cache.getByLabelCalled, "cache getByLabelCalled should not be accessed with WithSkipCache")
+		assert.False(t, cache.setCalled, "cache setCalled should not be accessed with WithSkipCache")
 	})
 
-	t.Run("Encrypt without WithSkipCache should read from cache", func(t *testing.T) {
+	t.Run("Encrypt without WithSkipCache should read or write to cache", func(t *testing.T) {
 		cache := &stubCache{}
 		svc, _ := setup(t, cache)
 
-		_, err := svc.Encrypt(ctx, namespace, plaintext)
+		_, err := svc.Encrypt(ctx, namespace, plaintext, contracts.EncryptOption{})
 		require.NoError(t, err)
-		assert.True(t, cache.getByLabelCalled, "cache should be accessed without WithSkipCache")
+		assert.True(t, cache.getByLabelCalled, "cache getByLabelCalled should be accessed without WithSkipCache")
+		assert.True(t, cache.setCalled, "cache setCalled should be accessed without WithSkipCache")
 	})
 
-	t.Run("Decrypt with WithSkipCache should not read from cache", func(t *testing.T) {
-		// First encrypt to create a data key
+	t.Run("Decrypt with WithSkipCache should not read or write to cache", func(t *testing.T) {
 		cache := &stubCache{}
 		svc, _ := setup(t, cache)
-		encrypted, err := svc.Encrypt(ctx, namespace, plaintext)
+
+		// Seed
+		encrypted, err := svc.Encrypt(ctx, namespace, plaintext, contracts.EncryptOption{SkipCache: true})
 		require.NoError(t, err)
 
-		// Reset and test decrypt
-		cache.getByIdCalled = false
-		_, err = svc.Decrypt(ctx, namespace, encrypted, WithSkipCache)
+		_, err = svc.Decrypt(ctx, namespace, encrypted, contracts.EncryptOption{SkipCache: true})
 		require.NoError(t, err)
-		assert.False(t, cache.getByIdCalled, "cache should not be accessed with WithSkipCache")
+		assert.False(t, cache.getByIdCalled, "cache getByIdCalled should not be accessed with WithSkipCache")
+		assert.False(t, cache.setCalled, "cache setCalled should not be accessed with WithSkipCache")
 	})
 
-	t.Run("Decrypt without WithSkipCache should read from cache", func(t *testing.T) {
-		// First encrypt to create a data key
+	t.Run("Decrypt without WithSkipCache should read or write to cache", func(t *testing.T) {
 		cache := &stubCache{}
 		svc, _ := setup(t, cache)
-		encrypted, err := svc.Encrypt(ctx, namespace, plaintext)
+
+		// Seed
+		encrypted, err := svc.Encrypt(ctx, namespace, plaintext, contracts.EncryptOption{SkipCache: true})
 		require.NoError(t, err)
 
-		// Reset and test decrypt
-		cache.getByIdCalled = false
-		_, err = svc.Decrypt(ctx, namespace, encrypted)
+		_, err = svc.Decrypt(ctx, namespace, encrypted, contracts.EncryptOption{})
 		require.NoError(t, err)
-		assert.True(t, cache.getByIdCalled, "cache should be accessed without WithSkipCache")
+		assert.True(t, cache.getByIdCalled, "cache getByIdCalled should be accessed without WithSkipCache")
+		assert.True(t, cache.setCalled, "cache setCalled should be accessed without WithSkipCache")
 	})
 }
 
@@ -793,11 +812,11 @@ func TestEncryptionService_FlushCache(t *testing.T) {
 	svc := encMgr.(*EncryptionManager)
 
 	// Encrypt some data - this will create a DEK and cache it
-	encrypted, err := svc.Encrypt(ctx, namespace, plaintext)
+	encrypted, err := svc.Encrypt(ctx, namespace, plaintext, contracts.EncryptOption{})
 	require.NoError(t, err)
 
 	// Verify we can decrypt - this should use the cached key
-	decrypted, err := svc.Decrypt(ctx, namespace, encrypted)
+	decrypted, err := svc.Decrypt(ctx, namespace, encrypted, contracts.EncryptOption{})
 	require.NoError(t, err)
 	assert.Equal(t, plaintext, decrypted)
 
@@ -823,7 +842,7 @@ func TestEncryptionService_FlushCache(t *testing.T) {
 	assert.False(t, existsByLabel, "DEK should not be in cache by label after flush")
 
 	// Verify we can still decrypt - this should fetch from DB and re-cache
-	decrypted, err = svc.Decrypt(ctx, namespace, encrypted)
+	decrypted, err = svc.Decrypt(ctx, namespace, encrypted, contracts.EncryptOption{})
 	require.NoError(t, err)
 	assert.Equal(t, plaintext, decrypted)
 
