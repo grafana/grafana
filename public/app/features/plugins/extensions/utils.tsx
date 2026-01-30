@@ -32,7 +32,6 @@ import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaAp
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import {
   getAppPluginConfigsSync,
-  getAppPluginsToAwaitSync,
   getAppPluginsToPreloadSync,
   getExposedComponentPluginDependenciesSync,
   getExtensionPointPluginDependenciesSync,
@@ -143,8 +142,8 @@ const getModalWrapper = ({
   const ModalWrapper = ({ onDismiss }: ModalWrapperProps) => {
     return (
       <Modal title={title} className={className} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-        {/* 
-          We also add an error boundary here (apart from the one in the `wrapWithPluginContext`) 
+        {/*
+          We also add an error boundary here (apart from the one in the `wrapWithPluginContext`)
           so the error appears inside the modal (and not at the bottom of the page.)
         */}
         <ExtensionErrorBoundary
@@ -661,15 +660,6 @@ export async function getExtensionPointPluginMeta(extensionPointId: string): Pro
 export async function getExposedComponentPluginDependencies(exposedComponentId: string): Promise<string[]> {
   const apps = await getAppPluginMetas();
   return getExposedComponentPluginDependenciesSync(exposedComponentId, apps);
-}
-
-/**
- * Returns a list of app plugins that has to be loaded before core Grafana could finish the initialization.
- * @returns A list of app plugins that has to be loaded before core Grafana could finish the initialization.
- */
-export async function getAppPluginsToAwait(): Promise<AppPluginConfig[]> {
-  const apps = await getAppPluginMetas();
-  return getAppPluginsToAwaitSync(apps);
 }
 
 /**

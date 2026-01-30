@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "Deprecated",
       "delete": "Delete",
       "duplicate": "Duplicate",
       "label-integration": "Integration",
       "label-notification-settings": "Notification settings",
       "label-section": "Optional {{name}} settings",
       "test": "Test",
+      "tooltip-deprecated": "This integration is deprecated and will be removed in a future release.",
       "tooltip-legacy-version": "This is a legacy integration (version: {{version}}). It cannot be modified."
     },
     "classic-condition-viewer": {
@@ -962,6 +964,13 @@
       "content-route-continue-matching-other-policies": "This route will continue matching other policies"
     },
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
+    "create-alert-from-panel": {
+      "description": "Open the alert creation form in the current tab or a new tab?",
+      "no-queries": "No alerting-capable queries found in this panel.",
+      "open": "Open",
+      "open-in-new-tab": "Open in new tab",
+      "title": "Create alert rule"
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Notifications are delivered to",
@@ -1018,10 +1027,6 @@
       "show-details": "Show details",
       "this-datasource-has-been-removed": "This datasource has been removed",
       "update-datasource": "Update datasource"
-    },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
-      "declare-incident": "Declare Incident"
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
@@ -1643,6 +1648,11 @@
       },
       "yaml-error": "Failed to parse YAML file: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "This Alertmanager has inhibition rules configured. Some alerts may be suppressed when matching alerts are firing.",
+      "learn-more": "Learn more about inhibition rules",
+      "title": "Inhibition rules are in effect"
+    },
     "insights": {
       "monitor-status-of-system": "Monitor the status of your system",
       "monitor-status-system-tooltip": "Alerting insights provides pre-built dashboards to monitor your alerting data.",
@@ -1928,6 +1938,10 @@
     "namespace-and-group-filter": {
       "select-group": "Select group",
       "select-namespace": "Select namespace"
+    },
+    "navigation": {
+      "alert-rules": "Alert rules",
+      "recently-deleted": "Recently deleted"
     },
     "need-help-info": {
       "need-help": "Need help?"
@@ -2314,7 +2328,8 @@
     },
     "routing-settings": {
       "aria-label-group-by": "Group by",
-      "description-group-by": "Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the default notification policy.",
+      "description-group-by": "Alerts are always grouped by grafana_folder and alertname, plus any additional labels you select. Select \"Disable (...)\" to send each alert as a separate notification.",
+      "group-by-hint": "grafana_folder and alertname are always included unless you select Disable (...).",
       "group-interval": "Group interval: <strong>{{groupIntervalValue}}</strong>",
       "group-wait": "Group wait: <strong>{{groupWaitValue}}</strong>",
       "grouping": "Grouping: <strong>{{fields}}</strong>",
@@ -2686,7 +2701,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "Actions",
-      "apply-tooltip": "Apply search \"{{name}}\"",
       "button-label": "Saved searches",
       "cancel": "Cancel",
       "default-indicator": "Default search",
@@ -3633,7 +3647,10 @@
       "move-modal-title": "Move",
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
+      "new-folder-as-team-folder-checkbox-tooltip": "Team folders are folders owned by your team. Use them to keep your team’s content in one place—making it easier to find, organize, and manage access",
+      "new-folder-as-team-folder-label": "Team:",
       "new-folder-name-required-phrase": "Folder name is required.",
+      "new-folder-owner-selector-checkbox": "Assign an owner to the folder",
       "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
       "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
@@ -5161,6 +5178,9 @@
       "title": {
         "deleted": "deleted"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": "Powered by"
     },
     "layout": {
       "cancel": "Cancel",
@@ -7993,6 +8013,43 @@
   "gauge": {
     "category-gauge": "Gauge",
     "category-radial-bar": "Gauge",
+    "config": {
+      "bar-shape": "Bar Style",
+      "bar-shape-flat": "Flat",
+      "bar-shape-rounded": "Rounded",
+      "bar-width": "Bar width",
+      "effects": {
+        "bar-glow": "Bar glow",
+        "center-glow": "Center glow",
+        "gradient": "Gradient",
+        "label": "Effects"
+      },
+      "endpoint-marker": "Endpoint marker",
+      "endpoint-marker-description": "Glow is only supported in dark mode",
+      "endpoint-marker-glow": "Glow",
+      "endpoint-marker-none": "None",
+      "endpoint-marker-point": "Point",
+      "neutral": {
+        "description": "Leave empty to use Min as neutral point",
+        "placeholder": "none",
+        "title": "Neutral value"
+      },
+      "segment-count": "Segments",
+      "segment-spacing": "Segment spacing",
+      "shape": "Style",
+      "shape-circle": "Circle",
+      "shape-gauge": "Arc",
+      "sparkline": "Show sparkline",
+      "text-mode": "Text mode",
+      "text-mode-auto": "Auto",
+      "text-mode-name": "Name",
+      "text-mode-none": "None",
+      "text-mode-value": "Value",
+      "text-mode-value-and-name": "Value and Name",
+      "threshold-labels": "Show labels",
+      "threshold-labels-description": "Display threshold and neutral values",
+      "threshold-markers": "Show thresholds"
+    },
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
     "description-neutral": "Leave empty to use Min as neutral point",
@@ -9814,7 +9871,7 @@
     "loading-panel-text": "Loading library panel",
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
+      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
       "button-cancel": "Cancel",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
@@ -10016,6 +10073,8 @@
       "no-more-logs-available": "No more logs available.",
       "older-logs": "older",
       "open-in-split-view": "Open in split view",
+      "show-original-log": "Show original logs",
+      "show-original-log-tooltip": "Clear displayed fields and show the original log line message",
       "time-window-label": "Context time window",
       "time-window-tooltip": "Amount of time before and after the referenced log",
       "title-log-context": "Log context",
@@ -10927,7 +10986,9 @@
     "invite-user": {
       "invite-button": "Invite",
       "invite-new-user-button": "Invite new user",
-      "invite-tooltip": "Invite user"
+      "invite-tooltip": "Invite user",
+      "upgrade-button": "Upgrade",
+      "upgrade-tooltip": "Upgrade to add more users"
     },
     "item": {
       "add-bookmark": "Add to Bookmarks",
@@ -11774,6 +11835,8 @@
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
       "error-field-required": "This field is required.",
+      "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
+      "error-repository-status-unhealthy-title": "Repository status unhealthy",
       "external-storage-label": "External storage",
       "files-count_one": "{{count}} files",
       "files-count_other": "{{count}} files",
@@ -11798,13 +11861,16 @@
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
+      "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-title": "A human-readable name for the config",
+      "error-connection-required": "Connection is required",
       "error-fetch-branches": "Failed to fetch branches",
       "error-required": "This field is required.",
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
+      "label-connection": "GitHub App connection",
       "label-enabled": "Enabled",
       "label-interval-seconds": "Interval (seconds)",
       "label-repository-type": "Repository type",
@@ -11838,24 +11904,36 @@
       "button-save": "Save",
       "button-saving": "Saving...",
       "description-app-id": "The ID of your GitHub App",
+      "description-description": "Optional description for this connection",
       "description-installation-id": "The installation ID of your GitHub App",
       "description-private-key": "The private key for your GitHub App in PEM format",
       "description-provider": "Select the provider type",
+      "description-title": "A human-readable name for this connection",
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
       "error-save-connection": "Failed to save connection",
       "label-app-id": "GitHub App ID",
+      "label-description": "Description",
       "label-installation-id": "GitHub Installation ID",
       "label-private-key": "Private Key (PEM)",
       "label-provider": "Provider",
+      "label-title": "Title",
       "not-found": "Connection not found",
       "not-found-description": "The connection you are looking for does not exist.",
       "page-subtitle": "Configure a connection to authenticate with external providers",
       "page-title-create": "Create connection",
       "page-title-edit": "Edit connection",
       "placeholder-app-id": "123456",
+      "placeholder-description": "Optional description",
       "placeholder-installation-id": "12345678",
-      "placeholder-private-key": "-----BEGIN RSA PRIVATE KEY-----..."
+      "placeholder-private-key": "-----BEGIN RSA PRIVATE KEY-----...",
+      "placeholder-title": "My GitHub App"
+    },
+    "connection-options": {
+      "loading": "Loading...",
+      "no-repos": "No repositories",
+      "repos-truncated_one": "{{shown}} +{{count}} more",
+      "repos-truncated_other": "{{shown}} +{{count}} more"
     },
     "connections": {
       "add-connection": "Add connection",
@@ -11865,13 +11943,11 @@
       "delete-title": "Delete connection",
       "error-loading": "Failed to load connections",
       "no-connections": "No connections configured",
-      "no-connections-message": "Add a connection to authenticate with external providers",
       "no-results": "No results matching your query",
-      "page-subtitle": "View and manage your app connections",
-      "page-title": "Connections",
       "search-placeholder": "Search connections",
       "status-connected": "Connected",
       "status-disconnected": "Disconnected",
+      "status-pending": "Pending",
       "status-unknown": "Unknown",
       "view": "View"
     },
@@ -12057,6 +12133,8 @@
       "error-delete-all-repositories": "Failed to delete all repositories",
       "subtitle": "View and manage your configured repositories",
       "success-all-repositories-deleted": "All configured repositories deleted",
+      "tab-connections": "Connections",
+      "tab-connections-title": "List of connections",
       "tab-getting-started": "Getting started",
       "tab-getting-started-title": "Getting started",
       "tab-repositories": "Repositories",
@@ -12120,6 +12198,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": "Repository was saved but no name was returned"
+        },
         "title": {
           "repository-connection-failed": "Repository connection failed",
           "repository-request-failed": "Repository request failed"
@@ -12140,7 +12221,6 @@
       "jobs": "Jobs"
     },
     "repository-actions": {
-      "connections": "Connections",
       "settings": "Settings",
       "source-code": "Source code"
     },
@@ -12341,6 +12421,8 @@
       "github-app-creation-failed": "Failed to create GitHub App connection",
       "github-app-error-loading": "Failed to load connections",
       "github-app-error-required": "Connection is required",
+      "github-app-help-instructions": "Create a GitHub App, generate a private key, install it, and paste the details below. <2>View step-by-step instructions</2>",
+      "github-app-help-title": "Need help creating a GitHub App?",
       "github-app-mode-existing": "Choose an existing app",
       "github-app-mode-label": "GitHub App configuration",
       "github-app-mode-new": "Connect to a new app",
@@ -12375,6 +12457,9 @@
       "push-to-a-new-branch": "Push to a new branch",
       "push-to-existing-branch": "Push to an existing branch"
     }
+  },
+  "provisioning-alert": {
+    "retry": "Retry"
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -12580,6 +12665,31 @@
       "title-data-source-help": "Data source help"
     }
   },
+  "query-editor": {
+    "action": {
+      "inspector": "Query inspector"
+    },
+    "edit-query-name": "Edit query name",
+    "validation": {
+      "duplicate-name": "Query name already exists",
+      "empty-name": "An empty query name is not allowed"
+    }
+  },
+  "query-editor-next": {
+    "sidebar": {
+      "card-click": "Select query {{refId}}",
+      "expression": "Expression",
+      "queries-expressions": "Queries & Expressions",
+      "query": "Query",
+      "query-stack": "Query Stack",
+      "toggle-size": "Toggle sidebar size"
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": "Open Query Library"
+    }
+  },
   "query-operation": {
     "header": {
       "app-dashboard": "Dashboard",
@@ -12604,45 +12714,6 @@
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "Bar Style",
-      "bar-shape-flat": "Flat",
-      "bar-shape-rounded": "Rounded",
-      "bar-width": "Bar width",
-      "effects": {
-        "bar-glow": "Bar glow",
-        "center-glow": "Center glow",
-        "gradient": "Gradient",
-        "label": "Effects"
-      },
-      "endpoint-marker": "Endpoint marker",
-      "endpoint-marker-description": "Glow is only supported in dark mode",
-      "endpoint-marker-glow": "Glow",
-      "endpoint-marker-none": "None",
-      "endpoint-marker-point": "Point",
-      "neutral": {
-        "description": "Leave empty to use Min as neutral point",
-        "placeholder": "none",
-        "title": "Neutral value"
-      },
-      "segment-count": "Segments",
-      "segment-spacing": "Segment spacing",
-      "shape": "Style",
-      "shape-circle": "Circle",
-      "shape-gauge": "Arc",
-      "sparkline": "Show sparkline",
-      "text-mode": "Text mode",
-      "text-mode-auto": "Auto",
-      "text-mode-name": "Name",
-      "text-mode-none": "None",
-      "text-mode-value": "Value",
-      "text-mode-value-and-name": "Value and Name",
-      "threshold-labels": "Show labels",
-      "threshold-labels-description": "Display threshold and neutral values",
-      "threshold-markers": "Show thresholds"
-    }
   },
   "recently-deleted": {
     "buttons": {
@@ -13339,6 +13410,7 @@
       "label-standard": "Standard"
     },
     "suggestions": {
+      "stat": "Stat",
       "stat-color-background": "Stat - color background",
       "stat-discrete-values": "Stat - discrete values",
       "stat-discrete-values-color-background": "Stat - discrete values - color background",
@@ -14771,6 +14843,9 @@
         "variable-values-fetched-datasource-query": "Variable values are fetched from a datasource query"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": "A variable that can be toggled on and off"
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "default",
@@ -14949,6 +15024,9 @@
       "label-both": "Both",
       "label-lines": "Lines",
       "label-points": "Points"
+    },
+    "suggestions": {
+      "scatter-plot": "Scatter plot"
     }
   }
 }

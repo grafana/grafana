@@ -802,12 +802,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Sil",
       "duplicate": "Çoğalt",
       "label-integration": "Entegrasyon",
       "label-notification-settings": "Bildirim ayarları",
       "label-section": "İsteğe bağlı {{name}} ayarları",
       "test": "Test",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -962,6 +964,13 @@
       "content-route-continue-matching-other-policies": "Bu yönlendirme diğer politikalarla eşleşmeye devam edecek"
     },
     "copy-to-clipboard": "\"{{label}}\" metnini panoya kopyala",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Bildirimler şuraya iletilir:",
@@ -1018,10 +1027,6 @@
       "show-details": "Ayrıntıları göster",
       "this-datasource-has-been-removed": "Bu veri kaynağı kaldırıldı",
       "update-datasource": "Veri kaynağını güncelle"
-    },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Grafana Incident yüklü değil veya düzgün yapılandırılmamış",
-      "declare-incident": "Olay Bildir"
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana Incident yüklü değil veya düzgün yapılandırılmamış",
@@ -1643,6 +1648,11 @@
       },
       "yaml-error": "YAML dosyası ayrıştırılamadı: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Sistem durumunu izleyin",
       "monitor-status-system-tooltip": "Uyarı analizleri, uyarı verilerinizi izlemek için önceden oluşturulmuş panolar sunar.",
@@ -1928,6 +1938,10 @@
     "namespace-and-group-filter": {
       "select-group": "Grup seç",
       "select-namespace": "Ad alanı seç"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Yardıma mı ihtiyacınız var?"
@@ -2686,7 +2700,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
       "default-indicator": "",
@@ -3631,7 +3644,10 @@
       "move-modal-title": "Taşı",
       "move-provisioned-folder": "",
       "moving": "Taşınıyor...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Klasör adı gereklidir.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Hem sağlanmış hem de sağlanmamış kaynakları seçtiniz. Bunlar birlikte işlenemez. Lütfen yalnızca sağlanmış kaynakları veya yalnızca sağlanmamış kaynakları seçin ve tekrar deneyin.",
       "selected-mix-resources-modal-title": "Karışık kaynak türleri seçildi"
     },
@@ -5159,6 +5175,9 @@
       "title": {
         "deleted": "silindi"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -7991,6 +8010,43 @@
   "gauge": {
     "category-gauge": "Ölçü",
     "category-radial-bar": "",
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    },
     "description-min-height": "Minimum satır yüksekliği (yatay hizalama)",
     "description-min-width": "Minimum sütun genişliği (dikey hizalama)",
     "description-neutral": "Nötr nokta olarak Min. değerini kullanmak için boş bırakın",
@@ -10014,6 +10070,8 @@
       "no-more-logs-available": "",
       "older-logs": "",
       "open-in-split-view": "",
+      "show-original-log": "",
+      "show-original-log-tooltip": "",
       "time-window-label": "",
       "time-window-tooltip": "",
       "title-log-context": "",
@@ -10925,7 +10983,9 @@
     "invite-user": {
       "invite-button": "Davet et",
       "invite-new-user-button": "",
-      "invite-tooltip": "Kullanıcı davet et"
+      "invite-tooltip": "Kullanıcı davet et",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Yer imlerine ekle",
@@ -11770,6 +11830,8 @@
       "description-clear-repository-connection": "Bu depo bağlantısı için net bir ad ekleyin",
       "empty": "Boş",
       "error-field-required": "Bu alan gereklidir.",
+      "error-repository-status-unhealthy-message": "",
+      "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Görünen ad",
       "placeholder-my-repository-connection": "Depo bağlantım",
@@ -11796,13 +11858,16 @@
       "alert-repository-settings-updated": "Depo ayarları güncellendi",
       "button-save": "Kaydet",
       "button-saving": "Kaydediliyor…",
+      "description-connection": "",
       "description-enabled": "Otomatik çekme etkinleştirildikten sonra hedef değiştirilemez.",
       "description-read-only": "Kaynaklar Grafana aracılığıyla değiştirilemez.",
       "description-title": "Yapılandırma için okunabilir ad",
+      "error-connection-required": "",
       "error-fetch-branches": "",
       "error-required": "Bu alan gereklidir.",
       "error-save-repository": "Depo ayarları kaydedilemedi",
       "label-automatic-pulling": "Otomatik çekme",
+      "label-connection": "",
       "label-enabled": "Etkin",
       "label-interval-seconds": "Aralık (saniye)",
       "label-repository-type": "Depo türü",
@@ -11836,24 +11901,36 @@
       "button-save": "",
       "button-saving": "",
       "description-app-id": "",
+      "description-description": "",
       "description-installation-id": "",
       "description-private-key": "",
       "description-provider": "",
+      "description-title": "",
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
       "label-app-id": "",
+      "label-description": "",
       "label-installation-id": "",
       "label-private-key": "",
       "label-provider": "",
+      "label-title": "",
       "not-found": "",
       "not-found-description": "",
       "page-subtitle": "",
       "page-title-create": "",
       "page-title-edit": "",
       "placeholder-app-id": "",
+      "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": ""
+      "placeholder-private-key": "",
+      "placeholder-title": ""
+    },
+    "connection-options": {
+      "loading": "",
+      "no-repos": "",
+      "repos-truncated_one": "",
+      "repos-truncated_other": ""
     },
     "connections": {
       "add-connection": "",
@@ -11863,13 +11940,11 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
+      "status-pending": "",
       "status-unknown": "",
       "view": ""
     },
@@ -12055,6 +12130,8 @@
       "error-delete-all-repositories": "Tüm depolar silinemedi",
       "subtitle": "Yapılandırılmış depoları görüntüleyin ve yönetin",
       "success-all-repositories-deleted": "Yapılandırılmış tüm depolar silindi",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Başlarken",
       "tab-getting-started-title": "Başlarken",
       "tab-repositories": "Depolar",
@@ -12118,6 +12195,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12138,7 +12218,6 @@
       "jobs": "İşler"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Ayarlar",
       "source-code": "Kaynak kodu"
     },
@@ -12318,6 +12397,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Sonlandır",
@@ -12330,15 +12414,32 @@
         "dismiss": "Çalışmaya devam et",
         "title": "Depo kurulumu silinsin mi?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-help-instructions": "",
+      "github-app-help-title": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Nelerin senkronize edileceğini seçin",
+      "step-configure-repo": "",
       "step-connect": "Bağlan",
       "step-finish": "Ek ayarlar seçin",
+      "step-github-app": "",
       "step-synchronize": "Harici depolama ile senkronize et",
       "sync-description": "Kaynakları harici depolama ile senkronize edin. Bu tek seferlik adımdan sonra tüm gelecekteki güncellemeler otomatik olarak depoya kaydedilecek ve örneğe geri sağlanacaktır.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Nelerin senkronize edileceğini seçin",
+      "title-configure-repo": "",
       "title-connect": "Harici depolamaya bağlan",
       "title-finish": "Ek ayarlar seçin",
+      "title-github-app": "",
       "title-synchronize": "Harici depolama ile senkronize et"
     },
     "wizard-content": {
@@ -12353,6 +12454,9 @@
       "push-to-a-new-branch": "",
       "push-to-existing-branch": ""
     }
+  },
+  "provisioning-alert": {
+    "retry": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -12558,6 +12662,31 @@
       "title-data-source-help": "Veri kaynağı yardımı"
     }
   },
+  "query-editor": {
+    "action": {
+      "inspector": ""
+    },
+    "edit-query-name": "",
+    "validation": {
+      "duplicate-name": "",
+      "empty-name": ""
+    }
+  },
+  "query-editor-next": {
+    "sidebar": {
+      "card-click": "",
+      "expression": "",
+      "queries-expressions": "",
+      "query": "",
+      "query-stack": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
+    }
+  },
   "query-operation": {
     "header": {
       "app-dashboard": "",
@@ -12582,45 +12711,6 @@
       "show-response": "Yanıtı göster"
     },
     "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor."
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {
@@ -13317,6 +13407,7 @@
       "label-standard": "Standart"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14749,6 +14840,9 @@
         "variable-values-fetched-datasource-query": "Değişken değerleri bir veri kaynağı sorgusundan alınır"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "varsayılan",
@@ -14927,6 +15021,9 @@
       "label-both": "Her ikisi de",
       "label-lines": "Çizgiler",
       "label-points": "Noktalar"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

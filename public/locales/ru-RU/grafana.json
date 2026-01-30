@@ -808,12 +808,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "Удалить",
       "duplicate": "Дублировать",
       "label-integration": "Интеграция",
       "label-notification-settings": "Параметры уведомлений",
       "label-section": "Дополнительные параметры {{name}}",
       "test": "Тестирование",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -972,6 +974,13 @@
       "content-route-continue-matching-other-policies": "Сопоставление маршрута с другими политиками будет продолжено"
     },
     "copy-to-clipboard": "Копировать метку «{{label}}» в буфер обмена",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "Точка контакта для доставки уведомлений",
@@ -1028,10 +1037,6 @@
       "show-details": "Показать подробности",
       "this-datasource-has-been-removed": "Источник данных удален",
       "update-datasource": "Обновить источник данных"
-    },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Инструмент Grafana Incident не установлен или настроен неправильно",
-      "declare-incident": "Заявить об инциденте"
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Инструмент Grafana Incident не установлен или настроен неправильно",
@@ -1653,6 +1658,11 @@
       },
       "yaml-error": "Не удалось проанализировать YAML-файл: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "Следите за состоянием своей системы",
       "monitor-status-system-tooltip": "Аналитика по оповещениям предлагает готовые дашборды для мониторинга данных оповещений.",
@@ -1940,6 +1950,10 @@
     "namespace-and-group-filter": {
       "select-group": "Выбрать группу",
       "select-namespace": "Выбрать пространство имен"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "Нужна помощь?"
@@ -2708,7 +2722,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
       "default-indicator": "",
@@ -3653,7 +3666,10 @@
       "move-modal-title": "Перемещение",
       "move-provisioned-folder": "",
       "moving": "Перемещение...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "Необходимо указать имя папки.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "Вы выбрали как подготовленные, так и неподготовленные ресурсы. Совместная обработка невозможна. Выберите только подготовленные или неподготовленные ресурсы и повторите попытку.",
       "selected-mix-resources-modal-title": "Выбраны разные типы ресурсов"
     },
@@ -5197,6 +5213,9 @@
       "title": {
         "deleted": "удалено"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -8043,6 +8062,43 @@
   "gauge": {
     "category-gauge": "Индикатор",
     "category-radial-bar": "",
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    },
     "description-min-height": "Минимальная высота строки (горизонтальная ориентация)",
     "description-min-width": "Минимальная ширина столбца (вертикальная ориентация)",
     "description-neutral": "Оставить пустым, чтобы использовать мин. как нейтральную точку",
@@ -10102,6 +10158,8 @@
       "no-more-logs-available": "Больше нет доступных журналов.",
       "older-logs": "более старые",
       "open-in-split-view": "Открыть в комбинированном режиме",
+      "show-original-log": "",
+      "show-original-log-tooltip": "",
       "time-window-label": "Окно времени контекста",
       "time-window-tooltip": "Количество времени до и после связанного журнала",
       "title-log-context": "Контекст журнала",
@@ -11013,7 +11071,9 @@
     "invite-user": {
       "invite-button": "Пригласить",
       "invite-new-user-button": "Пригласить нового пользователя",
-      "invite-tooltip": "Пригласить пользователя"
+      "invite-tooltip": "Пригласить пользователя",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "Добавить в закладки",
@@ -11864,6 +11924,8 @@
       "description-clear-repository-connection": "Добавьте понятное имя для этого подключения к репозиторию.",
       "empty": "Пусто",
       "error-field-required": "Поле является обязательным.",
+      "error-repository-status-unhealthy-message": "",
+      "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "Отображаемое имя",
       "placeholder-my-repository-connection": "Мое подключение к репозиторию",
@@ -11896,13 +11958,16 @@
       "alert-repository-settings-updated": "Параметры репозитория обновлены",
       "button-save": "Сохранить",
       "button-saving": "Сохранение...",
+      "description-connection": "",
       "description-enabled": "После включения автоматического внесения изменения целевой элемент невозможно изменить.",
       "description-read-only": "Ресурсы невозможно изменить через Grafana.",
       "description-title": "Понятное название конфигурации",
+      "error-connection-required": "",
       "error-fetch-branches": "",
       "error-required": "Поле является обязательным.",
       "error-save-repository": "Не удалось сохранить параметры репозитория",
       "label-automatic-pulling": "Автоматическое включение изменений",
+      "label-connection": "",
       "label-enabled": "Включено",
       "label-interval-seconds": "Интервал (в секундах)",
       "label-repository-type": "Тип репозитория",
@@ -11936,24 +12001,38 @@
       "button-save": "",
       "button-saving": "",
       "description-app-id": "",
+      "description-description": "",
       "description-installation-id": "",
       "description-private-key": "",
       "description-provider": "",
+      "description-title": "",
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
       "label-app-id": "",
+      "label-description": "",
       "label-installation-id": "",
       "label-private-key": "",
       "label-provider": "",
+      "label-title": "",
       "not-found": "",
       "not-found-description": "",
       "page-subtitle": "",
       "page-title-create": "",
       "page-title-edit": "",
       "placeholder-app-id": "",
+      "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": ""
+      "placeholder-private-key": "",
+      "placeholder-title": ""
+    },
+    "connection-options": {
+      "loading": "",
+      "no-repos": "",
+      "repos-truncated_one": "",
+      "repos-truncated_few": "",
+      "repos-truncated_many": "",
+      "repos-truncated_other": ""
     },
     "connections": {
       "add-connection": "",
@@ -11963,13 +12042,11 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
+      "status-pending": "",
       "status-unknown": "",
       "view": ""
     },
@@ -12159,6 +12236,8 @@
       "error-delete-all-repositories": "Не удалось удалить все репозитории",
       "subtitle": "Просмотр настроенных репозиториев и управление ими",
       "success-all-repositories-deleted": "Все настроенные репозитории удалены",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "Начало работы",
       "tab-getting-started-title": "Начало работы",
       "tab-repositories": "Репозитории",
@@ -12222,6 +12301,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12242,7 +12324,6 @@
       "jobs": "Задания"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "Параметры",
       "source-code": "Исходный код"
     },
@@ -12422,6 +12503,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "Готово",
@@ -12434,15 +12520,32 @@
         "dismiss": "Продолжить работу",
         "title": "Отменить настройку репозитория?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-help-instructions": "",
+      "github-app-help-title": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "Выберите, что синхронизировать",
+      "step-configure-repo": "",
       "step-connect": "Подключить",
       "step-finish": "Выберите дополнительные параметры",
+      "step-github-app": "",
       "step-synchronize": "Синхронизировать с внешним хранилищем",
       "sync-description": "Синхронизируйте ресурсы с внешним хранилищем. После этого разового шага все будущие обновления будут автоматически сохраняться в репозитории и загружаться обратно в экземпляр.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "Выберите, что синхронизировать",
+      "title-configure-repo": "",
       "title-connect": "Подключение к внешнему хранилищу",
       "title-finish": "Выбор дополнительных параметров",
+      "title-github-app": "",
       "title-synchronize": "Синхронизировать с внешним хранилищем"
     },
     "wizard-content": {
@@ -12457,6 +12560,9 @@
       "push-to-a-new-branch": "",
       "push-to-existing-branch": ""
     }
+  },
+  "provisioning-alert": {
+    "retry": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -12664,6 +12770,31 @@
       "title-data-source-help": "Справка по источнику данных"
     }
   },
+  "query-editor": {
+    "action": {
+      "inspector": ""
+    },
+    "edit-query-name": "",
+    "validation": {
+      "duplicate-name": "",
+      "empty-name": ""
+    }
+  },
+  "query-editor-next": {
+    "sidebar": {
+      "card-click": "",
+      "expression": "",
+      "queries-expressions": "",
+      "query": "",
+      "query-stack": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
+    }
+  },
   "query-operation": {
     "header": {
       "app-dashboard": "",
@@ -12688,45 +12819,6 @@
       "show-response": "Показать ответ"
     },
     "query-editor-not-exported": "Плагин источника данных не экспортирует компоненты редактора запросов"
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {
@@ -13429,6 +13521,7 @@
       "label-standard": "Стандартный"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14863,6 +14956,9 @@
         "variable-values-fetched-datasource-query": "Значения переменных извлекаются из запроса к источнику данных"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "по умолчанию",
@@ -15041,6 +15137,9 @@
       "label-both": "Оба",
       "label-lines": "Линии",
       "label-points": "Точки"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

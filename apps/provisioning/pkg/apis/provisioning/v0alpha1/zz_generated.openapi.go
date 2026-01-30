@@ -50,6 +50,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.MigrateJobOptions":         schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.MoveJobOptions":            schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions":     schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
+		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.QuotaStatus":               schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RefItem":                   schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RefList":                   schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
 		"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.Repository":                schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
@@ -342,6 +343,21 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The connection display name (shown in the UI)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The connection description",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"type": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
@@ -377,7 +393,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 						},
 					},
 				},
-				Required: []string{"type"},
+				Required: []string{"title", "type"},
 			},
 		},
 		Dependencies: []string{
@@ -400,13 +416,47 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 							Format:      "int64",
 						},
 					},
-					"state": {
+					"fieldErrors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Connection state\n\nPossible enum values:\n - `\"connected\"`\n - `\"disconnected\"`",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"connected", "disconnected"},
+							Description: "FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ErrorDetails"),
+									},
+								},
+							},
+						},
+					},
+					"conditions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-map-keys": []interface{}{
+									"type",
+								},
+								"x-kubernetes-list-type":       "map",
+								"x-kubernetes-patch-merge-key": "type",
+								"x-kubernetes-patch-strategy":  "merge",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Conditions represent the latest available observations of the connection's state.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.Condition"),
+									},
+								},
+							},
 						},
 					},
 					"health": {
@@ -417,11 +467,11 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 						},
 					},
 				},
-				Required: []string{"observedGeneration", "state", "health"},
+				Required: []string{"observedGeneration", "health"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ErrorDetails", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.Condition"},
 	}
 }
 
@@ -479,25 +529,36 @@ func schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref common.ReferenceCall
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "ErrorDetails describes an individual field error intended to help users identify and fix issues in resource specifications. This type is modeled after Kubernetes' StatusCause and serves the same purpose: to deliver actionable feedback about fields in the spec that require attention. Errors may relate to invalid formats, missing or invalid values, or cases where a referenced value does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to communicate validation or external reference errors that users can resolve by editing spec fields.",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Type is a machine-readable description of the cause of the error. This is intended for programmatic handling and matches Kubernetes' CauseType values.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"field": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Field is the path to the field or JSON pointer that caused the error. This helps users and tools identify exactly where to correct the problem. This field is optional and may be empty if not applicable.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"detail": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"origin": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Origin indicates where the error originated in validation, or the name of the external service that reported the error. This can be useful for tooling or debugging, and may reference a specific rule, function, or service. This field is optional and may be empty.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
@@ -1698,6 +1759,33 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref common.Refe
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "QuotaStatus represents the quota limits configured for this repository. These values come from static configuration and are read-only.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"maxRepositories": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxRepositories is the maximum number of repositories allowed. 0 means unlimited.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"maxResourcesPerRepository": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_RefItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -2005,6 +2093,49 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 							Format:      "int64",
 						},
 					},
+					"fieldErrors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ErrorDetails"),
+									},
+								},
+							},
+						},
+					},
+					"conditions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-map-keys": []interface{}{
+									"type",
+								},
+								"x-kubernetes-list-type":       "map",
+								"x-kubernetes-patch-merge-key": "type",
+								"x-kubernetes-patch-strategy":  "merge",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Conditions represent the latest available observations of the repository's state.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.Condition"),
+									},
+								},
+							},
+						},
+					},
 					"health": {
 						SchemaProps: spec.SchemaProps{
 							Description: "This will get updated with the current health status (and updated periodically)",
@@ -2058,12 +2189,19 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 							Format:      "",
 						},
 					},
+					"quota": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Quota contains the configured quota limits for this repository",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.QuotaStatus"),
+						},
+					},
 				},
 				Required: []string{"observedGeneration", "health", "sync", "webhook"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceCount", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.TokenStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.WebhookStatus"},
+			"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ErrorDetails", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HealthStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.QuotaStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ResourceCount", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.SyncStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.TokenStatus", "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.WebhookStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.Condition"},
 	}
 }
 
@@ -2236,6 +2374,14 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 							Format:      "",
 						},
 					},
+					"maxRepositories": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxRepositories is the maximum number of repositories allowed per namespace (0 = unlimited)",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 					"availableRepositoryTypes": {
 						SchemaProps: spec.SchemaProps{
 							Description: "AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)",
@@ -2271,7 +2417,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 						},
 					},
 				},
-				Required: []string{"allowImageRendering", "items"},
+				Required: []string{"allowImageRendering", "maxRepositories", "items"},
 			},
 		},
 		Dependencies: []string{
@@ -2874,7 +3020,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref common.ReferenceCallb
 					},
 					"intervalSeconds": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When non-zero, the sync will run periodically",
+							Description: "The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one.",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
@@ -2974,7 +3120,7 @@ func schema_pkg_apis_provisioning_v0alpha1_TestResults(ref common.ReferenceCallb
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "HistoryList is a list of versions of a resource",
+				Description: "TestResults is the result of a test connection operation Deprecated: this will go way when we deprecate the test endpoint We should use fieldErrors from status instead.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {

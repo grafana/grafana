@@ -799,12 +799,14 @@
       }
     },
     "channel-sub-form": {
+      "badge-deprecated": "",
       "delete": "삭제",
       "duplicate": "복제",
       "label-integration": "통합",
       "label-notification-settings": "알림 설정",
       "label-section": "{{name}} 설정(선택 사항)",
       "test": "테스트",
+      "tooltip-deprecated": "",
       "tooltip-legacy-version": ""
     },
     "classic-condition-viewer": {
@@ -957,6 +959,13 @@
       "content-route-continue-matching-other-policies": "이 경로는 계속 다른 정책과 비교 후 적용 여부가 결정됩니다"
     },
     "copy-to-clipboard": "'{{label}}'을(를) 클립보드로 복사",
+    "create-alert-from-panel": {
+      "description": "",
+      "no-queries": "",
+      "open": "",
+      "open-in-new-tab": "",
+      "title": ""
+    },
     "create-metadata": {
       "label": {
         "contact-point": "알림 전송처:",
@@ -1013,10 +1022,6 @@
       "show-details": "상세 정보 표시",
       "this-datasource-has-been-removed": "이 데이터 소스는 제거되었습니다",
       "update-datasource": "데이터 소스 업데이트"
-    },
-    "declare-incident-button": {
-      "content-grafana-incident-installed-configured-correctly": "Grafana 인시던트가 설치되지 않았거나 올바르게 구성되지 않았습니다",
-      "declare-incident": "인시던트 선언"
     },
     "declare-incident-menu-item": {
       "content-grafana-incident-installed-configured-correctly": "Grafana 인시던트가 설치되지 않았거나 올바르게 구성되지 않았습니다",
@@ -1638,6 +1643,11 @@
       },
       "yaml-error": "YAML 파일 파싱에 실패: {{error}}"
     },
+    "inhibition-rules": {
+      "body": "",
+      "learn-more": "",
+      "title": ""
+    },
     "insights": {
       "monitor-status-of-system": "시스템 상태 모니터링",
       "monitor-status-system-tooltip": "경고 인사이트는 경고 데이터를 모니터링할 수 있도록 사전 구축된 대시보드를 제공합니다.",
@@ -1922,6 +1932,10 @@
     "namespace-and-group-filter": {
       "select-group": "그룹 선택",
       "select-namespace": "네임스페이스 선택"
+    },
+    "navigation": {
+      "alert-rules": "",
+      "recently-deleted": ""
     },
     "need-help-info": {
       "need-help": "도움이 필요하세요?"
@@ -2675,7 +2689,6 @@
     },
     "saved-searches": {
       "actions-aria-label": "",
-      "apply-tooltip": "",
       "button-label": "",
       "cancel": "",
       "default-indicator": "",
@@ -3620,7 +3633,10 @@
       "move-modal-title": "이동",
       "move-provisioned-folder": "",
       "moving": "이동 중...",
+      "new-folder-as-team-folder-checkbox-tooltip": "",
+      "new-folder-as-team-folder-label": "",
       "new-folder-name-required-phrase": "폴더 이름은 필수 입력 항목입니다.",
+      "new-folder-owner-selector-checkbox": "",
       "selected-mix-resources-modal-text": "프로비저닝된 리소스와 프로비저닝되지 않은 리소스를 모두 선택하셨습니다. 이 두 가지는 함께 처리할 수 없습니다. 프로비저닝된 리소스만 또는 프로비저닝되지 않은 리소스만 선택한 후 다시 시도해 주세요.",
       "selected-mix-resources-modal-title": "혼합 리소스 유형 선택됨"
     },
@@ -5140,6 +5156,9 @@
       "title": {
         "deleted": "삭제됨"
       }
+    },
+    "kiosk": {
+      "footerPoweredBy": ""
     },
     "layout": {
       "cancel": "",
@@ -7965,6 +7984,43 @@
   "gauge": {
     "category-gauge": "게이지",
     "category-radial-bar": "",
+    "config": {
+      "bar-shape": "",
+      "bar-shape-flat": "",
+      "bar-shape-rounded": "",
+      "bar-width": "",
+      "effects": {
+        "bar-glow": "",
+        "center-glow": "",
+        "gradient": "",
+        "label": ""
+      },
+      "endpoint-marker": "",
+      "endpoint-marker-description": "",
+      "endpoint-marker-glow": "",
+      "endpoint-marker-none": "",
+      "endpoint-marker-point": "",
+      "neutral": {
+        "description": "",
+        "placeholder": "",
+        "title": ""
+      },
+      "segment-count": "",
+      "segment-spacing": "",
+      "shape": "",
+      "shape-circle": "",
+      "shape-gauge": "",
+      "sparkline": "",
+      "text-mode": "",
+      "text-mode-auto": "",
+      "text-mode-name": "",
+      "text-mode-none": "",
+      "text-mode-value": "",
+      "text-mode-value-and-name": "",
+      "threshold-labels": "",
+      "threshold-labels-description": "",
+      "threshold-markers": ""
+    },
     "description-min-height": "행 최소 높이(가로 방향)",
     "description-min-width": "열 최소 너비(세로 방향)",
     "description-neutral": "'최소'를 중립점으로 사용하려면 비워둡니다",
@@ -9970,6 +10026,8 @@
       "no-more-logs-available": "더 이상 사용할 수 있는 로그가 없습니다.",
       "older-logs": "노인",
       "open-in-split-view": "분할 보기에서 열기",
+      "show-original-log": "",
+      "show-original-log-tooltip": "",
       "time-window-label": "컨텍스트 시간 창",
       "time-window-tooltip": "참조된 로그 전후의 시간",
       "title-log-context": "로그 콘텍스트",
@@ -10881,7 +10939,9 @@
     "invite-user": {
       "invite-button": "초대",
       "invite-new-user-button": "새 사용자 초대",
-      "invite-tooltip": "사용자 초대"
+      "invite-tooltip": "사용자 초대",
+      "upgrade-button": "",
+      "upgrade-tooltip": ""
     },
     "item": {
       "add-bookmark": "북마크에 추가",
@@ -11723,6 +11783,8 @@
       "description-clear-repository-connection": "이 리포지토리 연결에 대해 알기 쉬운 이름 추가",
       "empty": "비어 있음",
       "error-field-required": "이 필드는 필수 입력 항목입니다.",
+      "error-repository-status-unhealthy-message": "",
+      "error-repository-status-unhealthy-title": "",
       "external-storage-label": "",
       "label-display-name": "표시 이름",
       "placeholder-my-repository-connection": "내 리포지토리 연결",
@@ -11746,13 +11808,16 @@
       "alert-repository-settings-updated": "리포지토리 설정이 업데이트되었습니다",
       "button-save": "저장",
       "button-saving": "저장 중...",
+      "description-connection": "",
       "description-enabled": "자동 풀링이 활성화되면 대상을 변경할 수 없습니다.",
       "description-read-only": "Grafana를 통해 리소스를 수정할 수 없습니다.",
       "description-title": "사람이 읽을 수 있는 구성 이름",
+      "error-connection-required": "",
       "error-fetch-branches": "",
       "error-required": "이 필드는 필수 입력 항목입니다.",
       "error-save-repository": "리포지토리 설정 저장 실패",
       "label-automatic-pulling": "자동 풀링",
+      "label-connection": "",
       "label-enabled": "활성화됨",
       "label-interval-seconds": "간격(초)",
       "label-repository-type": "리포지토리 유형",
@@ -11786,24 +11851,35 @@
       "button-save": "",
       "button-saving": "",
       "description-app-id": "",
+      "description-description": "",
       "description-installation-id": "",
       "description-private-key": "",
       "description-provider": "",
+      "description-title": "",
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
       "label-app-id": "",
+      "label-description": "",
       "label-installation-id": "",
       "label-private-key": "",
       "label-provider": "",
+      "label-title": "",
       "not-found": "",
       "not-found-description": "",
       "page-subtitle": "",
       "page-title-create": "",
       "page-title-edit": "",
       "placeholder-app-id": "",
+      "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": ""
+      "placeholder-private-key": "",
+      "placeholder-title": ""
+    },
+    "connection-options": {
+      "loading": "",
+      "no-repos": "",
+      "repos-truncated_other": ""
     },
     "connections": {
       "add-connection": "",
@@ -11813,13 +11889,11 @@
       "delete-title": "",
       "error-loading": "",
       "no-connections": "",
-      "no-connections-message": "",
       "no-results": "",
-      "page-subtitle": "",
-      "page-title": "",
       "search-placeholder": "",
       "status-connected": "",
       "status-disconnected": "",
+      "status-pending": "",
       "status-unknown": "",
       "view": ""
     },
@@ -12003,6 +12077,8 @@
       "error-delete-all-repositories": "모든 리포지토리 삭제 실패",
       "subtitle": "구성된 리포지토리 보기 및 관리",
       "success-all-repositories-deleted": "구성된 모든 리포지토리가 삭제되었습니다",
+      "tab-connections": "",
+      "tab-connections-title": "",
       "tab-getting-started": "시작하기",
       "tab-getting-started-title": "시작하기",
       "tab-repositories": "리포지토리",
@@ -12066,6 +12142,9 @@
     },
     "provisioning-wizard": {
       "on-submit": {
+        "error": {
+          "no-repository-name": ""
+        },
         "title": {
           "repository-connection-failed": "",
           "repository-request-failed": ""
@@ -12086,7 +12165,6 @@
       "jobs": "작업"
     },
     "repository-actions": {
-      "connections": "",
       "settings": "설정",
       "source-code": "소스 코드"
     },
@@ -12266,6 +12344,11 @@
       "alert-point-permissions": "",
       "alert-point-unsupported": "",
       "alert-title": "",
+      "auth-type-github-app-description": "",
+      "auth-type-github-app-label": "",
+      "auth-type-pat-description": "",
+      "auth-type-pat-label": "",
+      "auth-type-subtitle": "",
       "button-cancel": "",
       "button-cancelling": "",
       "button-next": "완료",
@@ -12278,15 +12361,32 @@
         "dismiss": "계속 작업하기",
         "title": "리포지토리 설정을 취소하시겠어요?"
       },
+      "github-app-creation-default-error": "",
+      "github-app-creation-failed": "",
+      "github-app-error-loading": "",
+      "github-app-error-required": "",
+      "github-app-help-instructions": "",
+      "github-app-help-title": "",
+      "github-app-mode-existing": "",
+      "github-app-mode-label": "",
+      "github-app-mode-new": "",
+      "github-app-no-connections": "",
+      "github-app-no-connections-message": "",
+      "step-auth-type": "",
       "step-bootstrap": "동기화할 항목 선택",
+      "step-configure-repo": "",
       "step-connect": "연결",
       "step-finish": "추가 설정 선택",
+      "step-github-app": "",
       "step-synchronize": "외부 스토리지와 동기화",
       "sync-description": "외부 스토리지와 리소스를 동기화합니다. 이 일회성 단계 후에는 향후 모든 업데이트가 자동으로 리포지토리에 저장되고 인스턴스에 다시 프로비저닝됩니다.",
       "sync-option-migrate-resources": "",
+      "title-auth-type": "",
       "title-bootstrap": "동기화할 항목 선택",
+      "title-configure-repo": "",
       "title-connect": "외부 스토리지에 연결",
       "title-finish": "추가 설정 선택",
+      "title-github-app": "",
       "title-synchronize": "외부 스토리지와 동기화"
     },
     "wizard-content": {
@@ -12301,6 +12401,9 @@
       "push-to-a-new-branch": "",
       "push-to-existing-branch": ""
     }
+  },
+  "provisioning-alert": {
+    "retry": ""
   },
   "public-dashboard": {
     "acknowledgment-checkboxes": {
@@ -12505,6 +12608,31 @@
       "title-data-source-help": "데이터 소스 도움말"
     }
   },
+  "query-editor": {
+    "action": {
+      "inspector": ""
+    },
+    "edit-query-name": "",
+    "validation": {
+      "duplicate-name": "",
+      "empty-name": ""
+    }
+  },
+  "query-editor-next": {
+    "sidebar": {
+      "card-click": "",
+      "expression": "",
+      "queries-expressions": "",
+      "query": "",
+      "query-stack": "",
+      "toggle-size": ""
+    }
+  },
+  "query-library": {
+    "exposed-compoment": {
+      "tooltip": ""
+    }
+  },
   "query-operation": {
     "header": {
       "app-dashboard": "",
@@ -12529,45 +12657,6 @@
       "show-response": "응답 표시"
     },
     "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
-  },
-  "radialbar": {
-    "config": {
-      "bar-shape": "",
-      "bar-shape-flat": "",
-      "bar-shape-rounded": "",
-      "bar-width": "",
-      "effects": {
-        "bar-glow": "",
-        "center-glow": "",
-        "gradient": "",
-        "label": ""
-      },
-      "endpoint-marker": "",
-      "endpoint-marker-description": "",
-      "endpoint-marker-glow": "",
-      "endpoint-marker-none": "",
-      "endpoint-marker-point": "",
-      "neutral": {
-        "description": "",
-        "placeholder": "",
-        "title": ""
-      },
-      "segment-count": "",
-      "segment-spacing": "",
-      "shape": "",
-      "shape-circle": "",
-      "shape-gauge": "",
-      "sparkline": "",
-      "text-mode": "",
-      "text-mode-auto": "",
-      "text-mode-name": "",
-      "text-mode-none": "",
-      "text-mode-value": "",
-      "text-mode-value-and-name": "",
-      "threshold-labels": "",
-      "threshold-labels-description": "",
-      "threshold-markers": ""
-    }
   },
   "recently-deleted": {
     "buttons": {
@@ -13261,6 +13350,7 @@
       "label-standard": "표준"
     },
     "suggestions": {
+      "stat": "",
       "stat-color-background": "",
       "stat-discrete-values": "",
       "stat-discrete-values-color-background": "",
@@ -14692,6 +14782,9 @@
         "variable-values-fetched-datasource-query": "변수 값은 데이터 소스 쿼리에서 가져옵니다."
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "기본값",
@@ -14870,6 +14963,9 @@
       "label-both": "둘 다",
       "label-lines": "선",
       "label-points": "포인트"
+    },
+    "suggestions": {
+      "scatter-plot": ""
     }
   }
 }

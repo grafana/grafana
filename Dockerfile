@@ -88,6 +88,7 @@ COPY pkg/build pkg/build
 COPY pkg/build/wire pkg/build/wire
 COPY pkg/promlib pkg/promlib
 COPY pkg/storage/unified/resource pkg/storage/unified/resource
+COPY pkg/storage/unified/resource/kv/go.* pkg/storage/unified/resource/kv
 COPY pkg/storage/unified/resourcepb pkg/storage/unified/resourcepb
 COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
 COPY pkg/semconv pkg/semconv
@@ -107,6 +108,7 @@ COPY apps/scope apps/scope
 COPY apps/logsdrilldown apps/logsdrilldown
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
+COPY apps/dashvalidator apps/dashvalidator
 COPY apps/folder apps/folder
 COPY apps/iam apps/iam
 COPY apps apps

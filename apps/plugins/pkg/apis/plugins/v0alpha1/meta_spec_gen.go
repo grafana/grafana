@@ -46,6 +46,8 @@ type MetaJSONData struct {
 	// +listType=atomic
 	Roles      []MetaRole      `json:"roles,omitempty"`
 	Extensions *MetaExtensions `json:"extensions,omitempty"`
+	// +listType=atomic
+	Languages []string `json:"languages,omitempty"`
 }
 
 // NewMetaJSONData creates a new MetaJSONData object.
@@ -67,6 +69,7 @@ type MetaInfo struct {
 	// Optional fields
 	Author      *MetaV0alpha1InfoAuthor `json:"author,omitempty"`
 	Description *string                 `json:"description,omitempty"`
+	Build       *MetaV0alpha1InfoBuild  `json:"build,omitempty"`
 	// +listType=atomic
 	Links []MetaV0alpha1InfoLinks `json:"links,omitempty"`
 	// +listType=atomic
@@ -251,9 +254,27 @@ func NewMetaV0alpha1InfoAuthor() *MetaV0alpha1InfoAuthor {
 }
 
 // +k8s:openapi-gen=true
+type MetaV0alpha1InfoBuild struct {
+	Time   *float64 `json:"time,omitempty"`
+	Repo   *string  `json:"repo,omitempty"`
+	Branch *string  `json:"branch,omitempty"`
+	Hash   *string  `json:"hash,omitempty"`
+	// Quoted to avoid conflict with CUE 'number' type
+	Number *float64 `json:"number,omitempty"`
+	Pr     *float64 `json:"pr,omitempty"`
+	Build  *float64 `json:"build,omitempty"`
+}
+
+// NewMetaV0alpha1InfoBuild creates a new MetaV0alpha1InfoBuild object.
+func NewMetaV0alpha1InfoBuild() *MetaV0alpha1InfoBuild {
+	return &MetaV0alpha1InfoBuild{}
+}
+
+// +k8s:openapi-gen=true
 type MetaV0alpha1InfoLinks struct {
-	Name *string `json:"name,omitempty"`
-	Url  *string `json:"url,omitempty"`
+	Name   *string                      `json:"name,omitempty"`
+	Url    *string                      `json:"url,omitempty"`
+	Target *MetaV0alpha1InfoLinksTarget `json:"target,omitempty"`
 }
 
 // NewMetaV0alpha1InfoLinks creates a new MetaV0alpha1InfoLinks object.
@@ -307,11 +328,28 @@ func NewMetaV0alpha1RouteHeaders() *MetaV0alpha1RouteHeaders {
 }
 
 // +k8s:openapi-gen=true
+type MetaV0alpha1RouteTokenAuthParams struct {
+	// Allow additional properties
+	GrantType *string `json:"grant_type,omitempty"`
+	// Allow additional properties
+	ClientId *string `json:"client_id,omitempty"`
+	// Allow additional properties
+	ClientSecret *string `json:"client_secret,omitempty"`
+	// Allow additional properties
+	Resource *string `json:"resource,omitempty"`
+}
+
+// NewMetaV0alpha1RouteTokenAuthParams creates a new MetaV0alpha1RouteTokenAuthParams object.
+func NewMetaV0alpha1RouteTokenAuthParams() *MetaV0alpha1RouteTokenAuthParams {
+	return &MetaV0alpha1RouteTokenAuthParams{}
+}
+
+// +k8s:openapi-gen=true
 type MetaV0alpha1RouteTokenAuth struct {
 	Url *string `json:"url,omitempty"`
 	// +listType=set
-	Scopes []string               `json:"scopes,omitempty"`
-	Params map[string]interface{} `json:"params,omitempty"`
+	Scopes []string                          `json:"scopes,omitempty"`
+	Params *MetaV0alpha1RouteTokenAuthParams `json:"params,omitempty"`
 }
 
 // NewMetaV0alpha1RouteTokenAuth creates a new MetaV0alpha1RouteTokenAuth object.
@@ -320,11 +358,26 @@ func NewMetaV0alpha1RouteTokenAuth() *MetaV0alpha1RouteTokenAuth {
 }
 
 // +k8s:openapi-gen=true
+type MetaV0alpha1RouteJwtTokenAuthParams struct {
+	// Allow additional properties
+	TokenUri *string `json:"token_uri,omitempty"`
+	// Allow additional properties
+	ClientEmail *string `json:"client_email,omitempty"`
+	// Allow additional properties
+	PrivateKey *string `json:"private_key,omitempty"`
+}
+
+// NewMetaV0alpha1RouteJwtTokenAuthParams creates a new MetaV0alpha1RouteJwtTokenAuthParams object.
+func NewMetaV0alpha1RouteJwtTokenAuthParams() *MetaV0alpha1RouteJwtTokenAuthParams {
+	return &MetaV0alpha1RouteJwtTokenAuthParams{}
+}
+
+// +k8s:openapi-gen=true
 type MetaV0alpha1RouteJwtTokenAuth struct {
 	Url *string `json:"url,omitempty"`
 	// +listType=set
-	Scopes []string               `json:"scopes,omitempty"`
-	Params map[string]interface{} `json:"params,omitempty"`
+	Scopes []string                             `json:"scopes,omitempty"`
+	Params *MetaV0alpha1RouteJwtTokenAuthParams `json:"params,omitempty"`
 }
 
 // NewMetaV0alpha1RouteJwtTokenAuth creates a new MetaV0alpha1RouteJwtTokenAuth object.
@@ -500,8 +553,10 @@ const (
 type MetaJSONDataState string
 
 const (
-	MetaJSONDataStateAlpha MetaJSONDataState = "alpha"
-	MetaJSONDataStateBeta  MetaJSONDataState = "beta"
+	MetaJSONDataStateAlpha      MetaJSONDataState = "alpha"
+	MetaJSONDataStateBeta       MetaJSONDataState = "beta"
+	MetaJSONDataStateStable     MetaJSONDataState = "stable"
+	MetaJSONDataStateDeprecated MetaJSONDataState = "deprecated"
 )
 
 // +k8s:openapi-gen=true
@@ -530,6 +585,16 @@ type MetaSpecClass string
 const (
 	MetaSpecClassCore     MetaSpecClass = "core"
 	MetaSpecClassExternal MetaSpecClass = "external"
+)
+
+// +k8s:openapi-gen=true
+type MetaV0alpha1InfoLinksTarget string
+
+const (
+	MetaV0alpha1InfoLinksTargetBlank  MetaV0alpha1InfoLinksTarget = "_blank"
+	MetaV0alpha1InfoLinksTargetSelf   MetaV0alpha1InfoLinksTarget = "_self"
+	MetaV0alpha1InfoLinksTargetParent MetaV0alpha1InfoLinksTarget = "_parent"
+	MetaV0alpha1InfoLinksTargetTop    MetaV0alpha1InfoLinksTarget = "_top"
 )
 
 // +k8s:openapi-gen=true

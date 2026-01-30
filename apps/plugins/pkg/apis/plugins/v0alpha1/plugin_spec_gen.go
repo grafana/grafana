@@ -4,9 +4,10 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type PluginSpec struct {
-	Id      string  `json:"id"`
-	Version string  `json:"version"`
-	Url     *string `json:"url,omitempty"`
+	Id       string  `json:"id"`
+	Version  string  `json:"version"`
+	Url      *string `json:"url,omitempty"`
+	ParentId *string `json:"parentId,omitempty"`
 }
 
 // NewPluginSpec creates a new PluginSpec object.
