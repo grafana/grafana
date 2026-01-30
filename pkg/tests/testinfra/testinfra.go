@@ -136,8 +136,10 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 	// UnifiedStorageOverGRPC
 	var storage sql.UnifiedStorageGrpcService
 	if runstore {
+		grpcHandler, grpcService, grpcErr := sql.ProvideUnifiedStorageGrpcServer(env.Cfg, env.FeatureToggles, prometheus.NewPedanticRegistry())
+		require.NoError(t, grpcErr)
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
+			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, grpcHandler, grpcService, nil, nil)
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)

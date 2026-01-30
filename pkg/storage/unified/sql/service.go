@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
-	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
@@ -67,7 +66,6 @@ type service struct {
 	reg           prometheus.Registerer
 	handler       grpcserver.Provider
 	tracing       trace.Tracer
-	authenticator func(ctx context.Context) (context.Context, error)
 
 	// -- Storage Services
 	queue          QOSEnqueueDequeuer
@@ -94,19 +92,21 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
+	grpcHandler grpcserver.Provider,
+	grpcServerService services.Service,
 	backend resource.StorageBackend,
 ) (UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
+	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil, grpcHandler, grpcServerService)
 	s.searchStandalone = true
 	if cfg.EnableSharding {
 		err := s.withRingLifecycle(memberlistKVConfig, httpServerRouter)
 		if err != nil {
 			return nil, err
 		}
-		err = s.initializeSubservicesManager()
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
-		}
+	}
+	err := s.initializeSubservicesManager()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 	}
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.SearchServer)
 	return s, nil
@@ -123,10 +123,12 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
+	grpcHandler grpcserver.Provider,
+	grpcServerService services.Service,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
 ) (UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
+	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient, grpcHandler, grpcServerService)
 
 	// TODO: move to standalone search once we only use sharding in search servers
 	if cfg.EnableSharding {
@@ -177,19 +179,13 @@ func newService(
 	searchRing *ring.Ring,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
+	grpcHandler grpcserver.Provider,
+	grpcServerService services.Service,
 ) *service {
-	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
-	// grpcutils.NewGrpcAuthenticator should be used instead.
-	authn := NewAuthenticatorWithFallback(cfg, reg, tracer, func(ctx context.Context) (context.Context, error) {
-		auth := grpc.Authenticator{Tracer: tracer}
-		return auth.Authenticate(ctx)
-	})
-
-	return &service{
+	svc := &service{
 		backend:            backend,
 		cfg:                cfg,
 		features:           features,
-		authenticator:      authn,
 		tracing:            tracer,
 		db:                 db,
 		log:                log,
@@ -199,8 +195,15 @@ func newService(
 		indexMetrics:       indexMetrics,
 		searchRing:         searchRing,
 		searchClient:       searchClient,
+		handler:            grpcHandler,
 		subservicesWatcher: services.NewFailureWatcher(),
 	}
+
+	if grpcServerService != nil {
+		svc.subservices = append(svc.subservices, grpcServerService)
+	}
+
+	return svc
 }
 
 func (s *service) initializeSubservicesManager() error {
@@ -302,11 +305,8 @@ func (s *service) OwnsIndex(key resource.NamespacedResource) (bool, error) {
 }
 
 func (s *service) starting(ctx context.Context) error {
-	if s.subservicesMngr != nil {
-		s.subservicesWatcher.WatchManager(s.subservicesMngr)
-		if err := services.StartManagerAndAwaitHealthy(ctx, s.subservicesMngr); err != nil {
-			return fmt.Errorf("failed to start subservices: %w", err)
-		}
+	if s.handler == nil {
+		return fmt.Errorf("grpc handler is required")
 	}
 
 	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing, s.reg)
@@ -346,15 +346,17 @@ func (s *service) starting(ctx context.Context) error {
 		serverOptions.OverridesService = overridesSvc
 	}
 
-	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, interceptors.AuthenticatorFunc(s.authenticator), s.tracing, prometheus.DefaultRegisterer)
-	if err != nil {
-		return err
-	}
-
 	// Create and register the server
 	err = s.createAndRegisterServer(serverOptions)
 	if err != nil {
 		return err
+	}
+
+	if s.subservicesMngr != nil {
+		s.subservicesWatcher.WatchManager(s.subservicesMngr)
+		if err := services.StartManagerAndAwaitHealthy(ctx, s.subservicesMngr); err != nil {
+			return fmt.Errorf("failed to start subservices: %w", err)
+		}
 	}
 
 	// TODO: move to standalone mode once we use sharding in search servers
@@ -382,17 +384,7 @@ func (s *service) GetAddress() string {
 }
 
 func (s *service) running(ctx context.Context) error {
-	serverErrCh := make(chan error, 1)
-	go func() {
-		serverErrCh <- s.handler.Run(ctx)
-	}()
-
 	select {
-	case err := <-serverErrCh:
-		if err != nil {
-			return err
-		}
-		return nil
 	case err := <-s.subservicesWatcher.Chan():
 		return fmt.Errorf("subservice failure: %w", err)
 	case <-ctx.Done():
@@ -407,12 +399,6 @@ func (s *service) running(ctx context.Context) error {
 			}
 		}
 
-		// Now wait for the gRPC server to complete graceful shutdown.
-		s.log.Info("Waiting for gRPC server to complete graceful shutdown")
-		err := <-serverErrCh
-		if err != nil {
-			return err
-		}
 		return nil
 	}
 }
