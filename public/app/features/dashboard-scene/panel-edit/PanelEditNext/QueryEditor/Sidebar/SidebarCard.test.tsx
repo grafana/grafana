@@ -1,10 +1,11 @@
 import { screen } from '@testing-library/react';
 
 import { VizPanel } from '@grafana/scenes';
-import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 
 import { QueryEditorProvider } from '../QueryEditorContext';
 import { ds1SettingsMock, mockActions, setup } from '../testUtils';
+import { Transformation } from '../types';
 
 import { QueryCard } from './QueryCard';
 import { TransformationCard } from './TransformationCard';
@@ -23,7 +24,11 @@ describe('SidebarCard', () => {
 
   it('should select query card and deselect transformation when clicking query card', async () => {
     const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
-    const transformation: DataTransformerConfig = { id: 'organize', options: {} };
+    const transformation: Transformation = {
+      transformId: 'organize',
+      registryItem: undefined,
+      transformConfig: { id: 'organize', options: {} },
+    };
 
     const setSelectedQuery = jest.fn();
     const setSelectedTransformation = jest.fn();
@@ -54,7 +59,11 @@ describe('SidebarCard', () => {
 
   it('should select transformation card and deselect query when clicking transformation card', async () => {
     const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
-    const transformation: DataTransformerConfig = { id: 'organize', options: {} };
+    const transformation: Transformation = {
+      transformId: 'organize',
+      registryItem: undefined,
+      transformConfig: { id: 'organize', options: {} },
+    };
 
     const setSelectedQuery = jest.fn();
     const setSelectedTransformation = jest.fn();

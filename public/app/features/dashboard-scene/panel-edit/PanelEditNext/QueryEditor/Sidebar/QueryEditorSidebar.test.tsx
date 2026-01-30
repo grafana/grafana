@@ -1,11 +1,12 @@
 import { render, screen } from '@testing-library/react';
 
 import { VizPanel } from '@grafana/scenes';
-import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 
 import { SidebarSize } from '../../constants';
 import { QueryEditorProvider } from '../QueryEditorContext';
 import { ds1SettingsMock, mockActions } from '../testUtils';
+import { Transformation } from '../types';
 
 import { QueryEditorSidebar } from './QueryEditorSidebar';
 
@@ -69,9 +70,9 @@ describe('QueryEditorSidebar', () => {
   it('should only render DataTransformerConfig cards and not CustomTransformerDefinition', () => {
     const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
 
-    const transformations: DataTransformerConfig[] = [
-      { id: 'organize', options: {} },
-      { id: 'reduce', options: {} },
+    const transformations: Transformation[] = [
+      { transformId: 'organize', registryItem: undefined, transformConfig: { id: 'organize', options: {} } },
+      { transformId: 'reduce', registryItem: undefined, transformConfig: { id: 'reduce', options: {} } },
     ];
 
     render(
@@ -109,7 +110,9 @@ describe('QueryEditorSidebar', () => {
       { refId: 'B', datasource: { type: 'test', uid: 'test' } },
     ];
 
-    const transformations: DataTransformerConfig[] = [{ id: 'organize', options: {} }];
+    const transformations: Transformation[] = [
+      { transformId: 'organize', registryItem: undefined, transformConfig: { id: 'organize', options: {} } },
+    ];
 
     render(
       <QueryEditorProvider
