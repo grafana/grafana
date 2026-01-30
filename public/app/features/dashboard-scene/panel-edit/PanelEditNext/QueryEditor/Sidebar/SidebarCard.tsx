@@ -15,7 +15,7 @@ interface SidebarCardProps {
 }
 
 export const SidebarCard = ({ config, isSelected, id, children, onClick }: SidebarCardProps) => {
-  const styles = useStyles2(getStyles, config, isSelected);
+  const styles = useStyles2(getStyles, { config, isSelected });
   const typeText = config.getLabel();
 
   return (
@@ -39,7 +39,10 @@ export const SidebarCard = ({ config, isSelected, id, children, onClick }: Sideb
   );
 };
 
-function getStyles(theme: GrafanaTheme2, config: QueryEditorTypeConfig, isSelected?: boolean) {
+function getStyles(
+  theme: GrafanaTheme2,
+  { config, isSelected }: { config: QueryEditorTypeConfig; isSelected?: boolean }
+) {
   return {
     card: css({
       display: 'flex',
