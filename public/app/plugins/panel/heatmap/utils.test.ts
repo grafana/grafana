@@ -168,6 +168,16 @@ describe('calculateBucketExpansionFactor', () => {
       expect(factor).toBe(1);
     });
 
+    it('returns 1 when only yMinValues is empty', () => {
+      const factor = calculateBucketExpansionFactor([], [1, 4, 16]);
+      expect(factor).toBe(1);
+    });
+
+    it('returns 1 when only yMaxValues is empty', () => {
+      const factor = calculateBucketExpansionFactor([1, 4, 16], []);
+      expect(factor).toBe(1);
+    });
+
     it('returns 1 for single bucket', () => {
       const yMinValues = [1];
       const yMaxValues = [4];
@@ -175,11 +185,11 @@ describe('calculateBucketExpansionFactor', () => {
       expect(factor).toBe(4);
     });
 
-    it('returns 1 when arrays have different lengths', () => {
-      const yMinValues = [1, 4];
-      const yMaxValues = [4];
+    it('handles when only one array has length > 1', () => {
+      const yMinValues = [1];
+      const yMaxValues = [4, 16, 64];
       const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(4); // Uses first bucket only
+      expect(factor).toBe(4); // Uses first bucket only, no fallback search
     });
 
     it('handles non-number values in arrays', () => {
@@ -203,6 +213,20 @@ describe('calculateBucketExpansionFactor', () => {
       expect(factor).toBe(4); // Skips first, uses second bucket
     });
 
+    it('skips bucket when yMax is not a number', () => {
+      const yMinValues = [0, 1, 4];
+      const yMaxValues = [1, 'invalid', 16];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(4); // Skips first two, uses third bucket
+    });
+
+    it('returns 1 when all subsequent buckets have non-number yMax', () => {
+      const yMinValues = [0, 1, 4];
+      const yMaxValues = [1, null, undefined];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(1); // Can't find any valid bucket
+    });
+
     it('handles decreasing bucket ranges (unusual but valid)', () => {
       // Buckets are in reverse order: [64,256], [16,64], [4,16], [1,4]
       const yMinValues = [64, 16, 4, 1];
@@ -223,6 +247,20 @@ describe('calculateBucketExpansionFactor', () => {
       const yMaxValues = [0];
       const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
       expect(factor).toBe(1); // 0/0 = NaN, invalid
+    });
+
+    it('skips buckets with zero factor in findIndex', () => {
+      const yMinValues = [0, 1, 0, 4];
+      const yMaxValues = [1, 0, 10, 16];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(4); // Skips: [0,1]=Inf, [1,0]=0, [0,10]=Inf, uses [4,16]=4
+    });
+
+    it('skips buckets with negative factor in findIndex', () => {
+      const yMinValues = [0, -5, 4];
+      const yMaxValues = [1, 10, 16];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(4); // Skips [0,1]=Inf, [-5,10]=-2, uses [4,16]=4
     });
   });
 
