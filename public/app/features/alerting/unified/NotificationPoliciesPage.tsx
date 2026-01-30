@@ -14,7 +14,7 @@ import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarning';
 import { InhibitionRulesAlert } from './components/InhibitionRulesAlert';
 import { TimeIntervalsTable } from './components/mute-timings/MuteTimingsTable';
-import { useNotificationPoliciesNav } from './navigation/useNotificationPoliciesNav';
+import { useNotificationPoliciesNav } from './navigation/useNotificationConfigNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
 

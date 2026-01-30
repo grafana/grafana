@@ -1,4 +1,4 @@
-import { useTimeIntervalsNav } from '../../navigation/useTimeIntervalsNav';
+import { useTimeIntervalsNav } from '../../navigation/useNotificationConfigNav';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';

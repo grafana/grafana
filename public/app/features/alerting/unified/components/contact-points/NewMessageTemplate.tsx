@@ -1,24 +1,17 @@
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 
-import { useTemplatesNav } from '../../navigation/useTemplatesNav';
+import { useTemplatesNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { createRelativeUrl } from '../../utils/url';
+import { getTemplateParentUrl } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { TemplateForm } from '../receivers/TemplateForm';
 
-import { ActiveTab } from './ContactPoints';
-
 function NewMessageTemplatePage() {
   const { navId } = useTemplatesNav();
   const useV2Nav = config.featureToggles.alertingNavigationV2;
-
-  // For V2 nav, the parent URL points to the dedicated Templates tab
-  // For legacy nav, Templates is accessed via the Contact Points page with tab parameter
-  const parentUrl = useV2Nav
-    ? '/alerting/notifications/templates'
-    : createRelativeUrl('/alerting/notifications', { tab: ActiveTab.NotificationTemplates });
+  const parentUrl = getTemplateParentUrl(useV2Nav);
 
   return (
     <AlertmanagerPageWrapper

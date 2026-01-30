@@ -2,7 +2,14 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { getNotificationConfigNavId, useNotificationConfigNav } from './useNotificationConfigNav';
+import {
+  getNotificationConfigNavId,
+  useContactPointsNav,
+  useNotificationConfigNav,
+  useNotificationPoliciesNav,
+  useTemplatesNav,
+  useTimeIntervalsNav,
+} from './useNotificationConfigNav';
 
 // Mock dependencies
 jest.mock('react-router-dom-v5-compat', () => ({
@@ -124,5 +131,70 @@ describe('getNotificationConfigNavId', () => {
   it('should return receivers when V2 is disabled', () => {
     config.featureToggles = { ...originalFeatureToggles, alertingNavigationV2: false };
     expect(getNotificationConfigNavId()).toBe('receivers');
+  });
+});
+
+describe('consolidated navigation hooks', () => {
+  const originalFeatureToggles = config.featureToggles;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockHasPermission.mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    config.featureToggles = originalFeatureToggles;
+  });
+
+  describe('when alertingNavigationV2 is enabled', () => {
+    beforeEach(() => {
+      config.featureToggles = { ...originalFeatureToggles, alertingNavigationV2: true };
+    });
+
+    it('useContactPointsNav should return notification-config navId', () => {
+      const result = useContactPointsNav();
+      expect(result.navId).toBe('notification-config');
+    });
+
+    it('useNotificationPoliciesNav should return notification-config navId', () => {
+      const result = useNotificationPoliciesNav();
+      expect(result.navId).toBe('notification-config');
+    });
+
+    it('useTemplatesNav should return notification-config navId', () => {
+      const result = useTemplatesNav();
+      expect(result.navId).toBe('notification-config');
+    });
+
+    it('useTimeIntervalsNav should return notification-config navId', () => {
+      const result = useTimeIntervalsNav();
+      expect(result.navId).toBe('notification-config');
+    });
+  });
+
+  describe('when alertingNavigationV2 is disabled', () => {
+    beforeEach(() => {
+      config.featureToggles = { ...originalFeatureToggles, alertingNavigationV2: false };
+    });
+
+    it('useContactPointsNav should return receivers navId', () => {
+      const result = useContactPointsNav();
+      expect(result.navId).toBe('receivers');
+    });
+
+    it('useNotificationPoliciesNav should return am-routes navId', () => {
+      const result = useNotificationPoliciesNav();
+      expect(result.navId).toBe('am-routes');
+    });
+
+    it('useTemplatesNav should return receivers navId', () => {
+      const result = useTemplatesNav();
+      expect(result.navId).toBe('receivers');
+    });
+
+    it('useTimeIntervalsNav should return am-routes navId', () => {
+      const result = useTimeIntervalsNav();
+      expect(result.navId).toBe('am-routes');
+    });
   });
 });

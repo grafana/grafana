@@ -6,17 +6,16 @@ import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
 import { isNotFoundError } from '../../api/util';
-import { useTemplatesNav } from '../../navigation/useTemplatesNav';
+import { useTemplatesNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { generateCopiedName } from '../../utils/duplicate';
 import { stringifyErrorLike } from '../../utils/misc';
+import { getTemplateParentUrl } from '../../utils/navigation';
 import { updateDefinesWithUniqueValue } from '../../utils/templates';
-import { createRelativeUrl } from '../../utils/url';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { TemplateForm } from '../receivers/TemplateForm';
 
-import { ActiveTab } from './ContactPoints';
 import { useGetNotificationTemplate, useNotificationTemplates } from './useNotificationTemplates';
 
 const notFoundComponent = <EntityNotFound entity="Notification template" />;
@@ -93,12 +92,7 @@ const DuplicateMessageTemplateComponent = () => {
 function DuplicateMessageTemplate() {
   const { navId } = useTemplatesNav();
   const useV2Nav = config.featureToggles.alertingNavigationV2;
-
-  // For V2 nav, the parent URL points to the dedicated Templates tab
-  // For legacy nav, Templates is accessed via the Contact Points page with tab parameter
-  const parentUrl = useV2Nav
-    ? '/alerting/notifications/templates'
-    : createRelativeUrl('/alerting/notifications', { tab: ActiveTab.NotificationTemplates });
+  const parentUrl = getTemplateParentUrl(useV2Nav);
 
   return (
     <AlertmanagerPageWrapper

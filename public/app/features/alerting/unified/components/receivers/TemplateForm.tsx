@@ -37,6 +37,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_TEMPLATE_EXAMPLES, DOCS_URL_TEMPLATE_NOTIFICATIONS } from '../../utils/docs';
 import { isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
+import { ALERTING_PATHS } from '../../utils/navigation';
 import { EditorColumnHeader } from '../EditorColumnHeader';
 import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { Spacer } from '../Spacer';
@@ -165,8 +166,8 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     // V2 nav has dedicated templates page, legacy nav uses tab parameter
     const useV2Nav = config.featureToggles.alertingNavigationV2;
     const returnLink = useV2Nav
-      ? makeAMLink('/alerting/notifications/templates', alertmanager)
-      : makeAMLink('/alerting/notifications', alertmanager, {
+      ? makeAMLink(ALERTING_PATHS.TEMPLATES, alertmanager)
+      : makeAMLink(ALERTING_PATHS.NOTIFICATIONS, alertmanager, {
           tab: ContactPointsActiveTabs.NotificationTemplates,
         });
 

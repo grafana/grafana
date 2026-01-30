@@ -2,7 +2,7 @@ import { Trans } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
-import { useTemplatesNav } from '../../navigation/useTemplatesNav';
+import { useTemplatesNav } from '../../navigation/useNotificationConfigNav';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';

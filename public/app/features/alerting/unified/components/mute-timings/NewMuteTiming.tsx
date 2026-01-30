@@ -1,7 +1,8 @@
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 
-import { useTimeIntervalsNav } from '../../navigation/useTimeIntervalsNav';
+import { useTimeIntervalsNav } from '../../navigation/useNotificationConfigNav';
+import { getTimeIntervalParentUrl } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 
@@ -10,10 +11,7 @@ import MuteTimingForm from './MuteTimingForm';
 function NewMuteTimingPage() {
   const { navId } = useTimeIntervalsNav();
   const useV2Nav = config.featureToggles.alertingNavigationV2;
-
-  // For V2 nav, the parent URL points to the dedicated Time Intervals tab
-  // For legacy nav, Time Intervals is accessed via the Notification Policies page
-  const parentUrl = useV2Nav ? '/alerting/routes/mute-timing' : '/alerting/routes?tab=time_intervals';
+  const parentUrl = getTimeIntervalParentUrl(useV2Nav);
 
   return (
     <AlertmanagerPageWrapper
