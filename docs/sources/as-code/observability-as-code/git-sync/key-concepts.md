@@ -44,9 +44,9 @@ A Grafana instance is a running Grafana server. Multiple instances can:
 - Sync from different paths within the same repository.
 - Sync from different repositories.
 
-### Git repository 
+### Git repository
 
-The Git repository is the external storage you want to sync your Grafana instance with. 
+The Git repository is the external storage you want to sync your Grafana instance with.
 
 You can organize your Git repository in several ways:
 

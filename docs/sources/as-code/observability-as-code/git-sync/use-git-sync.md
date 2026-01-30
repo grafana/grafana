@@ -32,7 +32,7 @@ TBC
 After you have synced your resources, Git Sync creates a dashboard that provides a summary of resources, health, pull status, webhook, sync jobs, resources, and files. To access it, follow these steps:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
-1. Select **Administration > General > Provisioning** in the left-side menu to access the Git Sync configuration screen. 
+1. Select **Administration > General > Provisioning** in the left-side menu to access the Git Sync configuration screen.
 1. Go to the **Repositories** tab, and locate the repository you want to work with. You can either view the current status of the sync, carry out pulls, or update your settings.
 
 Refer to [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/provisioned-dashboards) for more information about working with provisioned files.
@@ -88,4 +88,3 @@ To update or delete your repository configuration after you've completed setup:
 
 - To modify your configuration, update any of the settings and select **Save**.
 - To delete the repository, click **Delete**. You can either keep the synced resources or delete them.
-

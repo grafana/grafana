@@ -115,19 +115,19 @@ To create the GitHub App, follow these steps:
 1. Fill in the following fields:
    - Name: Must be unique
    - Homepage URL: For example, your Grafana Cloud instance URL
-1. Scroll down to the **Webhook** section and uncheck the **Active** box 
+1. Scroll down to the **Webhook** section and uncheck the **Active** box
 1. In the **Permissions** section, go to **Repository permissions** and set these parameters:
    - **Contents**: Read and write permission
    - **Metadata**: Read-only permission
    - **Pull requests**: Read and write permission
    - **Webhooks**: Read and write permission
 1. Finally, under **Where can this GitHub App be installed?**, select **Only on this account**
-1. Click on **Create Github App** to complete the process. 
+1. Click on **Create Github App** to complete the process.
 
-On the app page: 
+On the app page:
 
 1. Copy the **AppID** from the **About** section
-1. Select the **Generate private key** from the banner or scroll down to to the **Private Keys** section to generate a key 
+1. Select the **Generate private key** from the banner or scroll down to to the **Private Keys** section to generate a key
 1. A PEM file containing your private key will be downloaded to your computer
 
 Finally, install the app:

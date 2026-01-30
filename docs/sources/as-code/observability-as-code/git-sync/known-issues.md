@@ -12,7 +12,7 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Git Sync limitations and known issues 
+title: Git Sync limitations and known issues
 menuTitle: Limits and known issues
 weight: 110
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/known-issues/
@@ -25,7 +25,7 @@ refs:
 aliases:
 ---
 
-# Git Sync limitations and known issues 
+# Git Sync limitations and known issues
 
 {{< admonition type="caution" >}}
 
@@ -49,10 +49,10 @@ At the moment Git Sync is available for GitHub only. Support for native Git and 
 
 The following Git Sync per-tier limits apply:
 
-| Tier | **Cloud - Free** |  **Cloud - Other**  | **On-prem OSS**    |   **On-prem Enterprise**    |
-| -------- | ---------- | ----------- | ----------- | ----------- |
-| Amount of connections | 1 | 10 | 10    |  10    |
-| Amount of synced resources| 20 | Grafana limit  | No limit    |  No limit    |
+| Tier                       | **Cloud - Free** | **Cloud - Other** | **On-prem OSS** | **On-prem Enterprise** |
+| -------------------------- | ---------------- | ----------------- | --------------- | ---------------------- |
+| Amount of connections      | 1                | 10                | 10              | 10                     |
+| Amount of synced resources | 20               | Grafana limit     | No limit        | No limit               |
 
 ## Authentication
 
@@ -64,7 +64,7 @@ You can authenticate in GitHub using a Personal Access Token token or GitHub App
 
 - You can only sync dashboards and folders. Refer to [Supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/#resource-support-and-compatibility) for more information.
 - If you're using Git Sync in Grafana OSS and Grafana Enterprise, some resources might be in an incompatible data format and won't be synced.
-- Full-instance sync is not available in Grafana Cloud and is experimental in Grafana OSS and Grafana Enterprise. 
+- Full-instance sync is not available in Grafana Cloud and is experimental in Grafana OSS and Grafana Enterprise.
 - When migrating to full instance sync, during the synchronization process your resources will be temporarily unavailable. No one will be able to create, edit, or delete resources during this process.
 - If you want to manage existing resources with Git Sync, you need to save them as JSON files and commit them to the synced repository. Open a PR to import, copy, move, or save a dashboard.
 - Restoring resources from the UI is currently not possible. As an alternative, you can restore dashboards directly in your GitHub repository by raising a PR, and they will be updated in Grafana.
@@ -73,13 +73,10 @@ You can authenticate in GitHub using a Personal Access Token token or GitHub App
 
 You cannot modify the permissions of a provisioned folder after you've synced it.
 
-The default permissions are: 
+The default permissions are:
 
-- Admin = Admin 
-- Editor = Editor 
-- Viewer = Viewer. 
+- Admin = Admin
+- Editor = Editor
+- Viewer = Viewer.
 
 Refer to [Roles and permissions](ref:roles-and-permissions) for more information.
-
-
-

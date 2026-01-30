@@ -37,8 +37,8 @@ Using Git Sync, you can manage your dashboards in the UI and synchronize them wi
 - Dashboards saved in your repository or local folder configured with Git Sync appear in a provisioned folder in Grafana.
 - Any dashboard folders saved with Git Sync have a **Provisioned** label in the UI.
 - To save any changes to provisioned resources, open a pull request or commit directly to an existing branch, such as the `main` branch.
-   - Use pull requests to review changes to dashboards.
-   - Preview the changes before merging.
+  - Use pull requests to review changes to dashboards.
+  - Preview the changes before merging.
 
 To learn more about Git, refer to [Getting Started - About Version Control](https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control) of the [Pro Git book](https://git-scm.com/book/en/v2) in the official Git documentation.
 
@@ -107,5 +107,3 @@ Follow these recommendations when working with provisioned dashboards:
 - **Provide clear commit messages**: Describe your changes to help with tracking and collaboration
 - **Regularly sync your repository**: Keep Grafana up to date with the latest changes
 - **Review the Events tab**: Monitor sync status to ensure changes are applied correctly
-
-
