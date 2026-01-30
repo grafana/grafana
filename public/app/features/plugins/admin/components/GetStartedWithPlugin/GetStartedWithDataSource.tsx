@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import { DataSourcePluginMeta } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
@@ -46,6 +47,7 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
             )
           : undefined
       }
+      data-testid={e2eSelectors.pages.ConnectionsDataSource.button}
     >
       <Trans i18nKey="plugins.get-started-with-data-source.add-new-data-source">Add new data source</Trans>
     </Button>
