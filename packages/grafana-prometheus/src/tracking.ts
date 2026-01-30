@@ -7,7 +7,15 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { PromQuery } from './types';
 
 const tagsToObscure = [StringLiteral, Identifier, NumberDurationLiteral];
-const partsToKeep = ['__name__', '__interval', '__interval_ms', '__rate_interval', '__range', '__range_s', '__range_ms'];
+const partsToKeep = [
+  '__name__',
+  '__interval',
+  '__interval_ms',
+  '__rate_interval',
+  '__range',
+  '__range_s',
+  '__range_ms',
+];
 
 export function obfuscate(query: string): string {
   let obfuscatedQuery: string = query;
