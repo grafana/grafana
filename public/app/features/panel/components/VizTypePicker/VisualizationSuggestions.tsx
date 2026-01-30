@@ -15,6 +15,7 @@ import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
+import { useStructureRev } from 'app/features/explore/Graph/useStructureRev';
 
 import { getAllPanelPluginMeta } from '../../state/util';
 import { MIN_MULTI_COLUMN_SIZE } from '../../suggestions/constants';
@@ -36,11 +37,13 @@ export interface Props {
 
 const useSuggestions = (data: PanelData | undefined, searchQuery: string | undefined) => {
   const [hasFetched, setHasFetched] = useState(false);
+  const structureRev = useStructureRev(data?.series ?? []);
+
   const { value, loading, error, retry } = useAsyncRetry(async () => {
     await new Promise((resolve) => setTimeout(resolve, hasFetched ? 75 : 0));
     setHasFetched(true);
-    return await getAllSuggestions(data);
-  }, [hasFetched, data]);
+    return await getAllSuggestions(data?.series);
+  }, [hasFetched, structureRev]);
 
   const filteredValue = useMemo(() => {
     if (!value || !searchQuery) {
