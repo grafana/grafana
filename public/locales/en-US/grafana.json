@@ -11929,7 +11929,6 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "Optional description",
       "placeholder-installation-id": "12345678",
-      "placeholder-private-key": "-----BEGIN RSA PRIVATE KEY-----...",
       "placeholder-title": "My GitHub App"
     },
     "connection-options": {
