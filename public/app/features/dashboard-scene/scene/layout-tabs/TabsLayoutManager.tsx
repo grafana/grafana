@@ -380,11 +380,17 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     });
   }
 
-  public moveTabToManager(tab: TabItem, destination: TabsLayoutManager, destinationIndex: number) {
+  public moveTabToManager(
+    tab: TabItem,
+    destination: TabsLayoutManager,
+    destinationIndex: number,
+    options?: { selectMovedTab?: boolean }
+  ) {
     if (destination === this) {
       return;
     }
 
+    const selectMovedTab = options?.selectMovedTab ?? false;
     const prevSourceTabs = [...this.state.tabs];
     const prevSourceSlug = this.state.currentTabSlug;
     const prevDestinationTabs = [...destination.state.tabs];
@@ -418,7 +424,11 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
         // Remove from source first, then clear parent, then add to destination.
         this.setState({ tabs: sourceTabs, currentTabSlug: nextSourceSlug });
         tab.clearParent();
-        destination.setState({ tabs: destTabs, currentTabSlug: tab.getSlug() });
+        destination.setState({
+          tabs: destTabs,
+          // Avoid switching the visible content on drop unless explicitly requested.
+          currentTabSlug: selectMovedTab ? tab.getSlug() : prevDestinationSlug,
+        });
 
         this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
         destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { Droppable } from '@hello-pangea/dnd';
 import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,8 +9,7 @@ import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectStat
 import { Button, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { getDashboardSceneFor, getLayoutOrchestratorFor } from '../../utils/utils';
-import { TABS_LAYOUT_MANAGER_DROP_TARGET_ATTR } from '../DashboardLayoutOrchestrator';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
@@ -29,9 +28,6 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const { hasCopiedTab } = useClipboardState();
   const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
   const soloPanelContext = useSoloPanelContext();
-  const orchestrator = getLayoutOrchestratorFor(model);
-  const { hoverTabsLayoutKey, draggingTabKey } = orchestrator?.useState() ?? {};
-  const showExternalDropTarget = !!draggingTabKey && hoverTabsLayoutKey === key;
 
   useEffect(() => {
     if (currentTab && currentTab.getSlug() !== model.state.currentTabSlug) {
@@ -48,77 +44,48 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   return (
     <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>
       <TabsBar className={styles.tabsBar}>
-        <DragDropContext
-          onBeforeDragStart={(start) => {
-            model.forceSelectTab(start.draggableId);
-            if (key) {
-              orchestrator?.startTabDrag(start.draggableId, key);
-            }
-          }}
-          onDragEnd={(result) => {
-            if (!result.destination) {
-              orchestrator?.maybeMoveDraggedTabToHoveredTabsLayout();
-              orchestrator?.stopTabDrag();
-              return;
-            }
+        <div className={styles.tabsRow}>
+          <Droppable droppableId={key!} direction="horizontal" type="TAB">
+            {(dropProvided) => (
+              <div className={styles.tabsContainer} ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
+                {tabs.map((tab) => (
+                  <TabWrapper tab={tab} manager={model} key={tab.state.key!} />
+                ))}
 
-            if (result.destination.index === result.source.index) {
-              orchestrator?.stopTabDrag();
-              return;
-            }
-
-            model.moveTab(result.source.index, result.destination.index);
-            orchestrator?.stopTabDrag();
-          }}
-        >
-          <div className={styles.tabsRow}>
-            <Droppable droppableId={key!} direction="horizontal">
-              {(dropProvided) => (
-                <div
-                  className={cx(styles.tabsContainer, showExternalDropTarget && styles.tabsContainerExternalDropTarget)}
-                  ref={dropProvided.innerRef}
-                  {...dropProvided.droppableProps}
-                  {...{ [TABS_LAYOUT_MANAGER_DROP_TARGET_ATTR]: key }}
-                >
-                  {tabs.map((tab) => (
-                    <TabWrapper tab={tab} manager={model} key={tab.state.key!} />
-                  ))}
-
-                  {dropProvided.placeholder}
-                </div>
-              )}
-            </Droppable>
-            {isEditing && !isClone && (
-              <div className="dashboard-canvas-add-button">
-                <Button
-                  icon="plus"
-                  variant="primary"
-                  fill="text"
-                  onClick={() => model.addNewTab()}
-                  onPointerUp={(evt) => evt.stopPropagation()}
-                  data-testid={selectors.components.CanvasGridAddActions.addTab}
-                >
-                  <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
-                </Button>
-                {hasCopiedTab && (
-                  <Button
-                    icon="clipboard-alt"
-                    variant="primary"
-                    fill="text"
-                    onClick={() => model.pasteTab()}
-                    onPointerUp={(evt) => evt.stopPropagation()}
-                    data-testid={selectors.components.CanvasGridAddActions.pasteTab}
-                  >
-                    <Trans i18nKey="dashboard.canvas-actions.paste-tab">Paste tab</Trans>
-                  </Button>
-                )}
-                <Button icon="layers-slash" variant="primary" fill="text" onClick={() => model.ungroupTabs()}>
-                  <Trans i18nKey="dashboard.canvas-actions.ungroup-tabs">Ungroup tabs</Trans>
-                </Button>
+                {dropProvided.placeholder}
               </div>
             )}
-          </div>
-        </DragDropContext>
+          </Droppable>
+          {isEditing && !isClone && (
+            <div className="dashboard-canvas-add-button">
+              <Button
+                icon="plus"
+                variant="primary"
+                fill="text"
+                onClick={() => model.addNewTab()}
+                onPointerUp={(evt) => evt.stopPropagation()}
+                data-testid={selectors.components.CanvasGridAddActions.addTab}
+              >
+                <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
+              </Button>
+              {hasCopiedTab && (
+                <Button
+                  icon="clipboard-alt"
+                  variant="primary"
+                  fill="text"
+                  onClick={() => model.pasteTab()}
+                  onPointerUp={(evt) => evt.stopPropagation()}
+                  data-testid={selectors.components.CanvasGridAddActions.pasteTab}
+                >
+                  <Trans i18nKey="dashboard.canvas-actions.paste-tab">Paste tab</Trans>
+                </Button>
+              )}
+              <Button icon="layers-slash" variant="primary" fill="text" onClick={() => model.ungroupTabs()}>
+                <Trans i18nKey="dashboard.canvas-actions.ungroup-tabs">Ungroup tabs</Trans>
+              </Button>
+            </div>
+          )}
+        </div>
       </TabsBar>
 
       {currentTab && <TabItemLayoutRenderer tab={currentTab} isEditing={isEditing} />}
@@ -159,11 +126,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflowY: 'hidden',
     paddingInline: theme.spacing(0.125),
     paddingTop: '1px',
-  }),
-  tabsContainerExternalDropTarget: css({
-    outline: `2px dashed ${theme.colors.primary.main}`,
-    outlineOffset: theme.spacing(0.25),
-    borderRadius: theme.shape.radius.default,
   }),
   nestedTabsMargin: css({
     marginLeft: theme.spacing(2),

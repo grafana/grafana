@@ -261,7 +261,8 @@ describe('TabsLayoutManager', () => {
 
       expect(source.state.tabs).toEqual([a]);
       expect(destination.state.tabs).toEqual([c, b]);
-      expect(destination.state.currentTabSlug).toBe(b.getSlug());
+      // Preserve destination selection to avoid jarring content switches.
+      expect(destination.state.currentTabSlug).toBe(c.getSlug());
       // moved tab was active in source, so source should pick a new active tab
       expect(source.state.currentTabSlug).toBe(a.getSlug());
       expect(dashboardEditActions.moveElement).toHaveBeenCalled();
@@ -289,6 +290,24 @@ describe('TabsLayoutManager', () => {
       expect(destination.state.tabs).toEqual([c]);
       expect(source.state.currentTabSlug).toBe(b.getSlug());
       expect(destination.state.currentTabSlug).toBe(c.getSlug());
+    });
+
+    it('can select the moved tab in destination when requested', () => {
+      const source = new TabsLayoutManager({ tabs: [] });
+      const destination = new TabsLayoutManager({ tabs: [] });
+
+      const a = source.addNewTab(new TabItem({ title: 'A' }));
+      const b = source.addNewTab(new TabItem({ title: 'B' }));
+      const c = destination.addNewTab(new TabItem({ title: 'C' }));
+
+      source.setState({ currentTabSlug: b.getSlug() });
+      destination.setState({ currentTabSlug: c.getSlug() });
+
+      source.moveTabToManager(b, destination, 0, { selectMovedTab: true });
+
+      expect(source.state.tabs).toEqual([a]);
+      expect(destination.state.tabs).toEqual([b, c]);
+      expect(destination.state.currentTabSlug).toBe(b.getSlug());
     });
   });
 

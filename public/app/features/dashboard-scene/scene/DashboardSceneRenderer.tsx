@@ -1,9 +1,10 @@
+import { DragDropContext, DropResult, BeforeCapture, DragStart } from '@hello-pangea/dnd';
 import { useContext, useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
 import { ScopesContext } from '@grafana/runtime';
-import { SceneComponentProps } from '@grafana/scenes';
+import { sceneGraph, SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useSelector } from 'app/types/store';
@@ -13,6 +14,10 @@ import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitte
 import { DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
+import { RowItem } from './layout-rows/RowItem';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
+import { TabItem } from './layout-tabs/TabItem';
+import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -95,6 +100,129 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     return <body.Component model={body} />;
   }
 
+  const handleBeforeCapture = (before: BeforeCapture) => {
+    // Only rows need special orchestrator handling for cross-tab row drags.
+    if (before.type !== 'ROW') {
+      return;
+    }
+
+    const row = sceneGraph.findByKey(model, before.draggableId);
+    if (row instanceof RowItem) {
+      model.state.layoutOrchestrator?.startRowDrag(row);
+    }
+  };
+
+  const handleBeforeDragStart = (start: DragStart) => {
+    if (start.type === 'ROW') {
+      const rowsManager = sceneGraph.findByKey(model, start.source.droppableId);
+      if (rowsManager instanceof RowsLayoutManager) {
+        rowsManager.forceSelectRow(start.draggableId);
+      }
+    }
+
+    if (start.type === 'TAB') {
+      const tabsManager = sceneGraph.findByKey(model, start.source.droppableId);
+      if (tabsManager instanceof TabsLayoutManager) {
+        tabsManager.forceSelectTab(start.draggableId);
+      }
+    }
+  };
+
+  const mapTabInsertIndex = (destination: TabsLayoutManager, destinationIndexIncludingRepeats: number): number => {
+    const allTabs = destination.getTabsIncludingRepeats();
+    const ranges = new Map<string, { start: number; end: number }>();
+
+    for (let i = 0; i < allTabs.length; i++) {
+      const t = allTabs[i];
+      const originalKey = t.state.repeatSourceKey ?? t.state.key;
+      if (!originalKey) {
+        continue;
+      }
+      const existing = ranges.get(originalKey);
+      if (!existing) {
+        ranges.set(originalKey, { start: i, end: i + 1 });
+      } else {
+        existing.end = i + 1;
+      }
+    }
+
+    const originalTabs = destination.state.tabs;
+    const insertAt = Math.max(0, Math.min(destinationIndexIncludingRepeats, allTabs.length));
+
+    for (let originalIndex = 0; originalIndex < originalTabs.length; originalIndex++) {
+      const originalKey = originalTabs[originalIndex].state.key;
+      if (!originalKey) {
+        continue;
+      }
+      const range = ranges.get(originalKey);
+      if (!range) {
+        continue;
+      }
+
+      // If inserting before the group, insert before this original tab.
+      if (insertAt <= range.start) {
+        return originalIndex;
+      }
+
+      // If inserting inside the group (between original and its repeats), insert after the group.
+      if (insertAt < range.end) {
+        return originalIndex + 1;
+      }
+    }
+
+    return originalTabs.length;
+  };
+
+  const handleDragEnd = (result: DropResult) => {
+    if (result.type === 'ROW') {
+      // Stop tracking row drag in orchestrator
+      model.state.layoutOrchestrator?.stopRowDrag();
+
+      if (!result.destination) {
+        return;
+      }
+
+      if (result.destination.index === result.source.index) {
+        return;
+      }
+
+      const rowsManager = sceneGraph.findByKey(model, result.source.droppableId);
+      if (rowsManager instanceof RowsLayoutManager) {
+        rowsManager.moveRow(result.draggableId, result.source.index, result.destination.index);
+      }
+
+      return;
+    }
+
+    if (result.type === 'TAB') {
+      if (!result.destination) {
+        return;
+      }
+
+      const sourceManager = sceneGraph.findByKey(model, result.source.droppableId);
+      const destinationManager = sceneGraph.findByKey(model, result.destination.droppableId);
+      const tab = sceneGraph.findByKey(model, result.draggableId);
+
+      if (!(sourceManager instanceof TabsLayoutManager) || !(destinationManager instanceof TabsLayoutManager)) {
+        return;
+      }
+      if (!(tab instanceof TabItem)) {
+        return;
+      }
+
+      if (sourceManager === destinationManager) {
+        if (result.destination.index === result.source.index) {
+          return;
+        }
+        sourceManager.moveTab(result.source.index, result.destination.index);
+        return;
+      }
+
+      const destinationIndex = mapTabInsertIndex(destinationManager, result.destination.index);
+      sourceManager.moveTabToManager(tab, destinationManager, destinationIndex, { selectMovedTab: false });
+    }
+  };
+
   return (
     <>
       {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
@@ -105,7 +233,15 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             dashboard={model}
             isEditing={isEditing}
             controls={controls && <controls.Component model={controls} />}
-            body={renderBody()}
+            body={
+              <DragDropContext
+                onBeforeCapture={handleBeforeCapture}
+                onBeforeDragStart={handleBeforeDragStart}
+                onDragEnd={handleDragEnd}
+              >
+                {renderBody()}
+              </DragDropContext>
+            }
           />
         )}
         {overlay && <overlay.Component model={overlay} />}
