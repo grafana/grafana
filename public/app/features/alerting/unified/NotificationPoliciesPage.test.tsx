@@ -1,4 +1,5 @@
 import { produce } from 'immer';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, userEvent, within } from 'test/test-utils';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
@@ -33,27 +34,26 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import NotificationPolicies from './NotificationPoliciesPage';
 import { findRoutesMatchingFilters } from './components/notification-policies/PoliciesTree';
+import PolicyPage from './components/notification-policies/PolicyPage';
+import {
+  createKubernetesRoutingTreeSpec,
+  k8sRouteToRoute,
+} from './components/notification-policies/useNotificationPolicyRoute';
 import {
   grantUserPermissions,
   mockDataSource,
   someCloudAlertManagerConfig,
   someCloudAlertManagerStatus,
 } from './mocks';
-import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import { Route, Routes } from 'react-router-dom-v5-compat';
-import PolicyPage from './components/notification-policies/PolicyPage';
-import { ROOT_ROUTE_NAME } from './utils/k8s/constants';
 import {
   deleteRoutingTree,
   getRoutingTree,
   resetRoutingTreeMap,
   setRoutingTree,
 } from './mocks/server/entities/k8s/routingtrees';
-import {
-  createKubernetesRoutingTreeSpec,
-  k8sRouteToRoute,
-} from './components/notification-policies/useNotificationPolicyRoute';
+import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { ROOT_ROUTE_NAME } from './utils/k8s/constants';
 
 jest.mock('./useRouteGroupsMatcher');
 

@@ -1,18 +1,20 @@
+import uFuzzy from '@leeoniya/ufuzzy';
 import { pick, uniq } from 'lodash';
 import memoize from 'micro-memoize';
+import { useMemo } from 'react';
 
 import { INHERITABLE_KEYS, type InheritableProperties } from '@grafana/alerting/internal';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
-import { ROUTES_META_SYMBOL, Route, RouteWithID, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, ROUTES_META_SYMBOL, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { getAPINamespace } from '../../../../../api/utils';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useAsync } from '../../hooks/useAsync';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import {
+  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RouteDefaults,
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree,
-  ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
   generatedRoutesApi as routingTreeApi,
 } from '../../openapi/routesApi.gen';
 import {
@@ -32,8 +34,6 @@ import {
   mergePartialAmRouteWithRouteTree,
   omitRouteFromRouteTree,
 } from '../../utils/routeTree';
-import uFuzzy from '@leeoniya/ufuzzy';
-import { useMemo } from 'react';
 
 export function isRouteProvisioned(route: Route): boolean {
   const provenance = route[ROUTES_META_SYMBOL]?.provenance ?? route.provenance;
@@ -406,7 +406,7 @@ export function k8sRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNot
     // This assumes if a `NAMED_ROOT_LABEL_NAME` label exists, it will NOT go to the default route, which is a fair but
     // not perfect assumption since we don't yet protect the label.
     object_matchers:
-      route.metadata.name == ROOT_ROUTE_NAME || !route.metadata.name
+      route.metadata.name === ROOT_ROUTE_NAME || !route.metadata.name
         ? [[NAMED_ROOT_LABEL_NAME, MatcherOperator.equal, '']]
         : [[NAMED_ROOT_LABEL_NAME, MatcherOperator.equal, route.metadata.name]],
     [ROUTES_META_SYMBOL]: {

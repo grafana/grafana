@@ -1,16 +1,15 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Modal, ModalProps, useStyles2 } from '@grafana/ui';
+import { Button, Modal, ModalProps } from '@grafana/ui';
 
-import { stringifyErrorLike } from '../../../utils/misc';
+import { RouteWithID } from '../../../../../../plugins/datasource/alertmanager/types';
 import { FormAmRoute } from '../../../types/amroutes';
+import { defaultGroupBy } from '../../../utils/amroutes';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { stringifyErrorLike } from '../../../utils/misc';
 import { AmRootRouteForm } from '../EditDefaultPolicyForm';
 import { UpdatingModal } from '../Modals';
-import { getFormStyles } from '../formStyles';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { RouteWithID } from '../../../../../../plugins/datasource/alertmanager/types';
-import { defaultGroupBy } from '../../../utils/amroutes';
 
 /**
  * This hook controls the delete modal for routing trees, showing loading and error states when appropriate
@@ -61,14 +60,31 @@ export const useDeleteRoutingTreeModal = (
         onDismiss={handleDismiss}
         closeOnBackdropClick={!isLoading}
         closeOnEscape={!isLoading}
-        title={'Delete routing tree'}
+        title={t(
+          'alerting.use-delete-routing-tree-modal.modal-element.title-delete-routing-tree',
+          'Delete routing tree'
+        )}
       >
-        <p>Deleting this routing tree will permanently remove it.</p>
-        <p>Are you sure you want to delete this routing tree?</p>
+        <p>
+          <Trans i18nKey="alerting.use-delete-routing-tree-modal.modal-element.deleting-routing-permanently-remove">
+            Deleting this routing tree will permanently remove it.
+          </Trans>
+        </p>
+        <p>
+          <Trans i18nKey="alerting.use-delete-routing-tree-modal.modal-element.delete-routing">
+            Are you sure you want to delete this routing tree?
+          </Trans>
+        </p>
 
         <Modal.ButtonRow>
           <Button type="button" variant="destructive" onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? 'Deleting...' : 'Yes, delete routing tree'}
+            {isLoading ? (
+              <Trans i18nKey="alerting.use-delete-routing-tree-modal.modal-element.deleting">Deleting...</Trans>
+            ) : (
+              <Trans i18nKey="alerting.use-delete-routing-tree-modal.modal-element.delete-yes">
+                Yes, delete routing tree
+              </Trans>
+            )}
           </Button>
           <Button type="button" variant="secondary" onClick={handleDismiss} disabled={isLoading}>
             <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
@@ -91,7 +107,6 @@ const emptyRouteWithID = {
  * This hook controls the create modal for routing trees, showing loading and error states when appropriate
  */
 export const useCreateRoutingTreeModal = (handleCreate: (route: Partial<FormAmRoute>) => Promise<unknown>) => {
-  const styles = useStyles2(getFormStyles);
   const [showModal, setShowModal] = useState(false);
   const [route, setRoute] = useState<RouteWithID>(emptyRouteWithID);
   const [error, setError] = useState<unknown | undefined>();
@@ -142,7 +157,10 @@ export const useCreateRoutingTreeModal = (handleCreate: (route: Partial<FormAmRo
         onDismiss={handleDismiss}
         closeOnBackdropClick={true}
         closeOnEscape={true}
-        title={'Create routing tree'}
+        title={t(
+          'alerting.use-create-routing-tree-modal.modal-element.title-create-routing-tree',
+          'Create routing tree'
+        )}
       >
         <AmRootRouteForm
           route={route}
@@ -155,14 +173,16 @@ export const useCreateRoutingTreeModal = (handleCreate: (route: Partial<FormAmRo
                 <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
               </Button>
               <Button type="submit">
-                <Trans i18nKey="alerting.policies.save-policy">Add routing tree</Trans>
+                <Trans i18nKey="alerting.use-create-routing-tree-modal.modal-element.add-routing-tree">
+                  Add routing tree
+                </Trans>
               </Button>
             </Modal.ButtonRow>
           }
         />
       </Modal>
     );
-  }, [route, error, handleSubmit, handleDismiss, isLoading, showModal, styles.input]);
+  }, [route, error, handleSubmit, handleDismiss, isLoading, showModal]);
 
   return [modalElement, handleShow, handleDismiss] as const;
 };

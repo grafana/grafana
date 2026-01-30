@@ -36,6 +36,7 @@ import {
 
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { getAmMatcherFormatter } from '../../utils/alertmanager';
+import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { isProvisionedResource } from '../../utils/k8s/utils';
 import { MatcherFormatter, normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createContactPointSearchLink, createMuteTimingLink } from '../../utils/misc';
@@ -51,7 +52,6 @@ import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 import { Matchers } from './Matchers';
 import { RoutesMatchingFilters } from './PoliciesTree';
 import { TimingOptions } from './timingOptions';
-import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
 const POLICIES_PER_PAGE = 20;
 
@@ -412,12 +412,7 @@ const Policy = (props: PolicyComponentProps) => {
           </>
         )}
       </div>
-      {showExportDrawer && (
-        <GrafanaPoliciesExporter
-          routeName={currentRoute.name == ROOT_ROUTE_NAME || !currentRoute.name ? '' : currentRoute.name}
-          onClose={toggleShowExportDrawer}
-        />
-      )}
+      {showExportDrawer && <GrafanaPoliciesExporter routeName={currentRoute.name} onClose={toggleShowExportDrawer} />}
     </Stack>
   );
 };
@@ -722,24 +717,29 @@ const ErrorsGutterIndicator: FC<{ errors: React.ReactNode[] }> = ({ errors }) =>
 
 type DefaultPolicyIndicatorProps = { route?: RouteWithID };
 
-export const DefaultPolicyIndicator: FC<DefaultPolicyIndicatorProps> = ({ route = {} }) => {
+export const DefaultPolicyIndicator: FC<DefaultPolicyIndicatorProps> = ({ route = { name: '' } }) => {
   const styles = useStyles2(getStyles);
   return (
     <>
       <Text element="h2" variant="body" weight="medium">
-        {route.name == ROOT_ROUTE_NAME || !route.name ? (
+        {route.name === ROOT_ROUTE_NAME || !route.name ? (
           <Trans i18nKey="alerting.policies.default-policy.title">Default policy</Trans>
         ) : (
-          `Default policy for '${route.name}'`
+          t('alerting.policies.root-policy.title', `Default policy for '{{routeName}}'`, {
+            routeName: route.name,
+          })
         )}
       </Text>
       <span className={styles.metadata}>
-        {route.name == ROOT_ROUTE_NAME || !route.name ? (
+        {route.name === ROOT_ROUTE_NAME || !route.name ? (
           <Trans i18nKey="alerting.policies.default-policy.description">
             All alert instances will be handled by the default policy if no other matching policies are found.
           </Trans>
         ) : (
-          'All alert instances associated with this Route will be handled by this default policy if no other matching policies are found.'
+          <Trans i18nKey="alerting.policies.root-policy.description">
+            All alert instances associated with this Route will be handled by this default policy if no other matching
+            policies are found.
+          </Trans>
         )}
       </span>
     </>

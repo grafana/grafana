@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { Fragment } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Button,
@@ -23,10 +23,26 @@ import {
   useAlertmanagerAbilities,
   useAlertmanagerAbility,
 } from 'app/features/alerting/unified/hooks/useAbilities';
-import { AlertmanagerGroup, Receiver, Route, ROUTES_META_SYMBOL } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, ROUTES_META_SYMBOL, Receiver, Route } from 'app/plugins/datasource/alertmanager/types';
 
+import ConditionalWrap from '../../components/ConditionalWrap';
+import MoreButton from '../../components/MoreButton';
+import { usePagination } from '../../hooks/usePagination';
+import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
+import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
+import { getAnnotation } from '../../utils/k8s/utils';
+import { normalizeMatchers } from '../../utils/matchers';
 import { stringifyErrorLike } from '../../utils/misc';
+import { ProvisioningBadge } from '../Provisioning';
+import { Spacer } from '../Spacer';
+import { useGrafanaContactPoints } from '../contact-points/useContactPoints';
+
+import { useAlertGroupsModal } from './Modals';
+import { useCreateRoutingTreeModal, useDeleteRoutingTreeModal } from './components/Modals';
+import { RoutingTreeFilter } from './components/RoutingTreeFilter';
+import { TIMING_OPTIONS_DEFAULTS } from './timingOptions';
+import { useExportRoutingTree } from './useExportRoutingTree';
 import {
   isRouteProvisioned,
   useCreateRoutingTree,
@@ -34,21 +50,6 @@ import {
   useListNotificationPolicyRoutes,
   useRootRouteSearch,
 } from './useNotificationPolicyRoute';
-import { useURLSearchParams } from '../../hooks/useURLSearchParams';
-import { usePagination } from '../../hooks/usePagination';
-import { useCreateRoutingTreeModal, useDeleteRoutingTreeModal } from './components/Modals';
-import { useExportRoutingTree } from './useExportRoutingTree';
-import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
-import ConditionalWrap from '../../components/ConditionalWrap';
-import { ProvisioningBadge } from '../Provisioning';
-import { getAnnotation } from '../../utils/k8s/utils';
-import { Spacer } from '../Spacer';
-import MoreButton from '../../components/MoreButton';
-import { useGrafanaContactPoints } from '../contact-points/useContactPoints';
-import { useAlertGroupsModal } from './Modals';
-import { normalizeMatchers } from '../../utils/matchers';
-import { RoutingTreeFilter } from './components/RoutingTreeFilter';
-import { TIMING_OPTIONS_DEFAULTS } from './timingOptions';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -75,7 +76,7 @@ export const PoliciesList = () => {
   });
 
   if (isLoading) {
-    return <LoadingPlaceholder text={'Loading...'} />;
+    return <LoadingPlaceholder text={t('alerting.policies-list.text-loading', 'Loading....')} />;
   }
 
   return (
@@ -89,18 +90,20 @@ export const PoliciesList = () => {
             <Button
               data-testid="create-policy-button"
               icon="plus"
-              aria-label={'add policy'}
+              aria-label={t('alerting.policies-list.create.aria-label', 'add policy')}
               variant="primary"
               disabled={!createPoliciesAllowed}
               onClick={() => showCreateModal()}
             >
-              Create policy
+              <Trans i18nKey="alerting.policies-list.create.text">Create policy</Trans>
             </Button>
           )}
         </Stack>
       </Stack>
       {fetchPoliciesError ? (
-        <Alert title={'Failed to fetch policies'}>{stringifyErrorLike(fetchPoliciesError)}</Alert>
+        <Alert title={t('alerting.policies-list.fetch.error', 'Failed to fetch policies')}>
+          {stringifyErrorLike(fetchPoliciesError)}
+        </Alert>
       ) : (
         <RoutingTreeList
           policies={allPolicies ?? []}
@@ -126,7 +129,9 @@ const RoutingTreeList = ({ policies, search, pageSize = DEFAULT_PAGE_SIZE, recei
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
 
   if (pageItems.length === 0) {
-    return <EmptyState variant="not-found" message={'No policies found'} />;
+    return (
+      <EmptyState variant="not-found" message={t('alerting.policies-list.empty-state.message', 'No policies found')} />
+    );
   }
 
   return (
@@ -230,8 +235,8 @@ export const RoutingTreeHeader = ({ route, onDelete }: RoutingTreeHeaderProps) =
       <Fragment key="export-contact-point">
         <Menu.Item
           icon="download-alt"
-          label={t('alerting.use-create-dropdown-menu-actions.label-export', 'Export')}
-          ariaLabel="export"
+          label={t('alerting.policies-list.policy-header.export.label', 'Export')}
+          ariaLabel={t('alerting.policies-list.policy-header.export.aria-label', 'export')}
           disabled={!exportPoliciesAllowed}
           data-testid="export"
           onClick={() => showExportDrawer(route.name ?? '')}
@@ -245,8 +250,27 @@ export const RoutingTreeHeader = ({ route, onDelete }: RoutingTreeHeaderProps) =
     const canBeDeleted = deletePoliciesAllowed && !provisioned;
     const isDefaultPolicy = route.name === ROOT_ROUTE_NAME;
 
-    const cannotDeleteNoPermissions = `You do not have the required permission to ${isDefaultPolicy ? 'reset' : 'delete'} this routing tree`;
-    const cannotDeleteProvisioned = `Routing tree is provisioned and cannot be ${isDefaultPolicy ? 'reset' : 'deleted'} via the UI`;
+    const cannotDeleteNoPermissions = isDefaultPolicy
+      ? t(
+          'alerting.policies-list.reset-reasons.no-permissions',
+          'You do not have the required permission to reset this contact point'
+        )
+      : t(
+          'alerting.policies-list.delete-reasons.no-permissions',
+          'You do not have the required permission to delete this routing tree'
+        );
+    const cannotDeleteProvisioned = isDefaultPolicy
+      ? t(
+          'alerting.policies-list.reset-reasons.no-permissions',
+          'Routing tree is provisioned and cannot be reset via the UI'
+        )
+      : t(
+          'alerting.policies-list.delete-reasons.no-permissions',
+          'Routing tree is provisioned and cannot be deleted via the UI'
+        );
+    const cannotDeleteText = isDefaultPolicy
+      ? t('alerting.policies-list.reset-text', 'Routing tree cannot be reset for the following reasons:')
+      : t('alerting.policies-list.delete-text', 'Routing tree cannot be deleted for the following reasons:');
 
     const reasonsDeleteIsDisabled = [
       !deletePoliciesAllowed ? cannotDeleteNoPermissions : '',
@@ -255,7 +279,7 @@ export const RoutingTreeHeader = ({ route, onDelete }: RoutingTreeHeaderProps) =
 
     const deleteTooltipContent = (
       <>
-        {`Routing tree cannot be ${isDefaultPolicy ? 'reset' : 'deleted'} for the following reasons:`}
+        {cannotDeleteText}
         <br />
         {reasonsDeleteIsDisabled.map((reason) => (
           <li key={reason}>{reason}</li>
@@ -276,10 +300,10 @@ export const RoutingTreeHeader = ({ route, onDelete }: RoutingTreeHeaderProps) =
         <Menu.Item
           label={
             route.name === ROOT_ROUTE_NAME
-              ? 'Reset'
-              : t('alerting.use-create-dropdown-menu-actions.label-delete', 'Delete')
+              ? t('alerting.policies-list.policy-header.delete.reset-label', 'Reset')
+              : t('alerting.policies-list.policy-header.delete.delete-label', 'Delete')
           }
-          ariaLabel="delete"
+          ariaLabel={t('alerting.policies-list.policy-header.delete.aria-label', 'delete')}
           icon="trash-alt"
           destructive
           disabled={!canBeDeleted}
@@ -310,7 +334,14 @@ export const RoutingTreeHeader = ({ route, onDelete }: RoutingTreeHeaderProps) =
         <Spacer />
         <LinkButton
           tooltipPlacement="top"
-          tooltip={provisioned ? 'Provisioned routing trees cannot be edited in the UI' : undefined}
+          tooltip={
+            provisioned
+              ? t(
+                  'alerting.policies-list.policy-header.view.provisioned-tooltip',
+                  'Provisioned routing trees cannot be edited in the UI'
+                )
+              : undefined
+          }
           variant="secondary"
           size="sm"
           icon={canEdit ? 'pen' : 'eye'}
@@ -318,11 +349,22 @@ export const RoutingTreeHeader = ({ route, onDelete }: RoutingTreeHeaderProps) =
           data-testid={`${canEdit ? 'edit' : 'view'}-action`}
           href={`/alerting/routes/policy/${encodeURIComponent(route.name ?? '')}/edit`}
         >
-          {canEdit ? 'Edit' : 'View'}
+          {canEdit
+            ? t('alerting.policies-list.policy-header.edit.text', 'Edit')
+            : t('alerting.policies-list.policy-header.view.text', 'View')}
         </LinkButton>
         {menuActions.length > 0 && (
           <Dropdown overlay={<Menu>{menuActions}</Menu>}>
-            <MoreButton data-testid="more-actions" aria-label={`More actions for routing tree "${route.name ?? ''}"`} />
+            <MoreButton
+              data-testid="more-actions"
+              aria-label={t(
+                'alerting.policies-list.policy-header.more-actions.aria-label',
+                'More actions for routing tree "{{name}}"',
+                {
+                  name: route.name ?? '',
+                }
+              )}
+            />
           </Dropdown>
         )}
       </Stack>
@@ -331,11 +373,11 @@ export const RoutingTreeHeader = ({ route, onDelete }: RoutingTreeHeaderProps) =
   );
 };
 
-interface hasRoutes {
-  routes?: hasRoutes[];
+interface HasRoutes {
+  routes?: HasRoutes[];
 }
 
-export function countPolicies(route: hasRoutes): number {
+export function countPolicies(route: HasRoutes): number {
   let count = 0;
   if (route.routes) {
     count += route.routes.length;

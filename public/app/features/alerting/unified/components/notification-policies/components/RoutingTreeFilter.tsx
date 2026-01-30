@@ -33,10 +33,13 @@ const RoutingTreeFilter = () => {
 
   return (
     <Stack direction="row" alignItems="end" gap={0.5}>
-      <Field className={styles.noBottom} label={'Search by name or receiver'}>
+      <Field
+        className={styles.noBottom}
+        label={t('alerting.routing-tree-filter.label-search-by-name-or-receiver', 'Search by name or receiver')}
+      >
         <Input
-          aria-label={'search routing trees'}
-          placeholder={t('alerting.contact-points-filter.placeholder-search', 'Search')}
+          aria-label={t('alerting.routing-tree-filter.aria-label-search-routing-trees', 'search routing trees')}
+          placeholder={t('alerting.routing-tree-filter.placeholder-search', 'Search')}
           width={46}
           prefix={<Icon name="search" />}
           onChange={(event) => {
@@ -50,9 +53,9 @@ const RoutingTreeFilter = () => {
         icon="times"
         onClick={() => clear()}
         disabled={!hasInput}
-        aria-label={t('alerting.contact-points-filter.aria-label-clear', 'clear')}
+        aria-label={t('alerting.routing-tree-filter.aria-label-clear', 'clear')}
       >
-        <Trans i18nKey="alerting.contact-points-filter.clear">Clear</Trans>
+        <Trans i18nKey="alerting.routing-tree-filter.clear">Clear</Trans>
       </Button>
     </Stack>
   );

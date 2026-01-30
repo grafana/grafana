@@ -65,8 +65,11 @@ export const AmRootRouteForm = ({
       {showNameField && (
         <Field
           required
-          label={t('alerting.am-root-route-form.name', 'Name')}
-          description={t('alerting.am-root-route-form.description-unique-route', 'A unique name for the routing tree')}
+          label={t('alerting.am-root-route-form.label-name', 'Name')}
+          description={t(
+            'alerting.am-root-route-form.description-unique-routing',
+            'A unique name for the routing tree'
+          )}
           invalid={!!errors.name}
           error={errors.name?.message}
         >
@@ -75,7 +78,7 @@ export const AmRootRouteForm = ({
               required: true,
               validate: (value) => {
                 if (!value || value.trim().length === 0) {
-                  return 'Name is required';
+                  return t('alerting.am-root-route-form.validate-name', 'Name is required');
                 }
                 return true;
               },

@@ -6,16 +6,18 @@ import { AppNotificationList } from 'app/core/components/AppNotifications/AppNot
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
-import NotificationPolicies from '../../NotificationPoliciesPage';
-import { grantUserPermissions, mockDataSource } from '../../mocks';
-import { DataSourceType } from '../../utils/datasource';
-import { getRoutingTree, getRoutingTreeList, resetRoutingTreeMap } from '../../mocks/server/entities/k8s/routingtrees';
-import { TIMING_OPTIONS_DEFAULTS } from './timingOptions';
-import { countPolicies } from './PoliciesList';
-import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
-import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { AccessControlAction } from '../../../../../types/accessControl';
+import NotificationPolicies from '../../NotificationPoliciesPage';
+import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { grantUserPermissions, mockDataSource } from '../../mocks';
+import { getRoutingTree, getRoutingTreeList, resetRoutingTreeMap } from '../../mocks/server/entities/k8s/routingtrees';
 import { KnownProvenance } from '../../types/knownProvenance';
+import { DataSourceType } from '../../utils/datasource';
+import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
+
+import { countPolicies } from './PoliciesList';
+import { TIMING_OPTIONS_DEFAULTS } from './timingOptions';
+
 
 jest.mock('../../useRouteGroupsMatcher');
 
@@ -199,7 +201,7 @@ describe('PoliciesList', () => {
         renderNotificationPolicies();
         await getRoute(ROOT_ROUTE_NAME);
         expect(await ui.createPolicyButton.find()).toBeInTheDocument();
-        expect(ui.createPolicyButton.query()).not.toBeDisabled();
+        expect(ui.createPolicyButton.query()).toBeEnabled();
       });
       it('disable if user does not have permission', async () => {
         grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
@@ -218,7 +220,7 @@ describe('PoliciesList', () => {
         const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
         const btn = await ui.viewButton.find(defaultPolicyEl);
         expect(btn).toBeInTheDocument();
-        expect(btn).not.toBeDisabled();
+        expect(btn).toBeEnabled();
       });
       it('shows edit if user has edit permission', async () => {
         grantAlertmanagerAbilities([
@@ -230,7 +232,7 @@ describe('PoliciesList', () => {
         const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
         const btn = await ui.editButton.find(defaultPolicyEl);
         expect(btn).toBeInTheDocument();
-        expect(btn).not.toBeDisabled();
+        expect(btn).toBeEnabled();
       });
       it('shows view if policy is provisioned', async () => {
         grantAlertmanagerAbilities([
@@ -242,7 +244,7 @@ describe('PoliciesList', () => {
         const defaultPolicyEl = await getRoute('Managed Policy - Empty Provisioned');
         const btn = await ui.viewButton.find(defaultPolicyEl);
         expect(btn).toBeInTheDocument();
-        expect(btn).not.toBeDisabled();
+        expect(btn).toBeEnabled();
       });
     });
     describe('More > Export', () => {
@@ -259,7 +261,7 @@ describe('PoliciesList', () => {
 
         const btn = await ui.exportButton.find();
         expect(btn).toBeInTheDocument();
-        expect(btn).not.toBeDisabled();
+        expect(btn).toBeEnabled();
       });
       it('disable if user does not have permission', async () => {
         grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
@@ -289,7 +291,7 @@ describe('PoliciesList', () => {
 
         const btn = await ui.deleteButton.find();
         expect(btn).toBeInTheDocument();
-        expect(btn).not.toBeDisabled();
+        expect(btn).toBeEnabled();
       });
       it('disable if user has no permission', async () => {
         grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);

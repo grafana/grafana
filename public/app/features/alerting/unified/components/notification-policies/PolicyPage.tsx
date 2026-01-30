@@ -1,10 +1,13 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
+
+import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
+
 import { PoliciesTree } from './PoliciesTree';
-import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
 const PoliciesTreeWrapper = () => {
   const { name = '' } = useParams();
@@ -13,8 +16,13 @@ const PoliciesTreeWrapper = () => {
 
   if (!routeName) {
     return (
-      <Alert severity="error" title={'Routing tree not found'}>
-        {'Sorry, this routing tree does not seem to exist.'}
+      <Alert
+        severity="error"
+        title={t('alerting.policies-tree-wrapper.title-routing-tree-not-found', 'Routing tree not found')}
+      >
+        <Trans i18nKey="alerting.policies-tree-wrapper.sorry-routing-exist">
+          Sorry, this routing tree does not seem to exist.
+        </Trans>
       </Alert>
     );
   }
