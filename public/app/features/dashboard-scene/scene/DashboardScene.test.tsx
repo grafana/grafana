@@ -684,7 +684,7 @@ describe('DashboardScene', () => {
         });
 
         it('Should not copy styles for non-timeseries panels', () => {
-          const vizPanel = findVizPanelByKey(scene, 'panel-1')! as VizPanel;
+          const vizPanel = findVizPanelByKey(scene, 'panel-1')!;
           scene.copyPanelStyles(vizPanel);
 
           expect(store.exists(LS_STYLES_COPY_KEY)).toBe(false);

@@ -647,7 +647,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private static extractPanelStyles(panel: VizPanel): {
     fieldConfig?: { defaults?: Partial<FieldConfig> };
   } {
-    const styles: { fieldConfig?: { defaults?: Partial<FieldConfig> } } = {};
+    const styles: { fieldConfig?: { defaults: Partial<FieldConfig> } } = {};
 
     if (!panel.state.fieldConfig?.defaults) {
       return styles;
@@ -655,9 +655,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     styles.fieldConfig = { defaults: {} };
 
-    /* eslint-disable @typescript-eslint/consistent-type-assertions */
-    const defaults = styles.fieldConfig.defaults as Record<string, unknown>;
-    const panelDefaults = panel.state.fieldConfig.defaults as Record<string, unknown>;
+    const defaults = styles.fieldConfig.defaults;
+    const panelDefaults = panel.state.fieldConfig.defaults;
 
     // default props (color)
     if (defaultGraphStyleConfig.fieldConfig?.defaultsProps) {
@@ -671,9 +670,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     // custom props (lineWidth, fillOpacity, etc.)
     if (panel.state.fieldConfig.defaults.custom && defaultGraphStyleConfig.fieldConfig?.defaults) {
-      /* eslint-disable @typescript-eslint/consistent-type-assertions */
-      const customDefaults = {} as Record<string, unknown>;
-      const panelCustom = panel.state.fieldConfig.defaults.custom as Record<string, unknown>;
+      const customDefaults: Record<string, unknown> = {};
+      const panelCustom: Record<string, unknown> = panel.state.fieldConfig.defaults.custom;
 
       for (const key of defaultGraphStyleConfig.fieldConfig.defaults) {
         const value = panelCustom[key];
