@@ -15,7 +15,6 @@ func TestIntegrationBenchmarkSQLStorageBackend(t *testing.T) {
 	if db.IsTestDbSQLite() {
 		opts.Concurrency = 1 // to avoid SQLite database is locked error
 	}
-	backend, dbConn := newTestBackend(t, true, 2*time.Millisecond)
-	dbConn.SqlDB().SetMaxOpenConns(min(max(10, opts.Concurrency), 100))
+	backend := newTestBackend(t, true, 2*time.Millisecond, min(max(10, opts.Concurrency), 100))
 	test.RunStorageBackendBenchmark(t, backend, opts)
 }

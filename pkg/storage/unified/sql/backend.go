@@ -14,6 +14,7 @@ import (
 
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/dskit/services"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
@@ -66,20 +67,14 @@ func ProvideStorageBackend(
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
 		MustString(string(options.StorageTypeUnified)))
 
-	var backend resource.StorageBackend
-	var err error
 	switch storageType {
 	case options.StorageTypeFile:
-		backend, err = newFileBackend(cfg)
+		return newFileBackend(cfg)
 	case options.StorageTypeUnifiedGrpc:
 		return nil, nil
 	default:
-		backend, err = newStorageBackend(cfg, db, reg, storageMetrics, tracer)
+		return newStorageBackend(cfg, db, reg, storageMetrics, tracer)
 	}
-	if err != nil {
-		return nil, err
-	}
-	return newStorageBackendService(backend)
 }
 
 type Backend interface {
@@ -116,6 +111,8 @@ func newStorageBackend(
 				MaxAge:           cfg.GarbageCollectionMaxAge,
 				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 			},
+			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
+			DisableStorageServices:  cfg.DisableStorageServices,
 		})
 	}
 
@@ -205,7 +202,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	if opts.WatchBufferSize == 0 {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
-	return &backend{
+	backend := &backend{
 		isHA:                    opts.IsHA,
 		disableStorageServices:  opts.DisableStorageServices,
 		done:                    ctx.Done(),
@@ -220,10 +217,22 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       opts.GarbageCollection,
-	}, nil
+	}
+	backend.Service = services.NewBasicService(func(serviceContext context.Context) error {
+		return backend.Init(serviceContext)
+	}, func(serviceContext context.Context) error {
+		<-serviceContext.Done()
+		return nil
+	}, func(failureCase error) error {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		return backend.Stop(ctx)
+	}).WithName("unified-storage-backend")
+	return backend, nil
 }
 
 type backend struct {
+	services.Service
 	//general
 	isHA                   bool
 	disableStorageServices bool

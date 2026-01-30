@@ -143,8 +143,8 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		storageBackend, err := sql.ProvideStorageBackend(env.Cfg, env.SQLStore, registerer, storageMetrics, tracingService)
 		require.NoError(t, err)
 
-		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, registerer, nil, storageMetrics, nil, nil, kv.Config{}, nil, storageBackend, nil)
+		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,
+			env.Cfg.Logger, registerer, nil, nil, nil, kv.Config{}, nil, storageBackend, nil)
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)

@@ -30,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -44,34 +43,39 @@ var initMutex = &sync.Mutex{}
 // newTestBackend creates a fresh database and backend for a test.
 // It uses a mutex to ensure the entire initialization and migration
 // process is atomic and does not race with other parallel tests.
-func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration) (resource.StorageBackend, sqldb.DB) {
+func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Duration, maxOpenConn int) resource.StorageBackend {
 	// Lock to ensure the entire init block is atomic.
 	initMutex.Lock()
 	// Unlock once the function returns the initialized backend.
 	defer initMutex.Unlock()
 
+	cfg := setting.NewCfg()
+	cfg.GRPCServer.Address = "localhost:0" // get a free address
+	cfg.GRPCServer.Network = "tcp"
+	registerer := prometheus.NewPedanticRegistry()
+	storageMetrics := resource.ProvideStorageMetrics(registerer)
+	tracingService := tracing.NewNoopTracerService()
+	cfg.EnableSQLKVBackend = false
+	cfg.MaxFileIndexAge = 24 * time.Hour
+	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
 	dbstore := db.InitTestDB(t)
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-	require.NoError(t, err)
-	require.NotNil(t, eDB)
-
-	backend, err := sql.NewBackend(sql.BackendOptions{
-		DBProvider:              eDB,
-		IsHA:                    isHA,
-		SimulatedNetworkLatency: simulatedNetworkLatency,
-		LastImportTimeMaxAge:    24 * time.Hour,
-	})
+	dbSection := cfg.SectionWithEnvOverrides("database")
+	if isHA {
+		dbSection.Key("high_availability").SetValue("true")
+	} else {
+		dbSection.Key("high_availability").SetValue("false")
+	}
+	if maxOpenConn > 0 {
+		dbSection.Key("max_open_conn").MustInt(maxOpenConn)
+	}
+	backend, err := sql.ProvideStorageBackend(cfg, dbstore, registerer, storageMetrics, tracingService)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
-
-	// Use a context with a reasonable timeout for migrations.
-	err = backend.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
+	backendService, ok := backend.(services.Service)
+	require.True(t, ok)
+	err = services.StartAndAwaitRunning(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)), backendService)
 	require.NoError(t, err)
-
-	sqlDB, err := eDB.Init(testutil.NewTestContext(t, time.Now().Add(1*time.Minute)))
-	require.NoError(t, err)
-
-	return backend, sqlDB
+	return backend
 }
 
 func TestMain(m *testing.M) {
@@ -83,8 +87,7 @@ func TestIntegrationStorageServer(t *testing.T) {
 	t.Cleanup(db.CleanupTestDB)
 
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
-		backend, _ := newTestBackend(t, true, 0)
-		return backend
+		return newTestBackend(t, true, 0, 0)
 	})
 }
 
@@ -95,15 +98,13 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			backend, _ := newTestBackend(t, true, 0)
-			return backend
+			return newTestBackend(t, true, 0, 0)
 		}, nil)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			backend, _ := newTestBackend(t, false, 0)
-			return backend
+			return newTestBackend(t, false, 0, 0)
 		}, nil)
 	})
 }
@@ -121,14 +122,14 @@ func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
 	}
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
-		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
-			return newTestBackend(t, true, 0)
+		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
+			return newTestBackend(t, true, 0, 0)
 		}, newKvBackend, opts)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
-		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
-			return newTestBackend(t, false, 0)
+		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) resource.StorageBackend {
+			return newTestBackend(t, false, 0, 0)
 		}, newKvBackend, opts)
 	})
 }
@@ -182,7 +183,7 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	t.Cleanup(searchBackend.Stop)
 
 	// Create a new resource backend
-	storage, _ := newTestBackend(t, false, 0)
+	storage := newTestBackend(t, false, 0, 0)
 	require.NotNil(t, storage)
 
 	// Run the shared storage and search tests
@@ -209,7 +210,7 @@ func TestClientServer(t *testing.T) {
 	backend, err := sql.ProvideStorageBackend(cfg, dbstore, registerer, storageMetrics, tracingService)
 	require.NoError(t, err)
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, registerer, nil, storageMetrics, nil, nil, kv.Config{}, nil, backend, nil)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, nil, registerer, nil, nil, nil, kv.Config{}, nil, backend, nil)
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 
@@ -308,7 +309,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	backend, err := sql.ProvideStorageBackend(cfg, dbstore, registerer, storageMetrics, tracingService)
 	require.NoError(t, err)
 
-	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), registerer, docBuilders, nil, nil, kv.Config{}, nil, backend)
+	svc, err := sql.ProvideSearchGRPCService(cfg, features, log.New("test"), registerer, docBuilders, nil, nil, kv.Config{}, nil, backend)
 	require.NoError(t, err)
 
 	var client resource.SearchClient

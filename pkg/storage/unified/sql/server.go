@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -13,7 +14,6 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -31,14 +31,12 @@ type QOSEnqueueDequeuer interface {
 type ServerOptions struct {
 	Backend          resource.StorageBackend
 	OverridesService *resource.OverridesService
-	DB               infraDB.DB
 	Cfg              *setting.Cfg
 	Tracer           trace.Tracer
 	Reg              prometheus.Registerer
 	AccessClient     types.AccessClient
 	SearchOptions    resource.SearchOptions
 	SearchClient     resourcepb.ResourceIndexClient
-	StorageMetrics   *resource.StorageMetrics
 	IndexMetrics     *resource.BleveIndexMetrics
 	Features         featuremgmt.FeatureToggles
 	QOSQueue         QOSEnqueueDequeuer

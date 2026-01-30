@@ -15,6 +15,7 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,6 +58,7 @@ func convertEmptyToClusterNamespace(namespace string, withExperimentalClusterSco
 
 // kvStorageBackend Unified storage backend based on KV storage.
 type kvStorageBackend struct {
+	services.Service
 	snowflake                    *snowflake.Node
 	kv                           KV
 	bulkLock                     *BulkLock
@@ -154,6 +156,10 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	logger.Info("backend initialized", "kv", fmt.Sprintf("%T", kv))
 
+	backend.Service = services.NewBasicService(nil, func(serviceContext context.Context) error {
+		<-serviceContext.Done()
+		return nil
+	}, nil).WithName("unified-storage-kv-backend")
 	return backend, nil
 }
 

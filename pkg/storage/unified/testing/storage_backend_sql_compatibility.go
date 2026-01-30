@@ -57,7 +57,7 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 	return backend, dbConn
 }
 
-func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBackend NewBackendWithDBFunc, opts *TestOptions) {
+func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend NewBackendFunc, newKvBackend NewBackendWithDBFunc, opts *TestOptions) {
 	if opts == nil {
 		opts = &TestOptions{}
 	}
@@ -85,7 +85,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 			}
 
 			kvbackend, db := newKvBackend(t.Context())
-			sqlbackend, _ := newSqlBackend(t.Context())
+			sqlbackend := newSqlBackend(t.Context())
 
 			tc.fn(t, sqlbackend, kvbackend, opts.NSPrefix, db)
 		})
@@ -98,7 +98,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend, newKvBac
 		}
 
 		kvbackend, db := newKvBackend(t.Context())
-		sqlbackend, _ := newSqlBackend(t.Context())
+		sqlbackend := newSqlBackend(t.Context())
 
 		runTestSearchOperationsCompatibility(t, sqlbackend, kvbackend, opts.NSPrefix, db, opts.SearchServerFactory)
 	})
