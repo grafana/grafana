@@ -82,7 +82,6 @@ export function LogsTableFields({
           maxWidth={tableWidth * 0.8}
           clear={() => {
             onDisplayedFieldsChange(defaultDisplayedFields);
-            // @todo can we reset user column widths on fields reset?
           }}
           columnsWithMeta={columnsWithMeta}
           dataFrames={[dataFrame]}

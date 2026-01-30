@@ -11,18 +11,6 @@ export function getSuggestedFields(displayedFields: string[], defaultFields: str
     },
   }));
 
-  // @todo cannot use LogListModel
-  // if (config.featureToggles.otelLogsFormatting) {
-  //   getSuggestedFieldsForLogs(logs).forEach((field) => {
-  //     suggestedFields.push({
-  //       name: field,
-  //       stats: {
-  //         percentOfLinesWithLabel: 100,
-  //       },
-  //     });
-  //   });
-  // }
-
   if (
     !defaultFields.length &&
     displayedFields.length &&

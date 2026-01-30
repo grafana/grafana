@@ -47,7 +47,7 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
       });
       setExtractedFrame(extractedFrames[0]);
     });
-    // @todo hook re-renders unexpectedly when data frame isn't changing if we add `rawTableFrame` as dependency
+    // @todo hook re-renders unexpectedly when data frame isn't changing if we add `rawTableFrame` as dependency, so we check for changes in the timestamps instead
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataLinkPostProcessor, fieldConfig, rawTableFrame.fields[1].values, theme, timeZone]);
 
