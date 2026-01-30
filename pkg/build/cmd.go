@@ -208,8 +208,9 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 	// and works better with SBOM and Vulnerability Scanners.
 	args = append(args, "-buildvcs=false")
 
-	if os.Getenv("WITH_TOOLEXEC") == "true" {
-		args = append(args, "-toolexec=\"./go-toolexec\"")
+	toolexecPath := os.Getenv("TOOLEXEC_PATH")
+	if toolexecPath != "" {
+		args = append(args, fmt.Sprintf("-toolexec=\"%s\"", toolexecPath))
 	}
 
 	args = append(args, "-o", binary)
