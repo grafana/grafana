@@ -2742,6 +2742,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "workspace:*"
+    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
@@ -3059,6 +3060,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "workspace:*"
+    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
