@@ -17,19 +17,13 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const hasError = data?.errors?.some((e) => e.refId === query.refId) ?? false;
   const isSelected = selectedQuery?.refId === query.refId;
 
-  const handleClick = () => {
-    if (!isSelected) {
-      setSelectedQuery(query);
-    }
-  };
-
   return (
     <SidebarCard
       editorType={editorType}
       isSelected={isSelected}
       hasError={hasError}
       id={query.refId}
-      onClick={handleClick}
+      onClick={() => setSelectedQuery(query)}
     >
       <DataSourceLogo dataSource={queryDsSettings} />
       <Text weight="light" variant="body" color="secondary">

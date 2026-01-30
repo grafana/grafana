@@ -12,19 +12,13 @@ export const TransformationCard = ({ transformation }: { transformation: DataTra
   const isSelected = selectedTransformation?.id === transformation.id;
   const transformationName = standardTransformersRegistry.getIfExists(transformation.id)?.name || transformation.id;
 
-  const handleClick = () => {
-    if (!isSelected) {
-      setSelectedTransformation(transformation);
-    }
-  };
-
   return (
     <SidebarCard
       editorType={QueryEditorType.Transformation}
       isSelected={isSelected}
       hasError={false}
       id={transformation.id}
-      onClick={handleClick}
+      onClick={() => setSelectedTransformation(transformation)}
     >
       <Text weight="light" variant="body" color="secondary">
         {transformationName}

@@ -70,8 +70,5 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(1),
       background: theme.colors.background.primary,
     }),
-    collapsableSectionContent: css({
-      padding: 0,
-    }),
   };
 }
