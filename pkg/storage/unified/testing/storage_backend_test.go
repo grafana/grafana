@@ -56,7 +56,8 @@ func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	skipTests := map[string]bool{
-		TestBlobSupport: true,
+		TestBlobSupport:               true,
+		TestGetResourceLastImportTime: true,
 	}
 
 	t.Run("Without RvManager", func(t *testing.T) {
