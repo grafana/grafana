@@ -163,6 +163,7 @@ func NewAPIService(
 	coreRoleAuthorizer := iamauthorizer.NewCoreRoleAuthorizer(accessClient)
 	globalRoleAuthorizer := globalRoleApiInstaller.GetAuthorizer()
 	roleAuthorizer := roleApiInstaller.GetAuthorizer()
+	teamLBACAuthorizer := teamLBACApiInstaller.GetAuthorizer()
 
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
@@ -210,6 +211,10 @@ func NewAPIService(
 				if a.GetResource() == "resourcepermissions" {
 					// Authorization is handled by the backend wrapper
 					return authorizer.DecisionAllow, "", nil
+				}
+
+				if a.GetResource() == iamv0.TeamLBACRuleInfo.GetName() {
+					return teamLBACAuthorizer.Authorize(ctx, a)
 				}
 
 				if a.GetResource() == "roles" {
