@@ -14782,6 +14782,9 @@
         "variable-values-fetched-datasource-query": "Nilai variabel diambil dari kueri sumber data"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "default",

@@ -19,11 +19,6 @@
  */
 export interface FeatureToggles {
   /**
-  * Disable envelope encryption (emergency only)
-  * @default false
-  */
-  disableEnvelopeEncryption?: boolean;
-  /**
   * Search for dashboards using panel title
   * @default false
   */

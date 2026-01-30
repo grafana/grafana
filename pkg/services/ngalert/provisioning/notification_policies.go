@@ -129,7 +129,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 		return definitions.Route{}, err
 	}
 
-	if err := revision.ResetUserDefinedRoute(defaultCfg); err != nil {
+	if _, err := revision.ResetUserDefinedRoute(defaultCfg); err != nil {
 		return definitions.Route{}, err
 	}
 
