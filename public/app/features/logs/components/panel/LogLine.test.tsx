@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { CoreApp, createTheme, getDefaultTimeRange, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../mocks/logRow';
@@ -24,6 +25,15 @@ jest.mock('@grafana/assistant', () => ({
     openAssistant: jest.fn(),
   }),
 }));
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    getDataSourceSrv: () => ({
+      get: (uid: string) => Promise.resolve(createTempoDatasource()),
+    }),
+  };
+});
 
 jest.mock('./LogListContext');
 jest.mock('../LogDetails');

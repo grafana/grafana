@@ -2,12 +2,24 @@ package resourcepermissions
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // TestGetPermissionKind tests the permission kind mapping logic
@@ -197,4 +209,290 @@ func TestResourcePermissionKindConstants(t *testing.T) {
 			assert.Equal(t, tt.expected, string(tt.kind))
 		})
 	}
+}
+
+// TestConvertK8sResourcePermissionToDTO tests converting K8s resource permission to DTO
+func TestConvertK8sResourcePermissionToDTO(t *testing.T) {
+	folderPermission := &iamv0.ResourcePermission{
+		Spec: iamv0.ResourcePermissionSpec{
+			Permissions: []iamv0.ResourcePermissionspecPermission{
+				{
+					Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole,
+					Name: "Editor",
+					Verb: "edit",
+				},
+				{
+					Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole,
+					Name: "Viewer",
+					Verb: "view",
+				},
+			},
+		},
+	}
+
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(false).Maybe()
+
+	api := &api{
+		cfg:    &setting.Cfg{},
+		logger: log.New("test"),
+		service: &Service{
+			options: Options{
+				Resource:          "dashboards",
+				ResourceAttribute: "uid",
+				APIGroup:          dashboardv1.APIGroup,
+				PermissionsToActions: map[string][]string{
+					"View": {"dashboards:read"},
+					"Edit": {"dashboards:read", "dashboards:write"},
+				},
+			},
+			actions: []string{"dashboards:read", "dashboards:write"},
+			license: license,
+		},
+	}
+
+	inheritedPerms, err := api.convertK8sResourcePermissionToDTO(folderPermission, "stack-123-org-1", true)
+
+	require.NoError(t, err)
+	require.Len(t, inheritedPerms, 2, "should have 2 inherited permissions (Editor and Viewer)")
+
+	editorPerm := inheritedPerms[0]
+	assert.Equal(t, "Editor", editorPerm.BuiltInRole, "should inherit Editor role from parent folder")
+	assert.True(t, editorPerm.IsInherited, "Editor permission should be marked as inherited from parent folder")
+	assert.Contains(t, editorPerm.Actions, "dashboards:read")
+	assert.Contains(t, editorPerm.Actions, "dashboards:write")
+
+	viewerPerm := inheritedPerms[1]
+	assert.Equal(t, "Viewer", viewerPerm.BuiltInRole, "should inherit Viewer role from parent folder")
+	assert.True(t, viewerPerm.IsInherited, "Viewer permission should be marked as inherited from parent folder")
+	assert.Contains(t, viewerPerm.Actions, "dashboards:read")
+	assert.NotContains(t, viewerPerm.Actions, "dashboards:write", "Viewer permission should not include write")
+}
+
+// TestGetFolderHierarchyPermissions tests the folder hierarchy permissions logic
+func TestGetFolderHierarchyPermissions(t *testing.T) {
+	tests := []struct {
+		name              string
+		folderUID         string
+		skipSelf          bool
+		folderInfoList    []folderv1.FolderInfo
+		folderPermissions map[string]*iamv0.ResourcePermission
+		expectedCount     int
+		expectedRoles     []string
+	}{
+		{
+			name:      "dashboard inherits from direct parent folder",
+			folderUID: "fold1",
+			skipSelf:  false,
+			folderInfoList: []folderv1.FolderInfo{
+				{Name: "fold1", Title: "Folder 1"},
+			},
+			folderPermissions: map[string]*iamv0.ResourcePermission{
+				"fold1": {
+					Spec: iamv0.ResourcePermissionSpec{
+						Permissions: []iamv0.ResourcePermissionspecPermission{
+							{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+						},
+					},
+				},
+			},
+			expectedCount: 1,
+			expectedRoles: []string{"Editor"},
+		},
+		{
+			name:      "folder skips its own permissions",
+			folderUID: "fold1",
+			skipSelf:  true,
+			folderInfoList: []folderv1.FolderInfo{
+				{Name: "fold1", Title: "Folder 1"},
+			},
+			folderPermissions: map[string]*iamv0.ResourcePermission{
+				"fold1": {
+					Spec: iamv0.ResourcePermissionSpec{
+						Permissions: []iamv0.ResourcePermissionspecPermission{
+							{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+						},
+					},
+				},
+			},
+			expectedCount: 0,
+			expectedRoles: []string{},
+		},
+		{
+			name:      "dashboard inherits from parent and grandparent",
+			folderUID: "fold2",
+			skipSelf:  false,
+			folderInfoList: []folderv1.FolderInfo{
+				{Name: "fold2", Title: "Folder 2", Parent: "fold1"},
+				{Name: "fold1", Title: "Folder 1"},
+			},
+			folderPermissions: map[string]*iamv0.ResourcePermission{
+				"fold1": {
+					Spec: iamv0.ResourcePermissionSpec{
+						Permissions: []iamv0.ResourcePermissionspecPermission{
+							{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Viewer", Verb: "view"},
+						},
+					},
+				},
+				"fold2": {
+					Spec: iamv0.ResourcePermissionSpec{
+						Permissions: []iamv0.ResourcePermissionspecPermission{
+							{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+						},
+					},
+				},
+			},
+			expectedCount: 2,
+			expectedRoles: []string{"Editor", "Viewer"},
+		},
+		{
+			name:      "folder only inherits from parent, skips self",
+			folderUID: "fold2",
+			skipSelf:  true,
+			folderInfoList: []folderv1.FolderInfo{
+				{Name: "fold2", Title: "Folder 2", Parent: "fold1"},
+				{Name: "fold1", Title: "Folder 1"},
+			},
+			folderPermissions: map[string]*iamv0.ResourcePermission{
+				"fold1": {
+					Spec: iamv0.ResourcePermissionSpec{
+						Permissions: []iamv0.ResourcePermissionspecPermission{
+							{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Viewer", Verb: "view"},
+						},
+					},
+				},
+				"fold2": {
+					Spec: iamv0.ResourcePermissionSpec{
+						Permissions: []iamv0.ResourcePermissionspecPermission{
+							{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+						},
+					},
+				},
+			},
+			expectedCount: 1,
+			expectedRoles: []string{"Viewer"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			license := licensingtest.NewFakeLicensing()
+			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(false).Maybe()
+
+			api := &api{
+				cfg:    &setting.Cfg{},
+				logger: log.New("test"),
+				service: &Service{
+					options: Options{
+						Resource:          "dashboards",
+						ResourceAttribute: "uid",
+						APIGroup:          dashboardv1.APIGroup,
+						PermissionsToActions: map[string][]string{
+							"View": {"dashboards:read"},
+							"Edit": {"dashboards:read", "dashboards:write"},
+						},
+					},
+					actions: []string{"dashboards:read", "dashboards:write"},
+					license: license,
+				},
+			}
+
+			fakeClient, fakeResourceInterface := setupFakeDynamicClient(t, tt.folderUID, tt.folderInfoList, tt.folderPermissions)
+			perms, err := api.getFolderHierarchyPermissions(context.Background(), "stack-123-org-1", tt.folderUID, fakeClient, tt.skipSelf)
+
+			require.NoError(t, err)
+			assert.Len(t, perms, tt.expectedCount, "expected %d permissions", tt.expectedCount)
+
+			actualRoles := make([]string, len(perms))
+			for i, perm := range perms {
+				actualRoles[i] = perm.BuiltInRole
+			}
+			assert.ElementsMatch(t, tt.expectedRoles, actualRoles, "expected roles to match")
+
+			for _, perm := range perms {
+				assert.True(t, perm.IsInherited, "permission should be marked as inherited")
+			}
+
+			// Verify mock was called
+			_ = fakeResourceInterface
+		})
+	}
+}
+
+// setupFakeDynamicClient creates a fake dynamic client with mocked folder hierarchy and permissions
+func setupFakeDynamicClient(t *testing.T, folderUID string, folderInfoList []folderv1.FolderInfo, folderPermissions map[string]*iamv0.ResourcePermission) (dynamic.Interface, *fakeResourceInterface) {
+	t.Helper()
+
+	fakeResource := &fakeResourceInterface{}
+	fakeClient := &fakeDynamicClient{resourceInterface: fakeResource}
+
+	fakeResource.getFunc = func(ctx context.Context, name string, opts metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
+		if len(subresources) > 0 && subresources[0] == "parents" {
+			// Return the folder hierarchy
+			folderList := &folderv1.FolderInfoList{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: folderv1.APIGroup + "/" + folderv1.APIVersion,
+					Kind:       "FolderInfoList",
+				},
+				Items: folderInfoList,
+			}
+
+			unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(folderList)
+			require.NoError(t, err)
+			return &unstructured.Unstructured{Object: unstructuredObj}, nil
+		}
+
+		const resourcePermNamePrefix = "folder.grafana.app-folders-"
+		var folderName string
+		if len(name) > len(resourcePermNamePrefix) {
+			folderName = name[len(resourcePermNamePrefix):]
+		}
+
+		if perm, ok := folderPermissions[folderName]; ok {
+			unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(perm)
+			require.NoError(t, err)
+			return &unstructured.Unstructured{Object: unstructuredObj}, nil
+		}
+
+		return nil, errors.New("not found")
+	}
+
+	return fakeClient, fakeResource
+}
+
+// fakeDynamicClient is a fake implementation of dynamic.Interface for testing
+type fakeDynamicClient struct {
+	resourceInterface dynamic.ResourceInterface
+}
+
+func (f *fakeDynamicClient) Resource(resource schema.GroupVersionResource) dynamic.NamespaceableResourceInterface {
+	return &fakeNamespaceableResourceInterface{
+		resourceInterface: f.resourceInterface,
+	}
+}
+
+// fakeNamespaceableResourceInterface is a fake implementation of dynamic.NamespaceableResourceInterface
+type fakeNamespaceableResourceInterface struct {
+	dynamic.NamespaceableResourceInterface
+	resourceInterface dynamic.ResourceInterface
+}
+
+func (f *fakeNamespaceableResourceInterface) Namespace(namespace string) dynamic.ResourceInterface {
+	if f.resourceInterface != nil {
+		return f.resourceInterface
+	}
+	return &fakeResourceInterface{}
+}
+
+// fakeResourceInterface is a fake implementation of dynamic.ResourceInterface
+type fakeResourceInterface struct {
+	dynamic.ResourceInterface
+	getFunc func(ctx context.Context, name string, opts metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error)
+}
+
+func (f *fakeResourceInterface) Get(ctx context.Context, name string, opts metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
+	if f.getFunc != nil {
+		return f.getFunc(ctx, name, opts, subresources...)
+	}
+	return &unstructured.Unstructured{}, nil
 }

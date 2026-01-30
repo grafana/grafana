@@ -14956,6 +14956,9 @@
         "variable-values-fetched-datasource-query": "Hodnoty proměnných jsou načteny z dotazu na zdroj dat"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "výchozí",

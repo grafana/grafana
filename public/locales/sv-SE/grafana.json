@@ -14840,6 +14840,9 @@
         "variable-values-fetched-datasource-query": "Variabelvärden hämtas från en datakällfråga"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "standard",

@@ -1432,7 +1432,8 @@
       "metadata": {
         "name": "disableEnvelopeEncryption",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2022-05-24T08:34:47Z"
+        "creationTimestamp": "2022-05-24T08:34:47Z",
+        "deletionTimestamp": "2026-01-29T15:12:34Z"
       },
       "spec": {
         "description": "Disable envelope encryption (emergency only)",
