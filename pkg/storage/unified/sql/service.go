@@ -59,6 +59,7 @@ type service struct {
 	hasSubservices     bool
 
 	backend       resource.StorageBackend
+	searchClient  resourcepb.ResourceIndexClient
 	serverStopper resource.ResourceServerStopper
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
@@ -97,6 +98,7 @@ func ProvideUnifiedStorageGrpcService(
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
+	searchClient resourcepb.ResourceIndexClient,
 ) (UnifiedStorageGrpcService, error) {
 	var err error
 	tracer := otel.Tracer("unified-storage")
@@ -121,6 +123,7 @@ func ProvideUnifiedStorageGrpcService(
 		storageMetrics:     storageMetrics,
 		indexMetrics:       indexMetrics,
 		searchRing:         searchRing,
+		searchClient:       searchClient,
 		subservicesWatcher: services.NewFailureWatcher(),
 	}
 
@@ -270,6 +273,7 @@ func (s *service) starting(ctx context.Context) error {
 		Reg:            s.reg,
 		AccessClient:   authzClient,
 		SearchOptions:  searchOptions,
+		SearchClient:   s.searchClient,
 		StorageMetrics: s.storageMetrics,
 		IndexMetrics:   s.indexMetrics,
 		Features:       s.features,

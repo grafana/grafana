@@ -84,12 +84,15 @@ export function QueryEditorContextWrapper({
   const actions = useMemo(
     () => ({
       updateQueries: dataPane.updateQueries,
+      updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => {
+        dataPane.updateSelectedQuery(updatedQuery, originalRefId);
+      },
       addQuery: dataPane.addQuery,
       deleteQuery: dataPane.deleteQuery,
       duplicateQuery: dataPane.duplicateQuery,
       runQueries: dataPane.runQueries,
-      changeDataSource: (settings: DataSourceInstanceSettings) => {
-        dataPane.changeDataSource(getDataSourceRef(settings));
+      changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
+        dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },
     }),
     [dataPane]
