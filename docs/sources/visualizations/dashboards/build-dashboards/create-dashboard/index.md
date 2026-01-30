@@ -40,7 +40,6 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
 {{< /shared >}}
-{{< /docs/list >}}
 
 1. In the dialog box that opens, do one of the following:
    - Select one of your existing data sources.
@@ -101,6 +100,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. When you've saved all the changes you want to make to the dashboard, click **Exit edit**.
 
    Now, when you want to make more changes to the saved dashboard, click **Edit** in the top-right corner.
+{{< /docs/list >}}
 
 ## Copy a dashboard
 
