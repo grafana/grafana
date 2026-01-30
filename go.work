@@ -37,6 +37,7 @@ use (
 	./pkg/plugins/codegen
 	./pkg/promlib
 	./pkg/semconv
+	./pkg/storage/unified/resource/kv
 )
 
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260112162805-d29cc9cf7f0f

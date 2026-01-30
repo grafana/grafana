@@ -79,10 +79,12 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       await submitData(spec, form.privateKey);
     } catch (err) {
       if (isFetchError(err)) {
-        const [field, errorMessage] = getConnectionFormErrors(err.data?.errors);
+        const errors = getConnectionFormErrors(err.data);
 
-        if (field && errorMessage) {
-          setError(field, errorMessage);
+        if (errors.length > 0) {
+          for (const [field, errorMessage] of errors) {
+            setError(field, errorMessage);
+          }
           return;
         }
       }

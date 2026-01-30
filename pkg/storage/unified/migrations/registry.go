@@ -31,12 +31,20 @@ type MigratorFunc = func(ctx context.Context, orgId int64, opts legacy.MigrateOp
 // requiring the accessor at registration time.
 type MigratorFactory func(accessor legacy.MigrationDashboardAccessor) MigratorFunc
 
+// ResourceInfo extends GroupResource with additional metadata needed for migration.
+type ResourceInfo struct {
+	schema.GroupResource
+	// LockTable is the legacy database table to lock during migration.
+	// This is required for all migrations that modify data.
+	LockTable string
+}
+
 // MigrationDefinition defines a resource migration.
 // This is the public API for defining and registering migrations.
 type MigrationDefinition struct {
 	ID          string                                   // Unique identifier for registry lookup (e.g., "folders-dashboards", "playlists")
 	MigrationID string                                   // ID for the migration log table entry (e.g., "folders and dashboards migration")
-	Resources   []schema.GroupResource                   // Resources to migrate together
+	Resources   []ResourceInfo                           // Resources to migrate together, with their lock tables
 	Migrators   map[schema.GroupResource]MigratorFactory // Type-safe migrator factories per resource
 	Validators  []ValidatorFactory                       // Optional validator factories
 }
@@ -45,10 +53,29 @@ type MigrationDefinition struct {
 // The format is "resource.group" (e.g., "dashboards.dashboard.grafana.app").
 func (d MigrationDefinition) ConfigResources() []string {
 	result := make([]string, len(d.Resources))
-	for i, gr := range d.Resources {
-		result[i] = gr.Resource + "." + gr.Group
+	for i, ri := range d.Resources {
+		result[i] = ri.Resource + "." + ri.Group
 	}
 	return result
+}
+
+// GetGroupResources returns just the GroupResource slice for compatibility with existing code.
+func (d MigrationDefinition) GetGroupResources() []schema.GroupResource {
+	result := make([]schema.GroupResource, len(d.Resources))
+	for i, ri := range d.Resources {
+		result[i] = ri.GroupResource
+	}
+	return result
+}
+
+// GetLockTable returns the lock table for a given GroupResource, or empty string if not found.
+func (d MigrationDefinition) GetLockTable(gr schema.GroupResource) string {
+	for _, ri := range d.Resources {
+		if ri.GroupResource == gr {
+			return ri.LockTable
+		}
+	}
+	return ""
 }
 
 // CreateValidators instantiates validators with the provided runtime dependencies.
@@ -152,7 +179,10 @@ func init() {
 	Registry.Register(MigrationDefinition{
 		ID:          "folders-dashboards",
 		MigrationID: "folders and dashboards migration",
-		Resources:   []schema.GroupResource{folderGR, dashboardGR},
+		Resources: []ResourceInfo{
+			{GroupResource: folderGR, LockTable: "folder"},
+			{GroupResource: dashboardGR, LockTable: "dashboard"},
+		},
 		Migrators: map[schema.GroupResource]MigratorFactory{
 			folderGR:    func(a legacy.MigrationDashboardAccessor) MigratorFunc { return a.MigrateFolders },
 			dashboardGR: func(a legacy.MigrationDashboardAccessor) MigratorFunc { return a.MigrateDashboards },
@@ -170,7 +200,9 @@ func init() {
 	Registry.Register(MigrationDefinition{
 		ID:          "playlists",
 		MigrationID: "playlists migration",
-		Resources:   []schema.GroupResource{playlistGR},
+		Resources: []ResourceInfo{
+			{GroupResource: playlistGR, LockTable: "playlist"},
+		},
 		Migrators: map[schema.GroupResource]MigratorFactory{
 			playlistGR: func(a legacy.MigrationDashboardAccessor) MigratorFunc { return a.MigratePlaylists },
 		},
