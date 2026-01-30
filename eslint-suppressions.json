@@ -3273,7 +3273,7 @@
       "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 4
+      "count": 3
     }
   },
   "public/app/features/variables/pickers/OptionsPicker/OptionsPicker.tsx": {

@@ -12,15 +12,7 @@ import { isAdHoc } from '../guard';
 import { VariableModel } from '../types';
 import { containsVariable, variableRegex, variableRegexExec } from '../utils';
 
-export interface GraphNode {
-  id: string;
-  label: string;
-}
-
-export interface GraphEdge {
-  from: string;
-  to: string;
-}
+import { GraphEdge, GraphNode, UsagesToNetwork, VariableUsages, VariableUsageTree } from './types';
 
 export const createDependencyNodes = (variables: VariableModel[]): GraphNode[] => {
   const nodes: GraphNode[] = [];
@@ -184,16 +176,6 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
   return result;
 };
 
-export interface VariableUsageTree {
-  variable: VariableModel;
-  tree: any;
-}
-
-export interface VariableUsages {
-  unUsed: VariableModel[];
-  usages: VariableUsageTree[];
-}
-
 export const createUsagesNetwork = (variables: VariableModel[], dashboard: DashboardModel | null): VariableUsages => {
   if (!dashboard) {
     return { unUsed: [], usages: [] };
@@ -290,13 +272,6 @@ export function getDependentPanels(variables: string[], panelsByVarUsage: Record
   }
 
   return new Set(thePanels);
-}
-
-export interface UsagesToNetwork {
-  variable: VariableModel;
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  showGraph: boolean;
 }
 
 export const traverseTree = (usage: UsagesToNetwork, parent: { id: string; value: any }): UsagesToNetwork => {

@@ -11,7 +11,8 @@ import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { VariableModel } from '../types';
 
 import { VariablesUnknownButton } from './VariablesUnknownButton';
-import { getUnknownsNetwork, UsagesToNetwork } from './utils';
+import { UsagesToNetwork } from './types';
+import { getUnknownsNetwork } from './utils';
 
 export const SLOW_VARIABLES_EXPANSION_THRESHOLD = 1000;
 
