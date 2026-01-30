@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { Button } from '../Button/Button';
 import { Box } from '../Layout/Box/Box';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { Sidebar, SidebarPosition, useSidebar } from './Sidebar';
 import mdx from './Sidebar.mdx';
@@ -209,6 +210,7 @@ export const VerticalTabs: StoryFn = (args) => {
 
 export const WithAutoHide: StoryFn = () => {
   const [openPane, setOpenPane] = useState('');
+  const [isPaused, setIsPaused] = useState(false);
 
   const containerStyle = css({
     flexGrow: 1,
@@ -243,15 +245,37 @@ export const WithAutoHide: StoryFn = () => {
     edgeMargin: 0,
     onClosePane: () => setOpenPane(''),
     autoHide: true,
-    autoHideTimeout: 10000, // Auto-hide after 10 seconds of inactivity
   });
 
+  const handlePause = () => {
+    contextValue.pauseAutoHide?.();
+    setIsPaused(true);
+  };
+
+  const handleResume = () => {
+    contextValue.resumeAutoHide?.();
+    setIsPaused(false);
+  };
+
   return (
-    <Box padding={2} backgroundColor={'canvas'} maxWidth={100} borderStyle={'solid'} borderColor={'weak'}>
-      <Box marginBottom={2} padding={2} backgroundColor={'secondary'}>
-        <strong>Auto-Hide Demo:</strong> Open any pane and it will automatically close after 3 seconds of inactivity
-        (only when undocked). Interact with the sidebar (click, move mouse) to reset the timer. Try docking the sidebar
-        to see that auto-hide is disabled in docked mode.
+    <Box padding={2} backgroundColor="canvas" maxWidth={100} borderStyle="solid" borderColor="weak">
+      <Box marginBottom={2} padding={2} backgroundColor="secondary">
+        <Stack gap={1} direction="column">
+          <p>
+            <strong>Auto-Hide Demo:</strong> Open any pane and it will automatically close after 10 seconds of
+            inactivity (only when undocked). Interact with the sidebar (click, move mouse) to reset the timer. Try
+            docking the sidebar to see that auto-hide is disabled in docked mode. You can also use the following buttons
+            to set pause/resume the auto-hide timer.
+          </p>
+          <Stack gap={1} direction="row">
+            <Button variant="secondary" size="sm" onClick={handlePause} disabled={isPaused}>
+              Pause Auto-Hide
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handleResume} disabled={!isPaused}>
+              Resume Auto-Hide
+            </Button>
+          </Stack>
+        </Stack>
       </Box>
       <div className={containerStyle} {...contextValue.outerWrapperProps}>
         <div className={gridStyle}>
@@ -266,47 +290,20 @@ export const WithAutoHide: StoryFn = () => {
         <Sidebar contextValue={contextValue}>
           {openPane === 'settings' && (
             <Sidebar.OpenPane>
-              <Sidebar.PaneHeader title="Settings (Auto-hide in 3s)">
+              <Sidebar.PaneHeader title="Settings">
                 <Button variant="secondary" size="sm">
                   Action
                 </Button>
               </Sidebar.PaneHeader>
             </Sidebar.OpenPane>
           )}
-          {openPane === 'outline' && (
-            <Sidebar.OpenPane>
-              <Sidebar.PaneHeader title="Outline (Auto-hide in 3s)" />
-            </Sidebar.OpenPane>
-          )}
-          {openPane === 'add' && (
-            <Sidebar.OpenPane>
-              <Sidebar.PaneHeader title="Add element (Auto-hide in 3s)" />
-            </Sidebar.OpenPane>
-          )}
           <Sidebar.Toolbar>
-            <Sidebar.Button
-              icon="plus"
-              title="Add"
-              tooltip="Add element"
-              active={openPane === 'add'}
-              onClick={() => togglePane('add')}
-            />
-
             <Sidebar.Button
               icon="cog"
               title="Settings"
               active={openPane === 'settings'}
               onClick={() => togglePane('settings')}
             />
-            <Sidebar.Button
-              icon="list-ui-alt"
-              title="Outline"
-              active={openPane === 'outline'}
-              onClick={() => togglePane('outline')}
-            />
-            <Sidebar.Divider />
-            <Sidebar.Button icon="info-circle" title="Insights" />
-            <Sidebar.Button icon="code-branch" title="Integrations" />
           </Sidebar.Toolbar>
         </Sidebar>
       </div>
