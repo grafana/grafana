@@ -725,13 +725,13 @@ describe('GrafanaReceiverForm', () => {
   });
 
   describe('Test contact point - K8s Test API', () => {
-    describe('when alertingImportAlertmanagerUI is enabled', () => {
+    describe('when alertingImportAlertmanagerAPI is enabled', () => {
       beforeEach(() => {
-        config.featureToggles.alertingImportAlertmanagerUI = true;
+        config.featureToggles.alertingImportAlertmanagerAPI = true;
       });
 
       afterEach(() => {
-        config.featureToggles.alertingImportAlertmanagerUI = false;
+        config.featureToggles.alertingImportAlertmanagerAPI = false;
       });
 
       it('should use K8s API for testing an integration', async () => {
