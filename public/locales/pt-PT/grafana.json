@@ -14840,6 +14840,9 @@
         "variable-values-fetched-datasource-query": "Os valores de variáveis são obtidos a partir de uma consulta de origem de dados"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "padrão",

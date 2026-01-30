@@ -14840,6 +14840,9 @@
         "variable-values-fetched-datasource-query": "Variablenwerte werden über eine Datenquellenabfrage abgerufen"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "Standard",

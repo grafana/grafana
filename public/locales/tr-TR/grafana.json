@@ -14840,6 +14840,9 @@
         "variable-values-fetched-datasource-query": "Değişken değerleri bir veri kaynağı sorgusundan alınır"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "varsayılan",
