@@ -22,13 +22,8 @@ import { getLogsTablePanelState } from './panelState/getLogsTablePanelState';
 import type { Options as LogsTableOptions } from './panelcfg.gen';
 import { BuildLinkToLogLine, isOnLogsTableOptionsChange, OnLogsTableOptionsChange } from './types';
 
-interface LogsTablePanelProps extends PanelProps<LogsTableOptions> {
-  frameIndex?: number;
-  showHeader?: boolean;
-}
-
-// Defaults
-export const ROW_ACTION_BUTTON_WIDTH = 55;
+type Options = LogsTableOptions & TableOptions;
+interface LogsTablePanelProps extends PanelProps<Options> {}
 
 export const LogsTable = ({
   data,
@@ -38,8 +33,6 @@ export const LogsTable = ({
   fieldConfig,
   options,
   eventBus,
-  frameIndex = 0,
-  showHeader = true, // @todo not pulling from panel settings
   onOptionsChange,
   onFieldConfigChange,
   replaceVariables,
@@ -50,6 +43,7 @@ export const LogsTable = ({
   id,
   renderCounter,
 }: LogsTablePanelProps) => {
+  const frameIndex = options.frameIndex <= data.series.length - 1 ? options.frameIndex : 0;
   const sidebarWidth = options.fieldSelectorWidth ?? DEFAULT_SIDEBAR_WIDTH;
   const styles = useStyles2(getStyles, sidebarWidth, height, width);
 
@@ -69,13 +63,14 @@ export const LogsTable = ({
   // Callbacks
   const handleTableOptionsChange = useCallback(
     (options: TableOptions) => {
+      console.log('handleTableOptionsChange', options);
       onLogsTableOptionsChange?.(options);
     },
     [onLogsTableOptionsChange]
   );
 
   const handleLogsTableOptionsChange = useCallback(
-    (options: LogsTableOptions) => {
+    (options: Options) => {
       onOptionsChange(options);
     },
     [onOptionsChange]
@@ -127,11 +122,13 @@ export const LogsTable = ({
   // Build panel data
   const panelData: PanelData | null = useMemo(() => {
     if (organizedFrame) {
-      return { ...data, series: [organizedFrame] };
+      const series = [...data.series];
+      series.splice(frameIndex, 1, organizedFrame);
+      return { ...data, series, frameIndex };
     }
 
     return null;
-  }, [organizedFrame, data]);
+  }, [organizedFrame, data, frameIndex]);
 
   if (extractedFrame === null || organizedFrame === null || logsFrame === null || !timeFieldName || !bodyFieldName) {
     return null;
@@ -164,7 +161,7 @@ export const LogsTable = ({
         id={id}
         timeRange={timeRange}
         timeZone={timeZone}
-        options={{ ...options, frameIndex, showHeader }}
+        options={{ ...options }}
         transparent={transparent}
         fieldConfig={fieldConfig}
         renderCounter={renderCounter}

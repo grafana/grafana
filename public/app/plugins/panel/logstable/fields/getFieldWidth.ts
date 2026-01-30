@@ -1,7 +1,6 @@
 import { Field, getFieldDisplayName } from '@grafana/data';
 
-import { ROW_ACTION_BUTTON_WIDTH } from '../LogsTable';
-import { DEFAULT_FIRST_FIELD_WIDTH } from '../constants';
+import { DEFAULT_FIRST_FIELD_WIDTH, ROW_ACTION_BUTTON_WIDTH } from '../constants';
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
 
 export function getFieldWidth(

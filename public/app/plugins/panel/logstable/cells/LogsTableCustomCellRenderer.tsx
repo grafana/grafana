@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { CustomCellRendererProps, useStyles2 } from '@grafana/ui';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
-import { ROW_ACTION_BUTTON_WIDTH } from '../LogsTable';
+import { ROW_ACTION_BUTTON_WIDTH } from '../constants';
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
 import { LogsTableRowActionButtons } from '../rows/LogsTableRowActionButtons';
 import { BuildLinkToLogLine } from '../types';
