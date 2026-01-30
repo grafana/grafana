@@ -3,9 +3,13 @@ package frontend
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -82,6 +86,21 @@ func (c FSRequestConfig) WithContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, requestConfigKey{}, c)
 }
 
+// Copy creates a deep copy of the FSRequestConfig.
+// This is necessary because FSFrontendSettings contains reference types (maps)
+// that would be shared in a shallow copy.
+func (c FSRequestConfig) Copy() FSRequestConfig {
+	result := c // Shallow copy primitives and structs
+
+	// Deep copy the ReportingStaticContext map
+	if c.ReportingStaticContext != nil {
+		result.ReportingStaticContext = make(map[string]string, len(c.ReportingStaticContext))
+		maps.Copy(result.ReportingStaticContext, c.ReportingStaticContext)
+	}
+
+	return result
+}
+
 func getBuildInfo(license licensing.Licensing, cfg *setting.Cfg) dtos.FrontendSettingsBuildInfoDTO {
 	version := setting.BuildVersion
 	commit := setting.BuildCommit
@@ -107,4 +126,58 @@ func getShortCommitHash(commitHash string, maxLength int) string {
 		return commitHash[:maxLength]
 	}
 	return commitHash
+}
+
+// WithOverrides merges tenant-specific settings from ini.File with this configuration.
+// Returns a new FSRequestConfig with overrides applied, using a deep copy to avoid
+// shared map references.
+func (c FSRequestConfig) WithOverrides(settings *ini.File, logger log.Logger) FSRequestConfig {
+	// Apply overrides from the settings service ini to the config. Theoretically we could use setting.NewCfgFromINIFile, but
+	// because we only want overrides, and not default values, we need to manually get them out of the ini structure.
+
+	result := c.Copy() // Deep copy to avoid shared map references
+
+	// TODO: We should apply all overrides for values in FSRequestConfig
+	applyBool(settings, "security", "content_security_policy", &result.CSPEnabled, logger)
+	applyString(settings, "security", "content_security_policy_template", &result.CSPTemplate, logger)
+	applyBool(settings, "security", "content_security_policy_report_only", &result.CSPReportOnlyEnabled, logger)
+	applyString(settings, "security", "content_security_policy_report_only_template", &result.CSPReportOnlyTemplate, logger)
+
+	return result
+}
+
+func getValue(settings *ini.File, section, key string) *ini.Key {
+	if !settings.HasSection(section) {
+		return nil
+	}
+	sec := settings.Section(section)
+	if !sec.HasKey(key) {
+		return nil
+	}
+
+	return sec.Key(key)
+}
+
+// applyString applies a string value from ini settings to a target field if it exists.
+func applyString(settings *ini.File, sectionName, keyName string, target *string, logger log.Logger) {
+	if key := getValue(settings, sectionName, keyName); key != nil {
+		*target = key.String()
+
+		logger.Debug("applying request config override",
+			"section", sectionName,
+			"key", keyName,
+			"value", *target)
+	}
+}
+
+// applyBool applies a boolean value from ini settings to a target field if it exists.
+func applyBool(settings *ini.File, sectionName, keyName string, target *bool, logger log.Logger) {
+	if key := getValue(settings, sectionName, keyName); key != nil {
+		*target = key.MustBool(false)
+
+		logger.Debug("applying request config override",
+			"section", sectionName,
+			"key", keyName,
+			"value", *target)
+	}
 }
