@@ -3796,6 +3796,7 @@
       "success-count_one": "{{count}} dashboard restored successfully",
       "success-count_other": "{{count}} dashboard restored successfully"
     },
+    "shared-with-me": "Shared with me",
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {
       "label": {
