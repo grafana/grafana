@@ -343,7 +343,6 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
           }
         }
 
-        // todo look at this
         if (
           rootUID === MIXED_DATASOURCE_NAME &&
           newQuery.refId === oldQuery.refId &&
