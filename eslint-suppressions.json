@@ -3867,11 +3867,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/loki/LogContextProvider.ts": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "public/app/plugins/datasource/loki/components/LokiCheatSheet.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
