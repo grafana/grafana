@@ -10,11 +10,26 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	settingservice "github.com/grafana/grafana/pkg/services/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// setupTestContext creates a request with a proper context that includes a logger
+func setupTestContext(r *http.Request) *http.Request {
+	logger := log.NewNopLogger()
+	reqCtx := &contextmodel.ReqContext{
+		Context: &web.Context{Req: r},
+		Logger:  logger,
+	}
+	ctx := ctxkey.Set(r.Context(), reqCtx)
+	return r.WithContext(ctx)
+}
 
 func TestRequestConfigMiddleware(t *testing.T) {
 	t.Run("should store base config in request context", func(t *testing.T) {
@@ -44,6 +59,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		handler := middleware(testHandler)
 
 		req := httptest.NewRequest("GET", "/", nil)
+		req = setupTestContext(req)
 		recorder := httptest.NewRecorder()
 
 		handler.ServeHTTP(recorder, req)
@@ -70,6 +86,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		handler := middleware(testHandler)
 
 		req := httptest.NewRequest("GET", "/", nil)
+		req = setupTestContext(req)
 		recorder := httptest.NewRecorder()
 
 		handler.ServeHTTP(recorder, req)
@@ -96,6 +113,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		handler := middleware(testHandler)
 
 		req := httptest.NewRequest("GET", "/", nil)
+		req = setupTestContext(req)
 		recorder := httptest.NewRecorder()
 
 		handler.ServeHTTP(recorder, req)
@@ -136,7 +154,8 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		handler := middleware(testHandler)
 
 		req := httptest.NewRequest("GET", "/", nil)
-		req.Header.Set("Grafana-Namespace", "stacks-123")
+		req.Header.Set("baggage", "namespace=stacks-123")
+		req = setupTestContext(req)
 		recorder := httptest.NewRecorder()
 
 		handler.ServeHTTP(recorder, req)
@@ -180,7 +199,8 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		handler := middleware(testHandler)
 
 		req := httptest.NewRequest("GET", "/", nil)
-		req.Header.Set("Grafana-Namespace", "stacks-123")
+		req.Header.Set("baggage", "namespace=stacks-123")
+		req = setupTestContext(req)
 		recorder := httptest.NewRecorder()
 
 		handler.ServeHTTP(recorder, req)
@@ -211,13 +231,108 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		handler := middleware(testHandler)
 
 		req := httptest.NewRequest("GET", "/", nil)
-		// No Grafana-Namespace header
+		req = setupTestContext(req)
+		// No baggage header
 		recorder := httptest.NewRecorder()
 
 		handler.ServeHTTP(recorder, req)
 
 		assert.Equal(t, http.StatusOK, recorder.Code)
 		assert.False(t, mockSettingsService.called)
+	})
+
+	t.Run("should parse namespace from baggage header with multiple values", func(t *testing.T) {
+		baseConfig := FSRequestConfig{
+			FSFrontendSettings: FSFrontendSettings{
+				AnonymousEnabled: false,
+			},
+			AppURL:     "https://base.example.com",
+			CSPEnabled: false,
+		}
+
+		mockSettingsService := &mockSettingsService{
+			settings: []*settingservice.Setting{
+				{Section: "security", Key: "content_security_policy", Value: "true"},
+			},
+		}
+
+		middleware := RequestConfigMiddleware(baseConfig, mockSettingsService)
+
+		var capturedConfig FSRequestConfig
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var err error
+			capturedConfig, err = FSRequestConfigFromContext(r.Context())
+			require.NoError(t, err)
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler := middleware(testHandler)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		// Baggage header with multiple key-value pairs
+		req.Header.Set("baggage", "trace-id=abc123,namespace=tenant-456,user-id=xyz")
+		req = setupTestContext(req)
+		recorder := httptest.NewRecorder()
+
+		handler.ServeHTTP(recorder, req)
+
+		assert.Equal(t, http.StatusOK, recorder.Code)
+		assert.True(t, capturedConfig.CSPEnabled, "Should apply tenant overrides when namespace is present")
+		assert.True(t, mockSettingsService.called, "Should call settings service when namespace is in baggage")
+	})
+
+	t.Run("should not call settings service with malformed baggage header", func(t *testing.T) {
+		baseConfig := FSRequestConfig{
+			AppURL: "https://base.example.com",
+		}
+
+		mockSettingsService := &mockSettingsService{}
+
+		middleware := RequestConfigMiddleware(baseConfig, mockSettingsService)
+
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler := middleware(testHandler)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		// Malformed baggage header
+		req.Header.Set("baggage", "invalid baggage format;;;")
+		req = setupTestContext(req)
+		recorder := httptest.NewRecorder()
+
+		handler.ServeHTTP(recorder, req)
+
+		assert.Equal(t, http.StatusOK, recorder.Code)
+		assert.False(t, mockSettingsService.called, "Should not call settings service with malformed baggage")
+	})
+
+	t.Run("should not call settings service when baggage has no namespace", func(t *testing.T) {
+		baseConfig := FSRequestConfig{
+			AppURL: "https://base.example.com",
+		}
+
+		mockSettingsService := &mockSettingsService{}
+
+		middleware := RequestConfigMiddleware(baseConfig, mockSettingsService)
+
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler := middleware(testHandler)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		// Baggage header without namespace key
+		req.Header.Set("baggage", "trace-id=abc123,user-id=xyz")
+		req = setupTestContext(req)
+		recorder := httptest.NewRecorder()
+
+		handler.ServeHTTP(recorder, req)
+
+		assert.Equal(t, http.StatusOK, recorder.Code)
+		assert.False(t, mockSettingsService.called, "Should not call settings service when namespace is not in baggage")
 	})
 }
 

@@ -3,6 +3,7 @@ package frontend
 import (
 	"net/http"
 
+	"go.opentelemetry.io/otel/baggage"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -14,7 +15,7 @@ import (
 
 // RequestConfigMiddleware manages per-request configuration.
 //
-// When Settings Service is configured and Grafana-Namespace header is present:
+// When Settings Service is configured and namespace is present in baggage header:
 // - Fetches tenant-specific overrides from Settings Service
 // - Merges overrides with base configuration
 // - Stores final configuration in context
@@ -26,7 +27,15 @@ func RequestConfigMiddleware(baseConfig FSRequestConfig, settingsService setting
 			ctx, span := tracing.Start(r.Context(), "frontend.RequestConfigMiddleware")
 			defer span.End()
 
-			namespace := r.Header.Get("Grafana-Namespace")
+			// Parse namespace from W3C baggage header
+			var namespace string
+			if baggageHeader := r.Header.Get("baggage"); baggageHeader != "" {
+				if bag, err := baggage.Parse(baggageHeader); err == nil {
+					if member := bag.Member("namespace"); member.Value() != "" {
+						namespace = member.Value()
+					}
+				}
+			}
 			ctx = request.WithNamespace(ctx, namespace)
 
 			reqCtx := contexthandler.FromContext(ctx)
