@@ -3,6 +3,7 @@ import { Text } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 import { useDatasource } from 'app/features/datasources/hooks';
 
+import { QUERY_EDITOR_TYPE_CONFIG } from '../../constants';
 import { useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 import { getEditorType } from '../utils';
 
@@ -19,7 +20,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
 
   return (
     <SidebarCard
-      editorType={editorType}
+      config={QUERY_EDITOR_TYPE_CONFIG[editorType]}
       isSelected={isSelected}
       hasError={hasError}
       id={query.refId}

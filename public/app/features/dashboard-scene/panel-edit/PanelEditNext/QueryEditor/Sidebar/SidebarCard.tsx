@@ -4,11 +4,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
-import { getEditorTypeText } from '../utils';
+import { QueryEditorTypeConfig } from '../../constants';
 
 interface SidebarCardProps {
-  editorType: QueryEditorType;
+  config: QueryEditorTypeConfig;
   isSelected: boolean;
   hasError: boolean;
   id: string;
@@ -16,9 +15,9 @@ interface SidebarCardProps {
   onClick: () => void;
 }
 
-export const SidebarCard = ({ editorType, isSelected, hasError, id, children, onClick }: SidebarCardProps) => {
-  const styles = useStyles2(getStyles, editorType, hasError, isSelected);
-  const typeText = getEditorTypeText(editorType);
+export const SidebarCard = ({ config, isSelected, hasError, id, children, onClick }: SidebarCardProps) => {
+  const styles = useStyles2(getStyles, config, hasError, isSelected);
+  const typeText = config.getLabel();
 
   return (
     <button
@@ -30,19 +29,18 @@ export const SidebarCard = ({ editorType, isSelected, hasError, id, children, on
     >
       <div className={styles.cardHeader}>
         <Stack direction="row" alignItems="center" gap={1}>
-          <Icon name={QUERY_EDITOR_TYPE_CONFIG[editorType].icon} />
+          <Icon name={config.icon} />
           <Text weight="light" variant="body">
             {typeText}
           </Text>
         </Stack>
-        {editorType !== QueryEditorType.Transformation && <Icon name="circle-mono" className={styles.dsStatusIcon} />}
       </div>
       <div className={styles.cardContent}>{children}</div>
     </button>
   );
 };
 
-function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: boolean, isSelected?: boolean) {
+function getStyles(theme: GrafanaTheme2, config: QueryEditorTypeConfig, hasError: boolean, isSelected?: boolean) {
   return {
     card: css({
       display: 'flex',
@@ -80,7 +78,7 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: 
       gap: theme.spacing(1),
       padding: theme.spacing(1),
       background: theme.colors.background.primary,
-      color: QUERY_EDITOR_TYPE_CONFIG[editorType].color,
+      color: config.color,
       borderTopRightRadius: theme.shape.radius.default,
       borderTopLeftRadius: theme.shape.radius.default,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
@@ -91,12 +89,6 @@ function getStyles(theme: GrafanaTheme2, editorType: QueryEditorType, hasError: 
       alignItems: 'center',
       gap: theme.spacing(1),
       padding: theme.spacing(1),
-    }),
-    dsStatusIcon: css({
-      color: hasError ? theme.colors.error.text : theme.colors.success.text,
-      width: '6px',
-      height: '6px',
-      marginRight: theme.spacing(0.5),
     }),
   };
 }

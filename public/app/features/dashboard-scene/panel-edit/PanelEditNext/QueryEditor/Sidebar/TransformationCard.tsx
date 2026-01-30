@@ -2,7 +2,7 @@ import { standardTransformersRegistry } from '@grafana/data';
 import { DataTransformerConfig } from '@grafana/schema';
 import { Text } from '@grafana/ui';
 
-import { QueryEditorType } from '../../constants';
+import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../../constants';
 import { useQueryEditorUIContext } from '../QueryEditorContext';
 
 import { SidebarCard } from './SidebarCard';
@@ -14,7 +14,7 @@ export const TransformationCard = ({ transformation }: { transformation: DataTra
 
   return (
     <SidebarCard
-      editorType={QueryEditorType.Transformation}
+      config={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Transformation]}
       isSelected={isSelected}
       hasError={false}
       id={transformation.id}
