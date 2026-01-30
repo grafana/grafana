@@ -47,14 +47,14 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
       <QuerySidebarCollapsableHeader
         label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
       >
-        {queries.map((query) => (
-          <QueryCard key={query.refId} query={query} />
+        {queries.map((query, index) => (
+          <QueryCard key={`${query.refId}-${index}`} query={query} />
         ))}
       </QuerySidebarCollapsableHeader>
       {transformations.length > 0 && (
         <QuerySidebarCollapsableHeader label={t('query-editor-next.sidebar.transformations', 'Transformations')}>
-          {transformations.map((transformation) => (
-            <TransformationCard key={transformation.id} transformation={transformation} />
+          {transformations.map((transformation, index) => (
+            <TransformationCard key={`${transformation.id}-${index}`} transformation={transformation} />
           ))}
         </QuerySidebarCollapsableHeader>
       )}
