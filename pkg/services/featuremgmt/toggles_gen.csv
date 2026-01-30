@@ -67,6 +67,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-23,alertingProvenanceLockWrites,experimental,@grafana/alerting-squad,false,false,false
 2025-11-13,alertingUIUseBackendFilters,experimental,@grafana/alerting-squad,false,false,false
 2025-11-24,alertingUIUseFullyCompatBackendFilters,experimental,@grafana/alerting-squad,false,false,false
+2025-10-29,createAlertRuleFromPanel,experimental,@grafana/alerting-squad,false,false,true
 2023-10-30,alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 2023-10-31,annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 2023-11-02,dashboardSceneForViewers,GA,@grafana/dashboards-squad,false,false,true
@@ -225,8 +226,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-01,alertEnrichmentMultiStep,experimental,@grafana/alerting-squad,false,false,false
 2025-08-01,alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false
 2025-06-10,alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
-2025-08-01,alertingImportAlertmanagerUI,experimental,@grafana/alerting-squad,false,false,false
-2026-01-26,alertingDisableDMAinUI,experimental,@grafana/alerting-squad,false,false,false
+2025-07-31,alertingImportAlertmanagerUI,experimental,@grafana/alerting-squad,false,false,false
 2025-07-15,sharingDashboardImage,GA,@grafana/sharing-squad,false,false,true
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 2025-06-24,tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false

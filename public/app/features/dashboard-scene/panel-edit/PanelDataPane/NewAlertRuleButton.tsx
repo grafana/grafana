@@ -1,12 +1,14 @@
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
-import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService, logInfo } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
-import { LogMessages } from 'app/features/alerting/unified/Analytics';
+import { LogMessages, logInfo } from 'app/features/alerting/unified/Analytics';
+import { AlertRuleDrawerForm } from 'app/features/alerting/unified/components/AlertRuleDrawerForm';
+import { createPanelAlertRuleNavigation } from 'app/features/alerting/unified/utils/navigation';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 
 interface ScenesNewRuleFromPanelButtonProps {
@@ -17,6 +19,7 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
   const location = useLocation();
 
   const { loading, value: formValues } = useAsync(() => scenesPanelToRuleFormValues(panel), [panel]);
+  const [isOpen, setIsOpen] = useState(false);
 
   if (loading) {
     return (
@@ -42,22 +45,45 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
     );
   }
 
-  const onClick = async () => {
-    logInfo(LogMessages.alertRuleFromPanel);
+  const { onContinueInAlertingFromDrawer, onButtonClick: onContinueInAlertingButton } = createPanelAlertRuleNavigation(
+    () => scenesPanelToRuleFormValues(panel),
+    location
+  );
 
-    const updateToDateFormValues = await scenesPanelToRuleFormValues(panel);
+  const shouldUseDrawer = config.featureToggles.createAlertRuleFromPanel;
 
-    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
-      defaults: JSON.stringify(updateToDateFormValues),
-      returnTo: location.pathname + location.search,
-    });
-
-    locationService.push(ruleFormUrl);
-  };
+  if (shouldUseDrawer) {
+    return (
+      <>
+        <Button
+          icon="bell"
+          className={className}
+          data-testid="create-alert-rule-button-drawer"
+          onClick={() => {
+            logInfo(LogMessages.alertRuleFromPanel);
+            setIsOpen(true);
+          }}
+        >
+          <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
+        </Button>
+        <AlertRuleDrawerForm
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          onContinueInAlerting={onContinueInAlertingFromDrawer}
+          prefill={formValues ?? undefined}
+        />
+      </>
+    );
+  }
 
   return (
-    <Button icon="bell" onClick={onClick} className={className} data-testid="create-alert-rule-button">
-      <Trans i18nKey="dashboard-scene.scenes-new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
+    <Button
+      icon="bell"
+      onClick={onContinueInAlertingButton}
+      className={className}
+      data-testid="create-alert-rule-button"
+    >
+      <Trans i18nKey="alerting.new-rule-from-panel-button.new-alert-rule">New alert rule</Trans>
     </Button>
   );
 };
