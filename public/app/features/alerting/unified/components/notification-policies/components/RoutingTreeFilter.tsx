@@ -34,6 +34,7 @@ const RoutingTreeFilter = () => {
   return (
     <Stack direction="row" alignItems="end" gap={0.5}>
       <Field
+        noMargin
         className={styles.noBottom}
         label={t('alerting.routing-tree-filter.label-search-by-name-or-receiver', 'Search by name or receiver')}
       >

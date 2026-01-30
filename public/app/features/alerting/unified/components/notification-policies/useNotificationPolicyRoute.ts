@@ -51,6 +51,8 @@ const {
 
 const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 
+const memoK8sRouteToRoute = memoize(k8sRouteToRoute);
+
 export const useNotificationPolicyRoute = (
   { alertmanager }: BaseAlertmanagerArgs,
   routeName: string = ROOT_ROUTE_NAME,
@@ -65,18 +67,10 @@ export const useNotificationPolicyRoute = (
       selectFromResult: (result) => {
         const { data, currentData, ...rest } = result;
 
-        const transformed = useMemo(() => {
-          return data ? k8sRouteToRoute(data) : data;
-        }, [data]);
-
-        const transformedCurrent = useMemo(() => {
-          return currentData ? k8sRouteToRoute(currentData) : currentData;
-        }, [currentData]);
-
         return {
           ...rest,
-          data: transformed,
-          currentData: transformedCurrent,
+          data: data ? memoK8sRouteToRoute(data) : data,
+          currentData: currentData ? memoK8sRouteToRoute(currentData) : currentData,
         };
       },
     }
@@ -108,18 +102,10 @@ export const useListNotificationPolicyRoutes = ({ skip }: Skippable = {}) => {
       selectFromResult: (result) => {
         const { data, currentData, ...rest } = result;
 
-        const transformed = useMemo(() => {
-          return data ? data.items.map(k8sRouteToRoute) : data;
-        }, [data]);
-
-        const transformedCurrent = useMemo(() => {
-          return currentData ? currentData.items.map(k8sRouteToRoute) : currentData;
-        }, [currentData]);
-
         return {
           ...rest,
-          data: transformed,
-          currentData: transformedCurrent,
+          data: data ? data.items.map(memoK8sRouteToRoute) : data,
+          currentData: currentData ? currentData.items.map(memoK8sRouteToRoute) : currentData,
         };
       },
     }
