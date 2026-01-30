@@ -65,23 +65,23 @@ Grafana ships with support for OpenTSDB, an open source time series database bui
 
 The OpenTSDB data source supports the following features:
 
-| Feature | Supported | Notes |
-| ------- | --------- | ----- |
-| Metrics queries | Yes | Query time series data with aggregation, downsampling, and filtering |
-| Alerting | Yes | Create alert rules based on OpenTSDB queries |
-| Annotations | Yes | Overlay events on graphs using metric-specific or global annotations |
-| Template variables | Yes | Use dynamic variables in queries |
-| Explore | Yes | Ad-hoc data exploration without dashboards |
+| Feature            | Supported | Notes                                                                |
+| ------------------ | --------- | -------------------------------------------------------------------- |
+| Metrics queries    | Yes       | Query time series data with aggregation, downsampling, and filtering |
+| Alerting           | Yes       | Create alert rules based on OpenTSDB queries                         |
+| Annotations        | Yes       | Overlay events on graphs using metric-specific or global annotations |
+| Template variables | Yes       | Use dynamic variables in queries                                     |
+| Explore            | Yes       | Ad-hoc data exploration without dashboards                           |
 
 ## Supported OpenTSDB versions
 
 The data source supports OpenTSDB versions 2.1 through 2.4. Some features are version-specific:
 
-| Feature | Minimum version |
-| ------- | --------------- |
-| Filters | 2.2 |
-| Fill policies | 2.2 |
-| Explicit tags | 2.3 |
+| Feature       | Minimum version |
+| ------------- | --------------- |
+| Filters       | 2.2             |
+| Fill policies | 2.2             |
+| Explicit tags | 2.3             |
 
 ## Get started
 

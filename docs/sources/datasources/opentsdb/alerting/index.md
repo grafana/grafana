@@ -66,12 +66,12 @@ Before creating alerts with OpenTSDB, ensure you have:
 
 OpenTSDB alerting works with standard metric queries that return time series data. The following table summarizes alerting compatibility:
 
-| Query type | Alerting support | Notes |
-| ---------- | ---------------- | ----- |
-| Metrics with aggregation | Yes | Recommended for alerting |
-| Metrics with downsampling | Yes | Use appropriate intervals |
-| Metrics with rate calculation | Yes | Useful for counter metrics |
-| Metrics with filters/tags | Yes | Filter to specific hosts or services |
+| Query type                    | Alerting support | Notes                                |
+| ----------------------------- | ---------------- | ------------------------------------ |
+| Metrics with aggregation      | Yes              | Recommended for alerting             |
+| Metrics with downsampling     | Yes              | Use appropriate intervals            |
+| Metrics with rate calculation | Yes              | Useful for counter metrics           |
+| Metrics with filters/tags     | Yes              | Filter to specific hosts or services |
 
 ## Create an alert rule
 
@@ -101,13 +101,13 @@ The following examples show common alerting scenarios with OpenTSDB.
 
 Monitor CPU usage and alert when it exceeds 90%:
 
-| Field | Value |
-| ----- | ----- |
-| Metric | `sys.cpu.user` |
-| Aggregator | `avg` |
-| Tags | `host=*` |
-| Downsample Interval | `1m` |
-| Downsample Aggregator | `avg` |
+| Field                 | Value          |
+| --------------------- | -------------- |
+| Metric                | `sys.cpu.user` |
+| Aggregator            | `avg`          |
+| Tags                  | `host=*`       |
+| Downsample Interval   | `1m`           |
+| Downsample Aggregator | `avg`          |
 
 **Condition:** When average is above `90`
 
@@ -115,13 +115,13 @@ Monitor CPU usage and alert when it exceeds 90%:
 
 Monitor available disk space and alert when it drops below a threshold:
 
-| Field | Value |
-| ----- | ----- |
-| Metric | `sys.disk.free` |
-| Aggregator | `min` |
-| Tags | `host=*`, `mount=/` |
-| Downsample Interval | `5m` |
-| Downsample Aggregator | `min` |
+| Field                 | Value               |
+| --------------------- | ------------------- |
+| Metric                | `sys.disk.free`     |
+| Aggregator            | `min`               |
+| Tags                  | `host=*`, `mount=/` |
+| Downsample Interval   | `5m`                |
+| Downsample Aggregator | `min`               |
 
 **Condition:** When minimum is below `10737418240` (10 GB in bytes)
 
@@ -129,15 +129,15 @@ Monitor available disk space and alert when it drops below a threshold:
 
 Monitor network bytes received and alert on high traffic:
 
-| Field | Value |
-| ----- | ----- |
-| Metric | `net.bytes.received` |
-| Aggregator | `sum` |
-| Tags | `host=webserver01` |
-| Rate | enabled |
-| Counter | enabled |
-| Downsample Interval | `1m` |
-| Downsample Aggregator | `avg` |
+| Field                 | Value                |
+| --------------------- | -------------------- |
+| Metric                | `net.bytes.received` |
+| Aggregator            | `sum`                |
+| Tags                  | `host=webserver01`   |
+| Rate                  | enabled              |
+| Counter               | enabled              |
+| Downsample Interval   | `1m`                 |
+| Downsample Aggregator | `avg`                |
 
 **Condition:** When sum is above `104857600` (100 MB/s in bytes)
 
@@ -145,13 +145,13 @@ Monitor network bytes received and alert on high traffic:
 
 Monitor application error counts:
 
-| Field | Value |
-| ----- | ----- |
-| Metric | `app.errors.count` |
-| Aggregator | `sum` |
-| Tags | `service=api`, `env=production` |
-| Downsample Interval | `5m` |
-| Downsample Aggregator | `sum` |
+| Field                 | Value                           |
+| --------------------- | ------------------------------- |
+| Metric                | `app.errors.count`              |
+| Aggregator            | `sum`                           |
+| Tags                  | `service=api`, `env=production` |
+| Downsample Interval   | `5m`                            |
+| Downsample Aggregator | `sum`                           |
 
 **Condition:** When sum is above `100`
 

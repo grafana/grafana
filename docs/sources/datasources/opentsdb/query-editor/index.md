@@ -60,33 +60,33 @@ To create a query:
 
 The Metric section contains the core query configuration:
 
-| Field | Description |
-| ----- | ----------- |
-| **Metric** | The metric name to query. Start typing to see autocomplete suggestions from your OpenTSDB server. |
-| **Aggregator** | The aggregation function to combine multiple time series. Default: `sum`. |
-| **Alias** | Custom display name for the series. Use `$tag_<tagname>` to include tag values in the alias. |
+| Field          | Description                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------------- |
+| **Metric**     | The metric name to query. Start typing to see autocomplete suggestions from your OpenTSDB server. |
+| **Aggregator** | The aggregation function to combine multiple time series. Default: `sum`.                         |
+| **Alias**      | Custom display name for the series. Use `$tag_<tagname>` to include tag values in the alias.      |
 
 ### Alias patterns
 
 The alias field supports dynamic substitution using tag values. Use the pattern `$tag_<tagname>` where `<tagname>` is the name of a tag on your metric.
 
-| Pattern | Description | Example output |
-| ------- | ----------- | -------------- |
-| `$tag_host` | Inserts the value of the `host` tag | `webserver01` |
-| `$tag_env` | Inserts the value of the `env` tag | `production` |
-| `$tag_host - CPU` | Combines tag value with static text | `webserver01 - CPU` |
-| `$tag_host ($tag_env)` | Multiple tag substitutions | `webserver01 (production)` |
+| Pattern                | Description                         | Example output             |
+| ---------------------- | ----------------------------------- | -------------------------- |
+| `$tag_host`            | Inserts the value of the `host` tag | `webserver01`              |
+| `$tag_env`             | Inserts the value of the `env` tag  | `production`               |
+| `$tag_host - CPU`      | Combines tag value with static text | `webserver01 - CPU`        |
+| `$tag_host ($tag_env)` | Multiple tag substitutions          | `webserver01 (production)` |
 
 ## Downsample section
 
 Downsampling reduces the number of data points returned by aggregating values over time intervals. This improves query performance and reduces the amount of data transferred.
 
-| Field | Description |
-| ----- | ----------- |
-| **Interval** | The time interval for downsampling. Leave blank to use the automatic interval based on the panel's time range and width. |
-| **Aggregator** | The aggregation function for downsampling. Default: `avg`. |
-| **Fill** | (Version 2.2+) The fill policy for missing data points. Default: `none`. |
-| **Disable downsampling** | Toggle to disable downsampling entirely. Use this when you need raw data points. |
+| Field                    | Description                                                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| **Interval**             | The time interval for downsampling. Leave blank to use the automatic interval based on the panel's time range and width. |
+| **Aggregator**           | The aggregation function for downsampling. Default: `avg`.                                                               |
+| **Fill**                 | (Version 2.2+) The fill policy for missing data points. Default: `none`.                                                 |
+| **Disable downsampling** | Toggle to disable downsampling entirely. Use this when you need raw data points.                                         |
 
 ### Interval format
 
@@ -94,11 +94,11 @@ The interval field accepts time duration strings:
 
 | Format | Description | Example |
 | ------ | ----------- | ------- |
-| `s` | Seconds | `30s` |
-| `m` | Minutes | `5m` |
-| `h` | Hours | `1h` |
-| `d` | Days | `1d` |
-| `w` | Weeks | `1w` |
+| `s`    | Seconds     | `30s`   |
+| `m`    | Minutes     | `5m`    |
+| `h`    | Hours       | `1h`    |
+| `d`    | Days        | `1d`    |
+| `w`    | Weeks       | `1w`    |
 
 When the interval is left blank, Grafana automatically calculates an appropriate interval based on the panel's time range and pixel width. This ensures optimal data density for visualization.
 
@@ -106,11 +106,11 @@ When the interval is left blank, Grafana automatically calculates an appropriate
 
 Filters (available in OpenTSDB 2.2+) provide advanced filtering capabilities that replace the legacy tag-based filtering.
 
-| Field | Description |
-| ----- | ----------- |
-| **Key** | The tag key to filter on. Select from autocomplete suggestions or type a custom value. |
-| **Type** | The filter type. Determines how the filter value is matched. Default: `iliteral_or`. |
-| **Filter** | The filter value or pattern. Supports autocomplete for tag values. |
+| Field        | Description                                                                                                     |
+| ------------ | --------------------------------------------------------------------------------------------------------------- |
+| **Key**      | The tag key to filter on. Select from autocomplete suggestions or type a custom value.                          |
+| **Type**     | The filter type. Determines how the filter value is matched. Default: `iliteral_or`.                            |
+| **Filter**   | The filter value or pattern. Supports autocomplete for tag values.                                              |
 | **Group by** | Toggle to group results by this tag key. When enabled, separate time series are returned for each unique value. |
 
 ### Add, edit, and remove filters
@@ -127,15 +127,15 @@ You can add multiple filters to a single query. All filters are combined with AN
 
 ### Filter types
 
-| Type | Description | Example |
-| ---- | ----------- | ------- |
-| `literal_or` | Matches exact values. Use `\|` to specify multiple values. | `web01\|web02\|web03` |
-| `iliteral_or` | Case-insensitive literal match. | `WEB01\|web02` |
-| `wildcard` | Matches using `*` as a wildcard character. | `web-*-prod` |
-| `iwildcard` | Case-insensitive wildcard match. | `WEB-*` |
-| `regexp` | Matches using regular expressions. | `web-[0-9]+` |
-| `not_literal_or` | Excludes exact values. | `web01\|web02` |
-| `not_iliteral_or` | Case-insensitive exclusion. | `TEST\|DEV` |
+| Type              | Description                                                | Example               |
+| ----------------- | ---------------------------------------------------------- | --------------------- |
+| `literal_or`      | Matches exact values. Use `\|` to specify multiple values. | `web01\|web02\|web03` |
+| `iliteral_or`     | Case-insensitive literal match.                            | `WEB01\|web02`        |
+| `wildcard`        | Matches using `*` as a wildcard character.                 | `web-*-prod`          |
+| `iwildcard`       | Case-insensitive wildcard match.                           | `WEB-*`               |
+| `regexp`          | Matches using regular expressions.                         | `web-[0-9]+`          |
+| `not_literal_or`  | Excludes exact values.                                     | `web01\|web02`        |
+| `not_iliteral_or` | Case-insensitive exclusion.                                | `TEST\|DEV`           |
 
 ### Group by behavior
 
@@ -154,9 +154,9 @@ When **Group by** is disabled:
 
 Tags filter metrics by key-value pairs. This is the legacy filtering method for OpenTSDB versions prior to 2.2.
 
-| Field | Description |
-| ----- | ----------- |
-| **Key** | The tag key to filter on. Select from autocomplete suggestions. |
+| Field     | Description                                                       |
+| --------- | ----------------------------------------------------------------- |
+| **Key**   | The tag key to filter on. Select from autocomplete suggestions.   |
 | **Value** | The tag value to match. Use `*` to match all values for this key. |
 
 ### Add, edit, and remove tags
@@ -182,13 +182,13 @@ Tags and Filters are mutually exclusive. If you have filters defined, you cannot
 
 The Rate section computes the rate of change, which is essential for counter metrics that continuously increment.
 
-| Field | Description |
-| ----- | ----------- |
-| **Rate** | Toggle to enable rate calculation. Computes the per-second rate of change between consecutive values. |
-| **Counter** | (When Rate is enabled) Toggle to indicate the metric is a monotonically increasing counter that may reset. |
-| **Counter max** | (When Counter is enabled) The maximum value before the counter wraps around. |
-| **Reset value** | (When Counter is enabled) The value the counter resets to after wrapping. Default: `0`. |
-| **Explicit tags** | (Version 2.3+) Toggle to require all specified tags to exist on matching time series. |
+| Field             | Description                                                                                                |
+| ----------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Rate**          | Toggle to enable rate calculation. Computes the per-second rate of change between consecutive values.      |
+| **Counter**       | (When Rate is enabled) Toggle to indicate the metric is a monotonically increasing counter that may reset. |
+| **Counter max**   | (When Counter is enabled) The maximum value before the counter wraps around.                               |
+| **Reset value**   | (When Counter is enabled) The value the counter resets to after wrapping. Default: `0`.                    |
+| **Explicit tags** | (Version 2.3+) Toggle to require all specified tags to exist on matching time series.                      |
 
 ### When to use rate calculation
 
@@ -218,24 +218,24 @@ The aggregator function combines multiple time series into one. Grafana fetches 
 
 ### Common aggregators
 
-| Aggregator | Description | Use case |
-| ---------- | ----------- | -------- |
-| `sum` | Sum all values at each timestamp. | Total requests across all servers. |
-| `avg` | Average all values at each timestamp. | Average CPU usage across hosts. |
-| `min` | Take the minimum value at each timestamp. | Lowest response time. |
-| `max` | Take the maximum value at each timestamp. | Peak memory usage. |
-| `dev` | Calculate the standard deviation. | Measure variability in response times. |
-| `count` | Count the number of data points. | Number of reporting hosts. |
+| Aggregator | Description                               | Use case                               |
+| ---------- | ----------------------------------------- | -------------------------------------- |
+| `sum`      | Sum all values at each timestamp.         | Total requests across all servers.     |
+| `avg`      | Average all values at each timestamp.     | Average CPU usage across hosts.        |
+| `min`      | Take the minimum value at each timestamp. | Lowest response time.                  |
+| `max`      | Take the maximum value at each timestamp. | Peak memory usage.                     |
+| `dev`      | Calculate the standard deviation.         | Measure variability in response times. |
+| `count`    | Count the number of data points.          | Number of reporting hosts.             |
 
 ### Interpolation aggregators
 
 These aggregators handle missing data points differently:
 
-| Aggregator | Description |
-| ---------- | ----------- |
-| `zimsum` | Sum values, treating missing data as zero. |
-| `mimmin` | Minimum value, ignoring missing (interpolated) data. |
-| `mimmax` | Maximum value, ignoring missing (interpolated) data. |
+| Aggregator | Description                                          |
+| ---------- | ---------------------------------------------------- |
+| `zimsum`   | Sum values, treating missing data as zero.           |
+| `mimmin`   | Minimum value, ignoring missing (interpolated) data. |
+| `mimmax`   | Maximum value, ignoring missing (interpolated) data. |
 
 {{< admonition type="note" >}}
 The available aggregators depend on your OpenTSDB server version and configuration. The aggregator dropdown is populated dynamically from the `/api/aggregators` endpoint on your OpenTSDB server.
@@ -245,12 +245,12 @@ The available aggregators depend on your OpenTSDB server version and configurati
 
 Fill policies (available in OpenTSDB 2.2+) determine how to handle missing data points during downsampling. This is important when your data has gaps or irregular collection intervals.
 
-| Policy | Description | Use case |
-| ------ | ----------- | -------- |
-| `none` | Don't fill missing values. Gaps remain in the data. | Default behavior; preserves data fidelity. |
-| `nan` | Fill missing values with NaN (Not a Number). | Useful for calculations that should propagate missing data. |
-| `null` | Fill missing values with null. | Visualizations show gaps at null points. |
-| `zero` | Fill missing values with zero. | Treat missing data as zero values; useful for counters. |
+| Policy | Description                                         | Use case                                                    |
+| ------ | --------------------------------------------------- | ----------------------------------------------------------- |
+| `none` | Don't fill missing values. Gaps remain in the data. | Default behavior; preserves data fidelity.                  |
+| `nan`  | Fill missing values with NaN (Not a Number).        | Useful for calculations that should propagate missing data. |
+| `null` | Fill missing values with null.                      | Visualizations show gaps at null points.                    |
+| `zero` | Fill missing values with zero.                      | Treat missing data as zero values; useful for counters.     |
 
 ### Choose the right fill policy
 
@@ -265,12 +265,12 @@ The query editor provides autocomplete suggestions to help you build queries qui
 
 ### What autocomplete provides
 
-| Field | Source | Description |
-| ----- | ------ | ----------- |
-| **Metric** | `/api/suggest?type=metrics` | Suggests metric names as you type. |
-| **Tag keys** | Previous query results | Suggests tag keys based on the selected metric. |
-| **Tag values** | `/api/suggest?type=tagv` | Suggests tag values as you type. |
-| **Filter keys** | Previous query results | Suggests tag keys for filter configuration. |
+| Field           | Source                      | Description                                     |
+| --------------- | --------------------------- | ----------------------------------------------- |
+| **Metric**      | `/api/suggest?type=metrics` | Suggests metric names as you type.              |
+| **Tag keys**    | Previous query results      | Suggests tag keys based on the selected metric. |
+| **Tag values**  | `/api/suggest?type=tagv`    | Suggests tag values as you type.                |
+| **Filter keys** | Previous query results      | Suggests tag keys for filter configuration.     |
 
 ### Autocomplete requirements
 
@@ -300,99 +300,99 @@ The following examples demonstrate common query patterns.
 
 ### Basic metric query with tag filtering
 
-| Field | Value |
-| ----- | ----- |
-| Metric | `sys.cpu.user` |
-| Aggregator | `avg` |
-| Tags | `host=webserver01` |
+| Field      | Value              |
+| ---------- | ------------------ |
+| Metric     | `sys.cpu.user`     |
+| Aggregator | `avg`              |
+| Tags       | `host=webserver01` |
 
 This query returns the average CPU usage for the host `webserver01`.
 
 ### Query with wildcard filter (OpenTSDB 2.2+)
 
-| Field | Value |
-| ----- | ----- |
-| Metric | `http.requests.count` |
-| Aggregator | `sum` |
-| Filter Key | `host` |
-| Filter Type | `wildcard` |
-| Filter Value | `web-*` |
-| Group by | enabled |
+| Field        | Value                 |
+| ------------ | --------------------- |
+| Metric       | `http.requests.count` |
+| Aggregator   | `sum`                 |
+| Filter Key   | `host`                |
+| Filter Type  | `wildcard`            |
+| Filter Value | `web-*`               |
+| Group by     | enabled               |
 
 This query sums HTTP request counts across all hosts matching `web-*` and groups results by host.
 
 ### Rate calculation for network counters
 
-| Field | Value |
-| ----- | ----- |
-| Metric | `net.bytes.received` |
-| Aggregator | `sum` |
-| Rate | enabled |
-| Counter | enabled |
+| Field       | Value                  |
+| ----------- | ---------------------- |
+| Metric      | `net.bytes.received`   |
+| Aggregator  | `sum`                  |
+| Rate        | enabled                |
+| Counter     | enabled                |
 | Counter max | `18446744073709551615` |
 
 This query calculates the rate of bytes received per second. The counter max is set to the 64-bit unsigned integer maximum to handle counter wraps correctly.
 
 ### Using alias patterns
 
-| Field | Value |
-| ----- | ----- |
-| Metric | `app.response.time` |
-| Aggregator | `avg` |
-| Tags | `host=*`, `env=production` |
-| Alias | `$tag_host - Response Time` |
+| Field      | Value                       |
+| ---------- | --------------------------- |
+| Metric     | `app.response.time`         |
+| Aggregator | `avg`                       |
+| Tags       | `host=*`, `env=production`  |
+| Alias      | `$tag_host - Response Time` |
 
 This query uses the alias pattern to create readable legend labels like `webserver01 - Response Time`.
 
 ### Downsampling with custom interval
 
-| Field | Value |
-| ----- | ----- |
-| Metric | `sys.disk.io.bytes` |
-| Aggregator | `sum` |
-| Downsample Interval | `5m` |
-| Downsample Aggregator | `avg` |
-| Fill | `zero` |
+| Field                 | Value               |
+| --------------------- | ------------------- |
+| Metric                | `sys.disk.io.bytes` |
+| Aggregator            | `sum`               |
+| Downsample Interval   | `5m`                |
+| Downsample Aggregator | `avg`               |
+| Fill                  | `zero`              |
 
 This query downsamples disk I/O data to 5-minute averages, filling gaps with zero values.
 
 ### Compare environments with filters
 
-| Field | Value |
-| ----- | ----- |
-| Metric | `app.errors.count` |
-| Aggregator | `sum` |
-| Filter Key | `env` |
-| Filter Type | `literal_or` |
+| Field        | Value                 |
+| ------------ | --------------------- |
+| Metric       | `app.errors.count`    |
+| Aggregator   | `sum`                 |
+| Filter Key   | `env`                 |
+| Filter Type  | `literal_or`          |
 | Filter Value | `staging\|production` |
-| Group by | enabled |
+| Group by     | enabled               |
 
 This query shows error counts for both staging and production environments as separate time series for comparison.
 
 ### Exclude specific hosts
 
-| Field | Value |
-| ----- | ----- |
-| Metric | `sys.cpu.user` |
-| Aggregator | `avg` |
-| Filter Key | `host` |
-| Filter Type | `not_literal_or` |
+| Field        | Value                     |
+| ------------ | ------------------------- |
+| Metric       | `sys.cpu.user`            |
+| Aggregator   | `avg`                     |
+| Filter Key   | `host`                    |
+| Filter Type  | `not_literal_or`          |
 | Filter Value | `test-server\|dev-server` |
-| Group by | enabled |
+| Group by     | enabled                   |
 
 This query shows CPU usage for all hosts except test-server and dev-server.
 
 ### Query with explicit tags (version 2.3+)
 
-| Field | Value |
-| ----- | ----- |
-| Metric | `app.request.latency` |
-| Aggregator | `avg` |
-| Filter Key | `host` |
-| Filter Type | `wildcard` |
-| Filter Value | `*` |
-| Group by | enabled |
-| Explicit tags | enabled |
+| Field         | Value                 |
+| ------------- | --------------------- |
+| Metric        | `app.request.latency` |
+| Aggregator    | `avg`                 |
+| Filter Key    | `host`                |
+| Filter Type   | `wildcard`            |
+| Filter Value  | `*`                   |
+| Group by      | enabled               |
+| Explicit tags | enabled               |
 
 This query only returns time series that have the `host` tag defined, excluding any time series that are missing this tag.
 

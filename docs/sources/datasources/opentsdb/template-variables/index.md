@@ -51,13 +51,13 @@ The OpenTSDB data source supports query-type template variables that fetch value
 
 ### Supported query functions
 
-| Query | Description | API used |
-| ----- | ----------- | -------- |
-| `metrics(prefix)` | Returns metric names matching the prefix. Use empty parentheses for all metrics. | `/api/suggest?type=metrics` |
-| `tag_names(metric)` | Returns tag keys (names) that exist for a specific metric. | `/api/search/lookup` |
-| `tag_values(metric, tagkey)` | Returns tag values for a specific metric and tag key. | `/api/search/lookup` |
-| `suggest_tagk(prefix)` | Returns tag keys matching the prefix across all metrics. | `/api/suggest?type=tagk` |
-| `suggest_tagv(prefix)` | Returns tag values matching the prefix across all metrics. | `/api/suggest?type=tagv` |
+| Query                        | Description                                                                      | API used                    |
+| ---------------------------- | -------------------------------------------------------------------------------- | --------------------------- |
+| `metrics(prefix)`            | Returns metric names matching the prefix. Use empty parentheses for all metrics. | `/api/suggest?type=metrics` |
+| `tag_names(metric)`          | Returns tag keys (names) that exist for a specific metric.                       | `/api/search/lookup`        |
+| `tag_values(metric, tagkey)` | Returns tag values for a specific metric and tag key.                            | `/api/search/lookup`        |
+| `suggest_tagk(prefix)`       | Returns tag keys matching the prefix across all metrics.                         | `/api/suggest?type=tagk`    |
+| `suggest_tagv(prefix)`       | Returns tag values matching the prefix across all metrics.                       | `/api/suggest?type=tagv`    |
 
 {{< admonition type="note" >}}
 The `tag_names` and `tag_values` functions use the OpenTSDB lookup API, which requires metrics to exist in your database. The `suggest_tagk` and `suggest_tagv` functions use the suggest API, which searches across all metrics.
@@ -149,11 +149,11 @@ tag_values(metric, tagkey, tag1=$variable1, tag2=$variable2)
 
 ### Nested variable examples
 
-| Query | Description |
-| ----- | ----------- |
-| `tag_values(sys.cpu.user, host, env=$env)` | Returns host values filtered by the selected `env` value. |
+| Query                                                      | Description                                                  |
+| ---------------------------------------------------------- | ------------------------------------------------------------ |
+| `tag_values(sys.cpu.user, host, env=$env)`                 | Returns host values filtered by the selected `env` value.    |
 | `tag_values(sys.cpu.user, host, env=$env, datacenter=$dc)` | Returns host values filtered by both `env` and `datacenter`. |
-| `tag_values(app.requests, endpoint, service=$service)` | Returns endpoint values for the selected service. |
+| `tag_values(app.requests, endpoint, service=$service)`     | Returns endpoint values for the selected service.            |
 
 ### Create cascading filters
 
@@ -181,21 +181,21 @@ Reference variables in your queries using the `$variablename` or `${variablename
 
 Variables can be used in these query editor fields:
 
-| Field | Example | Description |
-| ----- | ------- | ----------- |
-| **Metric** | `$metric` | Dynamically select which metric to query. |
-| **Tag value** | `host=$host` | Filter by a variable-selected tag value. |
-| **Filter value** | `$host` | Use in filter value field for filtering. |
-| **Alias** | `$tag_host - $host` | Include variable values in legend labels. |
-| **Downsample interval** | `$interval` | Use a variable for the downsample interval. |
+| Field                   | Example             | Description                                 |
+| ----------------------- | ------------------- | ------------------------------------------- |
+| **Metric**              | `$metric`           | Dynamically select which metric to query.   |
+| **Tag value**           | `host=$host`        | Filter by a variable-selected tag value.    |
+| **Filter value**        | `$host`             | Use in filter value field for filtering.    |
+| **Alias**               | `$tag_host - $host` | Include variable values in legend labels.   |
+| **Downsample interval** | `$interval`         | Use a variable for the downsample interval. |
 
 ### Variable syntax options
 
-| Syntax | Description |
-| ------ | ----------- |
-| `$variablename` | Simple syntax for most cases. |
-| `${variablename}` | Use when the variable is adjacent to other text (for example, `${host}_suffix`). |
-| `${variablename:format}` | Apply a specific format to the variable value. |
+| Syntax                   | Description                                                                      |
+| ------------------------ | -------------------------------------------------------------------------------- |
+| `$variablename`          | Simple syntax for most cases.                                                    |
+| `${variablename}`        | Use when the variable is adjacent to other text (for example, `${host}_suffix`). |
+| `${variablename:format}` | Apply a specific format to the variable value.                                   |
 
 ## Multi-value variables
 
@@ -211,11 +211,11 @@ When you enable **Multi-value** for a variable, users can select multiple values
 
 With a `host` variable configured as multi-value:
 
-| Field | Value |
-| ----- | ----- |
-| Filter Key | `host` |
-| Filter Type | `literal_or` |
-| Filter Value | `$host` |
+| Field        | Value        |
+| ------------ | ------------ |
+| Filter Key   | `host`       |
+| Filter Type  | `literal_or` |
+| Filter Value | `$host`      |
 
 If the user selects `webserver01`, `webserver02`, and `webserver03`, the filter value becomes `webserver01|webserver02|webserver03`.
 
@@ -223,25 +223,25 @@ If the user selects `webserver01`, `webserver02`, and `webserver03`, the filter 
 
 When the user selects "All", Grafana sends all available values pipe-separated. For large value sets, consider using a wildcard filter instead:
 
-| Field | Value |
-| ----- | ----- |
-| Filter Key | `host` |
-| Filter Type | `wildcard` |
-| Filter Value | `*` |
+| Field        | Value      |
+| ------------ | ---------- |
+| Filter Key   | `host`     |
+| Filter Type  | `wildcard` |
+| Filter Value | `*`        |
 
 ## Interval and auto-interval variables
 
 Grafana provides built-in interval variables that are useful with OpenTSDB downsampling:
 
-| Variable | Description |
-| -------- | ----------- |
-| `$__interval` | Automatically calculated interval based on time range and panel width. |
-| `$__interval_ms` | Same as `$__interval` but in milliseconds. |
+| Variable         | Description                                                            |
+| ---------------- | ---------------------------------------------------------------------- |
+| `$__interval`    | Automatically calculated interval based on time range and panel width. |
+| `$__interval_ms` | Same as `$__interval` but in milliseconds.                             |
 
 Use these in the downsample interval field for automatic interval adjustment:
 
-| Field | Value |
-| ----- | ----- |
+| Field               | Value         |
+| ------------------- | ------------- |
 | Downsample Interval | `$__interval` |
 
 ## Next steps

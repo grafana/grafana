@@ -47,10 +47,10 @@ For general information about annotations in Grafana, refer to [Annotate visuali
 
 OpenTSDB supports two types of annotations:
 
-| Type | Description | Use case |
-| ---- | ----------- | -------- |
-| **Metric annotations** | Annotations attached to a specific time series (TSUID). Retrieved by querying the associated metric. | Track events affecting a specific host or service. |
-| **Global annotations** | Annotations not tied to any time series. Apply system-wide. | Track deployments, maintenance windows, or infrastructure-wide events. |
+| Type                   | Description                                                                                          | Use case                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Metric annotations** | Annotations attached to a specific time series (TSUID). Retrieved by querying the associated metric. | Track events affecting a specific host or service.                     |
+| **Global annotations** | Annotations not tied to any time series. Apply system-wide.                                          | Track deployments, maintenance windows, or infrastructure-wide events. |
 
 ## How Grafana retrieves annotations
 
@@ -71,12 +71,12 @@ To add OpenTSDB annotations to a dashboard:
 
 ## Annotation query fields
 
-| Field | Description |
-| ----- | ----------- |
-| **Name** | A descriptive name for this annotation query. Appears in the annotation legend. |
-| **Data source** | Select the OpenTSDB data source. |
-| **Enabled** | Toggle to enable or disable this annotation query. |
-| **OpenTSDB metrics query** | The metric name to query for annotations (for example, `events.deployment`). |
+| Field                       | Description                                                                      |
+| --------------------------- | -------------------------------------------------------------------------------- |
+| **Name**                    | A descriptive name for this annotation query. Appears in the annotation legend.  |
+| **Data source**             | Select the OpenTSDB data source.                                                 |
+| **Enabled**                 | Toggle to enable or disable this annotation query.                               |
+| **OpenTSDB metrics query**  | The metric name to query for annotations (for example, `events.deployment`).     |
 | **Show Global Annotations** | Toggle to include global annotations that aren't tied to a specific time series. |
 
 ## Example annotation queries
@@ -87,11 +87,11 @@ The following examples demonstrate common annotation use cases.
 
 Monitor when deployments occur for a specific application:
 
-| Field | Value |
-| ----- | ----- |
-| Name | App Deployments |
-| OpenTSDB metrics query | `deploy.myapp` |
-| Show Global Annotations | disabled |
+| Field                   | Value           |
+| ----------------------- | --------------- |
+| Name                    | App Deployments |
+| OpenTSDB metrics query  | `deploy.myapp`  |
+| Show Global Annotations | disabled        |
 
 This query retrieves annotations attached to the `deploy.myapp` metric, showing deployment events for that specific application.
 
@@ -99,11 +99,11 @@ This query retrieves annotations attached to the `deploy.myapp` metric, showing 
 
 Capture system-wide events such as network changes or datacenter maintenance:
 
-| Field | Value |
-| ----- | ----- |
-| Name | Infrastructure Events |
-| OpenTSDB metrics query | `events.infrastructure` |
-| Show Global Annotations | enabled |
+| Field                   | Value                   |
+| ----------------------- | ----------------------- |
+| Name                    | Infrastructure Events   |
+| OpenTSDB metrics query  | `events.infrastructure` |
+| Show Global Annotations | enabled                 |
 
 This query retrieves both metric-specific and global annotations, providing a complete picture of infrastructure events.
 
@@ -111,21 +111,21 @@ This query retrieves both metric-specific and global annotations, providing a co
 
 Mark incident start and resolution times:
 
-| Field | Value |
-| ----- | ----- |
-| Name | Incidents |
-| OpenTSDB metrics query | `events.incident` |
-| Show Global Annotations | enabled |
+| Field                   | Value             |
+| ----------------------- | ----------------- |
+| Name                    | Incidents         |
+| OpenTSDB metrics query  | `events.incident` |
+| Show Global Annotations | enabled           |
 
 ### Monitor configuration changes
 
 Track when configuration changes are applied:
 
-| Field | Value |
-| ----- | ----- |
-| Name | Config Changes |
-| OpenTSDB metrics query | `events.config` |
-| Show Global Annotations | disabled |
+| Field                   | Value           |
+| ----------------------- | --------------- |
+| Name                    | Config Changes  |
+| OpenTSDB metrics query  | `events.config` |
+| Show Global Annotations | disabled        |
 
 ### Correlate multiple event types
 
@@ -155,14 +155,14 @@ To display annotations in Grafana, you must first create them in OpenTSDB. OpenT
 
 OpenTSDB annotations have the following fields:
 
-| Field | Required | Description |
-| ----- | -------- | ----------- |
-| `startTime` | Yes | Unix epoch timestamp in seconds when the event started. |
-| `endTime` | No | Unix epoch timestamp in seconds when the event ended. Useful for duration-based events. |
-| `tsuid` | No | The time series UID to associate this annotation with. If empty, the annotation is global. |
-| `description` | No | Brief description of the event. This text displays in Grafana. |
-| `notes` | No | Detailed notes about the event. |
-| `custom` | No | A map of custom key-value pairs for additional metadata. |
+| Field         | Required | Description                                                                                |
+| ------------- | -------- | ------------------------------------------------------------------------------------------ |
+| `startTime`   | Yes      | Unix epoch timestamp in seconds when the event started.                                    |
+| `endTime`     | No       | Unix epoch timestamp in seconds when the event ended. Useful for duration-based events.    |
+| `tsuid`       | No       | The time series UID to associate this annotation with. If empty, the annotation is global. |
+| `description` | No       | Brief description of the event. This text displays in Grafana.                             |
+| `notes`       | No       | Detailed notes about the event.                                                            |
+| `custom`      | No       | A map of custom key-value pairs for additional metadata.                                   |
 
 ### Create a global annotation
 
@@ -234,12 +234,12 @@ The following section addresses common issues you may encounter when using OpenT
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| ----- | -------- |
-| Time range doesn't include annotations | Expand the dashboard time range to include the annotation timestamps. |
-| Wrong metric name | Verify the metric name in your annotation query matches the metric associated with the annotations in OpenTSDB. |
-| Annotations are global but toggle is off | Enable **Show Global Annotations** if your annotations don't have a TSUID. |
-| No annotations exist | Verify annotations exist in OpenTSDB using the API: `curl http://<OPENTSDB_HOST>:4242/api/annotation?startTime=<START>&endTime=<END>` |
+| Cause                                    | Solution                                                                                                                              |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Time range doesn't include annotations   | Expand the dashboard time range to include the annotation timestamps.                                                                 |
+| Wrong metric name                        | Verify the metric name in your annotation query matches the metric associated with the annotations in OpenTSDB.                       |
+| Annotations are global but toggle is off | Enable **Show Global Annotations** if your annotations don't have a TSUID.                                                            |
+| No annotations exist                     | Verify annotations exist in OpenTSDB using the API: `curl http://<OPENTSDB_HOST>:4242/api/annotation?startTime=<START>&endTime=<END>` |
 
 ### Annotation text is empty
 

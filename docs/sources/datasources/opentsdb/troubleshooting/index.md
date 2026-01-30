@@ -47,12 +47,12 @@ These errors occur when Grafana can't connect to the OpenTSDB server.
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| ----- | -------- |
-| Wrong URL or port | Verify the URL includes the correct protocol, IP address, and port. The default port is `4242`. |
-| OpenTSDB not running | Check that the OpenTSDB server is running and accessible. |
-| Firewall blocking connection | Ensure firewall rules allow outbound connections from Grafana to the OpenTSDB server on the configured port. |
-| Network issues | Verify network connectivity between Grafana and OpenTSDB. Try pinging the server or using `curl` to test the API. |
+| Cause                        | Solution                                                                                                          |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Wrong URL or port            | Verify the URL includes the correct protocol, IP address, and port. The default port is `4242`.                   |
+| OpenTSDB not running         | Check that the OpenTSDB server is running and accessible.                                                         |
+| Firewall blocking connection | Ensure firewall rules allow outbound connections from Grafana to the OpenTSDB server on the configured port.      |
+| Network issues               | Verify network connectivity between Grafana and OpenTSDB. Try pinging the server or using `curl` to test the API. |
 
 To test connectivity manually, run:
 
@@ -90,13 +90,13 @@ These errors occur when executing queries against OpenTSDB.
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| ----- | -------- |
-| Time range doesn't contain data | Expand the dashboard time range. Verify data exists in OpenTSDB for the selected period. |
-| Wrong metric name | Verify the metric name is correct. Use autocomplete to discover available metrics. |
-| Incorrect tag filters | Remove or adjust tag filters. Use `*` as a wildcard to match all values. |
-| Version mismatch | Ensure the configured OpenTSDB version matches your server. Filters are only available in version 2.2+. |
-| Using both Filters and Tags | Use either Filters or Tags, not both. They're mutually exclusive in OpenTSDB 2.2+. |
+| Cause                           | Solution                                                                                                |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Time range doesn't contain data | Expand the dashboard time range. Verify data exists in OpenTSDB for the selected period.                |
+| Wrong metric name               | Verify the metric name is correct. Use autocomplete to discover available metrics.                      |
+| Incorrect tag filters           | Remove or adjust tag filters. Use `*` as a wildcard to match all values.                                |
+| Version mismatch                | Ensure the configured OpenTSDB version matches your server. Filters are only available in version 2.2+. |
+| Using both Filters and Tags     | Use either Filters or Tags, not both. They're mutually exclusive in OpenTSDB 2.2+.                      |
 
 ### Query timeout
 
