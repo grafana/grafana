@@ -92,7 +92,7 @@ These errors occur when Grafana cannot establish or maintain a connection to the
 
 1. Check the `max_connections` setting on the MySQL server to ensure it isn't being exceeded.
 1. Verify the `wait_timeout` and `interactive_timeout` settings in MySQL aren't set too low.
-1. Increase the **Max lifetime** setting in Grafana's data source configuration to be lower than MySQL's `wait_timeout`.
+1. Increase the **Max lifetime** setting in Grafana's data source configuration to be lower than the MySQL `wait_timeout`.
 1. Check MySQL server logs for any errors or connection-related messages.
 
 ## Authentication errors
