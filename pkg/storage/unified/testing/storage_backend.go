@@ -1487,22 +1487,23 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 			{
 				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: "dashboards", Resource: "dashboard", Name: "test"},
 				Action: resourcepb.BulkRequest_ADDED,
-				Value:  nil,
+				Value:  []byte(`{ "kind": "Test" }`),
 			},
 			{
 				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: "dashboards", Resource: "dashboard", Name: "test2"},
 				Action: resourcepb.BulkRequest_ADDED,
-				Value:  nil,
+				Value:  []byte(`{ "kind": "Test" }`),
 			},
 			{
 				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: "folders", Resource: "folder", Name: "test2"},
 				Action: resourcepb.BulkRequest_ADDED,
-				Value:  nil,
+				Value:  []byte(`{ "kind": "Test" }`),
 			},
 		}
 
 		resp := bulk.ProcessBulk(ctx, resource.BulkSettings{Collection: collections}, toBulkIterator(bulkRequests))
 		require.Nil(t, resp.Error)
+		require.Empty(t, resp.Rejected)
 
 		result := collectLastImportedTimes(t, backend, ctx)
 		require.Len(t, result, len(collections))
@@ -1526,19 +1527,20 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		bulkRequests1 := []*resourcepb.BulkRequest{{
 			Key:    &resourcepb.ResourceKey{Namespace: ns1, Group: "dashboards", Resource: "dashboard", Name: "test"},
 			Action: resourcepb.BulkRequest_ADDED,
-			Value:  nil,
+			Value:  []byte(`{ "kind": "Test" }`),
 		}, {
 			Key:    &resourcepb.ResourceKey{Namespace: ns1, Group: "dashboards", Resource: "dashboard", Name: "test2"},
 			Action: resourcepb.BulkRequest_ADDED,
-			Value:  nil,
+			Value:  []byte(`{ "kind": "Test" }`),
 		}, {
 			Key:    &resourcepb.ResourceKey{Namespace: ns1, Group: "folders", Resource: "folder", Name: "test2"},
 			Action: resourcepb.BulkRequest_ADDED,
-			Value:  nil,
+			Value:  []byte(`{ "kind": "Test" }`),
 		}}
 
 		resp1 := bulk.ProcessBulk(ctx, resource.BulkSettings{Collection: collections1}, toBulkIterator(bulkRequests1))
 		require.Nil(t, resp1.Error)
+		require.Empty(t, resp1.Rejected)
 
 		firstImport := time.Now()
 
@@ -1558,15 +1560,16 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		bulkRequests2 := []*resourcepb.BulkRequest{{
 			Key:    &resourcepb.ResourceKey{Namespace: ns1, Group: "dashboards", Resource: "dashboard", Name: "new-test"},
 			Action: resourcepb.BulkRequest_ADDED,
-			Value:  nil,
+			Value:  []byte(`{ "kind": "Test" }`),
 		}, {
 			Key:    &resourcepb.ResourceKey{Namespace: ns2, Group: "folders", Resource: "folder", Name: "test2"},
 			Action: resourcepb.BulkRequest_ADDED,
-			Value:  nil,
+			Value:  []byte(`{ "kind": "Test" }`),
 		}}
 
 		resp2 := bulk.ProcessBulk(ctx, resource.BulkSettings{Collection: collections2}, toBulkIterator(bulkRequests2))
 		require.Nil(t, resp2.Error)
+		require.Empty(t, resp2.Rejected)
 
 		secondImport := time.Now()
 
