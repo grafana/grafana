@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useEffect } from 'react';
+import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
-import { Button, Combobox, Field, Input, SecretTextArea, Stack } from '@grafana/ui';
+import { Button, Combobox, Field, Stack } from '@grafana/ui';
 import { Connection } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
-import { CONNECTIONS_URL } from '../constants';
+import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
+import { CONNECTIONS_TAB_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { ConnectionFormData } from '../types';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
@@ -25,27 +26,28 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   const connectionName = data?.metadata?.name;
   const isEdit = Boolean(connectionName);
   const privateKey = data?.secure?.privateKey;
-  const [privateKeyConfigured, setPrivateKeyConfigured] = useState(Boolean(privateKey));
   const [submitData, request] = useCreateOrUpdateConnection(connectionName);
   const navigate = useNavigate();
 
+  const formMethods = useForm<ConnectionFormData>({
+    defaultValues: {
+      type: data?.spec?.type || 'github',
+      title: data?.spec?.title || '',
+      description: data?.spec?.description || '',
+      appID: data?.spec?.github?.appID || '',
+      installationID: data?.spec?.github?.installationID || '',
+      privateKey: '',
+    },
+  });
+
   const {
-    register,
     handleSubmit,
     reset,
     control,
-    formState: { errors, isDirty },
-    setValue,
+    formState: { isDirty },
     getValues,
     setError,
-  } = useForm<ConnectionFormData>({
-    defaultValues: {
-      type: data?.spec?.type || 'github',
-      appID: data?.spec?.github?.appID || '',
-      installationID: data?.spec?.github?.installationID || '',
-      privateKey: privateKey?.name || '',
-    },
-  });
+  } = formMethods;
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -58,14 +60,16 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
 
       reset(formData);
       // use timeout to ensure the form resets before navigating
-      setTimeout(() => navigate(CONNECTIONS_URL), 300);
+      setTimeout(() => navigate(CONNECTIONS_TAB_URL), 300);
     }
   }, [request.isSuccess, reset, getValues, connectionName, navigate]);
 
   const onSubmit = async (form: ConnectionFormData) => {
     try {
       const spec = {
+        title: form.title,
         type: form.type,
+        ...(form.description && { description: form.description }),
         github: {
           appID: form.appID,
           installationID: form.installationID,
@@ -75,10 +79,12 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       await submitData(spec, form.privateKey);
     } catch (err) {
       if (isFetchError(err)) {
-        const [field, errorMessage] = getConnectionFormErrors(err.data?.errors);
+        const errors = getConnectionFormErrors(err.data);
 
-        if (field && errorMessage) {
-          setError(field, errorMessage);
+        if (errors.length > 0) {
+          for (const [field, errorMessage] of errors) {
+            setError(field, errorMessage);
+          }
           return;
         }
       }
@@ -86,114 +92,43 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
-      <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
-      <Stack direction="column" gap={2}>
-        <Field
-          noMargin
-          htmlFor="type"
-          label={t('provisioning.connection-form.label-provider', 'Provider')}
-          description={t('provisioning.connection-form.description-provider', 'Select the provider type')}
-        >
-          <Controller
-            name="type"
-            control={control}
-            render={({ field: { ref, onChange, ...field } }) => (
-              <Combobox
-                id="type"
-                disabled // TODO enable when other providers are supported
-                options={providerOptions}
-                onChange={(option) => onChange(option?.value)}
-                {...field}
-              />
-            )}
-          />
-        </Field>
+    <FormProvider {...formMethods}>
+      <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
+        <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
+        <Stack direction="column" gap={2}>
+          <Field
+            noMargin
+            htmlFor="type"
+            label={t('provisioning.connection-form.label-provider', 'Provider')}
+            description={t('provisioning.connection-form.description-provider', 'Select the provider type')}
+          >
+            <Controller
+              name="type"
+              control={control}
+              render={({ field: { ref, onChange, ...field } }) => (
+                <Combobox
+                  id="type"
+                  disabled // TODO enable when other providers are supported
+                  options={providerOptions}
+                  onChange={(option) => onChange(option?.value)}
+                  {...field}
+                />
+              )}
+            />
+          </Field>
 
-        <Field
-          noMargin
-          label={t('provisioning.connection-form.label-app-id', 'GitHub App ID')}
-          description={t('provisioning.connection-form.description-app-id', 'The ID of your GitHub App')}
-          invalid={!!errors.appID}
-          error={errors?.appID?.message}
-          required
-        >
-          <Input
-            id="appID"
-            {...register('appID', {
-              required: t('provisioning.connection-form.error-required', 'This field is required'),
-            })}
-            placeholder={t('provisioning.connection-form.placeholder-app-id', '123456')}
-          />
-        </Field>
+          <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} />
 
-        <Field
-          noMargin
-          label={t('provisioning.connection-form.label-installation-id', 'GitHub Installation ID')}
-          description={t(
-            'provisioning.connection-form.description-installation-id',
-            'The installation ID of your GitHub App'
-          )}
-          invalid={!!errors.installationID}
-          error={errors?.installationID?.message}
-          required
-        >
-          <Input
-            id="installationID"
-            {...register('installationID', {
-              required: t('provisioning.connection-form.error-required', 'This field is required'),
-            })}
-            placeholder={t('provisioning.connection-form.placeholder-installation-id', '12345678')}
-          />
-        </Field>
-
-        <Field
-          noMargin
-          htmlFor="privateKey"
-          label={t('provisioning.connection-form.label-private-key', 'Private Key (PEM)')}
-          description={t(
-            'provisioning.connection-form.description-private-key',
-            'The private key for your GitHub App in PEM format'
-          )}
-          invalid={!!errors.privateKey}
-          error={errors?.privateKey?.message}
-          required={!isEdit}
-        >
-          <Controller
-            name="privateKey"
-            control={control}
-            rules={{
-              required: isEdit ? false : t('provisioning.connection-form.error-required', 'This field is required'),
-            }}
-            render={({ field: { ref, ...field } }) => (
-              <SecretTextArea
-                {...field}
-                id="privateKey"
-                placeholder={t(
-                  'provisioning.connection-form.placeholder-private-key',
-                  '-----BEGIN RSA PRIVATE KEY-----...'
-                )}
-                isConfigured={privateKeyConfigured}
-                onReset={() => {
-                  setValue('privateKey', '');
-                  setPrivateKeyConfigured(false);
-                }}
-                rows={8}
-                grow
-              />
-            )}
-          />
-        </Field>
-
-        <Stack gap={2}>
-          <Button type="submit" disabled={request.isLoading}>
-            {request.isLoading
-              ? t('provisioning.connection-form.button-saving', 'Saving...')
-              : t('provisioning.connection-form.button-save', 'Save')}
-          </Button>
-          {connectionName && data && <DeleteConnectionButton name={connectionName} connection={data} />}
+          <Stack gap={2}>
+            <Button type="submit" disabled={request.isLoading}>
+              {request.isLoading
+                ? t('provisioning.connection-form.button-saving', 'Saving...')
+                : t('provisioning.connection-form.button-save', 'Save')}
+            </Button>
+            {connectionName && data && <DeleteConnectionButton name={connectionName} connection={data} />}
+          </Stack>
         </Stack>
-      </Stack>
-    </form>
+      </form>
+    </FormProvider>
   );
 }

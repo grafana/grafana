@@ -218,6 +218,15 @@ export async function goToEmbeddedPanel(page: Page) {
   await page.goto(soloPanelUrl!);
 }
 
+export async function goToPanelSnapshot(page: Page) {
+  // extracting snapshot url from clipboard
+  const snapshotUrl = await page.evaluate(() => navigator.clipboard.readText());
+
+  expect(snapshotUrl).toBeDefined();
+
+  await page.goto(snapshotUrl);
+}
+
 export async function moveTab(
   dashboardPage: DashboardPage,
   page: Page,
@@ -270,4 +279,9 @@ export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage)
   if (confirmModal) {
     await confirmModal.click();
   }
+}
+
+export async function addNewPanelFromSidebar(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
+  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.addButton).click();
+  await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
 }

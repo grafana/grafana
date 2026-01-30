@@ -79,7 +79,6 @@ describe('PrometheusDatasource', () => {
   let ds: PrometheusDatasource;
   const instanceSettings = {
     url: 'proxied',
-    id: 1,
     uid: 'ABCDEF',
     access: 'proxy',
     user: 'test',
@@ -1102,7 +1101,6 @@ describe('PrometheusDatasource', () => {
 describe('PrometheusDatasource2', () => {
   const instanceSettings = {
     url: 'proxied',
-    id: 1,
     uid: 'ABCDEF',
     user: 'test',
     password: 'mupp',
@@ -1249,7 +1247,6 @@ describe('modifyQuery', () => {
     describe('scope filters', () => {
       const instanceSettings = {
         access: 'proxy',
-        id: 1,
         jsonData: {},
         name: 'scoped-prom',
         readOnly: false,
@@ -1313,7 +1310,6 @@ describe('PrometheusDatasource incremental query logic', () => {
 
     const incrementalInstanceSettings = {
       url: 'proxied',
-      id: 1,
       uid: 'ABCDEF',
       access: 'proxy',
       user: 'test',

@@ -152,6 +152,7 @@ type FrontendSettingsWhitelabelingDTO struct {
 	AppTitle           *string                                   `json:"appTitle,omitempty"`
 	LoginLogo          *string                                   `json:"loginLogo,omitempty"`
 	MenuLogo           *string                                   `json:"menuLogo,omitempty"`
+	FavIcon            *string                                   `json:"favIcon,omitempty"`
 	LoginBackground    *string                                   `json:"loginBackground,omitempty"`
 	LoginSubtitle      *string                                   `json:"loginSubtitle,omitempty"`
 	LoginBoxBackground *string                                   `json:"loginBoxBackground,omitempty"`
@@ -222,6 +223,7 @@ type FrontendSettingsDTO struct {
 	ExternalUserMngLinkName              string              `json:"externalUserMngLinkName"`
 	ExternalUserMngAnalytics             bool                `json:"externalUserMngAnalytics"`
 	ExternalUserMngAnalyticsParams       string              `json:"externalUserMngAnalyticsParams"`
+	ExternalUserUpgradeLinkUrl           string              `json:"externalUserUpgradeLinkUrl"`
 	ViewersCanEdit                       bool                `json:"viewersCanEdit"`
 	DisableSanitizeHtml                  bool                `json:"disableSanitizeHtml"`
 	TrustedTypesDefaultPolicyEnabled     bool                `json:"trustedTypesDefaultPolicyEnabled"`

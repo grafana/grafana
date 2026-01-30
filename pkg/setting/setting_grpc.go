@@ -13,13 +13,14 @@ import (
 )
 
 type GRPCServerSettings struct {
-	Enabled        bool
-	Network        string
-	Address        string      // with flags, call Process to fill this field defaults
-	TLSConfig      *tls.Config // with flags, call Process to fill this field
-	EnableLogging  bool        // log request and response of each unary gRPC call
-	MaxRecvMsgSize int
-	MaxSendMsgSize int
+	Enabled                 bool
+	Network                 string
+	Address                 string      // with flags, call Process to fill this field defaults
+	TLSConfig               *tls.Config // with flags, call Process to fill this field
+	EnableLogging           bool        // log request and response of each unary gRPC call
+	MaxRecvMsgSize          int
+	MaxSendMsgSize          int
+	GracefulShutdownTimeout time.Duration
 
 	MaxConnectionAge      time.Duration
 	MaxConnectionAgeGrace time.Duration
@@ -125,6 +126,7 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.GRPCServer.EnableLogging = server.Key("enable_logging").MustBool(false)
 	cfg.GRPCServer.MaxRecvMsgSize = server.Key("max_recv_msg_size").MustInt(0)
 	cfg.GRPCServer.MaxSendMsgSize = server.Key("max_send_msg_size").MustInt(0)
+	cfg.GRPCServer.GracefulShutdownTimeout = server.Key("graceful_shutdown_timeout").MustDuration(10 * time.Second)
 
 	// Read connection management options from INI file
 	cfg.GRPCServer.MaxConnectionAge = server.Key("max_connection_age").MustDuration(0)
@@ -144,6 +146,7 @@ func (c *GRPCServerSettings) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.EnableLogging, "grpc-server-enable-logging", false, "Enable logging of gRPC requests and responses")
 	fs.IntVar(&c.MaxRecvMsgSize, "grpc-server-max-recv-msg-size", 0, "Maximum size of a gRPC request message in bytes")
 	fs.IntVar(&c.MaxSendMsgSize, "grpc-server-max-send-msg-size", 0, "Maximum size of a gRPC response message in bytes")
+	fs.DurationVar(&c.GracefulShutdownTimeout, "grpc-server-graceful-shutdown-timeout", 10*time.Second, "Duration to wait for graceful gRPC server shutdown")
 
 	// Internal flags, we need to call ProcessTLSConfig
 	fs.BoolVar(&c.useTLS, "grpc-server-use-tls", false, "Enable TLS for the gRPC server")

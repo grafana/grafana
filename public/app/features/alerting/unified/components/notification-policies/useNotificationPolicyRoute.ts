@@ -22,8 +22,8 @@ import {
 } from '../../reducers/alertmanager/notificationPolicyRoutes';
 import { FormAmRoute } from '../../types/amroutes';
 import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
-import { PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
-import { isK8sEntityProvisioned, shouldUseK8sApi } from '../../utils/k8s/utils';
+import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
+import { getAnnotation, isProvisionedResource, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { routeAdapter } from '../../utils/routeAdapter';
 import {
   InsertPosition,
@@ -32,6 +32,11 @@ import {
   mergePartialAmRouteWithRouteTree,
   omitRouteFromRouteTree,
 } from '../../utils/routeTree';
+
+export function isRouteProvisioned(route: Route): boolean {
+  const provenance = route[ROUTES_META_SYMBOL]?.provenance ?? route.provenance;
+  return isProvisionedResource(provenance);
+}
 
 const k8sRoutesToRoutesMemoized = memoize(k8sRoutesToRoutes, { maxSize: 1 });
 
@@ -82,7 +87,7 @@ const parseAmConfigRoute = memoize((route: Route): Route => {
   return {
     ...route,
     [ROUTES_META_SYMBOL]: {
-      provisioned: Boolean(route.provenance && route.provenance !== PROVENANCE_NONE),
+      provenance: route.provenance,
     },
   };
 });
@@ -232,10 +237,11 @@ function k8sRoutesToRoutes(routes: ComGithubGrafanaGrafanaPkgApisAlertingNotific
       ...route.spec.defaults,
       routes: route.spec.routes?.map(k8sSubRouteToRoute),
       [ROUTES_META_SYMBOL]: {
-        provisioned: isK8sEntityProvisioned(route),
+        provenance: getAnnotation(route, K8sAnnotations.Provenance),
         resourceVersion: route.metadata.resourceVersion,
         name: route.metadata.name,
       },
+      provenance: getAnnotation(route, K8sAnnotations.Provenance),
     };
   });
 }

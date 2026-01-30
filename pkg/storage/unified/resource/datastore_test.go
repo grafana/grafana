@@ -9,13 +9,33 @@ import (
 	"testing"
 
 	"github.com/bwmarrin/snowflake"
+	badger "github.com/dgraph-io/badger/v4"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
 
 var node, _ = snowflake.NewNode(1)
+
+func setupTestBadgerDB(t *testing.T) *badger.DB {
+	// Create a temporary directory for the test database
+	opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
+	db, err := badger.Open(opts)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := db.Close()
+		require.NoError(t, err)
+	})
+	return db
+}
+
+func setupTestKV(t *testing.T) KV {
+	db := setupTestBadgerDB(t)
+	return kv.NewBadgerKV(db)
+}
 
 func setupTestDataStore(t *testing.T) *dataStore {
 	kv := setupTestKV(t)
@@ -27,12 +47,13 @@ func TestNewDataStore(t *testing.T) {
 	require.NotNil(t, ds)
 }
 
-// nolint:unused
 func setupTestDataStoreSqlKv(t *testing.T) *dataStore {
 	dbstore := db.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
-	kv, err := NewSQLKV(eDB)
+	dbConn, err := eDB.Init(context.Background())
+	require.NoError(t, err)
+	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	require.NoError(t, err)
 	return newDataStore(kv)
 }
@@ -600,7 +621,7 @@ func TestDataKey_Validate(t *testing.T) {
 				Resource:        "test-resource",
 				Name:            "test-name",
 				ResourceVersion: rv,
-				Action:          DataAction("unknown"),
+				Action:          kv.DataAction("unknown"),
 			},
 			expectError: true,
 			errorMsg:    "action 'unknown' is invalid",
@@ -609,7 +630,7 @@ func TestDataKey_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.key.Validate()
+			err := validateDataKey(tt.key)
 			if tt.expectError {
 				require.Error(t, err)
 				if tt.errorMsg != "" {
@@ -700,13 +721,13 @@ func runDataStoreTestWith(t *testing.T, storeName string, newStoreFn func(*testi
 	})
 }
 
-func TestDataStore_Save_And_Get(t *testing.T) {
+func TestIntegrationDataStore_Save_And_Get(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreSaveAndGet)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreSaveAndGet)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreSaveAndGet)
 }
 
 func testDataStoreSaveAndGet(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	rv := node.Generate()
 
 	testKey := DataKey{
@@ -767,13 +788,13 @@ func testDataStoreSaveAndGet(t *testing.T, ctx context.Context, ds *dataStore) {
 	})
 }
 
-func TestDataStore_Delete(t *testing.T) {
+func TestIntegrationDataStore_Delete(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreDelete)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreDelete)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreDelete)
 }
 
 func testDataStoreDelete(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	rv := node.Generate()
 
 	testKey := DataKey{
@@ -816,18 +837,17 @@ func testDataStoreDelete(t *testing.T, ctx context.Context, ds *dataStore) {
 		}
 
 		err := ds.Delete(ctx, nonExistentKey)
-		require.Error(t, err)
-		require.Equal(t, ErrNotFound, err)
+		require.NoError(t, err)
 	})
 }
 
-func TestDataStore_List(t *testing.T) {
+func TestIntegrationDataStore_List(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreList)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreList)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreList)
 }
 
 func testDataStoreList(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	resourceKey := ListRequestKey{
 		Namespace: "test-namespace",
 		Group:     "test-group",
@@ -948,13 +968,13 @@ func testDataStoreList(t *testing.T, ctx context.Context, ds *dataStore) {
 	})
 }
 
-func TestDataStore_Integration(t *testing.T) {
+func TestIntegrationDataStore_Integration(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreIntegration)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreIntegration)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreIntegration)
 }
 
 func testDataStoreIntegration(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	t.Run("full lifecycle test", func(t *testing.T) {
 		resourceKey := ListRequestKey{
 			Namespace: "integration-ns",
@@ -1039,13 +1059,13 @@ func testDataStoreIntegration(t *testing.T, ctx context.Context, ds *dataStore) 
 	})
 }
 
-func TestDataStore_Keys(t *testing.T) {
+func TestIntegrationDataStore_Keys(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreKeys)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreKeys)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreKeys)
 }
 
 func testDataStoreKeys(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	resourceKey := ListRequestKey{
 		Namespace: "test-namespace",
 		Group:     "test-group",
@@ -1189,13 +1209,13 @@ func testDataStoreKeys(t *testing.T, ctx context.Context, ds *dataStore) {
 	})
 }
 
-func TestDataStore_ValidationEnforced(t *testing.T) {
+func TestIntegrationDataStore_ValidationEnforced(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreValidationEnforced)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreValidationEnforced)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreValidationEnforced)
 }
 
 func testDataStoreValidationEnforced(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Create an invalid key
 	invalidKey := DataKey{
 		Namespace:       "Invalid-Namespace-$$$",
@@ -1521,13 +1541,13 @@ func TestListRequestKey_Prefix(t *testing.T) {
 	}
 }
 
-func TestDataStore_LastResourceVersion(t *testing.T) {
+func TestIntegrationDataStore_LastResourceVersion(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreLastResourceVersion)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreLastResourceVersion)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreLastResourceVersion)
 }
 
 func testDataStoreLastResourceVersion(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	t.Run("returns last resource version for existing data", func(t *testing.T) {
 		resourceKey := ListRequestKey{
 			Namespace: "test-namespace",
@@ -1626,13 +1646,13 @@ func testDataStoreLastResourceVersion(t *testing.T, ctx context.Context, ds *dat
 	})
 }
 
-func TestDataStore_GetLatestResourceKey(t *testing.T) {
+func TestIntegrationDataStore_GetLatestResourceKey(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestResourceKey)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKey)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKey)
 }
 
 func testDataStoreGetLatestResourceKey(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	key := GetRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -1692,13 +1712,13 @@ func testDataStoreGetLatestResourceKey(t *testing.T, ctx context.Context, ds *da
 	require.Equal(t, DataActionUpdated, latestKey.Action)
 }
 
-func TestDataStore_GetLatestResourceKey_Deleted(t *testing.T) {
+func TestIntegrationDataStore_GetLatestResourceKey_Deleted(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestResourceKeyDeleted)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKeyDeleted)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKeyDeleted)
 }
 
 func testDataStoreGetLatestResourceKeyDeleted(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	key := GetRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -1723,13 +1743,13 @@ func testDataStoreGetLatestResourceKeyDeleted(t *testing.T, ctx context.Context,
 	require.Equal(t, ErrNotFound, err)
 }
 
-func TestDataStore_GetLatestResourceKey_NotFound(t *testing.T) {
+func TestIntegrationDataStore_GetLatestResourceKey_NotFound(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestResourceKeyNotFound)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKeyNotFound)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKeyNotFound)
 }
 
 func testDataStoreGetLatestResourceKeyNotFound(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	key := GetRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -1741,13 +1761,13 @@ func testDataStoreGetLatestResourceKeyNotFound(t *testing.T, ctx context.Context
 	require.Equal(t, ErrNotFound, err)
 }
 
-func TestDataStore_GetResourceKeyAtRevision(t *testing.T) {
+func TestIntegrationDataStore_GetResourceKeyAtRevision(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetResourceKeyAtRevision)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetResourceKeyAtRevision)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetResourceKeyAtRevision)
 }
 
 func testDataStoreGetResourceKeyAtRevision(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	key := GetRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -1819,13 +1839,13 @@ func testDataStoreGetResourceKeyAtRevision(t *testing.T, ctx context.Context, ds
 	require.Equal(t, DataActionUpdated, dataKey.Action)
 }
 
-func TestDataStore_ListLatestResourceKeys(t *testing.T) {
+func TestIntegrationDataStore_ListLatestResourceKeys(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListLatestResourceKeys)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListLatestResourceKeys)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListLatestResourceKeys)
 }
 
 func testDataStoreListLatestResourceKeys(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	listKey := ListRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -1875,13 +1895,13 @@ func testDataStoreListLatestResourceKeys(t *testing.T, ctx context.Context, ds *
 	require.Equal(t, DataActionUpdated, resultKeys[0].Action)
 }
 
-func TestDataStore_ListLatestResourceKeys_Deleted(t *testing.T) {
+func TestIntegrationDataStore_ListLatestResourceKeys_Deleted(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListLatestResourceKeysDeleted)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListLatestResourceKeysDeleted)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListLatestResourceKeysDeleted)
 }
 
 func testDataStoreListLatestResourceKeysDeleted(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	listKey := ListRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -1928,13 +1948,13 @@ func testDataStoreListLatestResourceKeysDeleted(t *testing.T, ctx context.Contex
 	require.Len(t, resultKeys, 0) // Should be empty because resource was deleted
 }
 
-func TestDataStore_ListLatestResourceKeys_Multiple(t *testing.T) {
+func TestIntegrationDataStore_ListLatestResourceKeys_Multiple(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListLatestResourceKeysMultiple)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListLatestResourceKeysMultiple)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListLatestResourceKeysMultiple)
 }
 
 func testDataStoreListLatestResourceKeysMultiple(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	listKey := ListRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -2002,13 +2022,13 @@ func testDataStoreListLatestResourceKeysMultiple(t *testing.T, ctx context.Conte
 	require.Equal(t, rv2, names["resource-2"])
 }
 
-func TestDataStore_ListResourceKeysAtRevision(t *testing.T) {
+func TestIntegrationDataStore_ListResourceKeysAtRevision(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListResourceKeysAtRevision)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevision)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevision)
 }
 
 func testDataStoreListResourceKeysAtRevision(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Create multiple resources with different versions
 	rv1 := node.Generate().Int64()
 	rv2 := node.Generate().Int64()
@@ -2126,7 +2146,7 @@ func testDataStoreListResourceKeysAtRevision(t *testing.T, ctx context.Context, 
 
 		require.Len(t, resultKeys, 3) // resource1 (updated), resource2, resource4
 		names := make(map[string]int64)
-		actions := make(map[string]DataAction)
+		actions := make(map[string]kv.DataAction)
 		for _, result := range resultKeys {
 			names[result.Name] = result.ResourceVersion
 			actions[result.Name] = result.Action
@@ -2217,13 +2237,13 @@ func testDataStoreListResourceKeysAtRevision(t *testing.T, ctx context.Context, 
 	})
 }
 
-func TestDataStore_ListResourceKeysAtRevision_ValidationErrors(t *testing.T) {
+func TestIntegrationDataStore_ListResourceKeysAtRevision_ValidationErrors(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListResourceKeysAtRevisionValidationErrors)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevisionValidationErrors)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevisionValidationErrors)
 }
 
 func testDataStoreListResourceKeysAtRevisionValidationErrors(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	tests := []struct {
 		name string
 		key  ListRequestKey
@@ -2262,13 +2282,13 @@ func testDataStoreListResourceKeysAtRevisionValidationErrors(t *testing.T, ctx c
 	}
 }
 
-func TestDataStore_ListResourceKeysAtRevision_EmptyResults(t *testing.T) {
+func TestIntegrationDataStore_ListResourceKeysAtRevision_EmptyResults(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListResourceKeysAtRevisionEmptyResults)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevisionEmptyResults)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevisionEmptyResults)
 }
 
 func testDataStoreListResourceKeysAtRevisionEmptyResults(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	listKey := ListRequestKey{
 		Group:     "apps",
 		Resource:  "resources",
@@ -2284,13 +2304,13 @@ func testDataStoreListResourceKeysAtRevisionEmptyResults(t *testing.T, ctx conte
 	require.Len(t, resultKeys, 0)
 }
 
-func TestDataStore_ListResourceKeysAtRevision_ResourcesNewerThanRevision(t *testing.T) {
+func TestIntegrationDataStore_ListResourceKeysAtRevision_ResourcesNewerThanRevision(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreListResourceKeysAtRevisionResourcesNewerThanRevision)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevisionResourcesNewerThanRevision)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreListResourceKeysAtRevisionResourcesNewerThanRevision)
 }
 
 func testDataStoreListResourceKeysAtRevisionResourcesNewerThanRevision(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Create a resource with a high resource version
 	rv := node.Generate().Int64()
 	key := DataKey{
@@ -2755,13 +2775,13 @@ func TestGetRequestKey_Prefix(t *testing.T) {
 	}
 }
 
-func TestDataStore_GetResourceStats_Comprehensive(t *testing.T) {
+func TestIntegrationDataStore_GetResourceStats_Comprehensive(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetResourceStatsComprehensive)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetResourceStatsComprehensive)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetResourceStatsComprehensive)
 }
 
 func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Test setup: 3 namespaces × 3 groups × 3 resources × 3 names × 3 versions = 243 total entries
 	// But each name will have only 1 latest version that counts, so 3 × 3 × 3 × 3 = 81 non-deleted resources
 	namespaces := []string{"ns1", "ns2", "ns3"}
@@ -2779,7 +2799,7 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 					for version := 1; version <= 3; version++ {
 						rv := node.Generate().Int64()
 
-						var action DataAction
+						var action kv.DataAction
 						switch version {
 						case 1:
 							action = DataActionCreated
@@ -2965,13 +2985,13 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 	})
 }
 
-func TestDataStore_getGroupResources(t *testing.T) {
+func TestIntegrationDataStore_getGroupResources(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetGroupResources)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetGroupResources)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetGroupResources)
 }
 
 func testDataStoreGetGroupResources(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	// Create test data with multiple group/resource combinations
 	testData := []struct {
 		group     string
@@ -3031,13 +3051,13 @@ func testDataStoreGetGroupResources(t *testing.T, ctx context.Context, ds *dataS
 	}
 }
 
-func TestDataStore_BatchDelete(t *testing.T) {
+func TestIntegrationDataStore_BatchDelete(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreBatchDelete)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreBatchDelete)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreBatchDelete)
 }
 
 func testDataStoreBatchDelete(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	keys := make([]DataKey, 95)
 	for i := 0; i < 95; i++ {
 		rv := node.Generate().Int64()
@@ -3070,13 +3090,13 @@ func testDataStoreBatchDelete(t *testing.T, ctx context.Context, ds *dataStore) 
 	}
 }
 
-func TestDataStore_BatchGet(t *testing.T) {
+func TestIntegrationDataStore_BatchGet(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreBatchGet)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreBatchGet)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreBatchGet)
 }
 
 func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	t.Run("batch get multiple existing keys", func(t *testing.T) {
 		// Create test data
 		keys := make([]DataKey, 5)
@@ -3218,13 +3238,13 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 	})
 }
 
-func TestDataStore_GetLatestAndPredecessor(t *testing.T) {
+func TestIntegrationDataStore_GetLatestAndPredecessor(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestAndPredecessor)
-	// enable this when sqlkv is ready
-	// runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestAndPredecessor)
+	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestAndPredecessor)
 }
 
 func testDataStoreGetLatestAndPredecessor(t *testing.T, ctx context.Context, ds *dataStore) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	resourceKey := ListRequestKey{
 		Namespace: "test-namespace",
 		Group:     "test-group",

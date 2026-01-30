@@ -1,7 +1,6 @@
 import { Action } from '@reduxjs/toolkit';
 
-import { BucketAggregation, ElasticsearchDataQuery, Terms } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
-
+import { BucketAggregation, ElasticsearchDataQuery, Terms } from '../../../../dataquery.gen';
 import { defaultBucketAgg } from '../../../../queryDef';
 import { removeEmpty } from '../../../../utils';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
@@ -47,11 +46,12 @@ export const createReducer =
         }
 
         /*
-        TODO: The previous version of the query editor was keeping some of the old bucket aggregation's configurations
-        in the new selected one (such as field or some settings).
-        It the future would be nice to have the same behavior but it's hard without a proper definition,
-        as Elasticsearch will error sometimes if some settings are not compatible.
-      */
+          TODO: The previous version of the query editor was keeping some of the old bucket aggregation's configurations
+          in the new selected one (such as field or some settings).
+          It the future would be nice to have the same behavior but it's hard without a proper definition,
+          as Elasticsearch will error sometimes if some settings are not compatible.
+        */
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         return {
           id: bucketAgg.id,
           type: action.payload.newType,

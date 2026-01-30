@@ -8,6 +8,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Generated from public/app/plugins/panel/newgauge/panelcfg.cue file.
+
 import * as common from '@grafana/schema';
 
 export const pluginVersion = "12.4.0-pre";
@@ -29,11 +31,15 @@ export interface Options extends common.SingleStatBaseOptions {
   barWidthFactor: number;
   effects: GaugePanelEffects;
   endpointMarker?: ('point' | 'glow' | 'none');
+  minVizHeight: number;
+  minVizWidth: number;
+  neutral?: number;
   segmentCount: number;
   segmentSpacing: number;
   shape: ('circle' | 'gauge');
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
+  sizing: common.BarGaugeSizing;
   sparkline?: boolean;
   textMode?: ('auto' | 'value_and_name' | 'value' | 'name' | 'none');
 }
@@ -43,11 +49,14 @@ export const defaultOptions: Partial<Options> = {
   barWidthFactor: 0.5,
   effects: {},
   endpointMarker: 'point',
+  minVizHeight: 75,
+  minVizWidth: 75,
   segmentCount: 1,
   segmentSpacing: 0.3,
   shape: 'gauge',
   showThresholdLabels: false,
   showThresholdMarkers: true,
+  sizing: common.BarGaugeSizing.Auto,
   sparkline: true,
   textMode: 'auto',
 };

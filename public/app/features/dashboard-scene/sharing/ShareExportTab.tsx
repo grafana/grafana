@@ -66,6 +66,10 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     return t('share-modal.tab-title.export', 'Export');
   }
 
+  public getSubtitle(): string | undefined {
+    return undefined;
+  }
+
   public onShareExternallyChange = () => {
     this.setState({
       isSharingExternally: !this.state.isSharingExternally,

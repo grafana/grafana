@@ -204,7 +204,6 @@
     "query-header": {
       "aria-label-kick-start": "Botão de início de consulta de registos do Azure",
       "body-switching-to-builder": "Mudar para o Construtor descartará a sua consulta KQL atual e limpará o editor KQL. Tem a certeza?",
-      "body-switching-to-kql": "Mudar para KQL descartará as suas definições atuais do construtor. Tem a certeza?",
       "button-kick-start-your-query": "Dê início à sua consulta",
       "button-run-query": "Executar consulta",
       "confirmText-switch-to": "Mudar para {{newMode}}",
@@ -275,7 +274,7 @@
       "label-time-column": "Coluna de tempo",
       "label-time-range": "Intervalo de tempo",
       "tooltip-time-column": "<0>Especifica a coluna de tempo utilizada para filtragem. A predefinição é a primeira coluna <1>timeSpan</1> das tabelas, a primeira coluna <3>datetime</3> encontrada ou <5>TimeGenerated</5>.</0>",
-      "tooltip-time-range": "<0>Especifica o intervalo de tempo utilizado para a consulta. A opção <1>Consulta</1> utilizará apenas os intervalos de tempo especificados na consulta. O <3>Painel</3> utilizará apenas o intervalo de tempo do Grafana. No modo Criador de registos, apenas será utilizado o tempo do painel.</0>"
+      "tooltip-time-range": ""
     },
     "top-field": {
       "label-top": "Topo"

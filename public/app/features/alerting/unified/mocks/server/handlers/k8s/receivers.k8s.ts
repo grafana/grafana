@@ -6,8 +6,9 @@ import {
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver } from 'app/features/alerting/unified/openapi/receiversApi.gen';
+import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { K8sAnnotations, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
+import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 
 const usedByPolicies = ['grafana-default-email'];
 const usedByRules = ['grafana-default-email'];
@@ -23,13 +24,16 @@ const getReceiversList = () => {
       const provenance =
         contactPoint.grafana_managed_receiver_configs?.find((integration) => {
           return integration.provenance;
-        })?.provenance || PROVENANCE_NONE;
+        })?.provenance || KnownProvenance.None;
+      // Only receivers from Grafana configuration can be used (not imported ones)
+      const canUse = provenance !== KnownProvenance.ConvertedPrometheus;
       return {
         metadata: {
           // This isn't exactly accurate, but its the cleanest way to use the same data for AM config and K8S responses
           uid: contactPoint.name,
           annotations: {
             [K8sAnnotations.Provenance]: provenance,
+            [K8sAnnotations.CanUse]: canUse ? 'true' : 'false',
             [K8sAnnotations.AccessAdmin]: 'true',
             [K8sAnnotations.AccessDelete]: cannotBeDeleted.includes(contactPoint.name) ? 'false' : 'true',
             [K8sAnnotations.AccessWrite]: cannotBeEdited.includes(contactPoint.name) ? 'false' : 'true',

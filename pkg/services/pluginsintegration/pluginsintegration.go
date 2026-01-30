@@ -131,6 +131,7 @@ var WireSet = wire.NewSet(
 	plugincontext.ProvideBaseService,
 	wire.Bind(new(plugincontext.BasePluginContextProvider), new(*plugincontext.BaseProvider)),
 	plugininstaller.ProvideService,
+	pluginassets.ProvideModuleHashCalculator,
 	pluginassets.ProvideService,
 	pluginchecker.ProvidePreinstall,
 	wire.Bind(new(pluginchecker.Preinstall), new(*pluginchecker.PreinstallImpl)),

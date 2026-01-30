@@ -3,12 +3,13 @@ package notifications
 import (
 	"context"
 
-	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
+
+	"github.com/grafana/grafana-app-sdk/app"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/grafana/grafana-app-sdk/simple"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
 	notificationsApp "github.com/grafana/grafana/apps/alerting/notifications/pkg/app"
@@ -28,12 +29,12 @@ import (
 )
 
 var (
-	_ appsdkapiserver.AppInstaller       = (*AlertingNotificationsAppInstaller)(nil)
-	_ appinstaller.LegacyStorageProvider = (*AlertingNotificationsAppInstaller)(nil)
-	_ appinstaller.AuthorizerProvider    = (*AlertingNotificationsAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
+	_ appinstaller.AuthorizerProvider    = (*AppInstaller)(nil)
 )
 
-type AlertingNotificationsAppInstaller struct {
+type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	cfg *setting.Cfg
 	ng  *ngalert.AlertNG
@@ -42,15 +43,19 @@ type AlertingNotificationsAppInstaller struct {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
-) (*AlertingNotificationsAppInstaller, error) {
+) (*AppInstaller, error) {
 	if ng.IsDisabled() {
 		log.New("app-registry").Info("Skipping Kubernetes Alerting Notifications API server (notifications.alerting.grafana.app): Unified Alerting is disabled")
 		return nil, nil
 	}
 
-	installer := &AlertingNotificationsAppInstaller{
+	installer := &AppInstaller{
 		cfg: cfg,
 		ng:  ng,
+	}
+
+	customCfg := notificationsApp.Config{
+		ReceiverTestingHandler: receiver.New(ng.Api.ReceiverTestService),
 	}
 
 	localManifest := apis.LocalManifest()
@@ -60,7 +65,7 @@ func RegisterAppInstaller(
 	appConfig := app.Config{
 		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
 		ManifestData:   *localManifest.ManifestData,
-		SpecificConfig: nil,
+		SpecificConfig: &customCfg,
 	}
 
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, &apis.GoTypeAssociator{})
@@ -72,7 +77,7 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-func (a AlertingNotificationsAppInstaller) GetAuthorizer() authorizer.Authorizer {
+func (a AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	authz := a.ng.Api.AccessControl
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -90,13 +95,18 @@ func (a AlertingNotificationsAppInstaller) GetAuthorizer() authorizer.Authorizer
 		})
 }
 
-func (a AlertingNotificationsAppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
+func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
 	namespacer := request.GetNamespaceMapper(a.cfg)
 	api := a.ng.Api
 	if gvr == receiver.ResourceInfo.GroupVersionResource() {
 		return receiver.NewStorage(api.ReceiverService, namespacer, api.ReceiverService)
 	} else if gvr == timeinterval.ResourceInfo.GroupVersionResource() {
-		return timeinterval.NewStorage(api.MuteTimings, namespacer)
+		srv := api.MuteTimings
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+			srv = srv.WithIncludeImported()
+		}
+		return timeinterval.NewStorage(srv, namespacer)
 	} else if gvr == templategroup.ResourceInfo.GroupVersionResource() {
 		srv := api.Templates
 		//nolint:staticcheck // not yet migrated to OpenFeature
@@ -105,7 +115,7 @@ func (a AlertingNotificationsAppInstaller) GetLegacyStorage(gvr schema.GroupVers
 		}
 		return templategroup.NewStorage(srv, namespacer)
 	} else if gvr == routingtree.ResourceInfo.GroupVersionResource() {
-		return routingtree.NewStorage(api.Policies, namespacer)
+		return routingtree.NewStorage(api.RouteService, namespacer)
 	}
 	panic("unknown legacy storage requested: " + gvr.String())
 }

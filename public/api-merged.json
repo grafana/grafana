@@ -4024,12 +4024,14 @@
     },
     "/dashboards/uid/{uid}/restore": {
       "post": {
+        "description": "This API will be removed when /apis/dashboards.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
         "tags": [
           "dashboards",
           "versions"
         ],
         "summary": "Restore a dashboard to a given dashboard version using UID.",
         "operationId": "restoreDashboardVersionByUID",
+        "deprecated": true,
         "parameters": [
           {
             "name": "Body",
@@ -4279,8 +4281,9 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Get data source Id by Name.",
+        "summary": "Get data source Id by Name. This function will be removed in the future.",
         "operationId": "getDataSourceIdByName",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -4314,8 +4317,9 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Get a single data source by Name.",
+        "summary": "Get a single data source by Name.  This function will be removed in the future.",
         "operationId": "getDataSourceByName",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -4344,8 +4348,9 @@
         "tags": [
           "datasources"
         ],
-        "summary": "Delete an existing data source by name.",
+        "summary": "Delete an existing data source by name. This function will be removed in the future.",
         "operationId": "deleteDataSourceByName",
+        "deprecated": true,
         "parameters": [
           {
             "type": "string",
@@ -14487,9 +14492,6 @@
         }
       }
     },
-    "CookieType": {
-      "type": "string"
-    },
     "Correlation": {
       "description": "Correlation is the model for correlations definitions",
       "type": "object",
@@ -18704,12 +18706,6 @@
     "PatchPrefsCmd": {
       "type": "object",
       "properties": {
-        "cookies": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CookieType"
-          }
-        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -19356,15 +19352,6 @@
         }
       }
     },
-    "PreferencesCookiePreferences": {
-      "description": "+k8s:openapi-gen=true",
-      "type": "object",
-      "properties": {
-        "analytics": {},
-        "functional": {},
-        "performance": {}
-      }
-    },
     "PreferencesNavbarPreference": {
       "description": "+k8s:openapi-gen=true",
       "type": "object",
@@ -19391,9 +19378,6 @@
       "description": "+k8s:openapi-gen=true",
       "type": "object",
       "properties": {
-        "cookiePreferences": {
-          "$ref": "#/definitions/PreferencesCookiePreferences"
-        },
         "homeDashboardUID": {
           "description": "UID for the home dashboard",
           "type": "string"
@@ -22148,6 +22132,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "uid": {
           "type": "string"
         }
@@ -23091,12 +23078,6 @@
     "UpdatePrefsCmd": {
       "type": "object",
       "properties": {
-        "cookies": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CookieType"
-          }
-        },
         "homeDashboardId": {
           "description": "The numerical :id of a favorited dashboard",
           "type": "integer",
@@ -25745,7 +25726,10 @@
     "searchTeamGroupsResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/SearchTeamGroupsQueryResult"
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/SearchTeamGroupsQueryResult"
+        }
       }
     },
     "searchTeamsResponse": {

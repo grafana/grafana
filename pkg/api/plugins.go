@@ -201,7 +201,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		Includes:         plugin.Includes,
 		BaseUrl:          plugin.BaseURL,
 		Module:           plugin.Module,
-		ModuleHash:       plugin.ModuleHash,
+		ModuleHash:       hs.pluginAssets.ModuleHash(c.Req.Context(), plugin),
 		DefaultNavUrl:    path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
 		State:            plugin.State,
 		Signature:        plugin.Signature,
@@ -209,7 +209,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		SignatureOrg:     plugin.SignatureOrg,
 		SecureJsonFields: map[string]bool{},
 		AngularDetected:  plugin.Angular.Detected,
-		LoadingStrategy:  hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
+		LoadingStrategy:  plugin.LoadingStrategy,
 		Extensions:       plugin.Extensions,
 		Translations:     plugin.Translations,
 	}

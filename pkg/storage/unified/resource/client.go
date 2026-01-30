@@ -33,13 +33,17 @@ import (
 
 //go:generate mockery --name ResourceClient --structname MockResourceClient --inpackage --filename client_mock.go --with-expecter
 type ResourceClient interface {
+	SearchClient
 	resourcepb.ResourceStoreClient
-	resourcepb.ResourceIndexClient
-	resourcepb.ManagedObjectIndexClient
 	resourcepb.BulkStoreClient
 	resourcepb.BlobStoreClient
-	resourcepb.DiagnosticsClient
 	resourcepb.QuotasClient
+}
+
+type SearchClient interface {
+	resourcepb.ResourceIndexClient
+	resourcepb.ManagedObjectIndexClient
+	resourcepb.DiagnosticsClient
 }
 
 // Internal implementation
@@ -174,17 +178,20 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("no claims found")
 	}
 
+	// If the identity is the service identity, we don't need to extract the ID token
+	if info.GetIdentityType() == types.TypeAccessPolicy {
+		return "", nil
+	}
+
 	if token := info.GetIDToken(); len(token) != 0 {
 		return token, nil
 	}
 
-	if !types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy) {
-		authLogger.FromContext(ctx).Warn(
-			"calling resource store as the service without id token or marking it as the service identity",
-			"subject", info.GetSubject(),
-			"uid", info.GetUID(),
-		)
-	}
+	authLogger.FromContext(ctx).Warn(
+		"calling resource store as the service without id token or marking it as the service identity",
+		"subject", info.GetSubject(),
+		"uid", info.GetUID(),
+	)
 
 	return "", nil
 }

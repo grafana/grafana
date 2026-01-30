@@ -20,6 +20,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
+	pluginassets2 "github.com/grafana/grafana/pkg/plugins/pluginassets"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -77,7 +82,9 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 
 	var pluginsAssets = passets
 	if pluginsAssets == nil {
-		pluginsAssets = pluginassets.ProvideService(pluginsCfg, pluginsCDN, pluginStore)
+		sig := signature.ProvideService(pluginsCfg, statickey.New())
+		calc := modulehash.NewCalculator(pluginsCfg, registry.NewInMemory(), pluginsCDN, sig)
+		pluginsAssets = pluginassets.ProvideService(calc)
 	}
 
 	hs := &HTTPServer{
@@ -263,7 +270,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -301,7 +309,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -338,8 +347,9 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
-							Angular: plugins.AngularMeta{Detected: true},
-							FS:      &pluginfakes.FakePluginFS{},
+							Angular:         plugins.AngularMeta{Detected: true},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyFetch,
 						},
 					},
 				}
@@ -376,6 +386,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -388,7 +399,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 			pluginAssets: newPluginAssetsWithConfig(&config.PluginManagementCfg{
 				PluginSettings: map[string]map[string]string{
 					"test-app": {
-						pluginassets.CreatePluginVersionCfgKey: pluginassets.CreatePluginVersionScriptSupportEnabled,
+						pluginassets2.CreatePluginVersionCfgKey: pluginassets2.CreatePluginVersionScriptSupportEnabled,
 					},
 				},
 			}),
@@ -421,6 +432,7 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 							FS: &pluginfakes.FakePluginFS{TypeFunc: func() plugins.FSType {
 								return plugins.FSTypeCDN
 							}},
+							LoadingStrategy: plugins.LoadingStrategyFetch,
 						},
 					},
 				}
@@ -549,7 +561,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -599,7 +612,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -639,7 +653,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
 							},
-							FS: &pluginfakes.FakePluginFS{},
+							FS:              &pluginfakes.FakePluginFS{},
+							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
 				}
@@ -711,6 +726,8 @@ func newPluginAssets() func() *pluginassets.Service {
 
 func newPluginAssetsWithConfig(pCfg *config.PluginManagementCfg) func() *pluginassets.Service {
 	return func() *pluginassets.Service {
-		return pluginassets.ProvideService(pCfg, pluginscdn.ProvideService(pCfg), &pluginstore.FakePluginStore{})
+		cdn := pluginscdn.ProvideService(pCfg)
+		calc := modulehash.NewCalculator(pCfg, registry.NewInMemory(), cdn, signature.ProvideService(pCfg, statickey.New()))
+		return pluginassets.ProvideService(calc)
 	}
 }

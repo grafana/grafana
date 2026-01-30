@@ -2,6 +2,7 @@ package sender
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -12,7 +13,6 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
 	models2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -22,14 +22,10 @@ import (
 	fake_ds "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -47,7 +43,7 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 
 	mockedClock := clock.NewMock()
 
-	moa := createMultiOrgAlertmanager(t, []int64{1})
+	moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1}), notifier.WithWaitReady())
 
 	appUrl := &url.URL{
 		Scheme: "http",
@@ -64,7 +60,7 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 		}),
 	}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
-		&fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures())
+		&fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false)
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, SendAlertsTo: models.AllAlertmanagers},
@@ -116,7 +112,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 
 	mockedClock := clock.NewMock()
 
-	moa := createMultiOrgAlertmanager(t, []int64{1, 2})
+	moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1, 2}), notifier.WithWaitReady())
 
 	appUrl := &url.URL{
 		Scheme: "http",
@@ -134,7 +130,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	}
 	fakeDs := &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
-		fakeDs, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures())
+		fakeDs, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false)
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey1.OrgID, SendAlertsTo: models.AllAlertmanagers},
@@ -276,7 +272,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	mockedClock := clock.NewMock()
 	mockedClock.Set(time.Now())
 
-	moa := createMultiOrgAlertmanager(t, []int64{1})
+	moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1}), notifier.WithWaitReady())
 
 	appUrl := &url.URL{
 		Scheme: "http",
@@ -293,7 +289,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 		}),
 	}
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
-		10*time.Minute, &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures())
+		10*time.Minute, &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false)
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, SendAlertsTo: models.AllAlertmanagers},
@@ -368,7 +364,7 @@ func TestAlertmanagersChoiceWithDisableExternalFeatureToggle(t *testing.T) {
 	mockedClock := clock.NewMock()
 	mockedClock.Set(time.Now())
 
-	moa := createMultiOrgAlertmanager(t, []int64{1})
+	moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1}), notifier.WithWaitReady())
 
 	appUrl := &url.URL{
 		Scheme: "http",
@@ -395,7 +391,7 @@ func TestAlertmanagersChoiceWithDisableExternalFeatureToggle(t *testing.T) {
 
 	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
 		10*time.Minute, &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}},
-		fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(featuremgmt.FlagAlertingDisableSendAlertsExternal))
+		fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(featuremgmt.FlagAlertingDisableSendAlertsExternal), false)
 
 	// Test that we only send to the internal Alertmanager even though the configuration specifies AllAlertmanagers.
 
@@ -468,56 +464,6 @@ func generatePostableAlert(t *testing.T, clk clock.Clock) models2.PostableAlert 
 			Labels:       models2.LabelSet(models.GenerateAlertLabels(5, "lbl-")),
 		},
 	}
-}
-
-func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAlertmanager {
-	t.Helper()
-
-	tmpDir := t.TempDir()
-	orgStore := notifier.NewFakeOrgStore(t, orgs)
-
-	cfg := &setting.Cfg{
-		DataPath: tmpDir,
-		UnifiedAlerting: setting.UnifiedAlertingSettings{
-			AlertmanagerConfigPollInterval: 3 * time.Minute,
-			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
-			DisabledOrgs:                   map[int64]struct{}{},
-		}, // do not poll in tests.
-	}
-
-	cfgStore := notifier.NewFakeConfigStore(t, make(map[int64]*models.AlertConfiguration))
-	kvStore := fakes.NewFakeKVStore(t)
-	registry := prometheus.NewPedanticRegistry()
-	m := metrics.NewNGAlert(registry)
-	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
-	decryptFn := secretsService.GetDecryptedValue
-	moa, err := notifier.NewMultiOrgAlertmanager(
-		cfg,
-		cfgStore,
-		orgStore,
-		kvStore,
-		fakes.NewFakeProvisioningStore(),
-		decryptFn,
-		m.GetMultiOrgAlertmanagerMetrics(),
-		nil,
-		fakes.NewFakeReceiverPermissionsService(),
-		log.New("testlogger"),
-		secretsService,
-		featuremgmt.WithFeatures(),
-		nil,
-	)
-	require.NoError(t, err)
-	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
-	require.Eventually(t, func() bool {
-		for _, org := range orgs {
-			_, err := moa.AlertmanagerFor(org)
-			if err != nil {
-				return false
-			}
-		}
-		return true
-	}, 10*time.Second, 100*time.Millisecond)
-	return moa
 }
 
 func TestBuildExternalURL(t *testing.T) {
@@ -949,6 +895,79 @@ func TestDatasourceToExternalAMcfg(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, tt.expected, cfg)
+		})
+	}
+}
+
+func TestSendBroadcastAlerts(t *testing.T) {
+	alerts := definitions.PostableAlerts{
+		PostableAlerts: []models2.PostableAlert{
+			{
+				Annotations: models2.LabelSet{"summary": "test alert 1"},
+				Alert:       models2.Alert{Labels: models2.LabelSet{"alertname": "TestAlert1"}},
+			},
+			{
+				Annotations: models2.LabelSet{"summary": "test alert 2"},
+				Alert:       models2.Alert{Labels: models2.LabelSet{"alertname": "TestAlert2"}},
+			},
+		},
+	}
+
+	testCases := []struct {
+		name            string
+		broadcastAlerts bool
+		expected        *notifier.AlertBroadcastPayload
+	}{
+		{
+			name:            "broadcasts alerts when enabled",
+			broadcastAlerts: true,
+			expected: &notifier.AlertBroadcastPayload{
+				OrgID:  1,
+				Alerts: alerts,
+			},
+		},
+		{
+			name:            "does not broadcast when disabled",
+			broadcastAlerts: false,
+			expected:        nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ruleKey := models.GenerateRuleKey(1)
+
+			mockedClock := clock.NewMock()
+			mockedClock.Set(time.Now())
+
+			mockChannel := &notifier.MockBroadcastChannel{}
+			mockPeer := &notifier.MockClusterPeer{Channel: mockChannel}
+			moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1}), notifier.WithPeer(mockPeer), notifier.WithWaitReady())
+
+			appUrl := &url.URL{
+				Scheme: "http",
+				Host:   "localhost",
+			}
+
+			fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
+			fakeAdminConfigStore.EXPECT().GetAdminConfigurations().Return(nil, nil)
+
+			alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
+				10*time.Minute, &fake_ds.FakeDataSourceService{}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), tc.broadcastAlerts)
+
+			require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase(context.Background()))
+
+			alertsRouter.Send(context.Background(), ruleKey, alerts)
+
+			if tc.expected == nil {
+				require.Empty(t, mockChannel.Broadcasts())
+			} else {
+				require.Len(t, mockChannel.Broadcasts(), 1)
+				var decoded notifier.AlertBroadcastPayload
+				err := json.Unmarshal(mockChannel.Broadcasts()[0], &decoded)
+				require.NoError(t, err)
+				require.Equal(t, *tc.expected, decoded)
+			}
 		})
 	}
 }

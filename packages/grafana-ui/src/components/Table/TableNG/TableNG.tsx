@@ -2,7 +2,7 @@ import 'react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
-import { CSSProperties, Key, ReactNode, useCallback, useMemo, useRef, useState, type JSX } from 'react';
+import { CSSProperties, Key, ReactNode, useCallback, useMemo, useRef, useState, useEffect, type JSX } from 'react';
 import {
   Cell,
   CellRendererProps,
@@ -124,6 +124,7 @@ export function TableNG(props: TableNGProps) {
     timeRange,
     transparent,
     width,
+    initialRowIndex,
   } = props;
 
   const theme = useTheme2();
@@ -251,6 +252,22 @@ export function TableNG(props: TableNGProps) {
     headerHeight: hasHeader ? TABLE.HEADER_ROW_HEIGHT : 0,
     rowHeight,
   });
+
+  const [scrollToIndex, setScrollToIndex] = useState(initialRowIndex);
+  useEffect(() => {
+    if (scrollToIndex !== undefined && sortedRows && gridRef.current?.scrollToCell) {
+      const rowIdx = sortedRows.findIndex((row) => row.__index === scrollToIndex);
+      gridRef.current.scrollToCell({
+        rowIdx,
+      });
+      // Select the first cell so there's something visually different about the row
+      gridRef.current.selectCell({
+        rowIdx,
+        idx: 0,
+      });
+      setScrollToIndex(undefined);
+    }
+  }, [scrollToIndex, sortedRows]);
 
   const [footers, isUniformFooter] = useMemo(() => {
     const footers: Array<TableFooterOptions | undefined> = [];
@@ -745,7 +762,11 @@ export function TableNG(props: TableNGProps) {
     () => (hasNestedFrames ? rows.find((r) => r.data)?.data : undefined),
     [hasNestedFrames, rows]
   );
-  const [nestedFieldWidths] = useColWidths(firstRowNestedData?.fields ?? [], availableWidth);
+  const nestedVisibleFields = useMemo(
+    () => (firstRowNestedData ? getVisibleFields(firstRowNestedData.fields) : []),
+    [firstRowNestedData]
+  );
+  const [nestedFieldWidths] = useColWidths(nestedVisibleFields, availableWidth);
 
   const { columns, cellRootRenderers } = useMemo(() => {
     const result = fromFields(visibleFields, widths);
@@ -759,7 +780,7 @@ export function TableNG(props: TableNGProps) {
     const hasNestedHeaders = firstRowNestedData.meta?.custom?.noHeader !== true;
     const renderRow = renderRowFactory(firstRowNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
     const { columns: nestedColumns, cellRootRenderers: nestedCellRootRenderers } = fromFields(
-      firstRowNestedData.fields,
+      nestedVisibleFields,
       nestedFieldWidths
     );
 
@@ -782,6 +803,7 @@ export function TableNG(props: TableNGProps) {
     firstRowNestedData,
     fromFields,
     nestedFieldWidths,
+    nestedVisibleFields,
     panelContext,
     visibleFields,
     widths,
