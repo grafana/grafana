@@ -32,9 +32,9 @@ aliases:
 
 {{< admonition type="caution" >}}
 
-Git Sync is available in [private preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions. Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
+Git Sync is available in [public preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions. Support and documentation is available but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
 
-You can sign up to the private preview using the [Git Sync early access form](https://forms.gle/WKkR3EVMcbqsNnkD9).
+You can sign up to the public preview using the [Git Sync early access form](https://forms.gle/WKkR3EVMcbqsNnkD9).
 
 **Git Sync is under continuous development.** Refer to [Limitations and known issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/known-issues) for more information, and [report any issues](https://grafana.com/help/) you encounter to help us improve the feature.
 
