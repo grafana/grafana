@@ -15,7 +15,6 @@ export const TransformationCard = ({ transformation }: { transformation: Transfo
     <SidebarCard
       config={QUERY_EDITOR_TYPE_CONFIG[QueryEditorType.Transformation]}
       isSelected={isSelected}
-      hasError={false}
       id={transformation.transformId}
       onClick={() => setSelectedTransformation(transformation)}
     >

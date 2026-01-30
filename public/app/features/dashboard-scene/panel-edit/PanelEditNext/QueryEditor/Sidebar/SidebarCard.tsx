@@ -9,14 +9,13 @@ import { QueryEditorTypeConfig } from '../../constants';
 interface SidebarCardProps {
   config: QueryEditorTypeConfig;
   isSelected: boolean;
-  hasError: boolean;
   id: string;
   children: React.ReactNode;
   onClick: () => void;
 }
 
-export const SidebarCard = ({ config, isSelected, hasError, id, children, onClick }: SidebarCardProps) => {
-  const styles = useStyles2(getStyles, config, hasError, isSelected);
+export const SidebarCard = ({ config, isSelected, id, children, onClick }: SidebarCardProps) => {
+  const styles = useStyles2(getStyles, config, isSelected);
   const typeText = config.getLabel();
 
   return (
@@ -40,7 +39,7 @@ export const SidebarCard = ({ config, isSelected, hasError, id, children, onClic
   );
 };
 
-function getStyles(theme: GrafanaTheme2, config: QueryEditorTypeConfig, hasError: boolean, isSelected?: boolean) {
+function getStyles(theme: GrafanaTheme2, config: QueryEditorTypeConfig, isSelected?: boolean) {
   return {
     card: css({
       display: 'flex',
