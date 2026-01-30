@@ -51,7 +51,7 @@ export const DataLinkEditor = memo(
           />
         </Field>
 
-        <Field label={t('grafana-ui.data-link-editor.url-label', 'URL')}>
+        <Field label={t('grafana-ui.data-link-editor.url-label', 'URL')} className={styles.urlField}>
           <DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />
         </Field>
 
@@ -87,6 +87,10 @@ DataLinkEditor.displayName = 'DataLinkEditor';
 const getStyles = (theme: GrafanaTheme2) => ({
   listItem: css({
     marginBottom: theme.spacing(),
+  }),
+  urlField: css({
+    position: 'relative',
+    zIndex: theme.zIndex.typeahead,
   }),
   infoText: css({
     paddingBottom: theme.spacing(2),

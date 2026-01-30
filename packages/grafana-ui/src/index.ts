@@ -80,6 +80,15 @@ export { FilterPill } from './components/FilterPill/FilterPill';
 
 export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/ConfirmModal';
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
+export {
+  CodeMirrorQueryField,
+  type CodeMirrorQueryFieldProps,
+} from './components/QueryField/CodeMirrorQueryField';
+// Bridge utilities for migrating from onTypeahead to CodeMirror autocompletion
+export {
+  createQueryFieldAutocompletion,
+  createTypeaheadAutocompletion,
+} from './components/QueryField/codemirrorQueryFieldUtils';
 export { CodeEditor } from './components/Monaco/CodeEditor';
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './components/Monaco/ReactMonacoEditorLazy';
 export {
@@ -91,6 +100,18 @@ export {
   CodeEditorSuggestionItemKind,
 } from './components/Monaco/types';
 export { variableSuggestionToCodeEditorSuggestion } from './components/Monaco/utils';
+
+// CodeMirror
+export { CodeMirrorEditor } from './components/CodeMirror/CodeMirrorEditor';
+export { createGenericTheme } from './components/CodeMirror/styles';
+export { createGenericHighlighter } from './components/CodeMirror/highlight';
+export type {
+  CodeMirrorEditorProps,
+  ThemeFactory,
+  HighlighterFactory,
+  AutocompletionFactory,
+  SyntaxHighlightConfig,
+} from './components/CodeMirror/types';
 
 // TODO: namespace
 export { Modal, type Props as ModalProps } from './components/Modal/Modal';
