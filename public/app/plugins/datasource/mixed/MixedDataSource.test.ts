@@ -247,4 +247,37 @@ describe('MixedDatasource', () => {
       expect(results[0].data).toHaveLength(0);
     });
   });
+
+  describe('hidden query filtering', () => {
+    it('should not include hidden queries in the request', async () => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const request = {
+        targets: [
+          { refId: 'QA', hide: true, datasource: { uid: 'A' } },
+          { refId: 'QB', hide: false, datasource: { uid: 'B' } },
+        ],
+      } as DataQueryRequest;
+
+      await expect(ds.query(request)).toEmitValuesWith((results) => {
+        // Only QB should be executed, QA is hidden
+        expect(results).toHaveLength(1);
+        expect(results[0].data).toEqual(['BBBB']);
+      });
+    });
+
+    it('should return empty when all queries are hidden', async () => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const request = {
+        targets: [
+          { refId: 'QA', hide: true, datasource: { uid: 'A' } },
+          { refId: 'QB', hide: true, datasource: { uid: 'B' } },
+        ],
+      } as DataQueryRequest;
+
+      await expect(ds.query(request)).toEmitValuesWith((results) => {
+        expect(results).toHaveLength(1);
+        expect(results[0].data).toHaveLength(0);
+      });
+    });
+  });
 });
