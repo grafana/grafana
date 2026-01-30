@@ -30,7 +30,7 @@ export function ToolbarExtensionPointMenu({ extensions, onSelect }: Props): Reac
 
 function renderItems(extensions: PluginExtensionLink[], onSelect: (link: PluginExtensionLink) => void): JSX.Element[] {
   return extensions.map((extension) => {
-    const dataTestId = `testid ${extension.title}`
+    const dataTestId = `testid ${extension.title}`;
 
     return (
       <Menu.Item
