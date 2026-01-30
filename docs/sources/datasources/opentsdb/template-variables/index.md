@@ -131,7 +131,7 @@ If template variables aren't populating in the **Preview of values** section, re
 
 ## Nested template variables
 
-You can use one template variable to filter values for another. This creates cascading filters, such as selecting a datacenter first, then showing only hosts in that datacenter.
+You can use one template variable to filter values for another. This creates cascading filters, such as selecting a data center first, then showing only hosts in that data center.
 
 ### Filter syntax
 
@@ -171,7 +171,7 @@ To create a hierarchy of dependent variables:
    - Name: `cpu`
    - Query: `tag_values(sys.cpu.user, cpu, datacenter=$datacenter, host=$host)`
 
-When users change the datacenter selection, the host variable automatically refreshes to show only hosts in that datacenter.
+When users change the data center selection, the host variable automatically refreshes to show only hosts in that data center.
 
 ## Use variables in queries
 
