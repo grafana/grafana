@@ -6,7 +6,7 @@ const UNFOCUSED = -1;
 
 /** @internal */
 export interface UseMenuFocusProps {
-  localRef: RefObject<HTMLDivElement | null>;
+  localRef: RefObject<HTMLElement | null>;
   isMenuOpen?: boolean;
   close?: () => void;
   onOpen?: (focusOnItem: (itemId: number) => void) => void;

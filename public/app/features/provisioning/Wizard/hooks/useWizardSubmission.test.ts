@@ -19,7 +19,7 @@ jest.mock('../../utils/data', () => ({
 }));
 
 jest.mock('../../utils/getFormErrors', () => ({
-  getFormErrors: jest.fn(() => ['repository.url', { type: 'manual', message: 'Invalid URL' }]),
+  getFormErrors: jest.fn(() => [['repository.url', { message: 'Invalid URL' }]]),
 }));
 
 describe('useWizardSubmission', () => {
@@ -330,7 +330,6 @@ describe('useWizardSubmission', () => {
         });
 
         expect(mockSetError).toHaveBeenCalledWith('repository.url', {
-          type: 'manual',
           message: 'Invalid URL',
         });
       });

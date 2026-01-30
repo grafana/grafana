@@ -15,6 +15,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { dashboardEditActions, NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { trackDropItemCrossLayout } from '../../utils/tracking';
 import {
   forceRenderChildren,
   getDashboardSceneFor,
@@ -387,6 +388,7 @@ export class AutoGridLayoutManager
   }
 
   public draggedGridItemInside(gridItem: SceneGridItemLike, position?: number): void {
+    trackDropItemCrossLayout(gridItem);
     let newGridItem: AutoGridItem;
 
     if (gridItem instanceof AutoGridItem) {

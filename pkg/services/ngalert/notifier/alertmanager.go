@@ -22,6 +22,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
@@ -373,6 +374,12 @@ func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.Postable
 	err := am.crypto.DecryptExtraConfigs(ctx, cfg)
 	if err != nil {
 		return false, fmt.Errorf("failed to decrypt external configurations: %w", err)
+	}
+
+	// Add managed routes to the configuration.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if am.features.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) {
+		cfg.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(cfg.AlertmanagerConfig.Route, cfg.ManagedRoutes)
 	}
 
 	mergeResult, err := cfg.GetMergedAlertmanagerConfig()
