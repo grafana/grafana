@@ -57,7 +57,9 @@ export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
 export function isDashboardResource(
   value: unknown
 ): value is DashboardWithAccessInfo<DashboardV2Spec> | DashboardWithAccessInfo<DashboardDataDTO> {
-  return isRecord(value) && value.kind === 'DashboardWithAccessInfo' && isRecord(value.spec);
+  return (
+    isRecord(value) && (value.kind === 'DashboardWithAccessInfo' || value.kind === 'Dashboard') && isRecord(value.spec)
+  );
 }
 
 export function isDashboardV2Spec(obj: unknown): obj is DashboardV2Spec {
