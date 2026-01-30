@@ -11898,6 +11898,7 @@
       "alert-connection-deleted": "Connection deleted",
       "alert-connection-saved": "Connection saved",
       "alert-connection-updated": "Connection updated",
+      "available-repositories": "Other allowed repositories",
       "back-to-connections": "Back to connections",
       "button-save": "Save",
       "button-saving": "Saving...",
@@ -11910,6 +11911,7 @@
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
       "error-save-connection": "Failed to save connection",
+      "grafana-repositories": "Repositories using this connection",
       "label-app-id": "GitHub App ID",
       "label-description": "Description",
       "label-installation-id": "GitHub Installation ID",
@@ -12219,6 +12221,7 @@
       "jobs": "Jobs"
     },
     "repository-actions": {
+      "connection": "Connection",
       "settings": "Settings",
       "source-code": "Source code"
     },
@@ -12241,6 +12244,8 @@
     },
     "repository-overview": {
       "checked": "Checked:",
+      "connection": "Connection:",
+      "connection-status": "Connection Status:",
       "finished": "Last successful pull:",
       "health": "Health",
       "healthy": "Healthy",
