@@ -74,8 +74,8 @@ export class AutoGridLayoutManager
     icon: 'apps',
   };
 
-  public serialize(): DashboardV2Spec['layout'] {
-    return serializeAutoGridLayout(this);
+  public serialize(isSnapshot?: boolean): DashboardV2Spec['layout'] {
+    return serializeAutoGridLayout(this, isSnapshot);
   }
 
   public readonly descriptor = AutoGridLayoutManager.descriptor;

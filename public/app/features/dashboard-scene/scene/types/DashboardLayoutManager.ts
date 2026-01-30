@@ -20,7 +20,7 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   /**
    * Serializer for layout
    */
-  serialize(): DashboardV2Spec['layout'];
+  serialize(isSnapshot?: boolean): DashboardV2Spec['layout'];
 
   /**
    * Adds a new panel to the layout

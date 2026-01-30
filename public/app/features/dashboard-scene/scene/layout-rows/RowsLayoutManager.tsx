@@ -60,8 +60,8 @@ export class RowsLayoutManager
     icon: 'list-ul',
   };
 
-  public serialize(): DashboardV2Spec['layout'] {
-    return serializeRowsLayout(this);
+  public serialize(isSnapshot?: boolean): DashboardV2Spec['layout'] {
+    return serializeRowsLayout(this, isSnapshot);
   }
 
   public readonly descriptor = RowsLayoutManager.descriptor;

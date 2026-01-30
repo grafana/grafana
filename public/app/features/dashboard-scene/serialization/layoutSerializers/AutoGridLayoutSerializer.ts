@@ -20,9 +20,44 @@ import { getGridItemKeyForPanelId } from '../../utils/utils';
 
 import { buildLibraryPanel, buildVizPanel, getConditionalRendering } from './utils';
 
-export function serializeAutoGridLayout(layoutManager: AutoGridLayoutManager): DashboardV2Spec['layout'] {
+export function serializeAutoGridLayout(
+  layoutManager: AutoGridLayoutManager,
+  isSnapshot?: boolean
+): DashboardV2Spec['layout'] {
   const { maxColumnCount, fillScreen, columnWidth, rowHeight, layout } = layoutManager.state;
   const defaults = defaultAutoGridLayoutSpec();
+
+  const items = isSnapshot
+    ? layout.state.children.flatMap((child) => {
+        const base = serializeAutoGridItem(child);
+        // Snapshots should contain explicit panels, not a repeater definition.
+        delete base.spec.repeat;
+
+        if (!child.state.repeatedPanels?.length) {
+          return [base];
+        }
+
+        const cloneItems = child.state.repeatedPanels.map((panel) => {
+          if (!panel.state.key) {
+            throw new Error('Snapshot serialization expected repeat clone to have a key');
+          }
+
+          const layoutItem: AutoGridLayoutItemKind = {
+            kind: 'AutoGridLayoutItem',
+            spec: {
+              element: {
+                kind: 'ElementReference',
+                name: panel.state.key,
+              },
+            },
+          };
+
+          return layoutItem;
+        });
+
+        return [base, ...cloneItems];
+      })
+    : layout.state.children.map(serializeAutoGridItem);
 
   return {
     kind: 'AutoGridLayout',
@@ -31,7 +66,7 @@ export function serializeAutoGridLayout(layoutManager: AutoGridLayoutManager): D
       fillScreen: fillScreen === defaults.fillScreen ? undefined : fillScreen,
       ...serializeAutoGridColumnWidth(columnWidth),
       ...serializeAutoGridRowHeight(rowHeight),
-      items: layout.state.children.map(serializeAutoGridItem),
+      items,
     },
   };
 }
