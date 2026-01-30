@@ -13,6 +13,10 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 		}, nil
 	}
 
+	for _, v := range req.Options.Fields {
+		v.Key = SEARCH_SELECTABLE_FIELDS_PREFIX + v.Key
+	}
+
 	srq := &resourcepb.ResourceSearchRequest{
 		Options: req.Options,
 		Limit:   req.Limit,
@@ -79,21 +83,15 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 	return rsp, nil
 }
 
-// Remove metadata.namespace filter from requirement fields, if it's present.
 func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
-	// Remove metadata.namespace filter from requirement fields, if it's present.
-	for ix := 0; ix < len(req.Options.Fields); {
-		v := req.Options.Fields[ix]
-		if v.Key == "metadata.namespace" && v.Operator == "=" {
-			if len(v.Values) == 1 && v.Values[0] == req.Options.Key.Namespace {
-				// Remove this requirement from fields, as it's implied by the key.namespace.
-				req.Options.Fields = append(req.Options.Fields[:ix], req.Options.Fields[ix+1:]...)
-				// Don't increment ix, as we're removing an element from the slice.
-				continue
-			}
+	var fields []*resourcepb.Requirement
+	for _, f := range req.Options.Fields {
+		if (f.Operator != "=" && f.Operator != "==") || f.Key == "metadata.namespace" {
+			continue
 		}
-		ix++
+		fields = append(fields, f)
 	}
+	req.Options.Fields = fields
 
 	return req
 }

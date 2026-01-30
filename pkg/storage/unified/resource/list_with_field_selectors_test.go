@@ -101,7 +101,7 @@ func TestFilterFieldSelectors(t *testing.T) {
 		wantFieldKeys []string
 	}{
 		{
-			name:      "removes matching metadata.namespace",
+			name:      "removes metadata.namespace and keep valid field",
 			namespace: "ns",
 			fields: []*resourcepb.Requirement{
 				{Key: "metadata.namespace", Operator: "=", Values: []string{"ns"}},
@@ -110,31 +110,13 @@ func TestFilterFieldSelectors(t *testing.T) {
 			wantFieldKeys: []string{"spec.foo"},
 		},
 		{
-			name:      "keeps metadata.namespace when value differs",
-			namespace: "ns",
-			fields: []*resourcepb.Requirement{
-				{Key: "metadata.namespace", Operator: "=", Values: []string{"other"}},
-				{Key: "spec.foo"},
-			},
-			wantFieldKeys: []string{"metadata.namespace", "spec.foo"},
-		},
-		{
-			name:      "keeps metadata.namespace when operator is not equals",
-			namespace: "ns",
-			fields: []*resourcepb.Requirement{
-				{Key: "metadata.namespace", Operator: "!=", Values: []string{"ns"}},
-				{Key: "spec.foo"},
-			},
-			wantFieldKeys: []string{"metadata.namespace", "spec.foo"},
-		},
-		{
-			name:      "keeps metadata.namespace when multiple values",
+			name:      "removes multiple unsupported fields",
 			namespace: "ns",
 			fields: []*resourcepb.Requirement{
 				{Key: "metadata.namespace", Operator: "=", Values: []string{"ns", "other"}},
-				{Key: "spec.foo"},
+				{Key: "spec.foo", Operator: "!="},
 			},
-			wantFieldKeys: []string{"metadata.namespace", "spec.foo"},
+			wantFieldKeys: []string{},
 		},
 	}
 
