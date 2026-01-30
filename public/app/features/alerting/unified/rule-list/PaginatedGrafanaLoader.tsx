@@ -13,6 +13,7 @@ import { groups } from '../utils/navigation';
 import { isUngroupedRuleGroup } from '../utils/rules';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
+import { DataSourceLoadState } from './GroupedView';
 import { DataSourceSection } from './components/DataSourceSection';
 import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
@@ -27,16 +28,24 @@ import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimi
 interface LoaderProps {
   groupFilter?: string;
   namespaceFilter?: string;
+  onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
 }
 
-export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter }: LoaderProps) {
+export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter, onLoadingStateChange }: LoaderProps) {
   const key = `${groupFilter}-${namespaceFilter}`;
 
   // Key is crucial. It resets the generator when filters change.
-  return <PaginatedGroupsLoader key={key} groupFilter={groupFilter} namespaceFilter={namespaceFilter} />;
+  return (
+    <PaginatedGroupsLoader
+      key={key}
+      groupFilter={groupFilter}
+      namespaceFilter={namespaceFilter}
+      onLoadingStateChange={onLoadingStateChange}
+    />
+  );
 }
 
-function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
+function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateChange }: LoaderProps) {
   // When backend filters are enabled, groupFilter is handled on the backend
   const filterState = { namespace: namespaceFilter, groupName: groupFilter };
   const { backendFilter } = getGrafanaFilter(filterState);
@@ -91,8 +100,38 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter }: LoaderProps) {
     filterFn
   );
 
+  // Report state changes to parent
+  useEffect(() => {
+    if (onLoadingStateChange) {
+      onLoadingStateChange(GRAFANA_RULES_SOURCE_NAME, {
+        isLoading,
+        rulesCount: groups.length,
+        error,
+      });
+    }
+  }, [isLoading, groups.length, error, onLoadingStateChange]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (onLoadingStateChange) {
+        onLoadingStateChange(GRAFANA_RULES_SOURCE_NAME, {
+          isLoading: false,
+          rulesCount: 0,
+          error: undefined,
+        });
+      }
+    };
+  }, [onLoadingStateChange]);
+
   const groupsByFolder = useMemo(() => groupBy(groups, 'folderUid'), [groups]);
   const hasNoRules = isEmpty(groups) && !isLoading;
+
+  // if we are loading and there are filters configured – we shouldn't show any data source headers
+  // until we have at least one result. This will provide a cleaner UI whent he user wants to find a specific folder or group.
+  if (hasFilters && isEmpty(groups)) {
+    return null;
+  }
 
   return (
     <DataSourceSection
