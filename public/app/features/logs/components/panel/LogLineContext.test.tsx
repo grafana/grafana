@@ -1,4 +1,4 @@
-import { render, screen, waitFor, userEvent, act } from 'test/test-utils';
+import { render, screen, waitFor, userEvent } from 'test/test-utils';
 
 import {
   createDataFrame,
