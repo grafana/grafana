@@ -8,9 +8,11 @@ import (
 	"iter"
 	"math"
 	"math/rand"
+	"path/filepath"
 	"sync"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v4"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
@@ -26,6 +28,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -60,7 +63,19 @@ func ProvideStorageBackend(
 	storageMetrics *resource.StorageMetrics,
 	tracer trace.Tracer,
 ) (resource.StorageBackend, error) {
-	backend, err := newStorageBackend(cfg, db, reg, storageMetrics, tracer)
+	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
+		MustString(string(options.StorageTypeUnified)))
+
+	var backend resource.StorageBackend
+	var err error
+	switch storageType {
+	case options.StorageTypeFile:
+		backend, err = newFileBackend(cfg)
+	case options.StorageTypeUnifiedGrpc:
+		return nil, fmt.Errorf("storage_type %s uses remote storage", storageType)
+	default:
+		backend, err = newStorageBackend(cfg, db, reg, storageMetrics, tracer)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -141,6 +156,23 @@ func newStorageBackend(
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
+}
+
+func newFileBackend(cfg *setting.Cfg) (resource.StorageBackend, error) {
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+	dataPath := apiserverCfg.Key("storage_path").
+		MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
+	db, err := badger.Open(badger.DefaultOptions(filepath.Join(dataPath, "badger")).
+		WithLogger(nil))
+	if err != nil {
+		return nil, err
+	}
+
+	kvStore := resource.NewBadgerKV(db)
+	return resource.NewKVStorageBackend(resource.KVBackendOptions{
+		KvStore: kvStore,
+		Log:     log.New("storage-backend"),
+	})
 }
 
 type BackendOptions struct {
