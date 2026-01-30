@@ -688,8 +688,7 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 //   - Empty or zero length Frames result in NoData.
 //
 // If a value is set:
-//   - 0 results in Normal.
-//   - Nonzero (e.g 1.2, NaN) results in Alerting.
+//   - Value (e.g 0, 1.2, NaN) results in Alerting.
 //   - nil results in noData.
 //   - unsupported Frame schemas results in Error.
 func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results {
@@ -805,8 +804,6 @@ func buildResult(f *data.Frame, val *float64, ts time.Time) Result {
 	switch {
 	case val == nil:
 		r.State = NoData
-	case *val == 0:
-		r.State = Normal
 	default:
 		r.State = Alerting
 	}
