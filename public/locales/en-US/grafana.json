@@ -5154,6 +5154,9 @@
       "panel-data-label": "Panel data",
       "panel-json-description": "The model saved in the dashboard JSON that configures how everything works.",
       "panel-json-label": "Panel JSON",
+      "panel-layout-description": "The grid position and size of the panel in the dashboard.",
+      "panel-layout-label": "Panel Layout",
+      "panel-spec-label": "Panel Spec",
       "select-source": "Select source",
       "unknown": "Unknown Object: {{show}}"
     },
@@ -6239,7 +6242,9 @@
     },
     "inspect-json-tab": {
       "apply": "Apply",
+      "error-element-changed": "Cannot change the element reference. Only layout properties (x, y, width, height) can be modified.",
       "error-invalid-json": "Invalid JSON",
+      "error-invalid-layout": "Layout JSON did not pass validation. Please check the JSON and try again.",
       "error-invalid-v2-panel": "Panel JSON did not pass validation. Please check the JSON and try again.",
       "validation-error": "Validation error"
     },
