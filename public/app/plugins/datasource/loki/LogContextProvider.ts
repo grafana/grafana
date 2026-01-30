@@ -275,6 +275,8 @@ export class LogContextProvider {
           LogfmtExpressionParser,
         ]);
 
+        parserNodes.sort((a, b) => b.from - a.from);
+
         // Add parsers first
         for (const node of parserNodes) {
           const parserName = query.expr.substring(node.from, node.to).trim();

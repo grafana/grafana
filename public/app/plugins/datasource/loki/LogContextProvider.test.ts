@@ -300,7 +300,7 @@ describe('LogContextProvider', () => {
         }
       );
 
-      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | json | logfmt | foo=\`uniqueParsedLabel\``);
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | json | foo=\`uniqueParsedLabel\``);
     });
 
     it('should apply all parsers in correct order (json | logfmt)', async () => {
@@ -315,7 +315,7 @@ describe('LogContextProvider', () => {
         }
       );
 
-      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | json`);
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | json | logfmt`);
     });
 
     it('should apply parsers and drop operations when includePipelineOperations is enabled', async () => {
@@ -331,7 +331,7 @@ describe('LogContextProvider', () => {
         }
       );
 
-      expect(contextQuery.query.expr).toEqual(`{level="info"} | logfmt | json | drop __error__, __error_details__`);
+      expect(contextQuery.query.expr).toEqual(`{level="info"} | json | logfmt | drop __error__, __error_details__`);
     });
 
     it('should apply logfmt (with args) and regexp label parser from original query', async () => {
@@ -352,7 +352,7 @@ describe('LogContextProvider', () => {
 
       // Parsers are added after the selector; when multiple parsers exist, the later insertion ends up earlier.
       expect(contextQuery.query.expr).toEqual(
-        '{bar="baz",xyz="abc"} | regexp "(?P<foo>bar)" | logfmt --strict field="otherField", label'
+        '{bar="baz",xyz="abc"} | logfmt --strict field="otherField", label | regexp "(?P<foo>bar)"'
       );
     });
 
@@ -374,7 +374,7 @@ describe('LogContextProvider', () => {
       );
 
       expect(contextQuery.query.expr).toEqual(
-        '{bar="baz",xyz="abc"} | regexp "(?P<foo>bar)" | logfmt --strict field="otherField", label | foo=`uniqueParsedLabel`'
+        '{bar="baz",xyz="abc"} | logfmt --strict field="otherField", label | regexp "(?P<foo>bar)" | foo=`uniqueParsedLabel`'
       );
     });
 
@@ -395,7 +395,7 @@ describe('LogContextProvider', () => {
       );
 
       expect(contextQuery.query.expr).toEqual(
-        '{bar="baz",xyz="abc"} | pattern `<foo> <bar>` | logfmt --strict field="otherField", label'
+        '{bar="baz",xyz="abc"} | logfmt --strict field="otherField", label | pattern `<foo> <bar>`'
       );
     });
 
@@ -560,7 +560,7 @@ describe('LogContextProvider', () => {
       );
 
       // When includePipelineOperations is enabled, both parsers and pipeline stages are added
-      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | json | logfmt | line_format "foo" | label_format a="baz"`);
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | json | line_format "foo" | label_format a="baz"`);
     });
   });
 
