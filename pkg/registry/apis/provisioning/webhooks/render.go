@@ -23,14 +23,14 @@ import (
 )
 
 type renderConnector struct {
-	unified resource.ResourceClient
-	core    *provisioningapis.APIBuilder
+	storageClient resource.StorageClient
+	core          *provisioningapis.APIBuilder
 }
 
-func NewRenderConnector(unified resource.ResourceClient, core *provisioningapis.APIBuilder) *renderConnector {
+func NewRenderConnector(storageClient resource.StorageClient, core *provisioningapis.APIBuilder) *renderConnector {
 	return &renderConnector{
-		unified: unified,
-		core:    core,
+		storageClient: storageClient,
+		core:          core,
 	}
 }
 
@@ -133,7 +133,7 @@ func (c *renderConnector) Connect(
 			return
 		}
 
-		rsp, err := c.unified.GetBlob(ctx, &resourcepb.GetBlobRequest{
+		rsp, err := c.storageClient.GetBlob(ctx, &resourcepb.GetBlobRequest{
 			Resource: &resourcepb.ResourceKey{
 				Namespace: namespace,
 				Group:     provisioning.GROUP,

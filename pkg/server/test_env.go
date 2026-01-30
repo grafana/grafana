@@ -33,7 +33,7 @@ func ProvideTestEnv(
 	httpClientProvider httpclient.Provider,
 	oAuthTokenService *oauthtokentest.Service,
 	featureMgmt featuremgmt.FeatureToggles,
-	resourceClient resource.ResourceClient,
+	diagnosticsClient resource.DiagnosticsClient,
 	idService auth.IDService,
 	githubRepoFactory *github.Factory,
 	githubConnectionFactory githubconnection.GithubFactory,
@@ -50,7 +50,7 @@ func ProvideTestEnv(
 		HTTPClientProvider:      httpClientProvider,
 		OAuthTokenService:       oAuthTokenService,
 		FeatureToggles:          featureMgmt,
-		ResourceClient:          resourceClient,
+		DiagnosticsClient:       diagnosticsClient,
 		IDService:               idService,
 		GithubRepoFactory:       githubRepoFactory,
 		GithubConnectionFactory: githubConnectionFactory,
@@ -73,7 +73,7 @@ type TestEnv struct {
 	OAuthTokenService       *oauthtokentest.Service
 	RequestMiddleware       web.Middleware
 	FeatureToggles          featuremgmt.FeatureToggles
-	ResourceClient          resource.ResourceClient
+	DiagnosticsClient       resource.DiagnosticsClient
 	IDService               auth.IDService
 	GithubRepoFactory       *github.Factory
 	GithubConnectionFactory githubconnection.GithubFactory

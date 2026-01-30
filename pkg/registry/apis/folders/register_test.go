@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
 
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -278,7 +278,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
-			sm := resource.NewMockResourceClient(t)
+			sm := newMockSearchClient(t)
 			sm.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Folder: obj.Name}).Return(
 				&resourcepb.ResourceStatsResponse{Stats: tt.statsResponse},
 				nil,
@@ -472,7 +472,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
-			sm := resource.NewMockResourceClient(t)
+			sm := newMockSearchClient(t)
 			if tt.setupFn != nil {
 				tt.setupFn(us)
 			}
@@ -570,7 +570,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
-			sm := resource.NewMockResourceClient(t)
+			sm := newMockSearchClient(t)
 			b := &FolderAPIBuilder{
 				namespacer: func(_ int64) string { return "123" },
 				folderSvc:  foldertest.NewFakeService(),
@@ -676,7 +676,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 		},
 	}
 	us := grafanarest.NewMockStorage(t)
-	sm := resource.NewMockResourceClient(t)
+	sm := newMockSearchClient(t)
 	b := &FolderAPIBuilder{
 		namespacer: func(_ int64) string { return "123" },
 		folderSvc:  foldertest.NewFakeService(),
@@ -712,4 +712,72 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 			require.Equal(t, tt.input, tt.expected)
 		})
 	}
+}
+
+type mockSearchClient struct {
+	mock.Mock
+	resourcepb.ResourceIndexClient
+	resourcepb.ManagedObjectIndexClient
+}
+
+func newMockSearchClient(t *testing.T) *mockSearchClient {
+	t.Helper()
+	searchClient := &mockSearchClient{}
+	t.Cleanup(func() {
+		searchClient.AssertExpectations(t)
+	})
+	return searchClient
+}
+
+func (m *mockSearchClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.ResourceSearchResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.ResourceSearchResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.ResourceStatsResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.ResourceStatsResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func (m *mockSearchClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.RebuildIndexesResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.RebuildIndexesResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func (m *mockSearchClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.CountManagedObjectsResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.CountManagedObjectsResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func (m *mockSearchClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.ListManagedObjectsResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.ListManagedObjectsResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func callArgs(ctx context.Context, in interface{}, opts []grpc.CallOption) []interface{} {
+	args := []interface{}{ctx, in}
+	for _, opt := range opts {
+		args = append(args, opt)
+	}
+	return args
 }
