@@ -21,7 +21,7 @@ describe('QueryEditorSidebar', () => {
     jest.clearAllMocks();
   });
 
-  it('should render empty transformations section when no transformations exist', () => {
+  it('should not render transformations section when no transformations exist', () => {
     const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
 
     render(
@@ -41,12 +41,7 @@ describe('QueryEditorSidebar', () => {
       </QueryEditorProvider>
     );
 
-    // Should render the transformations section header
-    expect(screen.getByText(/transformations/i)).toBeInTheDocument();
-
-    // Should not render any transformation cards
-    const transformationSection = screen.getByText(/transformations/i).closest('div');
-    expect(transformationSection).toBeInTheDocument();
+    expect(screen.queryByText(/transformations/i)).not.toBeInTheDocument();
   });
 
   it('should render queries section even when no queries exist', () => {
