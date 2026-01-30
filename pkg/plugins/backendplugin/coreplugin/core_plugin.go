@@ -18,6 +18,7 @@ type corePlugin struct {
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.QueryDataHandler
+	backend.QueryChunkedDataHandler
 	backend.StreamHandler
 	backend.AdmissionHandler
 	backend.ConversionHandler
@@ -27,13 +28,14 @@ type corePlugin struct {
 func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 	return func(pluginID string, logger log.Logger, _ trace.Tracer, _ func() []string) (backendplugin.Plugin, error) {
 		return &corePlugin{
-			pluginID:            pluginID,
-			logger:              logger,
-			CheckHealthHandler:  opts.CheckHealthHandler,
-			CallResourceHandler: opts.CallResourceHandler,
-			QueryDataHandler:    opts.QueryDataHandler,
-			AdmissionHandler:    opts.AdmissionHandler,
-			StreamHandler:       opts.StreamHandler,
+			pluginID:                pluginID,
+			logger:                  logger,
+			CheckHealthHandler:      opts.CheckHealthHandler,
+			CallResourceHandler:     opts.CallResourceHandler,
+			QueryDataHandler:        opts.QueryDataHandler,
+			QueryChunkedDataHandler: opts.QueryChunkedDataHandler,
+			AdmissionHandler:        opts.AdmissionHandler,
+			StreamHandler:           opts.StreamHandler,
 		}, nil
 	}
 }
@@ -94,6 +96,15 @@ func (cp *corePlugin) QueryData(ctx context.Context, req *backend.QueryDataReque
 	}
 
 	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if cp.QueryChunkedDataHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
+		return cp.QueryChunkedDataHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	return plugins.ErrMethodNotImplemented
 }
 
 func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

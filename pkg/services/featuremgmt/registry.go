@@ -18,13 +18,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "disableEnvelopeEncryption",
-			Description: "Disable envelope encryption (emergency only)",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-		},
-		{
 			Name:        "panelTitleSearch",
 			Description: "Search for dashboards using panel title",
 			Stage:       FeatureStagePublicPreview,
@@ -2272,6 +2265,14 @@ var (
 			Description:  "Enables search for team bindings in the app platform API",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingMultiplePolicies",
+			Description:  "Enables the ability to create multiple alerting policies",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
 		},

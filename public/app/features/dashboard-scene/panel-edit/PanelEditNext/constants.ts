@@ -19,7 +19,7 @@ export const QUERY_EDITOR_TYPE_CONFIG: Record<QueryEditorType, QueryEditorTypeCo
     label: 'Query',
   },
   [QueryEditorType.Expression]: {
-    icon: 'brackets-curly',
+    icon: 'calculator-alt',
     color: '#C27AFF',
     label: 'Expression',
   },

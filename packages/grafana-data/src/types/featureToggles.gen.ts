@@ -19,11 +19,6 @@
  */
 export interface FeatureToggles {
   /**
-  * Disable envelope encryption (emergency only)
-  * @default false
-  */
-  disableEnvelopeEncryption?: boolean;
-  /**
   * Search for dashboards using panel title
   * @default false
   */
@@ -1441,4 +1436,9 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesTeamBindings?: boolean;
+  /**
+  * Enables the ability to create multiple alerting policies
+  * @default false
+  */
+  alertingMultiplePolicies?: boolean;
 }
