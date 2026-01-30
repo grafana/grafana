@@ -572,7 +572,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
-	resourceClient, err := unified.ProvideUnifiedResourceClients(options, storageMetrics, bleveIndexMetrics)
+	resourceClient, err := unified.ProvideUnifiedResourceClient(options, storageMetrics, bleveIndexMetrics)
 	if err != nil {
 		return nil, err
 	}
@@ -1256,7 +1256,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
-	resourceClient, err := unified.ProvideUnifiedResourceClients(options, storageMetrics, bleveIndexMetrics)
+	resourceClient, err := unified.ProvideUnifiedResourceClient(options, storageMetrics, bleveIndexMetrics)
 	if err != nil {
 		return nil, err
 	}
@@ -1660,8 +1660,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	diagnosticsClient := resourceClient.DiagnosticsClient
-	testEnv, err := ProvideTestEnv(testingT, server, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, diagnosticsClient, idimplService, factory, githubFactory, decryptService)
+	testEnv, err := ProvideTestEnv(testingT, server, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, resourceClient, idimplService, factory, githubFactory, decryptService)
 	if err != nil {
 		return nil, err
 	}

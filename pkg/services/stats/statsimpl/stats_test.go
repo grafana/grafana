@@ -144,6 +144,15 @@ func newMockSearchClient(t *testing.T) *mockSearchClient {
 	return searchClient
 }
 
+func (m *mockSearchClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.HealthCheckResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.HealthCheckResponse)
+	}
+	return resp, ret.Error(1)
+}
+
 func (m *mockSearchClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	ret := m.Called(callArgs(ctx, in, opts)...)
 	var resp *resourcepb.ResourceSearchResponse

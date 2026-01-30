@@ -50,7 +50,6 @@ type Client struct {
 	StorageClient
 	SearchClient
 	QuotaClient
-	DiagnosticsClient
 }
 
 // storageClient is the internal implementation of StorageClient

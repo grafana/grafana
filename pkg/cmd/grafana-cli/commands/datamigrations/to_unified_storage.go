@@ -226,7 +226,7 @@ func promptYesNo(prompt string) (bool, error) {
 }
 
 func newUnifiedMigratorClient(cfg *setting.Cfg, sqlStore db.DB, featureToggles featuremgmt.FeatureToggles) (resource.MigratorClient, error) {
-	resourceClients, err := unified.ProvideUnifiedResourceClients(&unified.Options{
+	resourceClient, err := unified.ProvideUnifiedResourceClient(&unified.Options{
 		Cfg:      cfg,
 		Features: featureToggles,
 		DB:       sqlStore,
@@ -235,7 +235,7 @@ func newUnifiedMigratorClient(cfg *setting.Cfg, sqlStore db.DB, featureToggles f
 		Authzc:   authlib.FixedAccessClient(true), // always true!
 		Docs:     nil,                             // document supplier
 	}, nil, nil)
-	return resourceClients.MigratorClient, err
+	return resourceClient, err
 }
 
 func newParquetClient(file *os.File) (resourcepb.BulkStoreClient, error) {

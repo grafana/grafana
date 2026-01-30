@@ -58,8 +58,8 @@ type clientMetrics struct {
 	requestRetries  *prometheus.CounterVec
 }
 
-// ProvideUnifiedResourceClients creates all resource client to be used in the wire dependency tree.
-func ProvideUnifiedResourceClients(opts *Options,
+// ProvideUnifiedResourceClient creates all resource client to be used in the wire dependency tree.
+func ProvideUnifiedResourceClient(opts *Options,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 ) (*resource.Client, error) {
