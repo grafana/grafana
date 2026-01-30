@@ -1,7 +1,7 @@
 import { defineConfig } from 'i18next-cli';
 
 export default defineConfig({
-  locales: ['en-US'], // Only en-US  is updated - Crowdin will PR with other languages
+  locales: ['en-US'], // Only en-US is updated - Crowdin will PR with other languages
   extract: {
     ignore: [
       'public/lib/monaco/**/*',
@@ -14,5 +14,6 @@ export default defineConfig({
     defaultNS: 'grafana',
     functions: ['t', '*.t'],
     transComponents: ['Trans'],
+    sort: (a, b) => a.key.localeCompare(b.key, 'en-US'),
   },
 });
