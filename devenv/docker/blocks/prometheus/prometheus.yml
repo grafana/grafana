@@ -19,6 +19,9 @@ alerting:
 
 scrape_configs:
   - job_name: 'prometheus'
+    basic_auth:
+      username: admin
+      password: admin
     static_configs:
       - targets: ['localhost:9090']
 
