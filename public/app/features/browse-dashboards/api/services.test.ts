@@ -1,22 +1,21 @@
 import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { BackendSrv, config, getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { DashboardQueryResult, QueryResponse } from 'app/features/search/service/types';
 
 import { listDashboards, listFolders } from './services';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: jest.fn(),
-}));
-
-jest.mock('app/core/services/context_srv', () => ({
-  ...jest.requireActual('app/core/services/context_srv'),
-  contextSrv: {
-    hasPermission: jest.fn(),
-  },
-}));
+jest.mock('app/core/services/context_srv', () => {
+  const contextSrvModule = jest.requireActual('app/core/services/context_srv');
+  return {
+    ...contextSrvModule,
+    contextSrv: {
+      ...contextSrvModule.contextSrv,
+      hasPermission: jest.fn(),
+    },
+  };
+});
 
 describe('browse-dashboards services', () => {
   describe('listDashboards', () => {
@@ -65,11 +64,22 @@ describe('browse-dashboards services', () => {
 
   describe('listFolders', () => {
     const PAGE_SIZE = 50;
-    const mockBackendSrv = getBackendSrv as jest.Mocked<typeof getBackendSrv>;
     const mockContextSrv = contextSrv as jest.Mocked<typeof contextSrv>;
+    let backendGetMock: jest.Mock;
+    let originalBackendSrv: BackendSrv;
+
+    beforeAll(() => {
+      originalBackendSrv = getBackendSrv();
+    });
+
+    afterAll(() => {
+      setBackendSrv(originalBackendSrv);
+    });
 
     beforeEach(() => {
       jest.clearAllMocks();
+      backendGetMock = jest.fn();
+      setBackendSrv({ ...originalBackendSrv, get: backendGetMock });
       mockContextSrv.hasPermission = jest.fn().mockReturnValue(true);
       config.featureToggles.foldersAppPlatformAPI = false;
       config.sharedWithMeFolderUID = 'sharedwithme';
@@ -85,11 +95,11 @@ describe('browse-dashboards services', () => {
           { uid: 'folder-1', title: 'Folder 1' },
           { uid: 'folder-2', title: 'Folder 2' },
         ];
-        mockBackendSrv().get = jest.fn().mockResolvedValue(mockFolders);
+        backendGetMock.mockResolvedValue(mockFolders);
 
         await listFolders('parent-uid', 'Parent Title', 1, PAGE_SIZE);
 
-        expect(mockBackendSrv().get).toHaveBeenCalledWith('/api/folders', {
+        expect(backendGetMock).toHaveBeenCalledWith('/api/folders', {
           parentUid: 'parent-uid',
           page: 1,
           limit: PAGE_SIZE,
@@ -101,7 +111,7 @@ describe('browse-dashboards services', () => {
           { uid: 'folder-1', title: 'Folder 1', managedBy: 'terraform' },
           { uid: 'folder-2', title: 'Folder 2' },
         ];
-        mockBackendSrv().get = jest.fn().mockResolvedValue(mockFolders);
+        backendGetMock.mockResolvedValue(mockFolders);
 
         const result = await listFolders('parent-uid', 'Parent Title', 1, PAGE_SIZE);
 
@@ -117,11 +127,11 @@ describe('browse-dashboards services', () => {
       });
 
       it('handles pagination correctly', async () => {
-        mockBackendSrv().get = jest.fn().mockResolvedValue([]);
+        backendGetMock.mockResolvedValue([]);
 
         await listFolders(undefined, undefined, 3, PAGE_SIZE);
 
-        expect(mockBackendSrv().get).toHaveBeenCalledWith('/api/folders', {
+        expect(backendGetMock).toHaveBeenCalledWith('/api/folders', {
           parentUid: undefined,
           page: 3,
           limit: PAGE_SIZE,
@@ -130,7 +140,7 @@ describe('browse-dashboards services', () => {
 
       it('does not add shared with me folder (handled by backend)', async () => {
         const mockFolders = [{ uid: 'folder-1', title: 'Folder 1' }];
-        mockBackendSrv().get = jest.fn().mockResolvedValue(mockFolders);
+        backendGetMock.mockResolvedValue(mockFolders);
 
         const result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
 
@@ -292,18 +302,18 @@ describe('browse-dashboards services', () => {
     describe('permissions', () => {
       it('returns empty array when user does not have FoldersRead permission', async () => {
         mockContextSrv.hasPermission = jest.fn().mockReturnValue(false);
-        mockBackendSrv().get = jest.fn();
+        backendGetMock.mockResolvedValue([]);
 
         const result = await listFolders();
 
         expect(result).toEqual([]);
-        expect(mockBackendSrv().get).not.toHaveBeenCalled();
+        expect(backendGetMock).not.toHaveBeenCalled();
       });
     });
 
     describe('URL generation', () => {
       beforeEach(() => {
-        mockBackendSrv().get = jest.fn().mockResolvedValue([
+        backendGetMock.mockResolvedValue([
           { uid: 'regular-folder', title: 'Regular Folder' },
           { uid: 'sharedwithme', title: 'Shared with me' },
         ]);
