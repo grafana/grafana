@@ -8,7 +8,7 @@ import { mockFolderApi, setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockFolder, mockGrafanaPromAlertingRule } from '../mocks';
 import { NO_GROUP_PREFIX } from '../utils/rules';
 
-import { GrafanaRuleGroupListItem } from './PaginatedGrafanaLoader';
+import { GrafanaRuleGroupListItem } from './components/AlertingFolder';
 
 const server = setupMswServer();
 

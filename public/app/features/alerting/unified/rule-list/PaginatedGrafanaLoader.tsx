@@ -36,11 +36,10 @@ export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter, onLoading
 function PaginatedFoldersLoader({ groupFilter, namespaceFilter, onLoadingStateChange }: LoaderProps) {
   const hasFilters = Boolean(groupFilter || namespaceFilter);
 
-  // TODO: Implement folder/group filtering when filters are provided
-  // For now, we fetch all folders and filtering happens at the group level within each folder
-
-  // Fetch folders containing alert rules
-  const { folders, isLoading, hasMore, fetchMore, error } = useAlertingFolders();
+  // Fetch root folders (no parentUid)
+  const { folders, isLoading, hasMore, fetchMore, error } = useAlertingFolders({
+    namespaceFilter,
+  });
 
   useDataSourceLoadingReporter(
     GRAFANA_RULES_SOURCE_NAME,
@@ -59,7 +58,7 @@ function PaginatedFoldersLoader({ groupFilter, namespaceFilter, onLoadingStateCh
       error={error}
     >
       {folders.map((folder) => (
-        <AlertingFolder key={folder.uid} folder={folder} />
+        <AlertingFolder key={folder.uid} folder={folder} groupFilter={groupFilter} namespaceFilter={namespaceFilter} />
       ))}
 
       {/* only show the CTA if the user has no rules and this isn't the result of a filter / search query */}

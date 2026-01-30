@@ -30,7 +30,7 @@ export const ListGroup = ({
   const [open, toggle] = useToggle(isOpen);
 
   return (
-    <div className={styles.groupWrapper} role="treeitem" aria-expanded={open} aria-selected="false">
+    <li className={styles.groupWrapper} role="treeitem" aria-expanded={open} aria-selected="false">
       <GroupHeader
         onToggle={() => toggle()}
         isOpen={open}
@@ -45,7 +45,7 @@ export const ListGroup = ({
           {children}
         </div>
       )}
-    </div>
+    </li>
   );
 };
 
@@ -92,19 +92,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     position: 'relative',
+    listStyle: 'none',
 
     '&:before': {
       content: "''",
       position: 'absolute',
       height: '100%',
-
-      marginLeft: theme.spacing(2.5),
+      left: theme.spacing(-1.5),
       borderLeft: `solid 1px ${theme.colors.border.weak}`,
     },
   }),
   headerWrapper: css({
-    padding: theme.spacing(1),
-    paddingLeft: theme.spacing(4),
+    padding: theme.spacing(1, 1.5),
     position: 'relative',
 
     '&:hover': {
@@ -114,5 +113,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   childrenWrapper: css({
     position: 'relative',
+    paddingLeft: theme.spacing(2),
   }),
 });

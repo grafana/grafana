@@ -14,6 +14,7 @@ interface ListSectionProps extends PropsWithChildren {
   collapsed?: boolean;
   actions?: ReactNode;
   pagination?: ReactNode;
+  onToggle?: () => void;
 }
 
 export const ListSection = ({
@@ -22,9 +23,14 @@ export const ListSection = ({
   collapsed = false,
   actions = null,
   pagination = null,
+  onToggle,
 }: ListSectionProps) => {
   const styles = useStyles2(getStyles);
-  const [isCollapsed, toggleCollapsed] = useToggle(collapsed);
+  const [internalCollapsed, internalToggle] = useToggle(collapsed);
+
+  // Use external toggle if provided, otherwise use internal
+  const isCollapsed = onToggle ? collapsed : internalCollapsed;
+  const toggle = onToggle ?? internalToggle;
 
   return (
     <li className={styles.wrapper} role="treeitem" aria-selected="false">
@@ -33,7 +39,7 @@ export const ListSection = ({
           <Stack alignItems="center" gap={0.5}>
             <IconButton
               name={isCollapsed ? 'angle-right' : 'angle-down'}
-              onClick={toggleCollapsed}
+              onClick={toggle}
               aria-label={t('common.collapse', 'Collapse')}
             />
             {title}
@@ -58,38 +64,38 @@ export const ListSection = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  groupItemsWrapper: css({
-    position: 'relative',
-
-    // unfortunately we have to resort to this since we can't overwrite the styles of the list items individually
-    // unless we clone the React Elements and modify className
-    'li[role=treeitem]': {
-      listStyle: 'none',
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    groupItemsWrapper: css({
       position: 'relative',
-      paddingLeft: theme.spacing(6.5),
+      paddingLeft: theme.spacing(2), // Add padding for nested children
 
-      '&:before': {
-        content: "''",
-        position: 'absolute',
-        height: '100%',
+      // Direct children (groups or nested folders)
+      '& > li[role=treeitem]': {
+        listStyle: 'none',
+        position: 'relative',
 
-        marginLeft: theme.spacing(-1.5),
-        marginTop: theme.spacing(-1),
-        borderLeft: `solid 1px ${theme.colors.border.weak}`,
+        '&:before': {
+          content: "''",
+          position: 'absolute',
+          height: '100%',
+          left: theme.spacing(-1.5),
+          marginTop: theme.spacing(-1),
+          borderLeft: `solid 1px ${theme.colors.border.weak}`,
+        },
       },
-    },
-  }),
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-  sectionTitle: css({
-    padding: theme.spacing(1, 1.5),
+    }),
+    wrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    sectionTitle: css({
+      padding: theme.spacing(1, 1.5),
 
-    '&:hover': {
-      background: theme.colors.action.hover,
-      borderRadius: theme.shape.radius.default,
-    },
-  }),
-});
+      '&:hover': {
+        background: theme.colors.action.hover,
+        borderRadius: theme.shape.radius.default,
+      },
+    }),
+  };
+};

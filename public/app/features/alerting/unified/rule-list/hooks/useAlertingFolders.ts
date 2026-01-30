@@ -3,6 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { DashboardQueryResult } from 'app/features/search/service/types';
 
+interface UseAlertingFoldersParams {
+  parentUid?: string;
+  namespaceFilter?: string;
+}
+
 interface UseAlertingFoldersResult {
   folders: DashboardQueryResult[];
   isLoading: boolean;
@@ -16,10 +21,16 @@ const FOLDERS_PAGE_SIZE = 40;
 /**
  * Hook to fetch folders using the search API.
  * Folders are fetched lazily with pagination support.
+ *
+ * @param params - Optional parameters
+ * @param params.parentUid - If provided, fetch child folders of this parent. If undefined, fetch root folders.
+ * @param params.namespaceFilter - If provided, filter folders by name
+ *
  * Note: This fetches all folders, not just those containing alert rules.
  * Empty folders will show no groups when expanded.
  */
-export function useAlertingFolders(): UseAlertingFoldersResult {
+export function useAlertingFolders(params?: UseAlertingFoldersParams): UseAlertingFoldersResult {
+  const { parentUid, namespaceFilter } = params ?? {};
   const [folders, setFolders] = useState<DashboardQueryResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
@@ -39,6 +50,8 @@ export function useAlertingFolders(): UseAlertingFoldersResult {
         const searcher = getGrafanaSearcher();
         const response = await searcher.search({
           kind: ['folder'],
+          location: parentUid,
+          query: namespaceFilter,
           limit: FOLDERS_PAGE_SIZE,
           from: pageToFetch * FOLDERS_PAGE_SIZE,
         });
@@ -52,7 +65,7 @@ export function useAlertingFolders(): UseAlertingFoldersResult {
         setIsLoading(false);
       }
     },
-    [hasMore]
+    [hasMore, parentUid, namespaceFilter]
   );
 
   const fetchMore = useCallback(() => {
