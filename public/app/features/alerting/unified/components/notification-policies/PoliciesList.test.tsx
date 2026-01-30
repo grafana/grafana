@@ -18,7 +18,6 @@ import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { countPolicies } from './PoliciesList';
 import { TIMING_OPTIONS_DEFAULTS } from './timingOptions';
 
-
 jest.mock('../../useRouteGroupsMatcher');
 
 jest.mock('../../hooks/useAbilities', () => ({
@@ -155,7 +154,7 @@ describe('PoliciesList', () => {
 
         const size = countPolicies(route.spec);
         if (size === 0) {
-          expect(routeEl).not.toHaveTextContent(new RegExp(`contains \d+ polic(ies|y)`, 'i'));
+          expect(routeEl).not.toHaveTextContent(new RegExp(`contains \\d+ polic(ies|y)`, 'i'));
         } else {
           expect(routeEl).toHaveTextContent(new RegExp(`contains ${size} polic(ies|y)`, 'i'));
         }
