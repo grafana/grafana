@@ -51,6 +51,11 @@ func RequestConfigMiddleware(baseConfig FSRequestConfig, settingsService setting
 						Key:      "section",
 						Operator: metav1.LabelSelectorOpIn,
 						Values:   []string{"security"}, // TODO: get correct list
+					}, {
+						// don't return values from defaults.ini as they conflict with the services's own defaults
+						Key:      "source",
+						Operator: metav1.LabelSelectorOpNotIn,
+						Values:   []string{"defaults"},
 					}},
 				}
 
