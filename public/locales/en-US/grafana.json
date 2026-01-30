@@ -2328,7 +2328,8 @@
     },
     "routing-settings": {
       "aria-label-group-by": "Group by",
-      "description-group-by": "Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the default notification policy.",
+      "description-group-by": "Alerts are always grouped by grafana_folder and alertname, plus any additional labels you select. Select \"Disable (...)\" to send each alert as a separate notification.",
+      "group-by-hint": "grafana_folder and alertname are always included unless you select Disable (...).",
       "group-interval": "Group interval: <strong>{{groupIntervalValue}}</strong>",
       "group-wait": "Group wait: <strong>{{groupWaitValue}}</strong>",
       "grouping": "Grouping: <strong>{{fields}}</strong>",

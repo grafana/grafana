@@ -14782,6 +14782,9 @@
         "variable-values-fetched-datasource-query": "從資料來源查詢中獲取變數值"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "預設值",

@@ -3,6 +3,7 @@ package rbac
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -290,6 +291,9 @@ func NewMapperRegistry() MapperRegistry {
 				skipScopeOnVerb: nil,
 			},
 		},
+		"*.datasource.grafana.app": {
+			"datasources": newResourceTranslation("datasources", "uid", false, nil),
+		},
 		"plugins.grafana.app": {
 			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),
 			"metas":   newResourceTranslation("plugins.metas", "uid", false, nil),
@@ -304,12 +308,38 @@ func NewMapperRegistry() MapperRegistry {
 	return mapper
 }
 
+// findGroupKey returns the registry key for group, using exact match first,
+// then wildcard match. A wildcard key has the form "*.<suffix>" (e.g. "*.datasource.grafana.app");
+// group matches if it has that suffix and is longer than the suffix (non-empty prefix).
+// Group starting with "*" never matches (so we never exact-match a wildcard registry key as input).
+func (m mapper) findGroupKey(group string) (string, bool) {
+	if strings.HasPrefix(group, "*") {
+		return "", false
+	}
+	if _, ok := m[group]; ok {
+		return group, true
+	}
+	for key := range m {
+		// is this a wildcard key?
+		if len(key) < 2 || key[0] != '*' || key[1] != '.' {
+			continue
+		}
+		// does the requested group have the same suffix as the wildcard key?
+		suffix := key[1:]
+		if len(group) > len(suffix) && strings.HasSuffix(group, suffix) {
+			return key, true
+		}
+	}
+	return "", false
+}
+
 func (m mapper) Get(group, resource string) (Mapping, bool) {
-	resources, ok := m[group]
+	groupKey, ok := m.findGroupKey(group)
 	if !ok {
 		return nil, false
 	}
 
+	resources := m[groupKey]
 	t, ok := resources[resource]
 	if !ok {
 		return nil, false
@@ -319,10 +349,12 @@ func (m mapper) Get(group, resource string) (Mapping, bool) {
 }
 
 func (m mapper) GetAll(group string) []Mapping {
-	resources, ok := m[group]
+	groupKey, ok := m.findGroupKey(group)
 	if !ok {
 		return nil
 	}
+
+	resources := m[groupKey]
 
 	translations := make([]Mapping, 0, len(resources))
 	for _, t := range resources {
