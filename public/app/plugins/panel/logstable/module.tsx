@@ -10,14 +10,18 @@ import { defaultTableFieldOptions } from '@grafana/schema/dist/esm/veneer/common
 
 import { PaginationEditor } from '../table/PaginationEditor';
 import { TableCellOptionEditor } from '../table/TableCellOptionEditor';
-import { FieldConfig as TableFieldConfig, defaultOptions as defaultTableOptions } from '../table/panelcfg.gen';
+import {
+  FieldConfig as TableFieldConfig,
+  defaultOptions as defaultTableOptions,
+  Options as TableOptions,
+} from '../table/panelcfg.gen';
 import { tableSuggestionsSupplier } from '../table/suggestions';
 
 import { LogsTable } from './LogsTable';
 import { Options, defaultOptions } from './panelcfg.gen';
 
 // @todo can we pull stuff from table module instead of manually adding?
-export const plugin = new PanelPlugin<Options, TableFieldConfig>(LogsTable)
+export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(LogsTable)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Actions]: {
@@ -248,7 +252,4 @@ export const plugin = new PanelPlugin<Options, TableFieldConfig>(LogsTable)
         defaultValue: defaultTableOptions?.enablePagination,
       });
   })
-
-  // @todo
-  //@ts-expect-error
   .setSuggestionsSupplier(tableSuggestionsSupplier);

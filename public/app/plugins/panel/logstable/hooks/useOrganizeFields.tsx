@@ -40,7 +40,6 @@ export function useOrganizeFields({
     if (!extractedFrame || !timeFieldName || !bodyFieldName || !logsFrame) {
       return;
     }
-    const showPermalinkButton = supportsPermalink && !!options.showCopyLogLink;
 
     organizeFields(
       extractedFrame,
@@ -48,7 +47,7 @@ export function useOrganizeFields({
       logsFrame,
       timeFieldName,
       bodyFieldName,
-      showPermalinkButton,
+      supportsPermalink,
       onPermalinkClick
     ).then((frame) => {
       if (frame) {
@@ -66,7 +65,7 @@ const organizeFields = async (
   logsFrame: LogsFrame,
   timeFieldName: string,
   bodyFieldName: string,
-  showPermalinkButton: boolean,
+  supportsPermalink: boolean,
   onPermalinkClick: BuildLinkToLogLine
 ) => {
   if (!extractedFrame) {
@@ -98,14 +97,13 @@ const organizeFields = async (
           width: getFieldWidth(field.config.custom?.width, field, fieldIndex, timeFieldName, options),
           inspect: field.config?.custom?.inspect ?? doesFieldSupportInspector(field),
           cellOptions:
-            isFirstField && bodyFieldName && (showPermalinkButton || options.showInspectLogLine)
+            isFirstField && bodyFieldName && (supportsPermalink || options.showInspectLogLine)
               ? {
                   type: TableCellDisplayMode.Custom,
                   cellComponent: (cellProps: CustomCellRendererProps) => (
                     <LogsTableCustomCellRenderer
                       logsFrame={logsFrame}
-                      showCopyLogLink={showPermalinkButton}
-                      showInspectLogLine={options.showInspectLogLine ?? true}
+                      supportsPermalink={supportsPermalink}
                       cellProps={cellProps}
                       options={options}
                       bodyFieldName={bodyFieldName}
