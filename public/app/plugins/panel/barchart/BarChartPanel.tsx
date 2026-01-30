@@ -40,7 +40,9 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     barRadius = 0,
     showValue,
     groupWidth,
+    groupByField,
     stacking,
+    isClusteredStacked,
     legend,
     tooltip,
     text,
@@ -72,8 +74,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
   // TODO: config data links
   const info = useMemo(
-    () => prepSeries(data.series, fieldConfig, stacking, theme, xField, colorByField),
-    [data.series, fieldConfig, stacking, theme, xField, colorByField]
+    () => prepSeries(data.series, fieldConfig, stacking, isClusteredStacked, theme, xField, colorByField, groupByField),
+    [data.series, fieldConfig, stacking, isClusteredStacked, theme, xField, colorByField, groupByField]
   );
 
   const vizSeries = useMemo(
@@ -93,7 +95,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     () => {
       return xGroupsCount === 0
         ? { builder: null, prepData: null }
-        : prepConfig({ series: vizSeries, totalSeries, color: info.color, orientation, options, timeZone, theme });
+        : prepConfig({ series: vizSeries, totalSeries, color: info.color, orientation, options, timeZone, theme, groupByField });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -109,6 +111,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       barRadius,
       showValue,
       groupWidth,
+      groupByField,
       stacking,
       legend,
       tooltip,
