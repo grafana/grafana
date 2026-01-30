@@ -9,7 +9,7 @@ import { SidebarCard } from './SidebarCard';
 export const TransformationCard = ({ transformation }: { transformation: Transformation }) => {
   const { selectedTransformation, setSelectedTransformation } = useQueryEditorUIContext();
   const isSelected = selectedTransformation?.transformId === transformation.transformId;
-  const transformationName = transformation.registryItem?.name || transformation.transformId;
+  const transformationName = transformation.registryItem?.name || transformation.transformConfig.id;
 
   return (
     <SidebarCard

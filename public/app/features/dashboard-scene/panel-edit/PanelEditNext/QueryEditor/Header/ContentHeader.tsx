@@ -56,7 +56,7 @@ export function ContentHeader() {
         )}
         {selectedTransformation && (
           <Text weight="light" variant="body" color="primary">
-            {selectedTransformation.id}
+            {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
           </Text>
         )}
       </div>
