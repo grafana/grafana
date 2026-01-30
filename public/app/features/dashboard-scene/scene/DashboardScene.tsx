@@ -98,6 +98,15 @@ export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'gra
 export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
 export const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
 
+type PanelStyles = {
+  fieldConfig?: { defaults: Partial<FieldConfig> };
+};
+
+type CopiedPanelStyles = {
+  panelType: string;
+  styles: PanelStyles;
+};
+
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
   title: string;
@@ -644,10 +653,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * Hardcoded to Timeseries for this PoC
    * @internal
    */
-  private static extractPanelStyles(panel: VizPanel): {
-    fieldConfig?: { defaults?: Partial<FieldConfig> };
-  } {
-    const styles: { fieldConfig?: { defaults: Partial<FieldConfig> } } = {};
+  private static extractPanelStyles(panel: VizPanel): PanelStyles {
+    const styles: PanelStyles = {};
 
     if (!panel.state.fieldConfig?.defaults) {
       return styles;
@@ -698,7 +705,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    const stylesToCopy = {
+    const stylesToCopy: CopiedPanelStyles = {
       panelType,
       styles: DashboardScene.extractPanelStyles(vizPanel),
     };
@@ -719,7 +726,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     try {
-      const stylesCopy: { panelType: string } = JSON.parse(stylesJson);
+      const stylesCopy: CopiedPanelStyles = JSON.parse(stylesJson);
       return stylesCopy.panelType === panelType;
     } catch (e) {
       return false;
@@ -738,12 +745,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     try {
-      const stylesCopy: {
-        panelType: string;
-        styles: {
-          fieldConfig?: { defaults?: Record<string, unknown> };
-        };
-      } = JSON.parse(stylesJson);
+      const stylesCopy: CopiedPanelStyles = JSON.parse(stylesJson);
 
       const panelType = vizPanel.state.pluginId;
 
