@@ -8,28 +8,57 @@ on:
 
 jobs:
   generate_version_number:
-    name: Generate version number
+    name: Generate image version
     runs-on: ubuntu-latest
     outputs:
-      image_version: ${{ steps.generate_version_number_step.outputs.image_version }}
+      image_version: ${{ steps.build_version.outputs.image_version }}
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Generate version number
-        id: generate_version_number_step
+      - name: Build version string
+        id: build_version
         run: |
-          tag_number=$(git describe --abbrev=0 --tags)
+          tag_number=$(node -p "require('./package.json').version")
+          
           short_hash=$(git rev-parse --short ${{ github.sha }})
-          image_version="$tag_number-$short_hash-ni"
+          branch_name="${GITHUB_REF#refs/heads/}"
+          
+          if [ "$branch_name" = "main" ]; then
+            image_version="$tag_number-ni"
+          else
+            sanitized_branch=$(echo "$branch_name" | sed 's/[/_]/-/g' | cut -c1-20)
+            image_version="$tag_number-$short_hash-$sanitized_branch-ni"
+          fi
+          
           echo "::set-output name=image_version::$(echo $image_version)"
-        # image_version will look like "8.3.6-8a2963c-ni"
+
+  determine_registry:
+    name: Determine target registry and environment
+    runs-on: ubuntu-latest
+    outputs:
+      registry_path: ${{ steps.set_config.outputs.registry_path }}
+      environment: ${{ steps.set_config.outputs.environment }}
+    steps:
+      - name: Set configuration based on trigger
+        id: set_config
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            environment="jfrog-ci"
+            registry_path="niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana"
+          else
+            environment="jfrog-pre"
+            registry_path="niartifacts.jfrog.io/rnd-docker-pre/ni/systemlink/ni-grafana"
+          fi
+          
+          echo "::set-output name=environment::$environment"
+          echo "::set-output name=registry_path::$registry_path"
 
   build_docker_image:
     name: Build Docker Image
-    needs: [generate_version_number]
+    needs: [generate_version_number, determine_registry]
     runs-on: ubuntu-latest
-    environment: jfrog-ci
+    environment: ${{ needs.determine_registry.outputs.environment }}
     steps:
       - uses: actions/checkout@v2
       - name: Login to Artifactory
@@ -38,19 +67,29 @@ jobs:
           registry: niartifacts.jfrog.io
           username: ${{ vars.JFROG_USERNAME }}
           password: ${{ secrets.JFROG_ACCESS_TOKEN }}
-      - name: Docker build and push
+      - name: Docker build and push (with latest)
+        if: needs.determine_registry.outputs.environment == 'jfrog-ci'
         uses: docker/build-push-action@v2
         with:
           context: .
           push: true
           tags: |
-            niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:latest
-            niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:${{ needs.generate_version_number.outputs.image_version }}
+            ${{ needs.determine_registry.outputs.registry_path }}:latest
+            ${{ needs.determine_registry.outputs.registry_path }}:${{ needs.generate_version_number.outputs.image_version }}
+      - name: Docker build and push (version only)
+        if: needs.determine_registry.outputs.environment == 'jfrog-pre'
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ needs.determine_registry.outputs.registry_path }}:${{ needs.generate_version_number.outputs.image_version }}
+  
   sign_docker_image:
     name: Sign Docker Image
-    needs: [generate_version_number, build_docker_image]
+    needs: [generate_version_number, determine_registry, build_docker_image]
     runs-on: ubuntu-latest
-    environment: jfrog-ci
+    environment: ${{ needs.determine_registry.outputs.environment }}
     steps:
       - name: Log into registry
         uses: redhat-actions/podman-login@v1
@@ -67,7 +106,7 @@ jobs:
         env:
           GNUPGHOME: ${{ runner.temp }}/gpg
       - name: Sign image
-        run: podman image sign --sign-by security@ni.com -d ${{ runner.temp }}/sigstore docker://niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:${{ needs.generate_version_number.outputs.image_version }}
+        run: podman image sign --sign-by security@ni.com -d ${{ runner.temp }}/sigstore docker://${{ needs.determine_registry.outputs.registry_path }}:${{ needs.generate_version_number.outputs.image_version }}
         env:
           GNUPGHOME: ${{ runner.temp }}/gpg
       - name: Configure AWS credentials
