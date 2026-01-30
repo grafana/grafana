@@ -19,8 +19,8 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/
-title: Git Sync
-menuTitle: Git Sync
+title: Provision resources with Git Sync
+menuTitle: Provision resources with Git Sync
 weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/
 aliases:

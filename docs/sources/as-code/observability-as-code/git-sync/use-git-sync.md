@@ -35,6 +35,8 @@ After you have synced your resources, Git Sync creates a dashboard that provides
 1. Select **Administration > General > Provisioning** in the left-side menu to access the Git Sync configuration screen. 
 1. Go to the **Repositories** tab, and locate the repository you want to work with. You can either view the current status of the sync, carry out pulls, or update your settings.
 
+Refer to [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/provisioned-dashboards) for more information about working with provisioned files.
+
 ## View the current status of synchronization
 
 Use the **View** section to see detailed information about the current status of your sync and [troubleshoot](#troubleshoot-synchronization) possible issues:
@@ -47,7 +49,7 @@ Use the **View** section to see detailed information about the current status of
 
 {{< admonition type="caution" >}}
 
-Before you proceed to troubleshoot, understand the [known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync#known-limitations/).
+Before you proceed to troubleshoot, understand the [known limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/known-issues/).
 
 {{< /admonition >}}
 
@@ -58,13 +60,13 @@ Monitor the **View** status page for synchronization issues and status updates. 
 - Sync failed (with error details)
 - Sync issues
 
-#### Dashboard sync errors
+**Dashboard sync errors**
 
 - If dashboards are not syncing, check if the repository URL is correct and accessible from the Grafana instance.
 - Ensure that the configured repository branch exists and is correctly referenced.
 - Check for conflicts in the repository that may prevent syncing.
 
-#### Dashboard import errors
+**Dashboard import errors**
 
 - Validate the JSON format of the dashboard files before importing.
 - If the import fails, check Grafana logs for error messages and troubleshoot accordingly.
@@ -87,4 +89,3 @@ To update or delete your repository configuration after you've completed setup:
 - To modify your configuration, update any of the settings and select **Save**.
 - To delete the repository, click **Delete**. You can either keep the synced resources or delete them.
 
-Refer to [Work with provisioned dashboards](../provisioned-dashboards) for information on removing provisioned files.
