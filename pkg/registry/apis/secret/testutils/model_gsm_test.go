@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/stretchr/testify/require"
@@ -21,7 +20,7 @@ func TestModelGsm(t *testing.T) {
 
 	t.Run("DeleteKeeper: keeper being referenced by secure value -> return error", func(t *testing.T) {
 		m := NewModelGsm(NewModelSecretsManager())
-		k, err := m.CreateKeeper(&v1beta1.Keeper{ObjectMeta: metav1.ObjectMeta{Namespace: "n1", Name: "k1"}})
+		k, err := m.CreateKeeper(&secretv1beta1.Keeper{ObjectMeta: metav1.ObjectMeta{Namespace: "n1", Name: "k1"}})
 		require.NoError(t, err)
 		require.NoError(t, m.SetKeeperAsActive(k.Namespace, k.Name))
 		m.Create(time.Now(), &secretv1beta1.SecureValue{ObjectMeta: metav1.ObjectMeta{Namespace: "n1", Name: "sv1"}})
@@ -32,13 +31,13 @@ func TestModelGsm(t *testing.T) {
 		m := NewModelGsm(NewModelSecretsManager())
 
 		// Delete active keeper
-		k, err := m.CreateKeeper(&v1beta1.Keeper{ObjectMeta: metav1.ObjectMeta{Namespace: "n1", Name: "k1"}})
+		k, err := m.CreateKeeper(&secretv1beta1.Keeper{ObjectMeta: metav1.ObjectMeta{Namespace: "n1", Name: "k1"}})
 		require.NoError(t, err)
 		require.NoError(t, m.SetKeeperAsActive(k.Namespace, k.Name))
 		require.NoError(t, m.DeleteKeeper(k.Namespace, k.Name))
 
 		// Delete inactive keeper
-		k, err = m.CreateKeeper(&v1beta1.Keeper{ObjectMeta: metav1.ObjectMeta{Namespace: "n1", Name: "k1"}})
+		k, err = m.CreateKeeper(&secretv1beta1.Keeper{ObjectMeta: metav1.ObjectMeta{Namespace: "n1", Name: "k1"}})
 		require.NoError(t, err)
 		require.NoError(t, m.DeleteKeeper(k.Namespace, k.Name))
 	})
