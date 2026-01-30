@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ../../data-sources/opentsdb/query-editor/
 description: Use the OpenTSDB query editor in Grafana
 keywords:
   - grafana
@@ -46,6 +44,10 @@ refs:
 # OpenTSDB query editor
 
 The query editor allows you to build OpenTSDB queries visually. The available options depend on the OpenTSDB version you configured for the data source.
+
+## Access the query editor
+
+The OpenTSDB query editor is located on the [Explore](ref:explore) page. You can also access the OpenTSDB query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
 
 ## Create a query
 
@@ -393,10 +395,6 @@ This query shows CPU usage for all hosts except test-server and dev-server.
 | Explicit tags | enabled |
 
 This query only returns time series that have the `host` tag defined, excluding any time series that are missing this tag.
-
-## Use in Explore
-
-You can use the OpenTSDB query editor in [Explore](ref:explore) for ad-hoc data exploration. The same query options are available, allowing you to investigate metrics without creating a dashboard.
 
 ## Next steps
 

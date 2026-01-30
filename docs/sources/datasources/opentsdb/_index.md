@@ -87,16 +87,19 @@ The data source supports OpenTSDB versions 2.1 through 2.4. Some features are ve
 
 The following documents help you get started with the OpenTSDB data source:
 
-- [Configure the OpenTSDB data source](ref:configure-opentsdb)
-- [OpenTSDB query editor](ref:query-editor-opentsdb)
-- [Template variables](ref:template-variables-opentsdb)
-- [Alerting](ref:alerting-opentsdb)
-- [Annotations](ref:annotations-opentsdb)
-- [Troubleshooting](ref:troubleshooting-opentsdb)
+- [Configure the OpenTSDB data source](ref:configure-opentsdb) - Set up authentication and connect to OpenTSDB.
+- [OpenTSDB query editor](ref:query-editor-opentsdb) - Create and edit queries with aggregation, downsampling, and filtering.
+- [Template variables](ref:template-variables-opentsdb) - Create dynamic dashboards with OpenTSDB variables.
+- [Troubleshooting](ref:troubleshooting-opentsdb) - Solve common configuration and query errors.
 
-## Explore
+## Additional features
 
-You can use [Explore](ref:explore) to query OpenTSDB data without creating a dashboard. This is useful for ad-hoc data exploration and troubleshooting.
+After you have configured the OpenTSDB data source, you can:
+
+- Add [Annotations](ref:annotations-opentsdb) to overlay OpenTSDB events on your graphs.
+- Configure and use [Template variables](ref:template-variables-opentsdb) for dynamic dashboards.
+- Set up [Alerting](ref:alerting-opentsdb) rules based on your time series queries.
+- Use [Explore](ref:explore) to investigate your OpenTSDB data without building a dashboard.
 
 ## Related resources
 

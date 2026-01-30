@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ../../data-sources/opentsdb/template-variables/
 description: Use template variables with the OpenTSDB data source in Grafana
 keywords:
   - grafana

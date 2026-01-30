@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ../../data-sources/opentsdb/configure/
 description: Configure the OpenTSDB data source in Grafana
 keywords:
   - grafana

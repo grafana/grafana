@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ../../data-sources/opentsdb/alerting/
 description: Use Grafana Alerting with the OpenTSDB data source
 keywords:
   - grafana

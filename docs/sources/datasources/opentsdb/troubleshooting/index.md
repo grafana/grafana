@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ../../data-sources/opentsdb/troubleshooting/
 description: Troubleshoot OpenTSDB data source issues in Grafana
 keywords:
   - grafana

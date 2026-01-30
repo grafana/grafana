@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ../../data-sources/opentsdb/annotations/
 description: Use annotations with the OpenTSDB data source in Grafana
 keywords:
   - grafana
@@ -229,6 +227,8 @@ curl -X POST http://opentsdb.example.com:4242/api/annotation \
 For more details on the annotation API, refer to the [OpenTSDB annotation API documentation](http://opentsdb.net/docs/build/html/api_http/annotation/index.html).
 
 ## Troubleshoot annotation issues
+
+The following section addresses common issues you may encounter when using OpenTSDB annotations.
 
 ### Annotations don't appear
 
