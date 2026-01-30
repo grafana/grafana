@@ -9,7 +9,6 @@ import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { contextSrv } from 'app/core/services/context_srv';
 
 import BrowseDashboardsPage from './BrowseDashboardsPage';
 import * as permissions from './permissions';
@@ -55,13 +54,6 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-jest.mock('@grafana/runtime/internal', () => {
-  return {
-    ...jest.requireActual('@grafana/runtime/internal'),
-    evaluateBooleanFlag: jest.fn().mockReturnValue(false),
-  };
-});
-
 function render(ui: Parameters<typeof testRender>[0], options: Parameters<typeof testRender>[1] = {}) {
   return testRender(ui, {
     preloadedState: {
@@ -86,7 +78,6 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
   beforeEach(() => {
     config.unifiedAlertingEnabled = true;
     jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
-    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -120,26 +111,13 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
     });
 
-    it('shows the "Recently deleted" button when restore is enabled and user can delete dashboards', async () => {
+    it('shows the "Recently deleted" button when restore is enabled', async () => {
       const previousFlag = config.featureToggles.restoreDashboards;
       config.featureToggles.restoreDashboards = true;
 
       render(<BrowseDashboardsPage queryParams={{}} />);
       await screen.findByPlaceholderText('Search for dashboards and folders');
       expect(await screen.findByRole('link', { name: 'Recently deleted' })).toBeInTheDocument();
-
-      config.featureToggles.restoreDashboards = previousFlag;
-    });
-
-    it('does not show the "Recently deleted" button when user cannot delete dashboards', async () => {
-      const previousFlag = config.featureToggles.restoreDashboards;
-      config.featureToggles.restoreDashboards = true;
-      mockPermissions.canDeleteDashboards = false;
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-
-      render(<BrowseDashboardsPage queryParams={{}} />);
-      await screen.findByPlaceholderText('Search for dashboards and folders');
-      expect(screen.queryByRole('link', { name: 'Recently deleted' })).not.toBeInTheDocument();
 
       config.featureToggles.restoreDashboards = previousFlag;
     });
