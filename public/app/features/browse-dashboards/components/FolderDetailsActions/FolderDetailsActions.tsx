@@ -7,7 +7,6 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { CombinedFolder, useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { TeamOwnerReferences } from 'app/core/components/OwnerReferences/OwnerReference';
-import { contextSrv } from 'app/core/services/context_srv';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { getFolderPermissions } from '../../permissions';
