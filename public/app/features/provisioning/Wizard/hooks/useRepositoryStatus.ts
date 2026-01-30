@@ -42,11 +42,12 @@ export function useRepositoryStatus(repoName?: string, options?: UseRepositorySt
 
   return {
     isReady,
-    isHealthy,
+    isHealthy: isReady ? isHealthy : undefined,
     healthMessage,
     checked,
     healthStatusNotReady,
-    isLoading: query.isLoading || query.isFetching,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
     hasError: query.isError,
     refetch: query.refetch,
   };

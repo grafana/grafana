@@ -1,8 +1,10 @@
 import { createContext, ReactNode, useContext } from 'react';
 
 import { DataQueryError, DataSourceApi, DataSourceInstanceSettings, PanelData } from '@grafana/data';
-import { CustomTransformerDefinition, VizPanel } from '@grafana/scenes';
-import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { VizPanel } from '@grafana/scenes';
+import { DataQuery } from '@grafana/schema';
+
+import { Transformation } from './types';
 
 export interface DatasourceState {
   datasource?: DataSourceApi;
@@ -19,12 +21,14 @@ export interface QueryRunnerState {
 
 export interface PanelState {
   panel: VizPanel;
-  transformations: Array<DataTransformerConfig | CustomTransformerDefinition>;
+  transformations: Transformation[];
 }
 
 export interface QueryEditorUIState {
-  selectedCard: DataQuery | null;
-  setSelectedCard: (query: DataQuery | null) => void;
+  selectedQuery: DataQuery | null;
+  selectedTransformation: Transformation | null;
+  setSelectedQuery: (query: DataQuery | null) => void;
+  setSelectedTransformation: (transformation: Transformation | null) => void;
   selectedCardDsData: {
     datasource?: DataSourceApi;
     dsSettings?: DataSourceInstanceSettings;

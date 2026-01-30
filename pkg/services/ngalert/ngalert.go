@@ -15,6 +15,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -176,6 +178,9 @@ type AlertNG struct {
 	bus          bus.Bus
 	pluginsStore pluginstore.Store
 	tracer       tracing.Tracer
+
+	evaluationCoordinator EvaluationCoordinator
+	schedCfg              schedule.SchedulerCfg
 }
 
 func (ng *AlertNG) init() error {
@@ -239,7 +244,7 @@ func (ng *AlertNG) init() error {
 		if remotePrimary {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
-			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer)
+			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer, ng.FeatureToggles)
 		} else {
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
@@ -252,6 +257,7 @@ func (ng *AlertNG) init() error {
 				m,
 				ng.tracer,
 				remoteSecondaryWithRemoteState,
+				ng.FeatureToggles,
 			)
 		}
 
@@ -313,7 +319,8 @@ func (ng *AlertNG) init() error {
 	clk := clock.New()
 
 	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, ng.store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs,
-		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService, ng.FeatureToggles)
+		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService, ng.FeatureToggles,
+		ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation)
 
 	// Make sure we sync at least once as Grafana starts to get the router up and running before we start sending any alerts.
 	if err := alertsRouter.SyncAndApplyConfigFromDatabase(initCtx); err != nil {
@@ -331,7 +338,7 @@ func (ng *AlertNG) init() error {
 	}
 	ng.RecordingWriter = recordingWriter
 
-	schedCfg := schedule.SchedulerCfg{
+	ng.schedCfg = schedule.SchedulerCfg{
 		RetryConfig: schedule.RetryConfig{
 			MaxAttempts:         ng.Cfg.UnifiedAlerting.MaxAttempts,
 			InitialRetryDelay:   ng.Cfg.UnifiedAlerting.InitialRetryDelay,
@@ -355,13 +362,10 @@ func (ng *AlertNG) init() error {
 		FeatureToggles:       ng.FeatureToggles,
 	}
 
-	if ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation {
-		schedCfg.EvaluationCoordinator = cluster.NewEvaluationCoordinator(ng.MultiOrgAlertmanager.Peer())
-	}
-
 	history, err := configureHistorianBackend(
 		initCtx,
 		ng.Cfg.UnifiedAlerting.StateHistory,
+		ng.Cfg.AnnotationMaximumTagsLength,
 		ng.annotationsRepo,
 		ng.dashboardService,
 		ng.store,
@@ -399,35 +403,52 @@ func (ng *AlertNG) init() error {
 		ResolvedRetention:              ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
 	}
 	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
-	stateManager := state.NewManager(stateManagerCfg, statePersister)
-	scheduler := schedule.NewScheduler(schedCfg, stateManager)
+	ng.stateManager = state.NewManager(stateManagerCfg, statePersister)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
 	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
 		subscribeToFolderChanges(ng.Log, ng.bus, ng.store)
 	}
 
-	ng.stateManager = stateManager
-	ng.schedule = scheduler
+	var apiStateManager state.AlertInstanceManager
+	var apiStatusReader apiprometheus.StatusReader
+	if ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation {
+		peer := ng.MultiOrgAlertmanager.Peer()
+		if peer == nil {
+			return fmt.Errorf("single-node evaluation in HA mode requires HA clustering to be enabled")
+		}
+		var err error
+		ng.evaluationCoordinator, err = cluster.NewEvaluationCoordinator(peer, ng.Log)
+		if err != nil {
+			return fmt.Errorf("failed to create evaluation coordinator: %w", err)
+		}
 
-	// For HA single-node evaluation mode, use StoreStateReader for API calls.
-	// This ensures Grafana instances read alert rule state from DB instead of memory,
-	// which has no data on non-primary nodes.
-	apiStateManager, apiStatusReader := initAPIStateReaders(
-		ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation,
-		stateManager,
-		scheduler,
-		ng.InstanceStore,
-		ng.Log,
-	)
+		// Use StoreStateReader to serve rule statuses / alert instances from the database,
+		// because non-primary nodes have no in-memory state
+		storeStateReader := state.NewStoreStateReader(ng.InstanceStore, ng.Log)
+		apiStateManager = storeStateReader
+		apiStatusReader = storeStateReader
+	} else {
+		// No need for a real evaluation coordinator in non-HA mode.
+		ng.evaluationCoordinator = cluster.NewNoopEvaluationCoordinator()
 
-	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService))
+		// Use in-memory state/scheduler for API calls
+		apiStateManager = ng.stateManager
+		ng.schedule = schedule.NewScheduler(ng.schedCfg, ng.stateManager)
+		apiStatusReader = ng.schedule
+	}
+
+	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService), ng.FeatureToggles)
+
+	routeService := routes.NewService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.FeatureToggles, ng.Log, validation.ValidateProvenanceRelaxed)
+
 	receiverAccess := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false)
 	receiverService := notifier.NewReceiverService(
 		receiverAccess,
 		configStore,
 		ng.store,
 		ng.store,
+		routeService,
 		ng.SecretsService,
 		ng.store,
 		ng.Log,
@@ -448,6 +469,7 @@ func (ng *AlertNG) init() error {
 		configStore,
 		ng.store,
 		ng.store,
+		routeService,
 		ng.SecretsService,
 		ng.store,
 		ng.Log,
@@ -460,7 +482,7 @@ func (ng *AlertNG) init() error {
 	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
 	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
 	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
-	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store)
+	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store, routeService)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
@@ -484,6 +506,7 @@ func (ng *AlertNG) init() error {
 		RuleStatusReader:     apiStatusReader,
 		AccessControl:        ng.accesscontrol,
 		Policies:             policyService,
+		RouteService:         routeService,
 		ReceiverService:      receiverService,
 		ReceiverTestService:  receiverTestService,
 		ContactPointService:  contactPointService,
@@ -548,49 +571,28 @@ func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles feature
 	return instanceStore, state.NewMultiInstanceReader(logger, protoInstanceStore, simpleInstanceStore)
 }
 
-// initAPIStateReaders returns the appropriate state manager and status reader for the API.
-// When HASingleNodeEvaluation is enabled, it returns a StoreStateReader that reads from the database,
-// ensuring non-primary instances can serve correct data even though they don't evaluate rules.
-// Otherwise, it returns the in-memory state manager and scheduler.
-func initAPIStateReaders(
-	haSingleNodeEvaluation bool,
-	stateManager *state.Manager,
-	scheduler apiprometheus.StatusReader,
-	instanceStore state.InstanceReader,
-	logger log.Logger,
-) (state.AlertInstanceManager, apiprometheus.StatusReader) {
-	if haSingleNodeEvaluation {
-		storeStateReader := state.NewStoreStateReader(instanceStore, logger)
-		return storeStateReader, storeStateReader
-	}
-	return stateManager, scheduler
-}
-
 func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
 	logger := log.New("ngalert.state.manager.persist")
-	var statePersister state.StatePersister
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
-		logger.Info("Using rule state persister")
+	compressed := featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	periodic := featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic)
 
-		if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
-			logger.Info("Compressed storage with periodic save enabled")
-			ticker := clock.New().Ticker(cfg.StatePeriodicSaveInterval)
-			statePersister = state.NewSyncRuleStatePersisiter(logger, ticker, cfg)
-		} else {
-			logger.Info("Compressed storage FullSync disabled")
-			statePersister = state.NewSyncRuleStatePersisiter(logger, nil, cfg)
-		}
-	} else if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
-		logger.Info("Using periodic state persister")
-		ticker := clock.New().Ticker(uaCfg.StatePeriodicSaveInterval)
-		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
-	} else {
+	switch {
+	case compressed && periodic:
+		logger.Info("Using async rule state persister (compressed + periodic)")
+		return state.NewAsyncRuleStatePersister(logger, clock.New(), cfg.StatePeriodicSaveInterval, cfg)
+	case compressed:
+		logger.Info("Using sync rule state persister (compressed)")
+		return state.NewSyncRuleStatePersister(logger, cfg)
+	case periodic:
+		logger.Info("Using async state persister (periodic)")
+		return state.NewAsyncStatePersister(logger, clock.New(), uaCfg.StatePeriodicSaveInterval, cfg)
+	default:
 		logger.Info("Using sync state persister")
-		statePersister = state.NewSyncStatePersisiter(logger, cfg)
+		return state.NewSyncStatePersisiter(logger, cfg)
 	}
-
-	return statePersister
 }
 
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
@@ -622,22 +624,9 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	})
 
 	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
-		// Only Warm() the state manager if we are actually executing alerts.
-		// Doing so when we are not executing alerts is wasteful and could lead
-		// to misleading rule status queries, as the status returned will be
-		// always based on the state loaded from the database at startup, and
-		// not the most recent evaluation state.
-		//
-		// Also note that this runs synchronously to ensure state is loaded
-		// before rule evaluation begins, hence we use ctx and not subCtx.
-		//
-		ng.stateManager.Warm(ctx, ng.store, ng.store, ng.StartupInstanceReader)
-
 		children.Go(func() error {
-			return ng.schedule.Run(subCtx)
-		})
-		children.Go(func() error {
-			return ng.stateManager.Run(subCtx)
+			runner := &evaluationRunner{ng: ng}
+			return runner.run(subCtx)
 		})
 	}
 	return children.Wait()
@@ -666,6 +655,7 @@ type Historian interface {
 func configureHistorianBackend(
 	ctx context.Context,
 	cfg setting.UnifiedAlertingStateHistorySettings,
+	annotationMaxTagsLength int64,
 	ar annotations.Repository,
 	ds dashboards.DashboardService,
 	rs historian.RuleStore,
@@ -693,7 +683,7 @@ func configureHistorianBackend(
 	if backend == historian.BackendTypeMultiple {
 		primaryCfg := cfg
 		primaryCfg.Backend = cfg.MultiPrimary
-		primary, err := configureHistorianBackend(ctx, primaryCfg, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, pluginContextProvider, clock, mw)
+		primary, err := configureHistorianBackend(ctx, primaryCfg, annotationMaxTagsLength, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, pluginContextProvider, clock, mw)
 		if err != nil {
 			return nil, fmt.Errorf("multi-backend target \"%s\" was misconfigured: %w", cfg.MultiPrimary, err)
 		}
@@ -702,7 +692,7 @@ func configureHistorianBackend(
 		for _, b := range cfg.MultiSecondaries {
 			secCfg := cfg
 			secCfg.Backend = b
-			sec, err := configureHistorianBackend(ctx, secCfg, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, pluginContextProvider, clock, mw)
+			sec, err := configureHistorianBackend(ctx, secCfg, annotationMaxTagsLength, ar, ds, rs, met, l, tracer, ac, datasourceService, httpClientProvider, pluginContextProvider, clock, mw)
 			if err != nil {
 				return nil, fmt.Errorf("multi-backend target \"%s\" was miconfigured: %w", b, err)
 			}
@@ -716,7 +706,7 @@ func configureHistorianBackend(
 		store := historian.NewAnnotationStore(ar, ds, met)
 		logCtx := log.WithContextualAttributes(ctx, []any{"backend", "annotations"})
 		annotationBackendLogger := log.New("ngalert.state.historian").FromContext(logCtx)
-		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met, ac), nil
+		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met, ac, annotationMaxTagsLength), nil
 	}
 	if backend == historian.BackendTypeLoki {
 		lcfg, err := lokiconfig.NewLokiConfig(cfg.LokiSettings)

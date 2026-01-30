@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import {
   CoreApp,
+  DataFrame,
   FieldType,
   getDefaultTimeRange,
   LogLevel,
@@ -13,6 +14,8 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { TempoDatasource } from '@grafana-plugins/tempo/datasource';
+import { createTempoDatasource } from '@grafana-plugins/tempo/test/mocks';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
@@ -28,14 +31,26 @@ jest.mock('@grafana/assistant', () => ({
   }),
 }));
 
+const FIELDS_LABEL = 'TestLabelType';
+
+const tempoDS: TempoDatasource & {
+  getLabelDisplayTypeFromFrame?: (key: string, frame: DataFrame | undefined, index: number | null) => string | null;
+} = createTempoDatasource(undefined, { uid: 'abc-123' });
+// Test-only override: Mocked data source does not expose getLabelDisplayTypeFromFrame, so we patch it here to show that the viz should work with any data source that returns logs.
+tempoDS.getLabelDisplayTypeFromFrame = () => {
+  return FIELDS_LABEL;
+};
+
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
     reportInteraction: jest.fn(),
+    getDataSourceSrv: () => ({
+      get: (uid: string) => Promise.resolve(tempoDS),
+    }),
   };
 });
-
 jest.mock('../../utils', () => ({
   ...jest.requireActual('../../utils'),
   isPopoverMenuDisabled: jest.fn(),
@@ -276,7 +291,7 @@ describe('LogList', () => {
         });
         await userEvent.click(screen.getByText('log message 1'));
         expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
-        expect(screen.getByText(/Fields/)).toBeInTheDocument();
+        expect(screen.getByText(FIELDS_LABEL)).toBeInTheDocument();
       });
     });
   });
@@ -490,7 +505,7 @@ describe('LogList', () => {
       );
 
       await userEvent.click(screen.getByText('log message 1'));
-      await screen.findByText('Fields');
+      await screen.findByText(FIELDS_LABEL);
 
       expect(screen.getByText('name_of_the_label')).toBeInTheDocument();
       expect(screen.getByText('value of the label')).toBeInTheDocument();
@@ -533,7 +548,7 @@ describe('LogList', () => {
       );
 
       await userEvent.click(screen.getByText('log message 1'));
-      await screen.findByText('Fields');
+      await screen.findByText(FIELDS_LABEL);
 
       expect(screen.getByText('name_of_the_label')).toBeInTheDocument();
       expect(screen.getByText('value of the label')).toBeInTheDocument();

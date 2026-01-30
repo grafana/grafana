@@ -30,7 +30,7 @@ interface ContentHeaderProps {
 }
 
 export function ContentHeader({ renderHeaderExtras }: ContentHeaderProps = {}) {
-  const { selectedCard } = useQueryEditorUIContext();
+  const { selectedQuery, selectedTransformation } = useQueryEditorUIContext();
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
 
@@ -38,10 +38,11 @@ export function ContentHeader({ renderHeaderExtras }: ContentHeaderProps = {}) {
   // renderSavedQueryButtons to determine the width of the container for positioning the saved queries dropdown.
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const cardType = getEditorType(selectedCard);
+  const cardType = getEditorType(selectedQuery);
   const styles = useStyles2(getStyles, { cardType });
 
-  if (!selectedCard) {
+  // We have to do defensive null checks since queries might be an empty array :(
+  if (!selectedQuery && !selectedTransformation) {
     return null;
   }
 
@@ -49,13 +50,27 @@ export function ContentHeader({ renderHeaderExtras }: ContentHeaderProps = {}) {
     <div className={styles.container} ref={containerRef}>
       <div className={styles.leftSection}>
         <Icon name={QUERY_EDITOR_TYPE_CONFIG[cardType].icon} size="sm" />
-        {cardType === QueryEditorType.Query && (
-          <DatasourceSection selectedCard={selectedCard} onChange={(ds) => changeDataSource(ds, selectedCard.refId)} />
+        {cardType === QueryEditorType.Query && selectedQuery && (
+          <DatasourceSection
+            selectedCard={selectedQuery}
+            onChange={(ds) => changeDataSource(ds, selectedQuery.refId)}
+          />
         )}
-        <EditableQueryName query={selectedCard} queries={queries} onQueryUpdate={updateSelectedQuery} />
-        {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
+        {selectedQuery && (
+          <>
+            <EditableQueryName query={selectedQuery} queries={queries} onQueryUpdate={updateSelectedQuery} />
+            {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
+          </>
+        )}
+        {selectedTransformation && (
+          <Text weight="light" variant="body" color="primary">
+            {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
+          </Text>
+        )}
       </div>
-      <HeaderActions cardType={cardType} query={selectedCard} queries={queries} containerRef={containerRef} />
+      {selectedQuery && (
+        <HeaderActions cardType={cardType} query={selectedQuery} queries={queries} containerRef={containerRef} />
+      )}
     </div>
   );
 }

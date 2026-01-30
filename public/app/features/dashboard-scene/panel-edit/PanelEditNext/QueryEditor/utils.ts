@@ -1,16 +1,19 @@
 import { DataTransformerConfig } from '@grafana/data';
+import { CustomTransformerDefinition } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 
 import { QueryEditorType } from '../constants';
 
-export function getEditorType(card: DataQuery | DataTransformerConfig | null): QueryEditorType {
+import { Transformation } from './types';
+
+export function getEditorType(card: DataQuery | Transformation | null): QueryEditorType {
   if (!card) {
     // Default to query type if no card is provided
     return QueryEditorType.Query;
   }
 
-  if (!('refId' in card)) {
+  if ('transformId' in card) {
     return QueryEditorType.Transformation;
   }
 
@@ -19,4 +22,10 @@ export function getEditorType(card: DataQuery | DataTransformerConfig | null): Q
   }
 
   return QueryEditorType.Query;
+}
+
+export function isDataTransformerConfig(
+  transformation: DataTransformerConfig | DataQuery | CustomTransformerDefinition | null
+): transformation is DataTransformerConfig {
+  return transformation !== null && 'id' in transformation && !('refId' in transformation);
 }

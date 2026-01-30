@@ -114,6 +114,10 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 	return m
 }
 
+func (st *Manager) ClearCache() {
+	st.cache.reset()
+}
+
 func (st *Manager) Run(ctx context.Context) error {
 	st.persister.Async(ctx, st.cache)
 	return nil

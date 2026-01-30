@@ -21,12 +21,19 @@ This page explains how folder permissions work and how to use them effectively t
 - To create folders, you need the Folder Creator role or appropriate organization permissions
 - Folder permissions are available in all Grafana editions (OSS, Enterprise, and Cloud)
 
-## Folder limitations
+{{< admonition type="caution" >}}
+**Folder limitations:**
 
 - Folders can be nested up to **4 levels deep**
 - Folder names cannot contain underscores (`_`) or percent signs (`%`)
-- The **General** folder cannot have its permissions modified through RBAC
-- You cannot set permissions on individual dashboards if the user already has folder-level access
+  {{< /admonition >}}
+
+## Default permissions for new folders
+
+How a folder is created determines its initial permissions:
+
+- **Folders created in the UI** are automatically granted: Admin role gets Admin permission, Editor role gets Edit permission, Viewer role gets View permission
+- **Folders created via as-code** (Terraform, API, provisioning) only have permissions explicitly defined in the configuration, plus Admin role gets Admin permission by default
 
 ## How folder permissions work
 
@@ -151,6 +158,7 @@ The permissions dialog shows all users, teams, and roles with access to this fol
 1. Select who to grant access to:
    - **User** - A specific user account
    - **Team** - All members of a team
+   - **Service Account** - A service account for API or automation access
    - **Role** - Users with a specific organization role (Viewer, Editor, Admin)
 1. Select the permission level (View, Edit, or Admin).
 1. Click **Save**.
