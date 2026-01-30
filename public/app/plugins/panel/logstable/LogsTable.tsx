@@ -9,6 +9,7 @@ import {
   LogsFrame,
   parseLogsFrame,
 } from 'app/features/logs/logsFrame';
+import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 import type { Options as TableOptions } from 'app/plugins/panel/table/panelcfg.gen';
 
 import { TableNGWrap } from './TableNGWrap';
@@ -132,15 +133,12 @@ export const LogsTable = ({
     return null;
   }, [organizedFrame, data]);
 
-  if (
-    extractedFrame === null ||
-    organizedFrame === null ||
-    logsFrame === null ||
-    !timeFieldName ||
-    !bodyFieldName ||
-    panelData === null
-  ) {
+  if (extractedFrame === null || organizedFrame === null || logsFrame === null || !timeFieldName || !bodyFieldName) {
     return null;
+  }
+
+  if (!panelData || !organizedFrame.length) {
+    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
 
   return (
