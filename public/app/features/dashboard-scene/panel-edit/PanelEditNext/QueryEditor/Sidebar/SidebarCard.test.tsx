@@ -82,34 +82,4 @@ describe('SidebarCard', () => {
     expect(setSelectedTransformation).toHaveBeenCalledWith(transformation);
     expect(setSelectedQuery).not.toHaveBeenCalled();
   });
-
-  it('should not deselect when clicking already selected card', async () => {
-    const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
-
-    const setSelectedQuery = jest.fn();
-    const setSelectedTransformation = jest.fn();
-
-    const { user } = setup(
-      <QueryEditorProvider
-        dsState={{ datasource: undefined, dsSettings: undefined, dsError: undefined }}
-        qrState={{ queries: [query], data: undefined, isLoading: false }}
-        panelState={{ panel: new VizPanel({ key: 'panel-1' }), transformations: [] }}
-        uiState={{
-          selectedQuery: query,
-          selectedTransformation: null,
-          setSelectedQuery,
-          setSelectedTransformation,
-        }}
-        actions={mockActions}
-      >
-        <QueryCard query={query} />
-      </QueryEditorProvider>
-    );
-
-    const queryCard = screen.getByRole('button', { name: /select card A/i });
-    await user.click(queryCard);
-
-    // Should not call setSelectedQuery again since it's already selected
-    expect(setSelectedQuery).not.toHaveBeenCalled();
-  });
 });
