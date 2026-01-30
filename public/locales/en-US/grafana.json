@@ -12673,14 +12673,16 @@
     }
   },
   "query-editor-next": {
+    "labels": {
+      "expression": "Expression",
+      "query": "Query",
+      "transformation": "Transformation"
+    },
     "sidebar": {
       "card-click": "Select card {{id}}",
-      "expression": "Expression",
       "queries-expressions": "Queries & Expressions",
-      "query": "Query",
       "query-stack": "Query Stack",
       "toggle-size": "Toggle sidebar size",
-      "transformation": "Transformation",
       "transformations": "Transformations"
     }
   },
