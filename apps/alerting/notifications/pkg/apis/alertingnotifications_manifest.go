@@ -204,7 +204,7 @@ var appManifestData = app.ManifestData{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
 
-																							Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchema"),
+																							Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaResource"),
 																						}},
 																				},
 																			},
@@ -388,6 +388,45 @@ var appManifestData = app.ManifestData{
 								"currentVersion",
 								"name",
 								"versions",
+							},
+						},
+					},
+					"getIntegrationtypeschemasIntegrationTypeSchemaResource": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "IntegrationTypeSchemaResource - K8s-style wrapper for integration type schemas",
+							Properties: map[string]spec.Schema{
+								"metadata": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										Properties: map[string]spec.Schema{
+											"name": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+											"namespace": {
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+										Required: []string{
+											"name",
+											"namespace",
+										},
+									},
+								},
+								"spec": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchema"),
+									},
+								},
+							},
+							Required: []string{
+								"metadata",
+								"spec",
 							},
 						},
 					},

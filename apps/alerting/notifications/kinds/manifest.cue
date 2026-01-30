@@ -20,7 +20,7 @@ manifest: {
 					"/integrationtypeschemas": {
 						"GET": {
 							response: {
-								items: [...#IntegrationTypeSchema]
+								items: [...#IntegrationTypeSchemaResource]
 							}
 							responseMetadata: typeMeta: false
 						}
@@ -80,4 +80,13 @@ manifest: {
 	options: [...#Field]
 	info?:       string
 	deprecated?: bool
+}
+
+// IntegrationTypeSchemaResource - K8s-style wrapper for integration type schemas
+#IntegrationTypeSchemaResource: {
+	metadata: {
+		name:      string
+		namespace: string
+	}
+	spec: #IntegrationTypeSchema
 }

@@ -3182,7 +3182,7 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchema"
+              "$ref": "#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaResource"
             }
           }
         }

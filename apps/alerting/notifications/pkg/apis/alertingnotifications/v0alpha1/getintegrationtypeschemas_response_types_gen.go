@@ -7,6 +7,21 @@ import (
 	errors "errors"
 )
 
+// IntegrationTypeSchemaResource - K8s-style wrapper for integration type schemas
+// +k8s:openapi-gen=true
+type IntegrationTypeSchemaResource struct {
+	Metadata V0alpha1IntegrationTypeSchemaResourceMetadata `json:"metadata"`
+	Spec     IntegrationTypeSchema                         `json:"spec"`
+}
+
+// NewIntegrationTypeSchemaResource creates a new IntegrationTypeSchemaResource object.
+func NewIntegrationTypeSchemaResource() *IntegrationTypeSchemaResource {
+	return &IntegrationTypeSchemaResource{
+		Metadata: *NewV0alpha1IntegrationTypeSchemaResourceMetadata(),
+		Spec:     *NewIntegrationTypeSchema(),
+	}
+}
+
 // IntegrationTypeSchema - receiver integration schema format
 // +k8s:openapi-gen=true
 type IntegrationTypeSchema struct {
@@ -96,14 +111,25 @@ func NewShowWhen() *ShowWhen {
 
 // +k8s:openapi-gen=true
 type GetIntegrationtypeschemas struct {
-	Items []IntegrationTypeSchema `json:"items"`
+	Items []IntegrationTypeSchemaResource `json:"items"`
 }
 
 // NewGetIntegrationtypeschemas creates a new GetIntegrationtypeschemas object.
 func NewGetIntegrationtypeschemas() *GetIntegrationtypeschemas {
 	return &GetIntegrationtypeschemas{
-		Items: []IntegrationTypeSchema{},
+		Items: []IntegrationTypeSchemaResource{},
 	}
+}
+
+// +k8s:openapi-gen=true
+type V0alpha1IntegrationTypeSchemaResourceMetadata struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+// NewV0alpha1IntegrationTypeSchemaResourceMetadata creates a new V0alpha1IntegrationTypeSchemaResourceMetadata object.
+func NewV0alpha1IntegrationTypeSchemaResourceMetadata() *V0alpha1IntegrationTypeSchemaResourceMetadata {
+	return &V0alpha1IntegrationTypeSchemaResourceMetadata{}
 }
 
 // +k8s:openapi-gen=true
