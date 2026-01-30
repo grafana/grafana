@@ -26,6 +26,8 @@ export interface SidebarContextValue {
   autoHide?: boolean;
   /** Called when there is activity in the sidebar */
   onActivity?: () => void;
+  pauseAutoHide?: () => void;
+  resumeAutoHide?: () => void;
 }
 
 export const SidebarContext: React.Context<SidebarContextValue | undefined> = React.createContext<
@@ -86,6 +88,8 @@ export function useSidebar({
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
 
+  const [autoHidePaused, setAutoHidePaused] = React.useState(false);
+
   const [isDocked, setIsDocked] = useSidebarSavedState(persistanceKey, 'docked', defaultToDocked);
   const [compact, setCompact] = useSidebarSavedState(persistanceKey, 'compact', defaultToCompact);
   const [paneWidth, setPaneWidth] = useSidebarSavedState(persistanceKey, 'size', 280);
@@ -123,16 +127,26 @@ export function useSidebar({
   const startAutoHideTimer = useCallback(() => {
     clearAutoHideTimer();
 
-    if (autoHide && hasOpenPane && !isDocked && onClosePane) {
+    if (autoHide && !autoHidePaused && hasOpenPane && !isDocked && onClosePane) {
       autoHideTimerRef.current = setTimeout(() => onClosePane(), autoHideTimeout);
     }
-  }, [autoHide, autoHideTimeout, hasOpenPane, isDocked, onClosePane, clearAutoHideTimer]);
+  }, [autoHide, autoHidePaused, autoHideTimeout, hasOpenPane, isDocked, onClosePane, clearAutoHideTimer]);
 
   const onActivity = useCallback(() => {
-    if (autoHide) {
+    if (autoHide && !autoHidePaused) {
       startAutoHideTimer();
     }
-  }, [autoHide, startAutoHideTimer]);
+  }, [autoHide, autoHidePaused, startAutoHideTimer]);
+
+  const pauseAutoHide = useCallback(() => {
+    setAutoHidePaused(true);
+    clearAutoHideTimer();
+  }, [clearAutoHideTimer]);
+
+  const resumeAutoHide = useCallback(() => {
+    setAutoHidePaused(false);
+    startAutoHideTimer();
+  }, [startAutoHideTimer]);
 
   React.useEffect(() => {
     if (autoHide && hasOpenPane && !isDocked) {
@@ -189,6 +203,8 @@ export function useSidebar({
     onClosePane,
     autoHide,
     onActivity,
+    pauseAutoHide,
+    resumeAutoHide,
   };
 }
 

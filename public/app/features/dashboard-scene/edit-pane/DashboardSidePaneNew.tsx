@@ -16,9 +16,11 @@ interface Props {
   dashboard: SceneObject;
   selectedElement: SceneObject | undefined;
   onAddPanel: () => void;
+  onDragStart: () => void;
+  onDragEnd: () => void;
 }
 
-export function DashboardSidePaneNew({ onAddPanel, dashboard, selectedElement }: Props) {
+export function DashboardSidePaneNew({ onAddPanel, dashboard, selectedElement, onDragStart, onDragEnd }: Props) {
   const styles = useStyles2(getStyles);
   const orchestrator = getDashboardSceneFor(dashboard).state.layoutOrchestrator;
 
@@ -28,7 +30,13 @@ export function DashboardSidePaneNew({ onAddPanel, dashboard, selectedElement }:
   };
 
   return (
-    <DragDropContext onDragStart={() => orchestrator?.startDraggingNewPanel()} onDragEnd={() => {}}>
+    <DragDropContext
+      onDragStart={() => {
+        orchestrator?.startDraggingNewPanel();
+        onDragStart();
+      }}
+      onDragEnd={() => onDragEnd()}
+    >
       <Droppable droppableId="side-drop-id" isDropDisabled>
         {(dropProvided) => (
           <div className={styles.sidePanel} ref={dropProvided.innerRef} {...dropProvided.droppableProps}>

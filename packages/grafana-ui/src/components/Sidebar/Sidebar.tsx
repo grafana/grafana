@@ -45,11 +45,12 @@ export function SidebarComp({ children, contextValue }: Props) {
   });
 
   useEffect(() => {
-    if (!onActivity || !ref.current) {
+    const element = ref.current;
+
+    if (!onActivity || !element) {
       return;
     }
 
-    const element = ref.current;
     const events = [
       'pointerdown',
       'pointerup',
@@ -70,9 +71,7 @@ export function SidebarComp({ children, contextValue }: Props) {
       'wheel',
     ];
 
-    const handleActivity = () => {
-      onActivity();
-    };
+    const handleActivity = () => onActivity();
 
     events.forEach((event) => {
       element.addEventListener(event, handleActivity);
