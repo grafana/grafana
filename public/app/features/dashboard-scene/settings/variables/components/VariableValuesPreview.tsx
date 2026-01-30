@@ -5,23 +5,29 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { MultiValueVariable, VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
+import { SceneVariable, VariableValueOption, VariableValueOptionProperties } from '@grafana/scenes';
 import { Button, InlineFieldRow, InlineLabel, InteractiveTable, Text, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-interface VariableState {
-  options: VariableValueOption[];
-  staticOptions?: VariableValueOption[];
-  valuesFormat?: string;
-}
-
-// made only for legacy reasons in public/app/features/variables/editor/VariableEditorEditor.tsx
-// TODO: remove ASAP
-type VariableValuesPreviewVariable = { useState(): VariableState } | MultiValueVariable;
-
 interface VariableValuesPreviewProps {
-  variable: VariableValuesPreviewVariable;
+  options: VariableValueOption[];
+  staticOptions: VariableValueOption[];
 }
+
+export const useGetAllVariableOptions = (
+  variable: SceneVariable
+): { options: VariableValueOption[]; staticOptions: VariableValueOption[] } => {
+  const state = variable.useState();
+  return {
+    options:
+      'getOptionsForSelect' in variable && typeof variable.getOptionsForSelect === 'function'
+        ? variable.getOptionsForSelect(false)
+        : 'options' in state
+          ? (state.options ?? [])
+          : [],
+    staticOptions: 'staticOptions' in state && Array.isArray(state.staticOptions) ? state.staticOptions : [],
+  };
+};
 
 function flattenProperties(properties?: VariableValueOptionProperties, path = ''): Record<string, string> {
   if (properties === undefined) {
@@ -56,11 +62,8 @@ export const useGetPropertiesFromOptions = (
     return ['text', 'value', ...keys];
   }, [options, staticOptions]);
 
-export const VariableValuesPreview = ({ variable }: VariableValuesPreviewProps) => {
+export const VariableValuesPreview = ({ options, staticOptions }: VariableValuesPreviewProps) => {
   const styles = useStyles2(getStyles);
-  const state = variable.useState();
-  const options = 'getOptionsForSelect' in variable ? variable.getOptionsForSelect(false) : state.options;
-  const staticOptions = 'staticOptions' in state && Array.isArray(state.staticOptions) ? state.staticOptions : [];
   const properties = useGetPropertiesFromOptions(options, staticOptions);
   const hasOptions = options.length > 0;
   const displayMultiPropsPreview = config.featureToggles.multiPropsVariables && hasOptions && properties.length > 2;
@@ -119,7 +122,7 @@ function VariableValuesWithPropsPreview({
 const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
 const unsanitizeKey = (key: string) => key.replace(/__dot__/g, '.');
 
-function VariableValuesWithoutPropsPreview({ options }: { options: VariableValueOption[] }) {
+export function VariableValuesWithoutPropsPreview({ options }: { options: VariableValueOption[] }) {
   const styles = useStyles2(getStyles);
   const [previewLimit, setPreviewLimit] = useState(20);
   const [previewOptions, setPreviewOptions] = useState<VariableValueOption[]>([]);

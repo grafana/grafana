@@ -18,7 +18,6 @@ interface ModalEditorProps {
 
 export function ModalEditorNonMultiProps(props: ModalEditorProps) {
   const {
-    variable,
     displayMultiPropsWarningBanner,
     formRef,
     onCloseModal,
@@ -45,7 +44,7 @@ export function ModalEditorNonMultiProps(props: ModalEditorProps) {
       )}
       <Stack direction="column" gap={2}>
         <VariableStaticOptionsForm options={options} onChange={onChangeOptions} ref={formRef} isInModal />
-        <VariableValuesPreview variable={variable} />
+        <VariableValuesPreview options={options} staticOptions={[]} />
       </Stack>
       <Modal.ButtonRow leftItems={<VariableStaticOptionsFormAddButton onAdd={onAddNewOption} />}>
         <Button

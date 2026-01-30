@@ -10,7 +10,7 @@ import { Button, FieldValidationMessage, Modal, Stack, TextArea } from '@grafana
 
 import { dashboardEditActions } from '../../../../edit-pane/shared';
 import { ValuesFormatSelector } from '../../components/CustomVariableForm';
-import { VariableValuesPreview } from '../../components/VariableValuesPreview';
+import { useGetAllVariableOptions, VariableValuesPreview } from '../../components/VariableValuesPreview';
 
 import { validateJsonQuery } from './CustomVariableEditor';
 import { ModalEditorNonMultiProps } from './ModalEditorNonMultiProps';
@@ -29,7 +29,8 @@ export function ModalEditor(props: ModalEditorProps) {
 
 function ModalEditorMultiProps(props: ModalEditorProps) {
   const {
-    variable,
+    options,
+    staticOptions,
     valuesFormat,
     query,
     queryValidationError,
@@ -69,7 +70,7 @@ function ModalEditorMultiProps(props: ModalEditorProps) {
           {queryValidationError && <FieldValidationMessage>{queryValidationError.message}</FieldValidationMessage>}
         </div>
         <div>
-          <VariableValuesPreview variable={variable} />
+          <VariableValuesPreview options={options} staticOptions={staticOptions} />
         </div>
       </Stack>
       <Modal.ButtonRow>
@@ -101,9 +102,11 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
   const [query, setQuery] = useState(() => variable.state.query);
   const [prevQuery, setPrevQuery] = useState('');
   const [queryValidationError, setQueryValidationError] = useState<Error>();
+  const { options, staticOptions } = useGetAllVariableOptions(variable);
 
   return {
-    variable,
+    options,
+    staticOptions,
     valuesFormat,
     query,
     queryValidationError,

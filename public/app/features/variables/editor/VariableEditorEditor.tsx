@@ -38,16 +38,12 @@ import { OnPropChangeArguments, VariableNameConstraints } from './types';
 
 // Adapter to make legacy VariableWithOptions compatible with VariableValuesPreview
 function LegacyVariableValuesPreview({ variable }: { variable: VariableWithOptions }) {
-  const adapted = {
-    useState: () => ({
-      options: variable.options.map((opt) => ({
-        label: String(opt.text),
-        value: Array.isArray(opt.value) ? opt.value.join(', ') : opt.value,
-        properties: opt.properties,
-      })),
-    }),
-  };
-  return <VariableValuesPreview variable={adapted} />;
+  const options = variable.options.map((opt) => ({
+    label: String(opt.text),
+    value: Array.isArray(opt.value) ? opt.value.join(', ') : opt.value,
+    properties: opt.properties,
+  }));
+  return <VariableValuesPreview options={options} staticOptions={[]} />;
 }
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({

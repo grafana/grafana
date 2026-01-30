@@ -309,7 +309,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
         onStaticOptionsOrderChange={onStaticOptionsOrderChange}
       />
 
-      {isHasVariableOptions && <VariableValuesPreview variable={variable} />}
+      {isHasVariableOptions && <VariableValuesPreview options={options} staticOptions={staticOptions ?? []} />}
     </div>
   );
 }
