@@ -127,7 +127,12 @@ export const LoginCtrl = memo(({ resetCode, children }: Props) => {
         .post<LoginDTO>('/login', formModel, { showErrorAlert: false })
         .then((result) => {
           setResult(result);
-          if (formModel.password !== 'admin' || config.ldapEnabled || config.authProxyEnabled) {
+          if (
+            formModel.password !== 'admin' ||
+            config.buildInfo.env === 'development' ||
+            config.ldapEnabled ||
+            config.authProxyEnabled
+          ) {
             toGrafana();
             return;
           } else {
