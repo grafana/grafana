@@ -243,9 +243,14 @@ export function prepConfig(opts: PrepConfigOpts) {
       // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so no need to expand y range
       isSparseHeatmap
         ? (u, dataMin, dataMax) => {
+            // Extract yMin and yMax arrays
+            const yMinData = u.data[1]?.[1];
+            const yMaxData = u.data[1]?.[2];
+            const yMinValues = Array.isArray(yMinData) ? yMinData : [];
+            const yMaxValues = Array.isArray(yMaxData) ? yMaxData : [];
+
             // ...but uPlot currently only auto-ranges from the yMin facet data, so we have to grow by 1 extra factor
-            // @ts-ignore
-            let bucketFactor = u.data[1][2][0] / u.data[1][1][0];
+            const bucketFactor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
 
             dataMax *= bucketFactor;
 
@@ -880,6 +885,55 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
 
     return null;
   };
+}
+
+/**
+ * Calculates a bucket expansion factor from yMin/yMax data arrays.
+ * Used to expand the y-axis range for sparse heatmaps where uPlot only auto-ranges from yMin.
+ *
+ * @param yMinValues - Array of yMin bucket boundary values
+ * @param yMaxValues - Array of yMax bucket boundary values
+ * @returns A valid expansion factor, or 1 as fallback
+ */
+export function calculateBucketExpansionFactor(yMinValues: unknown[], yMaxValues: unknown[]): number {
+  let bucketFactor = 1;
+
+  if (yMaxValues.length > 0 && yMinValues.length > 0) {
+    const firstYMin = yMinValues[0];
+    const firstYMax = yMaxValues[0];
+    if (typeof firstYMin === 'number' && typeof firstYMax === 'number') {
+      const factor = firstYMax / firstYMin;
+      // Only use if valid
+      if (Number.isFinite(factor) && factor > 0) {
+        bucketFactor = factor;
+      }
+    }
+  }
+
+  // Guard against invalid bucket factors (e.g., 1/0 = Infinity when first bucket starts at 0)
+  if (bucketFactor === 1 && yMinValues.length > 1 && yMaxValues.length > 1) {
+    const validIndex = yMinValues.findIndex((yMin, i) => {
+      if (i === 0 || typeof yMin !== 'number' || yMin === 0) {
+        return false;
+      }
+      const yMax = yMaxValues[i];
+      if (typeof yMax !== 'number') {
+        return false;
+      }
+      const factor = yMax / yMin;
+      return Number.isFinite(factor) && factor > 0;
+    });
+
+    if (validIndex !== -1) {
+      const yMin = yMinValues[validIndex];
+      const yMax = yMaxValues[validIndex];
+      if (typeof yMin === 'number' && typeof yMax === 'number') {
+        bucketFactor = yMax / yMin;
+      }
+    }
+  }
+
+  return bucketFactor;
 }
 
 export const boundedMinMax = (

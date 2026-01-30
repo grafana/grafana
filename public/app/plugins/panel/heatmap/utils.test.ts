@@ -1,6 +1,13 @@
 import { ScaleDistribution } from '@grafana/schema';
 
-import { applyExplicitMinMax, boundedMinMax, calculateYSizeDivisor, toLogBase, valuesToFills } from './utils';
+import {
+  applyExplicitMinMax,
+  boundedMinMax,
+  calculateBucketExpansionFactor,
+  calculateYSizeDivisor,
+  toLogBase,
+  valuesToFills,
+} from './utils';
 
 describe('toLogBase', () => {
   it('returns 10 when value is 10', () => {
@@ -82,6 +89,157 @@ describe('applyExplicitMinMax', () => {
     const [min, max] = applyExplicitMinMax(null, null, undefined, undefined);
     expect(min).toBe(null);
     expect(max).toBe(null);
+  });
+});
+
+describe('calculateBucketExpansionFactor', () => {
+  describe('valid bucket factor calculation', () => {
+    it('calculates factor from first bucket with valid values', () => {
+      const yMinValues = [1, 4, 16];
+      const yMaxValues = [4, 16, 64];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(4);
+    });
+
+    it('calculates factor from exponential buckets', () => {
+      const yMinValues = [1, 2, 4, 8];
+      const yMaxValues = [2, 4, 8, 16];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(2);
+    });
+
+    it('handles fractional factors', () => {
+      const yMinValues = [10, 15, 20];
+      const yMaxValues = [15, 20, 25];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(1.5);
+    });
+  });
+
+  describe('division by zero handling', () => {
+    it('finds valid factor from second bucket when first bucket starts at 0', () => {
+      const yMinValues = [0, 1, 4, 16];
+      const yMaxValues = [1, 4, 16, 64];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(4); // Uses second bucket: 4/1 = 4
+    });
+
+    it('finds valid factor from third bucket when first two fail', () => {
+      const yMinValues = [0, 0, 1, 4];
+      const yMaxValues = [1, 4, 4, 16];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(4); // Uses third bucket: 4/1 = 4
+    });
+
+    it('returns 1 when all buckets start at 0', () => {
+      const yMinValues = [0, 0, 0];
+      const yMaxValues = [1, 4, 16];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(1);
+    });
+  });
+
+  describe('negative values', () => {
+    it('handles negative bucket ranges', () => {
+      const yMinValues = [-16, -4, -1];
+      const yMaxValues = [-4, -1, 0];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(0.25); // -4/-16 = 0.25
+    });
+
+    it('skips zero but allows negative values when finding fallback', () => {
+      const yMinValues = [0, -4, -1];
+      const yMaxValues = [1, -1, 0];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(0.25); // Uses second bucket: -1/-4 = 0.25
+    });
+
+    it('handles mixed positive and negative buckets', () => {
+      const yMinValues = [-10, -5, 0, 5];
+      const yMaxValues = [-5, 0, 5, 10];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(0.5); // -5/-10 = 0.5
+    });
+  });
+
+  describe('edge cases', () => {
+    it('returns 1 for empty arrays', () => {
+      const factor = calculateBucketExpansionFactor([], []);
+      expect(factor).toBe(1);
+    });
+
+    it('returns 1 for single bucket', () => {
+      const yMinValues = [1];
+      const yMaxValues = [4];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(4);
+    });
+
+    it('returns 1 when arrays have different lengths', () => {
+      const yMinValues = [1, 4];
+      const yMaxValues = [4];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(4); // Uses first bucket only
+    });
+
+    it('handles non-number values in arrays', () => {
+      const yMinValues = ['1', 4, 16];
+      const yMaxValues = [4, 16, 64];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(4); // Skips first, uses second bucket
+    });
+
+    it('handles null values', () => {
+      const yMinValues = [null, 1, 4];
+      const yMaxValues = [4, 4, 16];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(4); // Skips first, uses second bucket
+    });
+
+    it('handles undefined values', () => {
+      const yMinValues = [undefined, 1, 4];
+      const yMaxValues = [4, 4, 16];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(4); // Skips first, uses second bucket
+    });
+
+    it('handles decreasing buckets (unusual but valid)', () => {
+      const yMinValues = [4, 16];
+      const yMaxValues = [1, 4]; // Decreasing instead of increasing
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(0.25); // 1/4 = 0.25, valid factor even though < 1
+    });
+
+    it('returns 1 when factor is Infinity', () => {
+      const yMinValues = [0];
+      const yMaxValues = [10];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(1); // 10/0 = Infinity, invalid
+    });
+
+    it('returns 1 when factor is NaN', () => {
+      const yMinValues = [0];
+      const yMaxValues = [0];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(1); // 0/0 = NaN, invalid
+    });
+  });
+
+  describe('realistic heatmap data', () => {
+    it('handles Prometheus-style exponential buckets starting at 0', () => {
+      // Typical Prometheus histogram buckets: 0, 1, 4, 16, 64, 256, 1024, 4096, 16384, 65536
+      const yMinValues = [0, 1, 4, 16, 64, 256, 1024, 4096, 16384, 65536];
+      const yMaxValues = [1, 4, 16, 64, 256, 1024, 4096, 16384, 65536, 262144];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(4); // Uses second bucket: 4/1 = 4
+    });
+
+    it('handles linear buckets', () => {
+      const yMinValues = [0, 10, 20, 30];
+      const yMaxValues = [10, 20, 30, 40];
+      const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
+      expect(factor).toBe(2); // Uses second bucket: 20/10 = 2
+    });
   });
 });
 
