@@ -73,7 +73,11 @@ Note the following:
 
 ## When to use service accounts
 
-Use service accounts and tokens to perform operations on automated or triggered tasks such as:
+{{< admonition type="note" >}}
+Service accounts are for accessing the Grafana HTTP API (dashboards, users, data sources, alerts). For Grafana Cloud users who need to send or query telemetry data (metrics, logs, traces), use [Cloud Access Policies](/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/) instead.
+{{< /admonition >}}
+
+A common use case for creating a service account is to perform operations on automated or triggered tasks. You can use service accounts to:
 
 - Authenticate applications, such as Terraform, with the Grafana API.
 - Schedule reports for specific dashboards to be delivered on a daily/weekly/monthly basis.
