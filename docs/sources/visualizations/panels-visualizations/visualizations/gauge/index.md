@@ -44,6 +44,8 @@ You can use gauges if you need to track:
 
 The following video provides beginner steps for creating gauge panels. You'll learn the data requirements and caveats, special customizations, and much more:
 
+<!-- FIXME: we should make a new video for G13 -->
+
 {{< youtube id="QwXj3y_YpnE" >}}
 
 {{< docs/play title="Grafana Gauge Visualization" url="https://play.grafana.org/d/KIhkVD6Gk/" >}}
