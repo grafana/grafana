@@ -33,12 +33,19 @@ import {
 } from './types/DashboardDropTarget';
 
 const TAB_ACTIVATION_DELAY_MS = 600;
+export const TABS_LAYOUT_MANAGER_DROP_TARGET_ATTR = 'data-tabs-layout-manager-drop-target';
 
 interface DashboardLayoutOrchestratorState extends SceneObjectState {
   /** Grid item currently being dragged */
   draggingGridItem?: SceneObjectRef<SceneGridItemLike>;
   /** Row currently being dragged */
   draggingRow?: SceneObjectRef<RowItem>;
+  /** Tab key currently being dragged (tab header drag) */
+  draggingTabKey?: string;
+  /** Key of the tabs layout manager where the tab drag started */
+  sourceTabsLayoutKey?: string;
+  /** Key of the tabs layout manager currently being hovered during tab drag */
+  hoverTabsLayoutKey?: string;
   /** Key of the source tab where drag started */
   sourceTabKey?: string;
   /** Key of the tab currently being hovered during drag */
@@ -101,6 +108,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     return () => {
       document.body.removeEventListener('pointermove', this._onPointerMove);
       document.body.removeEventListener('pointermove', this._onRowDragPointerMove);
+      document.body.removeEventListener('pointermove', this._onTabDragPointerMove, true);
+      window.removeEventListener('mousemove', this._onTabDragMouseMove, true);
       document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
       document.body.removeEventListener('pointerup', this._onRowDragPointerUp, true);
       this._clearTabActivationTimer();
@@ -114,6 +123,13 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
    */
   public isDragging(): boolean {
     return !!(this.state.draggingGridItem || this.state.draggingRow);
+  }
+
+  /**
+   * Returns true if a tab header drag operation is in progress.
+   */
+  public isDraggingTab(): boolean {
+    return !!this.state.draggingTabKey;
   }
 
   /**
@@ -257,6 +273,149 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     // Add pointerup listener to handle drop after cross-tab switch
     // Use capture phase to ensure we receive the event even if something calls stopPropagation
     document.body.addEventListener('pointerup', this._onRowDragPointerUp, true);
+  }
+
+  /**
+   * Called when a tab header drag starts (from TabsLayoutManagerRenderer)
+   */
+  public startTabDrag(tabKey: string, sourceTabsLayoutKey: string): void {
+    // Capture pointer position during drag so we can infer a destination on drop
+    document.body.addEventListener('pointermove', this._onTabDragPointerMove, true);
+    window.addEventListener('mousemove', this._onTabDragMouseMove, true);
+    this.setState({
+      draggingTabKey: tabKey,
+      sourceTabsLayoutKey,
+      hoverTabsLayoutKey: undefined,
+    });
+  }
+
+  /**
+   * Called when a tab header drag ends (from TabsLayoutManagerRenderer)
+   */
+  public stopTabDrag(): void {
+    document.body.removeEventListener('pointermove', this._onTabDragPointerMove, true);
+    window.removeEventListener('mousemove', this._onTabDragMouseMove, true);
+    if (this.state.draggingTabKey || this.state.hoverTabsLayoutKey || this.state.sourceTabsLayoutKey) {
+      this.setState({ draggingTabKey: undefined, hoverTabsLayoutKey: undefined, sourceTabsLayoutKey: undefined });
+    }
+  }
+
+  /**
+   * If the tab drag ended outside the source tabs bar, try to move the dragged tab
+   * into the currently hovered tabs area (another TabsLayoutManager).
+   */
+  public maybeMoveDraggedTabToHoveredTabsLayout(): boolean {
+    const { draggingTabKey, hoverTabsLayoutKey, sourceTabsLayoutKey } = this.state;
+
+    if (!draggingTabKey || !hoverTabsLayoutKey || hoverTabsLayoutKey === sourceTabsLayoutKey) {
+      return false;
+    }
+
+    const dashboard = this._getDashboard();
+    const draggedTab = sceneGraph.findByKey(dashboard, draggingTabKey);
+    const destinationManager = sceneGraph.findByKey(dashboard, hoverTabsLayoutKey);
+
+    if (!(draggedTab instanceof TabItem) || !(destinationManager instanceof TabsLayoutManager)) {
+      return false;
+    }
+
+    const sourceManager = draggedTab.getParentLayout();
+    if (!(sourceManager instanceof TabsLayoutManager)) {
+      return false;
+    }
+
+    const destinationIndex = this._getTabInsertIndex(destinationManager, this._lastCursorX, this._lastCursorY);
+    sourceManager.moveTabToManager(draggedTab, destinationManager, destinationIndex);
+    return true;
+  }
+
+  private _onTabDragPointerMove = (evt: PointerEvent): void => {
+    this._updateTabDragHover(evt.clientX, evt.clientY);
+  };
+
+  private _onTabDragMouseMove = (evt: MouseEvent): void => {
+    this._updateTabDragHover(evt.clientX, evt.clientY);
+  };
+
+  private _updateTabDragHover(clientX: number, clientY: number): void {
+    this._lastCursorX = clientX;
+    this._lastCursorY = clientY;
+
+    const elementsUnderPoint = document.elementsFromPoint(clientX, clientY);
+    const hoveredLayoutKey = this._findAttributeInElementsOrAncestors(
+      elementsUnderPoint,
+      TABS_LAYOUT_MANAGER_DROP_TARGET_ATTR
+    );
+
+    const nextHover =
+      hoveredLayoutKey && hoveredLayoutKey !== this.state.sourceTabsLayoutKey ? hoveredLayoutKey : undefined;
+
+    if (nextHover !== this.state.hoverTabsLayoutKey) {
+      this.setState({ hoverTabsLayoutKey: nextHover });
+    }
+  }
+
+  private _findAttributeInElementsOrAncestors(
+    elements: Element[] | undefined,
+    attributeName: string
+  ): string | undefined {
+    if (!elements) {
+      return undefined;
+    }
+
+    for (const el of elements) {
+      let current: Element | null = el;
+      while (current) {
+        const v = current.getAttribute(attributeName);
+        if (v) {
+          return v;
+        }
+        current = current.parentElement;
+      }
+    }
+
+    return undefined;
+  }
+
+  private _getTabInsertIndex(destination: TabsLayoutManager, clientX: number, clientY: number): number {
+    const elementsUnderPoint = document.elementsFromPoint(clientX, clientY);
+    const hoveredTabEl = elementsUnderPoint?.find((el) => el.getAttribute('data-tab-activation-key'));
+
+    if (!(hoveredTabEl instanceof HTMLElement)) {
+      return destination.state.tabs.length;
+    }
+
+    const hoveredTabKey = hoveredTabEl.getAttribute('data-tab-activation-key');
+    if (!hoveredTabKey) {
+      return destination.state.tabs.length;
+    }
+
+    const hoveredTabObj = sceneGraph.findByKey(this._getDashboard(), hoveredTabKey);
+    if (!(hoveredTabObj instanceof TabItem)) {
+      return destination.state.tabs.length;
+    }
+
+    // Only compute placement if the hovered tab belongs to the destination manager.
+    if (hoveredTabObj.getParentLayout() !== destination) {
+      return destination.state.tabs.length;
+    }
+
+    const rect = hoveredTabEl.getBoundingClientRect();
+    const insertAfter = clientX > rect.left + rect.width / 2;
+
+    const originalKey = hoveredTabObj.state.repeatSourceKey ?? hoveredTabObj.state.key;
+    const originalTab = destination.getTabsIncludingRepeats().find((t) => t.state.key === originalKey);
+    if (!originalTab) {
+      return destination.state.tabs.length;
+    }
+
+    const originalIndex = destination.state.tabs.findIndex((t) => t === originalTab);
+    if (originalIndex < 0) {
+      return destination.state.tabs.length;
+    }
+
+    const desired = originalIndex + (insertAfter ? 1 : 0);
+    return Math.max(0, Math.min(desired, destination.state.tabs.length));
   }
 
   private _onRowDragPointerMove = (evt: PointerEvent): void => {

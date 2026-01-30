@@ -380,6 +380,60 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     });
   }
 
+  public moveTabToManager(tab: TabItem, destination: TabsLayoutManager, destinationIndex: number) {
+    if (destination === this) {
+      return;
+    }
+
+    const prevSourceTabs = [...this.state.tabs];
+    const prevSourceSlug = this.state.currentTabSlug;
+    const prevDestinationTabs = [...destination.state.tabs];
+    const prevDestinationSlug = destination.state.currentTabSlug;
+
+    dashboardEditActions.moveElement({
+      source: this,
+      movedObject: tab,
+      perform: () => {
+        const sourceTabs = [...prevSourceTabs];
+        const destTabs = [...prevDestinationTabs];
+
+        const fromIndex = sourceTabs.findIndex((t) => t === tab);
+        if (fromIndex < 0) {
+          return;
+        }
+
+        sourceTabs.splice(fromIndex, 1);
+
+        const clampedDestinationIndex = Math.max(0, Math.min(destinationIndex, destTabs.length));
+        destTabs.splice(clampedDestinationIndex, 0, tab);
+
+        // If the moved tab was active in source, pick a sensible new active tab.
+        let nextSourceSlug = prevSourceSlug;
+        if (prevSourceSlug === tab.getSlug()) {
+          const newIndex = fromIndex > 0 ? fromIndex - 1 : 0;
+          nextSourceSlug = sourceTabs[newIndex]?.getSlug();
+        }
+
+        // Important: avoid briefly parenting the same SceneObject in two places.
+        // Remove from source first, then clear parent, then add to destination.
+        this.setState({ tabs: sourceTabs, currentTabSlug: nextSourceSlug });
+        tab.clearParent();
+        destination.setState({ tabs: destTabs, currentTabSlug: tab.getSlug() });
+
+        this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
+        destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
+      },
+      undo: () => {
+        // Reverse order for the same parenting reason as in perform().
+        destination.setState({ tabs: prevDestinationTabs, currentTabSlug: prevDestinationSlug });
+        tab.clearParent();
+        this.setState({ tabs: prevSourceTabs, currentTabSlug: prevSourceSlug });
+        this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
+        destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
+      },
+    });
+  }
+
   private rearrangeTabs(fromIndex: number, toIndex: number, selectedTabIndex: number) {
     const tabs = [...this.state.tabs];
     const [removed] = tabs.splice(fromIndex, 1);

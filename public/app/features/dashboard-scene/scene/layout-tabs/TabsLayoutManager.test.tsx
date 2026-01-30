@@ -239,6 +239,59 @@ describe('TabsLayoutManager', () => {
     });
   });
 
+  describe('moveTabToManager', () => {
+    beforeEach(() => {
+      lastUndo = undefined;
+      jest.clearAllMocks();
+    });
+
+    it('should move a tab to another tabs layout manager and select it there', () => {
+      const source = new TabsLayoutManager({ tabs: [] });
+      const destination = new TabsLayoutManager({ tabs: [] });
+
+      const a = source.addNewTab(new TabItem({ title: 'A' }));
+      const b = source.addNewTab(new TabItem({ title: 'B' }));
+      const c = destination.addNewTab(new TabItem({ title: 'C' }));
+
+      // Set explicit current tabs
+      source.setState({ currentTabSlug: b.getSlug() });
+      destination.setState({ currentTabSlug: c.getSlug() });
+
+      source.moveTabToManager(b, destination, 1);
+
+      expect(source.state.tabs).toEqual([a]);
+      expect(destination.state.tabs).toEqual([c, b]);
+      expect(destination.state.currentTabSlug).toBe(b.getSlug());
+      // moved tab was active in source, so source should pick a new active tab
+      expect(source.state.currentTabSlug).toBe(a.getSlug());
+      expect(dashboardEditActions.moveElement).toHaveBeenCalled();
+    });
+
+    it('should handle undo action correctly when moving a tab to another manager', () => {
+      const source = new TabsLayoutManager({ tabs: [] });
+      const destination = new TabsLayoutManager({ tabs: [] });
+
+      const a = source.addNewTab(new TabItem({ title: 'A' }));
+      const b = source.addNewTab(new TabItem({ title: 'B' }));
+      const c = destination.addNewTab(new TabItem({ title: 'C' }));
+
+      source.setState({ currentTabSlug: b.getSlug() });
+      destination.setState({ currentTabSlug: c.getSlug() });
+
+      source.moveTabToManager(b, destination, 0);
+      expect(source.state.tabs).toEqual([a]);
+      expect(destination.state.tabs).toEqual([b, c]);
+
+      expect(typeof lastUndo).toBe('function');
+      lastUndo && lastUndo();
+
+      expect(source.state.tabs).toEqual([a, b]);
+      expect(destination.state.tabs).toEqual([c]);
+      expect(source.state.currentTabSlug).toBe(b.getSlug());
+      expect(destination.state.currentTabSlug).toBe(c.getSlug());
+    });
+  });
+
   describe('getVizPanels', () => {
     it('Should not included repeated tabs', () => {
       const manager = new TabsLayoutManager({
