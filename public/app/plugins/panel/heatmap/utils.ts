@@ -903,14 +903,13 @@ export function calculateBucketExpansionFactor(yMinValues: unknown[], yMaxValues
     const firstYMax = yMaxValues[0];
     if (typeof firstYMin === 'number' && typeof firstYMax === 'number') {
       const factor = firstYMax / firstYMin;
-      // Only use if valid
       if (Number.isFinite(factor) && factor > 0) {
         bucketFactor = factor;
       }
     }
   }
 
-  // Guard against invalid bucket factors (e.g., 1/0 = Infinity when first bucket starts at 0)
+  // Guard against invalid bucket factors (e.g., division by zero when first bucket starts at 0)
   if (bucketFactor === 1 && yMinValues.length > 1 && yMaxValues.length > 1) {
     const validIndex = yMinValues.findIndex((yMin, i) => {
       if (i === 0 || typeof yMin !== 'number' || yMin === 0) {
