@@ -123,12 +123,12 @@ function cachePromiseWithCallback<T>({ key, promise, onError }: CachePromiseWith
  * @param options.onError - Optional error handler that receives the error and an invalidate function
  * @returns A promise that resolves to the cached or newly computed value
  */
-export async function getCachedPromise<T>(promise: PromiseFunction<T>, options?: CachedPromiseOptions<T>): Promise<T> {
+export function getCachedPromise<T>(promise: PromiseFunction<T>, options?: CachedPromiseOptions<T>): Promise<T> {
   const { cacheKey, defaultValue, onError } = options ?? {};
   const key = cacheKey ?? promise.name;
 
   if (!key) {
-    throw new Error(`getCachedPromise function must be invoked with an named function or cacheKey`);
+    return Promise.reject(new Error(`getCachedPromise function must be invoked with a named function or cacheKey`));
   }
 
   const cached = cache.get(key);
@@ -150,7 +150,7 @@ export async function getCachedPromise<T>(promise: PromiseFunction<T>, options?:
 
 export function invalidateCache() {
   if (process.env.NODE_ENV !== 'test') {
-    throw new Error('invalidateCachedPromise function can only be called from tests.');
+    throw new Error('invalidateCache function can only be called from tests.');
   }
 
   cache.clear();

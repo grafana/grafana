@@ -90,7 +90,7 @@ describe('getCachedPromise', () => {
   describe('when called with anonymous functions', () => {
     test('should throw an error', async () => {
       await expect(getCachedPromise(async () => 2)).rejects.toThrow(
-        `getCachedPromise function must be invoked with an named function or cacheKey`
+        `getCachedPromise function must be invoked with a named function or cacheKey`
       );
     });
 
