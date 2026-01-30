@@ -303,13 +303,14 @@ Set up image rendering to add visual previews of dashboard updates directly in p
 
 To enable this capability, install the Grafana Image Renderer in your Grafana instance. For more information and installation instructions, refer to the [Image Renderer service](https://github.com/grafana/grafana-image-renderer).
 
-## Update or delete your Git Sync configuration
+## Update or delete your synced resources
 
 To update or delete your repository configuration after you've completed setup:
 
 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
 1. Select **Administration > General > Provisioning**.
-1. Select **Settings** for the repository you wish to modify to access the **Configure repository** screen:
+1. Go to the **Repositories** tab, and locate the repository you want to modify.
+1. Select **Settings** to access the **Configure repository** screen:
 
 - To modify your configuration, update any of the settings and select **Save**.
 - To delete the repository, click **Delete**. You can either keep the synced resources or delete them.
@@ -318,10 +319,10 @@ To update or delete your repository configuration after you've completed setup:
 
 You've successfully set up Git Sync to manage your Grafana dashboards through version control. Your dashboards are now synchronized with a GitHub repository, enabling collaborative development and change tracking.
 
-To learn more about using Git Sync:
+To learn more about using Git Sync refer to the following documents:
 
-- [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/provisioned-dashboards/)
 - [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/use-git-sync/)
+- [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/provisioned-dashboards/)
 - [Git Sync deployment scenarios](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios)
 - [Export resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources/)
 - [`grafanactl` documentation](https://grafana.github.io/grafanactl/)

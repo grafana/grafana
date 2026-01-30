@@ -9,7 +9,8 @@ labels:
   products:
     - enterprise
     - oss
-title: Work with provisioned dashboards
+title: Work with provisioned dashboards in Git Sync
+menuTitle: Work with provisioned dashboards
 weight: 450
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/provisioned-dashboards/
 aliases:
@@ -17,7 +18,7 @@ aliases:
   - ../provision-resources/provisioned-dashboards/
 ---
 
-# Work with provisioned dashboards
+# Work with provisioned dashboards in Git Sync
 
 {{< admonition type="caution" >}}
 
@@ -41,7 +42,7 @@ Using Git Sync, you can manage your dashboards in the UI and synchronize them wi
 
 To learn more about Git, refer to [Getting Started - About Version Control](https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control) of the [Pro Git book](https://git-scm.com/book/en/v2) in the official Git documentation.
 
-### Add and save a new dashboard
+### Create a new dashboard
 
 {{< admonition type="note" >}}
 
@@ -54,8 +55,7 @@ You have two options for creating **new** dashboards or folders in Git Sync:
 - Create them directly within Git Sync-managed folders in the Grafana UI
 - Add them by committing JSON files to your Git repository
 
-When you create a new dashboard in a provisioned folder associated with a GitHub repository, you follow the same process you use for any new dashboard.
-Refer to [Create a dashboard](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/) for more information.
+When you create a new dashboard in a provisioned folder associated with a GitHub repository, you follow the same process you use for any new dashboard. Refer to [Create a dashboard](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/) for more information.
 
 After you create the dashboard, follow these steps:
 
@@ -67,7 +67,7 @@ After you create the dashboard, follow these steps:
    - **Branch**: Specify the branch name in GitHub (for example, main). This option only appears if you select **Push to a new branch**.
 1. Select **Save**.
 
-### Save dashboard changes to GitHub
+### Edit dashboards
 
 When you edit a provisioned resource, you're prompted to save or discard those changes. Saving changes requires opening a pull request in your GitHub repository.
 
