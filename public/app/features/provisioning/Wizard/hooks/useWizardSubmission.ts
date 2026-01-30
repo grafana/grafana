@@ -129,17 +129,22 @@ export function useWizardSubmission({
       } catch (error) {
         const formData = getValues();
         if (isFetchError(error)) {
-          const [field, errorMessage] = getFormErrors(error.data.errors);
-          if (field === 'repository.token' && activeStep === 'connection' && formData.githubAuthType !== 'pat') {
+          const errors = getFormErrors(error.data);
+          // Check for special case: token error when using GitHub App
+          const tokenError = errors.find(([field]) => field === 'repository.token');
+          if (tokenError && activeStep === 'connection' && formData.githubAuthType !== 'pat') {
+            const [, errorMessage] = tokenError;
             setStepStatusInfo({
               status: 'error',
               error: {
                 title: repositoryConnectionFailed,
-                message: errorMessage?.message ?? '',
+                message: errorMessage.message,
               },
             });
-          } else if (field && errorMessage) {
-            setError(field, errorMessage);
+          } else if (errors.length > 0) {
+            for (const [field, errorMessage] of errors) {
+              setError(field, errorMessage);
+            }
           } else {
             setStepStatusInfo({
               status: 'error',
