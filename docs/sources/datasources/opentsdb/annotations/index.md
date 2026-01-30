@@ -22,6 +22,21 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+  query-editor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/
+  template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/
+  alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/
 ---
 
 # OpenTSDB annotations
@@ -231,3 +246,9 @@ For more details on the annotation API, refer to the [OpenTSDB annotation API do
 The annotation displays but has no description text.
 
 **Solution:** Ensure the `description` field is populated when creating annotations in OpenTSDB. Grafana displays the `description` field as the annotation text.
+
+## Next steps
+
+- [Build queries](ref:query-editor) to visualize metrics alongside annotations.
+- [Use template variables](ref:template-variables) to create dynamic dashboards.
+- [Set up alerting](ref:alerting) to get notified when metrics cross thresholds.

@@ -38,6 +38,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  query-editor:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/
+  troubleshooting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/
 ---
 
 # OpenTSDB alerting
@@ -180,3 +190,8 @@ Follow these best practices when creating OpenTSDB alerts:
 - **Use meaningful names:** Give alert rules descriptive names that indicate what they monitor.
 - **Enable downsampling:** Always enable downsampling for alerting queries to reduce data volume and improve reliability.
 - **Consider counter resets:** For counter metrics, enable the Counter option and set appropriate max values to handle resets correctly.
+
+## Next steps
+
+- [Build queries](ref:query-editor) to explore your metrics before creating alerts.
+- [Troubleshoot issues](ref:troubleshooting) if alerts aren't firing as expected.
