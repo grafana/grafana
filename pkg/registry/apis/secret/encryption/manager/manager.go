@@ -115,7 +115,7 @@ func (s *EncryptionManager) registerUsageMetrics() {
 	})
 }
 
-func (s *EncryptionManager) Encrypt(ctx context.Context, namespace xkube.Namespace, payload []byte, opts contracts.EncryptOption) (contracts.EncryptedPayload, error) {
+func (s *EncryptionManager) Encrypt(ctx context.Context, namespace xkube.Namespace, payload []byte, opts contracts.EncryptionOption) (contracts.EncryptedPayload, error) {
 	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.Encrypt", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
 	))
@@ -297,7 +297,7 @@ func newRandomDataKey() ([]byte, error) {
 	return rawDataKey, nil
 }
 
-func (s *EncryptionManager) Decrypt(ctx context.Context, namespace xkube.Namespace, payload contracts.EncryptedPayload, opts contracts.EncryptOption) ([]byte, error) {
+func (s *EncryptionManager) Decrypt(ctx context.Context, namespace xkube.Namespace, payload contracts.EncryptedPayload, opts contracts.EncryptionOption) ([]byte, error) {
 	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.Decrypt", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
 	))
