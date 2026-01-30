@@ -7,15 +7,221 @@ import (
 	"hash/fnv"
 	"maps"
 	"slices"
+	"strings"
 	"unsafe"
 
+	"github.com/grafana/alerting/definition"
+	"github.com/prometheus/alertmanager/dispatch"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func (rev *ConfigRevision) ResetUserDefinedRoute(defaultCfg *definitions.PostableUserConfig) error {
+const UserDefinedRoutingTreeName = "user-defined"
+const NamedRouteMatcher = "__grafana_managed_route__"
+
+type ManagedRoute struct {
+	Name    string
+	Version string
+
+	Receiver       string
+	GroupBy        []string
+	GroupWait      *model.Duration
+	GroupInterval  *model.Duration
+	RepeatInterval *model.Duration
+	Routes         []*definition.Route
+
+	Provenance models.Provenance
+}
+
+func (r *ManagedRoute) GeneratedSubRoute() *definition.Route {
+	amRoute := ManagedRouteToRoute(r)
+
+	// It's important that the generated sub-route is fully defined so that they will never rely on the values of the root.
+	defaultOpts := dispatch.DefaultRouteOpts
+	if amRoute.GroupWait == nil {
+		gw := model.Duration(defaultOpts.GroupWait)
+		amRoute.GroupWait = &gw
+	}
+	if amRoute.GroupInterval == nil {
+		gi := model.Duration(defaultOpts.GroupInterval)
+		amRoute.GroupInterval = &gi
+	}
+	if amRoute.RepeatInterval == nil {
+		ri := model.Duration(defaultOpts.RepeatInterval)
+		amRoute.RepeatInterval = &ri
+	}
+	if r.Name != UserDefinedRoutingTreeName {
+		// Set label matcher.
+		amRoute.ObjectMatchers = definitions.ObjectMatchers{managedRouteMatcher(r.Name)}
+	}
+	return &amRoute
+}
+
+func (r *ManagedRoute) ResourceType() string {
+	return (&definition.Route{}).ResourceType()
+}
+
+func (r *ManagedRoute) ResourceID() string {
+	if r.Name == UserDefinedRoutingTreeName {
+		// Backwards compatibility with legacy user-defined routing tree.
+		return ""
+	}
+	return r.Name
+}
+
+func NewManagedRoute(name string, r *definition.Route) *ManagedRoute {
+	return &ManagedRoute{
+		Name:    name,
+		Version: CalculateRouteFingerprint(*r),
+
+		Receiver:       r.Receiver,
+		GroupBy:        r.GroupByStr,
+		GroupWait:      r.GroupWait,
+		GroupInterval:  r.GroupInterval,
+		RepeatInterval: r.RepeatInterval,
+		Routes:         r.Routes,
+
+		Provenance: models.Provenance(r.Provenance),
+	}
+}
+
+func managedRouteMatcher(name string) *labels.Matcher {
+	return &labels.Matcher{
+		Type:  labels.MatchEqual,
+		Name:  NamedRouteMatcher,
+		Value: name,
+	}
+}
+
+type ManagedRoutes []*ManagedRoute
+
+func (m ManagedRoutes) Sort() {
+	// Sort the keys of the map to ensure consistent ordering. Always ensure that the legacy user-defined routing tree is last.
+	slices.SortFunc(m, func(a, b *ManagedRoute) int {
+		if a.Name == UserDefinedRoutingTreeName {
+			return 1
+		}
+		if b.Name == UserDefinedRoutingTreeName {
+			return -1
+		}
+		return strings.Compare(a.Name, b.Name)
+	})
+}
+
+func WithManagedRoutes(root *definitions.Route, managedRoutes map[string]*definition.Route) *definitions.Route {
+	if len(managedRoutes) == 0 {
+		// If there are no managed routes, we just return the original root.
+		return root
+	}
+	newRoot := *root
+	newManagedRoutes := make([]*definition.Route, 0, len(newRoot.Routes)+len(managedRoutes))
+	for _, k := range slices.Sorted(maps.Keys(managedRoutes)) {
+		// On the off chance that the route is nil or invalid managed route with the restricted name, we skip it.
+		if managedRoutes[k] == nil || k == UserDefinedRoutingTreeName {
+			continue
+		}
+		newManagedRoutes = append(newManagedRoutes, NewManagedRoute(k, managedRoutes[k]).GeneratedSubRoute())
+	}
+
+	// Add the user-defined routing tree at the end.
+	newManagedRoutes = append(newManagedRoutes, newRoot.Routes...)
+	newRoot.Routes = newManagedRoutes
+	return &newRoot
+}
+
+func (rev *ConfigRevision) GetManagedRoute(name string) *ManagedRoute {
+	if name == UserDefinedRoutingTreeName {
+		return NewManagedRoute(UserDefinedRoutingTreeName, rev.Config.AlertmanagerConfig.Route)
+	}
+	route, ok := rev.Config.ManagedRoutes[name]
+	if !ok {
+		return nil
+	}
+	return NewManagedRoute(name, route)
+}
+
+func (rev *ConfigRevision) GetManagedRoutes(includeManagedRoutes bool) ManagedRoutes {
+	managedRoutes := make(ManagedRoutes, 0, len(rev.Config.ManagedRoutes)+1)
+	if includeManagedRoutes {
+		for _, k := range slices.Sorted(maps.Keys(rev.Config.ManagedRoutes)) {
+			// On the off chance that the route is nil or invalid managed route with the restricted name, we skip it.
+			if rev.Config.ManagedRoutes[k] == nil || k == UserDefinedRoutingTreeName {
+				continue
+			}
+			managedRoutes = append(managedRoutes, NewManagedRoute(k, rev.Config.ManagedRoutes[k]))
+		}
+	}
+	managedRoutes = append(managedRoutes, NewManagedRoute(UserDefinedRoutingTreeName, rev.Config.AlertmanagerConfig.Route))
+
+	return managedRoutes
+}
+
+func (rev *ConfigRevision) DeleteManagedRoute(name string) {
+	delete(rev.Config.ManagedRoutes, name)
+}
+
+func (rev *ConfigRevision) CreateManagedRoute(name string, subtree definitions.Route) (*ManagedRoute, error) {
+	if name == "" {
+		return nil, fmt.Errorf("route name is required")
+	}
+
+	if name == UserDefinedRoutingTreeName {
+		return nil, models.ErrRouteExists.Errorf("cannot create a managed route with the name %q, this name is reserved for the user-defined routing tree", UserDefinedRoutingTreeName)
+	}
+
+	if _, exists := rev.Config.ManagedRoutes[name]; exists {
+		return nil, models.ErrRouteExists.Errorf("")
+	}
+
+	managedRoute := NewManagedRoute(name, &subtree)
+	amRoute := ManagedRouteToRoute(managedRoute)
+
+	err := rev.ValidateRoute(amRoute)
+	if err != nil {
+		return nil, models.MakeErrRouteInvalidFormat(err)
+	}
+
+	if rev.Config.ManagedRoutes == nil {
+		rev.Config.ManagedRoutes = make(map[string]*definition.Route, 1)
+	}
+	rev.Config.ManagedRoutes[name] = &amRoute
+
+	return managedRoute, nil
+}
+
+func (rev *ConfigRevision) UpdateNamedRoute(name string, subtree definitions.Route) (*ManagedRoute, error) {
+	if name == "" {
+		return nil, fmt.Errorf("route name is required")
+	}
+
+	if existing := rev.GetManagedRoute(name); existing == nil {
+		return nil, fmt.Errorf("managed route %q not found", name)
+	}
+
+	managedRoute := NewManagedRoute(name, &subtree)
+	amRoute := ManagedRouteToRoute(managedRoute)
+
+	err := rev.ValidateRoute(amRoute)
+	if err != nil {
+		return nil, models.MakeErrRouteInvalidFormat(err)
+	}
+
+	if name == UserDefinedRoutingTreeName {
+		rev.Config.AlertmanagerConfig.Route = &amRoute
+	} else {
+		if rev.Config.ManagedRoutes == nil {
+			rev.Config.ManagedRoutes = make(map[string]*definition.Route, 1)
+		}
+		rev.Config.ManagedRoutes[name] = &amRoute
+	}
+
+	return managedRoute, nil
+}
+
+func (rev *ConfigRevision) ResetUserDefinedRoute(defaultCfg *definitions.PostableUserConfig) (*ManagedRoute, error) {
 	// Ensure the new default receiver exists and if not, create it.
 	if err := rev.validateReceiverReferences(*defaultCfg.AlertmanagerConfig.Route); err != nil {
 		// Default receiver doesn't exist, create it.
@@ -27,13 +233,12 @@ func (rev *ConfigRevision) ResetUserDefinedRoute(defaultCfg *definitions.Postabl
 			}
 		}
 		if defaultRcv == nil {
-			return fmt.Errorf("inconsistent default configuration: default receiver %q not found", defaultCfg.AlertmanagerConfig.Route.Receiver)
+			return nil, fmt.Errorf("inconsistent default configuration: default receiver %q not found", defaultCfg.AlertmanagerConfig.Route.Receiver)
 		}
 		rev.Config.AlertmanagerConfig.Receivers = append(rev.Config.AlertmanagerConfig.Receivers, defaultRcv)
 	}
 
-	rev.Config.AlertmanagerConfig.Route = defaultCfg.AlertmanagerConfig.Route
-	return nil
+	return rev.UpdateNamedRoute(UserDefinedRoutingTreeName, *defaultCfg.AlertmanagerConfig.Route)
 }
 
 func (rev *ConfigRevision) ValidateRoute(route definitions.Route) error {
@@ -72,8 +277,19 @@ func (rev *ConfigRevision) validateTimeIntervalReferences(route definitions.Rout
 }
 
 // RenameReceiverInRoutes renames all references to a receiver in all routes. Returns number of routes that were updated
-func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string) int {
-	return renameReceiverInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route)
+func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string, includeManagedRoutes bool) map[*definitions.Route]int {
+	res := make(map[*definitions.Route]int)
+	if cnt := renameReceiverInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route); cnt > 0 {
+		res[rev.Config.AlertmanagerConfig.Route] = cnt
+	}
+	for _, r := range rev.Config.ManagedRoutes {
+		// Still attempt to rename receivers in any managed routes if not supported for data consistency, but
+		// don't return them int he results.
+		if cnt := renameReceiverInRoute(oldName, newName, r); includeManagedRoutes && cnt > 0 {
+			res[r] = cnt
+		}
+	}
+	return res
 }
 
 func renameReceiverInRoute(oldName, newName string, routes ...*definitions.Route) int {
@@ -92,8 +308,19 @@ func renameReceiverInRoute(oldName, newName string, routes ...*definitions.Route
 }
 
 // RenameTimeIntervalInRoutes renames all references to a time interval in all routes. Returns number of routes that were updated
-func (rev *ConfigRevision) RenameTimeIntervalInRoutes(oldName, newName string) int {
-	return renameTimeIntervalInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route)
+func (rev *ConfigRevision) RenameTimeIntervalInRoutes(oldName, newName string, includeManagedRoutes bool) map[*definitions.Route]int {
+	res := make(map[*definitions.Route]int)
+	if cnt := renameTimeIntervalInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route); cnt > 0 {
+		res[rev.Config.AlertmanagerConfig.Route] = cnt
+	}
+	for _, r := range rev.Config.ManagedRoutes {
+		// Still attempt to rename time intervals in any managed routes if not supported for data consistency, but
+		// don't return them int he results.
+		if cnt := renameTimeIntervalInRoute(oldName, newName, r); includeManagedRoutes && cnt > 0 {
+			res[r] = cnt
+		}
+	}
+	return res
 }
 
 func renameTimeIntervalInRoute(oldName, newName string, routes ...*definitions.Route) int {
@@ -117,19 +344,6 @@ func renameTimeIntervalInRoute(oldName, newName string, routes ...*definitions.R
 		updated += renameTimeIntervalInRoute(oldName, newName, route.Routes...)
 	}
 	return updated
-}
-
-// ToGroupBy converts the given label strings to (groupByAll, []model.LabelName) where groupByAll is true if the input
-// contains models.GroupByAll. This logic is in accordance with upstream Route.ValidateChild().
-func ToGroupBy(groupByStr ...string) (groupByAll bool, groupBy []model.LabelName) {
-	for _, l := range groupByStr {
-		if l == models.GroupByAll {
-			return true, nil
-		} else {
-			groupBy = append(groupBy, model.LabelName(l))
-		}
-	}
-	return false, groupBy
 }
 
 func CalculateRouteFingerprint(route definitions.Route) string {

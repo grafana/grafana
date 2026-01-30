@@ -14956,6 +14956,9 @@
         "variable-values-fetched-datasource-query": "Wartości zmiennych są pobierane z zapytania dotyczącego źródła danych"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "domyślne",

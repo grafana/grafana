@@ -14956,6 +14956,9 @@
         "variable-values-fetched-datasource-query": "Значения переменных извлекаются из запроса к источнику данных"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "по умолчанию",

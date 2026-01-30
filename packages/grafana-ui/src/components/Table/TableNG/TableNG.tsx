@@ -253,13 +253,21 @@ export function TableNG(props: TableNGProps) {
     rowHeight,
   });
 
+  const [scrollToIndex, setScrollToIndex] = useState(initialRowIndex);
   useEffect(() => {
-    if (initialRowIndex && gridRef.current?.scrollToCell) {
+    if (scrollToIndex !== undefined && sortedRows && gridRef.current?.scrollToCell) {
+      const rowIdx = sortedRows.findIndex((row) => row.__index === scrollToIndex);
       gridRef.current.scrollToCell({
-        rowIdx: initialRowIndex,
+        rowIdx,
       });
+      // Select the first cell so there's something visually different about the row
+      gridRef.current.selectCell({
+        rowIdx,
+        idx: 0,
+      });
+      setScrollToIndex(undefined);
     }
-  }, [initialRowIndex]);
+  }, [scrollToIndex, sortedRows]);
 
   const [footers, isUniformFooter] = useMemo(() => {
     const footers: Array<TableFooterOptions | undefined> = [];

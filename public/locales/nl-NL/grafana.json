@@ -14840,6 +14840,9 @@
         "variable-values-fetched-datasource-query": "Variabelewaarden worden opgehaald uit een gegevensbronquery"
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "standaard",

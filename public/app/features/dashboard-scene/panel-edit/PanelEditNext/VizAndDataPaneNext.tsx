@@ -10,7 +10,8 @@ import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { QueryEditorContextWrapper } from './QueryEditor/QueryEditorContextWrapper';
-import { QueryEditorSidebar, SidebarSize } from './QueryEditor/Sidebar/QueryEditorSidebar';
+import { QueryEditorSidebar } from './QueryEditor/Sidebar/QueryEditorSidebar';
+import { SidebarSize } from './constants';
 import { useVizAndDataPaneLayout } from './hooks';
 
 export function VizAndDataPaneNext({
