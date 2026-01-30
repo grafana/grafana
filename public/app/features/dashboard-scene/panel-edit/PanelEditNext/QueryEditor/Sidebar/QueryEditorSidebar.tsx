@@ -53,8 +53,8 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
       </QuerySidebarCollapsableHeader>
       {transformations.length > 0 && (
         <QuerySidebarCollapsableHeader label={t('query-editor-next.sidebar.transformations', 'Transformations')}>
-          {transformations.map((transformation, index) => (
-            <TransformationCard key={`${transformation.id}-${index}`} transformation={transformation} />
+          {transformations.map((transformation) => (
+            <TransformationCard key={transformation.transformId} transformation={transformation} />
           ))}
         </QuerySidebarCollapsableHeader>
       )}

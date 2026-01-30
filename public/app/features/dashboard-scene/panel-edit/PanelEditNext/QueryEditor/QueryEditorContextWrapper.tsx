@@ -1,6 +1,12 @@
 import { ReactNode, useMemo, useState } from 'react';
+import { v4 } from 'uuid';
 
-import { DataSourceInstanceSettings, getDataSourceRef, LoadingState } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  getDataSourceRef,
+  LoadingState,
+  standardTransformersRegistry,
+} from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 
@@ -8,6 +14,7 @@ import { getQueryRunnerFor } from '../../../utils/utils';
 import { PanelDataPaneNext } from '../PanelDataPaneNext';
 
 import { QueryEditorProvider } from './QueryEditorContext';
+import { Transformation } from './types';
 import { isDataTransformerConfig } from './utils';
 
 /**
@@ -28,12 +35,22 @@ export function QueryEditorContextWrapper({
   const [selectedQueryRefId, setSelectedQueryRefId] = useState<string | null>(null);
   const [selectedTransformationId, setSelectedTransformationId] = useState<string | null>(null);
 
-  const transformations = useMemo(() => {
+  const transformations: Transformation[] = useMemo(() => {
     if (panel.state.$data instanceof SceneDataTransformer) {
       // Filter to only include DataTransformerConfig items (exclude CustomTransformerDefinition)
-      return panel.state.$data.state.transformations.filter((t): t is DataTransformerConfig =>
+      const transformationList = panel.state.$data.state.transformations.filter((t): t is DataTransformerConfig =>
         isDataTransformerConfig(t)
       );
+
+      const transformationsList: Transformation[] = transformationList.map((t) => {
+        return {
+          transformConfig: t,
+          registryItem: standardTransformersRegistry.getIfExists(t.id),
+          transformId: v4(),
+        };
+      });
+
+      return transformationsList;
     }
     return [];
   }, [panel]);
@@ -86,9 +103,7 @@ export function QueryEditorContextWrapper({
   const selectedTransformation = useMemo(() => {
     // If we have a selected transformation id, try to find that transformation
     if (selectedTransformationId) {
-      const transformation = transformations.find(
-        (t): t is DataTransformerConfig => isDataTransformerConfig(t) && t.id === selectedTransformationId
-      );
+      const transformation = transformations.find((t) => t.transformId === selectedTransformationId);
       if (transformation) {
         return transformation;
       }
@@ -106,8 +121,8 @@ export function QueryEditorContextWrapper({
         // Clear transformation selection when selecting a query
         setSelectedTransformationId(null);
       },
-      setSelectedTransformation: (transformation: DataTransformerConfig | null) => {
-        setSelectedTransformationId(transformation?.id ?? null);
+      setSelectedTransformation: (transformation: Transformation | null) => {
+        setSelectedTransformationId(transformation?.transformId ?? null);
         // Clear query selection when selecting a transformation
         setSelectedQueryRefId(null);
       },

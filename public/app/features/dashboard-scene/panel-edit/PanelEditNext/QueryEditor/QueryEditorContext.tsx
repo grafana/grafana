@@ -2,7 +2,9 @@ import { createContext, ReactNode, useContext } from 'react';
 
 import { DataSourceApi, DataSourceInstanceSettings, PanelData } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
-import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
+
+import { Transformation } from './types';
 
 export interface DatasourceState {
   datasource?: DataSourceApi;
@@ -18,14 +20,14 @@ export interface QueryRunnerState {
 
 export interface PanelState {
   panel: VizPanel;
-  transformations: DataTransformerConfig[];
+  transformations: Transformation[];
 }
 
 export interface QueryEditorUIState {
   selectedQuery: DataQuery | null;
-  selectedTransformation: DataTransformerConfig | null;
+  selectedTransformation: Transformation | null;
   setSelectedQuery: (query: DataQuery | null) => void;
-  setSelectedTransformation: (transformation: DataTransformerConfig | null) => void;
+  setSelectedTransformation: (transformation: Transformation | null) => void;
 }
 
 export interface QueryEditorActions {
