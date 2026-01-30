@@ -415,6 +415,22 @@ export function truncateTitle(title: string, length: number): string {
   return `${part.trimEnd()}...`;
 }
 
+export const PLUGINS_EXTENSIONS_ROOT_CATEGORY = '${root}';
+
+export function isRootPluginExtension(extension: PluginExtensionLink): boolean {
+  return extension.category === PLUGINS_EXTENSIONS_ROOT_CATEGORY;
+}
+
+export function extensionLinkToPanelMenuItem(extension: PluginExtensionLink): PanelMenuItem {
+  return {
+    text: truncateTitle(extension.title, 25),
+    href: extension.path,
+    onClick: extension.onClick,
+    iconClassName: extension.icon,
+    target: extension.openInNewTab ? '_blank' : undefined,
+  };
+}
+
 export function createExtensionSubMenu(extensions: PluginExtensionLink[]): PanelMenuItem[] {
   const categorized: Record<string, PanelMenuItem[]> = {};
   const uncategorized: PanelMenuItem[] = [];
@@ -423,13 +439,7 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
     const category = extension.category;
 
     if (!category) {
-      uncategorized.push({
-        text: truncateTitle(extension.title, 25),
-        href: extension.path,
-        onClick: extension.onClick,
-        iconClassName: extension.icon,
-        target: extension.openInNewTab ? '_blank' : undefined,
-      });
+      uncategorized.push(extensionLinkToPanelMenuItem(extension));
       continue;
     }
 
@@ -437,13 +447,7 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
       categorized[category] = [];
     }
 
-    categorized[category].push({
-      text: truncateTitle(extension.title, 25),
-      href: extension.path,
-      onClick: extension.onClick,
-      iconClassName: extension.icon,
-      target: extension.openInNewTab ? '_blank' : undefined,
-    });
+    categorized[category].push(extensionLinkToPanelMenuItem(extension));
   }
 
   const subMenu = Object.keys(categorized).reduce((subMenu: PanelMenuItem[], category) => {
