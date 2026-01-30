@@ -45,7 +45,7 @@ export const testIntegrationApi = alertingApi.injectEndpoints({
         };
 
         return {
-          url: `/apis/alertingnotifications.grafana.app/v0alpha1/namespaces/${namespace}/receivers/${receiverName}/test`,
+          url: `/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/${namespace}/receivers/${receiverName}/test`,
           method: 'POST',
           data: body,
         };

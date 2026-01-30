@@ -28,7 +28,8 @@ interface K8sTestRequestBody {
 
 const wrapper = () => getWrapper({ renderWithRouter: true });
 
-const K8S_TEST_ENDPOINT = '/apis/alertingnotifications.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test';
+const K8S_TEST_ENDPOINT =
+  '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test';
 
 const defaultK8sSuccessResponse: TestIntegrationResponse = {
   apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
@@ -217,7 +218,7 @@ describe('useTestContactPoint', () => {
         );
 
         expect(requestUrl).not.toBeUndefined();
-        expect(requestUrl).toContain('/apis/alertingnotifications.grafana.app/');
+        expect(requestUrl).toContain('/apis/notifications.alerting.grafana.app/');
       } finally {
         consoleSpy.mockRestore();
       }

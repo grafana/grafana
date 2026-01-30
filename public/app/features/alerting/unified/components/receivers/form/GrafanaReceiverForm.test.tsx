@@ -740,7 +740,7 @@ describe('GrafanaReceiverForm', () => {
           .build();
 
         const capturedRequests = captureRequests(
-          (req) => req.url.includes('/apis/alertingnotifications.grafana.app/') && req.method === 'POST'
+          (req) => req.url.includes('/apis/notifications.alerting.grafana.app/') && req.method === 'POST'
         );
 
         const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode />);
@@ -765,7 +765,7 @@ describe('GrafanaReceiverForm', () => {
 
         // Verify the request was made to the K8s API endpoint
         const [request] = await capturedRequests;
-        expect(request.url).toContain('/apis/alertingnotifications.grafana.app/');
+        expect(request.url).toContain('/apis/notifications.alerting.grafana.app/');
         expect(request.url).toContain('/receivers/');
         expect(request.url).toContain('/test');
       });
@@ -775,7 +775,7 @@ describe('GrafanaReceiverForm', () => {
         // This proves the correct endpoint was called through UI side effects
         server.use(
           http.post<{ namespace: string; name: string }>(
-            '/apis/alertingnotifications.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+            '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
             ({ params }) => {
               if (params.name !== '-') {
                 return HttpResponse.json(
@@ -876,7 +876,7 @@ describe('GrafanaReceiverForm', () => {
         // Use a delayed handler to observe the loading state
         server.use(
           http.post<{ namespace: string; name: string }>(
-            '/apis/alertingnotifications.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+            '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
             async () => {
               await delay(100);
               return HttpResponse.json({
@@ -922,7 +922,7 @@ describe('GrafanaReceiverForm', () => {
         const errorMessage = 'Connection refused: unable to reach webhook endpoint';
         server.use(
           http.post<{ namespace: string; name: string }>(
-            '/apis/alertingnotifications.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+            '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
             () => {
               return HttpResponse.json({
                 apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
@@ -961,7 +961,7 @@ describe('GrafanaReceiverForm', () => {
       it('should display error message when K8s API returns HTTP error', async () => {
         server.use(
           http.post<{ namespace: string; name: string }>(
-            '/apis/alertingnotifications.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+            '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
             () => {
               return HttpResponse.json(
                 { message: 'Internal server error: database connection failed' },

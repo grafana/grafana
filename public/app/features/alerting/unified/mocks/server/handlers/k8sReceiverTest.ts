@@ -14,7 +14,7 @@ interface TestRequestBody {
 
 const testReceiverK8sHandler = () =>
   http.post<{ namespace: string; name: string }, TestRequestBody>(
-    '/apis/alertingnotifications.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
+    '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name/test',
     async ({ request }) => {
       const body = await request.json();
 
