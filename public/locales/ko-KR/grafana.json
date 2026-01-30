@@ -14782,6 +14782,9 @@
         "variable-values-fetched-datasource-query": "변수 값은 데이터 소스 쿼리에서 가져옵니다."
       }
     },
+    "create-switch-variable-adapter": {
+      "description": ""
+    },
     "data-source-variable-slice": {
       "text": {
         "default": "기본값",

@@ -3,9 +3,11 @@ package resource
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -235,11 +237,14 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 	return doc.UpdateCopyFields()
 }
 
-func StandardDocumentBuilder() DocumentBuilder {
-	return &standardDocumentBuilder{}
+func StandardDocumentBuilder(manifests []app.Manifest) DocumentBuilder {
+	return &standardDocumentBuilder{selectableFields: SelectableFieldsForManifests(manifests)}
 }
 
-type standardDocumentBuilder struct{}
+type standardDocumentBuilder struct {
+	// Maps "group/resource" (in lowercase) to list of selectable fields.
+	selectableFields map[string][]string
+}
 
 func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
 	tmp := &unstructured.Unstructured{}
@@ -254,7 +259,35 @@ func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resour
 	}
 
 	doc := NewIndexableDocument(key, rv, obj)
+
+	sfKey := strings.ToLower(key.GetGroup() + "/" + key.GetResource())
+	doc.SelectableFields = getSelectableFieldsFromObject(tmp, s.selectableFields[sfKey])
+
 	return doc, nil
+}
+
+func getSelectableFieldsFromObject(tmp *unstructured.Unstructured, fields []string) map[string]string {
+	result := map[string]string{}
+
+	for _, field := range fields {
+		path := strings.Split(field, ".")
+		val, ok, err := unstructured.NestedFieldNoCopy(tmp.Object, path...)
+		if err != nil || !ok {
+			continue
+		}
+
+		switch v := val.(type) {
+		case string:
+			result[field] = v
+		case bool:
+			result[field] = strconv.FormatBool(v)
+		default:
+			// In practice there should only be strings, bools and int/float selectable fields.
+			result[field] = fmt.Sprintf("%v", v)
+		}
+	}
+
+	return result
 }
 
 type searchableDocumentFields struct {
