@@ -838,12 +838,14 @@ describe('GrafanaReceiverForm', () => {
         expect(testButton).not.toBeInTheDocument();
       });
 
-      it('should show test button when canTest annotation is missing', async () => {
+      it('should not show test button when canTest annotation is missing', async () => {
         const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
           .withIntegrations((integrationFactory) => [integrationFactory.webhook().build()])
           .build({
             metadata: {
-              annotations: {},
+              annotations: {
+                'grafana.com/access/canTest': undefined,
+              },
             },
           });
 
@@ -851,7 +853,8 @@ describe('GrafanaReceiverForm', () => {
 
         await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
-        expect(ui.testButton.get()).toBeInTheDocument();
+        const testButton = screen.queryByRole('button', { name: /test/i });
+        expect(testButton).not.toBeInTheDocument();
       });
 
       it('should show test button when canTest annotation is true', async () => {
