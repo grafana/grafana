@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
 
@@ -364,12 +365,16 @@ type target struct {
 // RunFixDashboardVariableQuotesMigration performs the migration
 func RunFixDashboardVariableQuotesMigration(sess *xorm.Session, mg *Migrator) error {
 	type dashboard struct {
-		ID   int64  `xorm:"id"`
-		Data string `xorm:"data"`
+		ID         int64  `xorm:"id"`
+		Version    int    `xorm:"version"`
+		UID        string `xorm:"uid"`
+		OrgID      int64  `xorm:"org_id"`
+		Data       string `xorm:"data"`
+		APIVersion string `xorm:"api_version"`
 	}
 
 	var dashboards []dashboard
-	if err := sess.Table("dashboard").Cols("id", "data").Find(&dashboards); err != nil {
+	if err := sess.Table("dashboard").Cols("id", "version", "uid", "org_id", "data", "api_version").Find(&dashboards); err != nil {
 		return fmt.Errorf("failed to fetch dashboards: %w", err)
 	}
 
@@ -406,21 +411,56 @@ func RunFixDashboardVariableQuotesMigration(sess *xorm.Session, mg *Migrator) er
 				continue
 			}
 
-			// Update the dashboard in the database
-			sqlUpdate := "UPDATE dashboard SET data = ? WHERE id = ?"
+			// Increment version for this change
+			parentVersion := dash.Version
+			newVersion := dash.Version + 1
+
+			// Update the dashboard in the database with incremented version
+			sqlUpdate := "UPDATE dashboard SET data = ?, version = ? WHERE id = ?"
 			if mg.Dialect.DriverName() == Postgres {
-				sqlUpdate = "UPDATE dashboard SET data = $1 WHERE id = $2"
+				sqlUpdate = "UPDATE dashboard SET data = $1, version = $2 WHERE id = $3"
 			}
 
-			_, err = sess.Exec(sqlUpdate, string(updatedData), dash.ID)
+			_, err = sess.Exec(sqlUpdate, string(updatedData), newVersion, dash.ID)
 			if err != nil {
 				mg.Logger.Warn("Failed to update dashboard", "dashboard_id", dash.ID, "error", err)
 				errorCount++
 				continue
 			}
 
+			// Create a dashboard_version entry for this change
+			sqlInsertVersion := `
+				INSERT INTO dashboard_version
+				(dashboard_id, parent_version, restored_from, version, created, created_by, message, data, api_version)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			if mg.Dialect.DriverName() == Postgres {
+				sqlInsertVersion = `
+					INSERT INTO dashboard_version
+					(dashboard_id, parent_version, restored_from, version, created, created_by, message, data, api_version)
+					VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+			}
+
+			message := "Fix PostgreSQL dashboard variable quotes (migration)"
+			createdBy := int64(-1) // System user for migrations
+
+			_, err = sess.Exec(sqlInsertVersion,
+				dash.ID,
+				parentVersion,
+				0, // restored_from
+				newVersion,
+				time.Now(),
+				createdBy,
+				message,
+				string(updatedData),
+				dash.APIVersion,
+			)
+			if err != nil {
+				mg.Logger.Warn("Failed to create dashboard_version entry", "dashboard_id", dash.ID, "error", err)
+				// Don't fail the migration if history creation fails, but log it
+			}
+
 			modifiedCount++
-			mg.Logger.Debug("Fixed dashboard variable quotes", "dashboard_id", dash.ID)
+			mg.Logger.Debug("Fixed dashboard variable quotes and created history entry", "dashboard_id", dash.ID, "version", newVersion)
 		}
 	}
 
