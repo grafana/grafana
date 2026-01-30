@@ -3,19 +3,19 @@ import { CSSProperties } from 'react';
 import { createTheme, FieldType } from '@grafana/data';
 import { PercentChangeColorMode } from '@grafana/schema';
 
-import { Props, BigValueColorMode, BigValueGraphMode, BigValueTextMode } from './BigValue';
+import { BigValueProps, BigValueColorMode, BigValueTextMode } from './BigValue';
 import {
   buildLayout,
   getPercentChangeColor,
   StackedWithChartLayout,
   StackedWithNoChartLayout,
   WideWithChartLayout,
+  BigValuePropsWithHeightAndWidth,
 } from './BigValueLayout';
 
-function getProps(propOverrides?: Partial<Props>): Props {
-  const props: Props = {
+function getProps(propOverrides?: Partial<BigValuePropsWithHeightAndWidth>): BigValuePropsWithHeightAndWidth {
+  const props: BigValuePropsWithHeightAndWidth = {
     colorMode: BigValueColorMode.Background,
-    graphMode: BigValueGraphMode.Area,
     height: 300,
     width: 300,
     value: {
@@ -105,7 +105,7 @@ describe('BigValueLayout', () => {
       ['wide layout', {}],
       ['non-wide layout', { disableWideLayout: true }],
     ])('should shrink the value if percent change is shown for %s', (_, propsOverride) => {
-      const baseProps: Partial<Props> = {
+      const baseProps: Partial<BigValueProps> = {
         width: 300,
         height: 100,
         sparkline: undefined,
