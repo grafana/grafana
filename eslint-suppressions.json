@@ -4318,39 +4318,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/panel/table/TableCellOptionEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/table/cells/BarGaugeCellOptionsEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/panel/table/cells/ColorBackgroundCellOptionsEditor.tsx": {
-    "@grafana/no-aria-label-selectors": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/panel/table/cells/ImageCellOptionsEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/panel/table/cells/MarkdownCellOptionsEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/table/cells/SparklineCellOptionsEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/table/migrations.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 4
