@@ -7,7 +7,7 @@ import { CustomVariable, VariableValueOption, VariableValueSingle } from '@grafa
 import { Alert, Button, Modal, Stack } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../../../edit-pane/shared';
-import { VariableStaticOptionsForm, VariableStaticOptionsFormRef } from '../../components/VariableStaticOptionsForm';
+import { createEmptyItem, VariableStaticOptionsForm, VariableStaticOptionsFormRef } from '../../components/VariableStaticOptionsForm';
 import { VariableStaticOptionsFormAddButton } from '../../components/VariableStaticOptionsFormAddButton';
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';
 
@@ -78,9 +78,12 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
     formRef,
     onCloseModal: onClose,
     options,
-    onChangeOptions: setOptions,
+    onChangeOptions(updatedOptions: VariableValueOption[]) {
+      setOptions(updatedOptions);
+    },
     onAddNewOption() {
       formRef.current?.addItem();
+      setOptions (() => [...options, createEmptyItem()]);
     },
     onSaveOptions() {
       dashboardEditActions.edit({

@@ -130,7 +130,7 @@ const getStyles = (theme: GrafanaTheme2, isInModal: boolean) => ({
   }),
 });
 
-function createEmptyItem(): VariableStaticOptionsFormItem {
+export function createEmptyItem(): VariableStaticOptionsFormItem {
   return {
     label: '',
     value: '',
