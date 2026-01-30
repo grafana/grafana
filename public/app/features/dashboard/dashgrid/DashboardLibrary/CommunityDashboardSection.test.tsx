@@ -141,6 +141,10 @@ describe('CommunityDashboardSection', () => {
       ],
     });
 
+    // Mock compatibility check to prevent auto-check errors
+    mockInterpolateDashboard.mockResolvedValue(createMockDashboardJson());
+    mockCheckCompatibility.mockResolvedValue(createMockCompatibilityResult());
+
     await setup();
 
     await waitFor(() => {
@@ -156,6 +160,10 @@ describe('CommunityDashboardSection', () => {
       pages: 5,
       items: [createMockGnetDashboard()],
     });
+
+    // Mock compatibility check to prevent auto-check errors
+    mockInterpolateDashboard.mockResolvedValue(createMockDashboardJson());
+    mockCheckCompatibility.mockResolvedValue(createMockCompatibilityResult());
 
     mockOnUseCommunityDashboard.mockRejectedValue(new Error('Failed to use community dashboard'));
 
@@ -366,6 +374,7 @@ describe('CommunityDashboardSection', () => {
     });
 
     it('should allow manual check when clicking Check button', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       mockDatasourceType = 'prometheus';
       mockFetchCommunityDashboards.mockResolvedValue({
         page: 1,
@@ -393,6 +402,8 @@ describe('CommunityDashboardSection', () => {
       await waitFor(() => {
         expect(screen.getByTestId('compatibility-badge-success')).toBeInTheDocument();
       });
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should show loading state during compatibility check', async () => {
