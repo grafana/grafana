@@ -6,18 +6,18 @@ describe('obfuscate', () => {
   });
 
   it('obfuscates metric name with labels', () => {
-    expect(obfuscate('http_requests_total{job="grafana"}')).toEqual('Identifier{Identifier=StringLiteral}');
+    expect(obfuscate('http_requests_total{job="grafana"}')).toEqual('Identifier{LabelName=StringLiteral}');
   });
 
   it('obfuscates on valid query with rate', () => {
     expect(obfuscate('rate(http_requests_total{job="grafana"}[5m])')).toEqual(
-      'rate(Identifier{Identifier=StringLiteral}[NumberDurationLiteral])'
+      'rate(Identifier{LabelName=StringLiteral}[NumberDurationLiteral])'
     );
   });
 
   it('obfuscates aggregation query', () => {
     expect(obfuscate('sum(rate(http_requests_total{job="grafana"}[5m])) by (instance)')).toEqual(
-      'sum(rate(Identifier{Identifier=StringLiteral}[NumberDurationLiteral])) by (Identifier)'
+      'sum(rate(Identifier{LabelName=StringLiteral}[NumberDurationLiteral])) by (LabelName)'
     );
   });
 
@@ -31,7 +31,7 @@ describe('obfuscate', () => {
 
   it('obfuscates query with multiple labels', () => {
     expect(obfuscate('up{job="prometheus", instance="localhost:9090"}')).toEqual(
-      'Identifier{Identifier=StringLiteral, Identifier=StringLiteral}'
+      'Identifier{LabelName=StringLiteral, LabelName=StringLiteral}'
     );
   });
 
@@ -57,7 +57,7 @@ describe('obfuscate', () => {
     expect(
       obfuscate('histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="api"}[5m])) by (le))')
     ).toEqual(
-      'histogram_quantile(NumberDurationLiteral, sum(rate(Identifier{Identifier=StringLiteral}[NumberDurationLiteral])) by (Identifier))'
+      'histogram_quantile(NumberDurationLiteral, sum(rate(Identifier{LabelName=StringLiteral}[NumberDurationLiteral])) by (LabelName))'
     );
   });
 

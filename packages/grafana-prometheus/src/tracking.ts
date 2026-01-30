@@ -1,33 +1,49 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/tracking.ts
-import { Identifier, NumberDurationLiteral, parser, StringLiteral } from '@prometheus-io/lezer-promql';
+import {
+  Identifier,
+  LabelName,
+  NumberDurationLiteral,
+  NumberDurationLiteralInDurationContext,
+  parser,
+  StringLiteral,
+} from '@prometheus-io/lezer-promql';
 
 import { CoreApp, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 
 import { PromQuery } from './types';
 
-const tagsToObscure = [StringLiteral, Identifier, NumberDurationLiteral];
-const partsToKeep = [
-  '__name__',
-  '__interval',
-  '__interval_ms',
-  '__rate_interval',
-  '__range',
-  '__range_s',
-  '__range_ms',
-];
+const tagsToObscure = [StringLiteral, Identifier, LabelName, NumberDurationLiteral, NumberDurationLiteralInDurationContext];
+const partsToKeep = ['__name__', '__interval', '__interval_ms', '__rate_interval', '__range', '__range_s', '__range_ms', '__auto'];
 
 export function obfuscate(query: string): string {
-  let obfuscatedQuery: string = query;
+  const replacements: Array<{ from: number; to: number; replacement: string }> = [];
   const tree = parser.parse(query);
   tree.iterate({
     enter: ({ type, from, to }): false | void => {
       const queryPart = query.substring(from, to);
-      if (tagsToObscure.includes(type.id) && !partsToKeep.includes(queryPart)) {
-        obfuscatedQuery = obfuscatedQuery.replace(queryPart, type.name);
+      // Skip empty parts, parts to keep, and Grafana variable syntax
+      if (
+        queryPart.length === 0 ||
+        partsToKeep.includes(queryPart) ||
+        queryPart.startsWith('$__') ||
+        !tagsToObscure.includes(type.id)
+      ) {
+        return;
       }
+      // Use consistent name for duration literals
+      const replacement =
+        type.id === NumberDurationLiteralInDurationContext ? 'NumberDurationLiteral' : type.name;
+      replacements.push({ from, to, replacement });
     },
   });
+
+  // Apply replacements from end to start to preserve positions
+  replacements.sort((a, b) => b.from - a.from);
+  let obfuscatedQuery = query;
+  for (const { from, to, replacement } of replacements) {
+    obfuscatedQuery = obfuscatedQuery.substring(0, from) + replacement + obfuscatedQuery.substring(to);
+  }
   return obfuscatedQuery;
 }
 
