@@ -46,7 +46,7 @@ func registerMigration(mg *sqlstoremigrator.Migrator,
 	opts ...ResourceMigrationOption,
 ) {
 	validators := def.CreateValidators(client, mg.Dialect.DriverName())
-	migration := NewResourceMigration(migrator, def.Resources, def.ID, validators, opts...)
+	migration := NewResourceMigration(migrator, def.GetGroupResources(), def.ID, validators, opts...)
 	mg.AddMigration(def.MigrationID, migration)
 }
 
