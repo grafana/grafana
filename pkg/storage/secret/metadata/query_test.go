@@ -54,6 +54,16 @@ func TestKeeperQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlExistsSecureValueUsingKeeper: {
+				{
+					Name: "exists",
+					Data: &existsSecureValueUsingKeeper{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+					},
+				},
+			},
 			sqlKeeperList: {
 				{
 					Name: "list",
@@ -69,6 +79,15 @@ func TestKeeperQueries(t *testing.T) {
 					Data: &readActiveKeeper{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "ns",
+						IsForUpdate: false,
+					},
+				},
+				{
+					Name: "read active for update",
+					Data: &readActiveKeeper{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+						IsForUpdate: true,
 					},
 				},
 			},

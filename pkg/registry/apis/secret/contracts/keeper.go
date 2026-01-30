@@ -18,8 +18,9 @@ var (
 	// The name used to refer to the system keeper
 	SystemKeeperName = "system"
 
-	ErrKeeperNotFound      = errors.New("keeper not found")
-	ErrKeeperAlreadyExists = errors.New("keeper already exists")
+	ErrKeeperNotFound                 = errors.New("keeper not found")
+	ErrKeeperAlreadyExists            = errors.New("keeper already exists")
+	ErrKeeperIsBeingUsedBySecureValue = errors.New("keeper is being used to store a secure value's secret, delete the secure value first and wait for it to be cleaned by the background worker")
 )
 
 // KeeperMetadataStorage is the interface for wiring and dependency injection.
@@ -31,7 +32,7 @@ type KeeperMetadataStorage interface {
 	List(ctx context.Context, namespace xkube.Namespace) ([]secretv1beta1.Keeper, error)
 	GetKeeperConfig(ctx context.Context, namespace string, name string, opts ReadOpts) (secretv1beta1.KeeperConfig, error)
 	SetAsActive(ctx context.Context, namespace xkube.Namespace, name string) error
-	GetActiveKeeperConfig(ctx context.Context, namespace string) (string, secretv1beta1.KeeperConfig, error)
+	GetActiveKeeperConfig(ctx context.Context, namespace string, opts ReadOpts) (string, secretv1beta1.KeeperConfig, error)
 }
 
 // ErrKeeperInvalidSecureValues is returned when a Keeper references SecureValues that do not exist.

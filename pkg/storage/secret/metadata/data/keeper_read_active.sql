@@ -17,4 +17,7 @@ WHERE
   {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
   {{ .Ident "active" }} = true
 LIMIT 1
+{{ if .IsForUpdate }}
+{{ .SelectFor "UPDATE" }}
+{{ end }}
 ;

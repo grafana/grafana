@@ -346,6 +346,13 @@ func TestStateMachine(t *testing.T) {
 					return
 				}
 			},
+			"deleteKeeper": func(t *rapid.T) {
+				ns := testutils.NamespaceGen.Draw(t, "namespace")
+				name := testutils.KeeperNameGen.Draw(t, "keeper")
+				modelErr := model.DeleteKeeper(ns, name)
+				err := sut.KeeperMetadataStorage.Delete(t.Context(), xkube.Namespace(ns), name)
+				require.ErrorIs(t, err, modelErr)
+			},
 		})
 	})
 }
@@ -436,5 +443,35 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 		require.Equal(t, sv1.Name, updatedSv.Name)
 		require.Equal(t, k1.Name, updatedSv.Status.Keeper)
 		require.Equal(t, newSv1.Spec.Description, updatedSv.Spec.Description)
+	})
+
+	t.Run("can't delete a keeper when there's at least a secure value that depends on it", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		// Create keeper and set it as active
+		keeper, err := sut.CreateKeeper(t.Context())
+		require.NoError(t, err)
+		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
+
+		// Create secure value using the active keeper
+		sv, err := sut.CreateSv(t.Context())
+		require.NoError(t, err)
+
+		// Keeper deletion is blocked
+		require.ErrorIs(t, sut.KeeperMetadataStorage.Delete(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name), contracts.ErrKeeperIsBeingUsedBySecureValue)
+
+		// Keeper deletion is still blocked because secure value has been deleted
+		// but not cleaned up by gc worker yet
+		_, err = sut.DeleteSv(t.Context(), sv.Namespace, sv.Name)
+		require.NoError(t, err)
+		require.ErrorIs(t, sut.KeeperMetadataStorage.Delete(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name), contracts.ErrKeeperIsBeingUsedBySecureValue)
+
+		// Keeper deletion succeeds once the gc worker cleans up the secure value
+		sut.Clock.AdvanceBy(10 * time.Minute)
+		_, err = sut.GarbageCollectionWorker.CleanupInactiveSecureValues(t.Context())
+		require.NoError(t, err)
+		require.NoError(t, sut.KeeperMetadataStorage.Delete(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
 	})
 }

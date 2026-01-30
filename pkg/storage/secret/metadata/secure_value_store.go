@@ -633,9 +633,10 @@ func (s *secureValueMetadataStorage) acquireLeases(ctx context.Context, leaseTok
 		SQLTemplate:  sqltemplate.New(s.dialect),
 		LeaseToken:   leaseToken,
 		MaxBatchSize: maxBatchSize,
-		MinAge:       int64((300 * time.Second).Seconds()),
-		LeaseTTL:     int64((30 * time.Second).Seconds()),
-		Now:          s.clock.Now().UTC().Unix(),
+		// TODO: make configurable
+		MinAge:   int64((300 * time.Second).Seconds()),
+		LeaseTTL: int64((30 * time.Second).Seconds()),
+		Now:      s.clock.Now().UTC().Unix(),
 	}
 
 	q, err := sqltemplate.Execute(sqlSecureValueLeaseInactive, req)
