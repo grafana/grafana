@@ -1,6 +1,7 @@
 import { ReactElement, useMemo, type JSX } from 'react';
 
 import { PluginExtensionLink } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Menu } from '@grafana/ui';
 import { truncateTitle } from 'app/features/plugins/extensions/utils';
 
@@ -30,7 +31,7 @@ export function ToolbarExtensionPointMenu({ extensions, onSelect }: Props): Reac
 
 function renderItems(extensions: PluginExtensionLink[], onSelect: (link: PluginExtensionLink) => void): JSX.Element[] {
   return extensions.map((extension) => {
-    const dataTestId = `testid ${extension.title}`;
+    const dataTestId = selectors.pages.Explore.toolbar.add(extension.title);
 
     return (
       <Menu.Item
