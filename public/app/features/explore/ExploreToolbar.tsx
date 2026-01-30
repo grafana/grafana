@@ -310,7 +310,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             noIntervalPicker={isLive}
             primary={true}
             width={(showSmallTimePicker ? 35 : 108) + 'px'}
-            testId={selectors.pages.Explore.toolbar.refreshPicker}
+            data-testid={selectors.pages.Explore.toolbar.refreshPicker}
           />,
           (!splitted || !isLeftPane) && <ShortLinkButtonMenu key="share" hideText={showSmallTimePicker} />,
           datasourceInstance?.meta.streaming && (
