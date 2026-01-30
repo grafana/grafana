@@ -101,6 +101,8 @@ const config: ConfigFile = {
     ...createAPIConfig('advisor', 'v0alpha1'),
     ...createAPIConfig('correlations', 'v0alpha1'),
     ...createAPIConfig('dashboard', 'v0alpha1'),
+    ...createAPIConfig('dashboard', 'v1beta1'),
+    ...createAPIConfig('dashboard', 'v2beta1'),
     ...createAPIConfig('folder', 'v1beta1'),
     ...createAPIConfig('iam', 'v0alpha1'),
     ...createAPIConfig('playlist', 'v0alpha1'),
@@ -111,6 +113,7 @@ const config: ConfigFile = {
     ...createAPIConfig('notifications.alerting', 'v0alpha1'),
     ...createAPIConfig('rules.alerting', 'v0alpha1'),
     ...createAPIConfig('historian.alerting', 'v0alpha1'),
+    ...createAPIConfig('logsdrilldown', 'v1beta1'),
     ...createAPIConfig('logsdrilldown', 'v1alpha1'),
     // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },

@@ -7,10 +7,11 @@ import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
-import { grantUserPermissions, grantUserRole } from '../mocks';
+import { grantUserPermissions, grantUserRole, mockDataSource } from '../mocks';
 import { setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 import { RulesFilter } from '../search/rulesSearchParser';
+import { setupDataSources } from '../testSetup/datasources';
 
 import RuleListPage, { RuleListActions } from './RuleList.v2';
 import { loadDefaultSavedSearch } from './filter/useSavedSearches';
@@ -363,6 +364,107 @@ describe('RuleListActions', () => {
       await user.click(exportMenuItem);
 
       expect(ui.exportDrawer.query()).toBeInTheDocument();
+    });
+  });
+
+  describe('Data source options visibility', () => {
+    it('should not show "New Data source recording rule" option when no data sources have manageAlerts enabled', async () => {
+      // Set up only data sources with manageAlerts explicitly set to false
+      // This replaces the default data sources that have manageAlerts defaulting to true
+      setupDataSources(
+        mockDataSource({
+          name: 'Prometheus-disabled',
+          uid: 'prometheus-disabled',
+          type: 'prometheus',
+          jsonData: { manageAlerts: false },
+        })
+      );
+
+      grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
+
+      const { user } = render(<RuleListActions />);
+
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).not.toBeInTheDocument();
+    });
+
+    it('should show "New Data source recording rule" option when data sources have manageAlerts enabled', async () => {
+      // Set up data source with manageAlerts enabled
+      setupDataSources(
+        mockDataSource({
+          name: 'Prometheus-enabled',
+          uid: 'prometheus-enabled',
+          type: 'prometheus',
+          jsonData: { manageAlerts: true },
+        })
+      );
+
+      grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
+
+      const { user } = render(<RuleListActions />);
+
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).toBeInTheDocument();
+    });
+  });
+
+  describe('alertingDisableDMAinUI feature toggle', () => {
+    testWithFeatureToggles({ enable: ['alertingListViewV2', 'alertingDisableDMAinUI'] });
+
+    beforeEach(() => {
+      // Set up data source with manageAlerts enabled to ensure the option would be shown
+      // if not for the feature toggle
+      setupDataSources(
+        mockDataSource({
+          name: 'Prometheus-enabled',
+          uid: 'prometheus-enabled',
+          type: 'prometheus',
+          jsonData: { manageAlerts: true },
+        })
+      );
+    });
+
+    it('should not show "New Data source recording rule" option when alertingDisableDMAinUI is enabled', async () => {
+      grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
+
+      const { user } = render(<RuleListActions />);
+
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).not.toBeInTheDocument();
+    });
+
+    it('should not show "New alert rule" button when user only has DMA permissions and alertingDisableDMAinUI is enabled', async () => {
+      grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
+
+      render(<RuleListActions />);
+
+      expect(ui.newRuleButton.query()).not.toBeInTheDocument();
+    });
+
+    it('should show "New alert rule" button when user has Grafana rule permissions even with alertingDisableDMAinUI enabled', async () => {
+      grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+
+      render(<RuleListActions />);
+
+      expect(ui.newRuleButton.get()).toBeInTheDocument();
+    });
+
+    it('should show "New Grafana recording rule" but not "New Data source recording rule" when alertingDisableDMAinUI is enabled', async () => {
+      grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]);
+
+      const { user } = render(<RuleListActions />);
+
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.newGrafanaRecordingRule.query(menu)).toBeInTheDocument();
+      expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).not.toBeInTheDocument();
     });
   });
 });

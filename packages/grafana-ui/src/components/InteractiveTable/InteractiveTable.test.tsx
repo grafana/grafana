@@ -2,6 +2,9 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
+import { Checkbox } from '../Forms/Checkbox';
+import { Icon } from '../Icon/Icon';
+
 import { InteractiveTable } from './InteractiveTable';
 import { Column } from './types';
 
@@ -245,6 +248,106 @@ describe('InteractiveTable', () => {
       await userEvent.click(valueColumnHeader);
 
       expect(fetchData).toHaveBeenCalledWith({ sortBy: [{ id: 'id', desc: false }] });
+    });
+  });
+
+  describe('custom header rendering', () => {
+    it('should render string headers', () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
+      const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      expect(screen.getByRole('columnheader', { name: 'ID' })).toBeInTheDocument();
+    });
+
+    it('should render React element headers', () => {
+      const columns: Array<Column<TableData>> = [
+        {
+          id: 'checkbox',
+          header: (
+            <>
+              <label htmlFor="select-all" className="sr-only">
+                Select all rows
+              </label>
+              <Checkbox id="select-all" data-testid="header-checkbox" />
+            </>
+          ),
+          cell: () => <Checkbox data-testid="cell-checkbox" aria-label="Select row" />,
+        },
+      ];
+      const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      expect(screen.getByTestId('header-checkbox')).toBeInTheDocument();
+      expect(screen.getByTestId('cell-checkbox')).toBeInTheDocument();
+      expect(screen.getByLabelText('Select all rows')).toBeInTheDocument();
+      expect(screen.getByLabelText('Select row')).toBeInTheDocument();
+      expect(screen.getByText('Select all rows')).toBeInTheDocument();
+    });
+
+    it('should render function renderer headers', () => {
+      const columns: Array<Column<TableData>> = [
+        {
+          id: 'firstName',
+          header: () => (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              <Icon name="user" size="sm" data-testid="header-icon" />
+              <span>First Name</span>
+            </span>
+          ),
+          sortType: 'string',
+        },
+      ];
+      const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      expect(screen.getByTestId('header-icon')).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: /first name/i })).toBeInTheDocument();
+    });
+
+    it('should render all header types together', () => {
+      const columns: Array<Column<TableData>> = [
+        {
+          id: 'checkbox',
+          header: (
+            <>
+              <label htmlFor="select-all" className="sr-only">
+                Select all rows
+              </label>
+              <Checkbox id="select-all" data-testid="header-checkbox" />
+            </>
+          ),
+          cell: () => <Checkbox aria-label="Select row" />,
+        },
+        {
+          id: 'id',
+          header: () => (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              <Icon name="user" size="sm" data-testid="header-icon" />
+              <span>ID</span>
+            </span>
+          ),
+          sortType: 'string',
+        },
+        { id: 'country', header: 'Country', sortType: 'string' },
+        { id: 'value', header: 'Value' },
+      ];
+      const data: TableData[] = [
+        { id: '1', value: 'Value 1', country: 'Sweden' },
+        { id: '2', value: 'Value 2', country: 'Norway' },
+      ];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      expect(screen.getByTestId('header-checkbox')).toBeInTheDocument();
+      expect(screen.getByTestId('header-icon')).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: 'Country' })).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: 'Value' })).toBeInTheDocument();
+
+      // Verify data is rendered
+      expect(screen.getByText('Sweden')).toBeInTheDocument();
+      expect(screen.getByText('Norway')).toBeInTheDocument();
+      expect(screen.getByText('Value 1')).toBeInTheDocument();
+      expect(screen.getByText('Value 2')).toBeInTheDocument();
     });
   });
 });

@@ -46,6 +46,9 @@ import * as utils from '../utils/utils';
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './layout-default/row-actions/RowActions';
@@ -144,6 +147,43 @@ describe('DashboardScene', () => {
       it('Can exit edit mode', () => {
         scene.exitEditMode({ skipConfirm: true });
         expect(locationService.getLocation().pathname).toBe('/d/dash-1');
+      });
+
+      it('Can discard changes and keep editing', () => {
+        // @ts-expect-error private property used for unit test
+        const changeTracker = scene._changeTracker;
+        const stopSpy = jest.spyOn(changeTracker, 'stopTrackingChanges');
+        const startSpy = jest.spyOn(changeTracker, 'startTrackingChanges');
+
+        // Make a change
+        scene.setState({ title: 'Updated title' });
+        expect(scene.state.isDirty).toBe(true);
+
+        // Put the scene into panel edit to verify we clear it
+        const panel = findVizPanelByKey(scene, 'panel-1')!;
+        const editPanel = buildPanelEditScene(panel);
+        scene.setState({ editPanel });
+
+        // Add an overlay as well to verify it is cleared
+        scene.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: scene.getRef() }) });
+        expect(scene.state.overlay).toBeDefined();
+
+        scene.discardChangesAndKeepEditing();
+
+        // Still editing, but no longer dirty
+        expect(scene.state.isEditing).toBe(true);
+        expect(scene.state.isDirty).toBe(false);
+
+        // Restored state from when edit mode started
+        expect(scene.state.title).toBe('hello');
+
+        // Clears edit-panel related state
+        expect(scene.state.editPanel).toBeUndefined();
+        expect(scene.state.overlay).toBeUndefined();
+
+        // Resets tracking
+        expect(stopSpy).toHaveBeenCalled();
+        expect(startSpy).toHaveBeenCalled();
       });
 
       it('Exiting already saved dashboard should not restore initial state', () => {
@@ -610,6 +650,31 @@ describe('DashboardScene', () => {
         expect(isLibraryPanel(libPanel)).toBe(false);
       });
 
+      it('Should unlink a library panel for auto grid panels', () => {
+        const libPanel = new VizPanel({
+          title: 'Panel B',
+          pluginId: 'table',
+          $behaviors: [new LibraryPanelBehavior({ name: 'lib panel', uid: 'abc', isLoaded: true })],
+        });
+
+        const autoGridItem = new AutoGridItem({
+          key: 'auto-grid-item-1',
+          body: libPanel,
+        });
+
+        const scene = buildTestScene({
+          body: new AutoGridLayoutManager({
+            layout: new AutoGridLayout({ children: [autoGridItem] }),
+          }),
+        });
+
+        expect(isLibraryPanel(libPanel)).toBe(true);
+
+        scene.unlinkLibraryPanel(libPanel);
+
+        expect(isLibraryPanel(libPanel)).toBe(false);
+      });
+
       it('Should create a library panel', () => {
         const vizPanel = new VizPanel({
           title: 'Panel A',
@@ -639,6 +704,38 @@ describe('DashboardScene', () => {
 
         expect(grid.state.children.length).toBe(1);
         expect(newGridItem.state.body).toBeInstanceOf(VizPanel);
+        expect(behavior.state.uid).toBe('uid');
+        expect(behavior.state.name).toBe('name');
+      });
+
+      it('Should create a library panel for auto grid panels', () => {
+        const vizPanel = new VizPanel({
+          title: 'Panel A',
+          key: 'panel-1',
+          pluginId: 'table',
+        });
+
+        const autoGridItem = new AutoGridItem({
+          key: 'auto-grid-item-1',
+          body: vizPanel,
+        });
+
+        const scene = buildTestScene({
+          body: new AutoGridLayoutManager({
+            layout: new AutoGridLayout({ children: [autoGridItem] }),
+          }),
+        });
+
+        const libPanel = {
+          uid: 'uid',
+          name: 'name',
+        };
+
+        scene.createLibraryPanel(vizPanel, libPanel as LibraryPanel);
+
+        const behavior = autoGridItem.state.body.state.$behaviors![0] as LibraryPanelBehavior;
+
+        expect(autoGridItem.state.body).toBeInstanceOf(VizPanel);
         expect(behavior.state.uid).toBe('uid');
         expect(behavior.state.name).toBe('name');
       });

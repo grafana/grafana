@@ -20,7 +20,7 @@ import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
-import { Portal } from '../Portal/Portal';
+import { getPortalContainer, Portal } from '../Portal/Portal';
 
 import { ToggletipContent } from './types';
 
@@ -120,7 +120,7 @@ export const Toggletip = memo(
         })}
         {isOpen && (
           <Portal>
-            <FloatingFocusManager context={context} modal={true}>
+            <FloatingFocusManager context={context} modal={true} getInsideElements={() => [getPortalContainer()]}>
               <div
                 data-testid="toggletip-content"
                 className={cx(style.container, {

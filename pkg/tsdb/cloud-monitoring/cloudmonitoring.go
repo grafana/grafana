@@ -92,7 +92,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}, nil
 	}
 
-	url := fmt.Sprintf("%v/v3/projects/%v/metricDescriptors", dsInfo.services[cloudMonitor].url, defaultProject)
+	url := fmt.Sprintf("%s/v3/projects/%s/metricDescriptors", dsInfo.services[cloudMonitor].url, defaultProject)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -139,6 +139,7 @@ type datasourceInfo struct {
 	defaultProject              string
 	clientEmail                 string
 	tokenUri                    string
+	universeDomain              string
 	services                    map[string]datasourceService
 	privateKey                  string
 	usingImpersonation          bool
@@ -150,6 +151,7 @@ type datasourceJSONData struct {
 	DefaultProject              string `json:"defaultProject"`
 	ClientEmail                 string `json:"clientEmail"`
 	TokenURI                    string `json:"tokenUri"`
+	UniverseDomain              string `json:"universeDomain"`
 	UsingImpersonation          bool   `json:"usingImpersonation"`
 	ServiceAccountToImpersonate string `json:"serviceAccountToImpersonate"`
 }
@@ -179,6 +181,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			defaultProject:              jsonData.DefaultProject,
 			clientEmail:                 jsonData.ClientEmail,
 			tokenUri:                    jsonData.TokenURI,
+			universeDomain:              jsonData.UniverseDomain,
 			usingImpersonation:          jsonData.UsingImpersonation,
 			serviceAccountToImpersonate: jsonData.ServiceAccountToImpersonate,
 			services:                    map[string]datasourceService{},
@@ -194,13 +197,13 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		for name, info := range routes {
+		for name := range routes {
 			client, err := newHTTPClient(dsInfo, opts, &httpClientProvider, name)
 			if err != nil {
 				return nil, err
 			}
 			dsInfo.services[name] = datasourceService{
-				url:    info.url,
+				url:    buildURL(name, dsInfo.universeDomain),
 				client: client,
 			}
 		}

@@ -220,14 +220,6 @@ func (m *mockZanzanaClient) Write(ctx context.Context, req *authzextv1.WriteRequ
 	return args.Error(0)
 }
 
-func (m *mockZanzanaClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*authzextv1.BatchCheckResponse), args.Error(1)
-}
-
 // authlib.AccessClient methods
 func (m *mockZanzanaClient) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 	args := m.Called(ctx, id, req, folder)
@@ -240,6 +232,10 @@ func (m *mockZanzanaClient) Compile(ctx context.Context, id authlib.AuthInfo, re
 		return nil, nil, args.Error(2)
 	}
 	return args.Get(0).(authlib.ItemChecker), args.Get(1).(authlib.Zookie), args.Error(2)
+}
+
+func (m *mockZanzanaClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	return authlib.BatchCheckResponse{}, nil
 }
 
 func (m *mockZanzanaClient) Mutate(ctx context.Context, req *authzextv1.MutateRequest) error {

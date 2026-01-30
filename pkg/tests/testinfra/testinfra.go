@@ -137,7 +137,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 	var storage sql.UnifiedStorageGrpcService
 	if runstore {
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil)
+			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
@@ -370,6 +370,39 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		require.NoError(t, err)
 	}
 
+	if opts.DisableZanzanaServerCheckQueryCache {
+		zanzanaServerSect, err := cfg.NewSection("zanzana.server")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_cache_limit", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("cache_controller_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("cache_controller_ttl", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_query_cache_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_query_cache_ttl", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_iterator_cache_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_iterator_cache_max_results", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("check_iterator_cache_ttl", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("list_objects_iterator_cache_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("list_objects_iterator_cache_max_results", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("list_objects_iterator_cache_ttl", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("shared_iterator_enabled", "false")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("shared_iterator_limit", "0")
+		require.NoError(t, err)
+		_, err = zanzanaServerSect.NewKey("shared_iterator_ttl", "0")
+		require.NoError(t, err)
+	}
+
 	analyticsSect, err := cfg.NewSection("analytics")
 	require.NoError(t, err)
 	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
@@ -557,6 +590,8 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 			_, err = section.NewKey("enableMigration", fmt.Sprintf("%t", v.EnableMigration))
 			require.NoError(t, err)
+			_, err = section.NewKey("autoMigrationThreshold", fmt.Sprintf("%d", v.AutoMigrationThreshold))
+			require.NoError(t, err)
 		}
 	}
 	if opts.UnifiedStorageEnableSearch {
@@ -585,6 +620,26 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("allowed_targets", strings.Join(opts.ProvisioningAllowedTargets, "|"))
+		require.NoError(t, err)
+	}
+	if len(opts.ProvisioningRepositoryTypes) > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("repository_types", strings.Join(opts.ProvisioningRepositoryTypes, "|"))
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningMaxResourcesPerRepository > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("max_resources_per_repository", fmt.Sprintf("%d", opts.ProvisioningMaxResourcesPerRepository))
+		require.NoError(t, err)
+	}
+	// Write max_repositories if explicitly set.
+	// Write when value != 10 (the default). Tests that want default (10) should explicitly set ProvisioningMaxRepositories = 10.
+	if opts.ProvisioningMaxRepositories != 10 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("max_repositories", fmt.Sprintf("%d", opts.ProvisioningMaxRepositories))
 		require.NoError(t, err)
 	}
 	if opts.EnableSCIM {
@@ -639,9 +694,14 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
 	require.NoError(t, err)
-	_, err = dbSection.NewKey("max_open_conn", "2")
+	maxConns := opts.DBMaxConns
+	if maxConns <= 0 {
+		maxConns = 2
+	}
+
+	_, err = dbSection.NewKey("max_open_conn", fmt.Sprintf("%d", maxConns))
 	require.NoError(t, err)
-	_, err = dbSection.NewKey("max_idle_conn", "2")
+	_, err = dbSection.NewKey("max_idle_conn", fmt.Sprintf("%d", maxConns))
 	require.NoError(t, err)
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -691,6 +751,9 @@ type GrafanaOpts struct {
 	UnifiedStorageMaxPageSizeBytes        int
 	PermittedProvisioningPaths            string
 	ProvisioningAllowedTargets            []string
+	ProvisioningRepositoryTypes           []string
+	ProvisioningMaxResourcesPerRepository int64
+	ProvisioningMaxRepositories           int64
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string
 	EnableRecordingRules                  bool
@@ -704,6 +767,10 @@ type GrafanaOpts struct {
 	DisableAuthZClientCache               bool
 	ZanzanaReconciliationInterval         time.Duration
 	DisableZanzanaCache                   bool
+	DisableZanzanaServerCheckQueryCache   bool
+
+	// If set to 0, the default (2) is used.
+	DBMaxConns int
 
 	// Allow creating grafana dir beforehand
 	Dir     string

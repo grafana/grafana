@@ -1,0 +1,165 @@
+{
+  "totalHits": 16,
+  "hits": [
+    {
+      "resource": "dashboards",
+      "name": "timeseries",
+      "title": "Panel Tests - Graph NG",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ]
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-by-value-color-schemes",
+      "title": "Panel Tests - Graph NG - By value color schemes",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ]
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-nulls",
+      "title": "Panel Tests - Graph NG - Discrete panels",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng",
+        "timeseries",
+        "trend",
+        "state-timeline",
+        "transform"
+      ]
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-gradient-area",
+      "title": "Panel Tests - Graph NG - Gradient Area Fills",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ]
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-soft-limits",
+      "title": "Panel Tests - Graph NG - softMin/softMax",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ]
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-yaxis-ticks",
+      "title": "Panel Tests - Graph NG - Y axis ticks",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ]
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-hue-gradients",
+      "title": "Panel Tests - GraphNG - Hue Gradients",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ]
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-time",
+      "title": "Panel Tests - GraphNG - Time Axis",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ]
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-thresholds",
+      "title": "Panel Tests - GraphNG Thresholds",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ]
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-shared-tooltip-cursor-positio",
+      "title": "Panel Tests - shared tooltips cursor positioning",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ]
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-bars-high-density",
+      "title": "Panel Tests - TimeSeries - bars high density (stroke + fill)",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ]
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-out-of-rage",
+      "title": "Panel Tests - Timeseries - Out of range",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ]
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-stacking",
+      "title": "Panel Tests - TimeSeries - stacking",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ]
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-formats",
+      "title": "Panel Tests - Timeseries - Supported input formats"
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-stacking2",
+      "title": "TimeSeries \u0026 BarChart Stacking",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ]
+    },
+    {
+      "resource": "dashboards",
+      "name": "timeseries-y-ticks-zero-decimals",
+      "title": "Zero Decimals Y Ticks",
+      "tags": [
+        "gdev",
+        "panel-tests",
+        "graph-ng"
+      ]
+    }
+  ],
+  "maxScore": 1
+}

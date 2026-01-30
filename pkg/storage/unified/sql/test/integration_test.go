@@ -107,17 +107,59 @@ func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	t.Cleanup(db.CleanupTestDB)
 
+	newKvBackend := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
+		return unitest.NewTestSqlKvBackend(t, ctx, true)
+	}
+
+	opts := &unitest.TestOptions{
+		SearchServerFactory: newTestResourceServerWithSearch,
+	}
+
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
 			return newTestBackend(t, true, 0)
-		}, nil)
+		}, newKvBackend, opts)
 	})
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
 		unitest.RunSQLStorageBackendCompatibilityTest(t, func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
 			return newTestBackend(t, false, 0)
-		}, nil)
+		}, newKvBackend, opts)
 	})
+}
+
+// newTestResourceServerWithSearch creates a ResourceServer with search enabled for testing
+func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBackend) resource.ResourceServer {
+	t.Helper()
+
+	// Create test config
+	cfg := setting.NewCfg()
+	cfg.EnableSearch = true
+	cfg.IndexFileThreshold = 1000 // Ensures memory indexing
+	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
+
+	// Initialize document builders for playlists
+	docBuilders := &resource.TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{
+			"playlist.grafana.app": "playlists",
+		},
+	}
+
+	// Create search options
+	features := featuremgmt.WithFeatures()
+	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
+	require.NoError(t, err)
+
+	// Create ResourceServer with search enabled
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      backend,
+		AccessClient: types.FixedAccessClient(true), // Allow all operations for testing
+		Search:       searchOpts,
+		Reg:          nil,
+	})
+	require.NoError(t, err)
+
+	return server
 }
 
 func TestIntegrationSearchAndStorage(t *testing.T) {
@@ -126,20 +168,20 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a new bleve backend
-	search, err := search.NewBleveBackend(search.BleveOptions{
+	searchBackend, err := search.NewBleveBackend(search.BleveOptions{
 		FileThreshold: 0,
 		Root:          t.TempDir(),
 	}, nil)
 	require.NoError(t, err)
-	require.NotNil(t, search)
-	t.Cleanup(search.Stop)
+	require.NotNil(t, searchBackend)
+	t.Cleanup(searchBackend.Stop)
 
 	// Create a new resource backend
 	storage, _ := newTestBackend(t, false, 0)
 	require.NotNil(t, storage)
 
 	// Run the shared storage and search tests
-	unitest.RunTestSearchAndStorage(t, ctx, storage, search)
+	unitest.RunTestSearchAndStorage(t, ctx, storage, searchBackend)
 }
 
 func TestClientServer(t *testing.T) {
@@ -156,7 +198,7 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil)
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 

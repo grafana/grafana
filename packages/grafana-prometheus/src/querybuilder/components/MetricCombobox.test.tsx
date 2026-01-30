@@ -31,7 +31,6 @@ describe('MetricCombobox', () => {
 
   const instanceSettings = {
     url: 'proxied',
-    id: 1,
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'GET' },

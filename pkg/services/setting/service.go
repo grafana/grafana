@@ -36,7 +36,7 @@ const DefaultBurst = 25
 
 const (
 	ApiGroup   = "setting.grafana.app"
-	apiVersion = "v0alpha1"
+	apiVersion = "v1beta1"
 	resource   = "settings"
 )
 

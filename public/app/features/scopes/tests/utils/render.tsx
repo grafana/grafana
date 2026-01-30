@@ -12,8 +12,6 @@ import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types/dashboa
 
 import { defaultScopesServices, ScopesContextProvider } from '../../ScopesContextProvider';
 
-import { getMock } from './mocks';
-
 const getDashboardDTO: (
   overrideDashboard: Partial<DashboardDataDTO>,
   overrideMeta: Partial<DashboardMeta>
@@ -208,7 +206,6 @@ export async function renderDashboard(
 export async function resetScenes(spies: jest.SpyInstance[] = []) {
   await jest.runOnlyPendingTimersAsync();
   jest.useRealTimers();
-  getMock.mockClear();
   spies.forEach((spy) => spy.mockClear());
   cleanup();
 }

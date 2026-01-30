@@ -393,6 +393,18 @@ func (s *searchSupport) Search(ctx context.Context, req *resourcepb.ResourceSear
 		}, nil
 	}
 
+	if req.Limit < 0 {
+		return &resourcepb.ResourceSearchResponse{
+			Error: NewBadRequestError("limit cannot be negative"),
+		}, nil
+	}
+
+	if req.Offset < 0 {
+		return &resourcepb.ResourceSearchResponse{
+			Error: NewBadRequestError("offset cannot be negative"),
+		}, nil
+	}
+
 	stats := NewSearchStats("Search")
 	defer s.logStats(ctx, stats, span, "namespace", req.Options.Key.Namespace, "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "query", req.Query)
 
@@ -863,7 +875,7 @@ func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time
 
 func (s *searchSupport) getOrCreateIndex(ctx context.Context, stats *SearchStats, key NamespacedResource, reason string) (ResourceIndex, error) {
 	if s == nil || s.search == nil {
-		return nil, fmt.Errorf("search is not configured properly (missing unifiedStorageSearch feature toggle?)")
+		return nil, fmt.Errorf("search is not configured properly (missing enable_search config?)")
 	}
 
 	ctx, span := tracer.Start(ctx, "resource.searchSupport.getOrCreateIndex")

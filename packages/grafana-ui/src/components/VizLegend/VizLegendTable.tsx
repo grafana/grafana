@@ -119,6 +119,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   table: css({
     width: '100%',
     'th:first-child': {
+      width: '100%',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     },
   }),
