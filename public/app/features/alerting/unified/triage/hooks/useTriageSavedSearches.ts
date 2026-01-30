@@ -8,8 +8,8 @@ import { UserStorage } from '@grafana/runtime/internal';
 import { useAppNotification } from '../../../../../core/copy/appNotification';
 import { logError, logWarning } from '../../Analytics';
 import {
-  RULES_SAVED_SEARCHES_STORAGE_KEY,
   SavedSearch,
+  TRIAGE_SAVED_SEARCHES_STORAGE_KEY,
   savedSearchSchema,
   savedSearchesArraySchema,
   validateSearchName,
@@ -17,36 +17,37 @@ import {
 import { isLoading as isLoadingState, isUninitialized, useAsync } from '../../hooks/useAsync';
 
 /**
- * UserStorage instance for saved searches.
+ * UserStorage instance for triage saved searches.
  * Uses 'alerting' as the service namespace.
  */
 const userStorage = new UserStorage('alerting');
 
 /**
- * Analytics tracking functions for saved search actions.
+ * Analytics tracking functions for triage saved search actions.
+ * All events include page: 'triage' to distinguish from Alert Rules page.
  */
-function trackSavedSearchSave(props: { hasDefault: boolean; totalCount: number }) {
-  reportInteraction('grafana_alerting_saved_search_save', props);
+function trackTriageSavedSearchSave(props: { hasDefault: boolean; totalCount: number }) {
+  reportInteraction('grafana_alerting_saved_search_save', { ...props, page: 'triage' });
 }
 
-function trackSavedSearchApply(props: { isDefault: boolean }) {
-  reportInteraction('grafana_alerting_saved_search_apply', props);
+function trackTriageSavedSearchApply(props: { isDefault: boolean }) {
+  reportInteraction('grafana_alerting_saved_search_apply', { ...props, page: 'triage' });
 }
 
-function trackSavedSearchDelete() {
-  reportInteraction('grafana_alerting_saved_search_delete');
+function trackTriageSavedSearchDelete() {
+  reportInteraction('grafana_alerting_saved_search_delete', { page: 'triage' });
 }
 
-function trackSavedSearchRename() {
-  reportInteraction('grafana_alerting_saved_search_rename');
+function trackTriageSavedSearchRename() {
+  reportInteraction('grafana_alerting_saved_search_rename', { page: 'triage' });
 }
 
-function trackSavedSearchSetDefault(props: { action: 'set' | 'clear' }) {
-  reportInteraction('grafana_alerting_saved_search_set_default', props);
+function trackTriageSavedSearchSetDefault(props: { action: 'set' | 'clear' }) {
+  reportInteraction('grafana_alerting_saved_search_set_default', { ...props, page: 'triage' });
 }
 
-export function trackSavedSearchAutoApply() {
-  reportInteraction('grafana_alerting_saved_search_auto_apply');
+export function trackTriageSavedSearchAutoApply() {
+  reportInteraction('grafana_alerting_saved_search_auto_apply', { page: 'triage' });
 }
 
 /**
@@ -62,11 +63,11 @@ function validateSavedSearches(data: unknown): SavedSearch[] {
 
   // If the whole array failed, try to salvage individual valid entries
   if (!Array.isArray(data)) {
-    logWarning('Saved searches data is not an array, returning empty array');
+    logWarning('Triage saved searches data is not an array, returning empty array');
     return [];
   }
 
-  logWarning('Saved searches validation failed, filtering invalid entries', {
+  logWarning('Triage saved searches validation failed, filtering invalid entries', {
     issues: JSON.stringify(result.error.issues),
   });
 
@@ -94,11 +95,11 @@ function sortSavedSearches(searches: SavedSearch[]): SavedSearch[] {
 }
 
 /**
- * Loads saved searches from UserStorage and validates the data.
+ * Loads triage saved searches from UserStorage and validates the data.
  * @returns Promise resolving to an array of valid saved searches
  */
-async function loadSavedSearchesFromStorage(): Promise<SavedSearch[]> {
-  const stored = await userStorage.getItem(RULES_SAVED_SEARCHES_STORAGE_KEY);
+async function loadTriageSavedSearchesFromStorage(): Promise<SavedSearch[]> {
+  const stored = await userStorage.getItem(TRIAGE_SAVED_SEARCHES_STORAGE_KEY);
   if (!stored) {
     return [];
   }
@@ -107,22 +108,23 @@ async function loadSavedSearchesFromStorage(): Promise<SavedSearch[]> {
     const parsed = JSON.parse(stored);
     return validateSavedSearches(parsed);
   } catch (error) {
-    logError(error instanceof Error ? error : new Error('Failed to parse saved searches JSON'), {
-      context: 'loadSavedSearchesFromStorage',
+    logError(error instanceof Error ? error : new Error('Failed to parse triage saved searches JSON'), {
+      context: 'loadTriageSavedSearchesFromStorage',
     });
-    return [];
+    // Re-throw so the caller can show an error notification to the user
+    throw error;
   }
 }
 
-export async function loadDefaultSavedSearch(): Promise<SavedSearch | null> {
-  const savedSearches = await loadSavedSearchesFromStorage();
+export async function loadDefaultTriageSavedSearch(): Promise<SavedSearch | null> {
+  const savedSearches = await loadTriageSavedSearchesFromStorage();
   return savedSearches.find((s) => s.isDefault) ?? null;
 }
 
 /**
- * Result of the useSavedSearches hook.
+ * Result of the useTriageSavedSearches hook.
  */
-export interface UseSavedSearchesResult {
+export interface UseTriageSavedSearchesResult {
   /** List of saved searches */
   savedSearches: SavedSearch[];
   /** Whether the initial load from storage is complete */
@@ -130,7 +132,7 @@ export interface UseSavedSearchesResult {
   /**
    * Save a new search with the given name and query.
    * @param name - The display name for the saved search
-   * @param query - The search query string
+   * @param query - The search query string (serialized URL params for triage)
    * @throws ValidationError if name is not unique
    */
   saveSearch: (name: string, query: string) => Promise<void>;
@@ -154,37 +156,29 @@ export interface UseSavedSearchesResult {
 }
 
 /**
- * Hook for managing saved searches with UserStorage persistence.
+ * Hook for managing triage page saved searches with UserStorage persistence.
+ *
+ * This hook is specific to the Alert Activity (Triage) page and uses a separate
+ * storage key from the Alert Rules page. The `query` field stores serialized
+ * URL parameters (filters, groupBy, time range).
  *
  * Features:
  * - Persists saved searches to UserStorage (syncs across devices)
  * - Validates data schema on load (filters invalid entries)
  * - Validates name uniqueness (case-insensitive)
- * - Tracks analytics for all actions
+ * - Tracks analytics for all actions with page: 'triage'
  * - Shows error notifications on storage failures
- * - Provides auto-apply logic for default search on navigation
- * - Per-user session tracking to handle logout/login scenarios
  *
  * @example
  * ```tsx
- * const { savedSearches, saveSearch, isLoading } = useSavedSearches();
+ * const { savedSearches, saveSearch, isLoading } = useTriageSavedSearches();
  *
- * // Save current search
- * const error = await saveSearch('My Search', currentQuery);
- * if (error) {
- *   // Handle validation error
- * }
- *
- * // Auto-apply default search on mount
- * useEffect(() => {
- *   const defaultSearch = getAutoApplySearch();
- *   if (defaultSearch) {
- *     applySearch(defaultSearch);
- *   }
- * }, []);
+ * // Save current state (serialized URL params)
+ * const currentQuery = serializeTriageState();
+ * await saveSearch('My Filters', currentQuery);
  * ```
  */
-export function useSavedSearches(): UseSavedSearchesResult {
+export function useTriageSavedSearches(): UseTriageSavedSearchesResult {
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const notifyApp = useAppNotification();
 
@@ -192,7 +186,7 @@ export function useSavedSearches(): UseSavedSearchesResult {
   const hasLoadedRef = useRef(false);
 
   // Use useAsync for loading state management
-  const [{ execute: executeLoad }, loadState] = useAsync(loadSavedSearchesFromStorage, []);
+  const [{ execute: executeLoad }, loadState] = useAsync(loadTriageSavedSearchesFromStorage, []);
   const isLoading = isLoadingState(loadState) || isUninitialized(loadState);
 
   // Load saved searches from storage on mount
@@ -208,8 +202,8 @@ export function useSavedSearches(): UseSavedSearchesResult {
         const validated = await executeLoad();
         setSavedSearches(validated);
       } catch (error) {
-        logError(error instanceof Error ? error : new Error('Failed to load saved searches from storage'), {
-          context: 'useSavedSearches.loadSearches',
+        logError(error instanceof Error ? error : new Error('Failed to load triage saved searches from storage'), {
+          context: 'useTriageSavedSearches.loadSearches',
         });
         notifyApp.error(
           t('alerting.saved-searches.error-load-title', 'Failed to load saved searches'),
@@ -230,10 +224,10 @@ export function useSavedSearches(): UseSavedSearchesResult {
   const persistSearches = useCallback(
     async (searches: SavedSearch[]): Promise<void> => {
       try {
-        await userStorage.setItem(RULES_SAVED_SEARCHES_STORAGE_KEY, JSON.stringify(searches));
+        await userStorage.setItem(TRIAGE_SAVED_SEARCHES_STORAGE_KEY, JSON.stringify(searches));
       } catch (error) {
-        logError(error instanceof Error ? error : new Error('Failed to save searches'), {
-          context: 'useSavedSearches.persistSearches',
+        logError(error instanceof Error ? error : new Error('Failed to save triage searches'), {
+          context: 'useTriageSavedSearches.persistSearches',
         });
         notifyApp.error(
           t('alerting.saved-searches.error-save-title', 'Failed to save'),
@@ -271,7 +265,7 @@ export function useSavedSearches(): UseSavedSearchesResult {
       setSavedSearches(newSearches);
 
       // Track analytics
-      trackSavedSearchSave({
+      trackTriageSavedSearchSave({
         hasDefault: newSearches.some((s) => s.isDefault),
         totalCount: newSearches.length,
       });
@@ -297,7 +291,7 @@ export function useSavedSearches(): UseSavedSearchesResult {
       setSavedSearches(newSearches);
 
       // Track analytics
-      trackSavedSearchRename();
+      trackTriageSavedSearchRename();
     },
     [savedSearches, persistSearches]
   );
@@ -313,7 +307,7 @@ export function useSavedSearches(): UseSavedSearchesResult {
       setSavedSearches(newSearches);
 
       // Track analytics
-      trackSavedSearchDelete();
+      trackTriageSavedSearchDelete();
     },
     [savedSearches, persistSearches]
   );
@@ -333,7 +327,7 @@ export function useSavedSearches(): UseSavedSearchesResult {
       setSavedSearches(newSearches);
 
       // Track analytics
-      trackSavedSearchSetDefault({ action: id === null ? 'clear' : 'set' });
+      trackTriageSavedSearchSetDefault({ action: id === null ? 'clear' : 'set' });
     },
     [savedSearches, persistSearches]
   );
@@ -352,9 +346,9 @@ export function useSavedSearches(): UseSavedSearchesResult {
 }
 
 /**
- * Track when a saved search is applied (called from parent component).
+ * Track when a triage saved search is applied (called from parent component).
  * @param search - The search that was applied
  */
-export function trackSavedSearchApplied(search: SavedSearch) {
-  trackSavedSearchApply({ isDefault: search.isDefault });
+export function trackTriageSavedSearchApplied(search: SavedSearch) {
+  trackTriageSavedSearchApply({ isDefault: search.isDefault });
 }

@@ -1,15 +1,34 @@
 /**
  * Shared types and utilities for SavedSearches feature.
  *
- * This module is extracted to avoid circular dependencies between:
- * - SavedSearches.tsx (main component)
- * - InlineSaveInput.tsx, InlineRenameInput.tsx, SavedSearchItem.tsx (sub-components)
- * - useSavedSearches.ts (hook)
+ * This module provides a common schema used by multiple pages:
+ * - Alert Rules page (storage key: 'savedSearches')
+ * - Alert Activity/Triage page (storage key: 'triageSavedSearches')
+ *
+ * Each page stores its saved searches separately using different UserStorage keys,
+ * but shares the same schema structure. The `query` field is generic and stores
+ * page-specific serialized state:
+ * - Alert Rules: Search query string (e.g., "state:firing namespace:global")
+ * - Alert Activity: URL parameters (e.g., "var-filters=...&var-groupBy=...&from=...&to=...")
  */
 
 import z from 'zod';
 
 import { t } from '@grafana/i18n';
+
+// ============================================================================
+// Storage Keys
+// ============================================================================
+
+/**
+ * UserStorage key for Alert Rules page saved searches.
+ */
+export const RULES_SAVED_SEARCHES_STORAGE_KEY = 'savedSearches';
+
+/**
+ * UserStorage key for Alert Activity (Triage) page saved searches.
+ */
+export const TRIAGE_SAVED_SEARCHES_STORAGE_KEY = 'triageSavedSearches';
 
 // ============================================================================
 // Schemas
