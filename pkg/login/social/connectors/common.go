@@ -37,6 +37,9 @@ const (
 	teamIdsKey = "team_ids"
 	// consider moving this to OAuthInfo
 	allowedOrganizationsKey = "allowed_organizations"
+	// ID token validation (shared by generic OAuth, Google, GitLab, Okta)
+	validateIDTokenKey = "validate_id_token"
+	jwkSetURLKey       = "jwk_set_url"
 )
 
 var (

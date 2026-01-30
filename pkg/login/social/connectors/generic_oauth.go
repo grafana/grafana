@@ -26,8 +26,6 @@ const (
 	nameAttributePathKey    = "name_attribute_path"
 	loginAttributePathKey   = "login_attribute_path"
 	idTokenAttributeNameKey = "id_token_attribute_name" // #nosec G101 not a hardcoded credential
-	validateIDTokenKey      = "validate_id_token"
-	jwkSetURLKey            = "jwk_set_url"
 )
 
 var ExtraGenericOAuthSettingKeys = map[string]ExtraKeyInfo{
