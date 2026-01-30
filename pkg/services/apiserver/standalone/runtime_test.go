@@ -22,3 +22,17 @@ func TestReadRuntimeCOnfig(t *testing.T) {
 	_, err = ReadRuntimeConfig("")
 	require.Error(t, err)
 }
+
+func TestIsAPIExtensionsEnabled(t *testing.T) {
+	runtime, err := ReadRuntimeConfig("query.grafana.app/v0alpha1=true,apiextensions.k8s.io/v1=true")
+	require.NoError(t, err)
+	require.True(t, IsAPIExtensionsEnabled(runtime))
+
+	runtime, err = ReadRuntimeConfig("query.grafana.app/v0alpha1=true")
+	require.NoError(t, err)
+	require.False(t, IsAPIExtensionsEnabled(runtime))
+
+	runtime, err = ReadRuntimeConfig("apiextensions.k8s.io/v1=false")
+	require.NoError(t, err)
+	require.False(t, IsAPIExtensionsEnabled(runtime))
+}

@@ -44,3 +44,23 @@ func ReadRuntimeConfig(cfg string) ([]RuntimeConfig, error) {
 	}
 	return apis, nil
 }
+
+// APIExtensionsGroupVersion is the group/version used in runtime config to enable
+// the apiextensions server (e.g. apiextensions.k8s.io/v1=true).
+// Apiextensions is wired separately from the factory's MakeAPIServer/MakeAppInstaller.
+const (
+	APIExtensionsGroup = "apiextensions.k8s.io"
+	APIExtensionsVersion = "v1"
+)
+
+// IsAPIExtensionsEnabled returns true if runtime config requests apiextensions.k8s.io/v1.
+// The apiextensions server is not expressed as an APIBuilder or AppInstaller; use this
+// helper to decide whether to enable it when running kube-aggregator with apiextensions.
+func IsAPIExtensionsEnabled(runtime []RuntimeConfig) bool {
+	for _, cfg := range runtime {
+		if cfg.Group == APIExtensionsGroup && cfg.Version == APIExtensionsVersion && cfg.Enabled {
+			return true
+		}
+	}
+	return false
+}
