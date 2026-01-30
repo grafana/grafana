@@ -840,6 +840,17 @@ func unstructuredToRepository(t *testing.T, obj *unstructured.Unstructured) *pro
 	return repo
 }
 
+func repositoryToUnstructured(t *testing.T, obj *provisioning.Repository) *unstructured.Unstructured {
+	bytes, err := json.Marshal(obj)
+	require.NoError(t, err)
+
+	res := &unstructured.Unstructured{}
+	err = res.UnmarshalJSON(bytes)
+	require.NoError(t, err)
+
+	return res
+}
+
 func unstructuredToConnection(t *testing.T, obj *unstructured.Unstructured) *provisioning.Connection {
 	bytes, err := obj.MarshalJSON()
 	require.NoError(t, err)

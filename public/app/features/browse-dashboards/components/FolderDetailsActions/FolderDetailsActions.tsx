@@ -19,7 +19,7 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
   const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({ folderName: folderDTO?.uid });
   const { canCreateDashboards, canCreateFolders } = getFolderPermissions(folderDTO ?? rootFolderDTO);
-  const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+
   const handleButtonClickToRecentlyDeleted = () => {
     reportInteraction('grafana_browse_dashboards_page_button_to_recently_deleted', {
       origin: window.location.pathname === config.appSubUrl + '/dashboards' ? 'Dashboards' : 'Folder view',
@@ -31,7 +31,7 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
       {config.featureToggles.teamFolders && folderDTO && 'ownerReferences' in folderDTO && (
         <FolderOwners ownerReferences={folderDTO.ownerReferences || []} />
       )}
-      {config.featureToggles.restoreDashboards && hasAdminRights && (
+      {config.featureToggles.restoreDashboards && (
         <LinkButton
           variant="secondary"
           href={config.appSubUrl + '/dashboard/recently-deleted'}

@@ -846,6 +846,7 @@ type testPlugin struct {
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.QueryDataHandler
+	backend.QueryChunkedDataHandler
 	backend.StreamHandler
 	backend.AdmissionHandler
 	backend.ConversionHandler

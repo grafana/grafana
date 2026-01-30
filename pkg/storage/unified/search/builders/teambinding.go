@@ -1,12 +1,9 @@
 package builders
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -55,15 +52,11 @@ type teamBindingDocumentBuilder struct{}
 
 func (b *teamBindingDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
 	tb := &iamv0.TeamBinding{}
-	if err := json.NewDecoder(bytes.NewReader(value)).Decode(tb); err != nil {
-		return nil, err
-	}
-	obj, err := utils.MetaAccessor(tb)
+	doc, err := NewIndexableDocumentFromValue(key, rv, value, tb, iamv0.TeamBindingKind())
 	if err != nil {
 		return nil, err
 	}
 
-	doc := resource.NewIndexableDocument(key, rv, obj)
 	doc.Fields = map[string]any{
 		TEAM_BINDING_SUBJECT_NAME: tb.Spec.Subject.Name,
 		TEAM_BINDING_TEAM_REF:     tb.Spec.TeamRef.Name,

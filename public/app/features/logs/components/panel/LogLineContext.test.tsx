@@ -572,4 +572,38 @@ describe('LogLineContext', () => {
       timeWindowMs: DEFAULT_TIME_WINDOW,
     });
   });
+
+  test('Should show and clear displayed fields', async () => {
+    const displayedFields = ['level', 'label'];
+
+    render(
+      <LogLineContext
+        log={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+        displayedFields={displayedFields}
+      />
+    );
+
+    expect(screen.getByText('Log context')).toBeInTheDocument();
+    expect(screen.queryByText('foo123')).not.toBeInTheDocument();
+
+    const showOriginalLogsButton = screen.getByRole('button', {
+      name: /show original logs/i,
+    });
+
+    expect(showOriginalLogsButton).toBeInTheDocument();
+
+    await userEvent.click(showOriginalLogsButton);
+
+    expect(
+      screen.queryByRole('button', {
+        name: /show original logs/i,
+      })
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByText('foo123')).toHaveLength(3);
+  });
 });
