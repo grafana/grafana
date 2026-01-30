@@ -25,7 +25,7 @@ ARG JS_YARN_INSTALL_FLAG=--immutable
 ARG JS_YARN_BUILD_FLAG=build
 
 # NI fork: update base image packages
-RUN apk update && apk upgrade
+RUN apk update && apk upgrade && rm -rf /var/cache/apk/*
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -58,7 +58,13 @@ COPY scripts scripts
 COPY emails emails
 
 # Set the build argument according to default or argument passed
-RUN yarn ${JS_YARN_BUILD_FLAG}
+RUN yarn ${JS_YARN_BUILD_FLAG} && \
+    # Clean up to reduce image size
+    rm -rf node_modules/.cache && \
+    rm -rf .yarn/cache && \
+    yarn cache clean && \
+    find . -name "*.map" -type f -delete && \
+    find . -name "*.ts" -not -name "*.d.ts" -type f -delete 2>/dev/null || true
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder
@@ -122,7 +128,7 @@ COPY pkg/codegen pkg/codegen
 COPY pkg/plugins/codegen pkg/plugins/codegen
 COPY apps/example apps/example
 
-RUN go mod download
+RUN go mod download && go clean -modcache -cache || true
 
 COPY embed.go Makefile build.go package.json ./
 COPY cue.mod cue.mod
@@ -145,7 +151,7 @@ RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 FROM ${BASE_IMAGE} AS tgz-builder
 
 # NI fork: update base image packages
-RUN apk update && apk upgrade
+RUN apk update && apk upgrade  && rm -rf /var/cache/apk/*
 
 WORKDIR /tmp/grafana
 
@@ -154,7 +160,8 @@ ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
 # add -v to make tar print every file it extracts
-RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
+RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1 && \
+    rm /tmp/grafana.tar.gz
 
 # helpers for COPY --from
 FROM ${GO_SRC} AS go-src
