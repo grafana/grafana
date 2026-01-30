@@ -16,15 +16,13 @@ import (
 )
 
 func TestUseFieldSelectorSearch(t *testing.T) {
-	tests := []struct {
-		name            string
-		withSearch      bool
+	tests := map[string]struct {
+		disableSearch   bool
 		req             *resourcepb.ListRequest
 		expectedAllowed bool
 	}{
-		{
-			name:       "false when no search client",
-			withSearch: false,
+		"false when no search client": {
+			disableSearch: true,
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
@@ -34,9 +32,7 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 			},
 			expectedAllowed: false,
 		},
-		{
-			name:       "false when source is not store",
-			withSearch: true,
+		"false when source is not store": {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_HISTORY,
 				Options: &resourcepb.ListOptions{
@@ -46,9 +42,7 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 			},
 			expectedAllowed: false,
 		},
-		{
-			name:       "false when no field selectors",
-			withSearch: true,
+		"false when no field selectors": {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
@@ -57,9 +51,7 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 			},
 			expectedAllowed: false,
 		},
-		{
-			name:       "false when version match exact",
-			withSearch: true,
+		"false when version match exact": {
 			req: &resourcepb.ListRequest{
 				Source:         resourcepb.ListRequest_STORE,
 				VersionMatchV2: resourcepb.ResourceVersionMatchV2_Exact,
@@ -70,9 +62,7 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 			},
 			expectedAllowed: false,
 		},
-		{
-			name:       "false when version match not older than",
-			withSearch: true,
+		"false when version match not older than": {
 			req: &resourcepb.ListRequest{
 				Source:         resourcepb.ListRequest_STORE,
 				VersionMatchV2: resourcepb.ResourceVersionMatchV2_NotOlderThan,
@@ -83,9 +73,7 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 			},
 			expectedAllowed: false,
 		},
-		{
-			name:       "true when store, fields, and search client",
-			withSearch: true,
+		"true when store, fields, and search client": {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
@@ -97,10 +85,10 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
 			s := &server{}
-			if tc.withSearch {
+			if !tc.disableSearch {
 				s.searchClient = &stubSearchClient{}
 			}
 
@@ -110,13 +98,11 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 }
 
 func TestFilterFieldSelectors(t *testing.T) {
-	tests := []struct {
-		name          string
+	tests := map[string]struct {
 		req           *resourcepb.ListRequest
 		wantFieldKeys []string
 	}{
-		{
-			name: "removes metadata.namespace and keep valid field",
+		"removes metadata.namespace and keep valid field": {
 			req: &resourcepb.ListRequest{
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{Namespace: "ns"},
@@ -128,8 +114,7 @@ func TestFilterFieldSelectors(t *testing.T) {
 			},
 			wantFieldKeys: []string{"spec.foo"},
 		},
-		{
-			name: "removes multiple unsupported fields",
+		"removes multiple unsupported fields": {
 			req: &resourcepb.ListRequest{
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{Namespace: "ns"},
@@ -143,8 +128,8 @@ func TestFilterFieldSelectors(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
 			out := filterFieldSelectors(tc.req)
 
 			gotKeys := make([]string, 0, len(out.Options.Fields))
