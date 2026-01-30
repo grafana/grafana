@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { dataFrameToLogsModel, } from '../../logsModel';
+import { dataFrameToLogsModel } from '../../logsModel';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { getDisplayedFieldsForLogs, identifyOTelLanguages, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
@@ -669,11 +669,13 @@ describe('LogLineContext', () => {
     const originalFlagValue = config.featureToggles.otelLogsFormatting;
     beforeEach(() => {
       config.featureToggles.otelLogsFormatting = true;
-      jest.mocked(getDisplayedFieldsForLogs).mockReturnValue([LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]);
+      jest
+        .mocked(getDisplayedFieldsForLogs)
+        .mockReturnValue([LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]);
     });
     afterAll(() => {
       config.featureToggles.otelLogsFormatting = originalFlagValue;
-    })
+    });
 
     test('Should show "Show original logs" button when displayed fields are different than the default fields', async () => {
       const displayedFields = ['level', 'label'];
