@@ -233,7 +233,7 @@ export const NotificationPoliciesList = () => {
         </Alert>
       )}
       {hasPoliciesData && (
-        <Stack direction="column" gap={1}>
+        <Stack direction="column" gap={3}>
           <NotificationPoliciesFilter
             onChangeMatchers={setLabelMatchersFilter}
             onChangeReceiver={setContactPointFilter}
