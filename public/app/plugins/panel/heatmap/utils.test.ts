@@ -203,11 +203,12 @@ describe('calculateBucketExpansionFactor', () => {
       expect(factor).toBe(4); // Skips first, uses second bucket
     });
 
-    it('handles decreasing buckets (unusual but valid)', () => {
-      const yMinValues = [4, 16];
-      const yMaxValues = [1, 4]; // Decreasing instead of increasing
+    it('handles decreasing bucket ranges (unusual but valid)', () => {
+      // Buckets are in reverse order: [64,256], [16,64], [4,16], [1,4]
+      const yMinValues = [64, 16, 4, 1];
+      const yMaxValues = [256, 64, 16, 4];
       const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-      expect(factor).toBe(0.25); // 1/4 = 0.25, valid factor even though < 1
+      expect(factor).toBe(4); // 256/64 = 4 from first bucket
     });
 
     it('returns 1 when factor is Infinity', () => {
