@@ -217,6 +217,20 @@ gen-go: gen-enterprise-go ## Generate Wire graph
 	@echo "generating Wire graph"
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
 
+.PHONY: gen-app-manifests-unistore
+gen-app-manifests-unistore: ## Generate unified storage app manifests list
+	@echo "generating unified storage app manifests"
+	$(GO) generate ./pkg/storage/unified/resource/app_manifests.go
+	@if [ -n "$$CODEGEN_VERIFY" ]; then \
+		echo "Verifying generated code is up to date..."; \
+		if ! git diff --quiet pkg/storage/unified/resource/app_manifests.go; then \
+			echo "Error: pkg/storage/unified/resource/app_manifests.go is not up to date. Please run 'make gen-app-manifests-unistore' to regenerate."; \
+			git diff pkg/storage/unified/resource/app_manifests.go; \
+			exit 1; \
+		fi; \
+		echo "Generated app manifests code is up to date."; \
+	fi
+
 .PHONY: fix-cue
 fix-cue:
 	@echo "formatting cue files"

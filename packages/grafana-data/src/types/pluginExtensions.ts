@@ -307,6 +307,8 @@ export type PluginExtensionResourceAttributesContext = {
     type: string;
     uid: string;
   };
+  traceID?: string;
+  spanID?: string;
 };
 
 export type DataSourceConfigErrorStatusContext = {

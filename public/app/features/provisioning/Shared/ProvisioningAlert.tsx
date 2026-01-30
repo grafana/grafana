@@ -9,6 +9,7 @@ interface ProvisioningAlertProps {
   error?: string | StatusInfo;
   warning?: string | StatusInfo;
   success?: string | StatusInfo;
+  retry?: () => void;
 }
 
 const getTitle = (alert: string | StatusInfo, type: 'error' | 'warning' | 'success' = 'error') => {
@@ -37,7 +38,7 @@ const getMessage = (alert: string | StatusInfo) => {
   return alert.message;
 };
 
-export function ProvisioningAlert({ error, warning, success }: ProvisioningAlertProps) {
+export function ProvisioningAlert({ error, warning, success, retry }: ProvisioningAlertProps) {
   const alertData = error || warning || success;
   const type = error ? 'error' : warning ? 'warning' : 'success';
   const severity = type === 'success' ? 'success' : type;
@@ -47,7 +48,12 @@ export function ProvisioningAlert({ error, warning, success }: ProvisioningAlert
   }
 
   return (
-    <Alert severity={severity} title={getTitle(alertData, type)}>
+    <Alert
+      severity={severity}
+      title={getTitle(alertData, type)}
+      buttonContent={retry ? <span>{t('provisioning-alert.retry', 'Retry')}</span> : undefined}
+      onRemove={retry}
+    >
       {getMessage(alertData)}
     </Alert>
   );

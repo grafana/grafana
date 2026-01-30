@@ -17,6 +17,17 @@ export function validateBranchName(branchName?: string) {
   return branchName && branchNameRegex.test(branchName!);
 }
 
+/**
+ * Formats a repository URL for display by extracting the path portion.
+ * e.g., "https://github.com/owner/repo/tree/main/path" -> "owner/repo/tree/main/path"
+ */
+export function formatRepoUrl(url?: string): string {
+  if (!url) {
+    return '';
+  }
+  return url.split('/').slice(3).join('/');
+}
+
 // Remove leading and trailing slashes from a string.
 const stripSlashes = (s: string) => s.replace(/^\/+|\/+$/g, '');
 

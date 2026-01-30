@@ -29,7 +29,8 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 			"namespace": "default",
 		},
 		"spec": map[string]any{
-			"type": "github",
+			"title": "Test Connection",
+			"type":  "github",
 			"github": map[string]any{
 				"appID":          "123456",
 				"installationID": "454545",
