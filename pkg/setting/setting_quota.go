@@ -1,5 +1,7 @@
 package setting
 
+import "gopkg.in/ini.v1"
+
 type OrgQuota struct {
 	User       int64 `target:"org_user"`
 	DataSource int64 `target:"data_source"`
@@ -32,34 +34,42 @@ type QuotaSettings struct {
 }
 
 func (cfg *Cfg) readQuotaSettings() {
+	iniFile := cfg.Raw
+	quota := ReadQuotaSettings(iniFile)
 	// set global defaults.
-	quota := cfg.Raw.Section("quota")
-	cfg.Quota.Enabled = quota.Key("enabled").MustBool(false)
+	cfg.Quota = quota
+}
+
+func ReadQuotaSettings(iniFile *ini.File) QuotaSettings {
+	section := iniFile.Section("quota")
+	var quota QuotaSettings
+	quota.Enabled = section.Key("enabled").MustBool(false)
 
 	// per ORG Limits
-	cfg.Quota.Org = OrgQuota{
-		User:       quota.Key("org_user").MustInt64(10),
-		DataSource: quota.Key("org_data_source").MustInt64(10),
-		Dashboard:  quota.Key("org_dashboard").MustInt64(10),
-		ApiKey:     quota.Key("org_api_key").MustInt64(10),
-		AlertRule:  quota.Key("org_alert_rule").MustInt64(100),
+	quota.Org = OrgQuota{
+		User:       section.Key("org_user").MustInt64(10),
+		DataSource: section.Key("org_data_source").MustInt64(10),
+		Dashboard:  section.Key("org_dashboard").MustInt64(10),
+		ApiKey:     section.Key("org_api_key").MustInt64(10),
+		AlertRule:  section.Key("org_alert_rule").MustInt64(100),
 	}
 
 	// per User limits
-	cfg.Quota.User = UserQuota{
-		Org: quota.Key("user_org").MustInt64(10),
+	quota.User = UserQuota{
+		Org: section.Key("user_org").MustInt64(10),
 	}
 
 	// Global Limits
-	cfg.Quota.Global = GlobalQuota{
-		User:         quota.Key("global_user").MustInt64(-1),
-		Org:          quota.Key("global_org").MustInt64(-1),
-		DataSource:   quota.Key("global_data_source").MustInt64(-1),
-		Dashboard:    quota.Key("global_dashboard").MustInt64(-1),
-		ApiKey:       quota.Key("global_api_key").MustInt64(-1),
-		Session:      quota.Key("global_session").MustInt64(-1),
-		File:         quota.Key("global_file").MustInt64(-1),
-		AlertRule:    quota.Key("global_alert_rule").MustInt64(-1),
-		Correlations: quota.Key("global_correlations").MustInt64(-1),
+	quota.Global = GlobalQuota{
+		User:         section.Key("global_user").MustInt64(-1),
+		Org:          section.Key("global_org").MustInt64(-1),
+		DataSource:   section.Key("global_data_source").MustInt64(-1),
+		Dashboard:    section.Key("global_dashboard").MustInt64(-1),
+		ApiKey:       section.Key("global_api_key").MustInt64(-1),
+		Session:      section.Key("global_session").MustInt64(-1),
+		File:         section.Key("global_file").MustInt64(-1),
+		AlertRule:    section.Key("global_alert_rule").MustInt64(-1),
+		Correlations: section.Key("global_correlations").MustInt64(-1),
 	}
+	return quota
 }
