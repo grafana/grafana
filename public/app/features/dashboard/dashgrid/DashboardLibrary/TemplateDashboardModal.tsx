@@ -144,8 +144,10 @@ export const TemplateDashboardModal = () => {
                     title={dashboard.name}
                     imageUrl={thumbnailUrl}
                     onClick={() => onPreviewDashboardClick(dashboard)}
+                    onClose={onClose}
                     dashboard={dashboard}
                     kind="template_dashboard"
+                    useAssistantHelp
                   />
                 );
               })}
