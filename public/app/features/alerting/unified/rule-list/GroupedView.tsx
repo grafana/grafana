@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { Stack } from '@grafana/ui';
 import { DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
@@ -12,14 +12,9 @@ import { PaginatedGrafanaLoader } from './PaginatedGrafanaLoader';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import { DataSourceErrorBoundary } from './components/DataSourceErrorBoundary';
 import { DataSourceSection } from './components/DataSourceSection';
+import { type DataSourceLoadState, useDataSourceLoadingStates } from './hooks/useDataSourceLoadingStates';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
-
-export interface DataSourceLoadState {
-  isLoading: boolean;
-  rulesCount: number;
-  error?: unknown;
-}
 
 interface GroupedViewProps {
   groupFilter?: string;
@@ -30,45 +25,8 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
   const hasFilters = Boolean(groupFilter || namespaceFilter);
   const externalRuleSources = useMemo(() => getExternalRulesSources(), []);
 
-  // Track detailed state for each datasource
-  const [dataSourceStates, setDataSourceStates] = useState<Map<string, DataSourceLoadState>>(new Map());
-
-  const handleLoadingStateChange = useCallback((uid: string, newState: DataSourceLoadState) => {
-    setDataSourceStates((prev) => {
-      const currentState = prev.get(uid);
-
-      // Deep comparison - only update if state actually changed
-      if (
-        currentState &&
-        currentState.isLoading === newState.isLoading &&
-        currentState.rulesCount === newState.rulesCount &&
-        currentState.error === newState.error
-      ) {
-        return prev; // No change, return same Map reference
-      }
-
-      // State changed - create new Map
-      const next = new Map(prev);
-      next.set(uid, newState);
-      return next;
-    });
-  }, []);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      setDataSourceStates(new Map());
-    };
-  }, []);
-
-  // Derive useful values for rendering
-  const loadingDataSources = useMemo(
-    () =>
-      Array.from(dataSourceStates.entries())
-        .filter(([_, state]) => state.isLoading)
-        .map(([uid]) => uid),
-    [dataSourceStates]
-  );
+  // Use custom hook for centralized state management
+  const { updateState, loadingDataSources } = useDataSourceLoadingStates();
 
   return (
     <Stack direction="column" gap={1} role="list">
@@ -76,7 +34,7 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
         <PaginatedGrafanaLoader
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
-          onLoadingStateChange={handleLoadingStateChange}
+          onLoadingStateChange={updateState}
           key={`${groupFilter}-${namespaceFilter}`}
         />
       </DataSourceErrorBoundary>
@@ -87,7 +45,7 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
             rulesSourceIdentifier={ruleSource}
             groupFilter={groupFilter}
             namespaceFilter={namespaceFilter}
-            onLoadingStateChange={handleLoadingStateChange}
+            onLoadingStateChange={updateState}
           />
         );
       })}

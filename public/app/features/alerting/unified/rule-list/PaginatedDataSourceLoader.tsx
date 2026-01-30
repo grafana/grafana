@@ -8,7 +8,6 @@ import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import { groups } from '../utils/navigation';
 
 import { DataSourceGroupLoader } from './DataSourceGroupLoader';
-import { DataSourceLoadState } from './GroupedView';
 import { DataSourceSection, DataSourceSectionProps } from './components/DataSourceSection';
 import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
@@ -17,6 +16,8 @@ import { LoadMoreButton } from './components/LoadMoreButton';
 import { NoRulesFound } from './components/NoRulesFound';
 import { getDatasourceFilter } from './hooks/datasourceFilter';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
+import { useDataSourceLoadingReporter } from './hooks/useDataSourceLoadingReporter';
+import { DataSourceLoadState } from './hooks/useDataSourceLoadingStates';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
 
@@ -103,29 +104,8 @@ function PaginatedGroupsLoader({
     filterFn
   );
 
-  // Report state changes to parent
-  useEffect(() => {
-    if (onLoadingStateChange) {
-      onLoadingStateChange(uid, {
-        isLoading,
-        rulesCount: groups.length,
-        error,
-      });
-    }
-  }, [isLoading, groups.length, error, onLoadingStateChange, uid]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (onLoadingStateChange) {
-        onLoadingStateChange(uid, {
-          isLoading: false,
-          rulesCount: 0,
-          error: undefined,
-        });
-      }
-    };
-  }, [onLoadingStateChange, uid]);
+  // Report state changes to parent using custom hook
+  useDataSourceLoadingReporter(uid, { isLoading, rulesCount: groups.length, error }, onLoadingStateChange);
 
   const hasNoRules = isEmpty(groups) && !isLoading;
   const groupsByNamespace = useMemo(() => groupBy(groups, 'file'), [groups]);

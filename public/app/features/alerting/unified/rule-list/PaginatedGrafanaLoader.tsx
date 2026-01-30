@@ -13,7 +13,6 @@ import { groups } from '../utils/navigation';
 import { isUngroupedRuleGroup } from '../utils/rules';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
-import { DataSourceLoadState } from './GroupedView';
 import { DataSourceSection } from './components/DataSourceSection';
 import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
@@ -22,6 +21,8 @@ import { LoadMoreButton } from './components/LoadMoreButton';
 import { NoRulesFound } from './components/NoRulesFound';
 import { getGrafanaFilter, hasGrafanaClientSideFilters } from './hooks/grafanaFilter';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
+import { useDataSourceLoadingReporter } from './hooks/useDataSourceLoadingReporter';
+import { DataSourceLoadState } from './hooks/useDataSourceLoadingStates';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
 
@@ -100,29 +101,12 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateCha
     filterFn
   );
 
-  // Report state changes to parent
-  useEffect(() => {
-    if (onLoadingStateChange) {
-      onLoadingStateChange(GRAFANA_RULES_SOURCE_NAME, {
-        isLoading,
-        rulesCount: groups.length,
-        error,
-      });
-    }
-  }, [isLoading, groups.length, error, onLoadingStateChange]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (onLoadingStateChange) {
-        onLoadingStateChange(GRAFANA_RULES_SOURCE_NAME, {
-          isLoading: false,
-          rulesCount: 0,
-          error: undefined,
-        });
-      }
-    };
-  }, [onLoadingStateChange]);
+  // Report state changes to parent using custom hook
+  useDataSourceLoadingReporter(
+    GRAFANA_RULES_SOURCE_NAME,
+    { isLoading, rulesCount: groups.length, error },
+    onLoadingStateChange
+  );
 
   const groupsByFolder = useMemo(() => groupBy(groups, 'folderUid'), [groups]);
   const hasNoRules = isEmpty(groups) && !isLoading;
