@@ -8,7 +8,7 @@ import (
 )
 
 type Config struct {
-	ReceiverTestingHandler        ReceiverTestingHandler
+	ReceiverTestingHandler       ReceiverTestingHandler
 	IntegrationTypeSchemaHandler IntegrationTypeSchemaHandler
 }
 
