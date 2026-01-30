@@ -1,6 +1,10 @@
 package resource
 
-import "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+)
 
 var (
 	_ resourcepb.DiagnosticsServer = (*noopService)(nil)

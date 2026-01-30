@@ -72,7 +72,7 @@ func ProvideStorageBackend(
 	case options.StorageTypeFile:
 		backend, err = newFileBackend(cfg)
 	case options.StorageTypeUnifiedGrpc:
-		return nil, fmt.Errorf("storage_type %s uses remote storage", storageType)
+		return nil, nil
 	default:
 		backend, err = newStorageBackend(cfg, db, reg, storageMetrics, tracer)
 	}
