@@ -374,7 +374,6 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		ctx:              ctx,
 		cancel:           cancel,
 		storageMetrics:   opts.storageMetrics,
-		indexMetrics:     opts.IndexMetrics,
 		maxPageSizeBytes: opts.MaxPageSizeBytes,
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
@@ -440,7 +439,6 @@ type server struct {
 	now              func() int64
 	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics   *StorageMetrics
-	indexMetrics     *BleveIndexMetrics
 	overridesService *OverridesService
 
 	// Background watch task -- this has permissions for everything

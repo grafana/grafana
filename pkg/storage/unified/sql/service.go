@@ -56,11 +56,9 @@ type service struct {
 	subservices        []services.Service
 	subservicesMngr    *services.Manager
 	subservicesWatcher *services.FailureWatcher
-	hasSubservices     bool
 
 	// -- Shared Components
 	backend       resource.StorageBackend
-	searchClient  resourcepb.ResourceIndexClient
 	serverStopper resource.ResourceServerStopper
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
@@ -75,6 +73,7 @@ type service struct {
 	queue          QOSEnqueueDequeuer
 	storageMetrics *resource.StorageMetrics
 	scheduler      *scheduler.Scheduler
+	searchClient   resourcepb.ResourceIndexClient
 
 	// -- Search Services
 	docBuilders      resource.DocumentBuilderSupplier
@@ -97,16 +96,16 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	httpServerRouter *mux.Router,
 	backend resource.StorageBackend,
 ) (UnifiedStorageGrpcService, error) {
-	s := newBaseService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
+	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, nil)
 	s.searchStandalone = true
 	if cfg.EnableSharding {
 		err := s.withRingLifecycle(memberlistKVConfig, httpServerRouter)
 		if err != nil {
 			return nil, err
 		}
-		err = s.registerSubservices()
+		err = s.initializeSubservicesManager()
 		if err != nil {
-			return nil, fmt.Errorf("failed to register subservices: %w", err)
+			return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 		}
 	}
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.SearchServer)
@@ -127,7 +126,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	backend resource.StorageBackend,
 	searchClient resourcepb.ResourceIndexClient,
 ) (UnifiedStorageGrpcService, error) {
-	s := newBaseService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
+	s := newService(cfg, features, db, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, searchClient)
 
 	// TODO: move to standalone search once we only use sharding in search servers
 	if cfg.EnableSharding {
@@ -156,16 +155,16 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 		s.subservices = append(s.subservices, s.queue, s.scheduler)
 	}
 
-	err := s.registerSubservices()
+	err := s.initializeSubservicesManager()
 	if err != nil {
-		return nil, fmt.Errorf("failed to register subservices: %w", err)
+		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 	}
 
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.StorageServer)
 	return s, nil
 }
 
-func newBaseService(
+func newService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
@@ -204,11 +203,10 @@ func newBaseService(
 	}
 }
 
-func (s *service) registerSubservices() error {
+func (s *service) initializeSubservicesManager() error {
 	if len(s.subservices) == 0 {
 		return nil
 	}
-	s.hasSubservices = true
 	var err error
 	s.subservicesMngr, err = services.NewManager(s.subservices...)
 	if err != nil {
@@ -304,7 +302,7 @@ func (s *service) OwnsIndex(key resource.NamespacedResource) (bool, error) {
 }
 
 func (s *service) starting(ctx context.Context) error {
-	if s.hasSubservices {
+	if s.subservicesMngr != nil {
 		s.subservicesWatcher.WatchManager(s.subservicesMngr)
 		if err := services.StartManagerAndAwaitHealthy(ctx, s.subservicesMngr); err != nil {
 			return fmt.Errorf("failed to start subservices: %w", err)
@@ -420,7 +418,7 @@ func (s *service) running(ctx context.Context) error {
 }
 
 func (s *service) stopping(_ error) error {
-	if s.hasSubservices {
+	if s.subservicesMngr != nil {
 		err := services.StopManagerAndAwaitStopped(context.Background(), s.subservicesMngr)
 		if err != nil {
 			return fmt.Errorf("failed to stop subservices: %w", err)
