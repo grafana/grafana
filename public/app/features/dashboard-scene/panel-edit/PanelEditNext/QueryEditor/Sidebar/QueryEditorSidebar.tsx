@@ -51,11 +51,13 @@ export const QueryEditorSidebar = memo(function QueryEditorSidebar({
           <QueryCard key={query.refId} query={query} />
         ))}
       </QuerySidebarCollapsableHeader>
-      <QuerySidebarCollapsableHeader label={t('query-editor-next.sidebar.transformations', 'Transformations')}>
-        {transformations.map((transformation) => (
-          <TransformationCard key={transformation.id} transformation={transformation} />
-        ))}
-      </QuerySidebarCollapsableHeader>
+      {transformations.length > 0 && (
+        <QuerySidebarCollapsableHeader label={t('query-editor-next.sidebar.transformations', 'Transformations')}>
+          {transformations.map((transformation) => (
+            <TransformationCard key={transformation.id} transformation={transformation} />
+          ))}
+        </QuerySidebarCollapsableHeader>
+      )}
     </div>
   );
 });
