@@ -35,6 +35,8 @@ interface BaseProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   iconOnly?: boolean;
   /** Show highlight dot */
   isHighlighted?: boolean;
+  /** Test ID for testing purposes */
+  testId?: string;
 }
 
 interface BasePropsWithChildren extends BaseProps {
@@ -75,6 +77,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
     iconOnly,
     'aria-label': ariaLabel,
     isHighlighted,
+    testId,
     ...rest
   } = props;
 
@@ -101,6 +104,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>((
       aria-label={getButtonAriaLabel(ariaLabel, tooltip)}
       aria-expanded={isOpen}
       type="button"
+      data-testId={testId}
       {...rest}
     >
       {renderIcon(icon, iconSize)}

@@ -163,6 +163,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         icon="angle-double-left"
         type="button"
         iconSize="xl"
+        testId={selectors.components.TimePicker.moveBackwardButton}
         tooltip={
           moveBackwardTooltip ?? t('time-picker.range-picker.backwards-time-aria-label', 'Move time range backwards')
         }
@@ -223,6 +224,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         type="button"
         variant={variant}
         iconSize="xl"
+        testId={selectors.components.TimePicker.moveForwardButton}
         tooltip={
           moveForwardTooltip ?? t('time-picker.range-picker.forwards-time-aria-label', 'Move time range forwards')
         }
@@ -235,6 +237,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           onClick={onZoom}
           icon="search-minus"
           type="button"
+          testId={selectors.components.TimePicker.zoomOut}
           variant={variant}
         />
       </Tooltip>
