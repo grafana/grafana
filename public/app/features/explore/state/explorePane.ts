@@ -1,8 +1,6 @@
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
-import { uniq } from 'lodash';
 import { AnyAction } from 'redux';
 
-import { generatedAPI as correlationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import {
   TimeRange,
   HistoryItem,
@@ -13,11 +11,10 @@ import {
   ExploreCorrelationHelperData,
   EventBusExtended,
 } from '@grafana/data';
-import { config, CorrelationData, CorrelationsData, getDataSourceSrv } from '@grafana/runtime';
+import { CorrelationData } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { getQueryKeys } from 'app/core/utils/explore';
-import { toEnrichedCorrelationDataK8s } from 'app/features/correlations/useCorrelationsK8s';
-import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
+import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { ExploreItemState } from 'app/types/explore';
 import { createAsyncThunk, ThunkResult } from 'app/types/store';
@@ -25,13 +22,7 @@ import { createAsyncThunk, ThunkResult } from 'app/types/store';
 import { datasourceReducer } from './datasource';
 import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
-import {
-  makeExplorePaneState,
-  loadAndInitDatasource,
-  createEmptyQueryResponse,
-  getRange,
-  getDatasourceUIDs,
-} from './utils';
+import { makeExplorePaneState, loadAndInitDatasource, createEmptyQueryResponse, getRange } from './utils';
 //
 // Actions and Payloads
 //
@@ -213,38 +204,7 @@ export const initializeExplore = createAsyncThunk(
     dispatch(updateTime({ exploreId }));
 
     if (instance) {
-      let correlations: CorrelationsData;
-      if (config.featureToggles.kubernetesCorrelations) {
-        let queryDSRefList = queries.map((q) => q.datasource).filter((ds) => ds !== undefined);
-        const dataSourceSrv = getDataSourceSrv();
-        const instanceDSRef = (await dataSourceSrv.get(instance.uid)).getRef();
-        queryDSRefList.push(instanceDSRef);
-        // filter out undefined values and duplicates
-        const labelStr = queryDSRefList
-          .filter(
-            (ref, index, array) =>
-              ref?.type !== undefined &&
-              ref?.uid !== undefined &&
-              array.findIndex((ref2) => ref2?.uid === ref.uid && ref2?.type === ref.type) === index
-          )
-          .map((ref) => `${ref?.type}.${ref?.uid}`)
-          .join();
-        const labelSelectString = `correlations.grafana.app/sourceDS-ref in (${labelStr})`;
-        const corrSubscription = dispatch(
-          correlationsAPIv0alpha1.endpoints.listCorrelation.initiate({
-            labelSelector: labelSelectString,
-          })
-        );
-
-        const { data } = await corrSubscription;
-        const enrichedCorr = (data?.items ?? [])
-          .map((item) => toEnrichedCorrelationDataK8s(item))
-          .filter((i) => i !== undefined);
-        correlations = { correlations: enrichedCorr, page: 0, limit: 1000, totalCount: enrichedCorr.length };
-      } else {
-        const datasourceUIDs = getDatasourceUIDs(instance.uid, queries);
-        correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
-      }
+      const correlations = await getCorrelationsFromStorage(dispatch, queries, instance.uid);
       dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
 
       dispatch(runQueries({ exploreId }));

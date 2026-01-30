@@ -1,5 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
+import { generatedAPI as correlationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
 import {
   config,
@@ -9,13 +10,18 @@ import {
   getBackendSrv,
   getDataSourceSrv,
 } from '@grafana/runtime';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExploreItemState } from 'app/types/explore';
+import { ThunkDispatch } from 'app/types/store';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
+import { getDatasourceUIDs } from '../explore/state/utils';
 import { parseLogsFrame } from '../logs/logsFrame';
 
 import { CreateCorrelationParams, CreateCorrelationResponse } from './types';
 import { CorrelationsResponse, getData, toEnrichedCorrelationsData } from './useCorrelations';
+import { toEnrichedCorrelationDataK8s } from './useCorrelationsK8s';
 
 type DataFrameRefIdToDataSourceUid = Record<string, string>;
 
@@ -145,3 +151,49 @@ export const generateDefaultLabel = async (sourcePane: ExploreItemState, targetP
 };
 
 export const correlationsLogger = createMonitoringLogger('features.correlations');
+
+// legacy just needs uid for lookup, remote storage needs name/group
+export const getCorrelationsFromStorage = async (
+  dispatch: ThunkDispatch,
+  queries: DataQuery[],
+  instanceUid: string
+): Promise<CorrelationsData> => {
+  let correlations: CorrelationsData;
+  if (config.featureToggles.kubernetesCorrelations) {
+    let queryDSRefList: DataSourceRef[];
+    if (instanceUid === MIXED_DATASOURCE_NAME) {
+      // filter out undefineds and duplicates. typescript doesnt recognize the null check when combined
+      queryDSRefList = queries
+        .map((q) => q.datasource)
+        .filter((ref) => ref !== undefined && ref !== null)
+        .filter(
+          (ref, index, array) =>
+            ref.type !== undefined &&
+            ref.uid !== undefined &&
+            array.findIndex((ref2) => ref2?.uid === ref?.uid && ref2?.type === ref?.type) === index
+        );
+    } else {
+      const dataSourceSrv = getDataSourceSrv();
+      const instanceDSRef = (await dataSourceSrv.get(instanceUid)).getRef();
+      queryDSRefList = [instanceDSRef];
+    }
+    const labelStr = queryDSRefList.map((ref) => `${ref?.type}.${ref?.uid}`).join();
+    const labelSelectString = `correlations.grafana.app/sourceDS-ref in (${labelStr})`;
+    const corrSubscription = dispatch(
+      correlationsAPIv0alpha1.endpoints.listCorrelation.initiate({
+        labelSelector: labelSelectString,
+      })
+    );
+
+    const { data } = await corrSubscription;
+    const enrichedCorr = (data?.items ?? [])
+      .map((item) => toEnrichedCorrelationDataK8s(item))
+      .filter((i) => i !== undefined);
+    correlations = { correlations: enrichedCorr, page: 0, limit: 1000, totalCount: enrichedCorr.length };
+  } else {
+    const datasourceUIDs = getDatasourceUIDs(instanceUid, queries);
+    correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
+  }
+
+  return correlations;
+};
