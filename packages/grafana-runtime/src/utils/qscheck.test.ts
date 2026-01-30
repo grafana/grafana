@@ -13,97 +13,132 @@ interface TestJsonData extends DataSourceJsonData {
 
 type TestCase = {
   name: string;
-  jsonData: TestJsonData;
+  jsonDatas: TestJsonData[];
   expected: boolean;
 };
 
 describe('qscheck', () => {
   const testCases: TestCase[] = [
     {
+      name: 'no queries',
+      jsonDatas: [],
+      expected: true,
+    },
+    {
       name: 'empty jsondata',
-      jsonData: {},
+      jsonDatas: [{}],
       expected: true,
     },
     {
       name: 'no oauth',
-      jsonData: {
-        thing1: 'http://localhost:9090',
-        thing2: 15,
-      },
+      jsonDatas: [
+        {
+          thing1: 'http://localhost:9090',
+          thing2: 15,
+        },
+      ],
       expected: true,
     },
     {
       name: 'oauth false',
-      jsonData: {
-        thing1: 'http://localhost:9090',
-        thing2: 42,
-        oauthPassThru: false,
-      },
+      jsonDatas: [
+        {
+          thing1: 'http://localhost:9090',
+          thing2: 42,
+          oauthPassThru: false,
+        },
+      ],
       expected: true,
     },
     {
       name: 'oauth true',
-      jsonData: {
-        thing1: 'http://localhost:9090',
-        thing2: 55,
-        oauthPassThru: true,
-      },
+      jsonDatas: [
+        {
+          thing1: 'http://localhost:9090',
+          thing2: 55,
+          oauthPassThru: true,
+        },
+      ],
       expected: false,
     },
     {
       name: 'oauth non-boolean',
-      jsonData: {
-        thing1: 'http://localhost:9090',
-        thing2: 77,
-        oauthPassThru: 42,
-      },
+      jsonDatas: [
+        {
+          thing1: 'http://localhost:9090',
+          thing2: 77,
+          oauthPassThru: 42,
+        },
+      ],
       expected: false,
     },
     {
       name: 'azureoauth missing',
-      jsonData: {
-        thing1: 'http://localhost:9090',
-        thing2: 77,
-        // azureCredentials not there
-      },
+      jsonDatas: [
+        {
+          thing1: 'http://localhost:9090',
+          thing2: 77,
+          // azureCredentials not there
+        },
+      ],
       expected: true,
     },
     {
       name: 'azureoauth different auth',
-      jsonData: {
-        thing1: 'http://localhost:9090',
-        thing2: 77,
-        azureCredentials: {
-          authType: 'workloadidentity',
+      jsonDatas: [
+        {
+          thing1: 'http://localhost:9090',
+          thing2: 77,
+          azureCredentials: {
+            authType: 'workloadidentity',
+          },
         },
-      },
+      ],
       expected: true,
     },
     {
       name: 'azureoauth currentuser auth',
-      jsonData: {
-        thing1: 'http://localhost:9090',
-        thing2: 77,
-        azureCredentials: {
-          authType: 'currentuser',
+      jsonDatas: [
+        {
+          thing1: 'http://localhost:9090',
+          thing2: 77,
+          azureCredentials: {
+            authType: 'currentuser',
+          },
         },
-      },
+      ],
+      expected: false,
+    },
+    {
+      name: 'one good one bad',
+      jsonDatas: [
+        {
+          thing1: 'http://localhost:9090',
+          thing2: 15,
+        },
+        {
+          thing1: 'http://localhost:9090',
+          thing2: 77,
+          oauthPassThru: true,
+        },
+      ],
       expected: false,
     },
   ];
 
   testCases.forEach((t) => {
     test(t.name, () => {
-      const settings: DataSourceInstanceSettings<TestJsonData> = {
-        jsonData: t.jsonData,
+      const settings: Array<DataSourceInstanceSettings<TestJsonData>> = t.jsonDatas.map((jsonData) => ({
+        jsonData: jsonData,
         uid: 'uid1',
         type: 'prometheus',
         name: 'prom1',
         meta: {} as DataSourcePluginMeta,
         readOnly: false,
         access: 'proxy',
-      };
-      const result = isQueryServiceCompatible([settings]);
+      }));
+
+      const result = isQueryServiceCompatible(settings);
       expect(result).toBe(t.expected);
     });
   });
