@@ -495,19 +495,6 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 	return response.Success("Annotation deleted")
 }
 
-func (hs *HTTPServer) canSaveAnnotation(c *contextmodel.ReqContext, ac accesscontrol.AccessControl, annotation *annotations.ItemDTO) (bool, error) {
-	if annotation.GetType() == annotations.Dashboard {
-		return canEditDashboard(c, ac, *annotation.DashboardUID)
-	} else {
-		return true, nil
-	}
-}
-
-func canEditDashboard(c *contextmodel.ReqContext, ac accesscontrol.AccessControl, dashboardUID string) (bool, error) {
-	evaluator := accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboardUID))
-	return ac.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
-}
-
 func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user *user.SignedInUser) (*annotations.ItemDTO, response.Response) {
 	query := &annotations.ItemQuery{
 		AnnotationID: annotationID,

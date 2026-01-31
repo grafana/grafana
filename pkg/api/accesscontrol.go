@@ -266,21 +266,6 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	annotationsWriterRole := ac.RoleRegistration{
-		Role: ac.RoleDTO{
-			Name:        "fixed:annotations:writer",
-			DisplayName: "Writer",
-			Description: "Update all annotations.",
-			Group:       "Annotations",
-			Permissions: []ac.Permission{
-				{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsAll},
-				{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsAll},
-				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsAll},
-			},
-		},
-		Grants: []string{string(org.RoleEditor)},
-	}
-
 	// Keeping the name to avoid breaking changes (for users who have assigned this role to grant permissions on organization annotations)
 	annotationsReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
@@ -299,7 +284,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	}
 
 	// Keeping the name to avoid breaking changes (for users who have assigned this role to grant permissions on organization annotations)
-	annotationsWriterRole = ac.RoleRegistration{
+	annotationsWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:annotations:writer",
 			DisplayName: "Writer (organization)",

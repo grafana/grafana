@@ -62,13 +62,6 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashU
 	return hs.starService.IsStarredByUser(c.Req.Context(), &query)
 }
 
-func dashboardGuardianResponse(err error) response.Response {
-	if err != nil {
-		return dashboardErrResponse(err, "Error while checking dashboard permissions")
-	}
-	return response.Error(http.StatusForbidden, "Access denied to this dashboard", nil)
-}
-
 // swagger:route GET /dashboards/uid/{uid} dashboards getDashboardByUID
 //
 // Get dashboard by uid.
