@@ -198,7 +198,7 @@ Stores the current map viewport bounding box in a dashboard variable.
 3. Select the variable name from the dropdown
 4. Use the variable in your queries
 
-The variable contains an array of coordinates (EPSG:4326): `[minLon,minLat,maxLon,maxLat]`
+The variable contains comma-separated coordinates (EPSG:4326): `minLon,minLat,maxLon,maxLat`
 
 ### Map layers options
 
