@@ -2,7 +2,7 @@ import { HTMLAttributes } from 'react';
 
 import { Button, IconSize } from '@grafana/ui';
 
-interface Props extends HTMLAttributes<HTMLButtonElement> {
+interface Props extends Omit<HTMLAttributes<HTMLButtonElement>, 'onToggle'> {
   isCollapsed: boolean;
   onToggle: (isCollapsed: boolean) => void;
   // Todo: this should be made compulsory for a11y purposes

@@ -61,7 +61,7 @@ describe('SignupInvitedPage', () => {
       await setupTestContext();
 
       expect(
-        screen.getByRole('heading', {
+        await screen.findByRole('heading', {
           name: /hello some user\./i,
         })
       ).toBeInTheDocument();
@@ -70,7 +70,7 @@ describe('SignupInvitedPage', () => {
     it('then the invited by should be correct', async () => {
       await setupTestContext();
 
-      const view = screen.getByText(
+      const view = await screen.findByText(
         /has invited you to join grafana and the organization please complete the following and choose a password to accept your invitation and continue:/i
       );
 
@@ -80,7 +80,7 @@ describe('SignupInvitedPage', () => {
     it('then the organization invited to should be correct', async () => {
       await setupTestContext();
 
-      const view = screen.getByText(
+      const view = await screen.findByText(
         /has invited you to join grafana and the organization please complete the following and choose a password to accept your invitation and continue:/i
       );
 
@@ -90,10 +90,10 @@ describe('SignupInvitedPage', () => {
     it('then the form should include form data', async () => {
       await setupTestContext();
 
-      expect(screen.getByPlaceholderText(/email@example\.com/i)).toHaveValue('some.user@localhost');
-      expect(screen.getByPlaceholderText(/name \(optional\)/i)).toHaveValue('Some User');
-      expect(screen.getByPlaceholderText(/username/i)).toHaveValue('some.user@localhost');
-      expect(screen.getByPlaceholderText(/password/i)).toHaveValue('');
+      expect(await screen.findByPlaceholderText(/email@example\.com/i)).toHaveValue('some.user@localhost');
+      expect(await screen.findByPlaceholderText(/name \(optional\)/i)).toHaveValue('Some User');
+      expect(await screen.findByPlaceholderText(/username/i)).toHaveValue('some.user@localhost');
+      expect(await screen.findByPlaceholderText(/password/i)).toHaveValue('');
     });
   });
 
@@ -105,9 +105,9 @@ describe('SignupInvitedPage', () => {
 
       await userEvent.click(screen.getByRole('button', { name: /sign up/i }));
 
-      await waitFor(() => expect(screen.getByText(/email is required/i)).toBeInTheDocument());
-      expect(screen.getByText(/username is required/i)).toBeInTheDocument();
-      expect(screen.getByText(/password is required/i)).toBeInTheDocument();
+      expect(await screen.findByText(/email is required/i)).toBeInTheDocument();
+      expect(await screen.findByText(/username is required/i)).toBeInTheDocument();
+      expect(await screen.findByText(/password is required/i)).toBeInTheDocument();
       expect(postSpy).toHaveBeenCalledTimes(0);
     });
   });
@@ -116,8 +116,8 @@ describe('SignupInvitedPage', () => {
     it('then correct form data should be posted', async () => {
       const { postSpy } = await setupTestContext();
 
-      await userEvent.type(screen.getByPlaceholderText(/password/i), 'pass@word1');
-      await userEvent.click(screen.getByRole('button', { name: /sign up/i }));
+      await userEvent.type(await screen.findByPlaceholderText(/password/i), 'pass@word1');
+      await userEvent.click(await screen.findByRole('button', { name: /sign up/i }));
 
       await waitFor(() => expect(postSpy).toHaveBeenCalledTimes(1));
       expect(postSpy).toHaveBeenCalledWith('/api/user/invite/complete', {

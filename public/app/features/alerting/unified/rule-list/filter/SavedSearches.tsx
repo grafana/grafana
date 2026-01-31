@@ -387,7 +387,7 @@ interface ListModeProps {
   hasSearches: boolean;
   canSave: boolean;
   activeAction: ActiveAction;
-  saveButtonRef: React.RefObject<HTMLButtonElement>;
+  saveButtonRef: React.RefObject<HTMLButtonElement | null>;
   isLoading: boolean;
   onStartSave: () => void;
   /** Callback to complete save. Throws ValidationError on validation failure. */

@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { config, locationService, setBackendSrv } from '@grafana/runtime';
@@ -323,18 +323,24 @@ describe('Tree', () => {
 
     await searchScopes('Applications');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
-    expectScopesHeadline('Results');
+    await waitFor(() => {
+      expectScopesHeadline('Results');
+    });
 
     await searchScopes('unknown');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
-    expectScopesHeadline('No results found for your query');
+    await waitFor(() => {
+      expectScopesHeadline('No results found for your query');
+    });
   });
 
   it('Should only show Recommended when there are no leaf container nodes visible', async () => {
     await openSelector();
     await expandResultApplications();
     await expandResultApplicationsCloud();
-    expectScopesHeadline('Recommended');
+    await waitFor(() => {
+      expectScopesHeadline('Recommended');
+    });
   });
 
   it('Should open to a specific path when scopes and scope_node are applied', async () => {
@@ -418,7 +424,7 @@ describe('Tree', () => {
       await openSelector();
 
       const searchInput = screen.getByRole('combobox', { name: 'Search' });
-      searchInput.focus();
+      await act(async () => fireEvent.focus(searchInput));
 
       // Navigate to Applications (which is expandable) - need to ensure we reach it
       await user.keyboard('{ArrowDown}');

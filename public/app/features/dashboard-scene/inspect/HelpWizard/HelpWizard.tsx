@@ -36,7 +36,7 @@ interface Props {
 export function HelpWizard({ panel, onClose }: Props) {
   const styles = useStyles2(getStyles);
   const service = useMemo(() => new SupportSnapshotService(panel), [panel]);
-  const plugin = panel.getPlugin();
+  const plugin = useMemo(() => panel.getPlugin(), [panel]);
 
   const {
     currentTab,
