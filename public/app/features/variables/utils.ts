@@ -9,6 +9,7 @@ import {
   VariableRefresh,
   VariableWithOptions,
   QueryVariableModel,
+  BaseVariableModel,
 } from '@grafana/data';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
@@ -21,7 +22,7 @@ import { variableAdapters } from './adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from './constants';
 import { getVariablesState } from './state/selectors';
 import { KeyedVariableIdentifier, VariableIdentifier, VariablePayload } from './state/types';
-import { TransactionStatus, VariableModel } from './types';
+import { TransactionStatus } from './types';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -155,7 +156,7 @@ export function getLegacyQueryOptions(
   return queryOptions;
 }
 
-export function getVariableRefresh(variable: VariableModel): VariableRefresh {
+export function getVariableRefresh(variable: BaseVariableModel): VariableRefresh {
   if (variable?.type === 'custom') {
     return VariableRefresh.onDashboardLoad;
   }
@@ -271,7 +272,7 @@ export function toStateKey(key: string | null | undefined): string {
   return String(key);
 }
 
-export const toKeyedVariableIdentifier = (variable: VariableModel): KeyedVariableIdentifier => {
+export const toKeyedVariableIdentifier = (variable: BaseVariableModel): KeyedVariableIdentifier => {
   if (!variable.rootStateKey) {
     throw new Error(`rootStateKey not found for variable with id:${variable.id}`);
   }
@@ -280,9 +281,9 @@ export const toKeyedVariableIdentifier = (variable: VariableModel): KeyedVariabl
 };
 
 export function toVariablePayload<T = undefined>(identifier: VariableIdentifier, data?: T): VariablePayload<T>;
-export function toVariablePayload<T = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
+export function toVariablePayload<T = undefined>(model: BaseVariableModel, data?: T): VariablePayload<T>;
 export function toVariablePayload<T = undefined>(
-  obj: VariableIdentifier | VariableModel,
+  obj: VariableIdentifier | BaseVariableModel,
   data?: T
 ): VariablePayload<T> {
   return { type: obj.type, id: obj.id, data: data as T };

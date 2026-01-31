@@ -2,13 +2,12 @@ import { css } from '@emotion/css';
 import { ReactElement, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { BaseVariableModel, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { CollapsableSection, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
-import { VariableModel } from '../types';
 
 import { VariablesUnknownButton } from './VariablesUnknownButton';
 import { getUnknownsNetwork, UsagesToNetwork } from './utils';
@@ -16,7 +15,7 @@ import { getUnknownsNetwork, UsagesToNetwork } from './utils';
 export const SLOW_VARIABLES_EXPANSION_THRESHOLD = 1000;
 
 export interface VariablesUnknownTableProps {
-  variables: VariableModel[];
+  variables: BaseVariableModel[];
   dashboard: DashboardModel | null;
 }
 

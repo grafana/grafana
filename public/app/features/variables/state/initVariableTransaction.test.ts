@@ -1,4 +1,4 @@
-import { DataSourceRef, LoadingState } from '@grafana/data';
+import { BaseVariableModel, DataSourceRef, LoadingState } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
@@ -14,7 +14,7 @@ import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { adHocBuilder, constantBuilder, datasourceBuilder, queryBuilder } from '../shared/testing/builders';
-import { TransactionStatus, VariableModel } from '../types';
+import { TransactionStatus } from '../types';
 import { toVariablePayload } from '../utils';
 
 import { initVariablesTransaction } from './actions';
@@ -43,7 +43,7 @@ variableAdapters.setInit(() => [
   createDataSourceVariableAdapter(),
 ]);
 
-function getTestContext(variables?: VariableModel[]) {
+function getTestContext(variables?: BaseVariableModel[]) {
   const key = 'key';
   const constant = constantBuilder().withId('constant').withName('constant').build();
   const templating = { list: variables ?? [constant] };
