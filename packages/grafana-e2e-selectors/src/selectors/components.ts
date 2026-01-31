@@ -1288,6 +1288,9 @@ export const versionedComponents = {
     submit: {
       [MIN_GRAFANA_VERSION]: 'data-testid-import-dashboard-submit',
     },
+    floatGridItemsWarning: {
+      [MIN_GRAFANA_VERSION]: 'data-testid-import-dashboard-float-grid-items-warning',
+    },
   },
   PanelAlertTabContent: {
     content: {
