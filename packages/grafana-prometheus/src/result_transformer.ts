@@ -21,6 +21,7 @@ import {
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { ExemplarTraceIdDestination, PromMetric, PromQuery, PromValue } from './types';
+import { isValidLegacyName } from './utf8_support';
 
 // handles case-insensitive Inf, +Inf, -Inf (with optional "inity" suffix)
 const INFINITY_SAMPLE_REGEX = /^[+-]?inf(?:inity)?$/i;
@@ -349,7 +350,20 @@ export function getOriginalMetricName(labelData: { [key: string]: string }) {
   const labelPart = Object.entries(labelData)
     .map((label) => `${label[0]}="${label[1]}"`)
     .join(',');
-  return `${metricName}{${labelPart}}`;
+
+  // For legacy metric names, put the name outside the braces
+  // For UTF-8 metric names, quote the name and include it inside the braces
+  if (metricName === '') {
+    return `{${labelPart}}`;
+  }
+
+  if (isValidLegacyName(metricName)) {
+    return labelPart ? `${metricName}{${labelPart}}` : metricName;
+  }
+
+  // UTF-8 metric name - must be quoted and placed inside braces
+  const quotedName = `"${metricName}"`;
+  return labelPart ? `{${quotedName}, ${labelPart}}` : `{${quotedName}}`;
 }
 
 function mergeHeatmapFrames(frames: DataFrame[]): DataFrame[] {
