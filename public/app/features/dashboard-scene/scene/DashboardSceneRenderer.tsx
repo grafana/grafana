@@ -101,11 +101,9 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   const handleBeforeCapture = (before: BeforeCapture) => {
-    // Only rows need special orchestrator handling for cross-tab row drags.
-    if (before.type !== 'ROW') {
-      return;
-    }
-
+    // BeforeCapture does not include the draggable "type".
+    // Only rows need special orchestrator handling for cross-tab row drags, so we
+    // attempt a lookup and only act if the draggable is a RowItem.
     const row = sceneGraph.findByKey(model, before.draggableId);
     if (row instanceof RowItem) {
       model.state.layoutOrchestrator?.startRowDrag(row);
@@ -121,10 +119,9 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     }
 
     if (start.type === 'TAB') {
-      const tabsManager = sceneGraph.findByKey(model, start.source.droppableId);
-      if (tabsManager instanceof TabsLayoutManager) {
-        tabsManager.forceSelectTab(start.draggableId);
-      }
+      // Intentionally do not select the tab in the edit pane on drag start.
+      // Selecting triggers side pane updates / lazy loads, which can cause a noticeable hitch
+      // on the first drag. We focus the moved tab on drop (cross-group) instead.
     }
   };
 
