@@ -1,57 +1,118 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
+import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 
 import { LoadingState, GrafanaTheme2 } from '@grafana/data';
 import { ControlsLabel, SceneDataLayerProvider } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, InlineSwitch, useElementSelection, useStyles2 } from '@grafana/ui';
 
 export type Props = {
   layer: SceneDataLayerProvider;
   // Set to true if the control is rendered inside a drop-down menu
   inMenu?: boolean;
+  // Set to true when editing with new layouts enabled - shows hidden controls with strikethrough
+  isEditingNewLayouts?: boolean;
+  // Drag handle props from react-beautiful-dnd/hello-pangea for drag and drop reordering
+  dragHandleProps?: DraggableProvidedDragHandleProps | null;
 };
 
 // Renders the controls for a single data layer
-export function DataLayerControl({ layer, inMenu }: Props) {
+export function DataLayerControl({ layer, inMenu, isEditingNewLayouts, dragHandleProps }: Props) {
   const elementId = `data-layer-${layer.state.key}`;
-  const { data, isHidden } = layer.useState();
+  const { data, isHidden, isEnabled } = layer.useState();
+  const { isSelected, onSelect, isSelectable } = useElementSelection(layer.state.key);
   const showLoading = Boolean(data && data.state === LoadingState.Loading);
   const styles = useStyles2(getStyles);
+  const shouldShowHidden = isEditingNewLayouts && isHidden;
 
-  if (isHidden) {
+  if (isHidden && !isEditingNewLayouts) {
     return null;
   }
 
+  // When isHidden is true, layer.Component returns null, so we render our own switch
+  const switchComponent = shouldShowHidden ? (
+    <InlineSwitch
+      className={styles.switch}
+      id={elementId}
+      value={isEnabled}
+      onChange={() => layer.setState({ isEnabled: !isEnabled })}
+    />
+  ) : (
+    <layer.Component model={layer} />
+  );
+
+  const onPointerDown = (evt: React.PointerEvent) => {
+    if (!isSelectable) {
+      return;
+    }
+
+    // Ignore click if it's inside the switch control (has a label with for=elementId)
+    // The ControlsLabel has no htmlFor when selectable, so clicks on it won't match
+    if (evt.target instanceof Element) {
+      const forAttribute = evt.target.closest('label[for]')?.getAttribute('for');
+
+      if (forAttribute === elementId) {
+        evt.stopPropagation();
+        return;
+      }
+    }
+
+    if (isSelectable && onSelect) {
+      evt.stopPropagation();
+      onSelect(evt);
+    }
+  };
+
   if (inMenu) {
     return (
-      <div className={styles.menuContainer}>
-        <div className={styles.controlWrapper}>
-          <layer.Component model={layer} />
-        </div>
+      <div
+        className={cx(
+          styles.menuContainer,
+          shouldShowHidden && styles.hidden,
+          isSelected && 'dashboard-selected-element',
+          isSelectable && !isSelected && 'dashboard-selectable-element'
+        )}
+        onPointerDown={onPointerDown}
+      >
+        <div className={styles.controlWrapper}>{switchComponent}</div>
         <ControlsLabel
-          htmlFor={elementId}
+          htmlFor={isSelectable ? undefined : elementId}
           isLoading={showLoading}
           onCancel={() => layer.cancelQuery?.()}
           label={layer.state.name}
           description={layer.state.description}
           error={layer.state.data?.errors?.[0].message}
           layout={'vertical'}
-          className={styles.menuLabel}
+          className={cx(styles.menuLabel, isSelectable && styles.labelSelectable)}
         />
       </div>
     );
   }
 
   return (
-    <div className={styles.container}>
+    <div
+      className={cx(
+        styles.container,
+        shouldShowHidden && styles.hidden,
+        isSelected && 'dashboard-selected-element',
+        isSelectable && !isSelected && 'dashboard-selectable-element'
+      )}
+      onPointerDown={onPointerDown}
+    >
+      {dragHandleProps && (
+        <div {...dragHandleProps} className={styles.dragHandle}>
+          <Icon name="draggabledots" />
+        </div>
+      )}
       <ControlsLabel
-        htmlFor={elementId}
+        htmlFor={isSelectable ? undefined : elementId}
         isLoading={showLoading}
         onCancel={() => layer.cancelQuery?.()}
         label={layer.state.name}
         description={layer.state.description}
         error={layer.state.data?.errors?.[0].message}
+        className={cx(isSelectable && styles.labelSelectable)}
       />
-      <layer.Component model={layer} />
+      {switchComponent}
     </div>
   );
 }
@@ -59,6 +120,7 @@ export function DataLayerControl({ layer, inMenu }: Props) {
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     display: 'flex',
+    alignItems: 'center',
   }),
   menuContainer: css({
     display: 'flex',
@@ -82,5 +144,31 @@ const getStyles = (theme: GrafanaTheme2) => ({
   menuLabel: css({
     marginTop: 0,
     marginBottom: 0,
+  }),
+  labelSelectable: css({
+    cursor: 'pointer',
+  }),
+  hidden: css({
+    opacity: 0.6,
+    '&:hover': css({
+      opacity: 1,
+    }),
+    label: css({
+      textDecoration: 'line-through',
+    }),
+  }),
+  switch: css({
+    borderBottomLeftRadius: 'unset',
+    borderTopLeftRadius: 'unset',
+  }),
+  dragHandle: css({
+    cursor: 'grab',
+    display: 'flex',
+    alignItems: 'center',
+    marginRight: theme.spacing(0.5),
+    color: theme.colors.text.secondary,
+    '&:hover': {
+      color: theme.colors.text.primary,
+    },
   }),
 });
