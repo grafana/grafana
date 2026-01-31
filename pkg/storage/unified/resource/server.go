@@ -37,11 +37,7 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
 	SearchServer
-	resourcepb.ResourceStoreServer
-	resourcepb.BulkStoreServer
-	resourcepb.BlobStoreServer
-	resourcepb.QuotasServer
-	resourcepb.DiagnosticsServer
+	StorageServer
 	ResourceServerStopper
 }
 
@@ -50,6 +46,15 @@ type SearchServer interface {
 	LifecycleHooks
 	resourcepb.ResourceIndexServer
 	resourcepb.ManagedObjectIndexServer
+	resourcepb.DiagnosticsServer
+}
+
+// SearchServer implements the search-related gRPC services
+type StorageServer interface {
+	resourcepb.ResourceStoreServer
+	resourcepb.BulkStoreServer
+	resourcepb.BlobStoreServer
+	resourcepb.QuotasServer
 	resourcepb.DiagnosticsServer
 }
 

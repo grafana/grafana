@@ -74,7 +74,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	acService accesscontrol.Service,
 	accessClient authlib.AccessClient,
 	registerer prometheus.Registerer,
-	unified resource.ResourceClient,
+	searcher resource.SearchClient,
 	zanzanaClient zanzana.Client,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
@@ -86,14 +86,14 @@ func RegisterAPIService(cfg *setting.Cfg,
 		ac:                   accessControl,
 		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
-		searcher:             unified,
+		searcher:             searcher,
 		permissionStore:      reconcilers.NewZanzanaPermissionStore(zanzanaClient),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, searcher resource.SearchClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
 		features:               features,
 		accessClient:           ac,

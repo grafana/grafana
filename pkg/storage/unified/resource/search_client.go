@@ -42,12 +42,12 @@ type DualWriter interface {
 	Status(ctx context.Context, gr schema.GroupResource) (dualwrite.StorageStatus, error)
 }
 
-func NewSearchClient(dual DualWriter, gr schema.GroupResource, unifiedClient resourcepb.ResourceIndexClient,
+func NewSearchWrapperClient(dual DualWriter, gr schema.GroupResource, searchClient resourcepb.ResourceIndexClient,
 	legacyClient resourcepb.ResourceIndexClient, features featuremgmt.FeatureToggles) resourcepb.ResourceIndexClient {
 	return &searchWrapper{
 		dual:          dual,
 		groupResource: gr,
-		unifiedClient: unifiedClient,
+		searchClient:  searchClient,
 		legacyClient:  legacyClient,
 		features:      features,
 		logger:        log.New("unified-storage.search-client"),
@@ -58,10 +58,10 @@ type searchWrapper struct {
 	dual          DualWriter
 	groupResource schema.GroupResource
 
-	unifiedClient resourcepb.ResourceIndexClient
-	legacyClient  resourcepb.ResourceIndexClient
-	features      featuremgmt.FeatureToggles
-	logger        log.Logger
+	searchClient resourcepb.ResourceIndexClient
+	legacyClient resourcepb.ResourceIndexClient
+	features     featuremgmt.FeatureToggles
+	logger       log.Logger
 }
 
 // extractUIDs extracts unique UIDs from search response results
@@ -132,7 +132,7 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceSta
 		return nil, err
 	}
 	if unified {
-		client = s.unifiedClient
+		client = s.searchClient
 	}
 
 	makeBackgroundCall, err := shouldMakeBackgroundCall(ctx, s.features, s.dual, s.groupResource)
@@ -148,7 +148,7 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceSta
 		go func() {
 			ctxBgWithTimeout, cancel := context.WithTimeout(ctxBg, backgroundRequestTimeout)
 			defer cancel() // Ensure we clean up the context
-			_, bgErr := s.unifiedClient.GetStats(ctxBgWithTimeout, in, opts...)
+			_, bgErr := s.searchClient.GetStats(ctxBgWithTimeout, in, opts...)
 			if bgErr != nil {
 				s.logger.Error("Background GetStats call to unified failed", "error", bgErr, "timeout", backgroundRequestTimeout)
 			} else {
@@ -168,7 +168,7 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 		return nil, err
 	}
 	if unified {
-		client = s.unifiedClient
+		client = s.searchClient
 	}
 
 	makeBackgroundCall, err := shouldMakeBackgroundCall(ctx, s.features, s.dual, s.groupResource)
@@ -190,7 +190,7 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 		go func() {
 			ctxBgWithTimeout, cancel := context.WithTimeout(ctxBg, backgroundRequestTimeout)
 			defer cancel() // Ensure we clean up the context
-			unifiedResponse, bgErr := s.unifiedClient.Search(ctxBgWithTimeout, in, opts...)
+			unifiedResponse, bgErr := s.searchClient.Search(ctxBgWithTimeout, in, opts...)
 			if bgErr != nil {
 				s.logger.Error("Background Search call to unified failed", "error", bgErr, "timeout", backgroundRequestTimeout)
 			} else {
@@ -213,7 +213,7 @@ func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearc
 
 func (s *searchWrapper) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest,
 	opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
-	return s.unifiedClient.RebuildIndexes(ctx, in, opts...)
+	return s.searchClient.RebuildIndexes(ctx, in, opts...)
 }
 
 // compareSearchResults compares legacy and unified search results and logs/metrics the outcome

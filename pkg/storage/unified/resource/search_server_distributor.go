@@ -60,7 +60,7 @@ func ProvideSearchDistributorServer(cfg *setting.Cfg, features featuremgmt.Featu
 }
 
 type RingClient struct {
-	Client ResourceClient
+	Client SearchClient
 	grpc_health_v1.HealthClient
 	Conn *grpc.ClientConn
 }
@@ -99,7 +99,7 @@ var (
 func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := ds.tracing.Start(ctx, "distributor.Search")
 	defer span.End()
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace, "Search")
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (ds *distributorServer) Search(ctx context.Context, r *resourcepb.ResourceS
 func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	ctx, span := ds.tracing.Start(ctx, "distributor.GetStats")
 	defer span.End()
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "GetStats")
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +215,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
 	ctx, span := ds.tracing.Start(ctx, "distributor.CountManagedObjects")
 	defer span.End()
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "CountManagedObjects")
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +226,7 @@ func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourc
 func (ds *distributorServer) ListManagedObjects(ctx context.Context, r *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	ctx, span := ds.tracing.Start(ctx, "distributor.ListManagedObjects")
 	defer span.End()
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "ListManagedObjects")
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func (ds *distributorServer) ListManagedObjects(ctx context.Context, r *resource
 	return client.ListManagedObjects(ctx, r)
 }
 
-func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, namespace string, methodName string) (context.Context, ResourceClient, error) {
+func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, namespace string) (context.Context, SearchClient, error) {
 	ringHasher := fnv.New32a()
 	_, err := ringHasher.Write([]byte(namespace))
 	if err != nil {

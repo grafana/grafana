@@ -26,29 +26,29 @@ const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
 
 func ProvideService(cfg *setting.Cfg, db db.DB, dashSvc dashboards.DashboardService, folderSvc folder.Service,
-	orgSvc org.Service, unifiedStorage resource.ResourceClient, features featuremgmt.FeatureToggles) stats.Service {
+	orgSvc org.Service, searchClient resource.SearchClient, features featuremgmt.FeatureToggles) stats.Service {
 	namespacer := request.GetNamespaceMapper(cfg)
 	return &sqlStatsService{
-		cfg:            cfg,
-		db:             db,
-		folderSvc:      folderSvc,
-		namespacer:     namespacer,
-		unifiedStorage: unifiedStorage,
-		dashSvc:        dashSvc,
-		orgSvc:         orgSvc,
-		features:       features,
+		cfg:          cfg,
+		db:           db,
+		folderSvc:    folderSvc,
+		namespacer:   namespacer,
+		searchClient: searchClient,
+		dashSvc:      dashSvc,
+		orgSvc:       orgSvc,
+		features:     features,
 	}
 }
 
 type sqlStatsService struct {
-	db             db.DB
-	cfg            *setting.Cfg
-	dashSvc        dashboards.DashboardService
-	features       featuremgmt.FeatureToggles
-	folderSvc      folder.Service
-	orgSvc         org.Service
-	namespacer     request.NamespaceMapper
-	unifiedStorage resource.ResourceClient
+	db           db.DB
+	cfg          *setting.Cfg
+	dashSvc      dashboards.DashboardService
+	features     featuremgmt.FeatureToggles
+	folderSvc    folder.Service
+	orgSvc       org.Service
+	namespacer   request.NamespaceMapper
+	searchClient resource.SearchClient
 }
 
 func (ss *sqlStatsService) getDashboardCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
@@ -97,7 +97,7 @@ func (ss *sqlStatsService) getRepositoryCount(ctx context.Context, orgs []*org.O
 	total := int64(0)
 	for _, org := range orgs {
 		ctx, _ = identity.WithServiceIdentity(ctx, org.ID)
-		resp, err := ss.unifiedStorage.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		resp, err := ss.searchClient.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: ss.namespacer(org.ID),
 			Kinds: []string{
 				provisioningv1.GROUP + "/" + provisioningv1.RepositoryResourceInfo.GroupResource().Resource,

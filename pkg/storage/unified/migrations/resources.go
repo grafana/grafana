@@ -17,7 +17,7 @@ func registerMigrations(ctx context.Context,
 	cfg *setting.Cfg,
 	mg *sqlstoremigrator.Migrator,
 	migrator UnifiedMigrator,
-	client resource.ResourceClient,
+	client resource.SearchClient,
 	sqlStore db.DB,
 ) error {
 	for _, def := range Registry.All() {
@@ -41,7 +41,7 @@ func registerMigrations(ctx context.Context,
 
 func registerMigration(mg *sqlstoremigrator.Migrator,
 	migrator UnifiedMigrator,
-	client resource.ResourceClient,
+	client resource.SearchClient,
 	def MigrationDefinition,
 	opts ...ResourceMigrationOption,
 ) {

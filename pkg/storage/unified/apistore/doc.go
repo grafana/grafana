@@ -22,7 +22,7 @@
 //					                    ↙             ↘
 //		 (this package) apistore.Storage                LegacyStorage
 //		 			            ↓                           ↓
-//		 		  unified.ResourceClient                LegacyService (like folder.Service or dashboard.Service)
+//		 		  resource.StorageClient               LegacyService (like folder.Service or dashboard.Service)
 //					            ↓                           ↓
 //	     StorageServer (unified storage)                SQL Storage
 //

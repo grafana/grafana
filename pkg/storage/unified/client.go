@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
+
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -49,6 +50,7 @@ type Options struct {
 	Authzc       types.AccessClient
 	Docs         resource.DocumentBuilderSupplier
 	SecureValues secrets.InlineSecureValueSupport
+	Backend      resource.StorageBackend // unused until sql.ProvideStorageBackend is implemented
 }
 
 type clientMetrics struct {
@@ -56,11 +58,11 @@ type clientMetrics struct {
 	requestRetries  *prometheus.CounterVec
 }
 
-// This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(opts *Options,
+// ProvideUnifiedResourceClient creates all resource client to be used in the wire dependency tree.
+func ProvideUnifiedResourceClient(opts *Options,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
-) (resource.ResourceClient, error) {
+) (*resource.Client, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
 		StorageType:             options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
@@ -70,27 +72,30 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues)
-	if err == nil {
-		// Decide whether to disable SQL fallback stats per resource in Mode 5.
-		// Otherwise we would still try to query the legacy SQL database in Mode 5.
-		var disableDashboardsFallback, disableFoldersFallback bool
-		if opts.Cfg != nil {
-			// String are static here, so we don't need to import the packages.
-			foldersMode := opts.Cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
-			disableFoldersFallback = foldersMode == grafanarest.Mode5
-			dashboardsMode := opts.Cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
-			disableDashboardsFallback = dashboardsMode == grafanarest.Mode5
-		}
-
-		// Used to get the folder stats
-		client = federated.NewFederatedClient(
-			client, // The original
-			legacysql.NewDatabaseProvider(opts.DB),
-			disableDashboardsFallback,
-			disableFoldersFallback,
-		)
+	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues, opts.Backend)
+	if err != nil {
+		return nil, err
 	}
+	// Decide whether to disable SQL fallback stats per resource in Mode 5.
+	// Otherwise we would still try to query the legacy SQL database in Mode 5.
+	var disableDashboardsFallback, disableFoldersFallback bool
+	if opts.Cfg != nil {
+		// String are static here, so we don't need to import the packages.
+		foldersMode := opts.Cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode
+		disableFoldersFallback = foldersMode == grafanarest.Mode5
+		dashboardsMode := opts.Cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode
+		disableDashboardsFallback = dashboardsMode == grafanarest.Mode5
+	}
+
+	// Used to get the folder stats
+	federatedSearchClient := federated.NewFederatedSearchClient(
+		client.SearchClient, // The original
+		legacysql.NewDatabaseProvider(opts.DB),
+		disableDashboardsFallback,
+		disableFoldersFallback,
+	)
+
+	client.SearchClient = federatedSearchClient
 
 	return client, err
 }
@@ -106,7 +111,8 @@ func newClient(opts options.StorageOptions,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 	secure secrets.InlineSecureValueSupport,
-) (resource.ResourceClient, error) {
+	backend resource.StorageBackend,
+) (*resource.Client, error) {
 	ctx := context.Background()
 
 	switch opts.StorageType {
@@ -141,7 +147,6 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 		return resource.NewLocalResourceClient(server), nil
-
 	case options.StorageTypeUnifiedGrpc:
 		if opts.Address == "" {
 			return nil, fmt.Errorf("expecting address for storage_type: %s", opts.StorageType)
@@ -201,7 +206,7 @@ func newClient(opts options.StorageOptions,
 			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
 				return nil, fmt.Errorf("failed to start queue: %w", err)
 			}
-			scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
+			sched, err := scheduler.NewScheduler(queue, &scheduler.Config{
 				NumWorkers: cfg.QOSNumberWorker,
 				Logger:     cfg.Logger,
 			})
@@ -209,7 +214,7 @@ func newClient(opts options.StorageOptions,
 				return nil, fmt.Errorf("failed to create scheduler: %w", err)
 			}
 
-			err = services.StartAndAwaitRunning(ctx, scheduler)
+			err = services.StartAndAwaitRunning(ctx, sched)
 			if err != nil {
 				return nil, fmt.Errorf("failed to start scheduler: %w", err)
 			}

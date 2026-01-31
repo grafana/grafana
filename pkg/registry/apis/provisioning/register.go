@@ -116,7 +116,7 @@ type APIBuilder struct {
 	jobHistoryLoki    *jobs.LokiJobHistory
 	resourceLister    resources.ResourceLister
 	dashboardAccess   legacy.MigrationDashboardAccessor
-	unified           resource.ResourceClient
+	searchClient      resource.SearchClient
 	repoFactory       repository.Factory
 	connectionFactory connection.Factory
 	client            client.ProvisioningV0alpha1Interface
@@ -143,7 +143,7 @@ func NewAPIBuilder(
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
 	features featuremgmt.FeatureToggles,
-	unified resource.ResourceClient,
+	searchClient resource.SearchClient,
 	configProvider apiserver.RestConfigProvider,
 	dashboardAccess legacy.MigrationDashboardAccessor,
 	storageStatus dualwrite.Service,
@@ -169,7 +169,7 @@ func NewAPIBuilder(
 	}
 
 	parsers := resources.NewParserFactory(clients)
-	resourceLister := resources.NewResourceListerForMigrations(unified)
+	resourceLister := resources.NewResourceListerForMigrations(searchClient)
 
 	// Create access checker based on mode
 	var accessChecker auth.AccessChecker
@@ -192,7 +192,7 @@ func NewAPIBuilder(
 		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 		resourceLister:                      resourceLister,
 		dashboardAccess:                     dashboardAccess,
-		unified:                             unified,
+		searchClient:                        searchClient,
 		access:                              accessChecker,
 		accessWithAdmin:                     accessChecker.WithFallbackRole(identity.RoleAdmin),
 		accessWithEditor:                    accessChecker.WithFallbackRole(identity.RoleEditor),
@@ -262,7 +262,7 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
-	client resource.ResourceClient, // implements resource.RepositoryClient
+	client resource.SearchClient,
 	configProvider apiserver.RestConfigProvider,
 	access authlib.AccessClient,
 	dashboardAccess legacy.MigrationDashboardAccessor,
@@ -785,7 +785,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
 			go connInformer.Informer().Run(postStartHookCtx.Done())
 
-			usageMetricCollector := usage.MetricCollector(b.tracer, b.repoLister.List, b.unified)
+			usageMetricCollector := usage.MetricCollector(b.tracer, b.repoLister.List, b.searchClient)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			metrics := jobs.RegisterJobMetrics(b.registry)

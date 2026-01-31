@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -765,19 +766,45 @@ var (
 )
 
 type mockSearchClient struct {
+	mock.Mock
+	resourcepb.ResourceIndexClient
+	resourcepb.ManagedObjectIndexClient
+	folders []folders.Folder
+
 	stats    *resourcepb.ResourceStatsResponse
 	statsErr error
-
-	folders []folders.Folder
 }
 
-// GetStats implements resourcepb.ResourceIndexClient.
+func newMockSearchClient(t *testing.T) *mockSearchClient {
+	t.Helper()
+	searchClient := &mockSearchClient{}
+	t.Cleanup(func() {
+		searchClient.AssertExpectations(t)
+	})
+	return searchClient
+}
+
 func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	if m.stats == nil && m.statsErr == nil {
+		ret := m.Called(callArgs(ctx, in, opts)...)
+		var resp *resourcepb.ResourceStatsResponse
+		if ret.Get(0) != nil {
+			resp = ret.Get(0).(*resourcepb.ResourceStatsResponse)
+		}
+		return resp, ret.Error(1)
+	}
 	return m.stats, m.statsErr
 }
 
-// Search implements resourcepb.ResourceIndexClient.
 func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if len(m.folders) == 0 {
+		ret := m.Called(callArgs(ctx, req, opts)...)
+		var resp *resourcepb.ResourceSearchResponse
+		if ret.Get(0) != nil {
+			resp = ret.Get(0).(*resourcepb.ResourceSearchResponse)
+		}
+		return resp, ret.Error(1)
+	}
 	// get the list of parents from the search request
 	parentSet := make(map[string]bool)
 	if req.Options != nil && req.Options.Fields != nil {
@@ -810,7 +837,37 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 	}, nil
 }
 
-// RebuildIndexes implements resourcepb.ResourceIndexClient.
 func (m *mockSearchClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
-	return nil, fmt.Errorf("not implemented")
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.RebuildIndexesResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.RebuildIndexesResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func (m *mockSearchClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.CountManagedObjectsResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.CountManagedObjectsResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func (m *mockSearchClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.ListManagedObjectsResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.ListManagedObjectsResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func callArgs(ctx context.Context, in interface{}, opts []grpc.CallOption) []interface{} {
+	args := []interface{}{ctx, in}
+	for _, opt := range opts {
+		args = append(args, opt)
+	}
+	return args
 }

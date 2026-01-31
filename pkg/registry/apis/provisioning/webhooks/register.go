@@ -62,7 +62,7 @@ func isPublicURL(url string) bool {
 func ProvideWebhooksWithImages(
 	cfg *setting.Cfg,
 	renderer rendering.Service,
-	blobstore resource.ResourceClient,
+	blobstore resource.StorageClient,
 	configProvider apiserver.RestConfigProvider,
 	registry prometheus.Registerer,
 ) *WebhookExtraBuilder {

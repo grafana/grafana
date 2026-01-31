@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -27,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -52,19 +52,19 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 
 	folderService := &foldertest.FakeService{}
 	folderService.ExpectedFolders = []*folder.Folder{{ID: 1}, {ID: 2}, {ID: 3}}
-	unifiedStorage := new(resource.MockResourceClient)
+	unifiedStorage := newMockSearchClient(t)
 	unifiedStorage.On("GetStats", mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
 		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 5}},
 	}, nil)
 
 	statsService := &sqlStatsService{
-		db:             db,
-		dashSvc:        dashSvc,
-		orgSvc:         orgSvc,
-		folderSvc:      folderService,
-		features:       featuremgmt.WithFeatures(),
-		namespacer:     request.GetNamespaceMapper(cfg),
-		unifiedStorage: unifiedStorage,
+		db:           db,
+		dashSvc:      dashSvc,
+		orgSvc:       orgSvc,
+		folderSvc:    folderService,
+		features:     featuremgmt.WithFeatures(),
+		namespacer:   request.GetNamespaceMapper(cfg),
+		searchClient: unifiedStorage,
 	}
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {
@@ -127,6 +127,83 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(15), count)
 	})
+}
+
+type mockSearchClient struct {
+	mock.Mock
+	resourcepb.ResourceIndexClient
+	resourcepb.ManagedObjectIndexClient
+}
+
+func newMockSearchClient(t *testing.T) *mockSearchClient {
+	t.Helper()
+	searchClient := &mockSearchClient{}
+	t.Cleanup(func() {
+		searchClient.AssertExpectations(t)
+	})
+	return searchClient
+}
+
+func (m *mockSearchClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.HealthCheckResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.HealthCheckResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func (m *mockSearchClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.ResourceSearchResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.ResourceSearchResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.ResourceStatsResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.ResourceStatsResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func (m *mockSearchClient) RebuildIndexes(ctx context.Context, in *resourcepb.RebuildIndexesRequest, opts ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.RebuildIndexesResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.RebuildIndexesResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func (m *mockSearchClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.CountManagedObjectsResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.CountManagedObjectsResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func (m *mockSearchClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.ListManagedObjectsResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.ListManagedObjectsResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func callArgs(ctx context.Context, in interface{}, opts []grpc.CallOption) []interface{} {
+	args := []interface{}{ctx, in}
+	for _, opt := range opts {
+		args = append(args, opt)
+	}
+	return args
 }
 
 func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) org.Service {

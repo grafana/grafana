@@ -131,7 +131,7 @@ func setupTestSearchWrapper(t *testing.T, dual *MockDualWriter, unifiedClient, l
 	return &searchWrapper{
 		dual:          dual,
 		groupResource: gr,
-		unifiedClient: unifiedClient,
+		searchClient:  unifiedClient,
 		legacyClient:  legacyClient,
 		features:      features,
 		logger:        log.NewNopLogger(),
@@ -144,19 +144,19 @@ func TestSearchClient_NewSearchClient(t *testing.T) {
 	t.Run("always returns wrapper", func(t *testing.T) {
 		dual := &MockDualWriter{} // Create fresh mock for this test
 
-		client := NewSearchClient(dual, gr, unifiedClient, legacyClient, features)
+		client := NewSearchWrapperClient(dual, gr, unifiedClient, legacyClient, features)
 
 		wrapper, ok := client.(*searchWrapper)
 		require.True(t, ok)
 		assert.Equal(t, dual, wrapper.dual)
 		assert.Equal(t, gr, wrapper.groupResource)
-		assert.Equal(t, unifiedClient, wrapper.unifiedClient)
+		assert.Equal(t, unifiedClient, wrapper.searchClient)
 		assert.Equal(t, legacyClient, wrapper.legacyClient)
 	})
 }
 
 func TestSearchWrapper_Search(t *testing.T) {
-	// gr, unifiedClient, legacyClient, features := setupTestSearchClient(t)
+	// gr, searchClient, legacyClient, features := setupTestSearchClient(t)
 	req := &resourcepb.ResourceSearchRequest{Query: "test"}
 	expectedResponse := &resourcepb.ResourceSearchResponse{TotalHits: 0}
 
@@ -384,7 +384,7 @@ func TestSearchWrapper_Search(t *testing.T) {
 }
 
 func TestSearchWrapper_GetStats(t *testing.T) {
-	// gr, unifiedClient, legacyClient, features := setupTestSearchClient(t)
+	// gr, searchClient, legacyClient, features := setupTestSearchClient(t)
 	req := &resourcepb.ResourceStatsRequest{Namespace: "test"}
 	expectedResponse := &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 100}}}
 

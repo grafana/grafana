@@ -46,10 +46,11 @@ func TestUnifiedStorageClient(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				nil,
 			)
 			require.NoError(t, err)
 
-			testCallAllMethods(client)
+			testCallAllMethods(client, client)
 			// every method should hit resource server exactly once
 			for method, count := range resourceServer.Calls {
 				require.Equal(t, 1, count, "method was called more than once: "+method)
@@ -80,10 +81,11 @@ func TestUnifiedStorageClient(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				nil,
 			)
 			require.NoError(t, err)
 
-			testCallAllMethods(client)
+			testCallAllMethods(client, client)
 			// only resource store methods in this case
 			for method, count := range resourceServer.Calls {
 				require.Equal(t, 1, count, "method was called more than once: "+method)
@@ -127,16 +129,16 @@ func TestNewSearchClient(t *testing.T) {
 	})
 }
 
-func testCallAllMethods(client resource.ResourceClient) {
-	_, _ = client.Read(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ReadRequest{})
-	_, _ = client.Create(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.CreateRequest{})
-	_, _ = client.Delete(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.DeleteRequest{})
-	_, _ = client.Update(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.UpdateRequest{})
-	_, _ = client.List(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListRequest{})
-	_, _ = client.GetStats(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ResourceStatsRequest{})
-	_, _ = client.Search(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ResourceSearchRequest{})
-	_, _ = client.CountManagedObjects(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.CountManagedObjectsRequest{})
-	_, _ = client.ListManagedObjects(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListManagedObjectsRequest{})
+func testCallAllMethods(storageClient resource.StorageClient, searchClient resource.SearchClient) {
+	_, _ = storageClient.Read(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ReadRequest{})
+	_, _ = storageClient.Create(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.CreateRequest{})
+	_, _ = storageClient.Delete(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.DeleteRequest{})
+	_, _ = storageClient.Update(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.UpdateRequest{})
+	_, _ = storageClient.List(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListRequest{})
+	_, _ = searchClient.GetStats(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ResourceStatsRequest{})
+	_, _ = searchClient.Search(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ResourceSearchRequest{})
+	_, _ = searchClient.CountManagedObjects(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.CountManagedObjectsRequest{})
+	_, _ = searchClient.ListManagedObjects(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListManagedObjectsRequest{})
 }
 
 func createTestGrpcServer(t *testing.T, address string) *testServer {

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -35,7 +36,7 @@ func TestIntegrationConcurrentUsersMetrics(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	unifiedStorage := new(resource.MockResourceClient)
+	unifiedStorage := new(mockSearchClient)
 	unifiedStorage.On("GetStats", mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
 		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 0}},
 	}, nil)
@@ -59,7 +60,7 @@ func TestIntegrationConcurrentUsersStats(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	unifiedStorage := new(resource.MockResourceClient)
+	unifiedStorage := new(mockSearchClient)
 	unifiedStorage.On("GetStats", mock.Anything, mock.Anything).Return(&resourcepb.ResourceStatsResponse{
 		Stats: []*resourcepb.ResourceStatsResponse_Stats{{Count: 0}},
 	}, nil)
@@ -161,4 +162,26 @@ type userAuthToken struct {
 	RotatedAt     int64
 	CreatedAt     int64
 	UpdatedAt     int64
+}
+
+type mockSearchClient struct {
+	mock.Mock
+	resource.SearchClient
+}
+
+func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	ret := m.Called(callArgs(ctx, in, opts)...)
+	var resp *resourcepb.ResourceStatsResponse
+	if ret.Get(0) != nil {
+		resp = ret.Get(0).(*resourcepb.ResourceStatsResponse)
+	}
+	return resp, ret.Error(1)
+}
+
+func callArgs(ctx context.Context, in interface{}, opts []grpc.CallOption) []interface{} {
+	args := []interface{}{ctx, in}
+	for _, opt := range opts {
+		args = append(args, opt)
+	}
+	return args
 }

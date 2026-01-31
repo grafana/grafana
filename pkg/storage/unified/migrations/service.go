@@ -24,7 +24,7 @@ type UnifiedStorageMigrationServiceImpl struct {
 	cfg      *setting.Cfg
 	sqlStore db.DB
 	kv       kvstore.KVStore
-	client   resource.ResourceClient
+	client   resource.SearchClient
 }
 
 var _ contract.UnifiedStorageMigrationService = (*UnifiedStorageMigrationServiceImpl)(nil)
@@ -35,7 +35,7 @@ func ProvideUnifiedStorageMigrationService(
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	kv kvstore.KVStore,
-	client resource.ResourceClient,
+	client resource.SearchClient,
 ) contract.UnifiedStorageMigrationService {
 	return &UnifiedStorageMigrationServiceImpl{
 		migrator: migrator,
@@ -64,7 +64,7 @@ func RegisterMigrations(
 	migrator UnifiedMigrator,
 	cfg *setting.Cfg,
 	sqlStore db.DB,
-	client resource.ResourceClient,
+	client resource.SearchClient,
 ) error {
 	ctx, span := tracer.Start(ctx, "storage.unified.RegisterMigrations")
 	defer span.End()
