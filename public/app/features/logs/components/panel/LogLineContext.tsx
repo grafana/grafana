@@ -20,6 +20,7 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
+  shallowCompare,
   store,
   TimeRange,
 } from '@grafana/data';
@@ -37,7 +38,7 @@ import { LoadingIndicator } from '../LoadingIndicator';
 
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogLineMenuCustomItem } from './LogLineMenu';
-import { LogList } from './LogList';
+import { LogList, LogListOptions } from './LogList';
 import { LogListModel } from './processing';
 import { ScrollToLogsEvent } from './virtualization';
 
@@ -100,6 +101,7 @@ export const LogLineContext = memo(
       : DEFAULT_TIME_WINDOW.toString();
     const [timeWindow, setTimeWindow] = useState(parseInt(defaultTimeWindow, 10));
     const [displayedFields, setDisplayedFields] = useState<string[]>(displayedFieldsProp);
+    const [defaultDisplayedFields, setDefaultDisplayedFields] = useState<string[]>([]);
 
     const eventBusRef = useRef(new EventBusSrv());
 
@@ -343,6 +345,12 @@ export const LogLineContext = memo(
       }
     }, [log.datasourceUid]);
 
+    const onLogOptionsChange = useCallback((option: LogListOptions, value: string | string[] | boolean) => {
+      if (option === 'defaultDisplayedFields' && Array.isArray(value)) {
+        setDefaultDisplayedFields(value);
+      }
+    }, []);
+
     return (
       <Modal
         isOpen={open}
@@ -386,7 +394,8 @@ export const LogLineContext = memo(
                 />
               </Stack>
             )}
-            {displayedFields.length > 0 && (
+            {/** Show button to reset if there are displayed fields and they are different than the defaults */}
+            {displayedFields.length > 0 && shallowCompare(displayedFields, defaultDisplayedFields) === false && (
               <Button
                 variant="secondary"
                 onClick={resetFields}
@@ -444,6 +453,7 @@ export const LogLineContext = memo(
                 loading={aboveState === LoadingState.Loading || belowState === LoadingState.Loading}
                 permalinkedLogId={log.uid}
                 onPermalinkClick={onPermalinkClick}
+                onLogOptionsChange={onLogOptionsChange}
                 onClickHideField={hideField}
                 onClickShowField={showField}
                 setDisplayedFields={setDisplayedFields}
