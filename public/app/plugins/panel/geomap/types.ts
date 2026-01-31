@@ -51,6 +51,7 @@ export interface MapLayerState<TConfig = unknown> extends LayerElement {
   onChange: (cfg: MapLayerOptions<TConfig>) => void;
   isBasemap?: boolean;
   mouseEvents: Subject<FeatureLike | undefined>;
+  originalAttribution?: any; // Store original attribution to restore when showing optional attributions
 }
 
 export {
