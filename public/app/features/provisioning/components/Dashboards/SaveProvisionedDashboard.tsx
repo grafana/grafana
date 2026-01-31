@@ -14,7 +14,7 @@ export interface SaveProvisionedDashboardProps {
 }
 
 export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAsCopy }: SaveProvisionedDashboardProps) {
-  const { isNew, defaultValues, workflowOptions, readOnly, repository } = useProvisionedDashboardData(
+  const { isNew, defaultValues, canPushToConfiguredBranch, readOnly, repository } = useProvisionedDashboardData(
     dashboard,
     saveAsCopy
   );
@@ -31,7 +31,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
       isNew={isNew || !!saveAsCopy}
       defaultValues={defaultValues}
       repository={repository}
-      workflowOptions={workflowOptions}
+      canPushToConfiguredBranch={canPushToConfiguredBranch}
       readOnly={readOnly}
       saveAsCopy={saveAsCopy}
     />

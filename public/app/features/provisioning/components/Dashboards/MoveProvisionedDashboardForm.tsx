@@ -33,7 +33,7 @@ export interface Props {
   defaultValues: ProvisionedDashboardFormData;
   readOnly: boolean;
   isNew?: boolean;
-  workflowOptions: Array<{ label: string; value: string }>;
+  canPushToConfiguredBranch: boolean;
   loadedFromRef?: string;
   targetFolderUID?: string;
   targetFolderTitle?: string;
@@ -48,7 +48,7 @@ export function MoveProvisionedDashboardForm({
   loadedFromRef,
   readOnly,
   isNew,
-  workflowOptions,
+  canPushToConfiguredBranch,
   targetFolderUID,
   targetFolderTitle,
   repository,
@@ -307,7 +307,7 @@ export function MoveProvisionedDashboardForm({
                 isNew={isNew}
                 readOnly={readOnly}
                 workflow={workflow}
-                workflowOptions={workflowOptions}
+                canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
               />
 

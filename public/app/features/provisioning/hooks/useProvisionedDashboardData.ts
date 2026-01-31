@@ -8,7 +8,7 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { DashboardMeta } from 'app/types/dashboard';
 
-import { getDefaultWorkflow, getWorkflowOptions } from '../components/defaults';
+import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../components/defaults';
 import { generatePath } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
 import { ProvisionedDashboardFormData } from '../types/form';
@@ -80,9 +80,9 @@ export interface ProvisionedDashboardData {
   defaultValues: ProvisionedDashboardFormData | null;
   repository?: RepositoryView;
   loadedFromRef?: string;
-  workflowOptions: Array<{ label: string; value: string }>;
   isNew: boolean;
   readOnly: boolean;
+  canPushToConfiguredBranch: boolean;
 }
 
 /**
@@ -108,25 +108,25 @@ export function useProvisionedDashboardData(dashboard: DashboardScene, saveAsCop
     return {
       isReady: false,
       isLoading,
+      canPushToConfiguredBranch: false,
       setIsLoading,
       defaultValues: null,
       repository: undefined,
       loadedFromRef,
-      workflowOptions: [],
       isNew: false,
       readOnly: true,
     };
   }
 
   const { values, isNew, repository } = defaultValuesResult;
-  const workflowOptions = getWorkflowOptions(repository);
+  const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
 
   return {
     isReady: true,
     defaultValues: values,
     repository,
     loadedFromRef,
-    workflowOptions,
+    canPushToConfiguredBranch,
     isNew,
     readOnly: getIsReadOnlyRepo(repository),
     isLoading,
