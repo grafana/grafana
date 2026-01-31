@@ -41,6 +41,8 @@ const logsPanel = async () => await import(/* webpackChunkName: "logsPanel" */ '
 const newsPanel = async () => await import(/* webpackChunkName: "newsPanel" */ 'app/plugins/panel/news/module');
 const pieChartPanel = async () =>
   await import(/* webpackChunkName: "pieChartPanel" */ 'app/plugins/panel/piechart/module');
+const rawPrometheusPanel = async () =>
+  await import(/* webpackChunkName: "rawPrometheusPanel" */ 'app/plugins/panel/raw-prometheus/module');
 const statPanel = async () => await import(/* webpackChunkName: "statPanel" */ 'app/plugins/panel/stat/module');
 const stateTimelinePanel = async () =>
   await import(/* webpackChunkName: "stateTimelinePanel" */ 'app/plugins/panel/state-timeline/module');
@@ -97,6 +99,7 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/gettingstarted': gettingStartedPanel,
   'core:plugin/gauge': gaugePanel,
   'core:plugin/piechart': pieChartPanel,
+  'core:plugin/raw-prometheus': rawPrometheusPanel,
   'core:plugin/bargauge': barGaugePanel,
   'core:plugin/barchart': barChartPanel,
   'core:plugin/logs': logsPanel,
