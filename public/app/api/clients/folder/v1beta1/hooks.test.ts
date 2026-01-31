@@ -271,6 +271,14 @@ describe.each([
   });
 
   describe('useUpdateFolder', () => {
+    // TODO: Remove manual mocking and move this to MSW handlers instead
+    const mockUpdateFolder = jest.fn(() => ({ error: undefined, result: { isSuccess: true } }));
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      (useUpdateFolderMutation as jest.Mock).mockReturnValue([mockUpdateFolder, { isSuccess: true }]);
+    });
+
     it('updates a folder', async () => {
       const { user } = await setupUpdateFolder(folderA_folderA.item.uid);
 
