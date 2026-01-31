@@ -312,3 +312,70 @@ func TestBuildConditionPatchOpsFromExisting_Connection(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildSpecCondition(t *testing.T) {
+	tests := []struct {
+		name           string
+		fieldErrors    []provisioning.ErrorDetails
+		expectedStatus metav1.ConditionStatus
+		expectedReason string
+		expectedMsg    string
+	}{
+		{
+			name:           "no errors creates Spec=True condition",
+			fieldErrors:    nil,
+			expectedStatus: metav1.ConditionTrue,
+			expectedReason: provisioning.ReasonSpecValid,
+			expectedMsg:    "Spec is valid",
+		},
+		{
+			name:           "empty errors creates Spec=True condition",
+			fieldErrors:    []provisioning.ErrorDetails{},
+			expectedStatus: metav1.ConditionTrue,
+			expectedReason: provisioning.ReasonSpecValid,
+			expectedMsg:    "Spec is valid",
+		},
+		{
+			name: "single error creates Spec=False condition",
+			fieldErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueRequired,
+					Field:  "spec.url",
+					Detail: "URL is required",
+				},
+			},
+			expectedStatus: metav1.ConditionFalse,
+			expectedReason: provisioning.ReasonSpecInvalid,
+			expectedMsg:    "Spec has 1 validation error",
+		},
+		{
+			name: "multiple errors creates Spec=False condition",
+			fieldErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeFieldValueRequired,
+					Field:  "spec.url",
+					Detail: "URL is required",
+				},
+				{
+					Type:   metav1.CauseTypeFieldValueRequired,
+					Field:  "spec.github.appID",
+					Detail: "App ID is required",
+				},
+			},
+			expectedStatus: metav1.ConditionFalse,
+			expectedReason: provisioning.ReasonSpecInvalid,
+			expectedMsg:    "Spec has multiple validation errors",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			condition := buildSpecCondition(tt.fieldErrors)
+
+			assert.Equal(t, provisioning.ConditionTypeSpec, condition.Type)
+			assert.Equal(t, tt.expectedStatus, condition.Status)
+			assert.Equal(t, tt.expectedReason, condition.Reason)
+			assert.Equal(t, tt.expectedMsg, condition.Message)
+		})
+	}
+}
