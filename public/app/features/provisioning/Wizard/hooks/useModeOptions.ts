@@ -88,7 +88,7 @@ export function useModeOptions(repoName: string, settings?: RepositoryViewList) 
         ),
         subtitle: t(
           'provisioning.mode-options.folder.subtitle',
-          'Use this option to sync external resources into a new folder without affecting the rest of your instance.'
+          'Use this option to sync external resources with a new provisioned folder in Grafana without affecting the rest of your instance.'
         ),
         disabled: false,
       },
