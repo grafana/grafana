@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -159,12 +158,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 
 	annotationPermissions := &dashboardsV1.AnnotationPermission{}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Features.IsEnabled(ctx, featuremgmt.FlagAnnotationPermissionUpdate) {
-		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
-	} else {
-		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
-	}
+	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
 	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
 	meta := dtos.DashboardMeta{

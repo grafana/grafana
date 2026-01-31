@@ -103,7 +103,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
-					CanAccessDashAnnotations: true,
 				},
 			)
 			require.NoError(t, err)
@@ -130,7 +129,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
-					CanAccessDashAnnotations: true,
 				},
 			)
 			require.NoError(t, err)
@@ -160,7 +158,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
-					CanAccessDashAnnotations: true,
 				},
 			)
 			require.ErrorIs(t, err, ErrLokiStoreNotFound)
@@ -180,7 +177,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
-					CanAccessDashAnnotations: true,
 				},
 			)
 			require.NoError(t, err)
@@ -206,7 +202,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
-					CanAccessDashAnnotations: true,
 				},
 			)
 			require.NoError(t, err)
@@ -230,7 +225,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
-					CanAccessDashAnnotations: true,
 				},
 			)
 			require.NoError(t, err)
@@ -256,7 +250,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
-					CanAccessDashAnnotations: true,
 				},
 			)
 			require.NoError(t, err)
@@ -286,7 +279,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
-					CanAccessDashAnnotations: true,
 				},
 			)
 			require.NoError(t, err)
@@ -315,7 +307,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
-					CanAccessDashAnnotations: true,
 				},
 			)
 			require.NoError(t, err)
@@ -349,7 +340,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 					Dashboards: map[string]int64{
 						dashboard1.UID: dashboard1.ID,
 					},
-					CanAccessDashAnnotations: true,
 				},
 			)
 			require.NoError(t, err)
@@ -385,7 +375,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				Dashboards: map[string]int64{
 					dashboard1.UID: dashboard1.ID,
 				},
-				CanAccessDashAnnotations: true,
 			})
 			require.Len(t, items, numTransitions)
 
@@ -430,7 +419,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 				Dashboards: map[string]int64{
 					dashboard1.UID: dashboard1.ID,
 				},
-				CanAccessDashAnnotations: true,
 			})
 			require.Len(t, items, numTransitions)
 
@@ -486,7 +474,6 @@ func TestHasAccess(t *testing.T) {
 
 	t.Run("should return false when scope is dashboard and dashboard UID is not in resources", func(t *testing.T) {
 		require.False(t, hasAccess(entry, annotation_ac.AccessResources{
-			CanAccessDashAnnotations: true,
 			Dashboards: map[string]int64{
 				"other-dashboard-uid": 1,
 			},
@@ -501,7 +488,6 @@ func TestHasAccess(t *testing.T) {
 
 	t.Run("should return true when scope is dashboard and dashboard UID is in resources", func(t *testing.T) {
 		require.True(t, hasAccess(entry, annotation_ac.AccessResources{
-			CanAccessDashAnnotations: true,
 			Dashboards: map[string]int64{
 				"dashboard-uid": 1,
 			},
