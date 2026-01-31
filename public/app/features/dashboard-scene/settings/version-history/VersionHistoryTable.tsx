@@ -4,9 +4,8 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
+import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-
-import { DecoratedRevisionModel } from '../VersionsEditView';
 
 import { RevertDashboardModal } from './RevertDashboardModal';
 
@@ -83,7 +82,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
                             version: version.version,
                             index: idx,
                             confirm: false,
-                            version_date: version.created,
+                            version_date: new Date(version.created),
                           });
                         }}
                       >
