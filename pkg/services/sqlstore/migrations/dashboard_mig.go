@@ -327,8 +327,6 @@ func (m *FixDashboardVariableQuotesMigration) SQL(dialect Dialect) string {
 
 func (m *FixDashboardVariableQuotesMigration) Exec(sess *xorm.Session, mg *Migrator) error {
 	return RunFixDashboardVariableQuotesMigration(sess, mg)
-	// fmt.Println("FixDashboardVariableQuotesMigration will run")
-	// return nil
 }
 
 // Dashboard structures for JSON unmarshaling
