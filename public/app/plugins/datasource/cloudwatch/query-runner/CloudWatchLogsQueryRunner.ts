@@ -50,6 +50,7 @@ import {
   StartQueryRequest,
 } from '../types';
 import { addDataLinksToLogsResponse } from '../utils/datalinks';
+import { LOG_GROUP_ACCOUNT_MAX, LOG_GROUP_PREFIX_MAX } from '../utils/logGroupsConstants';
 import { runWithRetry } from '../utils/logsRetry';
 import { increasingInterval } from '../utils/rxjs/increasingInterval';
 import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from '../utils/templateVariableUtils';
@@ -96,7 +97,8 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const validLogQueries = logQueries.filter(this.filterQuery);
 
     const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => {
-      const { expression, logGroups, logGroupNames } = this.interpolateLogsQueryVariables(target, options.scopedVars);
+      const { expression, logGroups, logGroupNames, logGroupPrefixes, selectedAccountIds } =
+        this.interpolateLogsQueryVariables(target, options.scopedVars);
       return {
         refId: target.refId,
         region: this.templateSrv.replace(this.getActualRegion(target.region)),
@@ -105,6 +107,10 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         logGroupNames,
         queryLanguage: target.queryLanguage,
         logsMode: target.logsMode ?? LogsMode.Insights,
+        logsQueryScope: target.logsQueryScope,
+        logGroupPrefixes,
+        logGroupClass: target.logGroupClass,
+        selectedAccountIds,
       };
     });
 
@@ -244,7 +250,10 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   interpolateLogsQueryVariables(
     query: CloudWatchLogsQuery,
     scopedVars: ScopedVars
-  ): Pick<CloudWatchLogsQuery, 'expression' | 'logGroups' | 'logGroupNames'> {
+  ): Pick<
+    CloudWatchLogsQuery,
+    'expression' | 'logGroups' | 'logGroupNames' | 'logGroupPrefixes' | 'selectedAccountIds'
+  > {
     const interpolatedLogGroupArns = interpolateStringArrayUsingSingleOrMultiValuedVariable(
       this.templateSrv,
       (query.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.arn),
@@ -273,6 +282,31 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     // Otherwise the StartLogQuery API will return a permission error
     const logGroups = uniqBy(interpolatedLogGroups, 'arn');
     const logGroupNames = uniq(interpolatedLegacyLogGroupNames);
+
+    const logGroupPrefixes = query.logGroupPrefixes
+      ? uniq(
+          interpolateStringArrayUsingSingleOrMultiValuedVariable(this.templateSrv, query.logGroupPrefixes, scopedVars)
+        )
+      : undefined;
+
+    if (logGroupPrefixes && logGroupPrefixes.length > LOG_GROUP_PREFIX_MAX) {
+      throw new Error(`Expanded prefix count (${logGroupPrefixes.length}) exceeds maximum of ${LOG_GROUP_PREFIX_MAX}`);
+    }
+
+    // Filter out "all" which is a special UI value meaning "don't filter by account"
+    const expandedAccountIds = query.selectedAccountIds
+      ? uniq(
+          interpolateStringArrayUsingSingleOrMultiValuedVariable(this.templateSrv, query.selectedAccountIds, scopedVars)
+        ).filter((id) => id !== 'all')
+      : undefined;
+    // Return undefined if empty after filtering (means "all accounts")
+    const selectedAccountIds = expandedAccountIds?.length ? expandedAccountIds : undefined;
+
+    if (selectedAccountIds && selectedAccountIds.length > LOG_GROUP_ACCOUNT_MAX) {
+      throw new Error(
+        `Expanded account count (${selectedAccountIds.length}) exceeds maximum of ${LOG_GROUP_ACCOUNT_MAX}`
+      );
+    }
 
     const logsSQLCustomerFormatter = (value: unknown, model: Partial<CustomFormatterVariable>) => {
       if (
@@ -304,6 +338,8 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       logGroups,
       logGroupNames,
       expression,
+      logGroupPrefixes,
+      selectedAccountIds,
     };
   }
 
@@ -520,10 +556,26 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const hasMissingLegacyLogGroupNames = !query.logGroupNames?.length;
     const hasMissingLogGroups = !query.logGroups?.length;
     const hasMissingQueryString = !query.expression?.length;
+    const hasMissingPrefixes = !query.logGroupPrefixes?.length;
 
-    // log groups are not mandatory if language is SQL and LogsMode is not Insights
-    const isInvalidCWLIQuery = query.queryLanguage !== 'SQL' && hasMissingLogGroups && hasMissingLegacyLogGroupNames;
-    if (isInvalidCWLIQuery || hasMissingQueryString) {
+    const isCWLIQuery = query.queryLanguage === 'CWLI' || query.queryLanguage === undefined;
+
+    // Log groups are not mandatory if:
+    // - language is SQL
+    // - language is CWLI and scope is 'namePrefix' (requires at least one prefix)
+    // - language is CWLI and scope is 'allLogGroups' (no log groups needed)
+    const usesNamePrefixScope = isCWLIQuery && query.logsQueryScope === 'namePrefix' && !hasMissingPrefixes;
+    const usesAllLogGroupsScope = isCWLIQuery && query.logsQueryScope === 'allLogGroups';
+    const isSQLQuery = query.queryLanguage === 'SQL';
+
+    const hasValidLogGroupSelection =
+      !hasMissingLogGroups ||
+      !hasMissingLegacyLogGroupNames ||
+      usesNamePrefixScope ||
+      usesAllLogGroupsScope ||
+      isSQLQuery;
+
+    if (!hasValidLogGroupSelection || hasMissingQueryString) {
       return false;
     }
 

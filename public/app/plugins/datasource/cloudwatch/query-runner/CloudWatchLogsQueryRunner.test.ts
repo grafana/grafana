@@ -10,12 +10,13 @@ import {
   LogRowModel,
 } from '@grafana/data';
 
-import { CloudWatchLogsAnomaliesQuery, CloudWatchLogsQuery, LogsMode } from '../dataquery.gen'; // Add this import statement
+import { CloudWatchLogsAnomaliesQuery, CloudWatchLogsQuery, LogsMode, LogsQueryLanguage } from '../dataquery.gen';
 import { logGroupNamesVariable, regionVariable } from '../mocks/CloudWatchDataSource';
 import { setupMockedLogsQueryRunner } from '../mocks/LogsQueryRunner';
 import { LogsRequestMock } from '../mocks/Request';
 import { validLogsQuery } from '../mocks/queries';
 import { TimeRangeMock } from '../mocks/timeRange';
+import { LOG_GROUP_ACCOUNT_MAX, LOG_GROUP_PREFIX_MAX } from '../utils/logGroupsConstants';
 
 import {
   LOGSTREAM_IDENTIFIER_INTERNAL,
@@ -83,6 +84,255 @@ describe('CloudWatchLogsQueryRunner', () => {
         { arn: 'templatedGroup-arn-2', name: 'templatedGroup-2' },
       ]);
     });
+
+    it('returns expanded logGroupPrefixes from template variable', () => {
+      const prefixVariable = {
+        ...logGroupNamesVariable,
+        id: 'prefixes',
+        name: 'prefixes',
+        current: {
+          value: ['prefix-1', 'prefix-2'],
+          text: ['prefix-1', 'prefix-2'],
+          selected: true,
+        },
+        multi: true,
+      };
+      const { runner } = setupMockedLogsQueryRunner({ variables: [prefixVariable] });
+
+      const query: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroupPrefixes: ['$prefixes'],
+      };
+
+      const { logGroupPrefixes } = runner.interpolateLogsQueryVariables(query, {});
+
+      expect(logGroupPrefixes).toEqual(['prefix-1', 'prefix-2']);
+    });
+
+    it('deduplicates logGroupPrefixes after template variable expansion', () => {
+      const prefixVariable = {
+        ...logGroupNamesVariable,
+        id: 'prefixes',
+        name: 'prefixes',
+        current: {
+          value: ['prefix-1', 'prefix-2'],
+          text: ['prefix-1', 'prefix-2'],
+          selected: true,
+        },
+        multi: true,
+      };
+      const { runner } = setupMockedLogsQueryRunner({ variables: [prefixVariable] });
+
+      const query: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroupPrefixes: ['prefix-1', '$prefixes'],
+      };
+
+      const { logGroupPrefixes } = runner.interpolateLogsQueryVariables(query, {});
+
+      expect(logGroupPrefixes).toEqual(['prefix-1', 'prefix-2']);
+    });
+
+    it('throws error when expanded logGroupPrefixes exceeds 5', () => {
+      const prefixVariable = {
+        ...logGroupNamesVariable,
+        id: 'prefixes',
+        name: 'prefixes',
+        current: {
+          value: ['prefix-1', 'prefix-2', 'prefix-3', 'prefix-4', 'prefix-5', 'prefix-6'],
+          text: ['prefix-1', 'prefix-2', 'prefix-3', 'prefix-4', 'prefix-5', 'prefix-6'],
+          selected: true,
+        },
+        multi: true,
+      };
+      const { runner } = setupMockedLogsQueryRunner({ variables: [prefixVariable] });
+
+      const query: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroupPrefixes: ['$prefixes'],
+      };
+
+      expect(() => runner.interpolateLogsQueryVariables(query, {})).toThrow(
+        `Expanded prefix count (6) exceeds maximum of ${LOG_GROUP_PREFIX_MAX}`
+      );
+    });
+
+    it('returns expanded selectedAccountIds from template variable', () => {
+      const accountVariable = {
+        ...logGroupNamesVariable,
+        id: 'accounts',
+        name: 'accounts',
+        current: {
+          value: ['123456789012', '234567890123'],
+          text: ['123456789012', '234567890123'],
+          selected: true,
+        },
+        multi: true,
+      };
+      const { runner } = setupMockedLogsQueryRunner({ variables: [accountVariable] });
+
+      const query: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        selectedAccountIds: ['$accounts'],
+      };
+
+      const { selectedAccountIds } = runner.interpolateLogsQueryVariables(query, {});
+
+      expect(selectedAccountIds).toEqual(['123456789012', '234567890123']);
+    });
+
+    it('deduplicates selectedAccountIds after template variable expansion', () => {
+      const accountVariable = {
+        ...logGroupNamesVariable,
+        id: 'accounts',
+        name: 'accounts',
+        current: {
+          value: ['123456789012', '234567890123'],
+          text: ['123456789012', '234567890123'],
+          selected: true,
+        },
+        multi: true,
+      };
+      const { runner } = setupMockedLogsQueryRunner({ variables: [accountVariable] });
+
+      const query: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        selectedAccountIds: ['123456789012', '$accounts'],
+      };
+
+      const { selectedAccountIds } = runner.interpolateLogsQueryVariables(query, {});
+
+      expect(selectedAccountIds).toEqual(['123456789012', '234567890123']);
+    });
+
+    it('returns undefined for logGroupPrefixes when not set in query', () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const query: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+      };
+
+      const { logGroupPrefixes } = runner.interpolateLogsQueryVariables(query, {});
+
+      expect(logGroupPrefixes).toBeUndefined();
+    });
+
+    it('returns undefined for selectedAccountIds when not set in query', () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const query: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+      };
+
+      const { selectedAccountIds } = runner.interpolateLogsQueryVariables(query, {});
+
+      expect(selectedAccountIds).toBeUndefined();
+    });
+
+    it('filters out "all" from selectedAccountIds as it is a special UI value', () => {
+      const accountVariable = {
+        ...logGroupNamesVariable,
+        id: 'accounts',
+        name: 'accounts',
+        current: {
+          value: ['all', '123456789012'],
+          text: ['All', '123456789012'],
+          selected: true,
+        },
+        multi: true,
+      };
+      const { runner } = setupMockedLogsQueryRunner({ variables: [accountVariable] });
+
+      const query: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        selectedAccountIds: ['$accounts'],
+      };
+
+      const { selectedAccountIds } = runner.interpolateLogsQueryVariables(query, {});
+
+      expect(selectedAccountIds).toEqual(['123456789012']);
+    });
+
+    it('returns undefined when selectedAccountIds only contains "all"', () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const query: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        selectedAccountIds: ['all'],
+      };
+
+      const { selectedAccountIds } = runner.interpolateLogsQueryVariables(query, {});
+
+      expect(selectedAccountIds).toBeUndefined();
+    });
+
+    it('throws error when expanded selectedAccountIds exceeds 20', () => {
+      const accountVariable = {
+        ...logGroupNamesVariable,
+        id: 'accounts',
+        name: 'accounts',
+        current: {
+          value: [
+            '111111111111',
+            '222222222222',
+            '333333333333',
+            '444444444444',
+            '555555555555',
+            '666666666666',
+            '777777777777',
+            '888888888888',
+            '999999999999',
+            '101010101010',
+            '111111111112',
+            '222222222223',
+            '333333333334',
+            '444444444445',
+            '555555555556',
+            '666666666667',
+            '777777777778',
+            '888888888889',
+            '999999999990',
+            '101010101011',
+            '121212121212',
+          ],
+          text: [
+            '111111111111',
+            '222222222222',
+            '333333333333',
+            '444444444444',
+            '555555555555',
+            '666666666666',
+            '777777777777',
+            '888888888888',
+            '999999999999',
+            '101010101010',
+            '111111111112',
+            '222222222223',
+            '333333333334',
+            '444444444445',
+            '555555555556',
+            '666666666667',
+            '777777777778',
+            '888888888889',
+            '999999999990',
+            '101010101011',
+            '121212121212',
+          ],
+          selected: true,
+        },
+        multi: true,
+      };
+      const { runner } = setupMockedLogsQueryRunner({ variables: [accountVariable] });
+
+      const query: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        selectedAccountIds: ['$accounts'],
+      };
+
+      expect(() => runner.interpolateLogsQueryVariables(query, {})).toThrow(
+        `Expanded account count (21) exceeds maximum of ${LOG_GROUP_ACCOUNT_MAX}`
+      );
+    });
   });
 
   describe('getLogRowContext', () => {
@@ -124,6 +374,134 @@ describe('CloudWatchLogsQueryRunner', () => {
       });
       expect(queryMock.mock.calls[1][0].targets[0].startTime).toBe(4);
       expect(queryMock.mock.calls[1][0].targets[0].region).toBe('templatedRegion');
+    });
+  });
+
+  describe('filterQuery', () => {
+    it('allows query with namePrefix scope and at least one prefix', async () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const queryWithNamePrefix: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroups: [],
+        logsQueryScope: 'namePrefix',
+        logGroupPrefixes: ['/aws/lambda/'],
+      };
+
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        targets: [queryWithNamePrefix],
+      };
+
+      const queryFn = jest
+        .fn()
+        .mockReturnValueOnce(of(startQuerySuccessResponseStub))
+        .mockReturnValueOnce(of(getQuerySuccessResponseStub));
+      await expect(runner.handleLogQueries([queryWithNamePrefix], options, queryFn)).toEmitValuesWith(() => {
+        expect(queryFn).toHaveBeenCalled();
+      });
+    });
+
+    it('filters out query with namePrefix scope but no prefixes', async () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const queryWithEmptyPrefixes: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroups: [],
+        logsQueryScope: 'namePrefix',
+        logGroupPrefixes: [],
+      };
+
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        targets: [queryWithEmptyPrefixes],
+      };
+
+      const queryFn = jest.fn().mockReturnValue(of({ data: [] }));
+      const response = runner.handleLogQueries([queryWithEmptyPrefixes], options, queryFn);
+      await expect(response).toEmitValuesWith(() => {
+        expect(queryFn).toHaveBeenCalledWith(
+          expect.objectContaining({
+            targets: [],
+          })
+        );
+      });
+    });
+
+    it('allows query with allLogGroups scope without log groups', async () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const queryWithAllLogGroups: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        logGroups: [],
+        logsQueryScope: 'allLogGroups',
+      };
+
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        targets: [queryWithAllLogGroups],
+      };
+
+      const queryFn = jest
+        .fn()
+        .mockReturnValueOnce(of(startQuerySuccessResponseStub))
+        .mockReturnValueOnce(of(getQuerySuccessResponseStub));
+      await expect(runner.handleLogQueries([queryWithAllLogGroups], options, queryFn)).toEmitValuesWith(() => {
+        expect(queryFn).toHaveBeenCalled();
+      });
+    });
+
+    it('filters out non-CWLI query when namePrefix scope would otherwise bypass missing log groups', async () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const queryWithNamePrefix: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        queryLanguage: LogsQueryLanguage.PPL,
+        logGroups: [],
+        logsQueryScope: 'namePrefix',
+        logGroupPrefixes: ['/aws/lambda/'],
+      };
+
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        targets: [queryWithNamePrefix],
+      };
+
+      const queryFn = jest.fn().mockReturnValue(of({ data: [] }));
+      const response = runner.handleLogQueries([queryWithNamePrefix], options, queryFn);
+      await expect(response).toEmitValuesWith(() => {
+        expect(queryFn).toHaveBeenCalledWith(
+          expect.objectContaining({
+            targets: [],
+          })
+        );
+      });
+    });
+
+    it('filters out non-CWLI query when allLogGroups scope would otherwise bypass missing log groups', async () => {
+      const { runner } = setupMockedLogsQueryRunner();
+
+      const queryWithAllLogGroups: CloudWatchLogsQuery = {
+        ...validLogsQuery,
+        queryLanguage: LogsQueryLanguage.PPL,
+        logGroups: [],
+        logsQueryScope: 'allLogGroups',
+      };
+
+      const options: DataQueryRequest<CloudWatchLogsQuery> = {
+        ...LogsRequestMock,
+        targets: [queryWithAllLogGroups],
+      };
+
+      const queryFn = jest.fn().mockReturnValue(of({ data: [] }));
+      const response = runner.handleLogQueries([queryWithAllLogGroups], options, queryFn);
+      await expect(response).toEmitValuesWith(() => {
+        expect(queryFn).toHaveBeenCalledWith(
+          expect.objectContaining({
+            targets: [],
+          })
+        );
+      });
     });
   });
 

@@ -28,6 +28,10 @@ export const SelectedLogGroups = ({
     setVisibleSelectecLogGroups(selectedLogGroups.slice(0, maxNoOfVisibleLogGroups));
   }, [selectedLogGroups, maxNoOfVisibleLogGroups]);
 
+  if (selectedLogGroups.length === 0) {
+    return null;
+  }
+
   return (
     <>
       <div className={styles.selectedLogGroupsContainer}>
@@ -57,18 +61,16 @@ export const SelectedLogGroups = ({
             Show all
           </Button>
         )}
-        {selectedLogGroups.length > 0 && (
-          <Button
-            size="sm"
-            variant="secondary"
-            icon="times"
-            fill="outline"
-            className={styles.removeButton}
-            onClick={() => setShowConfirm(true)}
-          >
-            Clear selection
-          </Button>
-        )}
+        <Button
+          size="sm"
+          variant="secondary"
+          icon="times"
+          fill="outline"
+          className={styles.removeButton}
+          onClick={() => setShowConfirm(true)}
+        >
+          Clear selection
+        </Button>
       </div>
       <ConfirmModal
         isOpen={showConfirm}

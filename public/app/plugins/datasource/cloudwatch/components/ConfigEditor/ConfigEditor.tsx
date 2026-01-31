@@ -182,6 +182,7 @@ export const ConfigEditor = (props: Props) => {
                 });
               }}
               maxNoOfVisibleLogGroups={2}
+              showQueryScopeSelector={false}
               //legacy props
               legacyOnChange={(logGroups) => {
                 updateDatasourcePluginJsonDataOption(props, 'defaultLogGroups', logGroups);

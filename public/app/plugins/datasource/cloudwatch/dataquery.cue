@@ -148,6 +148,10 @@ composableKinds: DataQuery: {
 				#QueryEditorExpression: #QueryEditorArrayExpression | #QueryEditorPropertyExpression | #QueryEditorGroupByExpression | #QueryEditorFunctionExpression | #QueryEditorFunctionParameterExpression | #QueryEditorOperatorExpression @cuetsy(kind="type")
 				#LogsMode: "Insights" | "Anomalies" @cuetsy(kind="enum")
 				#LogsQueryLanguage: "CWLI" | "SQL" | "PPL" @cuetsy(kind="enum")
+				// Log group selection scope - determines how log groups are selected for the query
+				#LogsQueryScope: "logGroupName" | "namePrefix" | "allLogGroups" @cuetsy(kind="type")
+				// Log group class filter
+				#LogGroupClass: "STANDARD" | "INFREQUENT_ACCESS" @cuetsy(kind="type")
 
 				// Shape of a CloudWatch Logs query
 				#CloudWatchLogsQuery: {
@@ -171,6 +175,15 @@ composableKinds: DataQuery: {
 
 					// Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
 					queryLanguage?: #LogsQueryLanguage
+
+					// Log group selection scope - determines how log groups are selected for the query
+					logsQueryScope?: #LogsQueryScope
+					// Log group name prefixes for namePrefix scope mode (max 5)
+					logGroupPrefixes?: [...string]
+					// Log group class filter for namePrefix and allLogGroups scope modes
+					logGroupClass?: #LogGroupClass
+					// Selected account IDs for cross-account queries (max 20)
+					selectedAccountIds?: [...string]
 				} @cuetsy(kind="interface")
 
 				// Shape of a Cloudwatch Log Anomalies query
