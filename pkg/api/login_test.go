@@ -581,18 +581,25 @@ func TestAuthProxyLoginEnableLoginTokenDisabled(t *testing.T) {
 }
 
 func TestAuthProxyLoginWithEnableLoginToken(t *testing.T) {
+	// Session token assignment for auth proxy users is now handled by the
+	// AuthProxySessionSync hook in the authn service, not in the login view.
+	// This test verifies that the login view correctly redirects without
+	// attempting to set a session cookie (that's the hook's responsibility).
 	sc := setupAuthProxyLoginTest(t, true)
 	require.Equal(t, 302, sc.resp.Code)
 
 	location, ok := sc.resp.Header()["Location"]
 	assert.True(t, ok)
 	assert.Equal(t, "/", location[0])
-	setCookie := sc.resp.Header()["Set-Cookie"]
-	require.NotNil(t, setCookie, "Set-Cookie should exist")
-	assert.Equal(t, fmt.Sprintf("%s=; Path=/; Max-Age=0; HttpOnly", loginCookieName), setCookie[0])
+	// The login view no longer sets the session cookie - this is now handled
+	// by the AuthProxySessionSync hook during authentication
+	_, ok = sc.resp.Header()["Set-Cookie"]
+	assert.False(t, ok, "Set-Cookie should not exist - session token is handled by auth service hook")
 }
 
 func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T) {
+	// Session token assignment for auth proxy users is now handled by the
+	// AuthProxySessionSync hook in the authn service, not in the login view.
 	fakeSetIndexViewData(t)
 
 	mock := &mockSocialService{
@@ -642,9 +649,10 @@ func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T
 	location, ok := sc.resp.Header()["Location"]
 	assert.True(t, ok)
 	assert.Equal(t, "/", location[0])
-	setCookie := sc.resp.Header()["Set-Cookie"]
-	require.NotNil(t, setCookie, "Set-Cookie should exist")
-	assert.Equal(t, fmt.Sprintf("%s=; Path=/; Max-Age=0; HttpOnly", loginCookieName), setCookie[0])
+	// The login view no longer sets the session cookie - this is now handled
+	// by the AuthProxySessionSync hook during authentication
+	_, ok = sc.resp.Header()["Set-Cookie"]
+	assert.False(t, ok, "Set-Cookie should not exist - session token is handled by auth service hook")
 }
 
 func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioContext {
