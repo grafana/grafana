@@ -1,12 +1,7 @@
-import { skipToken } from '@reduxjs/toolkit/query';
-import { memo, useMemo, useState } from 'react';
+import { memo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Combobox, Field, Input, SecretInput, Stack } from '@grafana/ui';
-import {
-  GetConnectionRepositoriesApiResponse,
-  useGetConnectionRepositoriesQuery,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { Combobox, Field, Input, Stack } from '@grafana/ui';
 
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
@@ -21,32 +16,21 @@ export const ConnectStep = memo(function ConnectStep() {
   const {
     register,
     control,
-    setValue,
     formState: { errors },
     getValues,
     watch,
   } = useFormContext<WizardFormData>();
 
-  const [tokenConfigured, setTokenConfigured] = useState(false);
-
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = '', githubAuthType, githubAppConnectionName] =
-    watch(['repository.url', 'repository.token', 'repository.tokenUser', 'githubAuthType', 'githubApp.connectionName']);
+  const [repositoryUrl = '', repositoryToken = '', repositoryTokenUser = '', githubAuthType] = watch([
+    'repository.url',
+    'repository.token',
+    'repository.tokenUser',
+    'githubAuthType',
+  ]);
   const isGitBased = isGitProvider(type);
   const isGitHubAppAuth = type === 'github' && githubAuthType === 'github-app';
-
-  const {
-    data: connectionRepositories,
-    isLoading: repositoriesLoading,
-    error: repositoriesError,
-  } = useGetConnectionRepositoriesQuery(
-    isGitHubAppAuth && githubAppConnectionName ? { name: githubAppConnectionName } : skipToken
-  );
-
-  const repositoryOptions = useMemo(() => {
-    return buildRepositoryOptions(connectionRepositories?.items);
-  }, [connectionRepositories]);
 
   const {
     options: branchOptions,
@@ -69,99 +53,6 @@ export const ConnectStep = memo(function ConnectStep() {
 
       {gitFields && (
         <>
-          {!isGitHubAppAuth && (
-            <>
-              <Field
-                noMargin
-                label={gitFields.tokenConfig.label}
-                required={gitFields.tokenConfig.required}
-                description={gitFields.tokenConfig.description}
-                error={errors?.repository?.token?.message}
-                invalid={!!errors?.repository?.token?.message}
-              >
-                <Controller
-                  name="repository.token"
-                  control={control}
-                  rules={gitFields.tokenConfig.validation}
-                  render={({ field: { ref, ...field } }) => (
-                    <SecretInput
-                      {...field}
-                      id="token"
-                      placeholder={gitFields.tokenConfig.placeholder}
-                      isConfigured={tokenConfigured}
-                      invalid={!!errors?.repository?.token?.message}
-                      onReset={() => {
-                        setValue('repository.token', '');
-                        setTokenConfigured(false);
-                      }}
-                    />
-                  )}
-                />
-              </Field>
-
-              {gitFields.tokenUserConfig && (
-                <Field
-                  noMargin
-                  label={gitFields.tokenUserConfig.label}
-                  required={gitFields.tokenUserConfig.required}
-                  description={gitFields.tokenUserConfig.description}
-                  error={errors?.repository?.tokenUser?.message}
-                  invalid={!!errors?.repository?.tokenUser?.message}
-                >
-                  <Input
-                    {...register('repository.tokenUser', gitFields.tokenUserConfig.validation)}
-                    id="tokenUser"
-                    placeholder={gitFields.tokenUserConfig.placeholder}
-                  />
-                </Field>
-              )}
-            </>
-          )}
-
-          {isGitHubAppAuth ? (
-            <Field
-              noMargin
-              label={gitFields.urlConfig.label}
-              description={gitFields.urlConfig.description}
-              error={errors?.repository?.url?.message}
-              invalid={Boolean(errors?.repository?.url?.message)}
-              required={gitFields.urlConfig.required}
-            >
-              <Controller
-                name="repository.url"
-                control={control}
-                rules={gitFields.urlConfig.validation}
-                render={({ field: { ref, onChange, ...field } }) => (
-                  <Combobox
-                    invalid={Boolean(errors?.repository?.url?.message || repositoriesError)}
-                    onChange={(option) => onChange(option?.value || '')}
-                    placeholder={gitFields.urlConfig.placeholder}
-                    options={repositoryOptions}
-                    loading={repositoriesLoading}
-                    createCustomValue
-                    isClearable
-                    {...field}
-                  />
-                )}
-              />
-            </Field>
-          ) : (
-            <Field
-              noMargin
-              label={gitFields.urlConfig.label}
-              description={gitFields.urlConfig.description}
-              error={errors?.repository?.url?.message}
-              invalid={Boolean(errors?.repository?.url?.message)}
-              required={gitFields.urlConfig.required}
-            >
-              <Input
-                {...register('repository.url', gitFields.urlConfig.validation)}
-                id="repository-url"
-                placeholder={gitFields.urlConfig.placeholder}
-              />
-            </Field>
-          )}
-
           <Field
             noMargin
             label={gitFields.branchConfig.label}
@@ -227,11 +118,3 @@ export const ConnectStep = memo(function ConnectStep() {
     </Stack>
   );
 });
-
-function buildRepositoryOptions(
-  repositories: GetConnectionRepositoriesApiResponse['items'] | undefined
-): Array<{ label: string; value: string }> {
-  return (repositories ?? [])
-    .filter((repo): repo is { name: string; url: string } => !!repo?.name && !!repo?.url)
-    .map((repo) => ({ label: repo.name, value: repo.url }));
-}

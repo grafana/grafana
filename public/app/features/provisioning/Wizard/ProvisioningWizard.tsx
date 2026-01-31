@@ -67,7 +67,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     handleSubmit,
   } = methods;
 
-  const [repoName = '', repoType, syncTarget, githubAuthType] = watch([
+  const [repoName = '', repoType, syncTarget, githubAuthType, githubAppMode] = watch([
     'repositoryName',
     'repository.type',
     'repository.sync.target',
@@ -93,7 +93,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     activeStep,
     completedSteps,
     currentStepConfig,
-    visibleSteps,
+    steps: wizardSteps,
     visibleStepIndex,
     goToNextStep,
     goToPreviousStep,
@@ -159,6 +159,8 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     isCreatingSkipJob,
     showCancelConfirmation,
     shouldUseCancelBehavior,
+    githubAppMode,
+    githubAuthType,
   });
 
   // A different repository is marked with instance target -- nothing will succeed
@@ -197,15 +199,16 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   return (
     <FormProvider {...methods}>
       <Stack gap={6} direction="row" alignItems="flex-start">
-        {activeStep === 'authType' ? (
-          <div className={styles.stepperSpacer} />
-        ) : (
-          <>
-            <Stepper steps={visibleSteps} activeStep={activeStep} visitedSteps={completedSteps} />
-            <div className={styles.divider} />
-          </>
-        )}
-        <form onSubmit={handleSubmit(onFormSubmit)} className={styles.form}>
+        <>
+          <Stepper steps={wizardSteps} activeStep={activeStep} visitedSteps={completedSteps} />
+          <div className={styles.divider} />
+        </>
+        <form
+          onSubmit={handleSubmit(onFormSubmit, (errors) => {
+            console.log('submit errors', errors);
+          })}
+          className={styles.form}
+        >
           <FormPrompt
             onDiscard={onDiscard}
             confirmRedirect={isDirty && !['authType', 'connection', 'finish'].includes(activeStep) && !isCancelling}

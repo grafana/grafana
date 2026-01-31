@@ -1,8 +1,8 @@
 import { memo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { t } from '@grafana/i18n';
-import { Field, Input, SecretTextArea, Stack } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { Button, Field, Input, SecretTextArea, Stack } from '@grafana/ui';
 
 import { ConnectionFormData } from '../../types';
 
@@ -11,10 +11,11 @@ export interface GitHubConnectionFieldsProps {
   required?: boolean;
   /** Initial value for whether private key is configured (edit mode) */
   privateKeyConfigured?: boolean;
+  onNewConnectionCreation?: () => void;
 }
 
 export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
-  ({ required = true, privateKeyConfigured = false }) => {
+  ({ required = true, privateKeyConfigured = false, onNewConnectionCreation }) => {
     const [isPrivateKeyConfigured, setIsPrivateKeyConfigured] = useState(privateKeyConfigured);
     const {
       register,
@@ -138,6 +139,14 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
             )}
           />
         </Field>
+
+        {onNewConnectionCreation && (
+          <Stack>
+            <Button onClick={onNewConnectionCreation}>
+              <Trans i18nKey="provisioning.connection-form.create-new-connection-button">Create connection</Trans>
+            </Button>
+          </Stack>
+        )}
       </Stack>
     );
   }

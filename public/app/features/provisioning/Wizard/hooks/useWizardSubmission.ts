@@ -54,7 +54,7 @@ export function useWizardSubmission({
     const { getValues, trigger, setError } = methods;
 
     if (currentStepConfig?.submitOnNext) {
-      if (activeStep === 'githubApp') {
+      if (activeStep === 'authType') {
         const formData = getValues();
         const currentGithubAppMode = formData.githubAppMode;
 
@@ -63,7 +63,6 @@ export function useWizardSubmission({
           if (isValid) {
             onSuccess();
           }
-          return;
         } else if (currentGithubAppMode === 'new') {
           setIsSubmitting(true);
           try {
@@ -71,7 +70,6 @@ export function useWizardSubmission({
           } finally {
             setIsSubmitting(false);
           }
-          return;
         }
       }
 

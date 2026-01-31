@@ -32,6 +32,7 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
   const {
     control,
     watch,
+    setValue,
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
@@ -56,69 +57,137 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
   // Expose submit method to parent via ref. The parent wizard (ProvisioningWizard) needs to trigger
   // submission when the user clicks "Next", so we use useImperativeHandle to allow the parent to
   // call submit() programmatically via githubAppStepRef.current?.submit()
-  useImperativeHandle(
-    ref,
-    () => ({
-      submit: async () => {
-        const isValid = await credentialForm.trigger();
-        if (!isValid) {
-          const validationError = t(
-            'provisioning.wizard.github-app-creation-default-error',
-            'Failed to create connection'
-          );
-          onSubmit({ success: false, error: validationError });
+
+  const handleCreateConnection = async () => {
+    const isValid = await credentialForm.trigger();
+    if (!isValid) {
+      const validationError = t('provisioning.wizard.github-app-creation-default-error', 'Failed to create connection');
+      onSubmit({ success: false, error: validationError });
+      return;
+    }
+
+    const { title, description, appID, installationID, privateKey } = credentialForm.getValues();
+    const spec: ConnectionSpec = {
+      type: 'github',
+      title,
+      ...(description && { description }),
+      github: { appID, installationID },
+    };
+
+    const defaultErrorMessage = t(
+      'provisioning.wizard.github-app-creation-default-error',
+      'Failed to create connection'
+    );
+
+    // Returns true if form errors were set (caller should return early)
+    const handleFormErrors = (error: unknown): boolean => {
+      if (isFetchError(error)) {
+        const formErrors = getConnectionFormErrors(error.data);
+        if (formErrors.length > 0) {
+          for (const [field, errorMessage] of formErrors) {
+            credentialForm.setError(field, errorMessage);
+          }
+          return true;
+        }
+      }
+      return false;
+    };
+
+    try {
+      const result = await createConnection(spec, privateKey);
+      if (result.data?.metadata?.name) {
+        setValue('githubApp.connectionName', result.data.metadata.name);
+        setValue('githubAppMode', 'existing');
+        return;
+      } else if (result.error) {
+        if (handleFormErrors(result.error)) {
           return;
         }
+      }
+      //   if (result.data?.metadata?.name) {
+      //     onSubmit({ success: true, connectionName: result.data.metadata.name });
+      //   } else if (result.error) {
+      //     if (handleFormErrors(result.error)) {
+      //       return;
+      //     }
+      //     onSubmit({ success: false, error: extractErrorMessage(result.error) });
+      //   } else {
+      //     onSubmit({ success: false, error: defaultErrorMessage });
+      //   }
+      // } catch (error) {
+      //   if (handleFormErrors(error)) {
+      //     return;
+      //   }
+      //   onSubmit({ success: false, error: extractErrorMessage(error) });
+    } catch (error) {
+      //
+      return error;
+    }
+  };
 
-        const { title, description, appID, installationID, privateKey } = credentialForm.getValues();
-        const spec: ConnectionSpec = {
-          type: 'github',
-          title,
-          ...(description && { description }),
-          github: { appID, installationID },
-        };
+  // useImperativeHandle(
+  //   ref,
+  //   () => ({
+  //     submit: async () => {
+  //       const isValid = await credentialForm.trigger();
+  //       if (!isValid) {
+  //         const validationError = t(
+  //           'provisioning.wizard.github-app-creation-default-error',
+  //           'Failed to create connection'
+  //         );
+  //         onSubmit({ success: false, error: validationError });
+  //         return;
+  //       }
 
-        const defaultErrorMessage = t(
-          'provisioning.wizard.github-app-creation-default-error',
-          'Failed to create connection'
-        );
+  //       const { title, description, appID, installationID, privateKey } = credentialForm.getValues();
+  //       const spec: ConnectionSpec = {
+  //         type: 'github',
+  //         title,
+  //         ...(description && { description }),
+  //         github: { appID, installationID },
+  //       };
 
-        // Returns true if form errors were set (caller should return early)
-        const handleFormErrors = (error: unknown): boolean => {
-          if (isFetchError(error)) {
-            const formErrors = getConnectionFormErrors(error.data);
-            if (formErrors.length > 0) {
-              for (const [field, errorMessage] of formErrors) {
-                credentialForm.setError(field, errorMessage);
-              }
-              return true;
-            }
-          }
-          return false;
-        };
+  //       const defaultErrorMessage = t(
+  //         'provisioning.wizard.github-app-creation-default-error',
+  //         'Failed to create connection'
+  //       );
 
-        try {
-          const result = await createConnection(spec, privateKey);
-          if (result.data?.metadata?.name) {
-            onSubmit({ success: true, connectionName: result.data.metadata.name });
-          } else if (result.error) {
-            if (handleFormErrors(result.error)) {
-              return;
-            }
-            onSubmit({ success: false, error: extractErrorMessage(result.error) });
-          } else {
-            onSubmit({ success: false, error: defaultErrorMessage });
-          }
-        } catch (error) {
-          if (handleFormErrors(error)) {
-            return;
-          }
-          onSubmit({ success: false, error: extractErrorMessage(error) });
-        }
-      },
-    }),
-    [credentialForm, createConnection, onSubmit]
-  );
+  //       // Returns true if form errors were set (caller should return early)
+  //       const handleFormErrors = (error: unknown): boolean => {
+  //         if (isFetchError(error)) {
+  //           const formErrors = getConnectionFormErrors(error.data);
+  //           if (formErrors.length > 0) {
+  //             for (const [field, errorMessage] of formErrors) {
+  //               credentialForm.setError(field, errorMessage);
+  //             }
+  //             return true;
+  //           }
+  //         }
+  //         return false;
+  //       };
+
+  //       // try {
+  //       //   const result = await createConnection(spec, privateKey);
+  //       //   if (result.data?.metadata?.name) {
+  //       //     onSubmit({ success: true, connectionName: result.data.metadata.name });
+  //       //   } else if (result.error) {
+  //       //     if (handleFormErrors(result.error)) {
+  //       //       return;
+  //       //     }
+  //       //     onSubmit({ success: false, error: extractErrorMessage(result.error) });
+  //       //   } else {
+  //       //     onSubmit({ success: false, error: defaultErrorMessage });
+  //       //   }
+  //       // } catch (error) {
+  //       //   if (handleFormErrors(error)) {
+  //       //     return;
+  //       //   }
+  //       //   onSubmit({ success: false, error: extractErrorMessage(error) });
+  //       // }
+  //     },
+  //   }),
+  //   [credentialForm, createConnection, onSubmit]
+  // );
 
   return (
     <Stack direction="column" gap={2}>
@@ -205,7 +274,7 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
 
       {githubAppMode === 'new' && (
         <FormProvider {...credentialForm}>
-          <GitHubConnectionFields required />
+          <GitHubConnectionFields required onNewConnectionCreation={handleCreateConnection} />
         </FormProvider>
       )}
     </Stack>
