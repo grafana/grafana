@@ -79,7 +79,7 @@ To activate Git Sync in Grafana, you need to enable the `provisioning` feature t
 
 To enable the required feature toggle:
 
-1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. For file location based on operating system, refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/#experimental-feature-toggles).
+1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`. For file location based on operating system, refer to [Configuration file location](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location).
 1. Locate or add a `[feature_toggles]` section. Add this value:
 
    ```ini
