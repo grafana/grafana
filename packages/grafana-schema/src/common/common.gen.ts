@@ -1001,6 +1001,55 @@ export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
   reducers: [],
 };
 
+export interface TableOptions {
+  /**
+   * Controls the height of the rows
+   */
+  cellHeight?: TableCellHeight;
+  /**
+   * If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
+   */
+  disableKeyboardEvents?: boolean;
+  /**
+   * Enable pagination on the table
+   */
+  enablePagination?: boolean;
+  /**
+   * Represents the index of the selected frame
+   */
+  frameIndex: number;
+  /**
+   * Defines the number of columns to freeze on the left side of the table
+   */
+  frozenColumns?: {
+    left?: number;
+  };
+  /**
+   * limits the maximum height of a row, if text wrapping or dynamic height is enabled
+   */
+  maxRowHeight?: number;
+  /**
+   * Controls whether the panel should show the header
+   */
+  showHeader: boolean;
+  /**
+   * Controls whether the header should show icons for the column types
+   */
+  showTypeIcons?: boolean;
+  /**
+   * Used to control row sorting
+   */
+  sortBy?: Array<TableSortByFieldState>;
+}
+
+export const defaultTableOptions: Partial<TableOptions> = {
+  cellHeight: TableCellHeight.Sm,
+  frameIndex: 0,
+  showHeader: true,
+  showTypeIcons: false,
+  sortBy: [],
+};
+
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
  * Generally defines alignment, filtering capabilties, display options, etc.
