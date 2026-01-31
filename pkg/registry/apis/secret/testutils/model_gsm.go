@@ -165,6 +165,36 @@ func (m *ModelGsm) SetKeeperAsActive(namespace, keeperName string) error {
 	return nil
 }
 
+func (m *ModelGsm) DeleteKeeper(namespace, keeperName string) error {
+	if !m.keeperExists(namespace, keeperName) {
+		return contracts.ErrKeeperNotFound
+	}
+
+	if m.existsSecureValueUsingKeeper(namespace, keeperName) {
+		return contracts.ErrKeeperIsBeingUsedBySecureValue
+	}
+
+	oldLen := len(m.Keepers)
+	m.Keepers = slices.DeleteFunc(m.Keepers, func(k *ModelKeeper) bool {
+		return k.namespace == namespace && k.name == keeperName
+	})
+	newLen := len(m.Keepers)
+	if oldLen-newLen > 1 {
+		return fmt.Errorf("expected 1 row affected, got %d for %s on %s", oldLen-newLen, keeperName, namespace)
+	}
+
+	return nil
+}
+
+func (m *ModelGsm) existsSecureValueUsingKeeper(namespace, keeperName string) bool {
+	for _, v := range m.SecureValues {
+		if v.Namespace == namespace && v.Status.Keeper == keeperName {
+			return true
+		}
+	}
+	return false
+}
+
 func (m *ModelGsm) Update(now time.Time, newSecureValue *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, bool, error) {
 	sv := m.ReadActiveVersion(newSecureValue.Namespace, newSecureValue.Name)
 	if sv == nil {

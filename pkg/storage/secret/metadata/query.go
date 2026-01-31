@@ -15,13 +15,14 @@ var (
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
 
 	// The SQL Commands
-	sqlKeeperCreate      = mustTemplate("keeper_create.sql")
-	sqlKeeperRead        = mustTemplate("keeper_read.sql")
-	sqlKeeperReadActive  = mustTemplate("keeper_read_active.sql")
-	sqlKeeperUpdate      = mustTemplate("keeper_update.sql")
-	sqlKeeperList        = mustTemplate("keeper_list.sql")
-	sqlKeeperDelete      = mustTemplate("keeper_delete.sql")
-	sqlKeeperSetAsActive = mustTemplate("keeper_set_as_active.sql")
+	sqlKeeperCreate                 = mustTemplate("keeper_create.sql")
+	sqlKeeperRead                   = mustTemplate("keeper_read.sql")
+	sqlKeeperReadActive             = mustTemplate("keeper_read_active.sql")
+	sqlKeeperUpdate                 = mustTemplate("keeper_update.sql")
+	sqlKeeperList                   = mustTemplate("keeper_list.sql")
+	sqlKeeperDelete                 = mustTemplate("keeper_delete.sql")
+	sqlExistsSecureValueUsingKeeper = mustTemplate("keeper_exists_secure_value.sql")
+	sqlKeeperSetAsActive            = mustTemplate("keeper_set_as_active.sql")
 
 	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
@@ -89,7 +90,8 @@ func (r readKeeper) Validate() error {
 // Read active keeper
 type readActiveKeeper struct {
 	sqltemplate.SQLTemplate
-	Namespace string
+	Namespace   string
+	IsForUpdate bool
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
@@ -128,6 +130,16 @@ type deleteKeeper struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r deleteKeeper) Validate() error {
+	return nil // TODO
+}
+
+type existsSecureValueUsingKeeper struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+}
+
+func (r existsSecureValueUsingKeeper) Validate() error {
 	return nil // TODO
 }
 

@@ -91,7 +91,7 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv1beta1.Secur
 	}()
 
 	// Secure value creation uses the active keeper
-	keeperName, keeperCfg, err := s.keeperMetadataStorage.GetActiveKeeperConfig(ctx, sv.Namespace)
+	keeperName, keeperCfg, err := s.keeperMetadataStorage.GetActiveKeeperConfig(ctx, sv.Namespace, contracts.ReadOpts{ForUpdate: true})
 	if err != nil {
 		return nil, fmt.Errorf("fetching active keeper config: namespace=%+v %w", sv.Namespace, err)
 	}
@@ -136,7 +136,7 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 		return nil, false, fmt.Errorf("reading secure value secret: %+w", err)
 	}
 
-	keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currentVersion.Namespace, currentVersion.Status.Keeper, contracts.ReadOpts{})
+	keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currentVersion.Namespace, currentVersion.Status.Keeper, contracts.ReadOpts{ForUpdate: true})
 	if err != nil {
 		return nil, false, fmt.Errorf("fetching keeper config: namespace=%+v keeper: %q %w", newSecureValue.Namespace, currentVersion.Status.Keeper, err)
 	}
