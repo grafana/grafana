@@ -91,7 +91,7 @@ func RegisterAPIService(
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
-	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient, roleApiInstaller, globalRoleApiInstaller)
+	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller)
 	registerMetrics(reg)
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -163,6 +163,7 @@ func NewAPIService(
 	coreRoleAuthorizer := iamauthorizer.NewCoreRoleAuthorizer(accessClient)
 	globalRoleAuthorizer := globalRoleApiInstaller.GetAuthorizer()
 	roleAuthorizer := roleApiInstaller.GetAuthorizer()
+	teamLBACAuthorizer := teamLBACApiInstaller.GetAuthorizer()
 
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
@@ -210,6 +211,10 @@ func NewAPIService(
 				if a.GetResource() == "resourcepermissions" {
 					// Authorization is handled by the backend wrapper
 					return authorizer.DecisionAllow, "", nil
+				}
+
+				if a.GetResource() == "teamlbacrules" {
+					return teamLBACAuthorizer.Authorize(ctx, a)
 				}
 
 				if a.GetResource() == "roles" {
