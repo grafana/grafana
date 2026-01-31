@@ -34,28 +34,6 @@ export class PostgresDatasource extends SqlDatasource {
     return new PostgresQueryModel(target, templateSrv, scopedVars);
   }
 
-  // interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
-  //   if (typeof value === 'string') {
-  //     // For single string values, just escape quotes (don't add outer quotes)
-  //     // The quotes are provided by the query template: WHERE x = '$var'
-  //     // We only escape internal single quotes: O'Brien -> O''Brien
-  //     return String(value).replace(/'/g, "''");
-  //   }
-  //
-  //   if (typeof value === 'number') {
-  //     return value;
-  //   }
-  //
-  //   if (Array.isArray(value)) {
-  //     // For arrays, quote each value individually and join with comma
-  //     // Used in: WHERE x IN ($var) -> WHERE x IN ('val1','val2','val3')
-  //     const quotedValues = value.map((v) => this.getQueryModel().quoteLiteral(v));
-  //     return quotedValues.join(',');
-  //   }
-  //
-  //   return value;
-  // };
-
   async getVersion(): Promise<string> {
     const value = await this.runSql<{ version: number }>(getVersion());
     const results = value.fields.version?.values;
