@@ -994,6 +994,7 @@ GroupByVariableKind: {
 	datasource?: {
 		name?: string
 	}
+	label?: string
 	spec: GroupByVariableSpec
 }
 
@@ -1039,6 +1040,7 @@ AdhocVariableKind: {
 	datasource?: {
 		name?: string
 	}
+	label?: string
 	spec: AdhocVariableSpec
 }
 

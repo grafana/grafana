@@ -9,6 +9,8 @@ import {
   LibraryPanelRef,
   LibraryPanelKind,
   DataQueryKind,
+  AdhocVariableKind,
+  GroupByVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -413,52 +415,70 @@ async function convertLibraryPanelToInlinePanel(libraryPanelElement: LibraryPane
 }
 
 export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExternally = false) {
-  const variableLookup: { [key: string]: any } = {};
   const dataQueryLabels: { [key: string]: Set<string> } = {};
 
   // get all datasource variables
   const datasourceVariables = dashboard.variables.filter((v) => v.kind === 'DatasourceVariable');
 
-  for (const variable of dashboard.variables) {
-    variableLookup[variable.spec.name] = variable.spec;
-  }
-
-  const removeDataSourceRefs = (dataQueryKind: DataQueryKind) => {
+  const processDataQueryKind = (dataQueryKind: DataQueryKind) => {
     if (!dataQueryKind.datasource?.name) {
       return;
     }
 
     const datasourceUid = dataQueryKind.datasource.name;
 
-    if (datasourceUid.startsWith('${') && datasourceUid.endsWith('}')) {
-      const varName = datasourceUid.slice(2, -1);
-      // if there's a match we don't want to remove the datasource ref
-      const match = datasourceVariables.find((v) => v.spec.name === varName);
-      if (match) {
-        return;
-      }
+    if (isReferencingDsTemplateVariable(datasourceUid)) {
+      return;
     }
 
-    // check if the obj.query.group matches any of the key in dataQueryLabels
-    const group = dataQueryLabels[dataQueryKind.group];
+    dataQueryKind.label = getLabel(dataQueryKind.group, datasourceUid);
+
+    dataQueryKind.datasource = undefined;
+  };
+
+  const processAdHocAndGroupByVariables = (variable: AdhocVariableKind | GroupByVariableKind) => {
+    const datasourceUid = variable.datasource?.name;
+
+    if (!datasourceUid) {
+      return;
+    }
+
+    if (isReferencingDsTemplateVariable(datasourceUid)) {
+      return;
+    }
+
+    variable.label = getLabel(variable.group, datasourceUid);
+    variable.datasource = undefined;
+  };
+
+  const isReferencingDsTemplateVariable = (datasourceUid: string) => {
+    if (datasourceUid.startsWith('${') && datasourceUid.endsWith('}')) {
+      const varName = datasourceUid.slice(2, -1);
+      return !!datasourceVariables.find((v) => v.spec.name === varName);
+    }
+
+    return false;
+  };
+
+  const getLabel = (datasourceGroup: string, datasourceUid: string) => {
+    const group = dataQueryLabels[datasourceGroup];
+
     if (group) {
       const matchingUid = group.has(datasourceUid);
       if (!matchingUid) {
         group.add(datasourceUid);
       }
     } else {
-      dataQueryLabels[dataQueryKind.group] = new Set([datasourceUid]);
+      dataQueryLabels[datasourceGroup] = new Set([datasourceUid]);
     }
 
-    dataQueryKind.label = `${dataQueryKind.group}-${group?.size || 1}`;
-
-    dataQueryKind.datasource = undefined;
+    return `${datasourceGroup}-${group?.size || 1}`;
   };
 
   const processPanel = (panel: PanelKind) => {
     if (panel.spec.data.spec.queries) {
       for (const query of panel.spec.data.spec.queries) {
-        removeDataSourceRefs(query.spec.query);
+        processDataQueryKind(query.spec.query);
       }
     }
   };
@@ -486,7 +506,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     // process template variables
     for (const variable of dashboard.variables) {
       if (variable.kind === 'QueryVariable') {
-        removeDataSourceRefs(variable.spec.query);
+        processDataQueryKind(variable.spec.query);
         variable.spec.options = [];
         variable.spec.current = {
           text: '',
@@ -497,12 +517,14 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
           text: '',
           value: '',
         };
+      } else if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
+        processAdHocAndGroupByVariables(variable);
       }
     }
 
     // process annotations vars
     for (const annotation of dashboard.annotations) {
-      removeDataSourceRefs(annotation.spec.query);
+      processDataQueryKind(annotation.spec.query);
     }
 
     return dashboard;

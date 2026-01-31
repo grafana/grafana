@@ -1759,6 +1759,7 @@ type DashboardGroupByVariableKind struct {
 	Kind       string                                         `json:"kind"`
 	Group      string                                         `json:"group"`
 	Datasource *DashboardV2beta1GroupByVariableKindDatasource `json:"datasource,omitempty"`
+	Label      *string                                        `json:"label,omitempty"`
 	Spec       DashboardGroupByVariableSpec                   `json:"spec"`
 }
 
@@ -1809,6 +1810,7 @@ type DashboardAdhocVariableKind struct {
 	Kind       string                                       `json:"kind"`
 	Group      string                                       `json:"group"`
 	Datasource *DashboardV2beta1AdhocVariableKindDatasource `json:"datasource,omitempty"`
+	Label      *string                                      `json:"label,omitempty"`
 	Spec       DashboardAdhocVariableSpec                   `json:"spec"`
 }
 

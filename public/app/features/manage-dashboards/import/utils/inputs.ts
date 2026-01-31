@@ -194,6 +194,11 @@ export function extractV2Inputs(dashboard: unknown): DashboardInputs {
         if (dsType && variable.spec.query?.label) {
           dsTypes[variable.spec.query?.label] = dsType;
         }
+      } else if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
+        const dsType = variable.group;
+        if (dsType && variable.label) {
+          dsTypes[variable.label] = dsType;
+        }
       }
     }
   }
@@ -295,11 +300,11 @@ export function applyV2Inputs(dashboard: DashboardV2Spec, form: ImportFormDataV2
   const mappings: DatasourceMappings = {};
   for (const key of Object.keys(form)) {
     if (key.startsWith('datasource-')) {
-      const dsType = key.replace('datasource-', '');
+      const label = key.replace('datasource-', '');
       const ds = form[key];
       if (isRecord(ds) && typeof ds.uid === 'string' && typeof ds.type === 'string') {
         const name = typeof ds.name === 'string' ? ds.name : undefined;
-        mappings[dsType] = { uid: ds.uid, type: ds.type, name };
+        mappings[label] = { uid: ds.uid, type: ds.type, name };
       }
     }
   }
@@ -328,8 +333,9 @@ function replaceAnnotationDatasources(
 ): DashboardV2Spec['annotations'] {
   return annotations?.map((annotation: AnnotationQueryKind) => {
     const dsType = annotation.spec.query?.group;
+    const dsLabel = annotation.spec.query?.label;
     const currentDsName = annotation.spec.query?.datasource?.name;
-    const ds = dsType ? mappings[dsType] : undefined;
+    const ds = dsLabel ? mappings[dsLabel] : dsType ? mappings[dsType] : undefined;
 
     if (isVariableRef(currentDsName) || !dsType || !ds) {
       return annotation;
@@ -355,8 +361,9 @@ function replaceVariableDatasources(
   return variables?.map((variable) => {
     if (variable.kind === 'QueryVariable') {
       const dsType = variable.spec.query?.group;
+      const dsLabel = variable.spec.query?.label;
       const currentDsName = variable.spec.query?.datasource?.name;
-      const ds = dsType ? mappings[dsType] : undefined;
+      const ds = dsLabel ? mappings[dsLabel] : dsType ? mappings[dsType] : undefined;
 
       if (isVariableRef(currentDsName) || !dsType || !ds) {
         return variable;
@@ -399,8 +406,9 @@ function replaceVariableDatasources(
 
     if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
       const dsType = variable.group;
+      const dsLabel = variable.label;
       const currentDsName = variable.datasource?.name;
-      const ds = dsType ? mappings[dsType] : undefined;
+      const ds = dsLabel ? mappings[dsLabel] : dsType ? mappings[dsType] : undefined;
 
       if (isVariableRef(currentDsName) || !dsType || !ds) {
         return variable;
@@ -431,8 +439,9 @@ function replaceElementDatasources(
             }
 
             const queryType = query.spec.query?.group;
+            const queryLabel = query.spec.query?.label;
             const currentDsName = query.spec.query?.datasource?.name;
-            const ds = queryType ? mappings[queryType] : undefined;
+            const ds = queryLabel ? mappings[queryLabel] : queryType ? mappings[queryType] : undefined;
 
             if (isVariableRef(currentDsName) || !queryType || !ds) {
               return query;

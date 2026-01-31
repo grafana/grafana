@@ -1392,6 +1392,7 @@ export interface GroupByVariableKind {
 	datasource?: {
 		name?: string;
 	};
+	label?: string;
 	spec: GroupByVariableSpec;
 }
 
@@ -1430,6 +1431,7 @@ export interface AdhocVariableKind {
 	datasource?: {
 		name?: string;
 	};
+	label?: string;
 	spec: AdhocVariableSpec;
 }
 

@@ -79,13 +79,13 @@ export const ImportDashboardFormV2 = ({ register, errors, control, inputs, getVa
             return null;
           }
 
-          const dataSourceOption = `datasource-${input.pluginId}`;
+          const dataSourceOption = `datasource-${input.name}`;
 
           return (
             <Field
               label={input.name}
               description={input.description}
-              key={input.pluginId}
+              key={dataSourceOption}
               invalid={!!errors[dataSourceOption]}
               error={errors[dataSourceOption] ? 'Please select a data source' : undefined}
               noMargin
@@ -98,12 +98,12 @@ export const ImportDashboardFormV2 = ({ register, errors, control, inputs, getVa
                     noDefault={true}
                     placeholder={input.info}
                     pluginId={input.pluginId}
-                    current={selectedDataSources[input.pluginId]}
+                    current={selectedDataSources[dataSourceOption]}
                     onChange={(ds) => {
                       field.onChange(ds);
                       setSelectedDataSources((prev) => ({
                         ...prev,
-                        [input.pluginId]: {
+                        [dataSourceOption]: {
                           uid: ds.uid,
                           type: ds.type,
                           name: ds.name,
