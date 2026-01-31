@@ -1,10 +1,9 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
-import { FieldType, getDefaultTimeRange, InternalTimeZones, toDataFrame, LoadingState } from '@grafana/data';
+import { FieldType, InternalTimeZones, toDataFrame, LoadingState } from '@grafana/data';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
-import { TABLE_RESULTS_STYLE } from 'app/types/explore';
 
-import { RawPrometheusContainer } from './RawPrometheusContainer';
+import { PrometheusQueryResultsContainer } from './PrometheusQueryResultsContainer';
 
 function getTable(): HTMLElement {
   return screen.getAllByRole('table')[0];
@@ -52,27 +51,30 @@ const dataFrame = toDataFrame({
 });
 
 const defaultProps = {
-  exploreId: 'left',
   loading: LoadingState.NotStarted,
   width: 800,
   onCellFilterAdded: jest.fn(),
   tableResult: [dataFrame],
-  splitOpenFn: () => {},
-  range: getDefaultTimeRange(),
   timeZone: InternalTimeZones.utc,
-  resultsStyle: TABLE_RESULTS_STYLE.raw,
   showRawPrometheus: false,
 };
 
-describe('RawPrometheusContainer', () => {
+describe('PrometheusQueryResultsContainer', () => {
   beforeAll(() => {
     getTemplateSrv();
   });
 
-  it('should render component for prometheus', () => {
-    render(<RawPrometheusContainer {...defaultProps} showRawPrometheus={true} />);
+  it('should render table with data and toggle when showRawPrometheus is true', async () => {
+    render(<PrometheusQueryResultsContainer {...defaultProps} showRawPrometheus={true} />);
 
-    expect(screen.queryAllByRole('table').length).toBe(1);
+    // Wait for lazy-loaded component to render
+    await waitFor(() => {
+      expect(screen.queryAllByRole('table').length).toBe(1);
+    });
+
+    // Toggle should be visible
+    expect(screen.queryAllByRole('radio').length).toBeGreaterThan(0);
+
     fireEvent.click(getTableToggle());
 
     expect(getTable()).toBeInTheDocument();
@@ -84,5 +86,26 @@ describe('RawPrometheusContainer', () => {
       { time: '2021-01-01 01:00:00', text: 'test_string_3' },
       { time: '2021-01-01 02:00:00', text: 'test_string_4' },
     ]);
+  });
+
+  it('should render table without toggle when showRawPrometheus is false', async () => {
+    render(<PrometheusQueryResultsContainer {...defaultProps} showRawPrometheus={false} />);
+
+    // Wait for lazy-loaded component to render
+    await waitFor(() => {
+      expect(screen.queryAllByRole('table').length).toBe(1);
+    });
+
+    // Toggle should NOT be visible
+    expect(screen.queryAllByRole('radio').length).toBe(0);
+  });
+
+  it('should render empty state when no data', async () => {
+    render(<PrometheusQueryResultsContainer {...defaultProps} tableResult={[]} showRawPrometheus={true} />);
+
+    // Wait for lazy-loaded component to render
+    await waitFor(() => {
+      expect(screen.getByText('0 series returned')).toBeInTheDocument();
+    });
   });
 });
