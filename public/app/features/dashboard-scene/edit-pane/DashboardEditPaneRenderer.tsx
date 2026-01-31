@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { sceneGraph, SceneObject, SceneObjectState, useSceneObjectState } from '@grafana/scenes';
-import { Sidebar } from '@grafana/ui';
+import { Sidebar, SidebarContextValue } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -25,12 +25,13 @@ import { ElementEditPane } from './ElementEditPane';
 export interface Props {
   editPane: DashboardEditPane;
   dashboard: DashboardScene;
+  sidebar: SidebarContextValue;
 }
 
 /**
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
-export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
+export function DashboardEditPaneRenderer({ editPane, dashboard, sidebar }: Props) {
   const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const { isEditing, meta, uid } = dashboard.useState();
   const hasUid = Boolean(uid);
@@ -99,6 +100,8 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             onAddPanel={onAddNewPanel}
             dashboard={dashboard}
             selectedElement={selectedLayoutElement}
+            onDragStart={() => sidebar.pauseAutoHide?.()}
+            onDragEnd={() => sidebar.resumeAutoHide?.()}
           />
         </Sidebar.OpenPane>
       )}

@@ -22,6 +22,12 @@ export interface SidebarContextValue {
   onResize: (diff: number) => void;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
+  /** Whether auto-hide is enabled */
+  autoHide?: boolean;
+  /** Called when there is activity in the sidebar */
+  onActivity?: () => void;
+  pauseAutoHide?: () => void;
+  resumeAutoHide?: () => void;
 }
 
 export const SidebarContext: React.Context<SidebarContextValue | undefined> = React.createContext<
@@ -49,6 +55,18 @@ export interface UseSideBarOptions {
    * Can only be app name as the final local storag key will be `grafana.ui.sidebar.{persistanceKey}.{docked|compact|size}`
    */
   persistanceKey?: string;
+  /**
+   * Enable auto-hide functionality
+   * When enabled, the sidebar will automatically close after a period of inactivity
+   * Only works when the sidebar is in undocked mode - docked sidebars will not auto-hide
+   */
+  autoHide?: boolean;
+  /**
+   * Auto-hide timeout in milliseconds
+   * Defaults to 10000ms (10 seconds) if not specified
+   * Only used when autoHide is true
+   */
+  autoHideTimeout?: number;
 }
 
 export const SIDE_BAR_WIDTH_ICON_ONLY = 5;
@@ -65,8 +83,12 @@ export function useSidebar({
   contentMargin = 2,
   persistanceKey,
   onClosePane,
+  autoHide = false,
+  autoHideTimeout = 10000,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
+
+  const [autoHidePaused, setAutoHidePaused] = React.useState(false);
 
   const [isDocked, setIsDocked] = useSidebarSavedState(persistanceKey, 'docked', defaultToDocked);
   const [compact, setCompact] = useSidebarSavedState(persistanceKey, 'compact', defaultToCompact);
@@ -74,6 +96,8 @@ export function useSidebar({
 
   // Used to accumulate drag distance to know when to change compact mode
   const [_, setCompactDrag] = React.useState(0);
+
+  const autoHideTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const onToggleDock = useCallback(() => {
     setIsDocked((prev) => {
@@ -92,6 +116,49 @@ export function useSidebar({
       [prop]: isDocked && hasOpenPane ? paneWidth + toolbarWidth : toolbarWidth,
     },
   };
+
+  const clearAutoHideTimer = useCallback(() => {
+    if (autoHideTimerRef.current !== null) {
+      clearTimeout(autoHideTimerRef.current);
+      autoHideTimerRef.current = null;
+    }
+  }, []);
+
+  const startAutoHideTimer = useCallback(() => {
+    clearAutoHideTimer();
+
+    if (autoHide && !autoHidePaused && hasOpenPane && !isDocked && onClosePane) {
+      autoHideTimerRef.current = setTimeout(() => onClosePane(), autoHideTimeout);
+    }
+  }, [autoHide, autoHidePaused, autoHideTimeout, hasOpenPane, isDocked, onClosePane, clearAutoHideTimer]);
+
+  const onActivity = useCallback(() => {
+    if (autoHide && !autoHidePaused) {
+      startAutoHideTimer();
+    }
+  }, [autoHide, autoHidePaused, startAutoHideTimer]);
+
+  const pauseAutoHide = useCallback(() => {
+    setAutoHidePaused(true);
+    clearAutoHideTimer();
+  }, [clearAutoHideTimer]);
+
+  const resumeAutoHide = useCallback(() => {
+    setAutoHidePaused(false);
+    startAutoHideTimer();
+  }, [startAutoHideTimer]);
+
+  React.useEffect(() => {
+    if (autoHide && hasOpenPane && !isDocked) {
+      startAutoHideTimer();
+    } else {
+      clearAutoHideTimer();
+    }
+
+    return () => {
+      clearAutoHideTimer();
+    };
+  }, [autoHide, hasOpenPane, isDocked, startAutoHideTimer, clearAutoHideTimer]);
 
   const onResize = useCallback(
     (diff: number) => {
@@ -134,6 +201,10 @@ export function useSidebar({
     bottomMargin,
     contentMargin,
     onClosePane,
+    autoHide,
+    onActivity,
+    pauseAutoHide,
+    resumeAutoHide,
   };
 }
 

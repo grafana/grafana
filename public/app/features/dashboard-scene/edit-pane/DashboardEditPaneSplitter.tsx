@@ -81,6 +81,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     position: 'right',
     persistanceKey: 'dashboard',
     onClosePane: () => editPane.closePane(),
+    autoHide: true,
   });
 
   /**
@@ -130,7 +131,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
         </div>
 
         <Sidebar contextValue={sidebarContext}>
-          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} sidebar={sidebarContext} />
         </Sidebar>
       </div>
     );
