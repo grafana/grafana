@@ -204,7 +204,7 @@ export function createFlatTree(
   const collection = folderUID ? childrenByUID[folderUID] : rootCollection;
 
   const items = folderUID
-    ? isOpen && collection?.items // keep seperate lines
+    ? isOpen && collection?.items // keep separate lines
     : collection?.items;
 
   let children = (items || []).flatMap((item) => {

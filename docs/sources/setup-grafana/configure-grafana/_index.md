@@ -1551,7 +1551,7 @@ Options are `debug`, `info`, `warn`, `error`. `critical` is an alias for `error`
 Optional settings to set different levels for specific loggers.
 For example: `filters = sqlstore:debug`
 
-You can use multiple filters with a comma-seperated list:
+You can use multiple filters with a comma-separated list:
 For example: `filters = sqlstore:debug,plugins:info`
 
 The equivalent for a `docker-compose.yaml` looks like this:

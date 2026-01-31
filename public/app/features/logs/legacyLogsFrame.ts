@@ -50,7 +50,7 @@ export function parseLegacyLogsFrame(frame: DataFrame): LogsFrame | null {
 
   // extracting the labels is done very differently for old-loki-style and simple-style
   // dataframes, so it's a little awkward to handle it,
-  // we both need to on-demand extract the labels, and also get teh labelsField,
+  // we both need to on-demand extract the labels, and also get the labelsField,
   // but only if the labelsField is used.
   const [labelsField, getL] = makeLabelsGetter(cache, bodyField, frame);
 

@@ -27,7 +27,7 @@ export interface BrowseDashboardsState {
   childrenByParentUID: Record<string, DashboardViewItemCollection | undefined>;
   selectedItems: DashboardTreeSelection;
 
-  // Only folders can ever be open or closed, so no need to seperate this by kind
+  // Only folders can ever be open or closed, so no need to separate this by kind
   openFolders: Record<string, boolean>;
 }
 

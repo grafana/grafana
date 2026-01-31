@@ -71,7 +71,7 @@ export class RequestsRecorder {
   async #handleRequest(request: Request) {
     const type = request.resourceType();
 
-    // Once we've recieved a document response, create a list of requests that we'll count the responses of.
+    // Once we've received a document response, create a list of requests that we'll count the responses of.
     // We also want to count the document request itself.
     if (this.#documentUrl || type === 'document') {
       this.#currentRequests.add(request);
@@ -95,7 +95,7 @@ export class RequestsRecorder {
     // Record when a document response comes in so we can keep track of future requests
     if (type === 'document') {
       if (this.#documentUrl) {
-        console.warn('recieved additional document response', url);
+        console.warn('received additional document response', url);
       }
 
       this.#documentUrl = url;

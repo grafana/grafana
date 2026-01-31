@@ -44,7 +44,7 @@ export const useNamespaces = (datasource: CloudWatchDatasource) => {
 export const useMetrics = (datasource: CloudWatchDatasource, { region, namespace, accountId }: GetMetricsRequest) => {
   const [metrics, setMetrics] = useState<Array<SelectableValue<string>>>([]);
 
-  // need to ensure dependency array below recieves the interpolated value so that the effect is triggered when a variable is changed
+  // need to ensure dependency array below receives the interpolated value so that the effect is triggered when a variable is changed
   if (region) {
     region = datasource.templateSrv.replace(region, {});
   }
