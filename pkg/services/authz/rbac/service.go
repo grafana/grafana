@@ -186,6 +186,166 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	return &authzv1.CheckResponse{Allowed: allowed}, nil
 }
 
+func (s *Service) BatchCheck(ctx context.Context, req *authzv1.BatchCheckRequest) (*authzv1.BatchCheckResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.BatchCheck")
+	defer span.End()
+
+	checks := req.GetChecks()
+	span.SetAttributes(attribute.Int("check_count", len(checks)))
+
+	ctxLogger := s.logger.FromContext(ctx).New(
+		"subject", req.GetSubject(),
+		"check_count", len(checks),
+	)
+	defer func(start time.Time) {
+		ctxLogger.Debug("BatchCheck execution time", "duration", time.Since(start).Milliseconds())
+	}(time.Now())
+
+	if _, has := types.AuthInfoFrom(ctx); !has {
+		return nil, status.Error(codes.Internal, "could not get auth info from context")
+	}
+
+	if len(checks) == 0 {
+		return &authzv1.BatchCheckResponse{
+			Results: make(map[string]*authzv1.BatchCheckResult),
+		}, nil
+	}
+
+	results := make(map[string]*authzv1.BatchCheckResult, len(checks))
+
+	// Validate subject
+	userUID, idType, err := s.validateSubject(ctx, req.GetSubject())
+	if err != nil {
+		ctxLogger.Error("invalid subject", "error", err)
+		for _, item := range checks {
+			results[item.GetCorrelationId()] = &authzv1.BatchCheckResult{Allowed: false, Error: err.Error()}
+		}
+		return &authzv1.BatchCheckResponse{Results: results}, nil
+	}
+
+	// Group checks by (namespace, action) to batch permission lookups
+	type checkGroup struct {
+		namespace         types.NamespaceInfo
+		action            string
+		actionSets        []string
+		items             []*authzv1.BatchCheckItem
+		checkReqs         []*checkRequest
+		requiresFreshData bool // true if any item in the group requires fresh data
+	}
+	groups := make(map[string]*checkGroup)
+
+	// First pass: validate and group checks
+	for _, item := range checks {
+		ns, err := validateNamespace(ctx, item.GetNamespace())
+		if err != nil {
+			results[item.GetCorrelationId()] = &authzv1.BatchCheckResult{Allowed: false, Error: err.Error()}
+			continue
+		}
+
+		action, actionSets, err := s.validateAction(ctx, item.GetGroup(), item.GetResource(), item.GetVerb())
+		if err != nil {
+			results[item.GetCorrelationId()] = &authzv1.BatchCheckResult{Allowed: false, Error: err.Error()}
+			continue
+		}
+
+		// Create the internal check request
+		checkReq := &checkRequest{
+			Namespace:    ns,
+			UserUID:      userUID,
+			IdentityType: idType,
+			Action:       action,
+			ActionSets:   actionSets,
+			Group:        item.GetGroup(),
+			Resource:     item.GetResource(),
+			Verb:         item.GetVerb(),
+			Name:         item.GetName(),
+			ParentFolder: item.GetFolder(),
+		}
+
+		// Group by namespace + action
+		groupKey := ns.Value + ":" + action
+
+		// Check if this item requires fresh data based on freshness_timestamp
+		// If freshness_timestamp is provided and is more recent than (now - cache TTL),
+		// we need to skip cache and fetch fresh data
+		requiresFresh := false
+		if item.GetFreshnessTimestamp() > 0 {
+			freshnessTime := time.UnixMilli(item.GetFreshnessTimestamp())
+			cacheExpiryTime := time.Now().Add(-s.settings.CacheTTL)
+			if freshnessTime.After(cacheExpiryTime) {
+				requiresFresh = true
+			}
+		}
+
+		if g, ok := groups[groupKey]; ok {
+			g.items = append(g.items, item)
+			g.checkReqs = append(g.checkReqs, checkReq)
+			// If any item in the group requires fresh data, mark the whole group
+			if requiresFresh {
+				g.requiresFreshData = true
+			}
+		} else {
+			groups[groupKey] = &checkGroup{
+				namespace:         ns,
+				action:            action,
+				actionSets:        actionSets,
+				items:             []*authzv1.BatchCheckItem{item},
+				checkReqs:         []*checkRequest{checkReq},
+				requiresFreshData: requiresFresh,
+			}
+		}
+	}
+
+	// Second pass: process each group with shared permissions
+	for _, group := range groups {
+		// Set namespace in context for this group (required by store methods)
+		groupCtx := request.WithNamespace(ctx, group.namespace.Value)
+
+		var permissions map[string]bool
+		var err error
+
+		// Determine whether to use cache or fetch fresh
+		if group.requiresFreshData {
+			// Skip cache and fetch fresh permissions from store
+			permissions, err = s.getIdentityPermissions(groupCtx, group.namespace, idType, userUID, group.action, group.actionSets)
+		} else {
+			// Try to get cached permissions first, then fall back to store
+			permissions, err = s.getCachedIdentityPermissions(groupCtx, group.namespace, idType, userUID, group.action)
+			if err != nil {
+				// Cache miss - fetch from store
+				permissions, err = s.getIdentityPermissions(groupCtx, group.namespace, idType, userUID, group.action, group.actionSets)
+			}
+		}
+
+		if err != nil {
+			ctxLogger.Error("could not get permissions", "namespace", group.namespace.Value, "action", group.action, "error", err)
+			for _, item := range group.items {
+				results[item.GetCorrelationId()] = &authzv1.BatchCheckResult{Allowed: false, Error: err.Error()}
+			}
+			continue
+		}
+
+		// Check each item in the group using the shared permissions
+		for i, item := range group.items {
+			checkReq := group.checkReqs[i]
+
+			allowed, err := s.checkPermission(groupCtx, permissions, checkReq)
+			if err != nil {
+				results[item.GetCorrelationId()] = &authzv1.BatchCheckResult{Allowed: false, Error: err.Error()}
+				continue
+			}
+
+			results[item.GetCorrelationId()] = &authzv1.BatchCheckResult{Allowed: allowed}
+		}
+	}
+
+	span.SetAttributes(attribute.Int("groups_processed", len(groups)))
+
+	return &authzv1.BatchCheckResponse{
+		Results: results,
+	}, nil
+}
+
 func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.List")
 	defer span.End()
