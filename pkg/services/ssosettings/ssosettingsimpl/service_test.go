@@ -911,6 +911,11 @@ func TestService_List(t *testing.T) {
 					Settings: map[string]any{"enabled": false},
 					Source:   models.System,
 				},
+				{
+					Provider: "ldap",
+					Settings: map[string]any(nil),
+					Source:   models.System,
+				},
 			},
 			wantErr: false,
 		},
