@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -22,6 +23,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
+import { useContactPointsNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { isExtraConfig } from '../../utils/alertmanager/extraConfigs';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -99,7 +101,7 @@ const ContactPointsTab = () => {
   }
 
   return (
-    <>
+    <Stack direction="column" gap={3}>
       {/* TODO we can add some additional info here with a ToggleTip */}
       <Stack direction="row" alignItems="end" justifyContent="space-between">
         <ContactPointsFilter />
@@ -148,7 +150,7 @@ const ContactPointsTab = () => {
         <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />
       )}
       {ExportDrawer}
-    </>
+    </Stack>
   );
 };
 
@@ -158,7 +160,7 @@ const NotificationTemplatesTab = () => {
   );
 
   return (
-    <>
+    <Stack direction="column" gap={3}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Text variant="body" color="secondary">
           <Trans i18nKey="alerting.notification-templates-tab.create-notification-templates-customize-notifications">
@@ -179,7 +181,7 @@ const NotificationTemplatesTab = () => {
         )}
       </Stack>
       <NotificationTemplates />
-    </>
+    </Stack>
   );
 };
 
@@ -207,6 +209,10 @@ export const ContactPointsPageContents = () => {
 
   const showContactPointsTab = canViewContactPoints || canCreateContactPoints;
 
+  // When V2 navigation is enabled, Templates has its own dedicated tab in the navigation,
+  // so we don't show local tabs here - just show the contact points content directly
+  const useV2Nav = config.featureToggles.alertingNavigationV2;
+
   // Depending on permissions, user may not have access to all tabs,
   // but we can default to picking the first one that they definitely _do_ have access to
   const defaultTab = [
@@ -223,6 +229,17 @@ export const ContactPointsPageContents = () => {
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
 
+  // V2 Navigation: No local tabs, just show contact points content
+  if (useV2Nav) {
+    return (
+      <>
+        <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager!} />
+        <ContactPointsTab />
+      </>
+    );
+  }
+
+  // Legacy Navigation: Show local tabs for Contact Points and Templates
   return (
     <>
       <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager!} />
@@ -282,8 +299,10 @@ const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE
 };
 
 function ContactPointsPage() {
+  const { navId, pageNav } = useContactPointsNav();
+
   return (
-    <AlertmanagerPageWrapper navId="receivers" accessType="notification">
+    <AlertmanagerPageWrapper navId={navId} pageNav={pageNav} accessType="notification">
       <ContactPointsPageContents />
     </AlertmanagerPageWrapper>
   );
