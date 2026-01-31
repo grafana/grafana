@@ -1189,6 +1189,10 @@ export interface Dashboard {
    */
   annotations?: AnnotationContainer;
   /**
+   * When set to true, live panels will not stream data if auto refresh is set to Off
+   */
+  connectLiveToAutoRefresh?: boolean;
+  /**
    * Description of dashboard.
    */
   description?: string;

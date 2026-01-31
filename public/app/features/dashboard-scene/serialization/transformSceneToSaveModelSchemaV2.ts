@@ -91,6 +91,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     description: sceneDash.description || undefined,
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
+    connectLiveToAutoRefresh: sceneDash.connectLiveToAutoRefresh,
     preload: sceneDash.preload ?? defaultDashboardV2Spec().preload,
     editable: sceneDash.editable ?? defaultDashboardV2Spec().editable,
     links: (sceneDash.links || []).map((link) => ({

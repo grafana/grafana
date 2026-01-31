@@ -1944,6 +1944,8 @@ type DashboardSpec struct {
 	// This will keep data "moving left" regardless of the query refresh rate. This setting helps
 	// avoid dashboards presenting stale live data.
 	LiveNow *bool `json:"liveNow,omitempty"`
+	// When set to true, live panels will not stream data if auto refresh is set to Off
+	ConnectLiveToAutoRefresh *bool `json:"connectLiveToAutoRefresh,omitempty"`
 	// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
 	Preload bool `json:"preload"`
 	// Plugins only. The version of the dashboard installed together with the plugin.

@@ -70,6 +70,9 @@ lineage: schemas: [{
 			// avoid dashboards presenting stale live data
 			liveNow?: bool
 
+			// When set to true, live panels will not stream data if auto refresh is set to Off
+			connectLiveToAutoRefresh?: bool
+
 			// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
 			weekStart?: string
 

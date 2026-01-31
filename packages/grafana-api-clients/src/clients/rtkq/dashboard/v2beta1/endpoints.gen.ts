@@ -1188,6 +1188,8 @@ export type DashboardVariableKind =
   | DashboardSwitchVariableKind;
 export type DashboardSpec = {
   annotations: DashboardAnnotationQueryKind[];
+  /** When set to true, live panels will not stream data if auto refresh is set to Off */
+  connectLiveToAutoRefresh?: boolean;
   cursorSync: DashboardDashboardCursorSync;
   /** Description of dashboard. */
   description?: string;
