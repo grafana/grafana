@@ -6,6 +6,7 @@ import { commonOptionsBuilder } from '@grafana/ui';
 import { GeomapPanel } from './GeomapPanel';
 import { LayersEditor } from './editor/LayersEditor';
 import { MapViewEditor } from './editor/MapViewEditor';
+import { VariableNameEditor } from './editor/VariableNameEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
 import { geomapSuggestionsSupplier } from './suggestions';
@@ -49,6 +50,24 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
       name: t('geomap.name-no-repeat', 'No map repeating'),
       description: t('geomap.description-no-repeat', 'Prevent the map from repeating horizontally'),
       defaultValue: false,
+    });
+
+    builder.addBooleanSwitch({
+      category,
+      path: 'view.dashboardVariable',
+      description: 'Store view bounds into a dashboard variable for use in queries.',
+      name: 'Enable dashboard variable',
+      defaultValue: false,
+    });
+
+    builder.addCustomEditor({
+      category,
+      id: 'view.dashboardVariableName',
+      path: 'view.dashboardVariableName',
+      name: 'Variable name',
+      description: 'Specify the dashboard variable to store view bounds.',
+      editor: VariableNameEditor,
+      showIf: (config) => config.view?.dashboardVariable === true,
     });
 
     // eslint-disable-next-line
