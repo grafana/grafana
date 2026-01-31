@@ -38,7 +38,7 @@ describe('ShareLinkTab', () => {
     config.appUrl = 'http://dashboards.grafana.com/grafana/';
     config.rendererAvailable = true;
     contextSrv.user.orgId = 1;
-    config.featureToggles.dashboardSceneForViewers = true;
+    config.featureToggles.dashboardScene = true;
     locationService.push('/d/dash-1?from=now-6h&to=now');
   });
 

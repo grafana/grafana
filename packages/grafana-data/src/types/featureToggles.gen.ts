@@ -369,16 +369,6 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
-  * Enables dashboard rendering using Scenes for viewer roles
-  * @default true
-  */
-  dashboardSceneForViewers?: boolean;
-  /**
-  * Enables rendering dashboards using scenes for solo panels
-  * @default true
-  */
-  dashboardSceneSolo?: boolean;
-  /**
   * Enables dashboard rendering using scenes for all roles
   * @default true
   */
