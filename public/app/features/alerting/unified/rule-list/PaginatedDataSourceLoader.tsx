@@ -16,6 +16,8 @@ import { LoadMoreButton } from './components/LoadMoreButton';
 import { NoRulesFound } from './components/NoRulesFound';
 import { getDatasourceFilter } from './hooks/datasourceFilter';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
+import { useDataSourceLoadingReporter } from './hooks/useDataSourceLoadingReporter';
+import { DataSourceLoadState } from './hooks/useDataSourceLoadingStates';
 import { useLazyLoadPrometheusGroups } from './hooks/useLazyLoadPrometheusGroups';
 import { FRONTED_GROUPED_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
 
@@ -23,6 +25,7 @@ interface LoaderProps extends Required<Pick<DataSourceSectionProps, 'application
   rulesSourceIdentifier: DataSourceRulesSourceIdentifier;
   groupFilter?: string;
   namespaceFilter?: string;
+  onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
 }
 
 export function PaginatedDataSourceLoader({
@@ -30,6 +33,7 @@ export function PaginatedDataSourceLoader({
   application,
   groupFilter,
   namespaceFilter,
+  onLoadingStateChange,
 }: LoaderProps) {
   const key = `${rulesSourceIdentifier.uid}-${groupFilter}-${namespaceFilter}`;
 
@@ -41,11 +45,18 @@ export function PaginatedDataSourceLoader({
       application={application}
       groupFilter={groupFilter}
       namespaceFilter={namespaceFilter}
+      onLoadingStateChange={onLoadingStateChange}
     />
   );
 }
 
-function PaginatedGroupsLoader({ rulesSourceIdentifier, application, groupFilter, namespaceFilter }: LoaderProps) {
+function PaginatedGroupsLoader({
+  rulesSourceIdentifier,
+  application,
+  groupFilter,
+  namespaceFilter,
+  onLoadingStateChange,
+}: LoaderProps) {
   // If there are filters, we don't want to populate the cache to avoid performance issues
   // Filtering may trigger multiple HTTP requests, which would populate the cache with a lot of groups hurting performance
   const hasFilters = Boolean(groupFilter || namespaceFilter);
@@ -93,8 +104,18 @@ function PaginatedGroupsLoader({ rulesSourceIdentifier, application, groupFilter
     filterFn
   );
 
+  // Report state changes to parent using custom hook
+  useDataSourceLoadingReporter(uid, { isLoading, rulesCount: groups.length, error }, onLoadingStateChange);
+
   const hasNoRules = isEmpty(groups) && !isLoading;
   const groupsByNamespace = useMemo(() => groupBy(groups, 'file'), [groups]);
+
+  // if we are loading and there are filters configured – we shouldn't show any data source headers
+  // until we have at least one result. This will provide a cleaner UI whent he user wants to find a specific folder or group.
+  // We will have another UI element indicating that we are still searching in other datasources.
+  if (hasFilters && isEmpty(groups)) {
+    return null;
+  }
 
   return (
     <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading} error={error}>
