@@ -8258,6 +8258,9 @@
     },
     "utils": {
       "get-next-layer-name": "Layer {{name}}"
+    },
+    "variable-name-editor": {
+      "placeholder": "Select variable"
     }
   },
   "get-enterprise": {

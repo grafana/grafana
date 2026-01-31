@@ -383,10 +383,7 @@ describe('GeomapPanel - View Listener', () => {
       jest.advanceTimersByTime(DEBOUNCE_TIMEOUT);
 
       // Verify locationService.partial was called with correct parameters
-      expect(locationService.partial).toHaveBeenCalledWith(
-        { [`var-${VARIABLE_NAME}`]: `${MOCK_EXTENT_4326}` },
-        true
-      );
+      expect(locationService.partial).toHaveBeenCalledWith({ [`var-${VARIABLE_NAME}`]: `${MOCK_EXTENT_4326}` }, true);
     });
 
     it('should debounce multiple rapid view changes', async () => {
@@ -496,10 +493,7 @@ describe('GeomapPanel - View Listener', () => {
       // Verify the extent was calculated and transformed
       expect(mockView.calculateExtent).toHaveBeenCalled();
       expect(transformExtent).toHaveBeenCalledWith(MOCK_EXTENT, 'EPSG:3857', 'EPSG:4326');
-      expect(locationService.partial).toHaveBeenCalledWith(
-        { [`var-${VARIABLE_NAME}`]: `${MOCK_EXTENT_4326}` },
-        true
-      );
+      expect(locationService.partial).toHaveBeenCalledWith({ [`var-${VARIABLE_NAME}`]: `${MOCK_EXTENT_4326}` }, true);
     });
   });
 
@@ -546,7 +540,7 @@ describe('GeomapPanel - View Listener', () => {
       await panel.initMapAsync(div);
 
       const prevProps = { ...props, width: 600, height: 400 };
-      
+
       // Update the panel's props
       Object.assign(panel.props, { width: 1000, height: 800 });
 
@@ -585,7 +579,7 @@ describe('GeomapPanel - View Listener', () => {
       const ViewConstructor = require('ol/View');
       const div = document.createElement('div');
       await panel.initMapAsync(div);
-      
+
       const view = panel.initMapView(props.options.view);
       expect(view).toBeDefined();
       expect(ViewConstructor).toHaveBeenCalled();
@@ -595,7 +589,7 @@ describe('GeomapPanel - View Listener', () => {
       const ViewConstructor = require('ol/View');
       const div = document.createElement('div');
       await panel.initMapAsync(div);
-      
+
       const viewConfig = {
         ...props.options.view,
         noRepeat: true,
@@ -608,7 +602,7 @@ describe('GeomapPanel - View Listener', () => {
     it('should handle shared view configuration', async () => {
       const div = document.createElement('div');
       await panel.initMapAsync(div);
-      
+
       const viewConfig = {
         ...props.options.view,
         shared: true,
