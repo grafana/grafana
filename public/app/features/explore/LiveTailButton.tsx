@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { ButtonGroup, ToolbarButton } from '@grafana/ui';
 
@@ -29,6 +30,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
         variant={buttonVariant}
         icon={!isLive || isPaused ? 'play' : 'pause'}
         onClick={onClickMain}
+        testId={selectors.pages.Explore.toolbar.live}
         tooltip={
           !isLive || isPaused
             ? t('explore.live-tail-button.start-live-stream-your-logs', 'Start live stream your logs')

@@ -32,6 +32,7 @@ export interface Props {
    * By default left items are hidden on small screens.
    */
   forceShowLeftItems?: boolean;
+  testId?: string;
 }
 
 /**
@@ -56,6 +57,7 @@ export const PageToolbar = memo(
     'aria-label': ariaLabel,
     buttonOverflowAlignment = 'right',
     forceShowLeftItems = false,
+    testId,
   }: Props) => {
     const styles = useStyles2(getStyles);
 
@@ -97,7 +99,7 @@ export const PageToolbar = memo(
     const searchLinksLabel = t('grafana-ui.page-toolbar.search-links', 'Search links');
 
     return (
-      <nav className={mainStyle} aria-label={ariaLabel}>
+      <nav className={mainStyle} aria-label={ariaLabel} data-testid={testId}>
         <div className={styles.leftWrapper}>
           {pageIcon && !onGoBack && (
             <div className={styles.pageIcon}>
