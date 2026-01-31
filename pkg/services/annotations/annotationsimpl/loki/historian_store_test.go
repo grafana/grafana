@@ -446,9 +446,6 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			}
 
 			items := store.annotationsFromStream(stream, annotation_ac.AccessResources{
-				Dashboards: map[string]int64{
-					dashboard1.UID: dashboard1.ID,
-				},
 				CanAccessOrgAnnotations: true,
 			})
 			require.Len(t, items, numTransitions)
