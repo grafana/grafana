@@ -6137,7 +6137,6 @@
         "required": [
           "title",
           "description",
-          "version",
           "group",
           "permissions"
         ],
@@ -6161,11 +6160,6 @@
             "description": "Display name of the role",
             "type": "string",
             "default": ""
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
           }
         }
       },
@@ -6720,7 +6714,6 @@
         "required": [
           "title",
           "description",
-          "version",
           "group",
           "permissions"
         ],
@@ -6744,11 +6737,6 @@
             "description": "Display name of the role",
             "type": "string",
             "default": ""
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
           }
         }
       },
@@ -7197,7 +7185,6 @@
         "required": [
           "title",
           "description",
-          "version",
           "group",
           "permissions"
         ],
@@ -7221,11 +7208,6 @@
             "description": "Display name of the role",
             "type": "string",
             "default": ""
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
           }
         }
       },
