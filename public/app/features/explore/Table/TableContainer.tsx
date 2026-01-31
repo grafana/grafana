@@ -67,7 +67,10 @@ export class TableContainer extends PureComponent<Props, State> {
     }
     // tries to estimate table height, with a min of 300 and a max of 600
     // if there are multiple tables, there is no min
-    return Math.min(600, Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46);
+    const height = Math.min(600, Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46);
+
+    // esure minimum height of 300
+    return Math.max(height, 300);
   }
 
   getTableTitle(dataFrames: DataFrame[] | null, data: DataFrame, i: number) {
