@@ -103,6 +103,7 @@ func processPanelMapShared(panelMap map[string]any, templatingList []map[string]
 
 		if newSql != originalSql {
 			targetMap["rawSql"] = newSql
+			targetMap["editorMode"] = "code"
 			modified = true
 		}
 	}
