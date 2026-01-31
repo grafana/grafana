@@ -202,3 +202,56 @@ Select your preferred evaluation (e.g. every 24 hours) and notification settings
 Click **Save** and check the alert is being triggered.
 
 Your alert is now configured to monitor Advisor results and notify you when failures are detected!
+
+## How to manage Advisor using the Grafana CLI `grafanactl`
+
+The Grafana CLI `grafanactl` tool is a command-line tool for managing Grafana resources as code. See how to install and configure it in the [Grafana CLI](/docs/grafana/latest/as-code/observability-as-code/grafana-cli/) documentation.
+
+It can be used to manage Advisor `checks` and `checktypes`. We'll cover some examples below.
+
+### Get the list of checks
+
+```bash
+grafanactl advisor checks list
+```
+
+### Get the list of checktypes
+
+```bash
+grafanactl advisor checktypes list
+```
+
+### Get the list of failures for a check
+
+```bash
+grafanactl resources get checks/<check-name> -o json | jq '.status.report.failures[].item'
+```
+
+### Run checks for a type
+
+```bash
+mkdir -p resources/Check/
+echo '{
+  "kind":"Check",
+  "metadata":{
+    "name":"check-manual",
+    "labels":{"advisor.grafana.app/type":"datasource"}, # Replace with the check type you want to run
+    "namespace":"<namespace>" # Replace with the namespace of your Grafana instance or "default" for on-premise
+  },
+  "apiVersion":"advisor.grafana.app/v0alpha1",
+  "spec":{"data":{}},
+  "status":{
+    "report":{
+      "count":0,
+      "failures":[]
+    }
+  }
+}' > resources/Check/check-manual.json
+grafanctl push checks/check-manual
+```
+
+And then wait for the check to be run and the results to be available:
+
+```bash
+grafanactl resources get checks/check-manual -o json | jq '.status.report'
+```
