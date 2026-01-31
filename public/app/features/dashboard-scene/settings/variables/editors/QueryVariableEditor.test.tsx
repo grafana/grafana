@@ -33,6 +33,12 @@ const promDatasource = mockDataSource({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      multiPropsVariables: true,
+    },
+  },
   getDataSourceSrv: () => ({
     get: async () => ({
       ...defaultDatasource,
@@ -387,7 +393,7 @@ describe('QueryVariableEditor', () => {
   it('should update the variable state when adding two static options', async () => {
     const {
       variable,
-      renderer: { getByTestId, getAllByTestId },
+      renderer: { getByTestId, getAllByPlaceholderText },
       user,
     } = await setup();
 
@@ -405,44 +411,33 @@ describe('QueryVariableEditor', () => {
     await user.click(addButton);
 
     // Enter label and value for first option
-    const labelInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.labelInput
-    );
-    const valueInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.valueInput
-    );
-
-    await user.type(labelInputs[0], 'First Option');
-    await user.type(valueInputs[0], 'first-value');
-
-    await waitFor(async () => {
-      await lastValueFrom(variable.validateAndUpdate());
-    });
-
-    expect(variable.state.staticOptions).toEqual([{ label: 'First Option', value: 'first-value' }]);
-
-    // Add second static option
-    await user.click(addButton);
-
-    // Get updated inputs (now there should be 2 sets)
-    const updatedLabelInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.labelInput
-    );
-    const updatedValueInputs = getAllByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.valueInput
-    );
-
-    // Enter label and value for second option
-    await user.type(updatedLabelInputs[1], 'Second Option');
-    await user.type(updatedValueInputs[1], 'second-value');
+    await user.type(getAllByPlaceholderText('text')[0], 'First Option[Tab]');
+    await user.type(getAllByPlaceholderText('value')[0], 'first-value[Tab]');
+    await screen.findByDisplayValue('first-value');
 
     await waitFor(async () => {
       await lastValueFrom(variable.validateAndUpdate());
     });
 
     expect(variable.state.staticOptions).toEqual([
-      { label: 'First Option', value: 'first-value' },
-      { label: 'Second Option', value: 'second-value' },
+      { label: 'First Option', value: 'first-value', properties: { text: 'First Option', value: 'first-value' } },
+    ]);
+
+    // Add second static option
+    await user.click(addButton);
+
+    // Enter label and value for second option
+    await user.type(getAllByPlaceholderText('text')[1], 'Second Option[Tab]');
+    await user.type(getAllByPlaceholderText('value')[1], 'second-value[Tab]');
+    await screen.findByDisplayValue('second-value');
+
+    await waitFor(async () => {
+      await lastValueFrom(variable.validateAndUpdate());
+    });
+
+    expect(variable.state.staticOptions).toEqual([
+      { label: 'First Option', value: 'first-value', properties: { text: 'First Option', value: 'first-value' } },
+      { label: 'Second Option', value: 'second-value', properties: { text: 'Second Option', value: 'second-value' } },
     ]);
   });
 

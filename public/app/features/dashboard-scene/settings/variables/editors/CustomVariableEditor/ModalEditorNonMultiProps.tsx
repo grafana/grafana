@@ -29,7 +29,7 @@ export function ModalEditorNonMultiProps(props: ModalEditorProps) {
 
   return (
     <Modal
-      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom Variable')}
+      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom options')}
       isOpen={true}
       onDismiss={onCloseModal}
       closeOnBackdropClick={false}
@@ -44,7 +44,7 @@ export function ModalEditorNonMultiProps(props: ModalEditorProps) {
       )}
       <Stack direction="column" gap={2}>
         <VariableStaticOptionsForm options={options} onChange={onChangeOptions} ref={formRef} isInModal />
-        <VariableValuesPreview options={options} />
+        <VariableValuesPreview options={options} staticOptions={[]} />
       </Stack>
       <Modal.ButtonRow leftItems={<VariableStaticOptionsFormAddButton onAdd={onAddNewOption} />}>
         <Button
@@ -74,6 +74,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
   const formRef = useRef<VariableStaticOptionsFormRef | null>(null);
 
   return {
+    variable,
     displayMultiPropsWarningBanner: valuesFormat === 'json',
     formRef,
     onCloseModal: onClose,
