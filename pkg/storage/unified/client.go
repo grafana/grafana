@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	badger "github.com/dgraph-io/badger/v4"
 	"github.com/fullstorydev/grpchan"
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -26,7 +25,6 @@ import (
 	"github.com/grafana/dskit/services"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -58,8 +56,8 @@ type clientMetrics struct {
 
 // This adds a UnifiedStorage client into the wire dependency tree
 func ProvideUnifiedStorageClient(opts *Options,
-	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
+	backend resource.StorageBackend,
 ) (resource.ResourceClient, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
@@ -70,7 +68,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(0),
-	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, opts.SecureValues)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, indexMetrics, opts.SecureValues, backend)
 	if err == nil {
 		// Decide whether to disable SQL fallback stats per resource in Mode 5.
 		// Otherwise we would still try to query the legacy SQL database in Mode 5.
@@ -98,39 +96,18 @@ func ProvideUnifiedStorageClient(opts *Options,
 func newClient(opts options.StorageOptions,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	authzc types.AccessClient,
 	docs resource.DocumentBuilderSupplier,
-	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 	secure secrets.InlineSecureValueSupport,
+	backend resource.StorageBackend,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
 	switch opts.StorageType {
 	case options.StorageTypeFile:
-		if opts.DataPath == "" {
-			opts.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
-		}
-
-		// Create BadgerDB instance
-		db, err := badger.Open(badger.DefaultOptions(filepath.Join(opts.DataPath, "badger")).
-			WithLogger(nil))
-		if err != nil {
-			return nil, err
-		}
-
-		kv := resource.NewBadgerKV(db)
-		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
-			KvStore: kv,
-			Log:     log.New(),
-		})
-		if err != nil {
-			return nil, err
-		}
-
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend: backend,
 			Blob: resource.BlobConfig{
@@ -178,17 +155,22 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
+		if backendService, ok := backend.(services.Service); ok {
+			if err := services.StartAndAwaitRunning(ctx, backendService); err != nil {
+				return nil, fmt.Errorf("failed to start storage backend: %w", err)
+			}
+		}
+
 		serverOptions := sql.ServerOptions{
-			DB:             db,
-			Cfg:            cfg,
-			Tracer:         tracer,
-			Reg:            reg,
-			AccessClient:   authzc,
-			SearchOptions:  searchOptions,
-			StorageMetrics: storageMetrics,
-			IndexMetrics:   indexMetrics,
-			Features:       features,
-			SecureValues:   secure,
+			Backend:       backend,
+			Cfg:           cfg,
+			Tracer:        tracer,
+			Reg:           reg,
+			AccessClient:  authzc,
+			SearchOptions: searchOptions,
+			IndexMetrics:  indexMetrics,
+			Features:      features,
+			SecureValues:  secure,
 		}
 
 		if cfg.QOSEnabled {
