@@ -21,6 +21,14 @@ cards:
       height: 24
       href: ./log-configurations/
       title: Log configurations
+    - description: Configure trace data correlation with entities using data source mappings and filtering options.
+      height: 24
+      href: ./trace-configurations/
+      title: Trace configurations
+    - description: Set up profile data correlation with entities using data source mappings and filtering options.
+      height: 24
+      href: ./profile-configurations/
+      title: Profile configurations
     - description: Set custom thresholds for request, resource, and health assertions to monitor your services.
       height: 24
       href: ./thresholds/
@@ -48,6 +56,8 @@ keywords:
   - Suppressed Assertions
   - Custom Model Rules
   - Log Configuration
+  - Trace Configuration
+  - Profile Configuration
   - Threshold Configuration
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/terraform/terraform-knowledge-graph/
 ---
@@ -58,7 +68,7 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-cod
 
 ## Overview
 
-Terraform enables you to manage [Grafana Cloud Knowledge Graph](/docs/grafana-cloud/knowledge-graph/) resources using infrastructure as code. With Terraform, you can define, version control, and deploy Knowledge Graph configurations including alert rules, suppression policies, entity models, log correlations, and thresholds.
+Terraform enables you to manage [Grafana Cloud Knowledge Graph](/docs/grafana-cloud/knowledge-graph/) resources using infrastructure as code. With Terraform, you can define, version control, and deploy Knowledge Graph configurations including alert rules, suppression policies, entity models, log, trace, and profile correlations, and thresholds.
 
 ## Explore
 
