@@ -19,6 +19,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ExternalGroupMappingTeamRef":                                       schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingTeamRef(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetGroups":                                                         schema_pkg_apis_iam_v0alpha1_GetGroups(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetGroupsBody":                                                     schema_pkg_apis_iam_v0alpha1_GetGroupsBody(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetMembers":                                                        schema_pkg_apis_iam_v0alpha1_GetMembers(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetMembersBody":                                                    schema_pkg_apis_iam_v0alpha1_GetMembersBody(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchTeams":                                                    schema_pkg_apis_iam_v0alpha1_GetSearchTeams(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchTeamsBody":                                                schema_pkg_apis_iam_v0alpha1_GetSearchTeamsBody(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchUsers":                                                    schema_pkg_apis_iam_v0alpha1_GetSearchUsers(ref),
@@ -85,6 +87,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.UserStatus":                                                        schema_pkg_apis_iam_v0alpha1_UserStatus(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam":              schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds6RoutesTeamsGETResponseUserTeam(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping": schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping(ref),
+		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesMembersGETResponseTeamUser":            schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds7RoutesMembersGETResponseTeamUser(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1RoutesNamespacedSearchTeamsGETResponseTeamHit":     schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1RoutesNamespacedSearchTeamsGETResponseTeamHit(ref),
 	}
 }
@@ -567,6 +570,76 @@ func schema_pkg_apis_iam_v0alpha1_GetGroupsBody(ref common.ReferenceCallback) co
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesGroupsGETResponseExternalGroupMapping"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GetMembers(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesMembersGETResponseTeamUser"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesMembersGETResponseTeamUser"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GetMembersBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesMembersGETResponseTeamUser"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.VersionsV0alpha1Kinds7RoutesMembersGETResponseTeamUser"},
 	}
 }
 
@@ -3415,6 +3488,47 @@ func schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds7RoutesGroupsGETResponseE
 					},
 				},
 				Required: []string{"name", "externalGroup"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_VersionsV0alpha1Kinds7RoutesMembersGETResponseTeamUser(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"team": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"user": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"permission": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"external": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"team", "user", "permission", "external"},
 			},
 		},
 	}

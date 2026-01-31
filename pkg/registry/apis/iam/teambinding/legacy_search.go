@@ -65,13 +65,18 @@ func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourc
 	}
 
 	subjectUID := subjectUIDFromRequirements(req.Options.Fields)
-	if subjectUID == "" {
-		return nil, fmt.Errorf("missing required field filter %q", resource.SEARCH_FIELD_PREFIX+builders.TEAM_BINDING_SUBJECT_NAME)
+	teamRef := teamRefFromRequirements(req.Options.Fields)
+	if subjectUID == "" && teamRef == "" {
+		return nil, fmt.Errorf("missing required field filters: %q or %q",
+			resource.SEARCH_FIELD_PREFIX+builders.TEAM_BINDING_SUBJECT_NAME,
+			resource.SEARCH_FIELD_PREFIX+builders.TEAM_BINDING_TEAM_REF,
+		)
 	}
 
 	fields := req.Fields
 	if len(fields) == 0 {
 		fields = []string{
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM_REF,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_PERMISSION,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_EXTERNAL,
@@ -91,6 +96,7 @@ func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourc
 	for p := int64(1); p <= req.Page; p++ {
 		res, err := c.store.ListTeamBindings(ctx, ns, legacy.ListTeamBindingsQuery{
 			UserUID: subjectUID,
+			TeamUID: teamRef,
 			Pagination: common.Pagination{
 				Limit:    req.Limit,
 				Continue: continueToken,
@@ -138,14 +144,23 @@ func (c *LegacyTeamBindingSearchClient) RebuildIndexes(ctx context.Context, in *
 }
 
 func subjectUIDFromRequirements(reqs []*resourcepb.Requirement) string {
-	want1 := resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME // fields.subject.name
-	want2 := builders.TEAM_BINDING_SUBJECT_NAME                                // subject.name
+	subjectUIDKey := resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_SUBJECT_NAME // fields.subject_name
 
+	return getFieldValueFromRequirements(reqs, subjectUIDKey)
+}
+
+func teamRefFromRequirements(reqs []*resourcepb.Requirement) string {
+	teamRefKey := resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM_REF // fields.team_ref
+
+	return getFieldValueFromRequirements(reqs, teamRefKey)
+}
+
+func getFieldValueFromRequirements(reqs []*resourcepb.Requirement, key string) string {
 	for _, r := range reqs {
 		if r == nil {
 			continue
 		}
-		if r.Key != want1 && r.Key != want2 {
+		if r.Key != key {
 			continue
 		}
 		if len(r.Values) < 1 {
@@ -153,7 +168,6 @@ func subjectUIDFromRequirements(reqs []*resourcepb.Requirement) string {
 		}
 		return r.Values[0]
 	}
-
 	return ""
 }
 
