@@ -59,7 +59,7 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.AliasedExpr, *sqlparser.AliasedTableExpr:
 		return
 
-	case *sqlparser.AndExpr, *sqlparser.OrExpr:
+	case *sqlparser.AndExpr, *sqlparser.OrExpr, *sqlparser.NotExpr:
 		return
 
 	case *sqlparser.BinaryExpr, *sqlparser.UnaryExpr:
