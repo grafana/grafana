@@ -5849,6 +5849,17 @@
     "community-mapping-select-datasource": "Select a datasource",
     "community-search-placeholder": "Search community dashboards...",
     "community-search-placeholder-with-datasource": "Search {{datasourceType}} community dashboards...",
+    "compatibility-auto-map-failed": "Unable to automatically map all datasource inputs for this dashboard. Compatibility check requires all datasource variables to be resolved.",
+    "compatibility-badge": {
+      "check": "Check compatibility",
+      "check-failed": "Check failed · Click to retry",
+      "check-tooltip": "Check if the metrics used by this dashboard exist in your datasource",
+      "checking": "Checking",
+      "error-text": "Error",
+      "score-only-tooltip": "{{score}}% metric availability",
+      "score-text": "{{score}}%",
+      "score-tooltip": "{{score}}% metric availability · {{found}}/{{total}} metrics exist in your datasource"
+    },
     "dashboard-card": {
       "details": {
         "datasource": "Datasource",
