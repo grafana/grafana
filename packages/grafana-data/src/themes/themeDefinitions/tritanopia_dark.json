@@ -1,0 +1,14 @@
+{
+  "name": "Tritanopia (Dark)",
+  "id": "tritanopia_dark",
+  "colors": {
+    "mode": "dark",
+    "success": {
+      "main": "#C8F2C2"
+    },
+    "warning": {
+      "main": "#F2CC0C"
+    },
+    "contrastThreshold": 4.5
+  }
+}
