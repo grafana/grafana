@@ -85,18 +85,15 @@ func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, plu
 	for _, zf := range pluginArchive.File {
 		// We can ignore gosec G305 here since we check for the ZipSlip vulnerability below
 		// nolint:gosec
-		fullPath := filepath.Join(fs.pluginsDir, zf.Name)
+		dstPath := filepath.Clean(filepath.Join(installDir, removeGitBuildFromName(zf.Name, pluginDirName))) // lgtm[go/zipslip]
 
 		// Check for ZipSlip. More Info: http://bit.ly/2MsjAWE
-		if filepath.IsAbs(zf.Name) ||
-			!strings.HasPrefix(fullPath, filepath.Clean(fs.pluginsDir)+string(os.PathSeparator)) ||
-			strings.HasPrefix(zf.Name, ".."+string(os.PathSeparator)) {
+		rel, err := filepath.Rel(installDir, dstPath)
+		if err != nil || filepath.IsAbs(zf.Name) || strings.HasPrefix(rel, "..") {
 			return "", fmt.Errorf(
 				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
-				zf.Name, fs.pluginsDir)
+				zf.Name, installDir)
 		}
-
-		dstPath := filepath.Clean(filepath.Join(fs.pluginsDir, removeGitBuildFromName(zf.Name, pluginDirName))) // lgtm[go/zipslip]
 
 		if zf.FileInfo().IsDir() {
 			// We can ignore gosec G304 here since it makes sense to give all users read access
