@@ -123,7 +123,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-06-05,pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,false,false
 2024-06-06,azureMonitorPrometheusExemplars,GA,@grafana/partner-datasources,false,false,false
 2024-06-13,authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
-2024-06-18,ssoSettingsLDAP,GA,@grafana/identity-access-team,false,true,false
 2024-06-19,zanzana,experimental,@grafana/identity-access-team,false,false,false
 2025-10-21,zanzanaNoLegacyClient,experimental,@grafana/identity-access-team,false,false,false
 2024-10-25,reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,false,false

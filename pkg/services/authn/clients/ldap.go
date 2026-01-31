@@ -20,6 +20,7 @@ var _ authn.PasswordClient = new(LDAP)
 type ldapService interface {
 	Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, error)
 	User(username string) (*login.ExternalUserInfo, error)
+	Enabled() bool
 }
 
 func ProvideLDAP(cfg *setting.Cfg, ldapService ldapService, userService user.Service, authInfoService login.AuthInfoService, tracer trace.Tracer) *LDAP {
@@ -40,6 +41,10 @@ func (c *LDAP) String() string {
 }
 
 func (c *LDAP) AuthenticateProxy(ctx context.Context, r *authn.Request, username string, _ map[string]string) (*authn.Identity, error) {
+	if !c.service.Enabled() {
+		return nil, nil
+	}
+
 	ctx, span := c.tracer.Start(ctx, "authn.ldap.AuthenticateProxy")
 	defer span.End()
 	info, err := c.service.User(username)
@@ -55,6 +60,10 @@ func (c *LDAP) AuthenticateProxy(ctx context.Context, r *authn.Request, username
 }
 
 func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
+	if !c.service.Enabled() {
+		return nil, nil
+	}
+
 	ctx, span := c.tracer.Start(ctx, "authn.ldap.AuthenticatePassword")
 	defer span.End()
 	info, err := c.service.Login(&login.LoginUserQuery{

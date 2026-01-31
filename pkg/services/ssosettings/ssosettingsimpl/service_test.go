@@ -911,6 +911,11 @@ func TestService_List(t *testing.T) {
 					Settings: map[string]any{"enabled": false},
 					Source:   models.System,
 				},
+				{
+					Provider: "ldap",
+					Settings: map[string]any(nil),
+					Source:   models.System,
+				},
 			},
 			wantErr: false,
 		},
@@ -1093,6 +1098,11 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 					},
 					Source: models.System,
 				},
+				{
+					Provider: "ldap",
+					Settings: map[string]any{},
+					Source:   models.System,
+				},
 			},
 			wantErr: false,
 		},
@@ -1212,6 +1222,11 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 						"client_id":     "client_id",
 					},
 					Source: models.System,
+				},
+				{
+					Provider: "ldap",
+					Settings: map[string]any{},
+					Source:   models.System,
 				},
 			},
 			wantErr: false,
@@ -2104,6 +2119,7 @@ func Test_ProviderService(t *testing.T) {
 				"grafana_com",
 				"azuread",
 				"okta",
+				"ldap",
 			},
 			strategiesLength: 2,
 		},
@@ -2118,6 +2134,7 @@ func Test_ProviderService(t *testing.T) {
 				"grafana_com",
 				"azuread",
 				"okta",
+				"ldap",
 				"saml",
 			},
 			strategiesLength: 3,
@@ -2136,7 +2153,7 @@ func Test_ProviderService(t *testing.T) {
 	}
 }
 
-func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool, ldapEnabled bool) testEnv {
+func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool, _ bool) testEnv {
 	t.Helper()
 
 	store := ssosettingstests.NewFakeStore()
@@ -2167,9 +2184,6 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool
 	licensing.On("FeatureEnabled", "saml").Return(isLicensingEnabled)
 
 	features := make([]any, 0)
-	if ldapEnabled {
-		features = append(features, featuremgmt.FlagSsoSettingsLDAP)
-	}
 	featureManager := featuremgmt.WithManager(features...)
 
 	svc := ProvideService(

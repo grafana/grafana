@@ -7,11 +7,12 @@ import (
 )
 
 type LDAPFakeService struct {
-	ExpectedConfig *ldap.ServersConfig
-	ExpectedClient multildap.IMultiLDAP
-	ExpectedError  error
-	ExpectedUser   *login.ExternalUserInfo
-	UserCalled     bool
+	ExpectedConfig  *ldap.ServersConfig
+	ExpectedClient  multildap.IMultiLDAP
+	ExpectedError   error
+	ExpectedUser    *login.ExternalUserInfo
+	ExpectedEnabled bool
+	UserCalled      bool
 }
 
 func NewLDAPFakeService() *LDAPFakeService {
@@ -20,6 +21,10 @@ func NewLDAPFakeService() *LDAPFakeService {
 
 func (s *LDAPFakeService) ReloadConfig() error {
 	return s.ExpectedError
+}
+
+func (s *LDAPFakeService) Enabled() bool {
+	return s.ExpectedEnabled
 }
 
 func (s *LDAPFakeService) Config() *ldap.ServersConfig {
