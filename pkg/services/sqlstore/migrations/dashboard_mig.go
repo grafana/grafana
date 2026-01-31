@@ -403,17 +403,40 @@ func RunFixDashboardVariableQuotesMigration(sess *xorm.Session, mg *Migrator) er
 
 		// If modified, update the dashboard
 		if modified {
-			// Marshal the entire map back to JSON
+			// Increment version for this change
+			parentVersion := dash.Version
+			newVersion := dash.Version + 1
+
+			// Update the version field in the dashboard JSON to match the new database version
+			dashboardMap["version"] = newVersion
+
+			// Add a revision note about this migration
+			// Check if there's a description field, and if so, add a note
+			// (But don't override user's description - add a revision field instead)
+			updateMessage := "Fixed PostgreSQL dashboard variable quotes in repeated panels"
+
+			// Add or update revision information
+			// This is stored in the dashboard JSON for audit purposes
+			if revision, ok := dashboardMap["revision"]; ok {
+				if revInt, ok := revision.(float64); ok {
+					dashboardMap["revision"] = int(revInt) + 1
+				}
+			}
+
+			// Store migration info in a meta field (Grafana sometimes uses this)
+			// This won't be displayed to users but is useful for debugging
+			if meta, ok := dashboardMap["meta"].(map[string]any); ok {
+				meta["updatedBy"] = "migration"
+				meta["updateMessage"] = updateMessage
+			}
+
+			// Marshal the entire map back to JSON with updated version
 			updatedData, err := json.Marshal(dashboardMap)
 			if err != nil {
 				mg.Logger.Warn("Failed to marshal updated dashboard JSON", "dashboard_id", dash.ID, "error", err)
 				errorCount++
 				continue
 			}
-
-			// Increment version for this change
-			parentVersion := dash.Version
-			newVersion := dash.Version + 1
 
 			// Update the dashboard in the database with incremented version
 			sqlUpdate := "UPDATE dashboard SET data = ?, version = ? WHERE id = ?"
@@ -440,7 +463,6 @@ func RunFixDashboardVariableQuotesMigration(sess *xorm.Session, mg *Migrator) er
 					VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 			}
 
-			message := "Fix PostgreSQL dashboard variable quotes (migration)"
 			createdBy := int64(-1) // System user for migrations
 
 			_, err = sess.Exec(sqlInsertVersion,
@@ -450,7 +472,7 @@ func RunFixDashboardVariableQuotesMigration(sess *xorm.Session, mg *Migrator) er
 				newVersion,
 				time.Now(),
 				createdBy,
-				message,
+				updateMessage,
 				string(updatedData),
 				dash.APIVersion,
 			)
@@ -460,7 +482,10 @@ func RunFixDashboardVariableQuotesMigration(sess *xorm.Session, mg *Migrator) er
 			}
 
 			modifiedCount++
-			mg.Logger.Debug("Fixed dashboard variable quotes and created history entry", "dashboard_id", dash.ID, "version", newVersion)
+			mg.Logger.Debug("Fixed dashboard variable quotes and created history entry",
+				"dashboard_id", dash.ID,
+				"old_version", parentVersion,
+				"new_version", newVersion)
 		}
 	}
 
