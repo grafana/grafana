@@ -261,6 +261,7 @@ export interface Version {
   isCompatible: boolean;
   grafanaDependency: string | null;
   angularDetected?: boolean;
+  status?: string; // Status of the version: 'active', 'deprecated'
 }
 
 export interface PluginDetails {
