@@ -1,5 +1,5 @@
-import { DragDropContext, DropResult, BeforeCapture, DragStart } from '@hello-pangea/dnd';
-import { useContext, useEffect, useMemo } from 'react';
+import { DragDropContext, DragUpdate, DropResult, BeforeCapture, DragStart } from '@hello-pangea/dnd';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
@@ -14,6 +14,7 @@ import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitte
 import { DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
+import { DashboardDndProvider } from './dnd/DashboardDndContext';
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
@@ -75,6 +76,17 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     return;
   }, [scopesContext, isEditing]);
 
+  // Ensure we never leave drag-only body classes behind.
+  useEffect(() => {
+    return () => {
+      document.body.classList.remove('dashboard-dnd-tab-active');
+    };
+  }, []);
+
+  // Track drag state so renderers can react (e.g., hide source placeholder on cross-droppable tab drags).
+  // Must be defined before any early returns to keep hook ordering stable.
+  const [tabDrag, setTabDrag] = useState<{ sourceDroppableId: string; destinationDroppableId?: string }>();
+
   if (editview) {
     return (
       <>
@@ -113,6 +125,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   };
 
   const handleBeforeDragStart = (start: DragStart) => {
+    if (start.type === 'TAB') {
+      document.body.classList.add('dashboard-dnd-tab-active');
+      setTabDrag({ sourceDroppableId: start.source.droppableId, destinationDroppableId: start.source.droppableId });
+    }
+
     if (start.type === 'ROW') {
       const rowsManager = sceneGraph.findByKey(model, start.source.droppableId);
       if (rowsManager instanceof RowsLayoutManager) {
@@ -126,6 +143,21 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         tabsManager.forceSelectTab(start.draggableId);
       }
     }
+  };
+
+  const handleDragUpdate = (update: DragUpdate) => {
+    if (update.type !== 'TAB') {
+      return;
+    }
+    // destination can be null when dragging over non-droppable areas
+    setTabDrag((prev) =>
+      prev
+        ? {
+            ...prev,
+            destinationDroppableId: update.destination?.droppableId,
+          }
+        : undefined
+    );
   };
 
   const mapTabInsertIndex = (destination: TabsLayoutManager, destinationIndexIncludingRepeats: number): number => {
@@ -174,6 +206,10 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   };
 
   const handleDragEnd = (result: DropResult) => {
+    // Clear any drag-only UI tweaks.
+    document.body.classList.remove('dashboard-dnd-tab-active');
+    setTabDrag(undefined);
+
     if (result.type === 'ROW') {
       // Stop tracking row drag in orchestrator
       model.state.layoutOrchestrator?.stopRowDrag();
@@ -219,7 +255,8 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       }
 
       const destinationIndex = mapTabInsertIndex(destinationManager, result.destination.index);
-      sourceManager.moveTabToManager(tab, destinationManager, destinationIndex, { selectMovedTab: false });
+      // When moving a tab into a new tab group, make it the active tab.
+      sourceManager.moveTabToManager(tab, destinationManager, destinationIndex, { selectMovedTab: true });
     }
   };
 
@@ -234,13 +271,16 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             isEditing={isEditing}
             controls={controls && <controls.Component model={controls} />}
             body={
-              <DragDropContext
-                onBeforeCapture={handleBeforeCapture}
-                onBeforeDragStart={handleBeforeDragStart}
-                onDragEnd={handleDragEnd}
-              >
-                {renderBody()}
-              </DragDropContext>
+              <DashboardDndProvider value={{ tabDrag }}>
+                <DragDropContext
+                  onBeforeCapture={handleBeforeCapture}
+                  onBeforeDragStart={handleBeforeDragStart}
+                  onDragUpdate={handleDragUpdate}
+                  onDragEnd={handleDragEnd}
+                >
+                  {renderBody()}
+                </DragDropContext>
+              </DashboardDndProvider>
             }
           />
         )}
