@@ -2136,7 +2136,7 @@ func Test_ProviderService(t *testing.T) {
 	}
 }
 
-func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool, ldapEnabled bool) testEnv {
+func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool, _ bool) testEnv {
 	t.Helper()
 
 	store := ssosettingstests.NewFakeStore()
@@ -2167,9 +2167,6 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool
 	licensing.On("FeatureEnabled", "saml").Return(isLicensingEnabled)
 
 	features := make([]any, 0)
-	if ldapEnabled {
-		features = append(features, featuremgmt.FlagSsoSettingsLDAP)
-	}
 	featureManager := featuremgmt.WithManager(features...)
 
 	svc := ProvideService(
