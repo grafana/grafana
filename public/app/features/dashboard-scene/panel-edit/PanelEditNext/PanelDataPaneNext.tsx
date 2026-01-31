@@ -82,6 +82,26 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
   }
 
+  /**
+   * Helper for operations that find and mutate a single query by refId.
+   * Handles cloning, finding index, and updating state.
+   */
+  private mutateQuery(refId: string, mutator: (query: DataQuery, index: number, queries: DataQuery[]) => DataQuery[]) {
+    const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
+    if (!queryRunner) {
+      return;
+    }
+
+    const queries = [...queryRunner.state.queries];
+    const index = queries.findIndex((q) => q.refId === refId);
+    if (index === -1) {
+      return;
+    }
+
+    const updatedQueries = mutator(queries[index], index, queries);
+    queryRunner.setState({ queries: updatedQueries });
+  }
+
   // Query Operations
   public updateQueries = (queries: DataQuery[]) => {
     const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
@@ -91,19 +111,10 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   };
 
   public updateSelectedQuery = (updatedQuery: DataQuery, originalRefId: string) => {
-    const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
-    if (!queryRunner) {
-      return;
-    }
-
-    const queries = [...queryRunner.state.queries];
-    const targetIndex = queries.findIndex((query) => query.refId === originalRefId);
-    if (targetIndex < 0) {
-      return;
-    }
-
-    queries[targetIndex] = updatedQuery;
-    queryRunner.setState({ queries });
+    this.mutateQuery(originalRefId, (_query, index, queries) => {
+      queries[index] = updatedQuery;
+      return queries;
+    });
   };
 
   public addQuery = (query?: Partial<DataQuery>) => {
@@ -126,36 +137,29 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     queryRunner.setState({ queries: updatedQueries });
   };
 
-  public deleteQuery = (index: number) => {
-    const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
-    if (!queryRunner) {
-      return;
-    }
-
-    const queries = [...queryRunner.state.queries];
-    queries.splice(index, 1);
-    queryRunner.setState({ queries });
+  public deleteQuery = (refId: string) => {
+    this.mutateQuery(refId, (_query, index, queries) => {
+      queries.splice(index, 1);
+      return queries;
+    });
   };
 
-  public duplicateQuery = (index: number) => {
-    const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
-    if (!queryRunner) {
-      return;
-    }
+  public duplicateQuery = (refId: string) => {
+    this.mutateQuery(refId, (query, index, queries) => {
+      const duplicated = {
+        ...query,
+        refId: getNextRefId(queries),
+      };
+      queries.splice(index + 1, 0, duplicated);
+      return queries;
+    });
+  };
 
-    const queries = [...queryRunner.state.queries];
-    const queryToDuplicate = queries[index];
-    if (!queryToDuplicate) {
-      return;
-    }
-
-    // Insert duplicate after the original
-    const duplicated = {
-      ...queryToDuplicate,
-      refId: getNextRefId(queries),
-    };
-    queries.splice(index + 1, 0, duplicated);
-    queryRunner.setState({ queries });
+  public toggleQueryHide = (refId: string) => {
+    this.mutateQuery(refId, (query, index, queries) => {
+      queries[index] = { ...query, hide: !query.hide };
+      return queries;
+    });
   };
 
   public runQueries = () => {
@@ -176,12 +180,13 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       throw new Error(`Failed to get datasource ${dsRef.uid ?? dsRef.type}`);
     }
 
-    const targetIndex = queryRunner.state.queries.findIndex(({ refId }) => refId === queryRefId);
+    const queries = [...queryRunner.state.queries];
+    const targetIndex = queries.findIndex(({ refId }) => refId === queryRefId);
     if (targetIndex === -1) {
       return;
     }
 
-    const targetQuery = queryRunner.state.queries[targetIndex];
+    const targetQuery = queries[targetIndex];
     const previousDataSource = targetQuery.datasource
       ? getDataSourceSrv().getInstanceSettings(targetQuery.datasource)
       : undefined;
@@ -200,7 +205,6 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       updatedQuery = { ...targetQuery, datasource: dsRef };
     }
 
-    const queries = [...queryRunner.state.queries];
     queries[targetIndex] = updatedQuery;
 
     queryRunner.setState({ queries });

@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useContext } from 'react';
 
-import { DataSourceApi, DataSourceInstanceSettings, PanelData } from '@grafana/data';
+import { DataQueryError, DataSourceApi, DataSourceInstanceSettings, PanelData } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 
@@ -16,6 +16,7 @@ export interface QueryRunnerState {
   queries: DataQuery[];
   data?: PanelData;
   isLoading: boolean;
+  queryError?: DataQueryError;
 }
 
 export interface PanelState {
@@ -28,14 +29,22 @@ export interface QueryEditorUIState {
   selectedTransformation: Transformation | null;
   setSelectedQuery: (query: DataQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
+  selectedCardDsData: {
+    datasource?: DataSourceApi;
+    dsSettings?: DataSourceInstanceSettings;
+  } | null;
+  selectedCardDsLoading: boolean;
+  showingDatasourceHelp: boolean;
+  toggleDatasourceHelp: () => void;
 }
 
 export interface QueryEditorActions {
   updateQueries: (queries: DataQuery[]) => void;
   updateSelectedQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   addQuery: (query?: Partial<DataQuery>) => void;
-  deleteQuery: (index: number) => void;
-  duplicateQuery: (index: number) => void;
+  deleteQuery: (refId: string) => void;
+  duplicateQuery: (refId: string) => void;
+  toggleQueryHide: (refId: string) => void;
   runQueries: () => void;
   changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
 }
