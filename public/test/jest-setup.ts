@@ -2,6 +2,7 @@
 import './global-jquery-shim';
 
 import { TransformStream } from 'node:stream/web';
+import { MessageChannel } from 'node:worker_threads';
 import { TextEncoder, TextDecoder } from 'util';
 
 // we need to isolate the `@grafana/data` module here now that it depends on `@grafana/i18n`
@@ -126,6 +127,7 @@ global.ResizeObserver = class ResizeObserver {
   }
 };
 
+global.MessageChannel = MessageChannel;
 global.BroadcastChannel = class BroadcastChannel {
   onmessage() {}
   onmessageerror() {}

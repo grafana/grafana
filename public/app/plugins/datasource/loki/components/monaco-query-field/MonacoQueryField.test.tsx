@@ -32,7 +32,7 @@ describe('MonacoQueryField', () => {
   test('Renders with no errors', async () => {
     renderComponent();
 
-    const monacoEditor = await screen.findByTestId(selectors.components.ReactMonacoEditor.editorLazy);
+    const monacoEditor = await screen.findByTestId(selectors.components.QueryField.container);
     expect(monacoEditor).toBeInTheDocument();
   });
 });

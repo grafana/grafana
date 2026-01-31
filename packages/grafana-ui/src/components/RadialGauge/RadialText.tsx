@@ -123,7 +123,7 @@ export const RadialText = memo(
             fontSize={valueFontSize}
             fill={theme.colors.text.primary}
             textAnchor="middle"
-            dominantBaseline="text-bottom"
+            dominantBaseline="text-after-edge"
           >
             <tspan fontSize={unitFontSize}>{displayValue.prefix ?? ''}</tspan>
             <tspan>{displayValue.text}</tspan>
@@ -136,7 +136,7 @@ export const RadialText = memo(
             x={centerX}
             y={nameY}
             textAnchor="middle"
-            dominantBaseline="text-bottom"
+            dominantBaseline="text-after-edge"
             fill={nameColor}
           >
             {displayValue.title}
