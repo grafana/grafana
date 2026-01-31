@@ -1,7 +1,7 @@
 import {
   AppEvents,
+  DataFrame,
   getPanelDataSummary,
-  PanelData,
   PanelDataSummary,
   PanelPlugin,
   PanelPluginVisualizationSuggestion,
@@ -123,11 +123,11 @@ export interface SuggestionsResult {
 
 /**
  * given PanelData, return a sorted list of Suggestions from all plugins which support it.
- * @param {PanelData} data queried and transformed data for the panel
+ * @param {DataFrame[]} series data frames
  * @returns {SuggestionsResult} sorted list of suggestions and error status
  */
-export async function getAllSuggestions(data?: PanelData): Promise<SuggestionsResult> {
-  const dataSummary = getPanelDataSummary(data?.series);
+export async function getAllSuggestions(series?: DataFrame[]): Promise<SuggestionsResult> {
+  const dataSummary = getPanelDataSummary(series);
   const list: PanelPluginVisualizationSuggestion[] = [];
 
   const pluginIds: string[] = getPanelPluginIds();
