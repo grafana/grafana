@@ -82,6 +82,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Post("/login", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPost))
 	r.Get("/login/:name", quota(string(auth.QuotaTargetSrv)), hs.OAuthLogin)
 
+	r.Post("/api/oauth/backchannel-logout", reqNoAuth, routing.Wrap(hs.HandleBackChannelLogout))
+
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
 
