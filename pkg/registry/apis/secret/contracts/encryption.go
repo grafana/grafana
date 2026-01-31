@@ -6,14 +6,18 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
+type EncryptionOption struct {
+	// When calling Encrypt within a database transaction, you must set SkipCache to true.
+	SkipCache bool
+}
+
 // EncryptionManager is an envelope encryption service in charge of encrypting/decrypting secrets.
 type EncryptionManager interface {
-	// Encrypt MUST NOT be used within database transactions, it may cause database locks.
-	// For those specific use cases where the encryption operation cannot be moved outside
-	// the database transaction, look at database-specific methods present at the specific
-	// implementation present at manager.EncryptionService.
-	Encrypt(ctx context.Context, namespace xkube.Namespace, payload []byte) (EncryptedPayload, error)
-	Decrypt(ctx context.Context, namespace xkube.Namespace, payload EncryptedPayload) ([]byte, error)
+	Encrypt(ctx context.Context, namespace xkube.Namespace, payload []byte, opts EncryptionOption) (EncryptedPayload, error)
+	Decrypt(ctx context.Context, namespace xkube.Namespace, payload EncryptedPayload, opts EncryptionOption) ([]byte, error)
+
+	// Since consolidation occurs at a level above the EncryptionManager, we need to allow that process to manually flush the cache
+	FlushCache(namespace xkube.Namespace)
 }
 
 type EncryptedPayload struct {
