@@ -1,0 +1,1223 @@
+{
+  "kind": "ReceiverTypeSchema",
+  "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "webhook",
+    "namespace": "default",
+    "uid": "CVClYNvV5lGDcpvd7fTKVIhhzI9XT84QA1AEhvN8FKIX"
+  },
+  "spec": {
+    "type": "webhook",
+    "currentVersion": "v1",
+    "name": "Webhook",
+    "heading": "Webhook settings",
+    "description": "Sends HTTP POST request to a URL",
+    "versions": [
+      {
+        "version": "v1",
+        "canCreate": true,
+        "options": [
+          {
+            "element": "input",
+            "inputType": "text",
+            "label": "URL",
+            "description": "",
+            "placeholder": "",
+            "propertyName": "url",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": true,
+            "protected": true,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": ""
+          },
+          {
+            "element": "select",
+            "inputType": "",
+            "label": "HTTP Method",
+            "description": "",
+            "placeholder": "",
+            "propertyName": "httpMethod",
+            "selectOptions": [
+              {
+                "label": "POST",
+                "value": "POST",
+                "description": ""
+              },
+              {
+                "label": "PUT",
+                "value": "PUT",
+                "description": ""
+              }
+            ],
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": ""
+          },
+          {
+            "element": "input",
+            "inputType": "text",
+            "label": "HTTP Basic Authentication - Username",
+            "description": "",
+            "placeholder": "",
+            "propertyName": "username",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": ""
+          },
+          {
+            "element": "input",
+            "inputType": "password",
+            "label": "HTTP Basic Authentication - Password",
+            "description": "",
+            "placeholder": "",
+            "propertyName": "password",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": true,
+            "dependsOn": ""
+          },
+          {
+            "element": "input",
+            "inputType": "text",
+            "label": "Authorization Header - Scheme",
+            "description": "Optionally provide a scheme for the Authorization Request Header. Default is Bearer.",
+            "placeholder": "Bearer",
+            "propertyName": "authorization_scheme",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": ""
+          },
+          {
+            "element": "input",
+            "inputType": "text",
+            "label": "Authorization Header - Credentials",
+            "description": "Credentials for the Authorization Request header. Only one of HTTP Basic Authentication or Authorization Request Header can be set.",
+            "placeholder": "",
+            "propertyName": "authorization_credentials",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": true,
+            "dependsOn": ""
+          },
+          {
+            "element": "key_value_map",
+            "inputType": "text",
+            "label": "Extra Headers",
+            "description": "Optionally provide extra headers to be used in the request.",
+            "placeholder": "",
+            "propertyName": "headers",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": ""
+          },
+          {
+            "element": "input",
+            "inputType": "text",
+            "label": "Max Alerts",
+            "description": "Max alerts to include in a notification. Remaining alerts in the same batch will be ignored above this number. 0 means no limit.",
+            "placeholder": "",
+            "propertyName": "maxAlerts",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": ""
+          },
+          {
+            "element": "textarea",
+            "inputType": "text",
+            "label": "Title",
+            "description": "Templated title of the message.",
+            "placeholder": "{{ template \"default.title\" . }}",
+            "propertyName": "title",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": ""
+          },
+          {
+            "element": "textarea",
+            "inputType": "",
+            "label": "Message",
+            "description": "Templated message to be used in the payload's \"message\" field.",
+            "placeholder": "{{ template \"default.message\" . }}",
+            "propertyName": "message",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": ""
+          },
+          {
+            "element": "subform",
+            "inputType": "",
+            "label": "Custom Payload",
+            "description": "Optionally provide a templated payload. Overrides 'Message' and 'Title' field.",
+            "placeholder": "",
+            "propertyName": "payload",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": [
+              {
+                "element": "textarea",
+                "inputType": "",
+                "label": "Payload Template",
+                "description": "Custom payload template.",
+                "placeholder": "{{ template \"webhook.default.payload\" . }}",
+                "propertyName": "template",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": true,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": ""
+              },
+              {
+                "element": "key_value_map",
+                "inputType": "text",
+                "label": "Payload Variables",
+                "description": "Optionally provide a variables to be used in the payload template. They will be available in the template as `.Vars.\u003cvariable_name\u003e`.",
+                "placeholder": "",
+                "propertyName": "vars",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": ""
+              }
+            ]
+          },
+          {
+            "element": "subform",
+            "inputType": "",
+            "label": "TLS",
+            "description": "TLS configuration options",
+            "placeholder": "",
+            "propertyName": "tlsConfig",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": [
+              {
+                "element": "checkbox",
+                "inputType": "",
+                "label": "Disable certificate verification",
+                "description": "Do not verify the server's certificate chain and host name.",
+                "placeholder": "",
+                "propertyName": "insecureSkipVerify",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": ""
+              },
+              {
+                "element": "textarea",
+                "inputType": "text",
+                "label": "CA Certificate",
+                "description": "Certificate in PEM format to use when verifying the server's certificate chain.",
+                "placeholder": "",
+                "propertyName": "caCertificate",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": true,
+                "dependsOn": ""
+              },
+              {
+                "element": "textarea",
+                "inputType": "text",
+                "label": "Client Certificate",
+                "description": "Client certificate in PEM format to use when connecting to the server.",
+                "placeholder": "",
+                "propertyName": "clientCertificate",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": true,
+                "dependsOn": ""
+              },
+              {
+                "element": "textarea",
+                "inputType": "text",
+                "label": "Client Key",
+                "description": "Client key in PEM format to use when connecting to the server.",
+                "placeholder": "",
+                "propertyName": "clientKey",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": true,
+                "dependsOn": ""
+              }
+            ]
+          },
+          {
+            "element": "subform",
+            "inputType": "",
+            "label": "HMAC Signature",
+            "description": "HMAC signature configuration options",
+            "placeholder": "",
+            "propertyName": "hmacConfig",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": [
+              {
+                "element": "input",
+                "inputType": "text",
+                "label": "Secret",
+                "description": "",
+                "placeholder": "",
+                "propertyName": "secret",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": true,
+                "validationRule": "",
+                "secure": true,
+                "dependsOn": ""
+              },
+              {
+                "element": "input",
+                "inputType": "text",
+                "label": "Header",
+                "description": "The header in which the HMAC signature will be included.",
+                "placeholder": "X-Grafana-Alerting-Signature",
+                "propertyName": "header",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": ""
+              },
+              {
+                "element": "input",
+                "inputType": "text",
+                "label": "Timestamp header",
+                "description": "If set, the timestamp will be included in the HMAC signature. The value should be the name of the header to use.",
+                "placeholder": "",
+                "propertyName": "timestampHeader",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": ""
+              }
+            ]
+          },
+          {
+            "element": "subform",
+            "inputType": "",
+            "label": "HTTP Config",
+            "description": "Common HTTP client options.",
+            "placeholder": "",
+            "propertyName": "http_config",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": [
+              {
+                "element": "subform",
+                "inputType": "",
+                "label": "OAuth2",
+                "description": "OAuth2 configuration options",
+                "placeholder": "",
+                "propertyName": "oauth2",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": "",
+                "subformOptions": [
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Token URL",
+                    "description": "URL for the access token endpoint.",
+                    "placeholder": "",
+                    "propertyName": "token_url",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": true,
+                    "protected": true,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Client ID",
+                    "description": "Client ID to use when authenticating.",
+                    "placeholder": "",
+                    "propertyName": "client_id",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": true,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Client Secret",
+                    "description": "Client secret to use when authenticating.",
+                    "placeholder": "",
+                    "propertyName": "client_secret",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": true,
+                    "validationRule": "",
+                    "secure": true,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "string_array",
+                    "inputType": "",
+                    "label": "Scopes",
+                    "description": "Optional scopes to request when obtaining an access token.",
+                    "placeholder": "",
+                    "propertyName": "scopes",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Endpoint Parameters",
+                    "description": "Optional parameters to append to the access token request.",
+                    "placeholder": "",
+                    "propertyName": "endpoint_params",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "subform",
+                    "inputType": "",
+                    "label": "TLS",
+                    "description": "Optional TLS configuration options for OAuth2 requests.",
+                    "placeholder": "",
+                    "propertyName": "tls_config",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": [
+                      {
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Disable certificate verification",
+                        "description": "Do not verify the server's certificate chain and host name.",
+                        "placeholder": "",
+                        "propertyName": "insecureSkipVerify",
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "required": false,
+                        "validationRule": "",
+                        "secure": false,
+                        "dependsOn": ""
+                      },
+                      {
+                        "element": "textarea",
+                        "inputType": "text",
+                        "label": "CA Certificate",
+                        "description": "Certificate in PEM format to use when verifying the server's certificate chain.",
+                        "placeholder": "",
+                        "propertyName": "caCertificate",
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "required": false,
+                        "validationRule": "",
+                        "secure": true,
+                        "dependsOn": ""
+                      },
+                      {
+                        "element": "textarea",
+                        "inputType": "text",
+                        "label": "Client Certificate",
+                        "description": "Client certificate in PEM format to use when connecting to the server.",
+                        "placeholder": "",
+                        "propertyName": "clientCertificate",
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "required": false,
+                        "validationRule": "",
+                        "secure": true,
+                        "dependsOn": ""
+                      },
+                      {
+                        "element": "textarea",
+                        "inputType": "text",
+                        "label": "Client Key",
+                        "description": "Client key in PEM format to use when connecting to the server.",
+                        "placeholder": "",
+                        "propertyName": "clientKey",
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "required": false,
+                        "validationRule": "",
+                        "secure": true,
+                        "dependsOn": ""
+                      }
+                    ]
+                  },
+                  {
+                    "element": "subform",
+                    "inputType": "",
+                    "label": "Proxy Config",
+                    "description": "Optional proxy configuration.",
+                    "placeholder": "",
+                    "propertyName": "proxy_config",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": [
+                      {
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Proxy URL",
+                        "description": "HTTP proxy server to use to connect to the targets.",
+                        "placeholder": "https://proxy.example.com",
+                        "propertyName": "proxy_url",
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "required": false,
+                        "protected": true,
+                        "validationRule": "",
+                        "secure": false,
+                        "dependsOn": ""
+                      },
+                      {
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Proxy from environment",
+                        "description": "Use environment HTTP_PROXY, HTTPS_PROXY and NO_PROXY to determine proxies.",
+                        "placeholder": "",
+                        "propertyName": "proxy_from_environment",
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "required": false,
+                        "validationRule": "",
+                        "secure": false,
+                        "dependsOn": ""
+                      },
+                      {
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "No Proxy",
+                        "description": "Comma-separated list of addresses that should not use a proxy.",
+                        "placeholder": "example.com,1.2.3.4",
+                        "propertyName": "no_proxy",
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "required": false,
+                        "validationRule": "",
+                        "secure": false,
+                        "dependsOn": ""
+                      },
+                      {
+                        "element": "key_value_map",
+                        "inputType": "text",
+                        "label": "Proxy Connect Header",
+                        "description": "Optional headers to send to proxies during CONNECT requests.",
+                        "placeholder": "",
+                        "propertyName": "proxy_connect_header",
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "required": false,
+                        "validationRule": "",
+                        "secure": false,
+                        "dependsOn": ""
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "version": "v0mimir1",
+        "canCreate": false,
+        "options": [
+          {
+            "element": "input",
+            "inputType": "text",
+            "label": "URL",
+            "description": "The endpoint to send HTTP POST requests to.",
+            "placeholder": "",
+            "propertyName": "url",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": true,
+            "validationRule": "",
+            "secure": true,
+            "dependsOn": ""
+          },
+          {
+            "element": "input",
+            "inputType": "number",
+            "label": "Max alerts",
+            "description": "The maximum number of alerts to include in a single webhook message. Alerts above this threshold are truncated. When leaving this at its default value of 0, all alerts are included.",
+            "placeholder": "",
+            "propertyName": "max_alerts",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "(^\\d+$|^$)",
+            "secure": false,
+            "dependsOn": ""
+          },
+          {
+            "element": "input",
+            "inputType": "text",
+            "label": "Timeout",
+            "description": "The maximum time to wait for a webhook request to complete, before failing the request and allowing it to be retried. The default value of 0s indicates that no timeout should be applied. NOTE: This will have no effect if set higher than the group_interval.",
+            "placeholder": "Use duration format, for example: 1.2s, 100ms",
+            "propertyName": "timeout",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": ""
+          },
+          {
+            "element": "subform",
+            "inputType": "",
+            "label": "HTTP Config",
+            "description": "Note that `basic_auth` and `bearer_token` options are mutually exclusive.",
+            "placeholder": "",
+            "propertyName": "http_config",
+            "showWhen": {
+              "field": "",
+              "is": ""
+            },
+            "required": false,
+            "validationRule": "",
+            "secure": false,
+            "dependsOn": "",
+            "subformOptions": [
+              {
+                "element": "subform",
+                "inputType": "",
+                "label": "Basic auth",
+                "description": "Sets the `Authorization` header with the configured username and password.",
+                "placeholder": "",
+                "propertyName": "basic_auth",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": "",
+                "subformOptions": [
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Username",
+                    "description": "",
+                    "placeholder": "",
+                    "propertyName": "username",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "password",
+                    "label": "Password",
+                    "description": "",
+                    "placeholder": "",
+                    "propertyName": "password",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": true,
+                    "dependsOn": ""
+                  }
+                ]
+              },
+              {
+                "element": "subform",
+                "inputType": "",
+                "label": "Authorization",
+                "description": "The HTTP authorization credentials for the targets.",
+                "placeholder": "",
+                "propertyName": "authorization",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": "",
+                "subformOptions": [
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Type",
+                    "description": "",
+                    "placeholder": "",
+                    "propertyName": "type",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "password",
+                    "label": "Credentials",
+                    "description": "",
+                    "placeholder": "",
+                    "propertyName": "credentials",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": true,
+                    "dependsOn": ""
+                  }
+                ]
+              },
+              {
+                "element": "checkbox",
+                "inputType": "",
+                "label": "Follow redirects",
+                "description": "Whether the client should follow HTTP 3xx redirects.",
+                "placeholder": "",
+                "propertyName": "follow_redirects",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": ""
+              },
+              {
+                "element": "checkbox",
+                "inputType": "",
+                "label": "Enable HTTP2",
+                "description": "Whether the client should configure HTTP2.",
+                "placeholder": "",
+                "propertyName": "enable_http2",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": ""
+              },
+              {
+                "element": "key_value_map",
+                "inputType": "",
+                "label": "HTTP Headers",
+                "description": "Headers to inject in the requests.",
+                "placeholder": "",
+                "propertyName": "http_headers",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": ""
+              },
+              {
+                "element": "input",
+                "inputType": "text",
+                "label": "Proxy URL",
+                "description": "HTTP proxy server to use to connect to the targets.",
+                "placeholder": "",
+                "propertyName": "proxy_url",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": ""
+              },
+              {
+                "element": "input",
+                "inputType": "text",
+                "label": "No Proxy",
+                "description": "Comma-separated list of domains for which the proxy should not be used.",
+                "placeholder": "",
+                "propertyName": "no_proxy",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": ""
+              },
+              {
+                "element": "checkbox",
+                "inputType": "",
+                "label": "Proxy From Environment",
+                "description": "Makes use of net/http ProxyFromEnvironment function to determine proxies.",
+                "placeholder": "",
+                "propertyName": "proxy_from_environment",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": ""
+              },
+              {
+                "element": "key_value_map",
+                "inputType": "",
+                "label": "Proxy Header Environment",
+                "description": "Headers to send to proxies during CONNECT requests.",
+                "placeholder": "",
+                "propertyName": "proxy_connect_header",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": ""
+              },
+              {
+                "element": "subform",
+                "inputType": "",
+                "label": "TLS config",
+                "description": "Configures the TLS settings.",
+                "placeholder": "",
+                "propertyName": "tls_config",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": "",
+                "subformOptions": [
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Server name",
+                    "description": "ServerName extension to indicate the name of the server.",
+                    "placeholder": "",
+                    "propertyName": "server_name",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "checkbox",
+                    "inputType": "",
+                    "label": "Skip verify",
+                    "description": "Disable validation of the server certificate.",
+                    "placeholder": "",
+                    "propertyName": "insecure_skip_verify",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Min TLS Version",
+                    "description": "",
+                    "placeholder": "",
+                    "propertyName": "min_version",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Max TLS Version",
+                    "description": "",
+                    "placeholder": "",
+                    "propertyName": "max_version",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": ""
+                  }
+                ]
+              },
+              {
+                "element": "subform",
+                "inputType": "",
+                "label": "OAuth2",
+                "description": "Configures the OAuth2 settings.",
+                "placeholder": "",
+                "propertyName": "oauth2",
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "required": false,
+                "validationRule": "",
+                "secure": false,
+                "dependsOn": "",
+                "subformOptions": [
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Client ID",
+                    "description": "The OAuth2 client ID",
+                    "placeholder": "",
+                    "propertyName": "client_id",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": true,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "password",
+                    "label": "Client secret",
+                    "description": "The OAuth2 client secret",
+                    "placeholder": "",
+                    "propertyName": "client_secret",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": true,
+                    "validationRule": "",
+                    "secure": true,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "input",
+                    "inputType": "text",
+                    "label": "Token URL",
+                    "description": "The OAuth2 token exchange URL",
+                    "placeholder": "",
+                    "propertyName": "token_url",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": true,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "string_array",
+                    "inputType": "",
+                    "label": "Scopes",
+                    "description": "Comma-separated list of scopes",
+                    "placeholder": "",
+                    "propertyName": "scopes",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "key_value_map",
+                    "inputType": "",
+                    "label": "Additional parameters",
+                    "description": "",
+                    "placeholder": "",
+                    "propertyName": "endpoint_params",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": ""
+                  },
+                  {
+                    "element": "subform",
+                    "inputType": "",
+                    "label": "TLS config",
+                    "description": "Configures the TLS settings.",
+                    "placeholder": "",
+                    "propertyName": "TLSConfig",
+                    "showWhen": {
+                      "field": "",
+                      "is": ""
+                    },
+                    "required": false,
+                    "validationRule": "",
+                    "secure": false,
+                    "dependsOn": "",
+                    "subformOptions": [
+                      {
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Server name",
+                        "description": "ServerName extension to indicate the name of the server.",
+                        "placeholder": "",
+                        "propertyName": "server_name",
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "required": false,
+                        "validationRule": "",
+                        "secure": false,
+                        "dependsOn": ""
+                      },
+                      {
+                        "element": "checkbox",
+                        "inputType": "",
+                        "label": "Skip verify",
+                        "description": "Disable validation of the server certificate.",
+                        "placeholder": "",
+                        "propertyName": "insecure_skip_verify",
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "required": false,
+                        "validationRule": "",
+                        "secure": false,
+                        "dependsOn": ""
+                      },
+                      {
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Min TLS Version",
+                        "description": "",
+                        "placeholder": "",
+                        "propertyName": "min_version",
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "required": false,
+                        "validationRule": "",
+                        "secure": false,
+                        "dependsOn": ""
+                      },
+                      {
+                        "element": "input",
+                        "inputType": "text",
+                        "label": "Max TLS Version",
+                        "description": "",
+                        "placeholder": "",
+                        "propertyName": "max_version",
+                        "showWhen": {
+                          "field": "",
+                          "is": ""
+                        },
+                        "required": false,
+                        "validationRule": "",
+                        "secure": false,
+                        "dependsOn": ""
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

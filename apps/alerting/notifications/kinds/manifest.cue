@@ -14,6 +14,7 @@ manifest: {
 				routeTreev0alpha1,
 				templatev0alpha1,
 				timeIntervalv0alpha1,
+				integrationTypeSchemav0alpha1,
 			]
 		}
 	}

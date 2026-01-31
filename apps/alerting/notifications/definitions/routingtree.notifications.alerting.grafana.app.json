@@ -1,0 +1,128 @@
+{
+  "kind": "CustomResourceDefinition",
+  "apiVersion": "apiextensions.k8s.io/v1",
+  "metadata": {
+    "name": "routingtrees.notifications.alerting.grafana.app"
+  },
+  "spec": {
+    "group": "notifications.alerting.grafana.app",
+    "versions": [
+      {
+        "name": "v0alpha1",
+        "served": true,
+        "storage": true,
+        "schema": {
+          "openAPIV3Schema": {
+            "properties": {
+              "spec": {
+                "properties": {
+                  "defaults": {
+                    "properties": {
+                      "group_by": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "group_interval": {
+                        "type": "string"
+                      },
+                      "group_wait": {
+                        "type": "string"
+                      },
+                      "receiver": {
+                        "type": "string"
+                      },
+                      "repeat_interval": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["receiver"],
+                    "type": "object"
+                  },
+                  "routes": {
+                    "items": {
+                      "properties": {
+                        "active_time_intervals": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "continue": {
+                          "type": "boolean"
+                        },
+                        "group_by": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "group_interval": {
+                          "type": "string"
+                        },
+                        "group_wait": {
+                          "type": "string"
+                        },
+                        "matchers": {
+                          "items": {
+                            "properties": {
+                              "label": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "enum": ["=", "!=", "=~", "!~"],
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["type", "label", "value"],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "mute_time_intervals": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "receiver": {
+                          "type": "string"
+                        },
+                        "repeat_interval": {
+                          "type": "string"
+                        },
+                        "routes": {
+                          "items": {
+                            "type": "object",
+                            "x-kubernetes-preserve-unknown-fields": true
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": ["continue"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["defaults", "routes"],
+                "type": "object"
+              }
+            },
+            "required": ["spec"],
+            "type": "object"
+          }
+        }
+      }
+    ],
+    "names": {
+      "kind": "RoutingTree",
+      "plural": "routingtrees"
+    },
+    "scope": "Namespaced"
+  }
+}
