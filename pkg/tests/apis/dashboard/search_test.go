@@ -14,6 +14,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	k8srest "k8s.io/client-go/rest"
@@ -218,6 +220,104 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIntegrationSearchOwnerReferences(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	ctx := context.Background()
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableDataMigrations: true,
+		AppModeProduction:     true,
+		DisableAnonymous:      true,
+		APIServerStorageType:  "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
+		},
+		UnifiedStorageEnableSearch: true,
+	})
+	defer helper.Shutdown()
+
+	ns := helper.Org1.Admin.Identity.GetNamespace()
+	gvr := schema.GroupVersionResource{
+		Group:    dashboardV0.GROUP,
+		Version:  dashboardV0.VERSION,
+		Resource: "dashboards",
+	}
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	// Create a dashboard with multiple owner references
+	dashboardUID := "owner-ref-test-dash"
+	ownerRefs := []metav1.OwnerReference{
+		{
+			APIVersion: "iam.grafana.app/v0alpha1",
+			Kind:       "Team",
+			Name:       "test-team",
+			UID:        "test-team-uid",
+		},
+		{
+			APIVersion: "iam.grafana.app/v0alpha1",
+			Kind:       "User",
+			Name:       "test-user",
+			UID:        "test-user-uid",
+		},
+	}
+
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"spec": map[string]any{
+				"title":         "Dashboard with owner references",
+				"schemaVersion": 42,
+			},
+		},
+	}
+	obj.SetName(dashboardUID)
+	obj.SetAPIVersion(gvr.GroupVersion().String())
+	obj.SetKind("Dashboard")
+	obj.SetOwnerReferences(ownerRefs)
+
+	_, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// Search for the dashboard by one of the owner references and verify all refs are returned
+	cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	cfg.GroupVersion = &dashboardV0.GroupVersion
+	restClient, err := k8srest.RESTClientFor(cfg)
+	require.NoError(t, err)
+
+	var statusCode int
+	req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
+		Param("limit", "1000").
+		Param("type", "dashboard").
+		Param("ownerReference", "iam.grafana.app/Team/test-team") // Search by one owner reference
+
+	res := req.Do(ctx).StatusCode(&statusCode)
+	require.NoError(t, res.Error())
+	require.Equal(t, http.StatusOK, statusCode)
+
+	var sr dashboardV0.SearchResults
+	raw, err := res.Raw()
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(raw, &sr))
+
+	// Find our dashboard in the results
+	var foundHit *dashboardV0.DashboardHit
+	for i := range sr.Hits {
+		if sr.Hits[i].Name == dashboardUID {
+			foundHit = &sr.Hits[i]
+			break
+		}
+	}
+
+	require.NotNil(t, foundHit, "Dashboard should be found in search results when filtering by owner reference")
+	require.Len(t, foundHit.OwnerReferences, 2, "Dashboard should have two owner references")
+	// Owner references are stored in format {Group}/{Kind}/{Name}
+	assert.Contains(t, foundHit.OwnerReferences, "iam.grafana.app/Team/test-team")
+	assert.Contains(t, foundHit.OwnerReferences, "iam.grafana.app/User/test-user")
 }
 
 func TestIntegrationSearchPermissionFiltering(t *testing.T) {
