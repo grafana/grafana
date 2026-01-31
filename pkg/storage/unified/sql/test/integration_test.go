@@ -203,7 +203,10 @@ func TestClientServer(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, nil, nil)
+	grpcHandler, grpcService, err := sql.ProvideUnifiedStorageGrpcServer(cfg, features, prometheus.NewPedanticRegistry())
+	require.NoError(t, err)
+
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, dbstore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil, nil, kv.Config{}, nil, grpcHandler, grpcService, nil, nil)
 	require.NoError(t, err)
 	var client resourcepb.ResourceStoreClient
 
@@ -296,7 +299,10 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 		},
 	}
 
-	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), prometheus.NewPedanticRegistry(), docBuilders, nil, nil, kv.Config{}, nil, nil)
+	grpcHandler, grpcService, err := sql.ProvideUnifiedStorageGrpcServer(cfg, features, prometheus.NewPedanticRegistry())
+	require.NoError(t, err)
+
+	svc, err := sql.ProvideSearchGRPCService(cfg, features, dbstore, log.New("test"), prometheus.NewPedanticRegistry(), docBuilders, nil, nil, kv.Config{}, nil, grpcHandler, grpcService, nil)
 	require.NoError(t, err)
 
 	var client resource.SearchClient
