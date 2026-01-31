@@ -62,6 +62,7 @@ type kvStorageBackend struct {
 	bulkLock                     *BulkLock
 	dataStore                    *dataStore
 	eventStore                   *eventStore
+	lastImportStore              *lastImportStore
 	notifier                     notifier
 	log                          log.Logger
 	withPruner                   bool
@@ -135,6 +136,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		bulkLock:                     NewBulkLock(),
 		dataStore:                    newDataStore(kv),
 		eventStore:                   eventStore,
+		lastImportStore:              newLastImportStore(kv),
 		notifier:                     newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
 		snowflake:                    s,
 		log:                          logger,
@@ -1303,8 +1305,26 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedR
 }
 
 func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
+	// Collect all and keep only the latest import time per resource.
+	result := map[NamespacedResource]ResourceLastImportTime{}
+
+	for key, err := range k.lastImportStore.ListLastImportTimes(ctx) {
+		if err != nil {
+			return func(yield func(ResourceLastImportTime, error) bool) { yield(ResourceLastImportTime{}, err) }
+		}
+
+		lit := key.ToResourceLastImportTime()
+		if lit.LastImportTime.After(result[lit.NamespacedResource].LastImportTime) {
+			result[lit.NamespacedResource] = lit
+		}
+	}
+
 	return func(yield func(ResourceLastImportTime, error) bool) {
-		yield(ResourceLastImportTime{}, fmt.Errorf("not implemented"))
+		for _, v := range result {
+			if !yield(v, nil) {
+				return
+			}
+		}
 	}
 }
 
@@ -1386,8 +1406,6 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 	}
 
-	obj := &unstructured.Unstructured{}
-
 	saved := make([]DataKey, 0)
 	rollback := func() {
 		// we don't have transactions in the kv store, so we simply delete everything we created
@@ -1396,6 +1414,8 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			b.log.Error("failed to delete during rollback: %s", err)
 		}
 	}
+
+	updatedResources := make(map[NamespacedResource]bool)
 
 	for iter.Next() {
 		if iter.RollbackRequested() {
@@ -1452,6 +1472,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			continue
 		}
 
+		obj := &unstructured.Unstructured{}
 		err := obj.UnmarshalJSON(req.Value)
 		if err != nil {
 			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
@@ -1482,9 +1503,21 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		saved = append(saved, dataKey)
+		updatedResources[NamespacedResource{Namespace: dataKey.Namespace, Group: dataKey.Group, Resource: dataKey.Resource}] = true
 	}
 
-	// TODO update last import time
+	if rsp.Error == nil {
+		now := time.Now()
+		for nsr := range updatedResources {
+			err := b.lastImportStore.Save(ctx, ResourceLastImportTime{
+				NamespacedResource: nsr,
+				LastImportTime:     now,
+			})
+			if err != nil {
+				rsp.Error = AsErrorResult(fmt.Errorf("failed to save last import time for resource %s: %s", nsr.String(), err))
+			}
+		}
+	}
 
 	return rsp
 }
