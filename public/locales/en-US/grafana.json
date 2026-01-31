@@ -3740,6 +3740,9 @@
       "manage-permissions": "Manage permissions",
       "move": "Move this folder"
     },
+    "folder-owners": {
+      "owned-by": "Owned by:"
+    },
     "folder-picker": {
       "accessible-label": "Select folder: {{ label }} currently selected",
       "button-label": "Select folder",
@@ -11215,6 +11218,9 @@
   "org-picker": {
     "noOptionsMessage-no-organizations-found": "No organizations found",
     "select-placeholder": "Select organization"
+  },
+  "owner-reference": {
+    "team-members": "Team members:"
   },
   "page": {
     "editable-title": {
