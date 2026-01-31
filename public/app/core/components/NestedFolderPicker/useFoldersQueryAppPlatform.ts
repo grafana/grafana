@@ -30,7 +30,6 @@ const collator = new Intl.Collator();
  * This version uses the getFolderChildren API from the folder v1beta1 API. Compared to legacy API, the v1beta1 API
  * does not have pagination at the moment.
  */
-
 export function useFoldersQueryAppPlatform({
   isBrowsing,
   openFolders,
