@@ -25,7 +25,7 @@ export interface UseWizardNavigationReturn {
   completedSteps: WizardStep[];
   currentStepIndex: number;
   currentStepConfig: Step<WizardStep> | undefined;
-  visibleSteps: Array<Step<WizardStep>>;
+  steps: Array<Step<WizardStep>>;
   visibleStepIndex: number;
   goToNextStep: () => Promise<void>;
   goToPreviousStep: () => void;
@@ -46,14 +46,11 @@ export function useWizardNavigation({
   const [activeStep, setActiveStep] = useState<WizardStep>(initialStep);
   const [completedSteps, setCompletedSteps] = useState<WizardStep[]>([]);
 
-  const visibleSteps = useMemo(() => steps.filter((s) => s.id !== 'authType'), [steps]);
+  // const visibleSteps = useMemo(() => steps, [steps]);
 
   const currentStepIndex = useMemo(() => steps.findIndex((s) => s.id === activeStep), [steps, activeStep]);
   const currentStepConfig = useMemo(() => steps[currentStepIndex], [steps, currentStepIndex]);
-  const visibleStepIndex = useMemo(
-    () => visibleSteps.findIndex((s) => s.id === activeStep),
-    [visibleSteps, activeStep]
-  );
+  const visibleStepIndex = useMemo(() => steps.findIndex((s) => s.id === activeStep), [steps, activeStep]);
 
   const goToPreviousStep = useCallback(() => {
     if (currentStepIndex > 0) {
@@ -136,7 +133,7 @@ export function useWizardNavigation({
     completedSteps,
     currentStepIndex,
     currentStepConfig,
-    visibleSteps,
+    steps,
     visibleStepIndex,
     goToNextStep,
     goToPreviousStep,

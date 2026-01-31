@@ -31,9 +31,7 @@ export function WizardStepContent({
 }: WizardStepContentProps) {
   switch (activeStep) {
     case 'authType':
-      return <AuthTypeStep />;
-    case 'githubApp':
-      return <GitHubAppStep ref={githubAppStepRef} onSubmit={onGitHubAppSubmit} />;
+      return <AuthTypeStep ref={githubAppStepRef} onSubmit={onGitHubAppSubmit} />;
     case 'connection':
       return <ConnectStep />;
     case 'bootstrap':

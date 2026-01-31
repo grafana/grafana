@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { t } from '@grafana/i18n';
 
 import { Step } from '../Stepper';
-import { WizardStep } from '../types';
+import { GitHubAppMode, GitHubAuthType, WizardStep } from '../types';
 
 export interface UseWizardButtonsParams {
   activeStep: WizardStep;
@@ -19,6 +19,8 @@ export interface UseWizardButtonsParams {
   isCreatingSkipJob: boolean;
   showCancelConfirmation: boolean;
   shouldUseCancelBehavior: boolean;
+  githubAppMode?: GitHubAppMode;
+  githubAuthType?: GitHubAuthType;
 }
 
 export interface UseWizardButtonsReturn {
@@ -42,6 +44,8 @@ export function useWizardButtons({
   isCreatingSkipJob,
   showCancelConfirmation,
   shouldUseCancelBehavior,
+  githubAppMode,
+  githubAuthType,
 }: UseWizardButtonsParams): UseWizardButtonsReturn {
   const nextButtonText = useMemo(() => {
     const stepIndex = steps.findIndex((s) => s.id === activeStep);
@@ -77,7 +81,8 @@ export function useWizardButtons({
   const isNextDisabled = useMemo(() => {
     // AuthType step is always enabled (user just needs to select an option)
     if (activeStep === 'authType') {
-      return false;
+      // Disable next if github app is in create connection mode
+      return githubAuthType === 'github-app' && githubAppMode === 'new';
     }
     // Don't block on hasStepError for connection/githubApp steps - users can fix their input and retry
     if (!['connection', 'githubApp'].includes(activeStep) && hasStepError) {
@@ -102,9 +107,11 @@ export function useWizardButtons({
     isCancelling,
     isStepRunning,
     isCreatingSkipJob,
+    githubAuthType,
+    githubAppMode,
   ]);
   const isPreviousDisabled = isSubmitting || isCancelling || isStepRunning || showCancelConfirmation;
-
+  console.log('isNextDisabled', isNextDisabled);
   return {
     nextButtonText,
     previousButtonText,

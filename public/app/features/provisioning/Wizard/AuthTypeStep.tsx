@@ -1,16 +1,23 @@
-import { memo, useMemo } from 'react';
+import { forwardRef, memo, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Card, Icon, Stack, Text } from '@grafana/ui';
+import { Card, Icon, RadioButtonGroup, Stack, Text } from '@grafana/ui';
 
-import { GitHubAuthType, WizardFormData } from './types';
+import { GitHubAppStep, GitHubAppStepRef } from './GitHubAppStep';
+import { RepositoriesList } from './components/RepositoriesList';
+import { RepositoryTokenInput } from './components/RepositoryTokenInput';
+import { ConnectionCreationResult, GitHubAuthType, WizardFormData } from './types';
 
 interface AuthTypeOption {
   id: GitHubAuthType;
   label: string;
   description: string;
   icon: 'key-skeleton-alt' | 'github';
+}
+
+interface GitHubAppStepProps {
+  onSubmit: (result: ConnectionCreationResult) => void;
 }
 
 const getAuthTypeOptions = (): AuthTypeOption[] => [
@@ -34,9 +41,14 @@ const getAuthTypeOptions = (): AuthTypeOption[] => [
   },
 ];
 
-export const AuthTypeStep = memo(function AuthTypeStep() {
-  const { control } = useFormContext<WizardFormData>();
+export const AuthTypeStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepProps>(function AuthTypeStep(
+  { onSubmit },
+  ref
+) {
+  const { control, watch } = useFormContext<WizardFormData>();
+  const [githubAuthType, githubAppMode] = watch(['githubAuthType', 'githubAppMode']);
   const authTypeOptions = useMemo(() => getAuthTypeOptions(), []);
+  const shouldShowRepositories = githubAuthType !== 'github-app' || githubAppMode !== 'new';
 
   return (
     <Stack direction="column" gap={2}>
@@ -47,30 +59,27 @@ export const AuthTypeStep = memo(function AuthTypeStep() {
         </Trans>
       </Text>
 
-      <Controller
-        name="githubAuthType"
-        control={control}
-        render={({ field: { onChange, value } }) => (
-          <Stack direction="column" gap={2}>
-            {authTypeOptions.map((option) => (
-              <Card
-                key={option.id}
-                noMargin
-                isSelected={value === option.id}
-                onClick={() => {
-                  onChange(option.id);
-                }}
-              >
-                <Card.Figure>
-                  <Icon name={option.icon} size="xxxl" />
-                </Card.Figure>
-                <Card.Heading>{option.label}</Card.Heading>
-                <Card.Description>{option.description}</Card.Description>
-              </Card>
-            ))}
-          </Stack>
-        )}
-      />
+      <Stack>
+        <Controller
+          name="githubAuthType"
+          control={control}
+          render={({ field: { onChange, value } }) => (
+            <RadioButtonGroup<GitHubAuthType>
+              value={value}
+              onChange={onChange}
+              options={authTypeOptions.map((option) => ({
+                label: option.label,
+                value: option.id,
+                description: option.description,
+              }))}
+            />
+          )}
+        />
+      </Stack>
+
+      {githubAuthType === 'github-app' ? <GitHubAppStep onSubmit={onSubmit} /> : <RepositoryTokenInput />}
+
+      {shouldShowRepositories && <RepositoriesList />}
     </Stack>
   );
 });

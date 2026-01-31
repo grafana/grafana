@@ -1,7 +1,7 @@
-import { memo, useState } from 'react';
+import { memo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Combobox, Field, Input, SecretInput, Stack } from '@grafana/ui';
+import { Combobox, Field, Input, Stack } from '@grafana/ui';
 
 import { FreeTierLimitNote } from '../Shared/FreeTierLimitNote';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
@@ -16,13 +16,10 @@ export const ConnectStep = memo(function ConnectStep() {
   const {
     register,
     control,
-    setValue,
     formState: { errors },
     getValues,
     watch,
   } = useFormContext<WizardFormData>();
-
-  const [tokenConfigured, setTokenConfigured] = useState(false);
 
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
@@ -56,70 +53,6 @@ export const ConnectStep = memo(function ConnectStep() {
 
       {gitFields && (
         <>
-          {!isGitHubAppAuth && (
-            <>
-              <Field
-                noMargin
-                label={gitFields.tokenConfig.label}
-                required={gitFields.tokenConfig.required}
-                description={gitFields.tokenConfig.description}
-                error={errors?.repository?.token?.message}
-                invalid={!!errors?.repository?.token?.message}
-              >
-                <Controller
-                  name="repository.token"
-                  control={control}
-                  rules={gitFields.tokenConfig.validation}
-                  render={({ field: { ref, ...field } }) => (
-                    <SecretInput
-                      {...field}
-                      id="token"
-                      placeholder={gitFields.tokenConfig.placeholder}
-                      isConfigured={tokenConfigured}
-                      invalid={!!errors?.repository?.token?.message}
-                      onReset={() => {
-                        setValue('repository.token', '');
-                        setTokenConfigured(false);
-                      }}
-                    />
-                  )}
-                />
-              </Field>
-
-              {gitFields.tokenUserConfig && (
-                <Field
-                  noMargin
-                  label={gitFields.tokenUserConfig.label}
-                  required={gitFields.tokenUserConfig.required}
-                  description={gitFields.tokenUserConfig.description}
-                  error={errors?.repository?.tokenUser?.message}
-                  invalid={!!errors?.repository?.tokenUser?.message}
-                >
-                  <Input
-                    {...register('repository.tokenUser', gitFields.tokenUserConfig.validation)}
-                    id="tokenUser"
-                    placeholder={gitFields.tokenUserConfig.placeholder}
-                  />
-                </Field>
-              )}
-            </>
-          )}
-
-          <Field
-            noMargin
-            label={gitFields.urlConfig.label}
-            description={gitFields.urlConfig.description}
-            error={errors?.repository?.url?.message}
-            invalid={Boolean(errors?.repository?.url?.message)}
-            required={gitFields.urlConfig.required}
-          >
-            <Input
-              {...register('repository.url', gitFields.urlConfig.validation)}
-              id="repository-url"
-              placeholder={gitFields.urlConfig.placeholder}
-            />
-          </Field>
-
           <Field
             noMargin
             label={gitFields.branchConfig.label}
