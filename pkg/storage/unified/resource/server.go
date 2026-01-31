@@ -380,6 +380,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		queueConfig:      opts.QOSConfig,
 		overridesService: opts.OverridesService,
 		storageEnabled:   true,
+		searchClient:     opts.SearchClient,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
@@ -432,6 +433,7 @@ type server struct {
 	blob             BlobSupport
 	secure           secrets.InlineSecureValueSupport
 	search           *searchServer
+	searchClient     resourcepb.ResourceIndexClient
 	diagnostics      resourcepb.DiagnosticsServer
 	access           claims.AccessClient
 	writeHooks       WriteAccessHooks
@@ -1101,9 +1103,15 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	if req.Limit < 1 {
 		req.Limit = 500 // default max 500 items in a page
 	}
-	maxPageBytes := s.maxPageSizeBytes
 	pageBytes := 0
 	rsp := &resourcepb.ListResponse{}
+
+	req = filterFieldSelectors(req)
+	if s.useFieldSelectorSearch(req) {
+		// If we get here, we're doing list with selectable fields. Let's do search instead, since
+		// we index all selectable fields, and fetch resulting documents one by one.
+		return s.listWithFieldSelectors(ctx, req)
+	}
 
 	key := req.Options.Key
 	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
@@ -1157,7 +1165,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 
 			pageBytes += len(item.Value)
 			rsp.Items = append(rsp.Items, item)
-			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
+			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
 				t := iter.ContinueToken()
 				if iter.Next() {
 					rsp.NextPageToken = t
