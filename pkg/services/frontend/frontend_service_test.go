@@ -493,4 +493,32 @@ func TestFrontendService_CSP(t *testing.T) {
 		cspHeader := recorder.Header().Get("Content-Security-Policy")
 		assert.Contains(t, cspHeader, "'nonce-"+capturedNonce+"'", "Nonce in header should match context nonce")
 	})
+
+	t.Run("should use base config when Tenant-ID header is present", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "default-src 'self'", // Base CSP policy
+		}
+
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("Tenant-ID", "tenant-123") // Simulate tenant request
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+
+		// Currently should still use base config (tenant overrides not yet implemented)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "default-src 'self'", "Should use base CSP for now")
+	})
 }
