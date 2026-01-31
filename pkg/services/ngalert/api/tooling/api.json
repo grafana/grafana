@@ -1,5 +1,5 @@
 {
- "basePath": "/api",
+ "basePath": "/api/v2/",
  "consumes": [
   "application/json"
  ],
@@ -2847,6 +2847,16 @@
    "type": "object"
   },
   "PermissionDenied": {
+   "type": "object"
+  },
+  "PostSilencesOKBody": {
+   "description": "PostSilencesOKBody post silences o k body",
+   "properties": {
+    "silenceID": {
+     "description": "silence ID",
+     "type": "string"
+    }
+   },
    "type": "object"
   },
   "PostableApiAlertingConfig": {
@@ -5704,10 +5714,15 @@
    "type": "object"
   }
  },
+ "host": "localhost",
  "info": {
-  "description": "Package definitions includes the types required for generating or consuming an OpenAPI\nspec for the Grafana Alerting API.",
-  "title": "Grafana Alerting API.",
-  "version": "1.1.0"
+  "description": "API of the Prometheus Alertmanager (https://github.com/prometheus/alertmanager)\nSchemes:\nhttp",
+  "license": {
+   "name": "Apache 2.0",
+   "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+  },
+  "title": "Alertmanager API",
+  "version": "0.0.1"
  },
  "paths": {
   "/convert/api/prom/rules": {
@@ -7495,6 +7510,204 @@
      "$ref": "#/definitions/postableAlert"
     },
     "type": "array"
+   }
+  },
+  "deleteSilenceInternalServerError": {
+   "description": "DeleteSilenceInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "deleteSilenceNotFound": {
+   "description": "DeleteSilenceNotFound A silence with the specified ID was not found"
+  },
+  "deleteSilenceOK": {
+   "description": "DeleteSilenceOK Delete silence response"
+  },
+  "getAlertGroupsBadRequest": {
+   "description": "GetAlertGroupsBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getAlertGroupsInternalServerError": {
+   "description": "GetAlertGroupsInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getAlertGroupsOK": {
+   "description": "GetAlertGroupsOK Get alert groups response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/alertGroups"
+   }
+  },
+  "getAlertsBadRequest": {
+   "description": "GetAlertsBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getAlertsInternalServerError": {
+   "description": "GetAlertsInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getAlertsOK": {
+   "description": "GetAlertsOK Get alerts response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/gettableAlerts"
+   }
+  },
+  "getReceiversOK": {
+   "description": "GetReceiversOK Get receivers response",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "items": {
+      "$ref": "#/definitions/receiver"
+     },
+     "type": "array"
+    }
+   }
+  },
+  "getSilenceInternalServerError": {
+   "description": "GetSilenceInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getSilenceNotFound": {
+   "description": "GetSilenceNotFound A silence with the specified ID was not found"
+  },
+  "getSilenceOK": {
+   "description": "GetSilenceOK Get silence response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/gettableSilence"
+   }
+  },
+  "getSilencesBadRequest": {
+   "description": "GetSilencesBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getSilencesInternalServerError": {
+   "description": "GetSilencesInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "getSilencesOK": {
+   "description": "GetSilencesOK Get silences response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/gettableSilences"
+   }
+  },
+  "getStatusOK": {
+   "description": "GetStatusOK Get status response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/alertmanagerStatus"
+   }
+  },
+  "postAlertsBadRequest": {
+   "description": "PostAlertsBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "postAlertsInternalServerError": {
+   "description": "PostAlertsInternalServerError Internal server error",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "postAlertsOK": {
+   "description": "PostAlertsOK Create alerts response"
+  },
+  "postSilencesBadRequest": {
+   "description": "PostSilencesBadRequest Bad request",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "postSilencesNotFound": {
+   "description": "PostSilencesNotFound A silence with the specified ID was not found",
+   "headers": {
+    "body": {
+     "description": "In: Body",
+     "type": "string"
+    }
+   }
+  },
+  "postSilencesOK": {
+   "description": "PostSilencesOK Create / update silence response",
+   "headers": {
+    "body": {
+     "description": "In: Body"
+    }
+   },
+   "schema": {
+    "$ref": "#/definitions/PostSilencesOKBody"
    }
   },
   "receiversResponse": {
