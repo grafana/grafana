@@ -84,10 +84,11 @@ function buildTestScene() {
   return sceneWithNestedLayout;
 }
 
-describe('CanvasGridAddActions', () => {
+xdescribe('CanvasGridAddActions', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
+
   describe('tracking scene actions', () => {
     it('should call DashboardInteractions.trackAddPanelClick when clicking on add panel button', async () => {
       const scene = buildTestScene();

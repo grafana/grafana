@@ -313,9 +313,9 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
       },
-      '&:hover .dashboard-canvas-add-button': {
+
+      '&:hover .dashboard-canvas-controls': {
         opacity: 1,
-        filter: 'unset',
       },
     }),
     controlsPanelEdit: css({
