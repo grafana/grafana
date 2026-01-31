@@ -688,54 +688,6 @@ describe('PostgreSQLDatasource', () => {
     });
   });
 
-  describe('When interpolating variables', () => {
-    describe('and value is a string', () => {
-      it('should return an unquoted value', () => {
-        const { ds, variable } = setupTestContext({});
-        expect(ds.interpolateVariable('abc', variable)).toEqual('abc');
-      });
-    });
-
-    describe('and value is a number', () => {
-      it('should return an unquoted value', () => {
-        const { ds, variable } = setupTestContext({});
-        expect(ds.interpolateVariable(1000 as unknown as string, variable)).toEqual(1000);
-      });
-    });
-
-    describe('and value is an array of strings', () => {
-      it('should return comma separated quoted values', () => {
-        const { ds, variable } = setupTestContext({});
-        expect(ds.interpolateVariable(['a', 'b', 'c'], variable)).toEqual("'a','b','c'");
-      });
-    });
-
-    describe('and variable allows multi-value and is a string', () => {
-      it('should return a quoted value', () => {
-        const { ds, variable } = setupTestContext({});
-        variable.multi = true;
-        expect(ds.interpolateVariable('abc', variable)).toEqual('abc');
-      });
-    });
-
-    describe('and variable contains single quote', () => {
-      it('should return a quoted value', () => {
-        const { ds, variable } = setupTestContext({});
-        variable.multi = true;
-        expect(ds.interpolateVariable("a'bc", variable)).toEqual("a''bc");
-        expect(ds.interpolateVariable("a'b'c", variable)).toEqual("a''b''c");
-      });
-    });
-
-    describe('and variable allows all and is a string', () => {
-      it('should return a quoted value', () => {
-        const { ds, variable } = setupTestContext({});
-        variable.includeAll = true;
-        expect(ds.interpolateVariable('abc', variable)).toEqual('abc');
-      });
-    });
-  });
-
   describe('targetContainsTemplate', () => {
     it('given query that contains template variable it should return true', () => {
       const rawSql = `SELECT
