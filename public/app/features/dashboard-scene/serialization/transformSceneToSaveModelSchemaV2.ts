@@ -6,6 +6,7 @@ import {
   behaviors,
   dataLayers,
   QueryVariable,
+  sceneGraph,
   SceneDataQuery,
   SceneDataTransformer,
   SceneQueryRunner,
@@ -53,8 +54,11 @@ import {
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { djb2Hash } from '../utils/djb2Hash';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { DSReferencesMapping } from './DashboardSceneSerializer';
@@ -137,7 +141,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF annotations
 
     // layout
-    layout: sceneDash.body.serialize(),
+    layout: sceneDash.body.serialize(isSnapshot),
     // EOF layout
   };
 
@@ -175,10 +179,59 @@ function getLiveNow(state: DashboardSceneState) {
 
 function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMapping, isSnapshot = false) {
   const panels = scene.state.body.getVizPanels() ?? [];
-  const panelsArray = panels.map((vizPanel) => {
-    return vizPanelToSchemaV2(vizPanel, dsReferencesMapping, isSnapshot);
-  });
-  return createElements(panelsArray, scene);
+
+  // For snapshot serialization we must also include repeated panel clones (panel repeaters store clones in state,
+  // not as layout children), otherwise the snapshot layout will reference elements that are missing.
+  if (isSnapshot) {
+    panels.push(...getRepeatedPanelsForSnapshot(scene));
+  }
+
+  return panels.reduce<Record<string, Element>>((elements, vizPanel) => {
+    const element = vizPanelToSchemaV2(vizPanel, dsReferencesMapping, isSnapshot);
+
+    // Snapshot layout expands repeaters into explicit panels and references repeat clones by their `key`.
+    // Non-clone panels should keep their stable element identifier.
+    const elementKey =
+      isSnapshot && vizPanel.state.repeatSourceKey
+        ? (() => {
+            if (!vizPanel.state.key) {
+              throw new Error('Snapshot serialization expected repeat clone to have a key');
+            }
+            return vizPanel.state.key;
+          })()
+        : dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
+
+    elements[elementKey] = element;
+    return elements;
+  }, {});
+}
+
+function getRepeatedPanelsForSnapshot(scene: DashboardScene): VizPanel[] {
+  const panels: VizPanel[] = [];
+
+  // Repeated panels are not part of `layout.getVizPanels()`; they are stored on the repeater item state.
+  const repeaters = sceneGraph.findAllObjects(
+    scene.getRoot(),
+    (obj) => obj instanceof DashboardGridItem || obj instanceof AutoGridItem
+  );
+
+  for (const repeater of repeaters) {
+    if (repeater instanceof DashboardGridItem) {
+      if (repeater.state.repeatedPanels?.length) {
+        panels.push(...repeater.state.repeatedPanels);
+      }
+      continue;
+    }
+
+    if (repeater instanceof AutoGridItem) {
+      if (repeater.state.repeatedPanels?.length) {
+        panels.push(...repeater.state.repeatedPanels);
+      }
+      continue;
+    }
+  }
+
+  return panels;
 }
 
 export function vizPanelToSchemaV2(
@@ -212,7 +265,12 @@ export function vizPanelToSchemaV2(
   const elementSpec: PanelKind = {
     kind: 'Panel',
     spec: {
-      id: getPanelIdForVizPanel(vizPanel),
+      // Repeat clones share the same numeric panel id (parsed from `panel-<id>-clone-<n>`),
+      // so snapshots must assign a stable unique id per clone.
+      id:
+        isSnapshot && vizPanel.state.repeatSourceKey && vizPanel.state.key
+          ? djb2Hash(vizPanel.state.key)
+          : getPanelIdForVizPanel(vizPanel),
       title: vizPanel.state.title,
       description: vizPanel.state.description ?? '',
       links: getPanelLinks(vizPanel),
