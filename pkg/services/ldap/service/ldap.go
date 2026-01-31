@@ -123,7 +123,7 @@ func (s *LDAPImpl) Reload(ctx context.Context, settings models.SSOSettings) erro
 }
 
 func (s *LDAPImpl) Enabled() bool {
-	return s.cfg.Enabled
+	return s.cfg != nil && s.cfg.Enabled
 }
 
 func (s *LDAPImpl) Validate(ctx context.Context, settings models.SSOSettings, oldSettings models.SSOSettings, requester identity.Requester) error {
