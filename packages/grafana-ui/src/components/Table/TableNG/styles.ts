@@ -93,7 +93,10 @@ export const getGridStyles = (theme: GrafanaTheme2, enablePagination?: boolean, 
       marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
       marginBlock: TABLE.CELL_PADDING,
     }),
-    cellNested: css({ '&[aria-selected=true]': { outline: 'none' } }),
+    cellNested: css({
+      '&[aria-selected=true]': { outline: 'none' },
+      '&:hover': { backgroundColor: 'transparent' },
+    }),
     noDataNested: css({
       height: TABLE.NESTED_NO_DATA_HEIGHT,
       display: 'flex',
