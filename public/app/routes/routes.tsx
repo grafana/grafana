@@ -329,8 +329,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/authentication/ldap',
       component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
-        ),
+        () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
+      ),
     },
     {
       path: '/admin/authentication/:provider',
