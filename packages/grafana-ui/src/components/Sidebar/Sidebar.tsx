@@ -39,6 +39,10 @@ export function SidebarComp({ children, contextValue }: Props) {
     if (evt.target instanceof Node && portalContainer && portalContainer.contains(evt.target)) {
       return;
     }
+    // ignore clicks inside drawers
+    if (evt.target instanceof Element && evt?.target.closest('.rc-drawer')) {
+      return;
+    }
     if (!isDocked && hasOpenPane) {
       contextValue.onClosePane?.();
     }
