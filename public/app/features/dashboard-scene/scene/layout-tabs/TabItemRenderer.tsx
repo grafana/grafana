@@ -61,6 +61,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             dragProvided.innerRef(ref);
           }}
           className={cx(dragSnapshot.isDragging && styles.dragging)}
+          style={dragProvided.draggableProps.style}
           {...dragProvided.draggableProps}
           {...dragProvided.dragHandleProps}
         >
