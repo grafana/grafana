@@ -123,10 +123,8 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
                 {...field}
                 id="privateKey"
                 invalid={!!errors.privateKey}
-                placeholder={t(
-                  'provisioning.connection-form.placeholder-private-key',
-                  '-----BEGIN RSA PRIVATE KEY-----...'
-                )}
+                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                placeholder="-----BEGIN RSA PRIVATE KEY-----..."
                 isConfigured={isPrivateKeyConfigured}
                 onReset={() => {
                   setValue('privateKey', '');

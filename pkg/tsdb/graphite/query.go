@@ -30,8 +30,6 @@ type queryModel struct {
 func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataResponse, error) {
 	emptyQueries := []string{}
 	graphiteQueries := map[string]queryModel{}
-	// FromAlert header is defined in pkg/services/ngalert/models/constants.go
-	fromAlert := req.Headers["FromAlert"] == "true"
 	result := backend.NewQueryDataResponse()
 
 	for _, query := range req.Queries {
@@ -100,7 +98,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			}
 		}()
 
-		queryFrames, err := s.toDataFrames(res, refId, fromAlert, graphiteReq.rawTarget)
+		queryFrames, err := s.toDataFrames(res, refId)
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
@@ -195,9 +193,7 @@ func (s *Service) createGraphiteRequest(ctx context.Context, query backend.DataQ
 	return graphiteReq, formData, emptyQuery, target, nil
 }
 
-var aliasRegex = regexp.MustCompile(`(alias|aliasByMetric|aliasByNode|aliasByTags|aliasQuery|aliasSub)\(`)
-
-func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert bool, rawTarget string) (frames data.Frames, error error) {
+func (s *Service) toDataFrames(response *http.Response, refId string) (frames data.Frames, error error) {
 	responseData, err := s.parseResponse(response)
 	if err != nil {
 		return nil, err
@@ -205,7 +201,6 @@ func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert 
 
 	frames = data.Frames{}
 	for _, series := range responseData {
-		aliasMatch := aliasRegex.MatchString(rawTarget)
 		timeVector := make([]time.Time, 0, len(series.DataPoints))
 		values := make([]*float64, 0, len(series.DataPoints))
 
@@ -221,11 +216,7 @@ func (s *Service) toDataFrames(response *http.Response, refId string, fromAlert 
 		tags := make(map[string]string)
 		for name, value := range series.Tags {
 			if name == "name" {
-				// Queries with aliases should use the target as the name
-				// to ensure multi-dimensional queries are distinguishable from each other
-				if fromAlert || aliasMatch {
-					value = series.Target
-				}
+				value = series.Target
 			}
 			switch value := value.(type) {
 			case string:
