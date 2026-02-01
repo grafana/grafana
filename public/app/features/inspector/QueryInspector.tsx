@@ -258,14 +258,17 @@ export class QueryInspector extends PureComponent<Props, State> {
             <Trans i18nKey="inspector.query.refresh">Refresh</Trans>
           </Button>
 
-          {haveData && allNodesExpanded && (
-            <Button icon="minus" variant="secondary" onClick={this.onToggleExpand}>
-              <Trans i18nKey="inspector.query.collapse-all">Collapse all</Trans>
-            </Button>
-          )}
-          {haveData && !allNodesExpanded && (
-            <Button icon="plus" variant="secondary" onClick={this.onToggleExpand}>
-              <Trans i18nKey="inspector.query.expand-all">Expand all</Trans>
+         {haveData && (
+            <Button
+              icon={allNodesExpanded ? 'minus' : 'plus'}
+              variant="secondary"
+              onClick={this.onToggleExpand}
+            >
+              {allNodesExpanded ? (
+                <Trans i18nKey="inspector.query.collapse-all">Collapse all</Trans>
+              ) : (
+                <Trans i18nKey="inspector.query.expand-all">Expand all</Trans>
+              )}
             </Button>
           )}
 
