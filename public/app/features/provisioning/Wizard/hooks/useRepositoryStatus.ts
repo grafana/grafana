@@ -46,7 +46,8 @@ export function useRepositoryStatus(repoName?: string, options?: UseRepositorySt
     healthMessage,
     checked,
     healthStatusNotReady,
-    isLoading: query.isLoading || query.isFetching,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
     hasError: query.isError,
     refetch: query.refetch,
   };

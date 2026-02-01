@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
@@ -27,6 +28,7 @@ type ReceiverService struct {
 	provisioningStore      provisoningStore
 	cfgStore               alertmanagerConfigStore
 	ruleNotificationsStore alertRuleNotificationSettingsStore
+	routeService           routeService
 	encryptionService      secretService
 	xact                   transactionManager
 	log                    log.Logger
@@ -34,6 +36,12 @@ type ReceiverService struct {
 	resourcePermissions    ac.ReceiverPermissionsService
 	tracer                 tracing.Tracer
 	includeImported        bool
+}
+
+type routeService interface {
+	ReceiverUseByName(ctx context.Context, rev *legacy_storage.ConfigRevision) map[string]int
+	ReceiverNameUsedByRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, name string) bool
+	RenameReceiverInRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, oldName, newName string) map[*definitions.Route]int
 }
 
 type alertRuleNotificationSettingsStore interface {
@@ -85,6 +93,7 @@ func NewReceiverService(
 	cfgStore alertmanagerConfigStore,
 	provisioningStore provisoningStore,
 	ruleNotificationsStore alertRuleNotificationSettingsStore,
+	routeService routeService,
 	encryptionService secretService,
 	xact transactionManager,
 	log log.Logger,
@@ -97,6 +106,7 @@ func NewReceiverService(
 		provisioningStore:      provisioningStore,
 		cfgStore:               cfgStore,
 		ruleNotificationsStore: ruleNotificationsStore,
+		routeService:           routeService,
 		encryptionService:      encryptionService,
 		xact:                   xact,
 		log:                    log,
@@ -300,7 +310,7 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		return err
 	}
 
-	usedByRoutes := revision.ReceiverNameUsedByRoutes(existing.Name)
+	usedByRoutes := rs.routeService.ReceiverNameUsedByRoutes(ctx, revision, existing.Name)
 	usedByRules, err := rs.UsedByRules(ctx, orgID, existing.Name)
 	if err != nil {
 		return err
@@ -583,7 +593,7 @@ func (rs *ReceiverService) InUseMetadata(ctx context.Context, orgID int64, recei
 	var importedUsesInRoutes map[string]int
 	receiverUsesInRules := map[string][]models.AlertRuleKey{}
 	if hasGrafanaOrigin {
-		receiverUsesInRoutes = revision.ReceiverUseByName()
+		receiverUsesInRoutes = rs.routeService.ReceiverUseByName(ctx, revision)
 		q := models.ListNotificationSettingsQuery{OrgID: orgID}
 		if len(receivers) == 1 {
 			q.ReceiverName = receivers[0].Name
@@ -768,14 +778,19 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 
 	validate := validation.ValidateProvenanceOfDependentResources(receiverProvenance)
 	// if there are no references to the old time interval, exit
-	updatedRoutes := revision.RenameReceiverInRoutes(oldName, newName)
 	canUpdate := true
-	if updatedRoutes > 0 {
-		routeProvenance, err := rs.provisioningStore.GetProvenance(ctx, revision.Config.AlertmanagerConfig.Route, orgID)
-		if err != nil {
-			return err
+	updatedRouteCnt := 0
+	if updatedRoutes := rs.routeService.RenameReceiverInRoutes(ctx, revision, oldName, newName); len(updatedRoutes) > 0 {
+		for route, updatedCnt := range updatedRoutes {
+			if updatedCnt > 0 {
+				updatedRouteCnt += updatedCnt
+				routeProvenance, err := rs.provisioningStore.GetProvenance(ctx, route, orgID)
+				if err != nil {
+					return err
+				}
+				canUpdate = canUpdate && validate(routeProvenance)
+			}
 		}
-		canUpdate = validate(routeProvenance)
 	}
 	dryRun := !canUpdate
 	affected, invalidProvenance, err := rs.ruleNotificationsStore.RenameReceiverInNotificationSettings(ctx, orgID, oldName, newName, validate, dryRun)
@@ -783,17 +798,21 @@ func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Contex
 		return err
 	}
 	if !canUpdate || len(invalidProvenance) > 0 {
-		err := makeErrReceiverDependentResourcesProvenance(updatedRoutes > 0, invalidProvenance)
+		err := makeErrReceiverDependentResourcesProvenance(updatedRouteCnt > 0, invalidProvenance)
 		span.RecordError(err, trace.WithAttributes(
 			attribute.Bool("invalid_route_provenance", canUpdate),
 			attribute.Int("invalid_rule_provenances", len(invalidProvenance)),
 		))
 		return err
 	}
-	if len(affected) > 0 || updatedRoutes > 0 {
-		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)
+	if len(affected) > 0 || updatedRouteCnt > 0 {
+		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRouteCnt)
 	}
 	return nil
+}
+
+func (rs *ReceiverService) ReceiverNameUsedByRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, name string) bool {
+	return rs.routeService.ReceiverNameUsedByRoutes(ctx, rev, name)
 }
 
 func (rs *ReceiverService) getImportedReceivers(ctx context.Context, span trace.Span, uids []string, revision *legacy_storage.ConfigRevision) []*models.Receiver {

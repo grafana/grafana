@@ -2320,7 +2320,8 @@
     },
     "routing-settings": {
       "aria-label-group-by": "分组依据",
-      "description-group-by": "通过相同的标签值将多个警报分组，从而将它们合并成单个通知。如果为空，则继承自默认通知策略。",
+      "description-group-by": "",
+      "group-by-hint": "",
       "group-interval": "",
       "group-wait": "",
       "grouping": "",
@@ -3618,7 +3619,9 @@
       "delete-button": "删除",
       "delete-modal-invalid-text": "一个或多个文件夹包含库面板或警报规则。请首先删除这些以便继续。",
       "delete-modal-invalid-title": "无法删除文件夹",
-      "delete-modal-restore-dashboards-text": "",
+      "delete-modal-restore-dashboards-common": "",
+      "delete-modal-restore-dashboards-prefix-folder": "",
+      "delete-modal-restore-dashboards-suffix-folder": "",
       "delete-modal-text": "此操作将删除以下内容：",
       "delete-modal-text-one-folder": "",
       "delete-modal-title": "删除",
@@ -5132,6 +5135,9 @@
       "panel-data-label": "面板数据",
       "panel-json-description": "保存在仪表板 JSON 中的模型，用于配置整体运作方式。",
       "panel-json-label": "面板 JSON",
+      "panel-layout-description": "",
+      "panel-layout-label": "",
+      "panel-spec-label": "",
       "select-source": "选择源",
       "unknown": "未知对象：{{show}}"
     },
@@ -5458,10 +5464,6 @@
         "tooltip": ""
       },
       "dashboard-options": {
-        "title": "",
-        "tooltip": ""
-      },
-      "edit-schema": {
         "title": "",
         "tooltip": ""
       },
@@ -6219,7 +6221,9 @@
     },
     "inspect-json-tab": {
       "apply": "应用",
+      "error-element-changed": "",
       "error-invalid-json": "",
+      "error-invalid-layout": "",
       "error-invalid-v2-panel": "",
       "validation-error": ""
     },
@@ -6723,7 +6727,7 @@
       "delete-button": "删除",
       "title": "删除"
     },
-    "delete-modal-restore-dashboards-text": "",
+    "delete-modal-restore-dashboards-prefix": "",
     "delete-modal-text": "您要删除这个数据面板吗？",
     "general": {
       "auto-refresh-description": "定义应显示于自动刷新列表中的自动刷新间隔。使用格式“5s”表示秒，“1m”表示分，“1h”表示小时，“1d”表示天（例如：“5s,10s,30s,1m,5m,15m,30m,1h,2h,1d”）。",
@@ -11847,6 +11851,7 @@
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
       "alert-connection-updated": "",
+      "available-repositories": "",
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
@@ -11859,6 +11864,7 @@
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
+      "grafana-repositories": "",
       "label-app-id": "",
       "label-description": "",
       "label-installation-id": "",
@@ -11873,7 +11879,6 @@
       "placeholder-app-id": "",
       "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": "",
       "placeholder-title": ""
     },
     "connection-options": {
@@ -12165,6 +12170,7 @@
       "jobs": "作业"
     },
     "repository-actions": {
+      "connection": "",
       "settings": "设置",
       "source-code": "源代码"
     },
@@ -12187,6 +12193,7 @@
     },
     "repository-overview": {
       "checked": "已检查：",
+      "connection-status": "",
       "finished": "",
       "health": "健康",
       "healthy": "状态良好",
@@ -12619,13 +12626,17 @@
     }
   },
   "query-editor-next": {
+    "labels": {
+      "expression": "",
+      "query": "",
+      "transformation": ""
+    },
     "sidebar": {
       "card-click": "",
-      "expression": "",
       "queries-expressions": "",
-      "query": "",
       "query-stack": "",
-      "toggle-size": ""
+      "toggle-size": "",
+      "transformations": ""
     }
   },
   "query-library": {
@@ -12664,7 +12675,7 @@
     },
     "page": {
       "no-deleted-dashboards": "您最近没有删除任何数据面板。",
-      "no-deleted-dashboards-text": "当您删除数据面板时，它将在此处显示 30 天，然后会被永久删除。您的组织管理员可以还原最近删除的数据面板。",
+      "no-deleted-dashboards-text": "",
       "no-search-result": "未找到与您的查询相关的结果"
     },
     "restore-modal": {
@@ -14781,6 +14792,9 @@
       "description": {
         "variable-values-fetched-datasource-query": "从数据源查询中获取变量值"
       }
+    },
+    "create-switch-variable-adapter": {
+      "description": ""
     },
     "data-source-variable-slice": {
       "text": {

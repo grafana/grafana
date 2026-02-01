@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -973,8 +974,8 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		revision, err := sut.cfgStore.Get(context.Background(), writer.GetOrgID())
 		require.NoError(t, err)
 
-		assert.Falsef(t, revision.ReceiverNameUsedByRoutes(receiverName), "old receiver name '%s' should not be used by routes", receiverName)
-		assert.Truef(t, revision.ReceiverNameUsedByRoutes(newReceiverName), "new receiver name '%s' should be used by routes", newReceiverName)
+		assert.Falsef(t, revision.ReceiverNameUsedByRoutes(receiverName, false), "old receiver name '%s' should not be used by routes", receiverName)
+		assert.Truef(t, revision.ReceiverNameUsedByRoutes(newReceiverName, false), "new receiver name '%s' should be used by routes", newReceiverName)
 	})
 
 	t.Run("returns ErrReceiverDependentResourcesProvenance if route has different provenance status", func(t *testing.T) {
@@ -1784,7 +1785,7 @@ func withInvalidExtraConfig(t *testing.T, sut *ReceiverService) {
 	extra.AlertmanagerConfig = "yaml:invalid"
 	cfg := createEncryptedConfig(t, sut.encryptionService, extra)
 	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
-	sut.cfgStore = legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(sut.encryptionService))
+	sut.cfgStore = legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(sut.encryptionService), featuremgmt.WithFeatures())
 }
 
 func withImportedIncluded(_ *testing.T, sut *ReceiverService) {
@@ -1799,9 +1800,10 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...cr
 
 	sut := NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), false),
-		legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(encryptSvc)),
+		legacy_storage.NewAlertmanagerConfigStore(store, NewExtraConfigsCrypto(encryptSvc), featuremgmt.WithFeatures()),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},
+		routes.NewFakeService(legacy_storage.ConfigRevision{}),
 		encryptSvc,
 		xact,
 		log.NewNopLogger(),
