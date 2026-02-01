@@ -118,11 +118,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       }
     }
 
-    if (start.type === 'TAB') {
-      // Intentionally do not select the tab in the edit pane on drag start.
-      // Selecting triggers side pane updates / lazy loads, which can cause a noticeable hitch
-      // on the first drag. We focus the moved tab on drop (cross-group) instead.
-    }
+    // if (start.type === 'TAB') {
+    //   // Intentionally do not select the tab in the edit pane on drag start.
+    //   // Selecting triggers side pane updates / lazy loads, which can cause a noticeable hitch
+    //   // on the first drag. We focus the moved tab on drop (cross-group) instead.
+    // }
   };
 
   const mapTabInsertIndex = (destination: TabsLayoutManager, destinationIndexIncludingRepeats: number): number => {
