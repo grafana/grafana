@@ -152,6 +152,7 @@ type FrontendSettingsWhitelabelingDTO struct {
 	AppTitle           *string                                   `json:"appTitle,omitempty"`
 	LoginLogo          *string                                   `json:"loginLogo,omitempty"`
 	MenuLogo           *string                                   `json:"menuLogo,omitempty"`
+	FavIcon            *string                                   `json:"favIcon,omitempty"`
 	LoginBackground    *string                                   `json:"loginBackground,omitempty"`
 	LoginSubtitle      *string                                   `json:"loginSubtitle,omitempty"`
 	LoginBoxBackground *string                                   `json:"loginBoxBackground,omitempty"`
