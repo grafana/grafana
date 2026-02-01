@@ -134,6 +134,16 @@ export const MenuItem = React.memo(
             setIsActive(true);
           }
           break;
+        case 'Enter':
+        case ' ':
+          if (hasSubMenu && !isSubMenuOpen) {
+            event.preventDefault();
+            event.stopPropagation();
+            setIsSubMenuOpen(true);
+            setIsActive(true);
+            return;
+          }
+          break;
         default:
           break;
       }
