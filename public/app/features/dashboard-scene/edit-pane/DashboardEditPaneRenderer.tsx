@@ -110,12 +110,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
       <Sidebar.Toolbar>
         {isEditing && (
           <>
-            {config.featureToggles.dashboardUndoRedo && (
-              <>
-                <UndoButton dashboard={dashboard} />
-                <RedoButton dashboard={dashboard} />
-              </>
-            )}
             <Sidebar.Button
               icon="plus"
               iconColor="primary"
@@ -129,14 +123,23 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
               active={selectedObject === null || openPane === 'add'}
             />
+
             <Sidebar.Button
               icon="cog"
+              iconSize="xl"
               onClick={() => editPane.selectObject(dashboard, dashboard.state.key!)}
               title={t('dashboard.sidebar.dashboard-options.title', 'Options')}
               tooltip={t('dashboard.sidebar.dashboard-options.tooltip', 'Dashboard options')}
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
               active={selectedObject === dashboard ? true : false}
             />
+            {config.featureToggles.dashboardUndoRedo && (
+              <>
+                <Sidebar.Divider />
+                <UndoButton dashboard={dashboard} />
+                <RedoButton dashboard={dashboard} />
+              </>
+            )}
             {/* <Sidebar.Button
               tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
               title={t('dashboard.sidebar.edit-schema.title', 'Code')}
@@ -147,6 +150,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             <Sidebar.Button
               style={{ color: '#ff671d' }}
               icon="comment-alt-message"
+              iconSize="xl"
               onClick={() =>
                 window.open(
                   'https://docs.google.com/forms/d/e/1FAIpQLSfDZJM_VlZgRHDx8UPtLWbd9bIBPRxoA28qynTHEYniyPXO6Q/viewform',
@@ -167,6 +171,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
         {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
         <Sidebar.Button
           icon="list-ui-alt"
+          iconSize="xl"
           onClick={() => editPane.openPane('outline')}
           title={t('dashboard.sidebar.outline.title', 'Outline')}
           tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
@@ -178,6 +183,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
         {Boolean(meta.isSnapshot) && (
           <Sidebar.Button
             data-testid="button-snapshot"
+            iconSize="xl"
             tooltip={t('dashboard.sidebar.snapshot.tooltip', 'Open original dashboard')}
             title={t('dashboard.toolbar.snapshot.title', 'Source')}
             icon="link"
@@ -212,6 +218,7 @@ function UndoButton({ dashboard }: ToolbarActionProps) {
   return (
     <Sidebar.Button
       icon="corner-up-left"
+      iconSize="xl"
       disabled={undoStack.length === 0}
       onClick={() => editPane.undoAction()}
       title={undoWord}
@@ -230,6 +237,7 @@ function RedoButton({ dashboard }: ToolbarActionProps) {
   return (
     <Sidebar.Button
       icon="corner-up-right"
+      iconSize="xl"
       disabled={redoStack.length === 0}
       title={redoWord}
       tooltip={tooltip}
