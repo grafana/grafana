@@ -1,14 +1,12 @@
-import { RefObject, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
-import { extractErrorMessage } from 'app/api/utils';
 
 import { dataToSpec } from '../../utils/data';
 import { getFormErrors } from '../../utils/getFormErrors';
-import { GitHubAppStepRef } from '../GitHubAppStep';
 import { Step } from '../Stepper';
 import { StepStatusInfo, WizardFormData, WizardStep } from '../types';
 
@@ -20,7 +18,6 @@ export interface UseWizardSubmissionParams {
     spec: RepositorySpec,
     token?: string
   ) => Promise<{ data?: { metadata?: { name?: string } }; error?: unknown }>;
-  githubAppStepRef: RefObject<GitHubAppStepRef>;
   setStepStatusInfo: (info: StepStatusInfo) => void;
   onSuccess: () => void;
 }
@@ -35,7 +32,6 @@ export function useWizardSubmission({
   currentStepConfig,
   methods,
   submitData,
-  githubAppStepRef,
   setStepStatusInfo,
   onSuccess,
 }: UseWizardSubmissionParams): UseWizardSubmissionReturn {

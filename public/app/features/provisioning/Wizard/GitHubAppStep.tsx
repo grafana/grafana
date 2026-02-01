@@ -1,4 +1,3 @@
-import { forwardRef } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -17,18 +16,11 @@ import { getConnectionFormErrors } from '../utils/getFormErrors';
 import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
 import { ConnectionCreationResult, WizardFormData } from './types';
 
-export interface GitHubAppStepRef {
-  submit: () => Promise<void>;
-}
-
 interface GitHubAppStepProps {
   onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
 }
 
-export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepProps>(function GitHubAppStep(
-  { onGitHubAppSubmit },
-  ref
-) {
+export function GitHubAppStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
   const {
     control,
     watch,
@@ -197,4 +189,4 @@ export const GitHubAppStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPr
       )}
     </Stack>
   );
-});
+}

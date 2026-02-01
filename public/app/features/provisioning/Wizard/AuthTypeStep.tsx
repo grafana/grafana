@@ -1,4 +1,4 @@
-import { forwardRef, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Connection } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
@@ -7,7 +7,7 @@ import { RadioButtonGroup, Stack, Text } from '@grafana/ui';
 
 import { useConnectionList } from '../hooks/useConnectionList';
 
-import { GitHubAppStep, GitHubAppStepRef } from './GitHubAppStep';
+import { GitHubAppStep } from './GitHubAppStep';
 import { RepositoriesList } from './components/RepositoriesList';
 import { RepositoryTokenInput } from './components/RepositoryTokenInput';
 import { ConnectionCreationResult, GitHubAuthType, WizardFormData } from './types';
@@ -44,10 +44,7 @@ const getAuthTypeOptions = (): AuthTypeOption[] => [
   },
 ];
 
-export const AuthTypeStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepProps>(function AuthTypeStep(
-  { onGitHubAppSubmit },
-  ref
-) {
+export function AuthTypeStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
   const { control, watch } = useFormContext<WizardFormData>();
   const [githubAuthType, githubAppMode, githubAppConnectionName] = watch([
     'githubAuthType',
@@ -100,7 +97,7 @@ export const AuthTypeStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPro
       {shouldShowRepositories && <RepositoriesList isSelectedConnectionReady={isSelectedConnectionReady} />}
     </Stack>
   );
-});
+}
 
 function isConnectionReady(connection?: Connection) {
   return connection?.status?.conditions?.find((c) => c.type === 'Ready')?.status === 'True';

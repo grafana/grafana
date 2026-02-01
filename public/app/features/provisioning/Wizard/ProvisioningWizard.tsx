@@ -15,7 +15,6 @@ import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 
-import { GitHubAppStepRef } from './GitHubAppStep';
 import { useStepStatus } from './StepStatusContext';
 import { Stepper } from './Stepper';
 import { WizardButtonBar } from './components/WizardButtonBar';
@@ -74,9 +73,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     'githubAuthType',
     'githubAppMode',
   ]);
-
-  // Ref for GitHubAppStep to trigger submission
-  const githubAppStepRef = useRef<GitHubAppStepRef>(null);
 
   const steps = useMemo(() => getSteps(repoType, githubAuthType), [repoType, githubAuthType]);
   const [submitData] = useCreateOrUpdateRepository(repoName);
@@ -203,12 +199,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
           <Stepper steps={wizardSteps} activeStep={activeStep} visitedSteps={completedSteps} />
           <div className={styles.divider} />
         </>
-        <form
-          onSubmit={handleSubmit(onFormSubmit, (errors) => {
-            console.log('submit errors', errors);
-          })}
-          className={styles.form}
-        >
+        <form onSubmit={handleSubmit(onFormSubmit)} className={styles.form}>
           <FormPrompt
             onDiscard={onDiscard}
             confirmRedirect={isDirty && !['authType', 'connection', 'finish'].includes(activeStep) && !isCancelling}
@@ -233,7 +224,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
                 activeStep={activeStep}
                 settingsData={settingsData}
                 repoName={repoName}
-                githubAppStepRef={githubAppStepRef}
                 onGitHubAppSubmit={handleGitHubAppCreation}
                 onRepositoryDeletion={handleRepositoryDeletion}
                 isCancelling={isCancelling}
