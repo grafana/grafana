@@ -13874,7 +13874,7 @@
         "legendPlacement": "Legend placement",
         "panelTitle": "Time series: {{title}}",
         "title": "Quick edit",
-        "tooltip": "Quick edit"
+        "tooltip": "Tooltip"
       },
       "tooltip": {
         "multi": "All",

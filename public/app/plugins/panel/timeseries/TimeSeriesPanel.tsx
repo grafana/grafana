@@ -263,7 +263,7 @@ export const TimeSeriesPanel = ({
           <IconButton
             ref={triggerRef}
             name="sliders-v-alt"
-            tooltip={t('timeseries.inline.quickEdit.tooltip', 'Quick edit')}
+            tooltip={t('timeseries.inline.quickEdit.tooltip', 'Tooltip')}
             onClick={(e) => {
               e.stopPropagation();
               setDragOffset({ x: 0, y: 0 });
