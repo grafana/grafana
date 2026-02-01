@@ -79,13 +79,12 @@ export function useWizardButtons({
   }, [isCancelling, shouldUseCancelBehavior, activeStep, repoName]);
 
   const isNextDisabled = useMemo(() => {
-    // AuthType step is always enabled (user just needs to select an option)
     if (activeStep === 'authType') {
-      // Disable next if github app is in create connection mode
+      // Only disable next if github app is in create connection mode
       return githubAuthType === 'github-app' && githubAppMode === 'new';
     }
-    // Don't block on hasStepError for connection/githubApp steps - users can fix their input and retry
-    if (!['connection', 'githubApp'].includes(activeStep) && hasStepError) {
+    // Don't block on hasStepError for connection steps - users can fix their input and retry
+    if (!['connection'].includes(activeStep) && hasStepError) {
       return true;
     }
     // Synchronize step requires success or warning to proceed
@@ -111,7 +110,7 @@ export function useWizardButtons({
     githubAppMode,
   ]);
   const isPreviousDisabled = isSubmitting || isCancelling || isStepRunning || showCancelConfirmation;
-  console.log('isNextDisabled', isNextDisabled);
+
   return {
     nextButtonText,
     previousButtonText,

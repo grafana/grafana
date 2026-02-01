@@ -1,12 +1,13 @@
+import { useMemo } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Field, RadioButtonGroup, Spinner, Stack } from '@grafana/ui';
-import { ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
+import { Alert, Combobox, Field, IconButton, RadioButtonGroup, Spinner, Stack } from '@grafana/ui';
+import { ConnectionSpec, ConnectionStatus } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
-import { ConnectionListItem } from '../Connection/ConnectionListItem';
+import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
 import { useConnectionList } from '../hooks/useConnectionList';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
@@ -40,11 +41,11 @@ export function GitHubAppStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
   });
 
   const [createConnection] = useCreateOrUpdateConnection();
-  const [connections, isLoading, connectionListError] = useConnectionList({});
+  const [connections, isLoading, connectionListError, refetchConnections] = useConnectionList({});
 
-  const githubAppMode = watch('githubAppMode');
-  const githubConnections = connections?.filter((c) => c.spec?.type === 'github') ?? [];
-
+  const [githubAppMode, githubAppConnectionName] = watch(['githubAppMode', 'githubApp.connectionName']);
+  const githubConnections = useMemo(() => connections?.filter((c) => c.spec?.type === 'github') ?? [], [connections]);
+  const selectedConnection = githubConnections.find((c) => c.metadata?.name === githubAppConnectionName);
   const handleCreateConnection = async () => {
     const isValid = await credentialForm.trigger();
     if (!isValid) {
@@ -83,6 +84,7 @@ export function GitHubAppStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
     try {
       const result = await createConnection(spec, privateKey);
       if (result.data?.metadata?.name) {
+        credentialForm.reset();
         onGitHubAppSubmit({ success: true, connectionName: result.data.metadata.name });
         return;
       } else if (result.error) {
@@ -98,6 +100,16 @@ export function GitHubAppStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
       onGitHubAppSubmit({ success: false, error: extractErrorMessage(error) || defaultErrorMessage });
     }
   };
+
+  const connectionOptions = useMemo(
+    () =>
+      githubConnections.map((connection) => ({
+        value: connection.metadata?.name ?? '',
+        label: connection.spec?.title ?? connection.metadata?.name ?? '',
+        description: connection.spec?.description,
+      })),
+    [githubConnections]
+  );
 
   return (
     <Stack direction="column" gap={2}>
@@ -164,17 +176,32 @@ export function GitHubAppStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
               }}
               render={({ field: { onChange, value } }) => (
                 <Stack direction="column" gap={1}>
-                  {githubConnections.map((connection) => {
-                    const connectionName = connection.metadata?.name ?? '';
-                    return (
-                      <ConnectionListItem
-                        key={connectionName}
-                        connection={connection}
-                        isSelected={value === connectionName}
-                        onClick={() => onChange(connectionName)}
-                      />
-                    );
-                  })}
+                  <Combobox
+                    options={connectionOptions}
+                    onChange={(option) => onChange(option?.value ?? '')}
+                    value={value ? { value: value, label: value } : null}
+                    invalid={Boolean(errors?.githubApp?.connectionName?.message)}
+                    placeholder={t(
+                      'provisioning.wizard.github-app-select-connection',
+                      'Select a GitHub App connection'
+                    )}
+                  />
+
+                  {selectedConnection && (
+                    <Stack>
+                      <Trans i18nKey="provisioning.wizard.github-app-connection-status">Connection status:</Trans>
+                      <ConnectionStatusBadge status={selectedConnection.status} />
+                      {!isConnectionReady(selectedConnection?.status) && (
+                        <IconButton
+                          aria-label={t('provisioning.wizard.github-app-sync-connection', 'Sync Connection')}
+                          key="syncConnection"
+                          name="sync"
+                          onClick={refetchConnections}
+                          disabled={isLoading}
+                        />
+                      )}
+                    </Stack>
+                  )}
                 </Stack>
               )}
             />
@@ -189,4 +216,8 @@ export function GitHubAppStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
       )}
     </Stack>
   );
+}
+
+function isConnectionReady(status: ConnectionStatus | undefined): boolean {
+  return Boolean(status?.conditions?.find((c) => c.type === 'Ready'));
 }

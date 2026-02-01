@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -136,7 +136,6 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     currentStepConfig,
     methods,
     submitData,
-    githubAppStepRef,
     setStepStatusInfo,
     onSuccess: goToNextStep,
   });

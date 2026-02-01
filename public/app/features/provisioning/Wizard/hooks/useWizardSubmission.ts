@@ -58,17 +58,8 @@ export function useWizardSubmission({
           : (['repository', 'repository.title'] as const);
 
       const isValid = await trigger(fieldsToValidate);
+
       if (!isValid) {
-        setStepStatusInfo({
-          status: 'error',
-          error: {
-            title: repositoryConnectionFailed,
-            message: t(
-              'provisioning.provisioning-wizard.on-submit.error.fix-form-errors',
-              'Invalid connection set up. Please fix the form errors and try again.'
-            ),
-          },
-        });
         return;
       }
 
@@ -133,6 +124,14 @@ export function useWizardSubmission({
             for (const [field, errorMessage] of errors) {
               setError(field, errorMessage);
             }
+            const combinedMessage = errors.map(([, err]) => err.message).join('\n');
+            setStepStatusInfo({
+              status: 'error',
+              error: {
+                title: repositoryConnectionFailed,
+                message: combinedMessage,
+              },
+            });
           } else {
             setStepStatusInfo({
               status: 'error',

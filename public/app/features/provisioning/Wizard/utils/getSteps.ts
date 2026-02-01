@@ -14,16 +14,6 @@ export const getSteps = (type: RepoType, githubAuthType?: GitHubAuthType): Array
       title: t('provisioning.wizard.connect-step', 'Connect'),
       submitOnNext: true,
     });
-
-    // If GitHub App is selected, add the GitHub App configuration step
-    // if (githubAuthType === 'github-app') {
-    //   steps.push({
-    //     id: 'githubApp',
-    //     name: t('provisioning.wizard.step-github-app', 'Connect'),
-    //     title: t('provisioning.wizard.title-github-app', 'Connect to GitHub'),
-    //     submitOnNext: true,
-    //   });
-    // }
   }
 
   // Connection step (always present, but fields vary)
