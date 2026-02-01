@@ -13870,6 +13870,7 @@
         "table": "Table"
       },
       "quickEdit": {
+        "button": "Quick edit",
         "legend": "Legend",
         "legendPlacement": "Legend placement",
         "panelTitle": "Time series: {{title}}",
