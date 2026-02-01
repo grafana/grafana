@@ -13996,6 +13996,14 @@
             "schema": {
               "type": "boolean"
             }
+          },
+          {
+            "in": "query",
+            "name": "targetOrgId",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -14329,6 +14337,14 @@
               "format": "int64",
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "targetOrgId",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -14407,6 +14423,14 @@
             "in": "path",
             "name": "teamId",
             "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "targetOrgId",
             "schema": {
               "format": "int64",
               "type": "integer"
@@ -14544,6 +14568,28 @@
               "format": "int64",
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "includeHidden",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "includeMapped",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "targetOrgId",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -14619,6 +14665,14 @@
             "in": "path",
             "name": "userId",
             "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "targetOrgId",
             "schema": {
               "format": "int64",
               "type": "integer"
