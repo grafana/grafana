@@ -66,6 +66,7 @@ type RepositoryController struct {
 	repoFactory       repository.Factory
 	connectionFactory connection.Factory
 	healthChecker     *RepositoryHealthChecker
+	quotaChecker      *RepositoryQuotaChecker
 	// To allow injection for testing.
 	processFn         func(item *queueItem) error
 	enqueueRepository func(obj any)
@@ -116,6 +117,7 @@ func NewRepositoryController(
 		repoFactory:       repoFactory,
 		connectionFactory: connectionFactory,
 		healthChecker:     healthChecker,
+		quotaChecker:      NewRepositoryQuotaChecker(quotaGetter, repoInformer.Lister()),
 		statusPatcher:     statusPatcher,
 		finalizer: &finalizer{
 			lister:        resourceLister,
@@ -362,12 +364,29 @@ func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Re
 	return patchOperations, nil
 }
 
+// isQuotaExceeded checks if the repository has a quota condition indicating quota is exceeded
+func isQuotaExceeded(obj *provisioning.Repository) bool {
+	for _, condition := range obj.Status.Conditions {
+		if condition.Type == provisioning.ConditionTypeQuota {
+			return condition.Status == v1.ConditionFalse &&
+				condition.Reason == provisioning.ReasonResourceQuotaExceeded
+		}
+	}
+	return false
+}
+
 func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *provisioning.Repository, repo repository.Repository, shouldResync bool, healthStatus provisioning.HealthStatus) *provisioning.SyncJobOptions {
 	logger := logging.FromContext(ctx)
 
 	switch {
 	case !obj.Spec.Sync.Enabled:
 		logger.Info("skip sync as it's disabled")
+		return nil
+	case isQuotaExceeded(obj):
+		logger.Info("skip sync for repository over quota",
+			"repository", obj.Name,
+			"namespace", obj.Namespace,
+		)
 		return nil
 	case !healthStatus.Healthy:
 		logger.Info("skip sync for unhealthy repository")
@@ -643,6 +662,34 @@ func (rc *RepositoryController) process(item *queueItem) error {
 			"path":  "/status/quota",
 			"value": newQuota,
 		})
+	}
+
+	// Check if namespace is over repository quota and set condition
+	overQuota, err := rc.quotaChecker.NamespaceOverQuota(ctx, namespace)
+	if err != nil {
+		return fmt.Errorf("check repository quota: %w", err)
+	}
+
+	// Set quota condition based on repository count
+	var quotaCondition v1.Condition
+	if overQuota {
+		quotaCondition = v1.Condition{
+			Type:    provisioning.ConditionTypeQuota,
+			Status:  v1.ConditionFalse,
+			Reason:  provisioning.ReasonResourceQuotaExceeded,
+			Message: fmt.Sprintf("Repository quota exceeded (max: %d)", newQuota.MaxRepositories),
+		}
+	} else {
+		quotaCondition = v1.Condition{
+			Type:    provisioning.ConditionTypeQuota,
+			Status:  v1.ConditionTrue,
+			Reason:  provisioning.ReasonWithinQuota,
+			Message: "Repository quota within limits",
+		}
+	}
+
+	if conditionPatchOps := BuildConditionPatchOpsFromExisting(obj.Status.Conditions, obj.GetGeneration(), quotaCondition); conditionPatchOps != nil {
+		patchOperations = append(patchOperations, conditionPatchOps...)
 	}
 
 	// determine the sync strategy and sync status to apply

@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -332,5 +333,354 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 				assert.EqualValues(collect, 0, maxRepos, "maxRepositories should be 0 (unlimited)")
 			}
 		}, waitTimeoutDefault, waitIntervalDefault, "QuotaStatus should show unlimited (0) values")
+	})
+}
+
+func TestIntegrationProvisioning_RepositoryCountQuota(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("all repositories have quota within limits when under quota", func(t *testing.T) {
+		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+			opts.ProvisioningMaxRepositories = 5 // Allow 5 repositories
+		})
+		ctx := context.Background()
+
+		// Create 3 repositories (under limit of 5)
+		for i := 1; i <= 3; i++ {
+			repoName := fmt.Sprintf("repo-quota-%d", i)
+			testRepo := TestRepo{
+				Name:   repoName,
+				Target: "folder",
+				Copies: map[string]string{
+					"testdata/all-panels.json": "dashboard.json",
+				},
+				ExpectedDashboards: 1,
+				ExpectedFolders:    1,
+			}
+			helper.CreateRepo(t, testRepo)
+		}
+
+		// Verify all repositories have quota condition = True
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			repos, err := helper.Repositories.Resource.List(ctx, metav1.ListOptions{})
+			if err != nil {
+				collect.Errorf("failed to list repositories: %v", err)
+				return
+			}
+
+			if len(repos.Items) != 3 {
+				collect.Errorf("expected 3 repositories, got %d", len(repos.Items))
+				return
+			}
+
+			for _, repo := range repos.Items {
+				conditions, found, err := unstructuredNestedSlice(repo.Object, "status", "conditions")
+				if !found || err != nil {
+					collect.Errorf("conditions not found for %s: %v", repo.GetName(), err)
+					continue
+				}
+
+				var quotaCondition map[string]interface{}
+				for _, c := range conditions {
+					cond, ok := c.(map[string]interface{})
+					if !ok {
+						continue
+					}
+					if cond["type"] == provisioning.ConditionTypeQuota {
+						quotaCondition = cond
+						break
+					}
+				}
+
+				if quotaCondition == nil {
+					collect.Errorf("Quota condition not found for %s", repo.GetName())
+					continue
+				}
+
+				assert.Equal(collect, string(metav1.ConditionTrue), quotaCondition["status"],
+					"Repository %s should have quota condition True when under quota", repo.GetName())
+				assert.Equal(collect, provisioning.ReasonWithinQuota, quotaCondition["reason"],
+					"Repository %s should have within quota reason", repo.GetName())
+			}
+		}, waitTimeoutDefault, waitIntervalDefault)
+	})
+
+	t.Run("all repositories have quota exceeded condition when over quota", func(t *testing.T) {
+		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+			opts.ProvisioningMaxRepositories = 3 // Allow only 3 repositories
+		})
+		ctx := context.Background()
+
+		// Create 5 repositories (over limit of 3)
+		repoNames := make([]string, 5)
+		for i := 0; i < 5; i++ {
+			repoNames[i] = fmt.Sprintf("repo-quota-%d", i)
+			testRepo := TestRepo{
+				Name:   repoNames[i],
+				Target: "folder",
+				Copies: map[string]string{
+					"testdata/all-panels.json": "dashboard.json",
+				},
+				ExpectedDashboards: 1,
+				ExpectedFolders:    1,
+			}
+			helper.CreateRepo(t, testRepo)
+		}
+
+		// Verify ALL repositories have quota exceeded condition
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			for _, repoName := range repoNames {
+				repoObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+				if err != nil {
+					collect.Errorf("failed to get repository %s: %v", repoName, err)
+					continue
+				}
+
+				conditions, found, err := unstructuredNestedSlice(repoObj.Object, "status", "conditions")
+				if !found || err != nil {
+					collect.Errorf("conditions not found for %s: %v", repoName, err)
+					continue
+				}
+
+				var quotaCondition map[string]interface{}
+				for _, c := range conditions {
+					cond, ok := c.(map[string]interface{})
+					if !ok {
+						continue
+					}
+					if cond["type"] == provisioning.ConditionTypeQuota {
+						quotaCondition = cond
+						break
+					}
+				}
+
+				if quotaCondition == nil {
+					collect.Errorf("Quota condition not found for %s", repoName)
+					continue
+				}
+
+				assert.Equal(collect, string(metav1.ConditionFalse), quotaCondition["status"],
+					"Repository %s should have quota condition False when over quota", repoName)
+				assert.Equal(collect, provisioning.ReasonResourceQuotaExceeded, quotaCondition["reason"],
+					"Repository %s should have quota exceeded reason", repoName)
+			}
+		}, waitTimeoutDefault, waitIntervalDefault)
+	})
+
+	t.Run("repositories recover when quota freed", func(t *testing.T) {
+		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+			opts.ProvisioningMaxRepositories = 3
+		})
+		ctx := context.Background()
+
+		// Create 5 repositories (over quota)
+		repoNames := make([]string, 5)
+		for i := 0; i < 5; i++ {
+			repoNames[i] = fmt.Sprintf("repo-quota-%d", i)
+			testRepo := TestRepo{
+				Name:   repoNames[i],
+				Target: "folder",
+				Copies: map[string]string{
+					"testdata/all-panels.json": "dashboard.json",
+				},
+				ExpectedDashboards: 1,
+				ExpectedFolders:    1,
+			}
+			helper.CreateRepo(t, testRepo)
+		}
+
+		// Wait for quota condition to be False (exceeded)
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			repoObj, err := helper.Repositories.Resource.Get(ctx, repoNames[0], metav1.GetOptions{})
+			if err != nil {
+				collect.Errorf("failed to get repository: %v", err)
+				return
+			}
+			conditions, found, _ := unstructuredNestedSlice(repoObj.Object, "status", "conditions")
+			if !found {
+				collect.Errorf("conditions not found")
+				return
+			}
+
+			var quotaCondition map[string]interface{}
+			for _, c := range conditions {
+				cond, ok := c.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				if cond["type"] == provisioning.ConditionTypeQuota {
+					quotaCondition = cond
+					break
+				}
+			}
+
+			if quotaCondition == nil {
+				collect.Errorf("Quota condition not found")
+				return
+			}
+			assert.Equal(collect, string(metav1.ConditionFalse), quotaCondition["status"])
+		}, waitTimeoutDefault, waitIntervalDefault)
+
+		// Delete 2 repositories to get back under quota (3 remaining)
+		err := helper.Repositories.Resource.Delete(ctx, repoNames[3], metav1.DeleteOptions{})
+		require.NoError(t, err)
+		err = helper.Repositories.Resource.Delete(ctx, repoNames[4], metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		// Verify remaining repositories have quota condition True
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			for i := 0; i < 3; i++ {
+				repoObj, err := helper.Repositories.Resource.Get(ctx, repoNames[i], metav1.GetOptions{})
+				if err != nil {
+					collect.Errorf("failed to get repository %s: %v", repoNames[i], err)
+					continue
+				}
+
+				conditions, found, err := unstructuredNestedSlice(repoObj.Object, "status", "conditions")
+				if !found || err != nil {
+					collect.Errorf("conditions not found for %s: %v", repoNames[i], err)
+					continue
+				}
+
+				var quotaCondition map[string]interface{}
+				for _, c := range conditions {
+					cond, ok := c.(map[string]interface{})
+					if !ok {
+						continue
+					}
+					if cond["type"] == provisioning.ConditionTypeQuota {
+						quotaCondition = cond
+						break
+					}
+				}
+
+				if quotaCondition == nil {
+					collect.Errorf("Quota condition not found for %s", repoNames[i])
+					continue
+				}
+
+				assert.Equal(collect, string(metav1.ConditionTrue), quotaCondition["status"],
+					"Repository %s should have quota condition True after quota freed", repoNames[i])
+			}
+		}, waitTimeoutDefault, waitIntervalDefault)
+	})
+
+	t.Run("repositories at exact limit have quota condition True", func(t *testing.T) {
+		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+			opts.ProvisioningMaxRepositories = 5
+		})
+		ctx := context.Background()
+
+		// Create exactly 5 repositories (at limit)
+		repoNames := make([]string, 5)
+		for i := 0; i < 5; i++ {
+			repoNames[i] = fmt.Sprintf("repo-quota-%d", i)
+			testRepo := TestRepo{
+				Name:   repoNames[i],
+				Target: "folder",
+				Copies: map[string]string{
+					"testdata/all-panels.json": "dashboard.json",
+				},
+				ExpectedDashboards: 1,
+				ExpectedFolders:    1,
+			}
+			helper.CreateRepo(t, testRepo)
+		}
+
+		// Verify all have quota condition True (at limit, not over)
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			for _, repoName := range repoNames {
+				repoObj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+				if err != nil {
+					collect.Errorf("failed to get repository %s: %v", repoName, err)
+					continue
+				}
+
+				conditions, found, err := unstructuredNestedSlice(repoObj.Object, "status", "conditions")
+				if !found || err != nil {
+					collect.Errorf("conditions not found for %s", repoName)
+					continue
+				}
+
+				var quotaCondition map[string]interface{}
+				for _, c := range conditions {
+					cond, ok := c.(map[string]interface{})
+					if !ok {
+						continue
+					}
+					if cond["type"] == provisioning.ConditionTypeQuota {
+						quotaCondition = cond
+						break
+					}
+				}
+
+				if quotaCondition == nil {
+					collect.Errorf("Quota condition not found for %s", repoName)
+					continue
+				}
+
+				assert.Equal(collect, string(metav1.ConditionTrue), quotaCondition["status"],
+					"Repository %s should have quota condition True at exact limit", repoName)
+			}
+		}, waitTimeoutDefault, waitIntervalDefault)
+	})
+
+	t.Run("quota condition reflects repository count status", func(t *testing.T) {
+		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+			opts.ProvisioningMaxRepositories = 2
+		})
+		ctx := context.Background()
+
+		// Create 3 repositories (over limit of 2)
+		repoNames := make([]string, 3)
+		for i := 0; i < 3; i++ {
+			repoNames[i] = fmt.Sprintf("repo-quota-%d", i)
+			testRepo := TestRepo{
+				Name:   repoNames[i],
+				Target: "folder",
+				Copies: map[string]string{
+					"testdata/all-panels.json": "dashboard.json",
+				},
+				ExpectedDashboards: 1,
+				ExpectedFolders:    1,
+			}
+			helper.CreateRepo(t, testRepo)
+		}
+
+		// Verify quota condition shows ResourceQuotaExceeded
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			repoObj, err := helper.Repositories.Resource.Get(ctx, repoNames[0], metav1.GetOptions{})
+			if err != nil {
+				collect.Errorf("failed to get repository: %v", err)
+				return
+			}
+
+			conditions, found, err := unstructuredNestedSlice(repoObj.Object, "status", "conditions")
+			if err != nil || !found {
+				collect.Errorf("conditions not found: %v", err)
+				return
+			}
+
+			var quotaCondition map[string]interface{}
+			for _, c := range conditions {
+				cond, ok := c.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				if cond["type"] == provisioning.ConditionTypeQuota {
+					quotaCondition = cond
+					break
+				}
+			}
+
+			if quotaCondition == nil {
+				collect.Errorf("Quota condition not found")
+				return
+			}
+
+			assert.Equal(collect, string(metav1.ConditionFalse), quotaCondition["status"])
+			assert.Equal(collect, provisioning.ReasonResourceQuotaExceeded, quotaCondition["reason"])
+			assert.Contains(collect, quotaCondition["message"], "quota exceeded")
+		}, waitTimeoutDefault, waitIntervalDefault)
 	})
 }
