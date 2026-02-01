@@ -4,6 +4,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
 
 import { dataToSpec } from '../../utils/data';
 import { getFormErrors } from '../../utils/getFormErrors';
@@ -52,42 +53,36 @@ export function useWizardSubmission({
 
   const handleSubmit = useCallback(async () => {
     const { getValues, trigger, setError } = methods;
+    const formData = getValues();
 
     if (currentStepConfig?.submitOnNext) {
-      if (activeStep === 'authType') {
-        const formData = getValues();
-        const currentGithubAppMode = formData.githubAppMode;
-
-        if (currentGithubAppMode === 'existing') {
-          const isValid = await trigger('githubApp.connectionName');
-          if (isValid) {
-            onSuccess();
-          }
-        } else if (currentGithubAppMode === 'new') {
-          setIsSubmitting(true);
-          try {
-            await githubAppStepRef.current?.submit();
-          } finally {
-            setIsSubmitting(false);
-          }
-        }
-      }
-
       const fieldsToValidate =
-        activeStep === 'connection' ? (['repository'] as const) : (['repository', 'repository.title'] as const);
+        activeStep === 'connection' || activeStep === 'authType'
+          ? (['repository'] as const)
+          : (['repository', 'repository.title'] as const);
 
       const isValid = await trigger(fieldsToValidate);
       if (!isValid) {
+        setStepStatusInfo({
+          status: 'error',
+          error: {
+            title: repositoryConnectionFailed,
+            message: t(
+              'provisioning.provisioning-wizard.on-submit.error.fix-form-errors',
+              'Invalid connection set up. Please fix the form errors and try again.'
+            ),
+          },
+        });
         return;
       }
 
       setIsSubmitting(true);
       try {
-        const formData = getValues();
         const connectionName =
           formData.githubAuthType === 'github-app' ? formData.githubApp?.connectionName : undefined;
         const spec = dataToSpec(formData.repository, connectionName);
         const token = formData.githubAuthType === 'pat' ? formData.repository.token : undefined;
+
         const rsp = await submitData(spec, token);
         if (rsp.error) {
           if (isFetchError(rsp.error)) {
@@ -125,7 +120,6 @@ export function useWizardSubmission({
           });
         }
       } catch (error) {
-        const formData = getValues();
         if (isFetchError(error)) {
           const errors = getFormErrors(error.data);
           // Check for special case: token error when using GitHub App
@@ -177,7 +171,6 @@ export function useWizardSubmission({
     currentStepConfig,
     methods,
     submitData,
-    githubAppStepRef,
     setStepStatusInfo,
     onSuccess,
     repositoryRequestFailed,

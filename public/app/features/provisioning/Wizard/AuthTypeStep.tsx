@@ -1,8 +1,11 @@
-import { forwardRef, memo, useMemo } from 'react';
+import { forwardRef, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { Connection } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { Trans, t } from '@grafana/i18n';
-import { Card, Icon, RadioButtonGroup, Stack, Text } from '@grafana/ui';
+import { RadioButtonGroup, Stack, Text } from '@grafana/ui';
+
+import { useConnectionList } from '../hooks/useConnectionList';
 
 import { GitHubAppStep, GitHubAppStepRef } from './GitHubAppStep';
 import { RepositoriesList } from './components/RepositoriesList';
@@ -17,7 +20,7 @@ interface AuthTypeOption {
 }
 
 interface GitHubAppStepProps {
-  onSubmit: (result: ConnectionCreationResult) => void;
+  onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
 }
 
 const getAuthTypeOptions = (): AuthTypeOption[] => [
@@ -42,13 +45,24 @@ const getAuthTypeOptions = (): AuthTypeOption[] => [
 ];
 
 export const AuthTypeStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepProps>(function AuthTypeStep(
-  { onSubmit },
+  { onGitHubAppSubmit },
   ref
 ) {
   const { control, watch } = useFormContext<WizardFormData>();
-  const [githubAuthType, githubAppMode] = watch(['githubAuthType', 'githubAppMode']);
+  const [githubAuthType, githubAppMode, githubAppConnectionName] = watch([
+    'githubAuthType',
+    'githubAppMode',
+    'githubApp.connectionName',
+  ]);
   const authTypeOptions = useMemo(() => getAuthTypeOptions(), []);
   const shouldShowRepositories = githubAuthType !== 'github-app' || githubAppMode !== 'new';
+
+  const [connections] = useConnectionList({});
+
+  const isSelectedConnectionReady = useMemo(() => {
+    const selectedConnection = connections?.find((c) => c.metadata?.name === githubAppConnectionName);
+    return isConnectionReady(selectedConnection);
+  }, [connections, githubAppConnectionName]);
 
   return (
     <Stack direction="column" gap={2}>
@@ -77,9 +91,17 @@ export const AuthTypeStep = forwardRef<GitHubAppStepRef | null, GitHubAppStepPro
         />
       </Stack>
 
-      {githubAuthType === 'github-app' ? <GitHubAppStep onSubmit={onSubmit} /> : <RepositoryTokenInput />}
+      {githubAuthType === 'github-app' ? (
+        <GitHubAppStep onGitHubAppSubmit={onGitHubAppSubmit} />
+      ) : (
+        <RepositoryTokenInput />
+      )}
 
-      {shouldShowRepositories && <RepositoriesList />}
+      {shouldShowRepositories && <RepositoriesList isSelectedConnectionReady={isSelectedConnectionReady} />}
     </Stack>
   );
 });
+
+function isConnectionReady(connection?: Connection) {
+  return connection?.status?.conditions?.find((c) => c.type === 'Ready')?.status === 'True';
+}

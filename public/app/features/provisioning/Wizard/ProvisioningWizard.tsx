@@ -177,12 +177,12 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     }
   }, [navigate, repoName, settingsData?.items]);
 
-  const handleGitHubAppSubmit = useCallback(
+  const handleGitHubAppCreation = useCallback(
     (result: ConnectionCreationResult) => {
       if (result.success) {
         setValue('githubApp.connectionName', result.connectionName);
-        setStepStatusInfo({ status: 'success' });
-        goToNextStep();
+        // after successful creation, switch to existing mode so user can select
+        setValue('githubAppMode', 'existing');
       } else {
         setStepStatusInfo({
           status: 'error',
@@ -193,7 +193,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
         });
       }
     },
-    [setValue, setStepStatusInfo, goToNextStep]
+    [setValue, setStepStatusInfo]
   );
 
   return (
@@ -234,7 +234,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
                 settingsData={settingsData}
                 repoName={repoName}
                 githubAppStepRef={githubAppStepRef}
-                onGitHubAppSubmit={handleGitHubAppSubmit}
+                onGitHubAppSubmit={handleGitHubAppCreation}
                 onRepositoryDeletion={handleRepositoryDeletion}
                 isCancelling={isCancelling}
               />

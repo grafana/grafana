@@ -6,13 +6,14 @@ import {
   GetConnectionRepositoriesApiResponse,
   useGetConnectionRepositoriesQuery,
 } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
+import { t } from '@grafana/i18n';
 import { Combobox, Field, Input } from '@grafana/ui';
 
 import { isGitProvider } from '../../utils/repositoryTypes';
 import { getGitProviderFields } from '../fields';
 import { WizardFormData } from '../types';
 
-export function RepositoriesList() {
+export function RepositoriesList({ isSelectedConnectionReady }: { isSelectedConnectionReady?: boolean }) {
   const {
     control,
     formState: { errors },
@@ -21,11 +22,8 @@ export function RepositoriesList() {
   } = useFormContext<WizardFormData>();
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const [githubAuthType, githubAppConnectionName, url] = watch([
-    'githubAuthType',
-    'githubApp.connectionName',
-    'repository.url',
-  ]);
+  const [githubAuthType, githubAppConnectionName] = watch(['githubAuthType', 'githubApp.connectionName']);
+
   const isGitBased = isGitProvider(type);
   const isGitHubAppAuth = type === 'github' && githubAuthType === 'github-app';
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
@@ -34,7 +32,9 @@ export function RepositoriesList() {
     isLoading: repositoriesLoading,
     error: repositoriesError,
   } = useGetConnectionRepositoriesQuery(
-    isGitHubAppAuth && githubAppConnectionName ? { name: githubAppConnectionName } : skipToken
+    isGitHubAppAuth && githubAppConnectionName && isSelectedConnectionReady
+      ? { name: githubAppConnectionName }
+      : skipToken
   );
 
   const repositoryOptions = useMemo(() => {
@@ -49,7 +49,14 @@ export function RepositoriesList() {
     <Field
       noMargin
       label={gitFields.urlConfig.label}
-      description={gitFields.urlConfig.description}
+      description={
+        isSelectedConnectionReady
+          ? gitFields.urlConfig.description
+          : t(
+              'provisioning.wizard.connection-not-ready',
+              'The selected GitHub App connection is not ready. List will be refreshed once the connection is ready.'
+            )
+      }
       error={errors?.repository?.url?.message}
       invalid={Boolean(errors?.repository?.url?.message)}
       required={gitFields.urlConfig.required}
@@ -63,13 +70,11 @@ export function RepositoriesList() {
             {isGitHubAppAuth ? (
               <Combobox
                 invalid={Boolean(errors?.repository?.url?.message || repositoriesError)}
-                onChange={(option) => {
-                  onChange(option?.value || '');
-                  console.log('selected repo url', option);
-                }}
+                onChange={(option) => onChange(option?.value || '')}
                 placeholder={gitFields.urlConfig.placeholder}
                 options={repositoryOptions}
                 loading={repositoriesLoading}
+                disabled={!isSelectedConnectionReady || repositoriesLoading}
                 createCustomValue
                 isClearable
                 {...field}

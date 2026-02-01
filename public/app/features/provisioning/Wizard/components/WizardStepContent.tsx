@@ -6,7 +6,7 @@ import { AuthTypeStep } from '../AuthTypeStep';
 import { BootstrapStep } from '../BootstrapStep';
 import { ConnectStep } from '../ConnectStep';
 import { FinishStep } from '../FinishStep';
-import { GitHubAppStep, GitHubAppStepRef } from '../GitHubAppStep';
+import { GitHubAppStepRef } from '../GitHubAppStep';
 import { SynchronizeStep } from '../SynchronizeStep';
 import { ConnectionCreationResult, WizardStep } from '../types';
 
@@ -31,7 +31,7 @@ export function WizardStepContent({
 }: WizardStepContentProps) {
   switch (activeStep) {
     case 'authType':
-      return <AuthTypeStep ref={githubAppStepRef} onSubmit={onGitHubAppSubmit} />;
+      return <AuthTypeStep ref={githubAppStepRef} onGitHubAppSubmit={onGitHubAppSubmit} />;
     case 'connection':
       return <ConnectStep />;
     case 'bootstrap':
