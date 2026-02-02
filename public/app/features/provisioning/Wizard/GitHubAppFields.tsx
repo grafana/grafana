@@ -14,6 +14,7 @@ import { ConnectionFormData } from '../types';
 import { isConnectionReady } from '../utils/connectionStatus';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
 
+import { useStepStatus } from './StepStatusContext';
 import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
 import { ConnectionCreationResult, WizardFormData } from './types';
 
@@ -27,6 +28,8 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     watch,
     formState: { errors },
   } = useFormContext<WizardFormData>();
+
+  const { setStepStatusInfo } = useStepStatus();
 
   // GH app form
   const credentialForm = useForm<ConnectionFormData>({
@@ -52,6 +55,8 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
   const [githubAppMode, githubAppConnectionName] = watch(['githubAppMode', 'githubApp.connectionName']);
   const selectedConnection = githubConnections.find((c) => c.metadata?.name === githubAppConnectionName);
   const handleCreateConnection = async () => {
+    // Reset any existing step errors
+    setStepStatusInfo({ status: 'idle' });
     const isValid = await credentialForm.trigger();
     if (!isValid) {
       const validationError = t('provisioning.wizard.github-app-creation-default-error', 'Failed to create connection');
