@@ -17,12 +17,13 @@ export function RepositoriesList({ isSelectedConnectionReady }: { isSelectedConn
   const {
     control,
     formState: { errors },
-    getValues,
     watch,
   } = useFormContext<WizardFormData>();
-  // We don't need to dynamically react on repo type changes, so we use getValues for it
-  const type = getValues('repository.type');
-  const [githubAuthType, githubAppConnectionName] = watch(['githubAuthType', 'githubApp.connectionName']);
+  const [githubAuthType, githubAppConnectionName, type] = watch([
+    'githubAuthType',
+    'githubApp.connectionName',
+    'repository.type',
+  ]);
 
   const isGitBased = isGitProvider(type);
   const isGitHubAppAuth = type === 'github' && githubAuthType === 'github-app';
@@ -50,12 +51,12 @@ export function RepositoriesList({ isSelectedConnectionReady }: { isSelectedConn
       noMargin
       label={gitFields.urlConfig.label}
       description={
-        isSelectedConnectionReady
-          ? gitFields.urlConfig.description
-          : t(
+        isSelectedConnectionReady && isGitHubAppAuth
+          ? t(
               'provisioning.wizard.connection-not-ready',
               'The selected GitHub App connection is not ready. List will be refreshed once the connection is ready.'
             )
+          : gitFields.urlConfig.description
       }
       error={errors?.repository?.url?.message}
       invalid={Boolean(errors?.repository?.url?.message)}
@@ -81,7 +82,7 @@ export function RepositoriesList({ isSelectedConnectionReady }: { isSelectedConn
                 {...field}
               />
             ) : (
-              <Input id="repository-url" placeholder={gitFields.urlConfig.placeholder} onChange={onChange} />
+              <Input {...field} id="repository-url" placeholder={gitFields.urlConfig.placeholder} onChange={onChange} />
             )}
           </>
         )}

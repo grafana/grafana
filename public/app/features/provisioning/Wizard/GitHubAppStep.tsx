@@ -179,7 +179,7 @@ export function GitHubAppStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
                   <Combobox
                     options={connectionOptions}
                     onChange={(option) => onChange(option?.value ?? '')}
-                    value={value ? { value: value, label: value } : null}
+                    value={value}
                     invalid={Boolean(errors?.githubApp?.connectionName?.message)}
                     placeholder={t(
                       'provisioning.wizard.github-app-select-connection',

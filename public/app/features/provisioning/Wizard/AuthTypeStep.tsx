@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
@@ -54,7 +55,8 @@ export function AuthTypeStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
   const authTypeOptions = useMemo(() => getAuthTypeOptions(), []);
   const shouldShowRepositories = githubAuthType !== 'github-app' || githubAppMode !== 'new';
 
-  const [connections] = useConnectionList({});
+  const shouldFetchConnections = githubAuthType === 'github-app';
+  const [connections] = useConnectionList(shouldFetchConnections ? {} : skipToken);
 
   const isSelectedConnectionReady = useMemo(() => {
     const selectedConnection = connections?.find((c) => c.metadata?.name === githubAppConnectionName);
