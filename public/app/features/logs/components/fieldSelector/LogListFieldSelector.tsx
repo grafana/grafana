@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { Resizable, ResizeCallback } from 're-resizable';
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 
@@ -14,6 +13,7 @@ import { LogListModel } from '../panel/processing';
 import { FIELD_SELECTOR_DEFAULT_WIDTH, FieldSelector, FIELD_SELECTOR_MIN_WIDTH } from './FieldSelector';
 import { getFieldSelectorWidth } from './fieldSelectorUtils';
 import { getFieldsWithStats } from './getFieldsWithStats';
+import { logsFieldSelectorWrapperStyles } from './styles';
 import { getSuggestedFields } from './suggestedFields';
 
 /**
@@ -144,17 +144,4 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
       )}
     </Resizable>
   );
-};
-
-const logsFieldSelectorWrapperStyles = {
-  collapsedButtonContainer: css({
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingTop: 2,
-  }),
-  collapsedButton: css({
-    margin: 0,
-  }),
 };

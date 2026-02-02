@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
 import { DataFrame, store } from '@grafana/data';
@@ -13,6 +12,7 @@ import { LogListModel } from '../panel/processing';
 import { FIELD_SELECTOR_DEFAULT_WIDTH, FieldSelector, FIELD_SELECTOR_MIN_WIDTH } from './FieldSelector';
 import { getFieldSelectorWidth } from './fieldSelectorUtils';
 import { getFieldsWithStats } from './getFieldsWithStats';
+import { logsFieldSelectorWrapperStyles } from './styles';
 import { getSuggestedFields } from './suggestedFields';
 
 /**
@@ -123,17 +123,4 @@ export const LogsTableFieldSelector = ({
       />
     </div>
   );
-};
-
-const logsFieldSelectorWrapperStyles = {
-  collapsedButtonContainer: css({
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingTop: 2,
-  }),
-  collapsedButton: css({
-    margin: 0,
-  }),
 };
