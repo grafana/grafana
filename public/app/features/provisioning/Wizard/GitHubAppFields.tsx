@@ -3,7 +3,7 @@ import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-fo
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Combobox, Field, IconButton, RadioButtonGroup, Spinner, Stack } from '@grafana/ui';
-import { ConnectionSpec, ConnectionStatus } from 'app/api/clients/provisioning/v0alpha1';
+import { ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
@@ -11,6 +11,7 @@ import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFie
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { ConnectionFormData } from '../types';
+import { isConnectionReady } from '../utils/connectionStatus';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
 
 import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
@@ -210,8 +211,4 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
       )}
     </Stack>
   );
-}
-
-function isConnectionReady(status: ConnectionStatus | undefined): boolean {
-  return Boolean(status?.conditions?.find((c) => c.type === 'Ready'));
 }
