@@ -84,6 +84,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	correlations2 "github.com/grafana/grafana/pkg/registry/apps/correlations"
+	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	live2 "github.com/grafana/grafana/pkg/registry/apps/live"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
@@ -688,7 +689,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	logger := loggermw.Provide(cfg, featureToggles)
 	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()
 	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, qsDatasourceClientBuilder)
-	ngAlert := metrics2.ProvideService()
+	ngAlert := metrics2.ProvideService(registerer)
 	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, dBstore, dashboardService, registerer)
 	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service15, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, quotaService, secretsService, notificationService, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, httpclientProvider, plugincontextProvider, receiverPermissionsService, userService)
 	if err != nil {
@@ -838,7 +839,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller)
+	dashValidatorAppInstaller, err := dashvalidator.RegisterAppInstaller(service15, plugincontextProvider)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(featureToggles, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
@@ -1366,7 +1371,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()
 	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, qsDatasourceClientBuilder)
 	notificationServiceMock := notifications.MockNotificationService()
-	ngAlert := metrics2.ProvideServiceForTest()
+	ngAlert := metrics2.ProvideService(registerer)
 	repositoryImpl := annotationsimpl.ProvideService(sqlStore, cfg, featureToggles, tagimplService, tracingService, dBstore, dashboardService, registerer)
 	alertNG, err := ngalert.ProvideService(cfg, featureToggles, cacheServiceImpl, service15, routeRegisterImpl, sqlStore, kvStore, exprService, dataSourceProxyService, quotaService, secretsService, notificationServiceMock, ngAlert, folderimplService, accessControl, dashboardService, renderingService, inProcBus, acimplService, repositoryImpl, pluginstoreService, tracingService, dBstore, httpclientProvider, plugincontextProvider, receiverPermissionsService, userService)
 	if err != nil {
@@ -1516,7 +1521,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller)
+	dashValidatorAppInstaller, err := dashvalidator.RegisterAppInstaller(service15, plugincontextProvider)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(featureToggles, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
@@ -1846,5 +1855,5 @@ var wireCLISet = wire.NewSet(
 
 var wireTestSet = wire.NewSet(
 	wireBasicSet,
-	ProvideTestEnv, metrics.WireSetForTest, sqlstore.ProvideServiceForTests, metrics2.ProvideServiceForTest, notifications.MockNotificationService, wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)), wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)), wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)), wire.Bind(new(db.DB), new(*sqlstore.SQLStore)), prefimpl.ProvideService, oauthtoken.ProvideService, oauthtokentest.ProvideService, wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)), wire.Bind(new(cleanup.AlertRuleService), new(*store2.DBstore)),
+	ProvideTestEnv, metrics.WireSetForTest, sqlstore.ProvideServiceForTests, metrics2.ProvideService, notifications.MockNotificationService, wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)), wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)), wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)), wire.Bind(new(db.DB), new(*sqlstore.SQLStore)), prefimpl.ProvideService, oauthtoken.ProvideService, oauthtokentest.ProvideService, wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)), wire.Bind(new(cleanup.AlertRuleService), new(*store2.DBstore)),
 )

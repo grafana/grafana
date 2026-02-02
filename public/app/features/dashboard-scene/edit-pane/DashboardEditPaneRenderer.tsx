@@ -34,6 +34,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const { isEditing, meta, uid } = dashboard.useState();
   const hasUid = Boolean(uid);
+  const isEmbedded = meta.isEmbedded;
   const selectedObject = selection?.getFirstObject();
   const isNewElement = selection?.isNewElement() ?? false;
   // the layout element that was selected when opening the 'add' pane
@@ -136,12 +137,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
               active={selectedObject === dashboard ? true : false}
             />
-            {/* <Sidebar.Button
-              tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
-              title={t('dashboard.sidebar.edit-schema.title', 'Code')}
-              icon="brackets-curly"
-              onClick={() => dashboard.openV2SchemaEditor()}
-            /> */}
             <Sidebar.Divider />
             <Sidebar.Button
               style={{ color: '#ff671d' }}
@@ -163,7 +158,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
             />
           </>
         )}
-        {hasUid && <ShareExportDashboardButton dashboard={dashboard} />}
+        {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
         <Sidebar.Button
           icon="list-ui-alt"
           onClick={() => editPane.openPane('outline')}

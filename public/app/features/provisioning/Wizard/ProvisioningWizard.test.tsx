@@ -153,6 +153,7 @@ describe('ProvisioningWizard', () => {
     mockUseGetRepositoryStatusQuery.mockReturnValue({
       data: {
         status: {
+          observedGeneration: 1,
           health: {
             healthy: true,
             checked: true,
@@ -163,6 +164,7 @@ describe('ProvisioningWizard', () => {
       isLoading: false,
       isFetching: false,
       isError: false,
+      isSuccess: true,
       error: null,
       refetch: jest.fn(),
     });

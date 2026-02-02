@@ -7,9 +7,9 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// buildConditionPatchOpsFromExisting creates condition patch operations for Repository or Connection resources.
+// BuildConditionPatchOpsFromExisting creates condition patch operations for Repository or Connection resources.
 // Returns nil if the condition hasn't changed to avoid unnecessary patches.
-func buildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, generation int64, newCondition metav1.Condition) []map[string]interface{} {
+func BuildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, generation int64, newCondition metav1.Condition) []map[string]interface{} {
 	// Check if condition already exists and is unchanged
 	existingCondition := meta.FindStatusCondition(existingConditions, newCondition.Type)
 	if existingCondition != nil &&
@@ -41,8 +41,9 @@ func buildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, g
 	}
 }
 
-// buildReadyConditionFromHealth creates a Ready condition based on health status.
-func buildReadyConditionFromHealth(healthStatus provisioning.HealthStatus) metav1.Condition {
+// buildReadyConditionWithReason creates a Ready condition with a specific reason.
+// This allows for granular error classification (InvalidSpec, AuthenticationFailed, ServiceUnavailable, RateLimited).
+func buildReadyConditionWithReason(healthStatus provisioning.HealthStatus, reason string) metav1.Condition {
 	if healthStatus.Healthy {
 		return metav1.Condition{
 			Type:    provisioning.ConditionTypeReady,
@@ -61,7 +62,7 @@ func buildReadyConditionFromHealth(healthStatus provisioning.HealthStatus) metav
 	return metav1.Condition{
 		Type:    provisioning.ConditionTypeReady,
 		Status:  metav1.ConditionFalse,
-		Reason:  provisioning.ReasonUnavailable,
+		Reason:  reason,
 		Message: message,
 	}
 }
