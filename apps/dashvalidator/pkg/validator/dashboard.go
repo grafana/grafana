@@ -63,45 +63,27 @@ func ValidateDashboardCompatibility(ctx context.Context, req DashboardCompatibil
 		return nil, fmt.Errorf("failed to extract queries from dashboard: %w", err)
 	}
 
-	fmt.Printf("[DEBUG] Extracted %d queries from dashboard\n", len(queries))
-	for i, q := range queries {
-		fmt.Printf("[DEBUG] Query %d: DS=%s, RefID=%s, Query=%s\n", i, q.DatasourceUID, q.RefID, q.QueryText)
-	}
-
 	// Step 2: Group queries by datasource UID (with variable resolution for MVP)
 	queriesByDatasource := groupQueriesByDatasource(queries, singleDatasource.UID, req.DashboardJSON)
-
-	fmt.Printf("[DEBUG] Grouped queries by %d datasources\n", len(queriesByDatasource))
-	for dsUID, dsQueries := range queriesByDatasource {
-		fmt.Printf("[DEBUG] Datasource %s has %d queries\n", dsUID, len(dsQueries))
-	}
 
 	// Step 3: Validate each datasource
 	var totalCompatibility float64
 	validatedCount := 0
 
 	for _, dsMapping := range req.DatasourceMappings {
-		fmt.Printf("[DEBUG] Processing datasource mapping: UID=%s, Type=%s, URL=%s\n", dsMapping.UID, dsMapping.Type, dsMapping.URL)
-
 		// Get queries for this datasource
 		dsQueries, ok := queriesByDatasource[dsMapping.UID]
 		if !ok || len(dsQueries) == 0 {
 			// No queries for this datasource, skip
-			fmt.Printf("[DEBUG] No queries found for datasource %s, skipping\n", dsMapping.UID)
 			continue
 		}
-
-		fmt.Printf("[DEBUG] Found %d queries for datasource %s\n", len(dsQueries), dsMapping.UID)
 
 		// Get validator for this datasource type
 		v, ok := validators[dsMapping.Type]
 		if !ok {
-			// Unsupported datasource type, skip but log
-			fmt.Printf("[DEBUG] No validator registered for type %s\n", dsMapping.Type)
+			// Unsupported datasource type, skip
 			continue
 		}
-
-		fmt.Printf("[DEBUG] Got validator for type %s, starting validation\n", dsMapping.Type)
 
 		// Convert DatasourceMapping to Datasource (identical field layout)
 		ds := Datasource(dsMapping)
@@ -148,17 +130,9 @@ func ValidateDashboardCompatibility(ctx context.Context, req DashboardCompatibil
 func extractQueriesFromDashboard(dashboardJSON map[string]interface{}) ([]DashboardQuery, error) {
 	var queries []DashboardQuery
 
-	// Debug: Print what keys we have
-	fmt.Printf("[DEBUG] Dashboard JSON keys: ")
-	for key := range dashboardJSON {
-		fmt.Printf("%s, ", key)
-	}
-	fmt.Printf("\n")
-
 	// Detect dashboard version (v1 uses "panels", v2 uses different structure)
 	// For MVP, we only support v1 (legacy format with panels array)
 	if !isV1Dashboard(dashboardJSON) {
-		fmt.Printf("[DEBUG] isV1Dashboard returned false, 'panels' key exists: %v\n", dashboardJSON["panels"] != nil)
 		return nil, fmt.Errorf("unsupported dashboard format: only v1 dashboards are supported in MVP")
 	}
 
@@ -487,12 +461,10 @@ func resolveDatasourceUID(uid string, singleDatasourceUID string, dashboardJSON 
 
 	// Check if it's a Prometheus variable
 	if isPrometheusVariable(uid, dashboardJSON) {
-		fmt.Printf("[DEBUG] Resolved Prometheus variable %s to %s\n", uid, singleDatasourceUID)
 		return singleDatasourceUID
 	}
 
 	// Non-Prometheus variable, return as-is (will be ignored in grouping)
-	fmt.Printf("[DEBUG] Variable %s is not a Prometheus variable, skipping\n", uid)
 	return uid
 }
 

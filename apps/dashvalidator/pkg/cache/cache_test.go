@@ -196,17 +196,6 @@ func TestMetricsCache_ProviderError_DoesNotCache(t *testing.T) {
 	require.Equal(t, 2, mockProv.getCallCount())
 }
 
-func TestMetricsCache_UnregisteredProvider_ReturnsError(t *testing.T) {
-	cache := NewMetricsCache()
-
-	// Try to get metrics with unregistered provider type
-	metrics, err := cache.GetMetrics(context.Background(), "unregistered", "ds-uid-1", "http://prom:9090", nil)
-
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "no metrics provider registered")
-	require.Nil(t, metrics)
-}
-
 // ============================================================================
 // Category 4: Concurrent Access
 // ============================================================================

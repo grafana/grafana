@@ -148,6 +148,189 @@ func TestHandleCheck_EmptyDatasourceType(t *testing.T) {
 }
 
 // ============================================================================
+// Request Parsing Tests
+// ============================================================================
+
+func TestHandleCheck_InvalidJSON(t *testing.T) {
+	bodyBytes := []byte(`{invalid json`)
+
+	requestURL, err := url.Parse("http://localhost:3000/apis/dashvalidator.grafana.app/v1alpha1/namespaces/org-1/check")
+	require.NoError(t, err)
+
+	req := &app.CustomRouteRequest{
+		ResourceIdentifier: resource.FullIdentifier{
+			Namespace: "org-1",
+		},
+		Path:    "check",
+		URL:     requestURL,
+		Method:  "POST",
+		Headers: http.Header{"Content-Type": []string{"application/json"}},
+		Body:    io.NopCloser(bytes.NewReader(bodyBytes)),
+	}
+
+	recorder := httptest.NewRecorder()
+	handler := handleCheckRoute(
+		logging.DefaultLogger,
+		nil, nil, nil,
+		map[string]validator.DatasourceValidator{},
+	)
+
+	_ = handler(context.Background(), recorder, req)
+
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
+
+	var response map[string]string
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &response))
+	assert.Contains(t, response["error"], "invalid JSON")
+}
+
+func TestHandleCheck_MultipleDatasources(t *testing.T) {
+	body := checkRequest{
+		DashboardJSON: map[string]interface{}{"title": "Test"},
+		DatasourceMappings: []datasourceMapping{
+			{UID: "ds-1", Type: "prometheus"},
+			{UID: "ds-2", Type: "prometheus"},
+		},
+	}
+
+	recorder := executeValidationRequest(t, body)
+
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
+
+	var response map[string]string
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &response))
+	assert.Contains(t, response["error"], "MVP only supports single datasource")
+}
+
+func TestHandleCheck_ZeroDatasources(t *testing.T) {
+	body := checkRequest{
+		DashboardJSON:      map[string]interface{}{"title": "Test"},
+		DatasourceMappings: []datasourceMapping{},
+	}
+
+	recorder := executeValidationRequest(t, body)
+
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
+
+	var response map[string]string
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &response))
+	assert.Contains(t, response["error"], "MVP only supports single datasource")
+}
+
+// ============================================================================
+// Response Conversion Tests (transforms data structure)
+// ============================================================================
+
+func TestConvertToCheckResponse(t *testing.T) {
+	t.Run("converts basic result correctly", func(t *testing.T) {
+		input := &validator.DashboardCompatibilityResult{
+			CompatibilityScore: 0.85,
+			DatasourceResults: []validator.DatasourceValidationResult{
+				{
+					UID:                "ds-1",
+					Type:               "prometheus",
+					Name:               "My Prometheus",
+					TotalQueries:       10,
+					CheckedQueries:     10,
+					TotalMetrics:       20,
+					FoundMetrics:       17,
+					MissingMetrics:     []string{"missing_1", "missing_2", "missing_3"},
+					CompatibilityScore: 0.85,
+					QueryBreakdown: []validator.QueryResult{
+						{
+							PanelTitle:         "CPU Usage",
+							PanelID:            1,
+							QueryRefID:         "A",
+							TotalMetrics:       5,
+							FoundMetrics:       4,
+							MissingMetrics:     []string{"missing_1"},
+							CompatibilityScore: 0.8,
+						},
+					},
+				},
+			},
+		}
+
+		result := convertToCheckResponse(input)
+
+		assert.Equal(t, 0.85, result.CompatibilityScore)
+		require.Len(t, result.DatasourceResults, 1)
+
+		dsResult := result.DatasourceResults[0]
+		assert.Equal(t, "ds-1", dsResult.UID)
+		assert.Equal(t, "prometheus", dsResult.Type)
+		require.NotNil(t, dsResult.Name)
+		assert.Equal(t, "My Prometheus", *dsResult.Name)
+		assert.Equal(t, 10, dsResult.TotalQueries)
+		assert.Equal(t, 17, dsResult.FoundMetrics)
+		assert.Equal(t, []string{"missing_1", "missing_2", "missing_3"}, dsResult.MissingMetrics)
+
+		require.Len(t, dsResult.QueryBreakdown, 1)
+		qr := dsResult.QueryBreakdown[0]
+		assert.Equal(t, "CPU Usage", qr.PanelTitle)
+		assert.Equal(t, 1, qr.PanelID)
+		assert.Equal(t, "A", qr.QueryRefID)
+		assert.Nil(t, qr.ParseError)
+	})
+
+	t.Run("handles empty name as nil pointer", func(t *testing.T) {
+		input := &validator.DashboardCompatibilityResult{
+			CompatibilityScore: 1.0,
+			DatasourceResults: []validator.DatasourceValidationResult{
+				{
+					UID:  "ds-1",
+					Type: "prometheus",
+					Name: "", // Empty name
+				},
+			},
+		}
+
+		result := convertToCheckResponse(input)
+
+		require.Len(t, result.DatasourceResults, 1)
+		assert.Nil(t, result.DatasourceResults[0].Name, "Empty name should become nil pointer")
+	})
+
+	t.Run("handles parse error in query result", func(t *testing.T) {
+		parseErr := "failed to parse PromQL"
+		input := &validator.DashboardCompatibilityResult{
+			CompatibilityScore: 0.5,
+			DatasourceResults: []validator.DatasourceValidationResult{
+				{
+					UID:  "ds-1",
+					Type: "prometheus",
+					QueryBreakdown: []validator.QueryResult{
+						{
+							PanelTitle: "Broken Query",
+							ParseError: &parseErr,
+						},
+					},
+				},
+			},
+		}
+
+		result := convertToCheckResponse(input)
+
+		require.Len(t, result.DatasourceResults, 1)
+		require.Len(t, result.DatasourceResults[0].QueryBreakdown, 1)
+		require.NotNil(t, result.DatasourceResults[0].QueryBreakdown[0].ParseError)
+		assert.Equal(t, "failed to parse PromQL", *result.DatasourceResults[0].QueryBreakdown[0].ParseError)
+	})
+
+	t.Run("handles empty datasource results", func(t *testing.T) {
+		input := &validator.DashboardCompatibilityResult{
+			CompatibilityScore: 1.0,
+			DatasourceResults:  []validator.DatasourceValidationResult{},
+		}
+
+		result := convertToCheckResponse(input)
+
+		assert.Equal(t, 1.0, result.CompatibilityScore)
+		assert.Empty(t, result.DatasourceResults)
+	})
+}
+
+// ============================================================================
 // Test Helper - Executes validation portion of handler only
 // ============================================================================
 

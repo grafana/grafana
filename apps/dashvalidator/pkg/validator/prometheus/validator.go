@@ -33,8 +33,6 @@ func NewValidator(mc *cache.MetricsCache) *Validator {
 
 // ValidateQueries validates Prometheus queries against the datasource
 func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Query, datasource validator.Datasource) (*validator.ValidationResult, error) {
-	fmt.Printf("[DEBUG PROM] Starting validation for %d queries against datasource %s\n", len(queries), datasource.URL)
-
 	result := &validator.ValidationResult{
 		TotalQueries:   len(queries),
 		QueryBreakdown: make([]validator.QueryResult, 0, len(queries)),
@@ -51,7 +49,6 @@ func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Que
 	queryMetrics := make(map[int][]string)
 
 	for i, query := range queries {
-		fmt.Printf("[DEBUG PROM] Parsing query %d: %s\n", i, query.QueryText)
 		metrics, err := v.parser.ExtractMetrics(query.QueryText)
 
 		// Store result regardless of success/failure
@@ -61,10 +58,8 @@ func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Que
 		}
 
 		if err != nil {
-			fmt.Printf("[DEBUG PROM] Failed to parse query %d: %v\n", i, err)
 			// Don't continue - we'll include this in breakdown as a failed query
 		} else {
-			fmt.Printf("[DEBUG PROM] Extracted %d metrics from query %d: %v\n", len(metrics), i, metrics)
 			result.CheckedQueries++
 			queryMetrics[i] = metrics
 
@@ -82,16 +77,11 @@ func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Que
 	}
 	result.TotalMetrics = len(metricsToCheck)
 
-	fmt.Printf("[DEBUG PROM] Total metrics to check: %d - %v\n", len(metricsToCheck), metricsToCheck)
-
 	// Step 2: Fetch available metrics from Prometheus (via cache)
-	fmt.Printf("[DEBUG PROM] Fetching available metrics for datasource %s\n", datasource.UID)
 	availableMetrics, err := v.cache.GetMetrics(ctx, "prometheus", datasource.UID, datasource.URL, datasource.HTTPClient)
 	if err != nil {
-		fmt.Printf("[DEBUG PROM] Failed to fetch metrics: %v\n", err)
 		return nil, fmt.Errorf("failed to fetch metrics from Prometheus: %w", err)
 	}
-	fmt.Printf("[DEBUG PROM] Fetched %d available metrics for %s\n", len(availableMetrics), datasource.UID)
 
 	// Build a set for O(1) lookup
 	availableSet := make(map[string]bool)
@@ -177,9 +167,6 @@ func (v *Validator) ValidateQueries(ctx context.Context, queries []validator.Que
 		// All queries failed to parse - treat as 0% compatible
 		result.CompatibilityScore = 0.0
 	}
-
-	fmt.Printf("[DEBUG PROM] Validation complete! Score: %.2f, Found: %d/%d metrics\n",
-		result.CompatibilityScore, result.FoundMetrics, result.TotalMetrics)
 
 	return result, nil
 }
