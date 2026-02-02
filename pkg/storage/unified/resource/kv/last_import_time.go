@@ -36,7 +36,7 @@ func (k *SqlKV) saveLastImportTime(ctx context.Context, key string) (io.WriteClo
 		)
 		args = []any{group, ns, resource, lastImportTime, lastImportTime}
 	case "postgres":
-		query = fmt.Sprintf("INSERT INTO %s (%s, %s, %s, %s) VALUES (?, ?, ?, ?) ON CONFLICT (%s, %s, %s) DO UPDATE SET %s = ?)",
+		query = fmt.Sprintf("INSERT INTO %s (%s, %s, %s, %s) VALUES ($1, $2, $3, $4) ON CONFLICT (%s, %s, %s) DO UPDATE SET %s = $5",
 			k.dialect.QuoteIdent(resourceLastImportTimeTable),
 			k.dialect.QuoteIdent("group"),
 			k.dialect.QuoteIdent("resource"),
@@ -127,7 +127,12 @@ func (k *SqlKV) deleteLastImportTime(ctx context.Context, key string) error {
 		return err
 	}
 
-	query := fmt.Sprintf("DELETE FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ?",
+	sql := "DELETE FROM %s WHERE %s = ? AND %s = ? AND %s = ? AND %s = ?"
+	if k.dialect.Name() == "postgres" {
+		sql = "DELETE FROM %s WHERE %s = $1 AND %s = $2 AND %s = $3 AND %s = $4"
+	}
+
+	query := fmt.Sprintf(sql,
 		k.dialect.QuoteIdent(resourceLastImportTimeTable),
 		k.dialect.QuoteIdent("group"),
 		k.dialect.QuoteIdent("resource"),

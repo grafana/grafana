@@ -136,13 +136,19 @@ func (s *lastImportStore) ListLastImportTimes(ctx context.Context) ([]ResourceLa
 		}
 
 		if s.lastImportTimeMaxAge > 0 && now.Sub(key.LastImportTime) > s.lastImportTimeMaxAge {
+			// Too old import time, don't return this value, but delete it.
 			toDelete = append(toDelete, key)
-		} else {
-			nsr := key.ToNamespacedResource()
-			if key.LastImportTime.After(toReturn[nsr].LastImportTime) {
-				toDelete = append(toDelete, toReturn[nsr]) // Save previous value for deletion.
-				toReturn[nsr] = key
+			continue
+		}
+
+		nsr := key.ToNamespacedResource()
+		prev, exists := toReturn[nsr]
+		if !exists || key.LastImportTime.After(prev.LastImportTime) {
+			if exists {
+				// Save previous value for deletion.
+				toDelete = append(toDelete, prev)
 			}
+			toReturn[nsr] = key
 		}
 	}
 
