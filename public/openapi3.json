@@ -14571,13 +14571,6 @@
           },
           {
             "in": "query",
-            "name": "includeHidden",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "in": "query",
             "name": "includeMapped",
             "schema": {
               "type": "boolean"
