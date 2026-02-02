@@ -22,6 +22,8 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
+import { buildAdHocApplyFilters, buildGroupByUpdate, buildOverviewState } from './utils';
+
 interface DashboardFiltersOverviewState {
   adhocFilters?: AdHocFiltersVariable;
   groupByVariable?: GroupByVariable;
@@ -60,44 +62,13 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable, onClos
         return;
       }
 
-      const keys = [];
-      const operatorsByKey: Record<string, string> = {};
-      const multiValuesByKey: Record<string, string[]> = {};
-      const singleValuesByKey: Record<string, string> = {};
-      const isOriginByKey: Record<string, boolean> = {};
-
-      for (const originFilter of adhocFilters.state.originFilters ?? []) {
-        if (originFilter.nonApplicable) {
-          continue;
-        }
-        keys.push({ label: originFilter.keyLabel, value: originFilter.key });
-        operatorsByKey[originFilter.key] = originFilter.operator;
-        isOriginByKey[originFilter.key] = true;
-        if (originFilter.values && originFilter.values.length > 0 && multiOperatorValues.has(originFilter.operator)) {
-          multiValuesByKey[originFilter.key] = originFilter.values!;
-        } else {
-          singleValuesByKey[originFilter.key] = originFilter.value!;
-        }
-      }
-
-      for (const selectedFilter of adhocFilters.state.filters) {
-        if (selectedFilter.nonApplicable) {
-          continue;
-        }
-        keys.push({ label: selectedFilter.keyLabel, value: selectedFilter.key });
-        operatorsByKey[selectedFilter.key] = selectedFilter.operator;
-        isOriginByKey[selectedFilter.key] = false;
-        if (
-          selectedFilter.values &&
-          selectedFilter.values.length > 0 &&
-          multiOperatorValues.has(selectedFilter.operator)
-        ) {
-          multiValuesByKey[selectedFilter.key] = selectedFilter.values!;
-        } else {
-          singleValuesByKey[selectedFilter.key] = selectedFilter.value!;
-        }
-      }
-
+      const {
+        keys,
+        operatorsByKey,
+        multiValuesByKey,
+        singleValuesByKey,
+        isOriginByKey,
+      } = buildOverviewState(adhocFilters.state, multiOperatorValues);
       keys.push(...(await adhocFilters._getKeys(null)));
 
       setKeys(keys);
@@ -204,87 +175,23 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable, onClos
 
   const applyChanges = () => {
     if (groupByVariable) {
-      const keyLabels = new Map<string, string>();
-      for (const keyOption of keys) {
-        const keyValue = keyOption.value ?? keyOption.label;
-        if (!keyValue) {
-          continue;
-        }
-        keyLabels.set(keyValue, keyOption.label ?? keyValue);
-      }
-
-      const nextValues = Object.entries(isGrouped)
-        .filter(([, enabled]) => enabled)
-        .map(([keyValue]) => keyValue);
-      const nextText = nextValues.map((value) => keyLabels.get(value) ?? value);
-
+      const { nextValues, nextText } = buildGroupByUpdate(keys, isGrouped);
       groupByVariable.changeValueTo(nextValues, nextText, true);
     }
 
     if (adhocFilters) {
-      const nextFilters: AdHocFilterWithLabels[] = [];
-      const nextOriginFilters: AdHocFilterWithLabels[] = [];
-      const seenKeys = new Set<string>();
       const existingOriginFilters = adhocFilters.state.originFilters ?? [];
       const existingFilters = adhocFilters.state.filters ?? [];
-      const nonApplicableOriginFilters = existingOriginFilters.filter((filter) => filter.nonApplicable);
-      const nonApplicableFilters = existingFilters.filter((filter) => filter.nonApplicable);
-
-      for (const keyOption of keys) {
-        const keyValue = keyOption.value ?? keyOption.label;
-        if (!keyValue || seenKeys.has(keyValue)) {
-          continue;
-        }
-        seenKeys.add(keyValue);
-
-        const isOrigin = isOriginByKey[keyValue] ?? false;
-        const existingOrigin = existingOriginFilters.find((filter) => filter.key === keyValue && !filter.nonApplicable);
-        const existingFilter = existingFilters.find((filter) => filter.key === keyValue && !filter.nonApplicable);
-
-        const operatorValue = operatorsByKey[keyValue] ?? '=';
-        const isMultiOperator = multiOperatorValues.has(operatorValue);
-        const singleValue = singleValuesByKey[keyValue] ?? '';
-        const multiValues = multiValuesByKey[keyValue] ?? [];
-
-        if (isMultiOperator) {
-          if (multiValues.length === 0) {
-            continue;
-          }
-          const filter: AdHocFilterWithLabels = {
-            ...(isOrigin ? existingOrigin : existingFilter),
-            key: keyValue,
-            keyLabel: keyOption.label ?? keyValue,
-            operator: operatorValue,
-            value: multiValues[0],
-            values: multiValues,
-            valueLabels: multiValues,
-          };
-          if (isOrigin) {
-            nextOriginFilters.push(filter);
-          } else {
-            nextFilters.push(filter);
-          }
-        } else {
-          if (!singleValue) {
-            continue;
-          }
-          const filter: AdHocFilterWithLabels = {
-            ...(isOrigin ? existingOrigin : existingFilter),
-            key: keyValue,
-            keyLabel: keyOption.label ?? keyValue,
-            operator: operatorValue,
-            value: singleValue,
-            values: undefined,
-            valueLabels: undefined,
-          };
-          if (isOrigin) {
-            nextOriginFilters.push(filter);
-          } else {
-            nextFilters.push(filter);
-          }
-        }
-      }
-
+      const { nextFilters, nextOriginFilters, nonApplicableOriginFilters, nonApplicableFilters } = buildAdHocApplyFilters({
+        keys,
+        isOriginByKey,
+        operatorsByKey,
+        singleValuesByKey,
+        multiValuesByKey,
+        existingOriginFilters,
+        existingFilters,
+        multiOperatorValues,
+      });
       const validatedOriginFilters = adhocFilters.validateOriginFilters([
         ...nextOriginFilters,
         ...nonApplicableOriginFilters,
@@ -350,6 +257,7 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable, onClos
               options={(inputValue: string) => getValueOptionsForKey(keyValue, operatorValue, inputValue)}
               value={multiValues}
               placeholder={t('dashboard.filters-overview.value.placeholder', 'Select values')}
+              isClearable={true}
               onChange={(selections: Array<ComboboxOption<string>>) => {
                 setMultiValuesByKey((prev) => ({
                   ...prev,
@@ -363,7 +271,8 @@ export const DashboardFiltersOverview = ({ adhocFilters, groupByVariable, onClos
               options={(inputValue: string) => getValueOptionsForKey(keyValue, operatorValue, inputValue)}
               value={singleValue ? { label: singleValue, value: singleValue } : null}
               placeholder={t('dashboard.filters-overview.value.placeholder', 'Select value')}
-              onChange={(selection: ComboboxOption<string>) => {
+              isClearable={true}
+              onChange={(selection: ComboboxOption<string> | null) => {
                 setSingleValuesByKey((prev) => ({ ...prev, [keyValue]: selection?.value ?? '' }));
               }}
             />
