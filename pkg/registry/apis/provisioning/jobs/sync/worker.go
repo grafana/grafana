@@ -40,8 +40,7 @@ type SyncWorker struct {
 
 	tracer tracing.Tracer
 
-	maxSyncWorkers      int
-	quotaLimitsProvider quotas.QuotaLimitsProvider
+	maxSyncWorkers int
 }
 
 func NewSyncWorker(
@@ -52,7 +51,6 @@ func NewSyncWorker(
 	metrics jobs.JobMetrics,
 	tracer tracing.Tracer,
 	maxSyncWorkers int,
-	quotaLimitsProvider quotas.QuotaLimitsProvider,
 ) *SyncWorker {
 	return &SyncWorker{
 		clients:             clients,
@@ -62,7 +60,6 @@ func NewSyncWorker(
 		metrics:             metrics,
 		tracer:              tracer,
 		maxSyncWorkers:      maxSyncWorkers,
-		quotaLimitsProvider: quotaLimitsProvider,
 	}
 }
 
@@ -224,12 +221,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	//    the natural place to evaluate quotas against those stats.
 	// 3. This ensures quota conditions reflect the actual resource state after reconciliation,
 	//    not just what the controller thinks should exist.
-	quotaStatus, err := r.quotaLimitsProvider.GetQuotaStatus(finalCtx, cfg.Namespace)
-	if err != nil {
-		logger.Error("failed to get quota status", "error", err)
-		finalSpan.SetAttributes(attribute.String("quota_limits.error", err.Error()))
-		return tracing.Error(span, err)
-	}
+	quotaStatus := repo.Config().Status.Quota
 	quotaCondition := quotas.EvaluateCondition(quotaStatus, quotas.NewQuotaUsageFromStats(repoStats))
 	if quotaConditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), quotaCondition); quotaConditionOps != nil {
 		patchOperations = append(patchOperations, quotaConditionOps...)

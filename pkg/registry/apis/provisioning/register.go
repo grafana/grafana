@@ -799,7 +799,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				metrics,
 				b.tracer,
 				10,
-				b.quotaLimitsProvider,
 			)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)

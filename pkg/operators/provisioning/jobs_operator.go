@@ -206,7 +206,7 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 }
 
 func setupWorkers(
-	cfg *setting.Cfg, controllerCfg *jobsControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer,
+	_ *setting.Cfg, controllerCfg *jobsControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer,
 ) ([]jobs.Worker, error) {
 	clients, err := controllerCfg.Clients()
 	if err != nil {
@@ -230,10 +230,7 @@ func setupWorkers(
 	workers := make([]jobs.Worker, 0)
 
 	metrics := jobs.RegisterJobMetrics(registry)
-	quotaLimitsProvider, err := controllerCfg.QuotaLimitsProvider()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get quota limits provider: %w", err)
-	}
+
 	// Sync
 	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, tracer, controllerCfg.maxSyncWorkers, metrics)
 	syncWorker := sync.NewSyncWorker(
@@ -244,7 +241,6 @@ func setupWorkers(
 		metrics,
 		tracer,
 		controllerCfg.maxSyncWorkers,
-		quotaLimitsProvider,
 	)
 	workers = append(workers, syncWorker)
 
