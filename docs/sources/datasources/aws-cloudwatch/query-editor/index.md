@@ -243,7 +243,7 @@ You can query CloudWatch Logs using three supported query language options:
 
 1. Select a region.
 1. Select **CloudWatch Logs** from the query type drop-down.
-1. Select the Logs Mode depending on whether you want to query CloudWatch Logs Insights or Log Anomalies.
+1. Use the Logs Mode selector to choose between Logs Insights and Log Anomalies queries.
 
 **Log Anomalies**
 
