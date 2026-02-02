@@ -1,6 +1,6 @@
 import * as H from 'history';
 
-import { CoreApp, DataQueryRequest, locationUtil, NavIndex, NavModelItem } from '@grafana/data';
+import { CoreApp, DataQueryRequest, locationUtil, NavIndex, NavModelItem, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
@@ -21,7 +21,6 @@ import { appEvents } from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
-import store from 'app/core/store';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -90,7 +89,6 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
-import { getIsLazy } from './layouts-shared/utils';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { LayoutParent } from './types/LayoutParent';
 
@@ -199,7 +197,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       meta: {},
       editable: true,
       $timeRange: state.$timeRange ?? new SceneTimeRange({}),
-      body: state.body ?? DefaultGridLayoutManager.fromVizPanels([], getIsLazy(state.preload)),
+      body: state.body ?? DefaultGridLayoutManager.fromVizPanels([]),
       links: state.links ?? [],
       ...state,
       editPane: new DashboardEditPane(),
@@ -408,6 +406,38 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this._initialState !== undefined;
   }
 
+  /**
+   * Discard changes and revert to the last saved state, while keeping edit mode enabled.
+   * This is useful for flows where you want to continue an action (for example share/export)
+   * without forcing the user to exit edit mode.
+   */
+  public discardChangesAndKeepEditing() {
+    if (!this.canDiscard()) {
+      console.error('Trying to discard back to a state that does not exist, initialState undefined');
+      return;
+    }
+
+    // Stop tracking while we reset state.
+    this._changeTracker.stopTrackingChanges();
+
+    const restoredState = sceneUtils.cloneSceneObjectState(this._initialState!, { isDirty: false });
+
+    // Ensure the restored layout stays editable.
+    restoredState.body.editModeChanged?.(true);
+
+    this.setState({
+      ...restoredState,
+      isEditing: true,
+      editable: true,
+      isDirty: false,
+      editPanel: undefined,
+      editview: undefined,
+      overlay: undefined,
+    });
+
+    this._changeTracker.startTrackingChanges();
+  }
+
   public pauseTrackingChanges() {
     this._changeTracker.stopTrackingChanges();
   }
@@ -527,17 +557,29 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public createLibraryPanel(panelToReplace: VizPanel, libPanel: LibraryPanel) {
-    const body = panelToReplace.clone({
-      $behaviors: [new LibraryPanelBehavior({ uid: libPanel.uid, name: libPanel.name })],
-    });
+    const behavior = new LibraryPanelBehavior({ uid: libPanel.uid, name: libPanel.name });
 
-    const gridItem = panelToReplace.parent;
+    const parent = panelToReplace.parent;
 
-    if (!(gridItem instanceof DashboardGridItem)) {
-      throw new Error("Trying to replace a panel that doesn't have a parent grid item");
+    if (parent instanceof DashboardGridItem) {
+      const body = panelToReplace.clone({
+        $behaviors: [behavior],
+      });
+      parent.setState({ body });
+      return;
     }
 
-    gridItem.setState({ body });
+    if (parent instanceof AutoGridItem) {
+      // Auto grid only supports creating library panels from the source panel (AutoGridItem.state.body).
+      const body = parent.state.body.clone({
+        $behaviors: [behavior],
+      });
+      parent.setState({ body });
+      parent.handleEditChange();
+      return;
+    }
+
+    throw new Error("Trying to replace a panel that doesn't have a parent layout item");
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
@@ -605,14 +647,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    const gridItem = panel.parent;
+    const parent = panel.parent;
 
-    if (!(gridItem instanceof DashboardGridItem)) {
-      console.error('Trying to unlink a lib panel in a layout that is not DashboardGridItem');
+    if (parent instanceof DashboardGridItem) {
+      parent.state.body.setState({ $behaviors: undefined });
       return;
     }
 
-    gridItem.state.body.setState({ $behaviors: undefined });
+    if (parent instanceof AutoGridItem) {
+      parent.state.body.setState({ $behaviors: undefined });
+      parent.handleEditChange();
+      return;
+    }
+
+    console.error('Trying to unlink a lib panel in a layout that is not DashboardGridItem or AutoGridItem');
   }
 
   public showModal(modal: SceneObject) {
@@ -722,9 +770,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   canEditDashboard() {
-    const { meta } = this.state;
-
-    return !meta.isSnapshot && Boolean(meta.canEdit || meta.canMakeEditable || config.viewersCanEdit);
+    const {
+      meta: { isSnapshot, isEmbedded, canEdit, canMakeEditable },
+    } = this.state;
+    return !isSnapshot && !isEmbedded && Boolean(canEdit || canMakeEditable || config.viewersCanEdit);
   }
 
   public getInitialSaveModel() {

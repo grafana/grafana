@@ -51,6 +51,8 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
 
     await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Json.content)).toBeVisible();
 
+    // Press Escape to close tooltip on the close button
+    await page.keyboard.press('Escape');
     // Press Escape to close inspector
     await page.keyboard.press('Escape');
 

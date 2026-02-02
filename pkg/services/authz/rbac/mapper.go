@@ -3,6 +3,7 @@ package rbac
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -182,25 +183,6 @@ func newFolderTranslation() translation {
 	return folderTranslation
 }
 
-func newExternalGroupMappingTranslation() translation {
-	return translation{
-		resource:  "teams.permissions",
-		attribute: "uid",
-		verbMapping: map[string]string{
-			utils.VerbGet:            "teams.permissions:read",
-			utils.VerbList:           "teams.permissions:read",
-			utils.VerbWatch:          "teams.permissions:read",
-			utils.VerbCreate:         "teams.permissions:write",
-			utils.VerbUpdate:         "teams.permissions:write",
-			utils.VerbPatch:          "teams.permissions:write",
-			utils.VerbDelete:         "teams.permissions:write",
-			utils.VerbGetPermissions: "teams.permissions:write",
-			utils.VerbSetPermissions: "teams.permissions:write",
-		},
-		folderSupport: false,
-	}
-}
-
 func NewMapperRegistry() MapperRegistry {
 	skipScopeOnAllVerbs := map[string]bool{
 		utils.VerbCreate:           true,
@@ -229,8 +211,6 @@ func NewMapperRegistry() MapperRegistry {
 			"serviceaccounts": newResourceTranslation("serviceaccounts", "uid", false, map[string]bool{utils.VerbCreate: true}),
 			// Teams is a special case. We translate user permissions from id to uid based.
 			"teams": newResourceTranslation("teams", "uid", false, map[string]bool{utils.VerbCreate: true}),
-			// ExternalGroupMappings is a special case. We translate team permissions from id to uid based.
-			"externalgroupmappings": newExternalGroupMappingTranslation(),
 			"coreroles": translation{
 				resource:  "roles",
 				attribute: "uid",
@@ -242,6 +222,17 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport: false,
 				// No need to skip scope on create for roles because we translate `permissions:type:delegate` to `roles:*``
 				skipScopeOnVerb: nil,
+			},
+			"globalroles": translation{
+				resource:  "roles",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:   "roles:read",
+					utils.VerbList:  "roles:read",
+					utils.VerbWatch: "roles:read",
+				},
+				folderSupport:    false,
+				useWildcardScope: true,
 			},
 			"roles": translation{
 				resource:  "roles",
@@ -300,6 +291,9 @@ func NewMapperRegistry() MapperRegistry {
 				skipScopeOnVerb: nil,
 			},
 		},
+		"*.datasource.grafana.app": {
+			"datasources": newResourceTranslation("datasources", "uid", false, nil),
+		},
 		"plugins.grafana.app": {
 			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),
 			"metas":   newResourceTranslation("plugins.metas", "uid", false, nil),
@@ -314,12 +308,38 @@ func NewMapperRegistry() MapperRegistry {
 	return mapper
 }
 
+// findGroupKey returns the registry key for group, using exact match first,
+// then wildcard match. A wildcard key has the form "*.<suffix>" (e.g. "*.datasource.grafana.app");
+// group matches if it has that suffix and is longer than the suffix (non-empty prefix).
+// Group starting with "*" never matches (so we never exact-match a wildcard registry key as input).
+func (m mapper) findGroupKey(group string) (string, bool) {
+	if strings.HasPrefix(group, "*") {
+		return "", false
+	}
+	if _, ok := m[group]; ok {
+		return group, true
+	}
+	for key := range m {
+		// is this a wildcard key?
+		if len(key) < 2 || key[0] != '*' || key[1] != '.' {
+			continue
+		}
+		// does the requested group have the same suffix as the wildcard key?
+		suffix := key[1:]
+		if len(group) > len(suffix) && strings.HasSuffix(group, suffix) {
+			return key, true
+		}
+	}
+	return "", false
+}
+
 func (m mapper) Get(group, resource string) (Mapping, bool) {
-	resources, ok := m[group]
+	groupKey, ok := m.findGroupKey(group)
 	if !ok {
 		return nil, false
 	}
 
+	resources := m[groupKey]
 	t, ok := resources[resource]
 	if !ok {
 		return nil, false
@@ -329,10 +349,12 @@ func (m mapper) Get(group, resource string) (Mapping, bool) {
 }
 
 func (m mapper) GetAll(group string) []Mapping {
-	resources, ok := m[group]
+	groupKey, ok := m.findGroupKey(group)
 	if !ok {
 		return nil
 	}
+
+	resources := m[groupKey]
 
 	translations := make([]Mapping, 0, len(resources))
 	for _, t := range resources {

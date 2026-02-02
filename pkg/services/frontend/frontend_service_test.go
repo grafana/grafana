@@ -187,6 +187,112 @@ func TestFrontendService_Middleware(t *testing.T) {
 	})
 }
 
+func TestFrontendService_LoginErrorCookie(t *testing.T) {
+	publicDir := setupTestWebAssets(t)
+	cfg := &setting.Cfg{
+		HTTPPort:               "3000",
+		StaticRootPath:         publicDir,
+		BuildVersion:           "10.3.0",
+		OAuthLoginErrorMessage: "oauth.login.error",
+		CookieSecure:           false,
+		CookieSameSiteDisabled: false,
+		CookieSameSiteMode:     http.SameSiteLaxMode,
+	}
+
+	t.Run("should detect login_error cookie and set generic error message", func(t *testing.T) {
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		// Set the login_error cookie (with some encrypted-looking value)
+		req.AddCookie(&http.Cookie{
+			Name:  "login_error",
+			Value: "abc123encryptedvalue",
+		})
+		recorder := httptest.NewRecorder()
+
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		body := recorder.Body.String()
+
+		// Check that the generic error message is in the response
+		assert.Contains(t, body, "loginError", "Should contain loginError when cookie is present")
+		assert.Contains(t, body, "oauth.login.error", "Should contain the generic OAuth error message")
+
+		// Check that the cookie was deleted (MaxAge=-1)
+		cookies := recorder.Result().Cookies()
+		var foundDeletedCookie bool
+		for _, cookie := range cookies {
+			if cookie.Name == "login_error" {
+				assert.Equal(t, -1, cookie.MaxAge, "Cookie should be deleted (MaxAge=-1)")
+				assert.Equal(t, "", cookie.Value, "Cookie value should be empty")
+				foundDeletedCookie = true
+				break
+			}
+		}
+		assert.True(t, foundDeletedCookie, "Should have set a cookie deletion header")
+	})
+
+	t.Run("should not set error when login_error cookie is absent", func(t *testing.T) {
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		// No login_error cookie
+		recorder := httptest.NewRecorder()
+
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		body := recorder.Body.String()
+
+		// The page should render but without the login error
+		assert.Contains(t, body, "window.grafanaBootData")
+		// Check that loginError is not set (or is empty/omitted in JSON)
+		// Since it's omitempty, it shouldn't appear at all
+		assert.NotContains(t, body, "loginError", "Should not contain loginError when cookie is absent")
+	})
+
+	t.Run("should handle custom OAuth error message from config", func(t *testing.T) {
+		customCfg := &setting.Cfg{
+			HTTPPort:               "3000",
+			StaticRootPath:         publicDir,
+			BuildVersion:           "10.3.0",
+			OAuthLoginErrorMessage: "Oh no a boo-boo happened!",
+			CookieSecure:           false,
+			CookieSameSiteDisabled: false,
+			CookieSameSiteMode:     http.SameSiteLaxMode,
+		}
+		service := createTestService(t, customCfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req.AddCookie(&http.Cookie{
+			Name:  "login_error",
+			Value: "abc123encryptedvalue",
+		})
+		recorder := httptest.NewRecorder()
+
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		body := recorder.Body.String()
+
+		// Check that the custom error message is used
+		assert.Contains(t, body, "Oh no a boo-boo happened!", "Should use custom OAuth error message from config")
+	})
+}
+
 func TestFrontendService_IndexHooks(t *testing.T) {
 	publicDir := setupTestWebAssets(t)
 	cfg := &setting.Cfg{
@@ -237,5 +343,154 @@ func TestFrontendService_IndexHooks(t *testing.T) {
 		// The build version comes from setting.BuildVersion (global), not cfg.BuildVersion
 		// So we just check that the page renders successfully
 		assert.Contains(t, body, "window.grafanaBootData")
+	})
+}
+
+func TestFrontendService_CSP(t *testing.T) {
+	publicDir := setupTestWebAssets(t)
+
+	t.Run("should set CSP headers when enabled", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com/grafana",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self' $NONCE; style-src 'self' $ROOT_PATH",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+
+		// Verify CSP header is set
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.NotEmpty(t, cspHeader, "CSP header should be set")
+		assert.Contains(t, cspHeader, "script-src 'self' 'nonce-", "CSP should contain nonce")
+		assert.Contains(t, cspHeader, "style-src 'self' grafana.example.com/grafana", "CSP should contain root path")
+	})
+
+	t.Run("should set CSP-Report-Only header when enabled", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			HTTPPort:              "3000",
+			StaticRootPath:        publicDir,
+			BuildVersion:          "10.3.0",
+			AppURL:                "https://grafana.example.com",
+			CSPReportOnlyEnabled:  true,
+			CSPReportOnlyTemplate: "default-src 'self' $NONCE",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+
+		// Verify CSP-Report-Only header is set
+		cspReportOnlyHeader := recorder.Header().Get("Content-Security-Policy-Report-Only")
+		assert.NotEmpty(t, cspReportOnlyHeader, "CSP-Report-Only header should be set")
+		assert.Contains(t, cspReportOnlyHeader, "default-src 'self' 'nonce-", "CSP-Report-Only should contain nonce")
+	})
+
+	t.Run("should set both CSP headers when both enabled", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			HTTPPort:              "3000",
+			StaticRootPath:        publicDir,
+			BuildVersion:          "10.3.0",
+			AppURL:                "https://grafana.example.com",
+			CSPEnabled:            true,
+			CSPTemplate:           "script-src 'self' $NONCE",
+			CSPReportOnlyEnabled:  true,
+			CSPReportOnlyTemplate: "default-src 'self'",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+
+		// Verify both headers are set
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		cspReportOnlyHeader := recorder.Header().Get("Content-Security-Policy-Report-Only")
+		assert.NotEmpty(t, cspHeader, "CSP header should be set")
+		assert.NotEmpty(t, cspReportOnlyHeader, "CSP-Report-Only header should be set")
+	})
+
+	t.Run("should not set CSP headers when disabled", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     false,
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+
+		// Verify CSP headers are not set
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		cspReportOnlyHeader := recorder.Header().Get("Content-Security-Policy-Report-Only")
+		assert.Empty(t, cspHeader, "CSP header should not be set when disabled")
+		assert.Empty(t, cspReportOnlyHeader, "CSP-Report-Only header should not be set when disabled")
+	})
+
+	t.Run("should store nonce in request context", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self' $NONCE",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+
+		var capturedNonce string
+		mux.Get("/test-nonce", func(w http.ResponseWriter, r *http.Request) {
+			ctx := contexthandler.FromContext(r.Context())
+			capturedNonce = ctx.RequestNonce
+			w.WriteHeader(200)
+		})
+
+		req := httptest.NewRequest("GET", "/test-nonce", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		assert.NotEmpty(t, capturedNonce, "Nonce should be stored in request context")
+
+		// Verify the nonce in context matches the one in the CSP header
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "'nonce-"+capturedNonce+"'", "Nonce in header should match context nonce")
 	})
 }

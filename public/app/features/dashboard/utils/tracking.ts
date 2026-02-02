@@ -1,10 +1,14 @@
+import { SceneObject } from '@grafana/scenes';
 import { VariableModel } from '@grafana/schema/dist/esm/index';
 import {
   AdhocVariableKind,
+  CustomVariableKind,
   DatasourceVariableKind,
   QueryVariableKind,
   VariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
+import { TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DashboardModel } from '../state/DashboardModel';
@@ -49,6 +53,11 @@ export function getV1SchemaVariables(variableList: VariableModel[]) {
   return {
     // Count variable types
     ...variableList.reduce<Record<string, number>>((variables, current) => {
+      // track how many custom CSV and custom JSON variables are used in a dashboard
+      if (current.type === 'custom') {
+        const name = variableName(`custom_${current.valuesFormat || 'csv'}`);
+        variables[name] = 1 + (variables[name] || 0);
+      }
       variables[variableName(current.type)] = 1 + (variables[variableName(current.type)] || 0);
       return variables;
     }, {}),
@@ -94,6 +103,11 @@ export function getV2SchemaVariables(variableList: VariableKind[]) {
     ...variableList.reduce<Record<string, number>>((variables, current) => {
       const type = mapNewToOldTypes(current.kind);
       if (type) {
+        // track how many custom CSV and custom JSON variables are used in a dashboard
+        if (isCustomVariable(current)) {
+          const name = variableName(`custom_${current.spec.valuesFormat || 'csv'}`);
+          variables[name] = 1 + (variables[name] || 0);
+        }
         variables[variableName(type)] = 1 + (variables[variableName(type)] || 0);
       }
       return variables;
@@ -111,6 +125,15 @@ export function getV2SchemaVariables(variableList: VariableKind[]) {
   };
 }
 
+export const getLayoutType = (obj?: SceneObject): 'row' | 'tab' | 'dashboard' => {
+  if (obj instanceof RowItem) {
+    return 'row';
+  } else if (obj instanceof TabItem) {
+    return 'tab';
+  }
+  return 'dashboard';
+};
+
 export const variableName = (type: string) => `variable_type_${type}_count`;
 const panelName = (type: string) => `panel_type_${type}_count`;
 
@@ -120,3 +143,7 @@ const isQueryVar: (v: VariableKind) => v is QueryVariableKind = (v) => v.kind ==
 
 const getDatasourceFromVar = (v: VariableKind) =>
   isAdhocVar(v) ? v.group : isDatasourceVar(v) ? v.spec.pluginId : isQueryVar(v) ? v.spec?.query.group : '';
+
+export function isCustomVariable(variable: VariableKind): variable is CustomVariableKind {
+  return variable.kind === 'CustomVariable';
+}

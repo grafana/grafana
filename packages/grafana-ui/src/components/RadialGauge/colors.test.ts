@@ -1,6 +1,6 @@
 import { defaultsDeep } from 'lodash';
 
-import { createTheme, FALLBACK_COLOR, Field, FieldDisplay, FieldType, ThresholdsMode } from '@grafana/data';
+import { createTheme, Field, FieldDisplay, FieldType, ThresholdsMode } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
 import {
@@ -50,35 +50,9 @@ describe('RadialGauge color utils', () => {
         },
       });
 
-    it('should return the baseColor if gradient is false-y', () => {
-      expect(
-        buildGradientColors(false, createTheme(), buildFieldDisplay(createField(FieldColorModeId.Fixed)), '#FF0000')
-      ).toEqual([
-        { color: '#FF0000', percent: 0 },
-        { color: '#FF0000', percent: 1 },
-      ]);
-
-      expect(
-        buildGradientColors(undefined, createTheme(), buildFieldDisplay(createField(FieldColorModeId.Fixed)), '#FF0000')
-      ).toEqual([
-        { color: '#FF0000', percent: 0 },
-        { color: '#FF0000', percent: 1 },
-      ]);
-    });
-
-    it('uses the fallback color if no baseColor is set', () => {
-      expect(buildGradientColors(false, createTheme(), buildFieldDisplay(createField(FieldColorModeId.Fixed)))).toEqual(
-        [
-          { color: FALLBACK_COLOR, percent: 0 },
-          { color: FALLBACK_COLOR, percent: 1 },
-        ]
-      );
-    });
-
     it('should map threshold colors correctly (with baseColor if displayProcessor does not return colors)', () => {
       expect(
         buildGradientColors(
-          true,
           createTheme(),
           buildFieldDisplay(createField(FieldColorModeId.Thresholds), {
             view: { getFieldDisplayProcessor: jest.fn(() => jest.fn(() => ({ color: '#444444' }))) },
@@ -89,14 +63,13 @@ describe('RadialGauge color utils', () => {
 
     it('should map threshold colors correctly (with baseColor if displayProcessor does not return colors)', () => {
       expect(
-        buildGradientColors(true, createTheme(), buildFieldDisplay(createField(FieldColorModeId.Thresholds)), '#FF0000')
+        buildGradientColors(createTheme(), buildFieldDisplay(createField(FieldColorModeId.Thresholds)), '#FF0000')
       ).toMatchSnapshot();
     });
 
     it('should return gradient colors for continuous color modes', () => {
       expect(
         buildGradientColors(
-          true,
           createTheme(),
           buildFieldDisplay(createField(FieldColorModeId.ContinuousCividis)),
           '#00FF00'
@@ -107,7 +80,6 @@ describe('RadialGauge color utils', () => {
     it.each(['dark', 'light'] as const)('should return gradient colors for by-value color mode in %s theme', (mode) => {
       expect(
         buildGradientColors(
-          true,
           createTheme({ colors: { mode } }),
           buildFieldDisplay(createField(FieldColorModeId.ContinuousBlues))
         )
@@ -117,7 +89,6 @@ describe('RadialGauge color utils', () => {
     it.each(['dark', 'light'] as const)('should return gradient colors for fixed color mode in %s theme', (mode) => {
       expect(
         buildGradientColors(
-          true,
           createTheme({ colors: { mode } }),
           buildFieldDisplay(createField(FieldColorModeId.Fixed)),
           '#442299'

@@ -45,8 +45,16 @@ const (
 )
 
 var (
-	RelationsFolder      = common.RelationsTyped
-	RelationsResouce     = common.RelationsResource
+	// RelationsFolder is used by reconciliation to list tuples for folder objects.
+	// It must include both verb relations (get/update/delete/...) and the permission-set relations (view/edit/admin)
+	RelationsFolder = append(append([]string{}, common.RelationsTyped...),
+		common.RelationSetView, common.RelationSetEdit, common.RelationSetAdmin,
+	)
+	// RelationsResouce is used by reconciliation to list tuples for resource objects.
+	// Include permission-set relations for the same reason as RelationsFolder.
+	RelationsResouce = append(append([]string{}, common.RelationsResource...),
+		common.RelationSetView, common.RelationSetEdit, common.RelationSetAdmin,
+	)
 	RelationsSubresource = common.RelationsSubresource
 )
 

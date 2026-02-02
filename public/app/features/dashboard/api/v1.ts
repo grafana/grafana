@@ -164,7 +164,11 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       const managerKind = annotations[AnnoKeyManagerKind];
 
       if (managerKind) {
-        result.meta.provisioned = annotations[AnnoKeyManagerAllowsEdits] === 'true' || managerKind === ManagerKind.Repo;
+        // `meta.provisioned` is used by the save/delete UI to decide if a dashboard is locked
+        // (i.e. it can't be saved from the UI). This should match the legacy behavior where
+        // `allowUiUpdates: true` keeps the dashboard editable/savable.
+        const allowsEdits = annotations[AnnoKeyManagerAllowsEdits] === 'true';
+        result.meta.provisioned = !allowsEdits && managerKind !== ManagerKind.Repo;
         result.meta.provisionedExternalId = annotations[AnnoKeySourcePath];
       }
 

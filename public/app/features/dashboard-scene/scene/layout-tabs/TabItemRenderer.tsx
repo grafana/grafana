@@ -11,7 +11,7 @@ import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useI
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
-import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
+import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { TabItem } from './TabItem';
 
@@ -20,7 +20,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const parentLayout = model.getParentLayout();
   const { currentTabSlug } = parentLayout.useState();
   const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
-  const { isSelected, onSelect, isSelectable } = useElementSelection(key);
+  const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
   const { isEditing } = useDashboardState(model);
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
@@ -89,10 +89,15 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
                 return;
               }
 
+              if (!isActive) {
+                onClearSelection?.();
+                return;
+              }
+
               onSelect?.(evt);
             }}
             label={titleInterpolated}
-            data-dashboard-drop-target-key={isDashboardLayoutGrid(layout) ? model.state.key : undefined}
+            data-tab-activation-key={key}
             {...titleCollisionProps}
           />
         </div>
@@ -126,7 +131,7 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
   return (
     <TabContent
       className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
-      data-dashboard-drop-target-key={key}
+      {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
     >
       <layout.Component model={layout} />
       {isEditing && conditionalRenderingOverlay}

@@ -420,6 +420,47 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 `, folder.Fullpath), string(r.Body()))
 	})
 
+	t.Run("evaluationTime should come from state with newest LastEvaluationTime", func(t *testing.T) {
+		fakeStore, fakeAIM, api := setupAPI(t)
+
+		rule := gen.With(asFixture(), withClassicConditionSingleQuery(), gen.WithNoNotificationSettings()).GenerateRef()
+		fakeStore.PutRule(context.Background(), rule)
+
+		// Create two states with different evaluation times and durations.
+		// State 1: newer evaluation time
+		// State 2: older evaluation time
+		baseTime := timeNow()
+		newerTime := baseTime.Add(2 * time.Minute)
+		newerDuration := 5 * time.Second
+		olderTime := baseTime.Add(1 * time.Minute)
+		olderDuration := 10 * time.Second
+
+		fakeAIM.GenerateAlertInstances(orgID, rule.UID, 1, func(s *state.State) *state.State {
+			s.Labels = data.Labels{"instance": "newer"}
+			s.LastEvaluationTime = newerTime
+			s.EvaluationDuration = newerDuration
+			return s
+		})
+		fakeAIM.GenerateAlertInstances(orgID, rule.UID, 1, func(s *state.State) *state.State {
+			s.Labels = data.Labels{"instance": "older"}
+			s.LastEvaluationTime = olderTime
+			s.EvaluationDuration = olderDuration
+			return s
+		})
+
+		r := api.RouteGetRuleStatuses(c)
+		require.Equal(t, http.StatusOK, r.Status())
+
+		var res apimodels.RuleResponse
+		require.NoError(t, json.Unmarshal(r.Body(), &res))
+		require.Len(t, res.Data.RuleGroups, 1)
+		require.Len(t, res.Data.RuleGroups[0].Rules, 1)
+
+		ruleResult := res.Data.RuleGroups[0].Rules[0]
+		require.Equal(t, newerTime, ruleResult.LastEvaluation, "LastEvaluation should be from state with newest evaluation time")
+		require.Equal(t, newerDuration.Seconds(), ruleResult.EvaluationTime, "EvaluationTime should be from state with newest LastEvaluationTime")
+	})
+
 	t.Run("with a rule that is paused", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNoNotificationSettings(), gen.WithIsPaused(true))
@@ -805,9 +846,20 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			OrgID:        orgID,
 		})).GenerateManyRef(3)
 
+		// Plugin rule with __grafana_origin label for plugins filter test
+		pluginRule := gen.With(
+			gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+				RuleGroup:    "plugins-test-plugin",
+				NamespaceUID: "folder-2",
+				OrgID:        orgID,
+			}),
+			gen.WithLabels(map[string]string{"__grafana_origin": "plugin/grafana-slo-app"}),
+		).GenerateRef()
+
 		ruleStore.PutRule(context.Background(), rulesInGroup1...)
 		ruleStore.PutRule(context.Background(), rulesInGroup2...)
 		ruleStore.PutRule(context.Background(), rulesInGroup3...)
+		ruleStore.PutRule(context.Background(), pluginRule)
 
 		api := NewPrometheusSrv(
 			log.NewNopLogger(),
@@ -818,7 +870,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			fakes.NewFakeProvisioningStore(),
 		)
 
-		permissions := createPermissionsForRules(slices.Concat(rulesInGroup1, rulesInGroup2, rulesInGroup3), orgID)
+		permissions := createPermissionsForRules(slices.Concat(rulesInGroup1, rulesInGroup2, rulesInGroup3, []*ngmodels.AlertRule{pluginRule}), orgID)
 		user := &user.SignedInUser{
 			OrgID:       orgID,
 			Permissions: permissions,
@@ -947,6 +999,68 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				require.Equal(t, expectedRuleInGroup1.UID, result.Data.RuleGroups[1].Rules[0].UID)
 				require.Equal(t, expectedRuleInGroup3.UID, result.Data.RuleGroups[0].Rules[0].UID)
 			}
+		})
+
+		t.Run("should filter rules by plugins parameter", func(t *testing.T) {
+			t.Run("returns all groups when plugins filter not specified", func(t *testing.T) {
+				r, err := http.NewRequest("GET", "/api/v1/rules?folder_uid=folder-2", nil)
+				require.NoError(t, err)
+				c.Context = &web.Context{Req: r}
+
+				resp := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				result := &apimodels.RuleResponse{}
+				require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+				require.Len(t, result.Data.RuleGroups, 2, "should return all groups including plugin group")
+			})
+
+			t.Run("excludes plugin rules when plugins=hide", func(t *testing.T) {
+				r, err := http.NewRequest("GET", "/api/v1/rules?folder_uid=folder-2&plugins=hide", nil)
+				require.NoError(t, err)
+				c.Context = &web.Context{Req: r}
+
+				resp := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				result := &apimodels.RuleResponse{}
+				require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+				require.Len(t, result.Data.RuleGroups, 1, "should only return non-plugin groups")
+				for _, group := range result.Data.RuleGroups {
+					require.NotEqual(t, "plugins-test-plugin", group.Name, "should not include plugin group")
+				}
+			})
+
+			t.Run("returns only plugin rules when plugins=only", func(t *testing.T) {
+				r, err := http.NewRequest("GET", "/api/v1/rules?folder_uid=folder-2&plugins=only", nil)
+				require.NoError(t, err)
+				c.Context = &web.Context{Req: r}
+
+				resp := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				result := &apimodels.RuleResponse{}
+				require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+				require.Len(t, result.Data.RuleGroups, 1, "should only return plugin group")
+				require.Equal(t, "plugins-test-plugin", result.Data.RuleGroups[0].Name)
+			})
+
+			t.Run("returns all groups when plugins filter has invalid value", func(t *testing.T) {
+				r, err := http.NewRequest("GET", "/api/v1/rules?folder_uid=folder-2&plugins=invalid", nil)
+				require.NoError(t, err)
+				c.Context = &web.Context{Req: r}
+
+				resp := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, resp.Status())
+
+				result := &apimodels.RuleResponse{}
+				require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+				require.Len(t, result.Data.RuleGroups, 2, "invalid value should return all groups")
+			})
 		})
 	})
 

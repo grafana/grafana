@@ -1353,5 +1353,5 @@ func mySQLTestDBConnStr() string {
 	if port == "" {
 		port = "3306"
 	}
-	return fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_ds_tests?collation=utf8mb4_unicode_ci&sql_mode='ANSI_QUOTES'&parseTime=true&loc=UTC", host, port)
+	return fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_ds_tests?collation=utf8mb4_unicode_ci&sql_mode=ANSI_QUOTES&parseTime=true&loc=UTC", host, port)
 }

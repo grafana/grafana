@@ -10,7 +10,6 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
 type typeInfo struct {
@@ -71,19 +70,6 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 	}
 
 	return resource
-}
-
-func NewResourceInfoFromBatchItem(i *authzextv1.BatchCheckItem) ResourceInfo {
-	typ, relations := getTypeAndRelations(i.GetGroup(), i.GetResource())
-	return newResource(
-		typ,
-		i.GetGroup(),
-		i.GetResource(),
-		i.GetName(),
-		i.GetFolder(),
-		i.GetSubresource(),
-		relations,
-	)
 }
 
 func NewResourceInfoFromList(r *authzv1.ListRequest) ResourceInfo {

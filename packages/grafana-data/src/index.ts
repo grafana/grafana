@@ -686,7 +686,6 @@ export {
   type DataSourceJsonData,
   type DataSourceSettings,
   type DataSourceInstanceSettings,
-  type DataSourceSelectItem,
   type AnnotationQueryRequest,
   type HistoryItem,
   type GetTagResponse,
@@ -796,6 +795,8 @@ export {
   type LogRowContextOptions,
   LogRowContextQueryDirection,
   type DataSourceWithLogsContextSupport,
+  type DataSourceWithLogsLabelTypesSupport,
+  hasLogsLabelTypesSupport,
   hasLogsContextSupport,
   SupplementaryQueryType,
   type SupplementaryQueryOptions,
@@ -844,7 +845,6 @@ export {
   DataLinkConfigOrigin,
   SupportedTransformationType,
   type InternalDataLink,
-  type LinkTarget,
   type LinkModel,
   type LinkModelSupplier,
   VariableOrigin,
@@ -852,6 +852,7 @@ export {
   VariableSuggestionsScope,
   OneClickMode,
 } from './types/dataLink';
+export { type LinkTarget } from './types/linkTarget';
 export {
   type Action,
   type ActionModel,

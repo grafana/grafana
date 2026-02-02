@@ -9,6 +9,7 @@ import {
   openScopesSelector,
   searchScopes,
   selectScope,
+  setupScopeRoutes,
 } from '../utils/scope-helpers';
 import { testScopes } from '../utils/scopes';
 
@@ -36,32 +37,37 @@ test.describe(
       const scopesSelector = getScopesSelectorInput(page);
       const recentScopesSelector = getRecentScopesSelector(page);
       const scopeTreeCheckboxes = getScopeTreeCheckboxes(page);
+      const scopes = testScopes();
+
+      // Set up routes once before any navigation (only for mocked mode)
+      if (!USE_LIVE_DATA) {
+        await setupScopeRoutes(page, scopes);
+      }
 
       await test.step('1.View and select any scope', async () => {
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         expect.soft(scopesSelector).toHaveAttribute('data-value', '');
 
-        const scopes = testScopes();
-        await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes); //used only in mocked scopes version
+        await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes);
 
         let scopeName = await getScopeTreeName(page, 0);
 
-        const firstLevelScopes = scopes[0].children!; //used only in mocked scopes version
+        const firstLevelScopes = scopes[0].children!;
         await expandScopesSelection(page, scopeName, USE_LIVE_DATA ? undefined : firstLevelScopes);
 
         scopeName = await getScopeTreeName(page, 1);
 
-        const secondLevelScopes = firstLevelScopes[0].children!; //used only in mocked scopes version
+        const secondLevelScopes = firstLevelScopes[0].children!;
         await expandScopesSelection(page, scopeName, USE_LIVE_DATA ? undefined : secondLevelScopes);
 
-        const selectedScopes = [secondLevelScopes[0]]; //used only in mocked scopes version
+        const selectedScopes = [secondLevelScopes[0]];
 
         scopeName = await getScopeLeafName(page, 0);
         let scopeTitle = await getScopeLeafTitle(page, 0);
         await selectScope(page, scopeName, USE_LIVE_DATA ? undefined : selectedScopes[0]);
 
-        await applyScopes(page, USE_LIVE_DATA ? undefined : selectedScopes); //used only in mocked scopes version
+        await applyScopes(page, USE_LIVE_DATA ? undefined : selectedScopes);
 
         expect.soft(scopesSelector).toHaveAttribute('data-value', scopeTitle);
       });
@@ -70,28 +76,27 @@ test.describe(
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
         expect.soft(scopesSelector).toHaveAttribute('data-value', '');
-        const scopes = testScopes();
-        await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes); //used only in mocked scopes version
+        await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes);
 
         let scopeName = await getScopeTreeName(page, 0);
 
-        const firstLevelScopes = scopes[0].children!; //used only in mocked scopes version
+        const firstLevelScopes = scopes[0].children!;
         await expandScopesSelection(page, scopeName, USE_LIVE_DATA ? undefined : firstLevelScopes);
 
         scopeName = await getScopeTreeName(page, 1);
 
-        const secondLevelScopes = firstLevelScopes[0].children!; //used only in mocked scopes version
+        const secondLevelScopes = firstLevelScopes[0].children!;
         await expandScopesSelection(page, scopeName, USE_LIVE_DATA ? undefined : secondLevelScopes);
 
         const scopeTitles: string[] = [];
-        const selectedScopes = [secondLevelScopes[0], secondLevelScopes[1]]; //used only in mocked scopes version
+        const selectedScopes = [secondLevelScopes[0], secondLevelScopes[1]];
         for (let i = 0; i < selectedScopes.length; i++) {
           scopeName = await getScopeLeafName(page, i);
           scopeTitles.push(await getScopeLeafTitle(page, i));
-          await selectScope(page, scopeName, USE_LIVE_DATA ? undefined : selectedScopes[i]); //used only in mocked scopes version
+          await selectScope(page, scopeName, USE_LIVE_DATA ? undefined : selectedScopes[i]);
         }
 
-        await applyScopes(page, USE_LIVE_DATA ? undefined : selectedScopes); //used only in mocked scopes version
+        await applyScopes(page, USE_LIVE_DATA ? undefined : selectedScopes);
 
         await expect.soft(scopesSelector).toHaveAttribute('data-value', scopeTitles.join(' + '));
       });
@@ -102,8 +107,7 @@ test.describe(
 
         expect.soft(scopesSelector).toHaveAttribute('data-value', '');
 
-        const scopes = testScopes();
-        await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes); //used only in mocked scopes version
+        await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes);
 
         await recentScopesSelector.click();
 
@@ -121,26 +125,25 @@ test.describe(
 
         expect.soft(scopesSelector).toHaveAttribute('data-value', '');
 
-        const scopes = testScopes();
         await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes);
 
         let scopeName = await getScopeTreeName(page, 1);
 
-        const firstLevelScopes = scopes[2].children!; //used only in mocked scopes version
+        const firstLevelScopes = scopes[2].children!;
         await expandScopesSelection(page, scopeName, USE_LIVE_DATA ? undefined : firstLevelScopes);
 
         scopeName = await getScopeTreeName(page, 1);
 
-        const secondLevelScopes = firstLevelScopes[0].children!; //used only in mocked scopes version
+        const secondLevelScopes = firstLevelScopes[0].children!;
         await expandScopesSelection(page, scopeName, USE_LIVE_DATA ? undefined : secondLevelScopes);
 
-        const selectedScopes = [secondLevelScopes[0]]; //used only in mocked scopes version
+        const selectedScopes = [secondLevelScopes[0]];
 
         scopeName = await getScopeLeafName(page, 0);
         let scopeTitle = await getScopeLeafTitle(page, 0);
         await selectScope(page, scopeName, USE_LIVE_DATA ? undefined : selectedScopes[0]);
 
-        await applyScopes(page, USE_LIVE_DATA ? undefined : []); //used only in mocked scopes version
+        await applyScopes(page, USE_LIVE_DATA ? undefined : []);
 
         expect.soft(scopesSelector).toHaveAttribute('data-value', new RegExp(`^${scopeTitle}`));
       });
@@ -148,17 +151,16 @@ test.describe(
       await test.step('5.View pre-completed production entity values as I type', async () => {
         await gotoDashboardPage({ uid: DASHBOARD_UNDER_TEST });
 
-        const scopes = testScopes();
-        await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes); //used only in mocked scopes version
+        await openScopesSelector(page, USE_LIVE_DATA ? undefined : scopes);
 
         let scopeName = await getScopeTreeName(page, 0);
 
-        const firstLevelScopes = scopes[0].children!; //used only in mocked scopes version
+        const firstLevelScopes = scopes[0].children!;
         await expandScopesSelection(page, scopeName, USE_LIVE_DATA ? undefined : firstLevelScopes);
 
         scopeName = await getScopeTreeName(page, 1);
 
-        const secondLevelScopes = firstLevelScopes[0].children!; //used only in mocked scopes version
+        const secondLevelScopes = firstLevelScopes[0].children!;
         await expandScopesSelection(page, scopeName, USE_LIVE_DATA ? undefined : secondLevelScopes);
 
         const scopeSearchOne = await getScopeLeafTitle(page, 0);

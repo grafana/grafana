@@ -70,7 +70,9 @@ func (s *Seeder) Seed(ctx context.Context) error {
 	if len(previous) > 0 {
 		filtered := make(map[accesscontrol.SeedPermission]struct{}, len(previous))
 		for p := range previous {
-			if p.Action == pluginaccesscontrol.ActionAppAccess {
+			// Legacy plugin app access permissions (Origin set) are granted by default and managed outside seeding.
+			// Keep them out of the diff so seeding doesn't try to remove or "re-add" them on every run.
+			if p.Action == pluginaccesscontrol.ActionAppAccess && p.Origin != "" {
 				continue
 			}
 			if p.Origin != "" && !s.seededPlugins[p.Origin] {
@@ -262,7 +264,7 @@ func (s *Seeder) SeedRole(ctx context.Context, role accesscontrol.RoleDTO, built
 }
 
 func (s *Seeder) rememberPermissionAssignments(role *accesscontrol.RoleDTO, builtInRoles []string, excludedRoles []string) {
-	AppendDesiredPermissions(s.builtinsPermissions, s.log, role, builtInRoles, excludedRoles, true)
+	AppendDesiredPermissions(s.builtinsPermissions, s.log, role, builtInRoles, excludedRoles)
 }
 
 // AppendDesiredPermissions accumulates permissions from a role registration onto basic roles (Viewer/Editor/Admin/Grafana Admin).
@@ -274,7 +276,6 @@ func AppendDesiredPermissions(
 	role *accesscontrol.RoleDTO,
 	builtInRoles []string,
 	excludedRoles []string,
-	ignorePluginAppAccess bool,
 ) {
 	if out == nil || role == nil {
 		return
@@ -287,7 +288,7 @@ func AppendDesiredPermissions(
 		}
 
 		for _, perm := range role.Permissions {
-			if ignorePluginAppAccess && perm.Action == pluginaccesscontrol.ActionAppAccess {
+			if role.IsPlugin() && perm.Action == pluginaccesscontrol.ActionAppAccess {
 				logger.Debug("Role is attempting to grant access permission, but this permission is already granted by default and will be ignored",
 					"role", role.Name, "permission", perm.Action, "scope", perm.Scope)
 				continue

@@ -13,10 +13,9 @@ import {
   EventBusSrv,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getTemplateSrv, PanelRenderer } from '@grafana/runtime';
+import { config, getTemplateSrv, PanelRenderer } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { AdHocFilterItem, PanelChrome, withTheme2, Themeable2, PanelContextProvider } from '@grafana/ui';
-import { config } from 'app/core/config';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
@@ -104,9 +103,22 @@ export class TableContainer extends PureComponent<Props, State> {
     if (dataFrames?.length) {
       dataFrames = dataFrames.map((frame) => {
         frame.fields.forEach((field, index) => {
-          const hidden = showAll ? false : index >= MAX_NUMBER_OF_COLUMNS;
-          field.config.custom = { hidden };
-          dataLimited = dataLimited || hidden;
+          const custom = field.config.custom ?? {};
+
+          const hiddenByColumnLimit = showAll ? false : index >= MAX_NUMBER_OF_COLUMNS;
+          dataLimited = dataLimited || hiddenByColumnLimit;
+
+          const hiddenByDatasource = custom.hideFrom?.viz === true || custom.hidden === true;
+          const hidden = hiddenByDatasource || hiddenByColumnLimit;
+
+          field.config.custom = {
+            ...custom,
+            hidden,
+            hideFrom: {
+              ...custom.hideFrom,
+              viz: hidden,
+            },
+          };
         });
         return frame;
       });

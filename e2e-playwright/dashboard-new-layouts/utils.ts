@@ -79,6 +79,20 @@ export const flows = {
       await variableLabelInput.blur();
     }
   },
+  async addNewTextBoxVariable(dashboardPage: DashboardPage, variable: Variable) {
+    await flows.newEditPaneVariableClick(dashboardPage, selectors);
+    await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+    // set the textbox variable value
+    const type = 'variable-type Value';
+    const fieldLabel = dashboardPage.getByGrafanaSelector(
+      selectors.components.PanelEditor.OptionsPane.fieldLabel(type)
+    );
+    await expect(fieldLabel).toBeVisible();
+    const inputField = fieldLabel.locator('input');
+    await expect(inputField).toBeVisible();
+    await inputField.fill(variable.value);
+    await inputField.blur();
+  },
 };
 
 export type Variable = {
@@ -89,8 +103,16 @@ export type Variable = {
   value: string;
 };
 
-export async function saveDashboard(dashboardPage: DashboardPage, page: Page, selectors: E2ESelectorGroups) {
+export async function saveDashboard(
+  dashboardPage: DashboardPage,
+  page: Page,
+  selectors: E2ESelectorGroups,
+  title?: string
+) {
   await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
+  if (title) {
+    await page.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput).fill(title);
+  }
   await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
   await expect(page.getByText('Dashboard saved')).toBeVisible();
 }
@@ -196,6 +218,15 @@ export async function goToEmbeddedPanel(page: Page) {
   await page.goto(soloPanelUrl!);
 }
 
+export async function goToPanelSnapshot(page: Page) {
+  // extracting snapshot url from clipboard
+  const snapshotUrl = await page.evaluate(() => navigator.clipboard.readText());
+
+  expect(snapshotUrl).toBeDefined();
+
+  await page.goto(snapshotUrl);
+}
+
 export async function moveTab(
   dashboardPage: DashboardPage,
   page: Page,
@@ -248,4 +279,9 @@ export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage)
   if (confirmModal) {
     await confirmModal.click();
   }
+}
+
+export async function addNewPanelFromSidebar(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
+  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.addButton).click();
+  await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
 }

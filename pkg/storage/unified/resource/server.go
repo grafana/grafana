@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
@@ -35,13 +36,25 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
+	SearchServer
 	resourcepb.ResourceStoreServer
 	resourcepb.BulkStoreServer
+	resourcepb.BlobStoreServer
+	resourcepb.QuotasServer
+	resourcepb.DiagnosticsServer
+	ResourceServerStopper
+}
+
+// SearchServer implements the search-related gRPC services
+type SearchServer interface {
+	LifecycleHooks
 	resourcepb.ResourceIndexServer
 	resourcepb.ManagedObjectIndexServer
-	resourcepb.BlobStoreServer
 	resourcepb.DiagnosticsServer
-	resourcepb.QuotasServer
+}
+
+type ResourceServerStopper interface {
+	Stop(ctx context.Context) error
 }
 
 type ListIterator interface {
@@ -223,6 +236,9 @@ type ResourceServerOptions struct {
 	// Search options
 	Search SearchOptions
 
+	// Search client for the storage api
+	SearchClient resourcepb.ResourceIndexClient
+
 	// Quota service
 	OverridesService *OverridesService
 
@@ -260,6 +276,38 @@ type ResourceServerOptions struct {
 	QOSConfig QueueConfig
 
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
+}
+
+// NewSearchServer creates a standalone search server.
+func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
+	if opts.Backend == nil {
+		return nil, fmt.Errorf("missing backend implementation")
+	}
+	if opts.Diagnostics == nil {
+		opts.Diagnostics = &noopService{}
+	}
+
+	// Initialize the blob storage
+	blobstore, err := initializeBlobStorage(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the search server using the search.go factory
+	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.AccessClient, blobstore, opts.IndexMetrics, opts.OwnsIndexFn)
+	if err != nil || searchServer == nil {
+		return nil, fmt.Errorf("search server could not be created: %w", err)
+	}
+	searchServer.lifecycle = opts.Lifecycle
+	searchServer.backendDiagnostics = opts.Diagnostics
+
+	// Initialize the search server
+	ctx := context.Background()
+	if err := searchServer.Init(ctx); err != nil {
+		return nil, fmt.Errorf("failed to initialize search server: %w", err)
+	}
+
+	return searchServer, nil
 }
 
 func NewResourceServer(opts ResourceServerOptions) (*server, error) {
@@ -304,25 +352,9 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	}
 
 	// Initialize the blob storage
-	blobstore := opts.Blob.Backend
-	if blobstore == nil {
-		if opts.Blob.URL != "" {
-			ctx := context.Background()
-			bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
-			if err != nil {
-				return nil, err
-			}
-
-			blobstore, err = NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
-				Bucket: NewInstrumentedBucket(bucket, opts.Reg),
-			})
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			// Check if the backend supports blob storage
-			blobstore, _ = opts.Backend.(BlobSupport)
-		}
+	blobstore, err := initializeBlobStorage(opts)
+	if err != nil {
+		return nil, err
 	}
 
 	logger := log.New("resource-server")
@@ -342,31 +374,54 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		ctx:              ctx,
 		cancel:           cancel,
 		storageMetrics:   opts.storageMetrics,
-		indexMetrics:     opts.IndexMetrics,
 		maxPageSizeBytes: opts.MaxPageSizeBytes,
 		reg:              opts.Reg,
 		queue:            opts.QOSQueue,
 		queueConfig:      opts.QOSConfig,
 		overridesService: opts.OverridesService,
+		storageEnabled:   true,
 
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
+		s.search, err = newSearchServer(opts.Search, s.backend, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err := s.Init(ctx)
+	err = s.Init(ctx)
 	if err != nil {
 		s.log.Error("resource server init failed", "error", err)
 		return nil, err
 	}
 
 	return s, nil
+}
+
+// initializeBlobStorage initializes blob storage from the provided options.
+func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
+	if opts.Blob.Backend != nil {
+		return opts.Blob.Backend, nil
+	}
+
+	if opts.Blob.URL != "" {
+		ctx := context.Background()
+		bucket, err := OpenBlobBucket(ctx, opts.Blob.URL)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewCDKBlobSupport(ctx, CDKBlobSupportOptions{
+			Bucket: NewInstrumentedBucket(bucket, opts.Reg),
+		})
+	}
+
+	// Check if the backend supports blob storage
+	blobstore, _ := opts.Backend.(BlobSupport)
+	return blobstore, nil
 }
 
 var _ ResourceServer = &server{}
@@ -376,7 +431,7 @@ type server struct {
 	backend          StorageBackend
 	blob             BlobSupport
 	secure           secrets.InlineSecureValueSupport
-	search           *searchSupport
+	search           *searchServer
 	diagnostics      resourcepb.DiagnosticsServer
 	access           claims.AccessClient
 	writeHooks       WriteAccessHooks
@@ -384,7 +439,6 @@ type server struct {
 	now              func() int64
 	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics   *StorageMetrics
-	indexMetrics     *BleveIndexMetrics
 	overridesService *OverridesService
 
 	// Background watch task -- this has permissions for everything
@@ -405,6 +459,7 @@ type server struct {
 	// write operations to make sure that subsequent search by the same client will return up-to-date results.
 	// Set from SearchOptions.IndexMinUpdateInterval.
 	artificialSuccessfulWriteDelay time.Duration
+	storageEnabled                 bool
 }
 
 // Init implements ResourceServer.
@@ -429,7 +484,7 @@ func (s *server) Init(ctx context.Context) error {
 		}
 
 		// Start watching for changes
-		if s.initErr == nil {
+		if s.initErr == nil && s.storageEnabled {
 			s.initErr = s.initWatcher()
 		}
 
@@ -448,7 +503,7 @@ func (s *server) Stop(ctx context.Context) error {
 		err := s.lifecycle.Stop(ctx)
 		if err != nil {
 			stopFailed = true
-			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
+			s.initErr = fmt.Errorf("service stopped with error: %w", err)
 		}
 	}
 
@@ -815,7 +870,7 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 
 	// TODO: once we know the client is always sending the RV, require ResourceVersion > 0
 	// See: https://github.com/grafana/grafana/pull/111866
-	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
+	if req.ResourceVersion > 0 && !rvmanager.IsRvEqual(latest.ResourceVersion, req.ResourceVersion) {
 		return &resourcepb.UpdateResponse{
 			Error: &ErrOptimisticLockingFailed,
 		}, nil
@@ -883,7 +938,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		rsp.Error = latest.Error
 		return rsp, nil
 	}
-	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
+	if req.ResourceVersion > 0 && !rvmanager.IsRvEqual(latest.ResourceVersion, req.ResourceVersion) {
 		rsp.Error = &ErrOptimisticLockingFailed
 		return rsp, nil
 	}
@@ -1051,6 +1106,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	rsp := &resourcepb.ListResponse{}
 
 	key := req.Options.Key
+	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	checker, _, err := s.access.Compile(ctx, user, claims.ListRequest{
 		Group:     key.Group,
 		Resource:  key.Resource,
@@ -1059,6 +1115,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	})
 	var trashChecker claims.ItemChecker // only for trash
 	if req.Source == resourcepb.ListRequest_TRASH {
+		//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 		trashChecker, _, err = s.access.Compile(ctx, user, claims.ListRequest{
 			Group:     key.Group,
 			Resource:  key.Resource,
@@ -1164,6 +1221,7 @@ func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, t
 	return obj.GetUpdatedBy() == user.GetUID() || trashChecker(iter.Name(), iter.Folder())
 }
 
+// Start the server.broadcaster (requires that the backend storage services are enabled)
 func (s *server) initWatcher() error {
 	var err error
 	s.broadcaster, err = NewBroadcaster(s.ctx, func(out chan<- *WrittenEvent) error {
@@ -1202,6 +1260,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 
 	key := req.Options.Key
+	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	checker, _, err := s.access.Compile(ctx, user, claims.ListRequest{
 		Group:     key.Group,
 		Resource:  key.Resource,
@@ -1379,6 +1438,11 @@ func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchReque
 	return s.search.Search(ctx, req)
 }
 
+// StatsGetter provides resource statistics (via search index or backend).
+type StatsGetter interface {
+	GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error)
+}
+
 // GetStats implements ResourceServer.
 func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	if err := s.Init(ctx); err != nil {
@@ -1387,7 +1451,7 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 
 	if s.search == nil {
 		// If the backend implements "GetStats", we can use it
-		srv, ok := s.backend.(resourcepb.ResourceIndexServer)
+		srv, ok := s.backend.(StatsGetter)
 		if ok {
 			return srv.GetStats(ctx, req)
 		}

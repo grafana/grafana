@@ -1,4 +1,6 @@
 export const PROVISIONING_URL = '/admin/provisioning';
+export const CONNECTIONS_URL = `${PROVISIONING_URL}/connections`;
+export const CONNECTIONS_TAB_URL = `${PROVISIONING_URL}?tab=connections`;
 export const CONNECT_URL = `${PROVISIONING_URL}/connect`;
 export const GETTING_STARTED_URL = `${PROVISIONING_URL}/getting-started`;
 export const UPGRADE_URL = 'https://grafana.com/profile/org/subscription';

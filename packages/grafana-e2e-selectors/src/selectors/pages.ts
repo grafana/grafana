@@ -190,6 +190,9 @@ export const versionedPages = {
       outlineButton: {
         '12.4.0': 'data-testid Dashboard Sidebar outline button',
       },
+      addButton: {
+        '12.4.0': 'data-testid Dashboard Sidebar new button',
+      },
     },
     DashNav: {
       nav: {
@@ -265,6 +268,9 @@ export const versionedPages = {
     },
     Controls: {
       '11.1.0': 'data-testid dashboard controls',
+    },
+    ControlsButton: {
+      '12.3.0': 'data-testid dashboard controls button',
     },
     SubMenu: {
       submenu: {
@@ -972,6 +978,11 @@ export const versionedPages = {
       },
       addFromQueryLibrary: {
         '11.5.0': 'data-testid explore add from query library button',
+      },
+    },
+    toolbar: {
+      add: {
+        '12.4.0': (key: string) => `data-testid explore-toolbar-add-button ${key}`,
       },
     },
     QueryHistory: {

@@ -32,8 +32,9 @@ function getField(cache: FieldCache, name: string, fieldType: FieldType): FieldW
 const DATAPLANE_TIMESTAMP_NAME = 'timestamp';
 const DATAPLANE_BODY_NAME = 'body';
 const DATAPLANE_SEVERITY_NAME = 'severity';
-const DATAPLANE_ID_NAME = 'id';
-const DATAPLANE_LABELS_NAME = 'labels';
+export const DATAPLANE_ID_NAME = 'id';
+export const DATAPLANE_LABELS_NAME = 'labels';
+export const DATAPLANE_LABEL_TYPES_NAME = 'labelTypes';
 
 // NOTE: this is a hot fn, we need to avoid allocating new objects here
 export function logFrameLabelsToLabels(logFrameLabels: LogFrameLabels): Labels {

@@ -8,6 +8,7 @@ import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
@@ -91,7 +92,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      update.editPanel = buildPanelEditScene(panel);
+      update.editPanel = buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID);
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;
     }
@@ -126,7 +127,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   private _waitForLibPanelToLoadBeforeEnteringPanelEdit(panel: VizPanel, libPanel: LibraryPanelBehavior) {
     const sub = libPanel.subscribeToState((state) => {
       if (state.isLoaded) {
-        this._scene.setState({ editPanel: buildPanelEditScene(panel) });
+        this._scene.setState({
+          editPanel: buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID),
+        });
         sub.unsubscribe();
       }
     });

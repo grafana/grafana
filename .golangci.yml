@@ -67,14 +67,6 @@ linters:
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apiserver is not allowed to import grafana core
-        apps-investigation:
-          list-mode: lax
-          files:
-            - ./apps/investigations/*
-            - ./apps/investigations/**/*
-          deny:
-            - pkg: github.com/grafana/grafana/pkg
-              desc: apps/investigations is not allowed to import grafana core
         apps-playlist:
           list-mode: lax
           files:
@@ -129,6 +121,8 @@ linters:
             - '**/pkg/tsdb/zipkin/**/*'
             - '**/pkg/tsdb/jaeger/*'
             - '**/pkg/tsdb/jaeger/**/*'
+            - '**/pkg/tsdb/elasticsearch/*'
+            - '**/pkg/tsdb/elasticsearch/**/*'
           deny:
             - pkg: github.com/grafana/grafana/pkg/api
               desc: Core plugins are not allowed to depend on Grafana core packages

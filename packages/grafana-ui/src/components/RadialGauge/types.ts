@@ -2,6 +2,8 @@ export type RadialTextMode = 'auto' | 'value_and_name' | 'value' | 'name' | 'non
 export type RadialShape = 'circle' | 'gauge';
 
 export interface RadialGaugeDimensions {
+  vizHeight: number;
+  vizWidth: number;
   margin: number;
   radius: number;
   centerX: number;
