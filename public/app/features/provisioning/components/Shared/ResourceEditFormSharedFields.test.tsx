@@ -112,11 +112,9 @@ describe('ResourceEditFormSharedFields', () => {
     });
 
     it('should render workflow fields when repository is true', () => {
-      setup({ repository: mockRepo.github });
+      setup({ repository: mockRepo.github, workflow: 'write', formDefaultValues: { workflow: 'write' } });
 
-      expect(screen.getByRole('radiogroup')).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: 'Push to an existing branch' })).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: 'Push to a new branch' })).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     });
   });
 
@@ -143,19 +141,16 @@ describe('ResourceEditFormSharedFields', () => {
   });
 
   describe('Workflow Fields', () => {
-    it('should not render branch field when workflow is write', () => {
+    it('should render branch field when workflow is write', () => {
       setup({ formDefaultValues: { workflow: 'write' }, repository: mockRepo.github, workflow: 'write' });
 
-      expect(screen.getByText('Workflow')).toBeInTheDocument();
-      expect(screen.queryByRole('textbox', { name: /branch/i })).not.toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     });
 
     it('should render branch field when workflow is branch', () => {
       setup({ formDefaultValues: { workflow: 'branch' }, repository: mockRepo.github, workflow: 'branch' });
 
-      expect(screen.getByText('Workflow')).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /branch/i })).toBeInTheDocument();
-      expect(screen.getByText('Branch name in GitHub')).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     });
   });
 
@@ -178,13 +173,19 @@ describe('ResourceEditFormSharedFields', () => {
       expect(commentTextarea).toHaveValue('Test comment');
     });
 
-    it('should allow selecting workflow options', async () => {
-      const { user } = setup({ repository: mockRepo.github });
+    it('should allow selecting a branch value', async () => {
+      const { user } = setup({
+        repository: mockRepo.github,
+        workflow: 'write',
+        formDefaultValues: { workflow: 'write' },
+      });
 
-      const branchOption = screen.getByRole('radio', { name: 'Push to a new branch' });
-      await user.click(branchOption);
+      const branchInput = screen.getByRole('combobox', { name: /branch/i });
+      await user.click(branchInput);
+      await user.type(branchInput, 'feature-branch');
+      await user.keyboard('{Enter}');
 
-      expect(branchOption).toBeChecked();
+      expect(branchInput).toHaveValue('feature-branch');
     });
 
     it('should allow typing in branch field when workflow is branch', async () => {
@@ -194,8 +195,10 @@ describe('ResourceEditFormSharedFields', () => {
         workflow: 'branch',
       });
 
-      const branchInput = screen.getByRole('textbox', { name: /branch/i });
+      const branchInput = screen.getByRole('combobox', { name: /branch/i });
+      await user.click(branchInput);
       await user.type(branchInput, 'feature-branch');
+      await user.keyboard('{Enter}');
 
       expect(branchInput).toHaveValue('feature-branch');
     });
@@ -242,8 +245,10 @@ describe('ResourceEditFormSharedFields', () => {
         workflow: 'branch',
       });
 
-      const branchInput = screen.getByRole('textbox', { name: /branch/i });
+      const branchInput = screen.getByRole('combobox', { name: /branch/i });
+      await user.click(branchInput);
       await user.type(branchInput, 'invalid//branch'); // Invalid branch name with consecutive slashes
+      await user.keyboard('{Enter}');
 
       // Trigger validation by blurring the field
       await user.tab();
