@@ -9,26 +9,27 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
-const lastImportTimesSection = "unified/last_import"
+const lastImportTimesSection = kv.LastImportTimeSection
 
 type lastImportStore struct {
 	kv KV
 }
 
-type LastImportKey struct {
+type LastImportTimeKey struct {
 	Namespace      string
 	Group          string
 	Resource       string
 	LastImportTime uint64
 }
 
-func (k LastImportKey) String() string {
+func (k LastImportTimeKey) String() string {
 	return fmt.Sprintf("%s~%s~%s~%d", k.Namespace, k.Group, k.Resource, k.LastImportTime)
 }
 
-func (k LastImportKey) Validate() error {
+func (k LastImportTimeKey) Validate() error {
 	if k.Namespace == "" {
 		return NewValidationError("namespace", k.Namespace, ErrNamespaceRequired)
 	}
@@ -45,7 +46,7 @@ func (k LastImportKey) Validate() error {
 	return nil
 }
 
-func (k LastImportKey) ToResourceLastImportTime() ResourceLastImportTime {
+func (k LastImportTimeKey) ToResourceLastImportTime() ResourceLastImportTime {
 	return ResourceLastImportTime{
 		NamespacedResource: NamespacedResource{
 			Namespace: k.Namespace,
@@ -56,24 +57,23 @@ func (k LastImportKey) ToResourceLastImportTime() ResourceLastImportTime {
 	}
 }
 
-func ParseLastImportKey(key string) (LastImportKey, error) {
+func ParseLastImportKey(key string) (LastImportTimeKey, error) {
 	parts := strings.Split(key, "~")
 	if len(parts) != 4 {
-		return LastImportKey{}, fmt.Errorf("invalid key format: expected 4 parts, got %d", len(parts))
+		return LastImportTimeKey{}, fmt.Errorf("invalid key format: expected 4 parts, got %d", len(parts))
 	}
 
 	t, err := strconv.ParseUint(parts[3], 10, 64)
 	if err != nil {
-		return LastImportKey{}, fmt.Errorf("invalid timestamp: %w", err)
+		return LastImportTimeKey{}, fmt.Errorf("invalid timestamp: %w", err)
 	}
 
-	return LastImportKey{
+	return LastImportTimeKey{
 		Namespace:      parts[0],
 		Group:          parts[1],
 		Resource:       parts[2],
 		LastImportTime: t,
 	}, nil
-
 }
 
 func newLastImportStore(kv KV) *lastImportStore {
@@ -83,7 +83,7 @@ func newLastImportStore(kv KV) *lastImportStore {
 }
 
 func (n *lastImportStore) Save(ctx context.Context, time ResourceLastImportTime) error {
-	k := LastImportKey{
+	k := LastImportTimeKey{
 		Namespace:      time.Namespace,
 		Group:          time.Group,
 		Resource:       time.Resource,
@@ -102,20 +102,20 @@ func (n *lastImportStore) Save(ctx context.Context, time ResourceLastImportTime)
 	return writer.Close()
 }
 
-func (n *lastImportStore) ListLastImportTimes(ctx context.Context) iter.Seq2[LastImportKey, error] {
-	return func(yield func(LastImportKey, error) bool) {
+func (n *lastImportStore) ListLastImportTimes(ctx context.Context) iter.Seq2[LastImportTimeKey, error] {
+	return func(yield func(LastImportTimeKey, error) bool) {
 		for k, err := range n.kv.Keys(ctx, lastImportTimesSection, ListOptions{
 			Sort:  SortOrderAsc,
 			Limit: 0, // Get all.
 		}) {
 			if err != nil {
-				yield(LastImportKey{}, err)
+				yield(LastImportTimeKey{}, err)
 				return
 			}
 
 			key, err := ParseLastImportKey(k)
 			if err != nil {
-				yield(LastImportKey{}, err)
+				yield(LastImportTimeKey{}, err)
 				return
 			}
 			if !yield(key, nil) {

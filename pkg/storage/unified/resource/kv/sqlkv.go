@@ -15,8 +15,13 @@ import (
 )
 
 const (
-	DataSection   = "unified/data"
-	EventsSection = "unified/events"
+	DataSection           = "unified/data"
+	EventsSection         = "unified/events"
+	LastImportTimeSection = "unified/last_import"
+)
+
+const (
+	resourceLastImportTimeTable = "resource_last_import_time"
 )
 
 var _ KV = &SqlKV{}
@@ -50,13 +55,14 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		return nil, fmt.Errorf("section is required")
 	}
 
-	if section != DataSection && section != EventsSection {
-		return nil, fmt.Errorf("invalid section: %s", section)
-	}
-
-	tableName := "resource_events"
-	if section == DataSection {
+	tableName := ""
+	switch section {
+	case EventsSection:
+		tableName = "resource_events"
+	case DataSection:
 		tableName = "resource_history"
+	default:
+		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
 	return &queryBuilder{
@@ -85,6 +91,11 @@ func (k *SqlKV) Ping(ctx context.Context) error {
 
 func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
+		if section == LastImportTimeSection {
+			k.lastImportTimeKeys(ctx, opt, yield)
+			return
+		}
+
 		qb, err := k.getQueryBuilder(section)
 		if err != nil {
 			yield("", err)
@@ -200,11 +211,14 @@ func (k *SqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 	if section == "" {
 		return nil, fmt.Errorf("section is required")
 	}
-	if section != DataSection && section != EventsSection {
-		return nil, fmt.Errorf("invalid section: %s", section)
-	}
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
+	}
+	if section == LastImportTimeSection {
+		return k.saveLastImportTime(ctx, key)
+	}
+	if section != DataSection && section != EventsSection {
+		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
 	return &sqlWriteCloser{

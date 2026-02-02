@@ -1308,6 +1308,8 @@ func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.
 	// Collect all and keep only the latest import time per resource.
 	result := map[NamespacedResource]ResourceLastImportTime{}
 
+	// TODO: delete old import times.
+
 	for key, err := range k.lastImportStore.ListLastImportTimes(ctx) {
 		if err != nil {
 			return func(yield func(ResourceLastImportTime, error) bool) { yield(ResourceLastImportTime{}, err) }

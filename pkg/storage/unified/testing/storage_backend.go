@@ -1583,6 +1583,10 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		// Verify that last import time for ns1 folders are unchanged
 		ns1FoldersKey := resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}
 		require.Equal(t, result1[ns1FoldersKey], result2[ns1FoldersKey])
+
+		// Last import time for ns1 dashboard has been updated
+		ns1DashboardsKey := resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}
+		require.NotEqual(t, result1[ns1DashboardsKey], result2[ns1DashboardsKey])
 	})
 }
 
@@ -1595,24 +1599,25 @@ func collectLastImportedTimes(t *testing.T, backend resource.StorageBackend, ctx
 	return result
 }
 
-func toBulkIterator(reqs []*resourcepb.BulkRequest) resource.BulkRequestIterator {
-	it := &sliceBulkRequestIterator{}
-	*it = reqs
-	return it
+type sliceBulkRequestIterator struct {
+	ix    int
+	items []*resourcepb.BulkRequest
 }
 
-type sliceBulkRequestIterator []*resourcepb.BulkRequest
+func toBulkIterator(items []*resourcepb.BulkRequest) *sliceBulkRequestIterator {
+	return &sliceBulkRequestIterator{ix: -1, items: items}
+}
 
 func (s *sliceBulkRequestIterator) Next() bool {
-	if len(*s) > 1 {
-		*s = (*s)[1:]
+	s.ix++
+	if s.ix < len(s.items) {
 		return true
 	}
 	return false
 }
 
 func (s *sliceBulkRequestIterator) Request() *resourcepb.BulkRequest {
-	return (*s)[0]
+	return s.items[s.ix]
 }
 
 func (s *sliceBulkRequestIterator) RollbackRequested() bool {
