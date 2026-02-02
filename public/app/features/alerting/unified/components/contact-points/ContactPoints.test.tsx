@@ -520,7 +520,7 @@ describe('contact points', () => {
       const { user } = renderWithProvider(<ContactPoint contactPoint={contactPointWithEverything} />);
 
       expect(screen.getByText(/used by 3 alert rules/i)).toBeInTheDocument();
-      expect(screen.getByText(/used by 1 notification policies/i)).toBeInTheDocument();
+      expect(screen.getByText(/used by 1 notification policy/i)).toBeInTheDocument();
 
       await clickMoreActionsButton(contactPointWithEverything.name);
       const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
@@ -544,7 +544,7 @@ describe('contact points', () => {
       };
       const { user } = renderWithProvider(<ContactPoint contactPoint={contactPointWithRule} />);
 
-      expect(screen.getByText(/used by 1 alert rules/i)).toBeInTheDocument();
+      expect(screen.getByText(/used by 1 alert rule/i)).toBeInTheDocument();
 
       await clickMoreActionsButton(contactPointWithEverything.name);
       const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
