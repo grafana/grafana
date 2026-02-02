@@ -77,7 +77,10 @@ export default function ConnectionFormPage() {
                   This GitHub App connection has lost access. The app may have been uninstalled or the repository access
                   was revoked.
                 </Trans>
-                {disconnectMessage && <Text element="p">{disconnectMessage}</Text>}
+                {/*Field errors are shown inline in the form*/}
+                {!!disconnectMessage && !connection?.status?.fieldErrors?.length && (
+                  <Text element="p">{disconnectMessage}</Text>
+                )}
               </Alert>
             )}
             {!isCreate && connectedRepos.length > 0 && (

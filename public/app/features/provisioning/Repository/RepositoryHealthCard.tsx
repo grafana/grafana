@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Link } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -6,6 +7,7 @@ import { Badge, Card, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
+import { CONNECTIONS_URL } from '../constants';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { formatTimestamp } from '../utils/time';
 
@@ -15,7 +17,7 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
   const status = repo.status;
   const connectionName = repo.spec?.connection?.name;
-  const { connection, isDisconnected } = useConnectionStatus(connectionName);
+  const { connection } = useConnectionStatus(connectionName);
 
   return (
     <Card noMargin className={styles.card}>
@@ -73,24 +75,12 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
                 <Trans i18nKey="provisioning.repository-overview.connection-status">Connection status:</Trans>
               </Text>
               <div className={styles.spanTwo}>
-                <ConnectionStatusBadge
-                  key={connection?.status?.conditions?.find((c) => c.type === 'Ready')?.status || 'pending'}
-                  status={connection?.status}
-                />
-              </div>
-            </>
-          )}
-
-          {/* Connection disconnected warning */}
-          {connectionName && isDisconnected && (
-            <>
-              <div />
-              <div className={styles.spanTwo}>
-                <Text color="error">
-                  <Trans i18nKey="provisioning.repository-health.connection-disconnected-message">
-                    This repository can no longer access GitHub through this connection.
-                  </Trans>
-                </Text>
+                <Link to={`${CONNECTIONS_URL}/${connectionName}/edit`}>
+                  <ConnectionStatusBadge
+                    key={connection?.status?.conditions?.find((c) => c.type === 'Ready')?.status || 'pending'}
+                    status={connection?.status}
+                  />
+                </Link>
               </div>
             </>
           )}
