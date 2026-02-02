@@ -17,7 +17,6 @@ export function RepositoryTokenInput() {
     setValue,
     formState: { errors },
     getValues,
-    watch,
   } = useFormContext<WizardFormData>();
 
   const type = getValues('repository.type');

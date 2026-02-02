@@ -60,6 +60,7 @@ export function RepositoriesList({ isSelectedConnectionReady }: { isSelectedConn
       error={errors?.repository?.url?.message}
       invalid={Boolean(errors?.repository?.url?.message)}
       required={gitFields.urlConfig.required}
+      htmlFor="repository-url"
     >
       <Controller
         name="repository.url"

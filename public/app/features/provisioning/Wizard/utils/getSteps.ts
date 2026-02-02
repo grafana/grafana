@@ -20,11 +20,11 @@ export const getSteps = (type: RepoType, githubAuthType?: GitHubAuthType): Array
   steps.push({
     id: 'connection',
     name:
-      type === 'github' && githubAuthType === 'github-app'
+      type === 'github'
         ? t('provisioning.wizard.step-configure-repo', 'Configure repository')
         : t('provisioning.wizard.step-connect', 'Connect'),
     title:
-      type === 'github' && githubAuthType === 'github-app'
+      type === 'github'
         ? t('provisioning.wizard.title-configure-repo', 'Configure repository')
         : t('provisioning.wizard.title-connect', 'Connect to external storage'),
     submitOnNext: true,
