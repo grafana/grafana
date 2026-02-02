@@ -36,7 +36,6 @@ type MockResourceIndex struct {
 }
 
 func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
-	// Fall back to buildInfo field if not mocked
 	return m.buildInfo, nil
 }
 
@@ -89,9 +88,8 @@ func (m *MockDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 
 // mockStorageBackend implements StorageBackend for testing
 type mockStorageBackend struct {
-	resourceStats        []ResourceStats
-	lastImportTimes      []ResourceLastImportTime
-	lastImportTimesError error
+	resourceStats   []ResourceStats
+	lastImportTimes []ResourceLastImportTime
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -133,10 +131,6 @@ func (m *mockStorageBackend) ListModifiedSince(ctx context.Context, key Namespac
 
 func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return func(yield func(ResourceLastImportTime, error) bool) {
-		if m.lastImportTimesError != nil {
-			yield(ResourceLastImportTime{}, m.lastImportTimesError)
-			return
-		}
 		for _, ti := range m.lastImportTimes {
 			if !yield(ti, nil) {
 				return
@@ -801,8 +795,12 @@ func TestRebuildIndexes(t *testing.T) {
 
 		rebuildReq := &resourcepb.RebuildIndexesRequest{
 			Namespace: "ns",
-			// Empty keys means check all open indexes, but since there are no rebuild conditions, nothing will be rebuilt
-			Keys: []*resourcepb.ResourceKey{},
+			// Explicitly specify keys to check - no rebuild conditions, so nothing will be rebuilt
+			Keys: []*resourcepb.ResourceKey{
+				{Namespace: key1.Namespace, Group: key1.Group, Resource: key1.Resource},
+				{Namespace: key2.Namespace, Group: key2.Group, Resource: key2.Resource},
+				{Namespace: key3.Namespace, Group: key3.Group, Resource: key3.Resource},
+			},
 		}
 
 		rsp, err := support.RebuildIndexes(context.Background(), rebuildReq)
