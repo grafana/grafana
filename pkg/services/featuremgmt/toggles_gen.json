@@ -3083,7 +3083,8 @@
       "metadata": {
         "name": "newFiltersUI",
         "resourceVersion": "1764664939750",
-        "creationTimestamp": "2024-08-30T12:48:13Z"
+        "creationTimestamp": "2024-08-30T12:48:13Z",
+        "deletionTimestamp": "2026-02-02T09:46:54Z"
       },
       "spec": {
         "description": "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",

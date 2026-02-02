@@ -1071,13 +1071,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:        "newFiltersUI",
-			Description: "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:         "vizActionsAuth",
 			Description:  "Allows authenticated API calls in actions",
 			Stage:        FeatureStagePublicPreview,

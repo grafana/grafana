@@ -685,11 +685,6 @@ export interface FeatureToggles {
   */
   dataplaneAggregator?: boolean;
   /**
-  * Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
-  * @default true
-  */
-  newFiltersUI?: boolean;
-  /**
   * Allows authenticated API calls in actions
   * @default false
   */
