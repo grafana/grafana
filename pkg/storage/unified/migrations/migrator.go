@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+const IndexRebuildBufferDuration = 30 * time.Second
+
 // Read from legacy and write into unified storage
 //
 //go:generate mockery --name UnifiedMigrator --structname MockUnifiedMigrator --inpackage --filename migrator_mock.go --with-expecter
