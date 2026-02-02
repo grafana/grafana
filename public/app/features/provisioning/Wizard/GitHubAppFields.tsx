@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
@@ -9,7 +8,7 @@ import { extractErrorMessage } from 'app/api/utils';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
-import { useConnectionList } from '../hooks/useConnectionList';
+import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { ConnectionFormData } from '../types';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
@@ -17,11 +16,11 @@ import { getConnectionFormErrors } from '../utils/getFormErrors';
 import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
 import { ConnectionCreationResult, WizardFormData } from './types';
 
-interface GitHubAppStepProps {
+interface GitHubAppFieldsProps {
   onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
 }
 
-export function GitHubAppStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
+export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
   const {
     control,
     watch,
@@ -41,10 +40,15 @@ export function GitHubAppStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
   });
 
   const [createConnection] = useCreateOrUpdateConnection();
-  const [connections, isLoading, connectionListError, refetchConnections] = useConnectionList({});
+  const {
+    options: connectionOptions,
+    isLoading,
+    connections: githubConnections,
+    error: connectionListError,
+    refetch: refetchConnections,
+  } = useConnectionOptions(true);
 
   const [githubAppMode, githubAppConnectionName] = watch(['githubAppMode', 'githubApp.connectionName']);
-  const githubConnections = useMemo(() => connections?.filter((c) => c.spec?.type === 'github') ?? [], [connections]);
   const selectedConnection = githubConnections.find((c) => c.metadata?.name === githubAppConnectionName);
   const handleCreateConnection = async () => {
     const isValid = await credentialForm.trigger();
@@ -100,16 +104,6 @@ export function GitHubAppStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
       onGitHubAppSubmit({ success: false, error: extractErrorMessage(error) || defaultErrorMessage });
     }
   };
-
-  const connectionOptions = useMemo(
-    () =>
-      githubConnections.map((connection) => ({
-        value: connection.metadata?.name ?? '',
-        label: connection.spec?.title ?? connection.metadata?.name ?? '',
-        description: connection.spec?.description,
-      })),
-    [githubConnections]
-  );
 
   return (
     <Stack direction="column" gap={2}>

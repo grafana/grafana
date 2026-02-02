@@ -13,6 +13,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useBranchOptions } from '../hooks/useBranchOptions';
+import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
@@ -27,6 +28,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
 
 jest.mock('../hooks/useCreateOrUpdateRepository');
 jest.mock('../hooks/useBranchOptions');
+jest.mock('../hooks/useConnectionOptions');
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
   useGetFrontendSettingsQuery: jest.fn(),
@@ -53,6 +55,7 @@ const mockUseGetResourceStatsQuery = useGetResourceStatsQuery as jest.MockedFunc
 const mockUseCreateRepositoryJobsMutation = useCreateRepositoryJobsMutation as jest.MockedFunction<
   typeof useCreateRepositoryJobsMutation
 >;
+const mockUseConnectionOptions = useConnectionOptions as jest.MockedFunction<typeof useConnectionOptions>;
 
 function setup(jsx: JSX.Element) {
   return render(<StepStatusProvider>{jsx}</StepStatusProvider>);
@@ -68,6 +71,9 @@ async function typeIntoTokenField(user: UserEvent, placeholder: string, value: s
 
 async function navigateToConnectionStep(user: UserEvent, type: 'github' | 'gitlab' | 'bitbucket' | 'local' | 'git') {
   if (type === 'github') {
+    // Select PAT option (GitHub App is the default)
+    await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
+
     // Fill PAT + repo URL on auth step
     await user.type(screen.getByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx'), 'test-token');
     await user.type(screen.getByPlaceholderText('https://github.com/owner/repository'), 'https://github.com/test/repo');
@@ -138,6 +144,15 @@ describe('ProvisioningWizard', () => {
       ],
       loading: false,
       error: null,
+    });
+
+    // Mock useConnectionOptions to prevent async state updates
+    mockUseConnectionOptions.mockReturnValue({
+      options: [],
+      isLoading: false,
+      connections: [],
+      error: undefined,
+      refetch: jest.fn(),
     });
 
     mockUseGetFrontendSettingsQuery.mockReturnValue({
@@ -536,6 +551,9 @@ describe('ProvisioningWizard', () => {
 
       const { user } = setup(<ProvisioningWizard type="github" />);
 
+      // Select PAT option (GitHub App is the default)
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
+
       await user.type(screen.getByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx'), 'test-token');
 
       const repoUrlInput = screen.getByPlaceholderText('https://github.com/owner/repository');
@@ -557,6 +575,9 @@ describe('ProvisioningWizard', () => {
   describe('Form Validation', () => {
     it('should validate required fields on connection step', async () => {
       const { user } = setup(<ProvisioningWizard type="github" />);
+
+      // Select PAT option (GitHub App is the default)
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       await user.type(screen.getByPlaceholderText('ghp_xxxxxxxxxxxxxxxxxxxx'), 'test-token');
       await user.type(

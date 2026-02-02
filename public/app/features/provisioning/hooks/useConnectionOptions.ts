@@ -16,7 +16,7 @@ interface ExternalRepository {
 }
 
 export function useConnectionOptions(enabled: boolean) {
-  const [connections, connectionsLoading] = useConnectionList(enabled ? {} : skipToken);
+  const [connections, connectionsLoading, error, refetch] = useConnectionList(enabled ? {} : skipToken);
   const githubConnections = useMemo(() => connections?.filter((c) => c.spec?.type === 'github') ?? [], [connections]);
 
   const connectionNames = useMemo(
@@ -91,5 +91,11 @@ export function useConnectionOptions(enabled: boolean) {
     });
   }, [githubConnections, reposByConnection, reposLoading]);
 
-  return { options, isLoading: connectionsLoading || reposLoading };
+  return {
+    options,
+    isLoading: connectionsLoading || reposLoading,
+    connections: githubConnections,
+    error,
+    refetch,
+  };
 }

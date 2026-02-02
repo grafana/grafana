@@ -52,7 +52,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       migrate: {
         history: true,
       },
-      githubAuthType: 'pat',
+      githubAuthType: 'github-app',
       githubAppMode: 'existing',
       githubApp: {},
     },

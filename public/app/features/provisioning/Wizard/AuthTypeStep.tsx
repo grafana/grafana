@@ -3,12 +3,12 @@ import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Connection } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
-import { Trans, t } from '@grafana/i18n';
-import { RadioButtonGroup, Stack, Text } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Field, RadioButtonGroup, Stack } from '@grafana/ui';
 
 import { useConnectionList } from '../hooks/useConnectionList';
 
-import { GitHubAppStep } from './GitHubAppStep';
+import { GitHubAppFields } from './GitHubAppFields';
 import { RepositoriesList } from './components/RepositoriesList';
 import { RepositoryTokenInput } from './components/RepositoryTokenInput';
 import { ConnectionCreationResult, GitHubAuthType, WizardFormData } from './types';
@@ -20,20 +20,11 @@ interface AuthTypeOption {
   icon: 'key-skeleton-alt' | 'github';
 }
 
-interface GitHubAppStepProps {
+interface AuthTypeStepProps {
   onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
 }
 
 const getAuthTypeOptions = (): AuthTypeOption[] => [
-  {
-    id: 'pat',
-    label: t('provisioning.wizard.auth-type-pat-label', 'Connect with Personal Access Token'),
-    description: t(
-      'provisioning.wizard.auth-type-pat-description',
-      'Use a personal access token to authenticate with GitHub. Suitable for individual use and testing.'
-    ),
-    icon: 'key-skeleton-alt',
-  },
   {
     id: 'github-app',
     label: t('provisioning.wizard.auth-type-github-app-label', 'Connect with GitHub App'),
@@ -43,9 +34,18 @@ const getAuthTypeOptions = (): AuthTypeOption[] => [
     ),
     icon: 'github',
   },
+  {
+    id: 'pat',
+    label: t('provisioning.wizard.auth-type-pat-label', 'Connect with Personal Access Token'),
+    description: t(
+      'provisioning.wizard.auth-type-pat-description',
+      'Use a personal access token to authenticate with GitHub. Suitable for individual use and testing.'
+    ),
+    icon: 'key-skeleton-alt',
+  },
 ];
 
-export function AuthTypeStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
+export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
   const { control, watch } = useFormContext<WizardFormData>();
   const [githubAuthType, githubAppMode, githubAppConnectionName] = watch([
     'githubAuthType',
@@ -65,14 +65,14 @@ export function AuthTypeStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
 
   return (
     <Stack direction="column" gap={2}>
-      <Text variant="bodySmall" color="secondary">
-        <Trans i18nKey="provisioning.wizard.auth-type-subtitle">
-          Both methods provide secure access to your GitHub repositories. Choose the one that best fits your workflow
-          and security requirements.
-        </Trans>
-      </Text>
-
-      <Stack>
+      <Field
+        noMargin
+        label={t('provisioning.wizard.auth-type-label', 'Authentication method')}
+        description={t(
+          'provisioning.wizard.auth-type-description',
+          'Both methods provide secure access to your GitHub repositories. Choose the one that best fits your workflow and security requirements.'
+        )}
+      >
         <Controller
           name="githubAuthType"
           control={control}
@@ -88,10 +88,10 @@ export function AuthTypeStep({ onGitHubAppSubmit }: GitHubAppStepProps) {
             />
           )}
         />
-      </Stack>
+      </Field>
 
       {githubAuthType === 'github-app' ? (
-        <GitHubAppStep onGitHubAppSubmit={onGitHubAppSubmit} />
+        <GitHubAppFields onGitHubAppSubmit={onGitHubAppSubmit} />
       ) : (
         <RepositoryTokenInput />
       )}
