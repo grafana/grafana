@@ -207,13 +207,13 @@ func ProvideZanzanaService(cfg *setting.Cfg, features featuremgmt.FeatureToggles
 type Zanzana struct {
 	*services.BasicService
 
-	cfg *setting.Cfg
-
-	logger   log.Logger
-	tracer   tracing.Tracer
-	handle   grpcserver.Provider
-	features featuremgmt.FeatureToggles
-	reg      prometheus.Registerer
+	cfg           *setting.Cfg
+	zanzanaServer zanzana.Server
+	logger        log.Logger
+	tracer        tracing.Tracer
+	handle        grpcserver.Provider
+	features      featuremgmt.FeatureToggles
+	reg           prometheus.Registerer
 }
 
 func (z *Zanzana) start(ctx context.Context) error {
@@ -291,6 +291,7 @@ func (z *Zanzana) running(ctx context.Context) error {
 func (z *Zanzana) stopping(err error) error {
 	if err != nil && !errors.Is(err, context.Canceled) {
 		z.logger.Error("Stopping zanzana due to unexpected error", "err", err)
+		z.zanzanaServer.Close()
 	}
 	return nil
 }

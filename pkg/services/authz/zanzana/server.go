@@ -9,4 +9,5 @@ import (
 type Server interface {
 	authzv1.AuthzServiceServer
 	authzextv1.AuthzExtentionServiceServer
+	Close()
 }
