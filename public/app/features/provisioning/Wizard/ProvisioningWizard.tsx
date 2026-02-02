@@ -205,11 +205,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
           />
           <Stack direction="column">
             <Box marginBottom={2}>
-              <Text element="h2">
-                {activeStep === 'authType'
-                  ? (currentStepConfig?.title ?? '')
-                  : `${visibleStepIndex + 1}. ${currentStepConfig?.title ?? ''}`}
-              </Text>
+              <Text element="h2">{`${visibleStepIndex + 1}. ${currentStepConfig?.title ?? ''}`}</Text>
             </Box>
 
             {hasStepError && 'error' in stepStatusInfo && (
