@@ -21,13 +21,11 @@ import (
 	"github.com/grafana/grafana/apps/dashvalidator/pkg/validator"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type DashValidatorConfig struct {
 	DatasourceSvc      datasources.DataSourceService
-	PluginCtx          *plugincontext.Provider
 	HTTPClientProvider httpclient.Provider
 	MetricsCache       *cache.MetricsCache                      // Injected by register.go
 	Validators         map[string]validator.DatasourceValidator // Injected by register.go, keyed by datasource type
@@ -104,7 +102,7 @@ func New(cfg app.Config) (app.App, error) {
 					Namespaced: true,
 					Path:       "check",
 					Method:     "POST",
-				}: handleCheckRoute(log, specificConfig.DatasourceSvc, specificConfig.PluginCtx, specificConfig.HTTPClientProvider, validators),
+				}: handleCheckRoute(log, specificConfig.DatasourceSvc, specificConfig.HTTPClientProvider, validators),
 			},
 		},
 	}
@@ -124,7 +122,6 @@ func New(cfg app.Config) (app.App, error) {
 func handleCheckRoute(
 	log logging.Logger,
 	datasourceSvc datasources.DataSourceService,
-	pluginCtx *plugincontext.Provider,
 	httpClientProvider httpclient.Provider,
 	validators map[string]validator.DatasourceValidator,
 ) func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error {

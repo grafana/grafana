@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	roleauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
 var _ appsdkapiserver.AppInstaller = (*DashValidatorAppInstaller)(nil)
@@ -28,7 +27,6 @@ type DashValidatorAppInstaller struct {
 // This is the composition root where all components are created and wired together.
 func RegisterAppInstaller(
 	datasourceSvc datasources.DataSourceService,
-	pluginCtx *plugincontext.Provider,
 	httpClientProvider httpclient.Provider,
 ) (*DashValidatorAppInstaller, error) {
 	// Create MetricsCache - shared cache for all datasource types
@@ -46,7 +44,6 @@ func RegisterAppInstaller(
 	// Create specific config for the app with all components
 	specificConfig := &validatorapp.DashValidatorConfig{
 		DatasourceSvc:      datasourceSvc,
-		PluginCtx:          pluginCtx,
 		HTTPClientProvider: httpClientProvider,
 		MetricsCache:       metricsCache,
 		Validators:         validators,

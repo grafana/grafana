@@ -171,7 +171,7 @@ func TestHandleCheck_InvalidJSON(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	handler := handleCheckRoute(
 		logging.DefaultLogger,
-		nil, nil, nil,
+		nil, nil,
 		map[string]validator.DatasourceValidator{},
 	)
 
@@ -363,7 +363,6 @@ func executeValidationRequest(t *testing.T, body checkRequest) *httptest.Respons
 	handler := handleCheckRoute(
 		logging.DefaultLogger,
 		nil, // datasourceSvc - not reached during validation failures
-		nil, // pluginCtx
 		nil, // httpClientProvider
 		map[string]validator.DatasourceValidator{},
 	)
