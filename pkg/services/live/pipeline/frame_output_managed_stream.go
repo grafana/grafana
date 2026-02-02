@@ -23,7 +23,7 @@ func (out *ManagedStreamFrameOutput) Type() string {
 }
 
 func (out *ManagedStreamFrameOutput) OutputFrame(ctx context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
-	stream, err := out.managedStream.GetOrCreateStream(vars.OrgID, vars.Scope, vars.Namespace)
+	stream, err := out.managedStream.GetOrCreateStream(vars.NS, vars.Scope, vars.Namespace)
 	if err != nil {
 		logger.Error("Error getting stream", "error", err)
 		return nil, err

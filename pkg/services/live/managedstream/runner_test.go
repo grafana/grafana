@@ -5,27 +5,28 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type testPublisher struct {
 	t *testing.T
 }
 
-func (p *testPublisher) publish(_ int64, _ string, _ []byte) error {
+func (p *testPublisher) publish(_ string, _ string, _ []byte) error {
 	return nil
 }
 
 func TestNewManagedStream(t *testing.T) {
 	publisher := &testPublisher{t: t}
-	c := NewNamespaceStream(1, "stream", "a", publisher.publish, nil, NewMemoryFrameCache())
+	c := NewNamespaceStream("default", "stream", "a", publisher.publish, nil, NewMemoryFrameCache())
 	require.NotNil(t, c)
 }
 
 func TestManagedStreamMinuteRate(t *testing.T) {
 	publisher := &testPublisher{t: t}
-	c := NewNamespaceStream(1, "stream", "a", publisher.publish, nil, NewMemoryFrameCache())
+	c := NewNamespaceStream("default", "stream", "a", publisher.publish, nil, NewMemoryFrameCache())
 	require.NotNil(t, c)
 
 	c.incRate("test1", time.Now().Unix())
@@ -49,12 +50,12 @@ func TestGetManagedStreams(t *testing.T) {
 	publisher := &testPublisher{t: t}
 	frameCache := NewMemoryFrameCache()
 	runner := NewRunner(publisher.publish, nil, frameCache)
-	s1, err := runner.GetOrCreateStream(1, "stream", "test1")
+	s1, err := runner.GetOrCreateStream("default", "stream", "test1")
 	require.NoError(t, err)
-	s2, err := runner.GetOrCreateStream(1, "stream", "test2")
+	s2, err := runner.GetOrCreateStream("default", "stream", "test2")
 	require.NoError(t, err)
 
-	managedChannels, err := runner.GetManagedChannels(1)
+	managedChannels, err := runner.GetManagedChannels("default")
 	require.NoError(t, err)
 	require.Len(t, managedChannels, 4) // 4 hardcoded testdata streams.
 
@@ -67,7 +68,7 @@ func TestGetManagedStreams(t *testing.T) {
 	err = s2.Push(context.Background(), "cpu1", data.NewFrame("cpu1"))
 	require.NoError(t, err)
 
-	managedChannels, err = runner.GetManagedChannels(1)
+	managedChannels, err = runner.GetManagedChannels("default")
 	require.NoError(t, err)
 	require.Len(t, managedChannels, 7) // 4 hardcoded testdata streams + 3 test channels.
 	require.Equal(t, "stream/test1/cpu1", managedChannels[4].Channel)
@@ -75,11 +76,11 @@ func TestGetManagedStreams(t *testing.T) {
 	require.Equal(t, "stream/test2/cpu1", managedChannels[6].Channel)
 
 	// Different org.
-	s3, err := runner.GetOrCreateStream(2, "stream", "test1")
+	s3, err := runner.GetOrCreateStream("org-2", "stream", "test1")
 	require.NoError(t, err)
 	err = s3.Push(context.Background(), "cpu1", data.NewFrame("cpu1"))
 	require.NoError(t, err)
-	managedChannels, err = runner.GetManagedChannels(1)
+	managedChannels, err = runner.GetManagedChannels("default")
 	require.NoError(t, err)
 	require.Len(t, managedChannels, 7) // Not affected by other org.
 }

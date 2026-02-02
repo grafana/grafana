@@ -38,7 +38,7 @@ var (
 // Runner keeps NamespaceStream per namespace.
 type Runner struct {
 	mu             sync.RWMutex
-	streams        map[int64]map[string]*NamespaceStream
+	streams        map[string]map[string]*NamespaceStream
 	publisher      model.ChannelPublisher
 	localPublisher LocalPublisher
 	frameCache     FrameCache
@@ -53,13 +53,13 @@ func NewRunner(publisher model.ChannelPublisher, localPublisher LocalPublisher, 
 	return &Runner{
 		publisher:      publisher,
 		localPublisher: localPublisher,
-		streams:        map[int64]map[string]*NamespaceStream{},
+		streams:        map[string]map[string]*NamespaceStream{},
 		frameCache:     frameCache,
 	}
 }
 
-func (r *Runner) GetManagedChannels(orgID int64) ([]*ManagedChannel, error) {
-	activeChannels, err := r.frameCache.GetActiveChannels(orgID)
+func (r *Runner) GetManagedChannels(ns string) ([]*ManagedChannel, error) {
+	activeChannels, err := r.frameCache.GetActiveChannels(ns)
 	if err != nil {
 		return []*ManagedChannel{}, fmt.Errorf("error getting active managed stream paths: %v", err)
 	}
@@ -72,7 +72,7 @@ func (r *Runner) GetManagedChannels(orgID int64) ([]*ManagedChannel, error) {
 		// Enrich with minute rate.
 		channel, _ := live.ParseChannel(managedChannel.Channel)
 		prefix := channel.Scope + "/" + channel.Namespace
-		namespaceStream, ok := r.streams[orgID][prefix]
+		namespaceStream, ok := r.streams[ns][prefix]
 		if ok {
 			managedChannel.MinuteRate = namespaceStream.minuteRate(channel.Path)
 		}
@@ -115,25 +115,25 @@ func (r *Runner) GetManagedChannels(orgID int64) ([]*ManagedChannel, error) {
 
 // GetOrCreateStream -- for now this will create new manager for each key.
 // Eventually, the stream behavior will need to be configured explicitly
-func (r *Runner) GetOrCreateStream(orgID int64, scope string, namespace string) (*NamespaceStream, error) {
+func (r *Runner) GetOrCreateStream(ns string, scope string, namespace string) (*NamespaceStream, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	_, ok := r.streams[orgID]
+	_, ok := r.streams[ns]
 	if !ok {
-		r.streams[orgID] = map[string]*NamespaceStream{}
+		r.streams[ns] = map[string]*NamespaceStream{}
 	}
 	prefix := scope + "/" + namespace
-	s, ok := r.streams[orgID][prefix]
+	s, ok := r.streams[ns][prefix]
 	if !ok {
-		s = NewNamespaceStream(orgID, scope, namespace, r.publisher, r.localPublisher, r.frameCache)
-		r.streams[orgID][prefix] = s
+		s = NewNamespaceStream(ns, scope, namespace, r.publisher, r.localPublisher, r.frameCache)
+		r.streams[ns][prefix] = s
 	}
 	return s, nil
 }
 
 // NamespaceStream holds the state of a managed stream.
 type NamespaceStream struct {
-	orgID          int64
+	ns             string
 	scope          string
 	namespace      string
 	publisher      model.ChannelPublisher
@@ -156,11 +156,11 @@ type ManagedChannel struct {
 }
 
 // NewNamespaceStream creates new NamespaceStream.
-func NewNamespaceStream(orgID int64, scope string, namespace string, publisher model.ChannelPublisher, localPublisher LocalPublisher, schemaUpdater FrameCache) *NamespaceStream {
+func NewNamespaceStream(ns string, scope string, namespace string, publisher model.ChannelPublisher, localPublisher LocalPublisher, schemaUpdater FrameCache) *NamespaceStream {
 	return &NamespaceStream{
-		orgID:          orgID,
+		ns:             ns, // k8s namespace
 		scope:          scope,
-		namespace:      namespace,
+		namespace:      namespace, // live "namespace"
 		publisher:      publisher,
 		localPublisher: localPublisher,
 		frameCache:     schemaUpdater,
@@ -180,7 +180,7 @@ func (s *NamespaceStream) Push(ctx context.Context, path string, frame *data.Fra
 	// The channel this will be posted into.
 	channel := live.Channel{Scope: s.scope, Namespace: s.namespace, Path: path}.String()
 
-	isUpdated, err := s.frameCache.Update(ctx, s.orgID, channel, jsonFrameCache)
+	isUpdated, err := s.frameCache.Update(ctx, s.ns, channel, jsonFrameCache)
 	if err != nil {
 		logger.Error("Error updating managed stream schema", "error", err)
 		return err
@@ -197,9 +197,9 @@ func (s *NamespaceStream) Push(ctx context.Context, path string, frame *data.Fra
 	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
 	s.incRate(path, time.Now().Unix())
 	if s.scope == live.ScopeDatasource || s.scope == live.ScopePlugin {
-		return s.localPublisher.PublishLocal(orgchannel.PrependOrgID(s.orgID, channel), frameJSON)
+		return s.localPublisher.PublishLocal(orgchannel.PrependK8sNamespace(s.ns, channel), frameJSON)
 	}
-	return s.publisher(s.orgID, channel, frameJSON)
+	return s.publisher(s.ns, channel, frameJSON)
 }
 
 func (s *NamespaceStream) incRate(path string, nowUnix int64) {
@@ -241,7 +241,7 @@ func (s *NamespaceStream) GetHandlerForPath(_ string) (model.ChannelHandler, err
 
 func (s *NamespaceStream) OnSubscribe(ctx context.Context, u identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	reply := model.SubscribeReply{}
-	frameJSON, ok, err := s.frameCache.GetFrame(ctx, u.GetOrgID(), e.Channel)
+	frameJSON, ok, err := s.frameCache.GetFrame(ctx, u.GetNamespace(), e.Channel)
 	if err != nil {
 		return reply, 0, err
 	}
