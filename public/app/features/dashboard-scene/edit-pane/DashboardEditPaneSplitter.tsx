@@ -19,6 +19,8 @@ import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
+import { useUserActivity } from './useUserActivity';
+
 interface Props {
   dashboard: DashboardScene;
   isEditing?: boolean;
@@ -56,6 +58,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
+  const isUserActive = useUserActivity(10000);
 
   /**
    * Adds star button and left side actions to app chrome breadcrumb area
@@ -123,15 +126,22 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
       <div
         className={styles.bodyWrapper}
         data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
-        {...sidebarContext.outerWrapperProps}
+        {...(isUserActive ? sidebarContext.outerWrapperProps : {})}
       >
-        <div className={styles.scrollContainer} ref={onBodyRef} onPointerDown={onClearSelection}>
+        <div
+          className={cx(styles.scrollContainer, !isUserActive && styles.scrollContainerNoSidebar)}
+          ref={onBodyRef}
+          onPointerDown={onClearSelection}
+          data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
+        >
           {body}
         </div>
 
-        <Sidebar contextValue={sidebarContext}>
-          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
-        </Sidebar>
+        {isUserActive && (
+          <Sidebar contextValue={sidebarContext}>
+            <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+          </Sidebar>
+        )}
       </div>
     );
   }
@@ -230,6 +240,9 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       scrollbarGutter: 'stable',
       // without top padding the fixed controls headers is rendered over the selection outline.
       padding: theme.spacing(0.125, 1, 2, 2),
+    }),
+    scrollContainerNoSidebar: css({
+      paddingRight: theme.spacing(2),
     }),
     body: css({
       label: 'body',

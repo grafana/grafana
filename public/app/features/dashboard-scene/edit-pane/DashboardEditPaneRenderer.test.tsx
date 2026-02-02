@@ -1,6 +1,7 @@
 import { act, screen } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { render, waitFor } from 'test/test-utils';
 
+import { createTheme } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils, config } from '@grafana/runtime';
@@ -17,6 +18,12 @@ setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
 });
+
+jest.mock('./useUserActivity', () => ({
+  useUserActivity: jest.fn().mockReturnValue(true),
+}));
+
+const mockUseUserActivity = jest.requireMock('./useUserActivity').useUserActivity;
 
 jest.mock('../utils/interactions', () => ({
   DashboardInteractions: {
@@ -45,7 +52,14 @@ export function buildTestScene() {
 }
 
 describe('DashboardEditPaneRenderer', () => {
-  config.featureToggles.dashboardNewLayouts = true;
+  beforeEach(() => {
+    config.featureToggles.dashboardNewLayouts = true;
+    mockUseUserActivity.mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('Should render sidebar', async () => {
     const scene = buildTestScene();
@@ -80,4 +94,59 @@ describe('DashboardEditPaneRenderer', () => {
   //     expect(DashboardInteractions.dashboardOutlineClicked).toHaveBeenCalled();
   //   });
   // });
+
+  describe('User Activity', () => {
+    it('should hide sidebar when user is inactive', async () => {
+      mockUseUserActivity.mockReturnValue(false);
+      const scene = buildTestScene();
+      act(() => activateFullSceneTree(scene));
+      render(<DashboardEditPaneSplitter dashboard={scene} />);
+      await waitFor(() =>
+        expect(screen.getByTestId(selectors.components.DashboardEditPaneSplitter.primaryBody)).toBeInTheDocument()
+      );
+      expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).not.toBeInTheDocument();
+    });
+
+    it('should toggle sidebar visibility based on user activity', async () => {
+      const scene = buildTestScene();
+      act(() => activateFullSceneTree(scene));
+      const { rerender } = render(<DashboardEditPaneSplitter dashboard={scene} />);
+      await waitFor(() =>
+        expect(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument()
+      );
+      mockUseUserActivity.mockReturnValue(false);
+      await act(async () => rerender(<DashboardEditPaneSplitter dashboard={scene} />));
+      await waitFor(() =>
+        expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).not.toBeInTheDocument()
+      );
+      mockUseUserActivity.mockReturnValue(true);
+      await act(async () => rerender(<DashboardEditPaneSplitter dashboard={scene} />));
+      await waitFor(() =>
+        expect(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument()
+      );
+    });
+
+    it('should apply correct padding', async () => {
+      const theme = createTheme();
+      const scene = buildTestScene();
+      act(() => activateFullSceneTree(scene));
+      const { rerender } = render(<DashboardEditPaneSplitter dashboard={scene} />);
+      await waitFor(() =>
+        expect(screen.getByTestId(selectors.components.DashboardEditPaneSplitter.primaryBody)).toBeInTheDocument()
+      );
+      expect(
+        window.getComputedStyle(screen.getByTestId(selectors.components.DashboardEditPaneSplitter.bodyContainer))
+          .paddingRight
+      ).toBe(theme.spacing(1));
+      mockUseUserActivity.mockReturnValue(false);
+      await act(async () => rerender(<DashboardEditPaneSplitter dashboard={scene} />));
+      await waitFor(() =>
+        expect(screen.getByTestId(selectors.components.DashboardEditPaneSplitter.primaryBody)).toBeInTheDocument()
+      );
+      expect(
+        window.getComputedStyle(screen.getByTestId(selectors.components.DashboardEditPaneSplitter.bodyContainer))
+          .paddingRight
+      ).toBe(theme.spacing(2));
+    });
+  });
 });
