@@ -152,6 +152,7 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"serviceaccounts:read", // serviceaccounts.ActionRead,
 )
 
+// Note: Any wildcard permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go
 var serviceIdentityTokenPermissions = []string{
 	"folder.grafana.app:*",
 	"dashboard.grafana.app:*",
