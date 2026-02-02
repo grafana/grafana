@@ -64,6 +64,15 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
     }
   }, [request.isSuccess, reset, getValues, connectionName, navigate]);
 
+  useEffect(() => {
+    if (isEdit && data?.status?.fieldErrors?.length) {
+      const errors = getConnectionFormErrors(data.status.fieldErrors);
+      for (const [field, errorMessage] of errors) {
+        setError(field, errorMessage);
+      }
+    }
+  }, [isEdit, data?.status?.fieldErrors, setError]);
+
   const onSubmit = async (form: ConnectionFormData) => {
     try {
       const spec = {
@@ -79,10 +88,12 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       await submitData(spec, form.privateKey);
     } catch (err) {
       if (isFetchError(err)) {
-        const [field, errorMessage] = getConnectionFormErrors(err.data?.errors);
+        const errors = getConnectionFormErrors(err.data);
 
-        if (field && errorMessage) {
-          setError(field, errorMessage);
+        if (errors.length > 0) {
+          for (const [field, errorMessage] of errors) {
+            setError(field, errorMessage);
+          }
           return;
         }
       }

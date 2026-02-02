@@ -1,4 +1,4 @@
-import { DataFrameView, FieldDisplay } from '@grafana/data';
+import { DataFrameView, FieldDisplay, ThresholdsMode } from '@grafana/data';
 
 import type { RadialGaugeProps } from './RadialGauge';
 import { RadialGaugeDimensions } from './types';
@@ -11,9 +11,28 @@ import {
   getFieldDisplayProcessor,
   getAngleBetweenSegments,
   getOptimalSegmentCount,
+  getThresholdPercentageValue,
 } from './utils';
 
 describe('RadialGauge utils', () => {
+  const createFieldDisplay = (value: number, min = 0, max = 100): FieldDisplay => ({
+    display: {
+      numeric: value,
+      text: value.toString(),
+      color: 'blue',
+    },
+    field: {
+      min,
+      max,
+    },
+    view: undefined,
+    colIndex: 0,
+    rowIndex: 0,
+    name: 'test',
+    getLinks: () => [],
+    hasLinks: false,
+  });
+
   describe('getFieldDisplayProcessor', () => {
     it('should return display processor from view when available', () => {
       const mockProcessor = jest.fn();
@@ -230,24 +249,6 @@ describe('RadialGauge utils', () => {
   });
 
   describe('getValueAngleForValue', () => {
-    const createFieldDisplay = (value: number, min = 0, max = 100): FieldDisplay => ({
-      display: {
-        numeric: value,
-        text: value.toString(),
-        color: 'blue',
-      },
-      field: {
-        min,
-        max,
-      },
-      view: undefined,
-      colIndex: 0,
-      rowIndex: 0,
-      name: 'test',
-      getLinks: () => [],
-      hasLinks: false,
-    });
-
     it('should calculate angle for value in range', () => {
       const fieldDisplay = createFieldDisplay(50, 0, 100);
       const result = getValueAngleForValue(fieldDisplay, 0, 360);
@@ -409,6 +410,22 @@ describe('RadialGauge utils', () => {
 
       expect(getOptimalSegmentCount(dimensions, 2, 10, 360)).toBe(8);
       expect(getOptimalSegmentCount(dimensions, 1, 5, 360)).toBe(5);
+    });
+  });
+
+  describe('getThresholdPercentageValue', () => {
+    it('should return the correct percentage for absolute thresholds', () => {
+      const threshold = { value: 75, label: 'Warning', color: '#fff' };
+      const fieldDisplay = createFieldDisplay(75, 0, 200);
+      const result = getThresholdPercentageValue(threshold, ThresholdsMode.Absolute, fieldDisplay);
+      expect(result).toBe(0.375);
+    });
+
+    it('should return the correct percentage for percentage thresholds', () => {
+      const threshold = { value: 75, label: 'Warning', color: '#fff' };
+      const fieldDisplay = createFieldDisplay(75, 0, 50);
+      const result = getThresholdPercentageValue(threshold, ThresholdsMode.Percentage, fieldDisplay);
+      expect(result).toBe(0.75);
     });
   });
 });
