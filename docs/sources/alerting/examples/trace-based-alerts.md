@@ -201,7 +201,7 @@ The following query calculates the fraction of failed server spans for each serv
 Here’s the query breakdown
 
 - `traces_span_metrics_calls_total`
-   A counter metric produced from spans that tracks the number of completed span operations.
+  A counter metric produced from spans that tracks the number of completed span operations.
   - `span_kind="SPAN_KIND_SERVER"` selects spans handling inbound requests.
   - `status_code="STATUS_CODE_ERROR"` selects only spans that ended in error.
   - Omitting the `status_code` filter in the denominator includes all spans, returning the total span count.
