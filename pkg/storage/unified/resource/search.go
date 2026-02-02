@@ -571,10 +571,31 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 		}
 	}
 
+	buildTimes := make([]*resourcepb.RebuildIndexesResponse_IndexBuildTime, 0)
+	for _, key := range s.search.GetOpenIndexes() {
+		idx := s.search.GetIndex(key)
+		if idx == nil {
+			continue
+		}
+		bi, err := idx.BuildInfo()
+		if err != nil {
+			s.log.Warn("failed to get build info for index", "key", key, "error", err)
+			continue
+		}
+		if !bi.BuildTime.IsZero() {
+			buildTimes = append(buildTimes, &resourcepb.RebuildIndexesResponse_IndexBuildTime{
+				Group:         key.Group,
+				Resource:      key.Resource,
+				BuildTimeUnix: bi.BuildTime.Unix(),
+			})
+		}
+	}
+
 	// All rebuilds completed successfully
 	return &resourcepb.RebuildIndexesResponse{
 		RebuildCount: int64(rebuildCount),
 		Details:      fmt.Sprintf("completed %d index rebuilds", rebuildCount),
+		BuildTimes:   buildTimes,
 	}, nil
 }
 

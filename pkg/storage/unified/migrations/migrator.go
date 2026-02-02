@@ -3,7 +3,9 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"google.golang.org/grpc/metadata"
@@ -15,12 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+const IndexRebuildBufferDuration = 30 * time.Second
+
 // Read from legacy and write into unified storage
 //
 //go:generate mockery --name UnifiedMigrator --structname MockUnifiedMigrator --inpackage --filename migrator_mock.go --with-expecter
 type UnifiedMigrator interface {
 	Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error)
-	RebuildIndexes(ctx context.Context, info authlib.NamespaceInfo, resources []schema.GroupResource) error
+	RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error
 }
 
 // unifiedMigration handles the migration of legacy resources to unified storage
@@ -151,13 +155,47 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 	return stream.CloseAndRecv()
 }
 
-func (m *unifiedMigration) RebuildIndexes(ctx context.Context, info authlib.NamespaceInfo, resources []schema.GroupResource) error {
-	m.log.Info("start rebuilding index for resources", "namespace", info.Value, "orgId", info.OrgID, "resources", resources)
-	defer m.log.Info("finished rebuilding index for resources", "namespace", info.Value, "orgId", info.OrgID, "resources", resources)
+type RebuildIndexOptions struct {
+	UsingDistributor    bool
+	NamespaceInfo       authlib.NamespaceInfo
+	Resources           []schema.GroupResource
+	MigrationFinishedAt time.Time
+}
 
+func (m *unifiedMigration) RebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
+	m.log.Info("start rebuilding index for resources", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+	defer m.log.Info("finished rebuilding index for resources", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+
+	boff := backoff.New(ctx, backoff.Config{
+		MinBackoff: 500 * time.Millisecond,
+		MaxBackoff: 3 * time.Second,
+		MaxRetries: 3,
+	})
+
+	var lastErr error
+	for boff.Ongoing() {
+		err := m.rebuildIndexes(ctx, opts)
+		if err == nil {
+			return nil
+		}
+
+		lastErr = err
+		m.log.Error("retrying rebuild indexes", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "error", err, "attempt", boff.NumRetries())
+		boff.Wait()
+	}
+
+	if err := boff.ErrCause(); err != nil {
+		m.log.Error("failed to rebuild indexes after retries", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "error", lastErr)
+		return lastErr
+	}
+
+	return nil
+}
+
+func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
 	keys := []*resourcepb.ResourceKey{}
-	for _, res := range resources {
-		key := buildResourceKey(res, info.Value)
+	for _, res := range opts.Resources {
+		key := buildResourceKey(res, opts.NamespaceInfo.Value)
 		if key != nil {
 			keys = append(keys, key)
 		}
@@ -165,26 +203,63 @@ func (m *unifiedMigration) RebuildIndexes(ctx context.Context, info authlib.Name
 
 	if m.client == nil {
 		// skip if no client is available (e.g., parquet migrator)
-		m.log.Warn("skipping rebuilding index as no search client is available", "namespace", info.Value, "orgId", info.OrgID, "resources", resources)
+		m.log.Warn("skipping rebuilding index as no search client is available", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
 		return nil
 	}
 
 	response, err := m.client.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{
-		Namespace: info.Value,
+		Namespace: opts.NamespaceInfo.Value,
 		Keys:      keys,
 	})
 	if err != nil {
-		m.log.Error("error rebuilding index for resource", "error", err, "namespace", info.Value, "orgId", info.OrgID, "resources", resources)
-		return err
+		return fmt.Errorf("error rebuilding index: %w", err)
+	}
+
+	if opts.UsingDistributor {
+		if response.ContactedPods == 0 {
+			m.log.Error("no pods contacted by distributor", "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+			return fmt.Errorf("rebuild index error: no pods contacted by distributor")
+		}
+
+		m.log.Info("distributor contacted pods", "count", response.ContactedPods, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+
+		buildTimeMap := make(map[string]int64)
+		for _, bt := range response.BuildTimes {
+			key := bt.Group + "/" + bt.Resource
+			buildTimeMap[key] = bt.BuildTimeUnix
+		}
+
+		// Allow a small buffer for clock skew between pods (30 seconds before migration finished)
+		minAcceptableTime := opts.MigrationFinishedAt.Add(-IndexRebuildBufferDuration).Unix()
+
+		for _, res := range opts.Resources {
+			key := res.Group + "/" + res.Resource
+			buildTime, found := buildTimeMap[key]
+			if !found {
+				m.log.Error("no build time reported for resource", "resource", key, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+				return fmt.Errorf("rebuild index error: no build time reported for resource %s", key)
+			}
+
+			if buildTime < minAcceptableTime {
+				m.log.Error("index build time is before migration finished", "resource", key, "build_time", time.Unix(buildTime, 0), "migration_finished_at", opts.MigrationFinishedAt, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+				return fmt.Errorf("rebuild index error: index for %s was built before migration finished (built at %s, migration finished at %s)", key, time.Unix(buildTime, 0), opts.MigrationFinishedAt)
+			}
+
+			m.log.Info("verified index build time", "resource", key, "build_time", time.Unix(buildTime, 0), "migration_finished_at", opts.MigrationFinishedAt)
+		}
+
+		// Check for errors from the distributor
+		if response.Error != nil {
+			m.log.Error("error rebuilding index for resource", "error", response.Error.Message, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+			return fmt.Errorf("rebuild index error: %s", response.Error.Message)
+		}
+
+		return nil
 	}
 
 	if response.Error != nil {
-		if response.RebuildCount < 1 {
-			m.log.Error("error rebuilding index: no indexes were rebuilt", "namespace", info.Value, "orgId", info.OrgID, "resources", resources)
-			return fmt.Errorf("no indexes were rebuilt")
-		}
-
-		m.log.Warn("partial error rebuilding index", "error", response.Error.Message, "rebuiltCount", response.RebuildCount, "namespace", info.Value, "orgId", info.OrgID, "resources", resources)
+		m.log.Error("error rebuilding index for resource", "error", response.Error.Message, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+		return fmt.Errorf("rebuild index error: %s", response.Error.Message)
 	}
 
 	return nil

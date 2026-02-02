@@ -54,7 +54,8 @@ func NewMigrationRunner(unifiedMigrator UnifiedMigrator, migrationID string, res
 
 // RunOptions configures a migration run.
 type RunOptions struct {
-	DriverName string
+	DriverName       string
+	UsingDistributor bool
 }
 
 // Run executes the migration logic for all organizations.
@@ -136,7 +137,14 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, in
 		return fmt.Errorf("migration failed for org %d (%s): %w", info.OrgID, info.Value, fmt.Errorf("migration error: %s", response.Error.Message))
 	}
 
-	err = r.unifiedMigrator.RebuildIndexes(ctx, info, r.resources)
+	migrationFinishedAt := time.Now()
+
+	err = r.unifiedMigrator.RebuildIndexes(ctx, RebuildIndexOptions{
+		UsingDistributor:    opts.UsingDistributor,
+		NamespaceInfo:       info,
+		Resources:           r.resources,
+		MigrationFinishedAt: migrationFinishedAt,
+	})
 	if err != nil {
 		r.log.Error("Rebuilding indexes failed", "org_id", info.OrgID, "error", err, "duration", time.Since(startTime))
 		return fmt.Errorf("rebuilding indexes failed for org %d (%s): %w", info.OrgID, info.Value, err)

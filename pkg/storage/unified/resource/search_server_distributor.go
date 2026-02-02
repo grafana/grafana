@@ -151,8 +151,10 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 
 	var wg sync.WaitGroup
 	var totalRebuildCount atomic.Int64
+	var contactedPods atomic.Int32
 	detailsCh := make(chan string, len(rs.Instances))
 	errorCh := make(chan error, len(rs.Instances))
+	buildTimesCh := make(chan *resourcepb.RebuildIndexesResponse_IndexBuildTime, len(rs.Instances)*10) // Allow for multiple indexes per pod
 
 	for _, inst := range rs.Instances {
 		wg.Add(1)
@@ -164,6 +166,8 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 				errorCh <- fmt.Errorf("instance %s: failed to get client, %w", inst.Id, err)
 				return
 			}
+
+			contactedPods.Add(1)
 
 			rsp, err := client.(*RingClient).Client.RebuildIndexes(rCtx, r)
 			if err != nil {
@@ -180,6 +184,10 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 				detailsCh <- fmt.Sprintf("{instance: %s, details: %s}", inst.Id, rsp.Details)
 			}
 
+			for _, bt := range rsp.BuildTimes {
+				buildTimesCh <- bt
+			}
+
 			totalRebuildCount.Add(rsp.RebuildCount)
 		}()
 	}
@@ -187,6 +195,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	wg.Wait()
 	close(errorCh)
 	close(detailsCh)
+	close(buildTimesCh)
 
 	errs := make([]error, 0, len(errorCh))
 	for err := range errorCh {
@@ -202,9 +211,27 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 		details += d
 	}
 
+	// Compute MIN(build time) for each resource type
+	minBuildTimes := make(map[string]*resourcepb.RebuildIndexesResponse_IndexBuildTime)
+	for bt := range buildTimesCh {
+		key := bt.Group + "/" + bt.Resource
+		existing, found := minBuildTimes[key]
+		if !found || bt.BuildTimeUnix < existing.BuildTimeUnix {
+			minBuildTimes[key] = bt
+		}
+	}
+
+	// Convert map to slice
+	buildTimes := make([]*resourcepb.RebuildIndexesResponse_IndexBuildTime, 0, len(minBuildTimes))
+	for _, bt := range minBuildTimes {
+		buildTimes = append(buildTimes, bt)
+	}
+
 	response := &resourcepb.RebuildIndexesResponse{
-		RebuildCount: totalRebuildCount.Load(),
-		Details:      details,
+		RebuildCount:  totalRebuildCount.Load(),
+		Details:       details,
+		ContactedPods: contactedPods.Load(),
+		BuildTimes:    buildTimes,
 	}
 	if len(errs) > 0 {
 		response.Error = AsErrorResult(errors.Join(errs...))
