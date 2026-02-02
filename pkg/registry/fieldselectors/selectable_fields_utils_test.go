@@ -1,4 +1,4 @@
-package apiregistry
+package fieldselectors
 
 import (
 	"testing"
