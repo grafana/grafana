@@ -171,7 +171,6 @@ func runStorageBackendBenchmark(t *testing.T, backend resource.StorageBackend, o
 			P90Latency:    latencies[len(latencies)*90/100],
 			P99Latency:    latencies[len(latencies)*99/100],
 		}
-
 	}
 
 	rvs := make([]int64, opts.NumResources)
