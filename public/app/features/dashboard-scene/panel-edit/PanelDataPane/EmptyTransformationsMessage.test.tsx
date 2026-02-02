@@ -1,13 +1,21 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { standardTransformersRegistry } from '@grafana/data';
+import { DataSourceInstanceSettings, standardTransformersRegistry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import config from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { EmptyTransformationsMessage, LegacyEmptyTransformationsMessage } from './EmptyTransformationsMessage';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(),
+  reportInteraction: jest.fn(),
+}));
 
 describe('EmptyTransformationsMessage', () => {
   standardTransformersRegistry.setInit(getStandardTransformers);
@@ -123,8 +131,7 @@ describe('EmptyTransformationsMessage', () => {
       expect(screen.getByTestId(selectors.components.Transforms.addTransformationButton)).toBeInTheDocument();
     });
 
-    it('should disable SQL expression card when datasourceUid is SHARED_DASHBOARD_QUERY', async () => {
-      const user = userEvent.setup();
+    it('should hide SQL expression card when datasourceUid is SHARED_DASHBOARD_QUERY', () => {
       render(
         <EmptyTransformationsMessage
           onShowPicker={onShowPicker}
@@ -132,18 +139,180 @@ describe('EmptyTransformationsMessage', () => {
           onAddTransformation={onAddTransformation}
           data={[]}
           datasourceUid={SHARED_DASHBOARD_QUERY}
+          queries={[]}
         />
       );
 
-      const sqlCard = screen.getByTestId('transform-with-sql-card');
-      expect(sqlCard).toHaveStyle({ pointerEvents: 'none' });
-      const button = sqlCard.querySelector('button');
+      // SQL card should not be shown for Dashboard datasource (frontend datasource)
+      expect(screen.queryByTestId('transform-with-sql-card')).not.toBeInTheDocument();
+      // But other transformation cards should still be shown
+      expect(screen.getByText('Organize fields by name')).toBeInTheDocument();
+    });
 
-      if (button) {
-        await user.click(button);
-      }
+    it('should hide SQL expression card when datasource is frontend-only (meta.backend is false)', () => {
+      const mockGetInstanceSettings = jest.fn().mockReturnValue({
+        uid: 'test-ds',
+        type: 'test',
+        name: 'Test DS',
+        meta: {
+          backend: false, // Frontend datasource
+        },
+      } as DataSourceInstanceSettings);
 
-      expect(onGoToQueries).not.toHaveBeenCalled();
+      (getDataSourceSrv as jest.Mock).mockReturnValue({
+        getInstanceSettings: mockGetInstanceSettings,
+      });
+
+      render(
+        <EmptyTransformationsMessage
+          onShowPicker={onShowPicker}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+          data={[]}
+          datasourceUid="test-ds"
+          queries={[]}
+        />
+      );
+
+      // SQL card should not be shown for frontend datasource
+      expect(screen.queryByTestId('transform-with-sql-card')).not.toBeInTheDocument();
+    });
+
+    it('should show SQL expression card when datasource is backend (meta.backend is true)', () => {
+      const mockGetInstanceSettings = jest.fn().mockReturnValue({
+        uid: 'prometheus-uid',
+        type: 'prometheus',
+        name: 'Prometheus',
+        meta: {
+          backend: true, // Backend datasource
+        },
+      } as DataSourceInstanceSettings);
+
+      (getDataSourceSrv as jest.Mock).mockReturnValue({
+        getInstanceSettings: mockGetInstanceSettings,
+      });
+
+      render(
+        <EmptyTransformationsMessage
+          onShowPicker={onShowPicker}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+          data={[]}
+          datasourceUid="prometheus-uid"
+          queries={[]}
+        />
+      );
+
+      // SQL card should be shown for backend datasource
+      expect(screen.getByTestId('transform-with-sql-card')).toBeInTheDocument();
+    });
+
+    it('should hide SQL expression card when Mixed datasource has all frontend datasources', () => {
+      const mockGetInstanceSettings = jest.fn((uid: string) => {
+        if (uid === 'mixed-uid') {
+          return {
+            uid: 'mixed-uid',
+            type: 'mixed',
+            name: 'Mixed',
+            meta: {
+              mixed: true, // Mixed datasource
+            },
+          } as DataSourceInstanceSettings;
+        }
+        if (uid === SHARED_DASHBOARD_QUERY) {
+          return {
+            uid: SHARED_DASHBOARD_QUERY,
+            type: 'dashboard',
+            name: 'Dashboard',
+            meta: {
+              backend: false, // Frontend datasource
+            },
+          } as DataSourceInstanceSettings;
+        }
+        return null;
+      });
+
+      (getDataSourceSrv as jest.Mock).mockReturnValue({
+        getInstanceSettings: mockGetInstanceSettings,
+      });
+
+      const queries: DataQuery[] = [
+        { refId: 'A', datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'dashboard' } },
+        { refId: 'B', datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'dashboard' } },
+      ];
+
+      render(
+        <EmptyTransformationsMessage
+          onShowPicker={onShowPicker}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+          data={[]}
+          datasourceUid="mixed-uid"
+          queries={queries}
+        />
+      );
+
+      // SQL card should not be shown when all queries use frontend datasources
+      expect(screen.queryByTestId('transform-with-sql-card')).not.toBeInTheDocument();
+    });
+
+    it('should show SQL expression card when Mixed datasource has at least one backend datasource', () => {
+      const mockGetInstanceSettings = jest.fn((uid: string) => {
+        if (uid === 'mixed-uid') {
+          return {
+            uid: 'mixed-uid',
+            type: 'mixed',
+            name: 'Mixed',
+            meta: {
+              mixed: true, // Mixed datasource
+            },
+          } as DataSourceInstanceSettings;
+        }
+        if (uid === SHARED_DASHBOARD_QUERY) {
+          return {
+            uid: SHARED_DASHBOARD_QUERY,
+            type: 'dashboard',
+            name: 'Dashboard',
+            meta: {
+              backend: false, // Frontend datasource
+            },
+          } as DataSourceInstanceSettings;
+        }
+        if (uid === 'prometheus-uid') {
+          return {
+            uid: 'prometheus-uid',
+            type: 'prometheus',
+            name: 'Prometheus',
+            meta: {
+              backend: true, // Backend datasource
+            },
+          } as DataSourceInstanceSettings;
+        }
+        return null;
+      });
+
+      (getDataSourceSrv as jest.Mock).mockReturnValue({
+        getInstanceSettings: mockGetInstanceSettings,
+      });
+
+      const queries: DataQuery[] = [
+        { refId: 'A', datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'dashboard' } },
+        { refId: 'B', datasource: { uid: 'prometheus-uid', type: 'prometheus' } },
+      ];
+
+      render(
+        <EmptyTransformationsMessage
+          onShowPicker={onShowPicker}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+          data={[]}
+          datasourceUid="mixed-uid"
+          queries={queries}
+        />
+      );
+
+      // SQL card should be shown because at least one query uses a backend datasource
+      expect(screen.getByTestId('transform-with-sql-card')).toBeInTheDocument();
     });
   });
 });

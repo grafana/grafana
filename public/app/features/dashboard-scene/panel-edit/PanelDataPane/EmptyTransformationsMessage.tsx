@@ -4,14 +4,16 @@ import { DataFrame, DataTransformerID, standardTransformersRegistry, Transformer
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Box, Button, Stack, Text } from '@grafana/ui';
 import config from 'app/core/config';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { SqlExpressionCard } from '../../../dashboard/components/TransformationsEditor/SqlExpressionCard';
 import { TransformationCard } from '../../../dashboard/components/TransformationsEditor/TransformationCard';
 import sqlDarkImage from '../../../transformers/images/dark/sqlExpression.svg';
 import sqlLightImage from '../../../transformers/images/light/sqlExpression.svg';
+
+import { areAllDatasourcesFrontend } from './utils';
 
 interface EmptyTransformationsProps {
   onShowPicker: () => void;
@@ -19,6 +21,7 @@ interface EmptyTransformationsProps {
   onAddTransformation?: (transformationId: string) => void;
   data: DataFrame[];
   datasourceUid?: string;
+  queries?: DataQuery[];
 }
 
 const TRANSFORMATION_IDS = [
@@ -92,7 +95,11 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
     props.onShowPicker();
   };
 
-  const showSqlCard = hasGoToQueries && config.featureToggles.sqlExpressions;
+  // SQL expressions require backend datasources
+  // Hide the SQL card if all datasources are frontend-only (Dashboard, Mixed with all frontend datasources, etc.)
+  const isFrontendOnly = areAllDatasourcesFrontend(props.datasourceUid, props.queries ?? []);
+  const showSqlCard = hasGoToQueries && config.featureToggles.sqlExpressions && !isFrontendOnly;
+
   return (
     <Box padding={2}>
       <Stack direction="column" alignItems="start" gap={2}>
@@ -121,7 +128,6 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                 imageUrl={config.theme2.isDark ? sqlDarkImage : sqlLightImage}
                 onClick={handleSqlTransformationClick}
                 testId="transform-with-sql-card"
-                disabled={props.datasourceUid === SHARED_DASHBOARD_QUERY}
               />
             )}
             {hasAddTransformation &&

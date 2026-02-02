@@ -154,6 +154,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           onAddTransformation={onAddTransformation}
           data={sourceData.data.series}
           datasourceUid={sourceData.datasource?.uid}
+          queries={sourceData.queries}
         />
         {transformationsDrawer}
       </>
