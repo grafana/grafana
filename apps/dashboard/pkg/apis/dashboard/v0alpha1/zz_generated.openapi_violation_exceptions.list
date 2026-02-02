@@ -1,3 +1,4 @@
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1,DashboardHit,OwnerReferences
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1,DashboardHit,Tags
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1,DashboardMetadata,Finalizers
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1,FacetResult,Terms

@@ -3740,6 +3740,9 @@
       "manage-permissions": "Manage permissions",
       "move": "Move this folder"
     },
+    "folder-owners": {
+      "owned-by": "Owned by:"
+    },
     "folder-picker": {
       "accessible-label": "Select folder: {{ label }} currently selected",
       "button-label": "Select folder",
@@ -4911,7 +4914,7 @@
           "apply": "Apply",
           "change-value": "Change variable value",
           "discard": "Discard",
-          "modal-title": "Custom Variable",
+          "modal-title": "Custom options",
           "values": "Values separated by comma"
         },
         "datasource-options": {
@@ -4947,6 +4950,7 @@
       },
       "variables": {
         "add-variable": "Add variable",
+        "reorder": "Drag to reorder",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
         "select-variable": "Select"
@@ -5812,7 +5816,7 @@
       "load": "Load"
     },
     "gcom-field": {
-      "label": "Find and import dashboards for common applications at <1></1>",
+      "label": "Find and import dashboards for common applications at <link />",
       "load-button": "Load",
       "placeholder": "Grafana.com dashboard URL or ID",
       "validation-required": "A Grafana dashboard URL or ID is required"
@@ -6317,6 +6321,11 @@
         "remove-panel": "Remove panel"
       }
     },
+    "option-row": {
+      "aria-label-remove-option": "Remove option",
+      "title-drag-and-drop-to-reorder": "Drag and drop to reorder",
+      "tooltip-remove-option": "Remove option"
+    },
     "panel-data-alerting-tab": {
       "tab-label": "Alert"
     },
@@ -6684,6 +6693,16 @@
         }
       },
       "label": "Hide"
+    },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": "Reorder variables list"
+        }
+      }
+    },
+    "variable-multi-prop-static-options-form": {
+      "aria-label-static-options": "Static options"
     },
     "variable-type-select": {
       "name-variable-type": "Variable type"
@@ -10350,9 +10369,15 @@
       "options": "Options"
     },
     "import-dashboard-overview-un-connected": {
-      "importing-from": "Importing dashboard from <2>Grafana.com</2>",
+      "importing-from": "Importing dashboard from <1>Grafana.com</1>",
       "published-by": "Published by",
       "updated-on": "Updated on"
+    },
+    "import-resource-format-error": {
+      "cancel": "Cancel",
+      "title": "Unsupported format",
+      "v1-message": "This dashboard is in Kubernetes v1 resource format and cannot be imported when Kubernetes dashboards feature is disabled. Please enable the kubernetesDashboards feature toggle to import this dashboard.",
+      "v2-message": "This dashboard is in v2 resource format and cannot be imported when Kubernetes dashboards feature is disabled. Please enable the kubernetesDashboards feature toggle to import this dashboard."
     },
     "snapshot-list-table": {
       "body-delete": "Are you sure you want to delete '{{snapshotToRemove}}'?",
@@ -11216,6 +11241,9 @@
     "noOptionsMessage-no-organizations-found": "No organizations found",
     "select-placeholder": "Select organization"
   },
+  "owner-reference": {
+    "team-members": "Team members:"
+  },
   "page": {
     "editable-title": {
       "edit-tooltip": "Edit title"
@@ -11713,6 +11741,7 @@
       "text-installed": "Installed"
     },
     "version-list": {
+      "deprecated": "Deprecated",
       "grafana-dependency": "Grafana dependency",
       "installed-version": "{{versionNumber}} (installed version)",
       "latest-compatible-version": "{{versionNumber}} (latest compatible version)",
@@ -11896,6 +11925,10 @@
       "configure": "Configure",
       "free-tier-limit-tooltip": "Free-tier accounts are restricted to one connection",
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
+    },
+    "connection": {
+      "disconnected-message": "This GitHub App connection has lost access. The app may have been uninstalled or the repository access was revoked.",
+      "disconnected-title": "Connection is disconnected"
     },
     "connection-form": {
       "alert-connection-deleted": "Connection deleted",
