@@ -4790,12 +4790,6 @@
         "edit-dashboard-json": "Edit Dashboard JSON"
       }
     },
-    "dashboard-validation": {
-      "body-dashboard-failed-schema-validation": "Validation is provided for development purposes and should be safe to ignore. If you are a Grafana developer, consider checking and updating the dashboard schema",
-      "title-checking-dashboard-validity": "Checking dashboard validity",
-      "title-dashboard-failed-schema-validation": "Dashboard failed schema validation",
-      "title-error-checking-dashboard-validity": "Error checking dashboard validity"
-    },
     "default-layout": {
       "description": "Position and size each panel individually",
       "item-options": {
