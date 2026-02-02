@@ -100,7 +100,7 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 		return p.findChildMeta(ctx, ref.ID, gcomMeta)
 	}
 
-	metaSpec := grafanaComPluginVersionMetaToMetaSpec(gcomMeta)
+	metaSpec := grafanaComPluginVersionMetaToMetaSpec(ctx, gcomMeta, "")
 	return &Result{
 		Meta: metaSpec,
 		TTL:  p.ttl,
@@ -111,7 +111,7 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 func (p *CatalogProvider) findChildMeta(ctx context.Context, childID string, parentMeta grafanaComPluginVersionMeta) (*Result, error) {
 	for _, child := range parentMeta.Children {
 		if child.JSON.Id == childID {
-			metaSpec := grafanaComChildPluginVersionToMetaSpec(child, parentMeta)
+			metaSpec := grafanaComChildPluginVersionToMetaSpec(ctx, child, parentMeta)
 			return &Result{
 				Meta: metaSpec,
 				TTL:  p.ttl,
@@ -120,8 +120,8 @@ func (p *CatalogProvider) findChildMeta(ctx context.Context, childID string, par
 	}
 
 	logging.FromContext(ctx).Debug("CatalogProvider: Child plugin not found in parent's children",
-		"childID", childID,
-		"parentID", parentMeta.PluginID,
+		"childId", childID,
+		"parentId", parentMeta.PluginSlug,
 		"childrenCount", len(parentMeta.Children),
 	)
 	return nil, ErrMetaNotFound

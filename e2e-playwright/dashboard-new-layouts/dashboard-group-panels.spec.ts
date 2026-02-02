@@ -514,18 +514,22 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row'))
       ).toBeVisible();
 
-      // edit row title to a non-default and click away to trigger onBlur
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput)
-        .fill('Test row 1');
-      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
+      // edit row title to a non-default
+      const titleInput = dashboardPage.getByGrafanaSelector(
+        selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput
+      );
+
+      await titleInput.fill('Test row 1');
+      await titleInput.blur();
+
+      // Verify new title
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('Test row 1'))
+      ).toBeVisible();
 
       // clear the title input to simulate no title and click away to trigger onBlur
-      await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('Test row 1')).click();
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput)
-        .fill('');
-      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
+      await titleInput.fill('');
+      await titleInput.blur();
 
       // title should be set to a default name
       await expect(
@@ -539,18 +543,16 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('New row 1'))
       ).toBeVisible();
 
-      // edit row title to a non-default and click away to trigger onBlur
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput)
-        .fill('Test row 2');
-      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
+      await titleInput.fill('Test row 2');
+      await titleInput.blur();
+
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('Test row 2'))
+      ).toBeVisible();
 
       // clear the title input to simulate no title and click away to trigger onBlur
-      await dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('Test row 2')).click();
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput)
-        .fill('');
-      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
+      await titleInput.fill('');
+      await titleInput.blur();
 
       // title should be set to a default name + 1 to avoid duplicates
       await expect(

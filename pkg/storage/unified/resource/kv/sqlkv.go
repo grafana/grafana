@@ -1,4 +1,4 @@
-package resource
+package kv
 
 import (
 	"bytes"
@@ -14,12 +14,17 @@ import (
 	"github.com/google/uuid"
 )
 
-var _ KV = &sqlKV{}
+const (
+	DataSection   = "unified/data"
+	EventsSection = "unified/events"
+)
 
-type sqlKV struct {
+var _ KV = &SqlKV{}
+
+type SqlKV struct {
 	db         *sql.DB
 	dialect    Dialect
-	driverName string // TODO: remove when backwards compatibility is no longer needed.
+	DriverName string // TODO: remove when backwards compatibility is no longer needed.
 }
 
 func NewSQLKV(db *sql.DB, driverName string) (KV, error) {
@@ -32,25 +37,25 @@ func NewSQLKV(db *sql.DB, driverName string) (KV, error) {
 		return nil, err
 	}
 
-	return &sqlKV{
+	return &SqlKV{
 		db:         db,
 		dialect:    dialect,
-		driverName: driverName, // for usage in datastore
+		DriverName: driverName, // for usage in datastore
 	}, nil
 }
 
 // getQueryBuilder creates a query builder for the given section
-func (k *sqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
+func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 	if section == "" {
 		return nil, fmt.Errorf("section is required")
 	}
 
-	if section != dataSection && section != eventsSection {
+	if section != DataSection && section != EventsSection {
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
 	tableName := "resource_events"
-	if section == dataSection {
+	if section == DataSection {
 		tableName = "resource_history"
 	}
 
@@ -74,11 +79,11 @@ func getKeyPaths(section string, keys []string) []string {
 	return result
 }
 
-func (k *sqlKV) Ping(ctx context.Context) error {
+func (k *SqlKV) Ping(ctx context.Context) error {
 	return k.db.PingContext(ctx)
 }
 
-func (k *sqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
+func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
 		qb, err := k.getQueryBuilder(section)
 		if err != nil {
@@ -122,7 +127,7 @@ func (k *sqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.
 	}
 }
 
-func (k *sqlKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
+func (k *SqlKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
@@ -147,7 +152,7 @@ func (k *sqlKV) Get(ctx context.Context, section string, key string) (io.ReadClo
 	return io.NopCloser(bytes.NewReader(value)), nil
 }
 
-func (k *sqlKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error] {
+func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error] {
 	return func(yield func(KeyValue, error) bool) {
 		if len(keys) == 0 {
 			return
@@ -191,11 +196,11 @@ func (k *sqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 	}
 }
 
-func (k *sqlKV) Save(ctx context.Context, section string, key string) (io.WriteCloser, error) {
+func (k *SqlKV) Save(ctx context.Context, section string, key string) (io.WriteCloser, error) {
 	if section == "" {
 		return nil, fmt.Errorf("section is required")
 	}
-	if section != dataSection && section != eventsSection {
+	if section != DataSection && section != EventsSection {
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 	if key == "" {
@@ -213,7 +218,7 @@ func (k *sqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 }
 
 type sqlWriteCloser struct {
-	kv      *sqlKV
+	kv      *SqlKV
 	ctx     context.Context
 	section string
 	key     string
@@ -250,7 +255,7 @@ func (w *sqlWriteCloser) Close() error {
 
 	// do regular kv save: simple key_path + value insert with conflict check.
 	// can only do this on resource_events for now, until we drop the columns in resource_history
-	if w.section == eventsSection {
+	if w.section == EventsSection {
 		query, args := qb.buildUpsertQuery(keyPath, value)
 		_, err := w.kv.db.ExecContext(w.ctx, query, args...)
 		if err != nil {
@@ -318,7 +323,7 @@ func (w *sqlWriteCloser) Close() error {
 	return nil
 }
 
-func (k *sqlKV) Delete(ctx context.Context, section string, key string) error {
+func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 	if key == "" {
 		return fmt.Errorf("key is required")
 	}
@@ -338,7 +343,7 @@ func (k *sqlKV) Delete(ctx context.Context, section string, key string) error {
 	return nil
 }
 
-func (k *sqlKV) BatchDelete(ctx context.Context, section string, keys []string) error {
+func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) error {
 	if len(keys) == 0 {
 		return nil
 	}
@@ -357,11 +362,11 @@ func (k *sqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 	return nil
 }
 
-func (k *sqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error {
+func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error {
 	return fmt.Errorf("Batch operation not implemented for sqlKV")
 }
 
-func (k *sqlKV) UnixTimestamp(ctx context.Context) (int64, error) {
+func (k *SqlKV) UnixTimestamp(ctx context.Context) (int64, error) {
 	return time.Now().Unix(), nil
 }
 

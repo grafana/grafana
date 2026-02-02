@@ -649,6 +649,50 @@ func TestGithubClient_CreateInstallationAccessToken(t *testing.T) {
 			errContains:    conngh.ErrServiceUnavailable.Error(),
 		},
 		{
+			name: "unprocessable entity - no access to repository",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostAppInstallationsAccessTokensByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnprocessableEntity)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusUnprocessableEntity,
+							},
+							Message: "Installation does not have access to repository",
+						}))
+					}),
+				),
+			),
+			installationID: "12345",
+			repo:           "private-repo",
+			wantToken:      conngh.InstallationToken{},
+			wantErr:        true,
+			errContains:    conngh.ErrUnprocessableEntity.Error(),
+		},
+		{
+			name: "authentication error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostAppInstallationsAccessTokensByInstallationId,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnauthorized)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusUnauthorized,
+							},
+							Message: "Installation does not have access to repository",
+						}))
+					}),
+				),
+			),
+			installationID: "12345",
+			repo:           "private-repo",
+			wantToken:      conngh.InstallationToken{},
+			wantErr:        true,
+			errContains:    conngh.ErrAuthentication.Error(),
+		},
+		{
 			name: "installation not found",
 			mockHandler: mockhub.NewMockedHTTPClient(
 				mockhub.WithRequestMatchHandler(
@@ -668,6 +712,7 @@ func TestGithubClient_CreateInstallationAccessToken(t *testing.T) {
 			repo:           "test-repo",
 			wantToken:      conngh.InstallationToken{},
 			wantErr:        true,
+			errContains:    conngh.ErrNotFound.Error(),
 		},
 		{
 			name: "unauthorized error",
