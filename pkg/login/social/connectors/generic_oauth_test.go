@@ -1529,10 +1529,8 @@ func TestSocialGenericOAuth_extractFromIDToken_WithIDTokenValidation(t *testing.
 				ClientSecret: "client-secret",
 			}
 			if tc.validateToken {
-				info.Extra = map[string]string{
-					"validate_id_token": "true",
-					"jwk_set_url":       tc.jwkSetURL,
-				}
+				info.ValidateIDToken = true
+				info.JwkSetURL = tc.jwkSetURL
 			}
 
 			provider := NewGenericOAuthProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)

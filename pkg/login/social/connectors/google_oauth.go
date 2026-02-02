@@ -39,9 +39,7 @@ var _ ssosettings.Reloadable = (*SocialGoogle)(nil)
 
 type SocialGoogle struct {
 	*SocialBase
-	validateHD      bool
-	validateIDToken bool
-	jwkSetURL       string
+	validateHD bool
 }
 
 type googleUserData struct {
@@ -55,10 +53,8 @@ type googleUserData struct {
 
 func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialGoogle {
 	provider := &SocialGoogle{
-		SocialBase:      newSocialBaseWithCache(social.GoogleProviderName, orgRoleMapper, info, features, cfg, cache),
-		validateHD:      MustBool(info.Extra[validateHDKey], true),
-		validateIDToken: MustBool(info.Extra[validateIDTokenKey], ExtraGoogleSettingKeys[validateIDTokenKey].DefaultValue.(bool)),
-		jwkSetURL:       info.Extra[jwkSetURLKey],
+		SocialBase: newSocialBaseWithCache(social.GoogleProviderName, orgRoleMapper, info, features, cfg, cache),
+		validateHD: MustBool(info.Extra[validateHDKey], true),
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
@@ -94,8 +90,7 @@ func (s *SocialGoogle) Validate(ctx context.Context, newSettings ssoModels.SSOSe
 		return err
 	}
 
-	validateIDToken := MustBool(info.Extra[validateIDTokenKey], ExtraGoogleSettingKeys[validateIDTokenKey].DefaultValue.(bool))
-	if validateIDToken && info.Extra[jwkSetURLKey] == "" {
+	if info.ValidateIDToken && info.JwkSetURL == "" {
 		return ssosettings.ErrInvalidOAuthConfig("If ID token validation is enabled then JWK Set URL must be configured.")
 	}
 
@@ -124,8 +119,6 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 
 	s.updateInfo(ctx, social.GoogleProviderName, newInfo)
 	s.validateHD = MustBool(newInfo.Extra[validateHDKey], true)
-	s.validateIDToken = MustBool(newInfo.Extra[validateIDTokenKey], ExtraGoogleSettingKeys[validateIDTokenKey].DefaultValue.(bool))
-	s.jwkSetURL = newInfo.Extra[jwkSetURLKey]
 
 	return nil
 }
@@ -274,8 +267,8 @@ func (s *SocialGoogle) extractFromToken(ctx context.Context, _ *http.Client, tok
 	var err error
 
 	// If JWT validation is enabled, validate the signature
-	if s.validateIDToken && s.jwkSetURL != "" {
-		rawJSON, err = s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.jwkSetURL)
+	if s.info.ValidateIDToken && s.info.JwkSetURL != "" {
+		rawJSON, err = s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.info.JwkSetURL)
 		if err != nil {
 			s.log.Warn("Error validating ID token signature", "error", err)
 			return nil, err

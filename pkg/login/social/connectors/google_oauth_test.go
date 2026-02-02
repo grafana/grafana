@@ -1276,10 +1276,8 @@ func TestSocialGoogle_extractFromToken_WithIDTokenValidation(t *testing.T) {
 				ClientSecret: "client-secret",
 			}
 			if tc.validateToken {
-				info.Extra = map[string]string{
-					"validate_id_token": "true",
-					"jwk_set_url":       tc.jwkSetURL,
-				}
+				info.ValidateIDToken = true
+				info.JwkSetURL = tc.jwkSetURL
 			}
 
 			s := NewGoogleProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)

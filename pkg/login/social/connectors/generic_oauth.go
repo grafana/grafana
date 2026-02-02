@@ -53,8 +53,6 @@ type SocialGenericOAuth struct {
 	idTokenAttributeName string
 	teamIdsAttributePath string
 	teamIds              []string
-	validateIDToken      bool
-	jwkSetURL            string
 }
 
 func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialGenericOAuth {
@@ -82,8 +80,6 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 		teamIdsAttributePath: info.TeamIdsAttributePath,
 		teamIds:              teamIds,
 		allowedOrganizations: allowedOrganizations,
-		validateIDToken:      MustBool(info.Extra[validateIDTokenKey], ExtraGenericOAuthSettingKeys[validateIDTokenKey].DefaultValue.(bool)),
-		jwkSetURL:            info.Extra[jwkSetURLKey],
 	}
 
 	ssoSettings.RegisterReloadable(social.GenericOAuthProviderName, provider)
@@ -125,8 +121,7 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels
 		return ssosettings.ErrInvalidOAuthConfig("If Allowed groups is configured then Groups attribute path must be configured.")
 	}
 
-	validateIDToken := MustBool(info.Extra[validateIDTokenKey], ExtraGenericOAuthSettingKeys[validateIDTokenKey].DefaultValue.(bool))
-	if validateIDToken && info.Extra[jwkSetURLKey] == "" {
+	if info.ValidateIDToken && info.JwkSetURL == "" {
 		return ssosettings.ErrInvalidOAuthConfig("If ID token validation is enabled then JWK Set URL must be configured.")
 	}
 
@@ -170,8 +165,6 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 	s.teamIdsAttributePath = newInfo.TeamIdsAttributePath
 	s.teamIds = teamIds
 	s.allowedOrganizations = allowedOrganizations
-	s.validateIDToken = MustBool(newInfo.Extra[validateIDTokenKey], ExtraGenericOAuthSettingKeys[validateIDTokenKey].DefaultValue.(bool))
-	s.jwkSetURL = newInfo.Extra[jwkSetURLKey]
 
 	return nil
 }
@@ -449,9 +442,9 @@ func (s *SocialGenericOAuth) extractFromIDToken(ctx context.Context, token *oaut
 	var err error
 
 	// If JWT validation is enabled, validate the signature
-	if s.validateIDToken && s.jwkSetURL != "" {
+	if s.info.ValidateIDToken && s.info.JwkSetURL != "" {
 		// create a dedicated client for the JWKS retrieval, without a token source
-		rawJSON, err = s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.jwkSetURL)
+		rawJSON, err = s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.info.JwkSetURL)
 		if err != nil {
 			s.log.Warn("Error validating ID token signature", "error", err)
 			return nil, err
@@ -753,8 +746,8 @@ func (s *SocialGenericOAuth) SupportBundleContent(bf *bytes.Buffer) error {
 	fmt.Fprintf(bf, "team_ids_attribute_path = %s\n", s.teamIdsAttributePath)
 	fmt.Fprintf(bf, "team_ids = %v\n", s.teamIds)
 	fmt.Fprintf(bf, "allowed_organizations = %v\n", s.allowedOrganizations)
-	fmt.Fprintf(bf, "validate_id_token = %v\n", s.validateIDToken)
-	fmt.Fprintf(bf, "jwk_set_url = %s\n", s.jwkSetURL)
+	fmt.Fprintf(bf, "validate_id_token = %v\n", s.info.ValidateIDToken)
+	fmt.Fprintf(bf, "jwk_set_url = %s\n", s.info.JwkSetURL)
 	bf.WriteString("```\n\n")
 
 	return s.getBaseSupportBundleContent(bf)

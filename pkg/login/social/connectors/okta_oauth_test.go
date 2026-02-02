@@ -600,10 +600,8 @@ func TestSocialOkta_UserInfo_WithIDTokenValidation(t *testing.T) {
 				ApiUrl:       userInfoServer.URL,
 			}
 			if tc.validateToken {
-				info.Extra = map[string]string{
-					"validate_id_token": "true",
-					"jwk_set_url":       tc.jwkSetURL,
-				}
+				info.ValidateIDToken = true
+				info.JwkSetURL = tc.jwkSetURL
 			}
 
 			cfg := &setting.Cfg{

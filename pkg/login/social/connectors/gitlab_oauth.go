@@ -36,8 +36,6 @@ var _ ssosettings.Reloadable = (*SocialGitlab)(nil)
 
 type SocialGitlab struct {
 	*SocialBase
-	validateIDToken bool
-	jwkSetURL       string
 }
 
 type apiData struct {
@@ -62,9 +60,7 @@ type userData struct {
 
 func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialGitlab {
 	provider := &SocialGitlab{
-		SocialBase:      newSocialBaseWithCache(social.GitlabProviderName, orgRoleMapper, info, features, cfg, cache),
-		validateIDToken: MustBool(info.Extra[validateIDTokenKey], ExtraGitlabSettingKeys[validateIDTokenKey].DefaultValue.(bool)),
-		jwkSetURL:       info.Extra[jwkSetURLKey],
+		SocialBase: newSocialBaseWithCache(social.GitlabProviderName, orgRoleMapper, info, features, cfg, cache),
 	}
 
 	ssoSettings.RegisterReloadable(social.GitlabProviderName, provider)
@@ -96,8 +92,7 @@ func (s *SocialGitlab) Validate(ctx context.Context, newSettings ssoModels.SSOSe
 		return err
 	}
 
-	validateIDToken := MustBool(info.Extra[validateIDTokenKey], ExtraGitlabSettingKeys[validateIDTokenKey].DefaultValue.(bool))
-	if validateIDToken && info.Extra[jwkSetURLKey] == "" {
+	if info.ValidateIDToken && info.JwkSetURL == "" {
 		return ssosettings.ErrInvalidOAuthConfig("If ID token validation is enabled then JWK Set URL must be configured.")
 	}
 
@@ -114,8 +109,6 @@ func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	defer s.reloadMutex.Unlock()
 
 	s.updateInfo(ctx, social.GitlabProviderName, newInfo)
-	s.validateIDToken = MustBool(newInfo.Extra[validateIDTokenKey], ExtraGitlabSettingKeys[validateIDTokenKey].DefaultValue.(bool))
-	s.jwkSetURL = newInfo.Extra[jwkSetURLKey]
 
 	return nil
 }
@@ -307,8 +300,8 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 	var err error
 
 	// If JWT validation is enabled, validate the signature
-	if s.validateIDToken && s.jwkSetURL != "" {
-		rawJSON, err = s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.jwkSetURL)
+	if s.info.ValidateIDToken && s.info.JwkSetURL != "" {
+		rawJSON, err = s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.info.JwkSetURL)
 		if err != nil {
 			s.log.Warn("Error validating ID token signature", "error", err)
 			return nil, err

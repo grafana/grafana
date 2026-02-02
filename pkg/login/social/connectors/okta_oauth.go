@@ -31,8 +31,6 @@ var _ ssosettings.Reloadable = (*SocialOkta)(nil)
 
 type SocialOkta struct {
 	*SocialBase
-	validateIDToken bool
-	jwkSetURL       string
 }
 
 type OktaUserInfoJson struct {
@@ -56,9 +54,7 @@ type OktaClaims struct {
 
 func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialOkta {
 	provider := &SocialOkta{
-		SocialBase:      newSocialBaseWithCache(social.OktaProviderName, orgRoleMapper, info, features, cfg, cache),
-		validateIDToken: MustBool(info.Extra[validateIDTokenKey], ExtraOktaSettingKeys[validateIDTokenKey].DefaultValue.(bool)),
-		jwkSetURL:       info.Extra[jwkSetURLKey],
+		SocialBase: newSocialBaseWithCache(social.OktaProviderName, orgRoleMapper, info, features, cfg, cache),
 	}
 
 	if info.UseRefreshToken {
@@ -94,8 +90,7 @@ func (s *SocialOkta) Validate(ctx context.Context, newSettings ssoModels.SSOSett
 		return err
 	}
 
-	validateIDToken := MustBool(info.Extra[validateIDTokenKey], ExtraOktaSettingKeys[validateIDTokenKey].DefaultValue.(bool))
-	if validateIDToken && info.Extra[jwkSetURLKey] == "" {
+	if info.ValidateIDToken && info.JwkSetURL == "" {
 		return ssosettings.ErrInvalidOAuthConfig("If ID token validation is enabled then JWK Set URL must be configured.")
 	}
 
@@ -112,8 +107,6 @@ func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings)
 	defer s.reloadMutex.Unlock()
 
 	s.updateInfo(ctx, social.OktaProviderName, newInfo)
-	s.validateIDToken = MustBool(newInfo.Extra[validateIDTokenKey], ExtraOktaSettingKeys[validateIDTokenKey].DefaultValue.(bool))
-	s.jwkSetURL = newInfo.Extra[jwkSetURLKey]
 	if newInfo.UseRefreshToken {
 		appendUniqueScope(s.Config, social.OfflineAccessScope)
 	}
@@ -147,8 +140,8 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 	var err error
 
 	// If JWT validation is enabled, validate the signature
-	if s.validateIDToken && s.jwkSetURL != "" {
-		rawJSON, err := s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.jwkSetURL)
+	if s.info.ValidateIDToken && s.info.JwkSetURL != "" {
+		rawJSON, err := s.validateIDTokenSignature(ctx, http.DefaultClient, idTokenString, s.info.JwkSetURL)
 		if err != nil {
 			return nil, fmt.Errorf("error validating id token signature: %w", err)
 		}
