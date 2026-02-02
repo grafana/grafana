@@ -364,11 +364,6 @@ export interface FeatureToggles {
   */
   alertmanagerRemotePrimary?: boolean;
   /**
-  * Change the way annotation permissions work by scoping them to folders and dashboards.
-  * @default true
-  */
-  annotationPermissionUpdate?: boolean;
-  /**
   * Enables dashboard rendering using Scenes for viewer roles
   * @default true
   */
