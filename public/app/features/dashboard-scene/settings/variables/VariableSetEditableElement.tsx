@@ -34,6 +34,21 @@ function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariable
   return [options];
 }
 
+function partitionVariables(variables: SceneVariable[]) {
+  const standardVariables: SceneVariable[] = [];
+  const controlsMenuVariables: SceneVariable[] = [];
+
+  variables.forEach((variable) => {
+    if (variable.state.hide === VariableHide.inControlsMenu) {
+      controlsMenuVariables.push(variable);
+    } else {
+      standardVariables.push(variable);
+    }
+  });
+
+  return { standardVariables, controlsMenuVariables };
+}
+
 export class VariableSetEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
   public readonly typeName = 'Variable';
@@ -49,8 +64,12 @@ export class VariableSetEditableElement implements EditableDashboardElement {
   }
 
   public getOutlineChildren() {
-    // Filter out system and snapshot variables - they should not appear in the outline
-    return this.set.state.variables.filter((variable) => isEditableVariableType(variable.state.type));
+    const { standardVariables, controlsMenuVariables } = partitionVariables(
+      this.set.state.variables
+        // filter out system and snapshot variables
+        .filter((variable) => isEditableVariableType(variable.state.type))
+    );
+    return [...standardVariables, ...controlsMenuVariables];
   }
 
   public useEditPaneOptions = useEditPaneOptions.bind(this, this.set);
@@ -90,18 +109,10 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
     };
   }, [variables]);
 
-  const { standardVariables, controlsMenuVariables } = useMemo(() => {
-    const standardVariables: SceneVariable[] = [];
-    const controlsMenuVariables: SceneVariable[] = [];
-    editableVariables.forEach((variable) => {
-      if (variable.state.hide === VariableHide.inControlsMenu) {
-        controlsMenuVariables.push(variable);
-      } else {
-        standardVariables.push(variable);
-      }
-    });
-    return { standardVariables, controlsMenuVariables };
-  }, [editableVariables]);
+  const { standardVariables, controlsMenuVariables } = useMemo(
+    () => partitionVariables(editableVariables),
+    [editableVariables]
+  );
 
   const createDragEndHandler = useCallback(
     (sourceList: SceneVariable[], mergeLists: (updatedList: SceneVariable[]) => SceneVariable[]) => {
@@ -157,13 +168,9 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
                   {...draggableProvided.draggableProps}
                 >
                   <div className={styles.variableContent}>
-                    <div
-                      className={styles.dragHandle}
-                      {...draggableProvided.dragHandleProps}
-                      onPointerDown={onPointerDown}
-                    >
+                    <div {...draggableProvided.dragHandleProps} onPointerDown={onPointerDown}>
                       <Tooltip content={t('dashboard.edit-pane.variables.reorder', 'Drag to reorder')} placement="top">
-                        <Icon name="draggabledots" size="sm" />
+                        <Icon name="draggabledots" size="md" className={styles.dragHandle} />
                       </Tooltip>
                     </div>
                     <Text>${variable.state.name}</Text>
