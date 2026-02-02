@@ -255,7 +255,7 @@ Optionally, you can extend Git Sync by enabling pull request notifications and i
 
 ### Set up webhooks for real-time notification and pull request integration
 
-Real-time notifications (or automatic pulling) is enabled and configured by defauft in Grafana Cloud.
+Real-time notifications (or automatic pulling) is enabled and configured by default in Grafana Cloud.
 
 In Grafana OSS/Enterprise, Git Sync uses webhooks to enable real-time updates from GitHub public repositories, or to enable pull request integrations. Without webhooks the polling interval is set during configuration, and is 60 seconds by default. You can set up webhooks with whichever service or tooling you prefer: Cloudflare Tunnels with a Cloudflare-managed domain, port-forwarding and DNS options, or a tool such as `ngrok`.
 
