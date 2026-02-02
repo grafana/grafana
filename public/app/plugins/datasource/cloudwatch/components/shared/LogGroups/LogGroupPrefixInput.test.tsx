@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { LOG_GROUP_PREFIX_MAX } from '../../../utils/logGroupsConstants';
+
 import { LogGroupPrefixInput } from './LogGroupPrefixInput';
 
 describe('LogGroupPrefixInput', () => {
@@ -8,7 +10,7 @@ describe('LogGroupPrefixInput', () => {
     render(<LogGroupPrefixInput prefixes={[]} onChange={jest.fn()} />);
 
     expect(screen.getByText('Prefixes')).toBeInTheDocument();
-    expect(screen.getByText('Enter prefixes...')).toBeInTheDocument();
+    expect(screen.getByText(`Add up to ${LOG_GROUP_PREFIX_MAX} prefixes`)).toBeInTheDocument();
   });
 
   it('should display existing prefixes', () => {
