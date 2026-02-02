@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 )
 
 func TestGetMuteTimings(t *testing.T) {
@@ -1406,6 +1407,7 @@ func createMuteTimingSvcSut() (*MuteTimingService, *legacy_storage.AlertmanagerC
 			return nil
 		},
 		ruleNotificationsStore: &fakeAlertRuleNotificationStore{},
+		routeService:           routes.NewFakeService(legacy_storage.ConfigRevision{}),
 	}, store, prov
 }
 
