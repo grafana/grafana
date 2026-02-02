@@ -101,29 +101,23 @@ describe('DashboardEditPaneRenderer', () => {
       const scene = buildTestScene();
       act(() => activateFullSceneTree(scene));
       render(<DashboardEditPaneSplitter dashboard={scene} />);
-      await waitFor(() =>
-        expect(screen.getByTestId(selectors.components.DashboardEditPaneSplitter.primaryBody)).toBeInTheDocument()
-      );
-      expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId(selectors.components.DashboardEditPaneSplitter.primaryBody)).toBeVisible();
+      });
+      expect(window.getComputedStyle(screen.getByTestId(selectors.components.Sidebar.container)).width).toBe('0px');
     });
 
     it('should toggle sidebar visibility based on user activity', async () => {
       const scene = buildTestScene();
       act(() => activateFullSceneTree(scene));
       const { rerender } = render(<DashboardEditPaneSplitter dashboard={scene} />);
-      await waitFor(() =>
-        expect(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument()
-      );
+      expect(window.getComputedStyle(screen.getByTestId(selectors.components.Sidebar.container)).width).not.toBe('0px');
       mockUseUserActivity.mockReturnValue(false);
       await act(async () => rerender(<DashboardEditPaneSplitter dashboard={scene} />));
-      await waitFor(() =>
-        expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).not.toBeInTheDocument()
-      );
+      expect(window.getComputedStyle(screen.getByTestId(selectors.components.Sidebar.container)).width).toBe('0px');
       mockUseUserActivity.mockReturnValue(true);
       await act(async () => rerender(<DashboardEditPaneSplitter dashboard={scene} />));
-      await waitFor(() =>
-        expect(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument()
-      );
+      expect(window.getComputedStyle(screen.getByTestId(selectors.components.Sidebar.container)).width).not.toBe('0px');
     });
 
     it('should apply correct padding', async () => {
@@ -131,18 +125,12 @@ describe('DashboardEditPaneRenderer', () => {
       const scene = buildTestScene();
       act(() => activateFullSceneTree(scene));
       const { rerender } = render(<DashboardEditPaneSplitter dashboard={scene} />);
-      await waitFor(() =>
-        expect(screen.getByTestId(selectors.components.DashboardEditPaneSplitter.primaryBody)).toBeInTheDocument()
-      );
       expect(
         window.getComputedStyle(screen.getByTestId(selectors.components.DashboardEditPaneSplitter.bodyContainer))
           .paddingRight
       ).toBe(theme.spacing(1));
       mockUseUserActivity.mockReturnValue(false);
       await act(async () => rerender(<DashboardEditPaneSplitter dashboard={scene} />));
-      await waitFor(() =>
-        expect(screen.getByTestId(selectors.components.DashboardEditPaneSplitter.primaryBody)).toBeInTheDocument()
-      );
       expect(
         window.getComputedStyle(screen.getByTestId(selectors.components.DashboardEditPaneSplitter.bodyContainer))
           .paddingRight

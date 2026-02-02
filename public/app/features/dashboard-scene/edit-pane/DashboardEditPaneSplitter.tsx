@@ -137,11 +137,9 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
           {body}
         </div>
 
-        {isUserActive && (
-          <Sidebar contextValue={sidebarContext}>
-            <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
-          </Sidebar>
-        )}
+        <Sidebar contextValue={sidebarContext} className={cx(styles.sidebar, !isUserActive && styles.sidebarHidden)}>
+          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+        </Sidebar>
       </div>
     );
   }
@@ -218,6 +216,12 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       flex: '1 1 0',
       overflow: 'hidden',
 
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('padding', {
+          duration: theme.transitions.duration.standard,
+        }),
+      },
+
       [theme.breakpoints.down('sm')]: {
         flex: 1,
 
@@ -240,6 +244,12 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       scrollbarGutter: 'stable',
       // without top padding the fixed controls headers is rendered over the selection outline.
       padding: theme.spacing(0.125, 1, 2, 2),
+
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('padding', {
+          duration: theme.transitions.duration.standard,
+        }),
+      },
     }),
     scrollContainerNoSidebar: css({
       paddingRight: theme.spacing(2),
@@ -273,6 +283,20 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
         background: theme.colors.background.canvas,
         top: headerHeight,
       },
+    }),
+    sidebar: css({
+      width: 'calc-size(auto, size)',
+
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('width', {
+          duration: theme.transitions.duration.standard,
+        }),
+      },
+    }),
+    sidebarHidden: css({
+      width: 0,
+      border: 0,
+      overflow: 'hidden',
     }),
   };
 }

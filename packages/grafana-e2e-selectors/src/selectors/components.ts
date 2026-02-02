@@ -61,6 +61,9 @@ export const versionedComponents = {
     },
   },
   Sidebar: {
+    container: {
+      '12.4.0': 'data-testid Sidebar container',
+    },
     closePane: {
       '12.4.0': 'data-testid Sidebar close pane',
     },
