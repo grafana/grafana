@@ -1,15 +1,15 @@
 import { render, screen } from 'test/test-utils';
 
-import { Connection, Repository, useGetConnectionQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { Connection, Repository, useListConnectionQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
 
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
-  useGetConnectionQuery: jest.fn(),
+  useListConnectionQuery: jest.fn(),
 }));
 
-const mockUseGetConnectionQuery = useGetConnectionQuery as jest.Mock;
+const mockUseListConnectionQuery = useListConnectionQuery as jest.Mock;
 
 const createMockRepository = (overrides: Partial<Repository> = {}): Repository => ({
   metadata: { name: 'test-repo' },
@@ -56,7 +56,7 @@ const createMockConnection = (overrides: Partial<Connection> = {}): Connection =
 
 describe('RepositoryHealthCard', () => {
   beforeEach(() => {
-    mockUseGetConnectionQuery.mockReturnValue({ data: undefined, isLoading: false });
+    mockUseListConnectionQuery.mockReturnValue({ data: { items: [] }, isLoading: false });
   });
 
   describe('Connection status', () => {
@@ -69,7 +69,7 @@ describe('RepositoryHealthCard', () => {
 
     it('should show connection status badge when connection exists', () => {
       const connection = createMockConnection();
-      mockUseGetConnectionQuery.mockReturnValue({ data: connection, isLoading: false });
+      mockUseListConnectionQuery.mockReturnValue({ data: { items: [connection] }, isLoading: false });
 
       const repo = createMockRepository({
         spec: {

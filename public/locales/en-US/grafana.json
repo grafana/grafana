@@ -11926,6 +11926,10 @@
       "free-tier-limit-tooltip": "Free-tier accounts are restricted to one connection",
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed"
     },
+    "connection": {
+      "disconnected-message": "This GitHub App connection has lost access. The app may have been uninstalled or the repository access was revoked.",
+      "disconnected-title": "Connection is disconnected"
+    },
     "connection-form": {
       "alert-connection-deleted": "Connection deleted",
       "alert-connection-saved": "Connection saved",
