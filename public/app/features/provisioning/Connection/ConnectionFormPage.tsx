@@ -9,15 +9,9 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
+import { ExternalRepository } from '../types';
 
 import { ConnectionForm } from './ConnectionForm';
-
-// External repository from the provider (e.g., GitHub)
-// The API returns `items: any[]` so we define the expected shape here
-interface ExternalRepository {
-  name?: string;
-  url?: string;
-}
 
 export default function ConnectionFormPage() {
   const { name = '' } = useParams();
