@@ -31,6 +31,7 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { QueryGroupOptions } from 'app/types/query';
 
+import { hasReadPermissions } from '../../../../extensions/query-library/utils/identity';
 import { MIXED_DATASOURCE_NAME } from '../../../../plugins/datasource/mixed/MixedDataSource';
 import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
 import { ExpressionDatasourceUID } from '../../../expressions/types';
@@ -428,7 +429,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
             >
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.add-query">Add query</Trans>
             </Button>
-            {queryLibraryEnabled && (
+            {queryLibraryEnabled && hasReadPermissions() && (
               <Button
                 icon="plus"
                 onClick={() =>

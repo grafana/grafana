@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { of, map } from 'rxjs';
 
 import {
+  CoreApp,
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
@@ -272,17 +273,79 @@ jest.mock('@grafana/data', () => ({
   },
 }));
 
+// Mock QueryLibraryContext with minimal setup
+const mockOpenDrawer = jest.fn();
+const mockQueryLibraryEnabled = jest.fn(() => false);
+jest.mock('../../../explore/QueryLibrary/QueryLibraryContext', () => ({
+  useQueryLibraryContext: () => ({
+    openDrawer: mockOpenDrawer,
+    queryLibraryEnabled: mockQueryLibraryEnabled(),
+    renderSavedQueryButtons: jest.fn(() => null), // Add this to prevent errors
+  }),
+}));
+
+// Mock hasReadPermissions
+const mockHasReadPermissions = jest.fn(() => false);
+jest.mock('../../../../extensions/query-library/utils/identity', () => ({
+  hasReadPermissions: () => mockHasReadPermissions(),
+}));
+
 const data = jest.requireMock('@grafana/data');
 let deactivators = [] as Array<() => void>;
 
 describe('PanelDataQueriesTab', () => {
   beforeEach(() => {
     data.store.setObject.mockClear();
+    // Reset mocks to default state
+    mockOpenDrawer.mockClear();
+    mockQueryLibraryEnabled.mockReturnValue(false);
+    mockHasReadPermissions.mockReturnValue(false);
   });
 
   afterEach(() => {
     deactivators.forEach((deactivate) => deactivate());
     deactivators = [];
+  });
+
+  describe('Add from saved queries button', () => {
+    it('should show button only when queryLibraryEnabled and hasReadPermissions are both true', async () => {
+      const modelMock = await createModelMock();
+
+      // Test: Button hidden when both flags are false
+      mockQueryLibraryEnabled.mockReturnValue(false);
+      mockHasReadPermissions.mockReturnValue(false);
+      const { rerender } = render(<PanelDataQueriesTabRendered model={modelMock} />);
+      expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
+
+      // Test: Button hidden when only queryLibraryEnabled is true
+      mockQueryLibraryEnabled.mockReturnValue(true);
+      mockHasReadPermissions.mockReturnValue(false);
+      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
+      expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
+
+      // Test: Button hidden when only hasReadPermissions is true
+      mockQueryLibraryEnabled.mockReturnValue(false);
+      mockHasReadPermissions.mockReturnValue(true);
+      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
+      expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
+
+      // Test: Button visible when both are true
+      mockQueryLibraryEnabled.mockReturnValue(true);
+      mockHasReadPermissions.mockReturnValue(true);
+      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
+      const button = await screen.findByTestId(selectors.components.QueryTab.addQueryFromLibrary);
+      expect(button).toBeInTheDocument();
+      expect(screen.getByText('Add from saved queries')).toBeInTheDocument();
+
+      // Test: Button click calls openDrawer with correct params
+      await userEvent.click(button);
+      expect(mockOpenDrawer).toHaveBeenCalledWith({
+        onSelectQuery: expect.any(Function),
+        options: {
+          context: CoreApp.PanelEditor,
+        },
+      });
+    });
   });
 
   describe('Adding queries', () => {
