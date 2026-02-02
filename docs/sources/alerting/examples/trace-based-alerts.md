@@ -101,7 +101,7 @@ histogram_quantile(0.95,
 ) > 2
 ```
 
-Here’s the query breakdown
+Here’s the query breakdown:
 
 - `traces_span_metrics_duration_seconds`
   It’s a native histogram produced from spans using Alloy or the OTEL collector. The metric is filtered by:
