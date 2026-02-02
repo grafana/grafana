@@ -16,7 +16,6 @@ export function ShareExportDashboardButton({ dashboard }: Props) {
     <Dropdown overlay={<ExportMenu dashboard={dashboard} />} placement="left-start">
       <Sidebar.Button
         icon="download-alt"
-        iconSize="xl"
         data-testid={newExportButtonSelector.Menu.container}
         title={t('dashboard.sidebar.export.title', 'Export')}
       />

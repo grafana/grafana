@@ -152,7 +152,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     divider: css({
       height: '1px',
       background: theme.colors.border.weak,
-      width: theme.spacing(3)
+      width: theme.spacing(3),
     }),
     flexGrow: css({
       flexGrow: 1,

@@ -5,8 +5,6 @@ import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { IconSize } from '../../types/icon';
-import { getActiveButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -17,12 +15,11 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean;
   tooltip?: string;
   title: string;
-  iconSize?: IconSize;
   iconColor?: string;
 }
 
 export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
-  ({ icon, active, onClick, title, tooltip, iconSize, iconColor, ...restProps }, ref) => {
+  ({ icon, active, onClick, title, tooltip, iconColor, ...restProps }, ref) => {
     const styles = useStyles2(getStyles);
     const context = useContext(SidebarContext);
 
@@ -46,9 +43,7 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
           onClick={onClick}
           {...restProps}
         >
-          <div className={cx(styles.iconWrapper, iconColor, active ? styles.iconActive : '')}>
-            {renderIcon(icon, iconSize)}
-          </div>
+          <div className={cx(styles.iconWrapper, iconColor, active && styles.iconActive)}>{renderIcon(icon)}</div>
           {!context.compact && <div className={cx(styles.title, active && styles.titleActive)}>{title}</div>}
         </button>
       </Tooltip>
@@ -58,13 +53,13 @@ export const SidebarButton = React.forwardRef<HTMLButtonElement, Props>(
 
 SidebarButton.displayName = 'SidebarButton';
 
-function renderIcon(icon: IconName | React.ReactNode, size?: IconSize) {
+function renderIcon(icon: IconName | React.ReactNode) {
   if (!icon) {
     return null;
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size={'lg'} />;
+    return <Icon name={icon} size="lg" />;
   }
 
   return icon;
@@ -112,18 +107,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignSelf: 'center',
       position: 'relative',
       borderRadius: theme.shape.radius.sm,
-      svg: {
-        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-          ...getIconTransitionStyles(theme),
-        },
-      },
       '&:hover, &:focus-visible': {
         background: theme.colors.action.hover,
       },
       '&.primary': {
-        backgroundColor: theme.colors.primary.main,
-          color: theme.colors.getContrastText(theme.colors.primary.main),
-
+        background: theme.colors.primary.main,
+        color: theme.colors.getContrastText(theme.colors.primary.main),
         '&:hover': {
           backgroundColor: theme.colors.primary.shade,
         },
@@ -133,7 +122,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     iconActive: css({
-      ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
+      background: theme.colors.secondary.main,
       '&::before': {
         display: 'block',
         content: '" "',
@@ -145,13 +134,15 @@ const getStyles = (theme: GrafanaTheme2) => {
         borderBottomLeftRadius: theme.shape.radius.sm,
         borderBottomRightRadius: theme.shape.radius.sm,
         backgroundImage: theme.colors.gradients.brandHorizontal,
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          ...getIconTransitionStyles(theme),
+        },
       },
-    }),
-    buttonWrapper: css({
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      whiteSpace: 'nowrap',
+      svg: {
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          ...getIconTransitionStyles(theme),
+        },
+      },
     }),
     title: css({
       fontSize: theme.typography.bodySmall.fontSize,
@@ -177,7 +168,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 function getIconTransitionStyles(theme: GrafanaTheme2) {
   return {
-    transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
+    transition: theme.transitions.create(['background-color', 'color'], {
       duration: theme.transitions.duration.short,
     }),
   };
