@@ -2,8 +2,8 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { memo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { t } from '@grafana/i18n';
-import { Combobox, Field, Input, TextArea } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { Combobox, Field, Icon, Input, TextArea, useTheme2, Text, Box } from '@grafana/ui';
 import { RepositoryView, useGetRepositoryRefsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { WorkflowOption } from 'app/features/provisioning/types';
@@ -32,6 +32,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
       formState: { errors },
     } = useFormContext();
 
+    const theme = useTheme2();
     const canPushToNonConfiguredBranch = repository?.workflows?.includes('branch');
     const canOnlyPushToConfiguredBranch = canPushToConfiguredBranch && !canPushToNonConfiguredBranch;
 
@@ -117,7 +118,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                       )
                     : t(
                         'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch',
-                        'Select an existing branch or enter a new branch name to create a branch for your changes'
+                        'Select an existing branch or enter a new branch name to create a branch'
                       )
                 }
                 invalid={Boolean(errors.ref || branchError)}
@@ -134,20 +135,33 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                   control={control}
                   rules={{ validate: validateBranchName }}
                   render={({ field: { ref, onChange, ...field } }) => (
-                    <Combobox
-                      {...field}
-                      invalid={!!errors.ref}
-                      id="provisioned-ref"
-                      onChange={(option) => onChange(option ? option.value : '')}
-                      placeholder={t(
-                        'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-branch',
-                        'Select or enter branch name'
+                    <>
+                      <Combobox
+                        {...field}
+                        invalid={!!errors.ref}
+                        id="provisioned-ref"
+                        onChange={(option) => onChange(option ? option.value : '')}
+                        placeholder={t(
+                          'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-branch',
+                          'Select or enter branch name'
+                        )}
+                        options={branchOptions}
+                        loading={branchLoading}
+                        isClearable
+                        createCustomValue
+                        prefixIcon="code-branch"
+                      />
+                      {canPushToNonConfiguredBranch && (
+                        <Box marginTop={1}>
+                          <Text element="p" variant="bodySmall" color="secondary">
+                            <Icon name="lightbulb" color={theme.colors.primary.shade} size="xs" />
+                            <Trans i18nKey="provisioned-resource-form.save-or-delete-resource-shared-fields.tip-create-branch">
+                              Tip: Type a name and press Enter to create a new branch
+                            </Trans>
+                          </Text>
+                        </Box>
                       )}
-                      options={branchOptions}
-                      loading={branchLoading}
-                      isClearable
-                      createCustomValue
-                    />
+                    </>
                   )}
                 />
               </Field>

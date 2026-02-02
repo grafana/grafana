@@ -192,7 +192,7 @@ describe('NewProvisionedFolderForm', () => {
     // Check if form elements are rendered
     expect(screen.getByRole('textbox', { name: /folder name/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
-    expect(screen.getByRole('radiogroup')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^create$/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
@@ -220,28 +220,20 @@ describe('NewProvisionedFolderForm', () => {
     expect(screen.getByLabelText('Repository not found')).toBeInTheDocument();
   });
 
-  it('should show branch field when branch workflow is selected', async () => {
-    const { user } = setup();
+  it('should show branch field for git repositories', () => {
+    setup();
 
-    expect(screen.queryByRole('textbox', { name: /branch/i })).not.toBeInTheDocument();
-
-    const branchOption = screen.getByRole('radio', { name: /push to a new branch/i });
-    await user.click(branchOption);
-
-    expect(screen.getByRole('textbox', { name: /branch/i })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /branch/i })).toBeInTheDocument();
   });
 
   it('should validate branch name', async () => {
     const { user } = setup();
 
-    // Select branch workflow
-    const branchOption = screen.getByRole('radio', { name: /push to a new branch/i });
-    await user.click(branchOption);
-
     // Enter invalid branch name
-    const branchInput = screen.getByRole('textbox', { name: /branch/i });
-    await user.clear(branchInput);
+    const branchInput = screen.getByRole('combobox', { name: /branch/i });
+    await user.click(branchInput);
     await user.type(branchInput, 'invalid//branch');
+    await user.keyboard('{Enter}');
 
     // Submit the form
     const submitButton = screen.getByRole('button', { name: /^create$/i });
@@ -314,21 +306,29 @@ describe('NewProvisionedFolderForm', () => {
       },
     ]);
 
-    const { user } = setup();
+    const { user } = setup(
+      {},
+      {
+        ...mockHookData,
+        initialValues: {
+          ...mockHookData.initialValues!,
+          ref: '',
+          workflow: 'branch',
+        },
+      }
+    );
 
     // Fill form
     const folderNameInput = screen.getByRole('textbox', { name: /folder name/i });
     await user.clear(folderNameInput);
     await user.type(folderNameInput, 'Branch Folder');
 
-    // Select branch workflow
-    const branchOption = screen.getByRole('radio', { name: /push to a new branch/i });
-    await user.click(branchOption);
-
     // Enter branch name
-    const branchInput = screen.getByRole('textbox', { name: /branch/i });
+    const branchInput = screen.getByRole('combobox', { name: /branch/i });
+    await user.click(branchInput);
     await user.clear(branchInput);
     await user.type(branchInput, 'feature/new-folder');
+    await user.keyboard('{Enter}');
 
     // Submit the form
     const submitButton = screen.getByRole('button', { name: /^create$/i });
