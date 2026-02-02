@@ -301,7 +301,7 @@ TraceQL is a query language for searching and filtering traces in Grafana Tempo,
 
 With TraceQL, you can skip converting tracing data into span metrics and query raw trace data directly. It provides a more flexible filtering based on the trace structure, attributes, or resource metadata, and can detect issues faster as it does not wait for metric generation.
 
-TraceQL isn't suitable for all scenarios. For example, it's not suitable for long-term analysis or alerting after sampling.
+TraceQL isn't suitable for all scenarios. For example:
 
 - **Inadequate for long-term analysis**
   Trace data has a significantly shorter retention period than metrics. For historical monitoring, it’s recommended to convert key tracing data into metrics to ensure the persistence of important data.
