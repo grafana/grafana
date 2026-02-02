@@ -906,7 +906,7 @@ func convertRepeatOptions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardRepeatOpt
 		return nil
 	}
 	return &dashv2alpha1.DashboardRepeatOptions{
-		Mode:      in.Mode,
+		Mode:      string(in.Mode),
 		Value:     in.Value,
 		Direction: (*dashv2alpha1.DashboardRepeatOptionsDirection)(in.Direction),
 		MaxPerRow: in.MaxPerRow,
@@ -918,7 +918,7 @@ func convertRowRepeatOptions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardRowRep
 		return nil
 	}
 	return &dashv2alpha1.DashboardRowRepeatOptions{
-		Mode:  in.Mode,
+		Mode:  string(in.Mode),
 		Value: in.Value,
 	}
 }
@@ -928,7 +928,7 @@ func convertAutoGridRepeatOptions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardA
 		return nil
 	}
 	return &dashv2alpha1.DashboardAutoGridRepeatOptions{
-		Mode:  in.Mode,
+		Mode:  string(in.Mode),
 		Value: in.Value,
 	}
 }
@@ -938,7 +938,7 @@ func convertTabRepeatOptions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardTabRep
 		return nil
 	}
 	return &dashv2alpha1.DashboardTabRepeatOptions{
-		Mode:  in.Mode,
+		Mode:  string(in.Mode),
 		Value: in.Value,
 	}
 }
