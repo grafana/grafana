@@ -596,7 +596,8 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return nil
 	}
 
-	// In case spec has changed, and the repo is not blocked, we proceed on updating the observed generation.
+	// In any case - repo blocked, repo unblocked, or simply spec has changed - we need to
+	// update the observedGeneration to alight with the given metadata.generation.
 	if hasSpecChanged {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
@@ -632,15 +633,6 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 		if conditionPatchOps := BuildConditionPatchOpsFromExisting(obj.Status.Conditions, obj.GetGeneration(), quotaCondition); conditionPatchOps != nil {
 			patchOperations = append(patchOperations, conditionPatchOps...)
-		}
-
-		// Update observedGeneration to prevent infinite reconciliation loops
-		if hasSpecChanged {
-			patchOperations = append(patchOperations, map[string]interface{}{
-				"op":    "replace",
-				"path":  "/status/observedGeneration",
-				"value": obj.Generation,
-			})
 		}
 
 		// Apply patch and exit
