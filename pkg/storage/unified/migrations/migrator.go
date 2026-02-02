@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/authlib/types"
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -20,7 +21,7 @@ import (
 //go:generate mockery --name UnifiedMigrator --structname MockUnifiedMigrator --inpackage --filename migrator_mock.go --with-expecter
 type UnifiedMigrator interface {
 	Migrate(ctx context.Context, opts legacy.MigrateOptions) (*resourcepb.BulkResponse, error)
-	RebuildIndexes(ctx context.Context, namespace string, res []schema.GroupResource) error
+	RebuildIndexes(ctx context.Context, info types.NamespaceInfo, resources []schema.GroupResource) error
 }
 
 // unifiedMigration handles the migration of legacy resources to unified storage
@@ -151,28 +152,28 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts legacy.MigrateOptio
 	return stream.CloseAndRecv()
 }
 
-func (m *unifiedMigration) RebuildIndexes(ctx context.Context, namespace string, resources []schema.GroupResource) error {
-	m.log.Info("start rebuilding index for resources", "namespace", namespace, "resources", resources)
-	defer m.log.Info("finished rebuilding index for resources", "namespace", namespace, "resources", resources)
+func (m *unifiedMigration) RebuildIndexes(ctx context.Context, info types.NamespaceInfo, resources []schema.GroupResource) error {
+	m.log.Info("start rebuilding index for resources", "namespace", info.Value, "orgId", info.OrgID, "resources", resources)
+	defer m.log.Info("finished rebuilding index for resources", "namespace", info.Value, "orgId", info.OrgID, "resources", resources)
 
 	keys := []*resourcepb.ResourceKey{}
 	for _, res := range resources {
-		key := buildResourceKey(res, namespace)
+		key := buildResourceKey(res, info.Value)
 		if key != nil {
 			keys = append(keys, key)
 		}
 	}
 	response, err := m.client.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{
-		Namespace: namespace,
+		Namespace: info.Value,
 		Keys:      keys,
 	})
 	if err != nil {
-		m.log.Error("error rebuilding index for resource", "error", err, "namespace", namespace, "resources", resources)
+		m.log.Error("error rebuilding index for resource", "error", err, "namespace", info.Value, "orgId", info.OrgID, "resources", resources)
 		return err
 	}
 
 	if response.Error != nil {
-		m.log.Error("error rebuilding index for resource", "error", response.Error.Message, "namespace", namespace, "resources", resources)
+		m.log.Error("error rebuilding index for resource", "error", response.Error.Message, "namespace", info.Value, "orgId", info.OrgID, "resources", resources)
 		return fmt.Errorf("error rebuilding index: %s", response.Error.Message)
 	}
 
