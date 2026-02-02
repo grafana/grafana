@@ -11741,6 +11741,7 @@
       "text-installed": "Installed"
     },
     "version-list": {
+      "deprecated": "Deprecated",
       "grafana-dependency": "Grafana dependency",
       "installed-version": "{{versionNumber}} (installed version)",
       "latest-compatible-version": "{{versionNumber}} (latest compatible version)",
