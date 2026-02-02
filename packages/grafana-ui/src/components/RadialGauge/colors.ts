@@ -12,6 +12,7 @@ import { FieldColorModeId } from '@grafana/schema';
 
 import { getFormattedThresholds } from '../Gauge/utils';
 
+import { DEFAULT_DECIMALS } from './constants';
 import { GradientStop, RadialShape } from './types';
 import { getThresholdPercentageValue, getValuePercentageForValue } from './utils';
 
@@ -24,14 +25,16 @@ export function buildGradientColors(
 
   // thresholds get special handling
   if (colorMode.id === FieldColorModeId.Thresholds) {
-    return getFormattedThresholds(fieldDisplay.field.decimals ?? 2, fieldDisplay.field, theme).map((threshold) => {
-      const percent = getThresholdPercentageValue(
-        threshold,
-        fieldDisplay.field.thresholds?.mode ?? ThresholdsMode.Absolute,
-        fieldDisplay
-      );
-      return { color: theme.visualization.getColorByName(threshold.color), percent };
-    });
+    return getFormattedThresholds(fieldDisplay.field.decimals ?? DEFAULT_DECIMALS, fieldDisplay.field, theme).map(
+      (threshold) => {
+        const percent = getThresholdPercentageValue(
+          threshold,
+          fieldDisplay.field.thresholds?.mode ?? ThresholdsMode.Absolute,
+          fieldDisplay
+        );
+        return { color: theme.visualization.getColorByName(threshold.color), percent };
+      }
+    );
   }
 
   // Handle continuous color modes before other by-value modes

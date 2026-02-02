@@ -14,7 +14,7 @@ interface ThresholdsBarProps {
   roundedBars?: boolean;
   glowFilter?: string;
   thresholds: Threshold[];
-  thresholdsMode: ThresholdsMode;
+  thresholdsMode?: ThresholdsMode;
   gradient?: GradientStop[];
 }
 
@@ -26,7 +26,7 @@ export function ThresholdsBar({
   roundedBars,
   glowFilter,
   thresholds,
-  thresholdsMode,
+  thresholdsMode = ThresholdsMode.Absolute,
   shape,
   gradient,
 }: ThresholdsBarProps) {

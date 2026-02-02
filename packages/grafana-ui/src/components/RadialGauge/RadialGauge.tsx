@@ -15,7 +15,7 @@ import { RadialSparkline } from './RadialSparkline';
 import { RadialText } from './RadialText';
 import { ThresholdsBar } from './ThresholdsBar';
 import { buildGradientColors } from './colors';
-import { ARC_END, ARC_START } from './constants';
+import { ARC_END, ARC_START, DEFAULT_DECIMALS } from './constants';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { RadialShape, RadialTextMode } from './types';
 import { calculateDimensions, getValueAngleForValue } from './utils';
@@ -225,8 +225,11 @@ export function RadialGauge(props: RadialGaugeProps) {
       );
 
       if (showScaleLabels || thresholdsBar) {
-        const decimals = displayValue.field.decimals ?? 2;
-        const thresholds = getFormattedThresholds(decimals, displayValue.field, theme);
+        const thresholds = getFormattedThresholds(
+          displayValue.field.decimals ?? DEFAULT_DECIMALS,
+          displayValue.field,
+          theme
+        );
 
         if (showScaleLabels) {
           graphics.push(
@@ -249,7 +252,7 @@ export function RadialGauge(props: RadialGaugeProps) {
             <ThresholdsBar
               key="thresholds-bar"
               thresholds={thresholds}
-              thresholdsMode={displayValue.field.thresholds?.mode!}
+              thresholdsMode={displayValue.field.thresholds?.mode}
               dimensions={dimensions}
               fieldDisplay={displayValue}
               startAngle={startAngle}
