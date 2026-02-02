@@ -77,6 +77,11 @@ func (in *DashboardHit) DeepCopyInto(out *DashboardHit) {
 		copy(*out, *in)
 	}
 	out.ManagedBy = in.ManagedBy
+	if in.OwnerReferences != nil {
+		in, out := &in.OwnerReferences, &out.OwnerReferences
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.Field != nil {
 		in, out := &in.Field, &out.Field
 		*out = (*in).DeepCopy()
