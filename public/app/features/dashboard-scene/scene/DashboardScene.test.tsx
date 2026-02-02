@@ -1070,6 +1070,31 @@ describe('DashboardScene', () => {
       expect(resultV2).toBeUndefined();
     });
 
+    it('should return undefined for empty V1 dashboard', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Empty Dashboard',
+        schemaVersion: 30,
+        panels: [],
+      } as unknown as Dashboard;
+
+      const result = scene.getTransformationCounts(saveModel);
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined for empty V2 dashboard', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Empty Dashboard V2',
+        elements: {},
+      } as unknown as DashboardV2Spec;
+
+      const result = scene.getTransformationCounts(saveModel);
+
+      expect(result).toBeUndefined();
+    });
+
     it('should handle multiple panels with transformations in V1', () => {
       const scene = buildTestScene();
       const saveModel = {
@@ -1211,7 +1236,7 @@ describe('DashboardScene', () => {
       expect(result).toEqual({ math: 1, sql: 2 });
     });
 
-    it('should return undefined when no expressions exist', () => {
+    it('should return undefined when no expressions exist for V1 and V2 dashboards', () => {
       const scene = buildTestScene();
       const saveModelV1 = createV1DashboardWithExpressions([]);
       const saveModelV2 = createV2DashboardWithExpressions([]);
@@ -1221,6 +1246,31 @@ describe('DashboardScene', () => {
 
       expect(resultV1).toBeUndefined();
       expect(resultV2).toBeUndefined();
+    });
+
+    it('should return undefined for empty V1 dashboard', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Empty Dashboard',
+        schemaVersion: 30,
+        panels: [],
+      } as unknown as Dashboard;
+
+      const result = scene.getExpressionCounts(saveModel);
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined for empty V2 dashboard', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Empty Dashboard V2',
+        elements: {},
+      } as unknown as DashboardV2Spec;
+
+      const result = scene.getExpressionCounts(saveModel);
+
+      expect(result).toBeUndefined();
     });
 
     it('should handle multiple panels with expressions in V1', () => {
