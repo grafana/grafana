@@ -1579,6 +1579,11 @@
       "action-button": "Import",
       "additional-settings": "Additional settings",
       "alert-rules": "Alert rules",
+      "confirm": {
+        "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
+        "confirm": "Start Import",
+        "title": "Confirm Import"
+      },
       "confirm-modal": {
         "confirm": "Import",
         "loading": "Loading...",
@@ -1605,13 +1610,36 @@
         "label": "Data source",
         "required-message": "Please select a data source"
       },
-      "error": "Failed to import alert rules: {{error}}",
+      "dry-run": {
+        "btn-cancel": "Cancel",
+        "btn-close": "Close",
+        "btn-continue": "Continue",
+        "btn-continue-anyway": "Continue anyway",
+        "error-help": "Please fix the configuration errors and try again.",
+        "error-title": "Configuration error",
+        "error-unknown": "An unknown error occurred",
+        "loading-text": "Checking your Alertmanager configuration for conflicts...",
+        "new-name": "New name",
+        "original-name": "Original name",
+        "renamed-receivers": "Renamed receivers",
+        "renamed-time-intervals": "Renamed time intervals",
+        "success-text": "Your Alertmanager configuration is valid and ready to be imported. No conflicts were detected.",
+        "title-error": "Validation failed",
+        "title-loading": "Validating configuration...",
+        "title-success": "Validation successful",
+        "title-warning": "Validation passed with warnings",
+        "warning-text": "The following resources have names that conflict with existing resources in Grafana. They will be renamed automatically during import.",
+        "warning-title": "Some resources will be renamed"
+      },
+      "error": "Failed to import resources",
       "group": {
         "description": "Type to search for an existing group",
         "label": "Group"
       },
       "import-location-and-filters": "Import location and filters",
       "import-source": "Import source",
+      "info-description": "This wizard helps you import alert rules and notification resources from external sources to Grafana Alerting. For more information, refer to the <2>documentation</2>.",
+      "info-title": "Import wizard",
       "namespace": {
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
@@ -1624,16 +1652,132 @@
         "label": "Pause imported recording rules"
       },
       "recording-rules": "Recording rules",
+      "review": {
+        "back": "Alert rules",
+        "filter": "Filter",
+        "folder": "Target folder",
+        "heading": "Review Import",
+        "importing": "Importing...",
+        "namespace": "Namespace",
+        "nothing": "Nothing to import",
+        "nothing-desc": "Both steps were skipped. Go back and configure at least one import source.",
+        "notifications-skipped": "Notification resources will not be imported.",
+        "notifications-title": "Notification Resources",
+        "pause": "Pause rules",
+        "pause-alerting": "Alert rules paused",
+        "pause-all": "All rules paused",
+        "pause-none": "No rules paused",
+        "pause-recording": "Recording rules paused",
+        "policy-tree": "Policy tree",
+        "renamed-intervals_one": "Time intervals renamed: {{count}}",
+        "renamed-intervals_other": "Time intervals renamed: {{count}}",
+        "renamed-receivers_one": "Receivers renamed: {{count}}",
+        "renamed-receivers_other": "Receivers renamed: {{count}}",
+        "routing": "Notification routing",
+        "routing-default": "Default Grafana policy",
+        "routing-imported": "Imported policy ({{label}}={{value}})",
+        "routing-manual": "Manual label ({{label}}={{value}})",
+        "rules-skipped": "Alert rules will not be imported.",
+        "rules-title": "Alert Rules",
+        "skipped": "Skipped",
+        "source": "Source",
+        "start": "Start import",
+        "subtitle": "Review each section and once you are happy, start the migration.",
+        "validation-error": "Validation failed.",
+        "validation-ok": "No conflicts found. Ready to import.",
+        "validation-warning": "Some resources will be renamed to avoid conflicts.",
+        "will-import": "Will import"
+      },
       "source": {
         "datasource": "Existing data source-managed rules",
         "datasource-description": "Import rules from existing data sources",
         "yaml": "Prometheus YAML file",
         "yaml-description": "Import rules from a Prometheus YAML file."
       },
-      "success": "Successfully imported alert rules to Grafana-managed rules.",
+      "step1": {
+        "datasource": "Alertmanager data source",
+        "heading": "Import Notification Resources",
+        "no-datasources": "No Alertmanager data sources found",
+        "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
+        "no-permission-title": "Insufficient permissions",
+        "policy-tree-desc": "Name for the imported notification policy tree. Alerts with the label <2>__grafana_managed_route__</2> matching this name will be routed through this policy tree.",
+        "policy-tree-name": "Policy tree name",
+        "policy-tree-placeholder": "prometheus-prod",
+        "policy-tree-title": "Policy Tree Name",
+        "select-datasource": "Select data source",
+        "skip": "Skip this step",
+        "source": {
+          "datasource": "Data source",
+          "datasource-desc": "Import from an Alertmanager data source",
+          "yaml": "YAML file",
+          "yaml-desc": "Import from an Alertmanager configuration YAML file"
+        },
+        "source-title": "Import Source",
+        "subtitle": "Import contact points, notification policies, templates, and mute timings from an external Alertmanager.",
+        "upload": "Upload YAML file",
+        "yaml-file": "Alertmanager config YAML"
+      },
+      "step2": {
+        "datasource": "Data source",
+        "group": "Group",
+        "group-desc": "Filter by group (optional)",
+        "heading": "Import Alert Rules",
+        "manual-label-name": "Label name",
+        "manual-label-name-placeholder": "team",
+        "manual-label-value": "Label value",
+        "manual-label-value-placeholder": "backend",
+        "namespace": "Namespace",
+        "namespace-desc": "Filter by namespace (optional)",
+        "no-permission-desc": "You do not have permission to import alert rules. You need both <strong>alerting.rules:create</strong> and <strong>alerting.provisioning:write</strong> permissions. You can skip this step.",
+        "no-permission-title": "Insufficient permissions",
+        "pause-alerting": "Pause imported alert rules",
+        "pause-recording": "Pause imported recording rules",
+        "policy": {
+          "default": "Use Grafana default policy",
+          "default-desc": "Alerts will be routed using the default Grafana notification policy",
+          "imported": "Use imported policy",
+          "imported-desc": "Use the policy tree imported in Step 1. Label {{label}}={{value}} will be added to all rules.",
+          "manual": "Enter label manually",
+          "manual-desc": "Specify a custom label to add to all imported rules"
+        },
+        "policy-desc": "Choose how imported alerts should be routed to contact points.",
+        "policy-title": "Notification Routing",
+        "select-group": "All groups",
+        "select-namespace": "All namespaces",
+        "settings-title": "Additional Settings",
+        "skip": "Skip this step",
+        "skipped-step1": "Step 1 was skipped",
+        "skipped-step1-desc": "You skipped importing Alertmanager resources. You can still import rules and route them using the default Grafana policy or a custom label.",
+        "source": {
+          "datasource": "Data source",
+          "datasource-desc": "Import from a Prometheus, Mimir, or Loki data source",
+          "yaml": "YAML file",
+          "yaml-desc": "Import from a Prometheus rules YAML file"
+        },
+        "source-title": "Import Source",
+        "subtitle": "Import alert rules and recording rules from an external source.",
+        "target-datasource": "Target data source",
+        "target-datasource-desc": "The Prometheus data source to store recording rules in",
+        "target-datasource-required": "Please select a target data source",
+        "target-folder": "Target folder",
+        "target-folder-desc": "Folder where imported rules will be stored",
+        "upload": "Upload YAML file",
+        "yaml-file": "Rules YAML file"
+      },
+      "success": "Successfully imported resources to Grafana Alerting.",
       "target-folder": {
         "description": "The folder to import the rules to",
         "label": "Target folder"
+      },
+      "wizard": {
+        "cancel": "Cancel",
+        "skip": "Skip",
+        "step-notifications": "Notification resources",
+        "step-notifications-desc": "Contact points, policies, templates",
+        "step-review": "Review & import",
+        "step-review-desc": "Preview and confirm import",
+        "step-rules": "Alert rules",
+        "step-rules-desc": "Alert and recording rules"
       },
       "yaml": {
         "description": "Select a Prometheus-compatible YAML file to import",
@@ -1644,6 +1788,9 @@
         "target-datasource-required": "Please select a target data source"
       },
       "yaml-error": "Failed to parse YAML file: {{error}}"
+    },
+    "import-to-gma-tool": {
+      "pageTitle": "Import to Grafana Alerting"
     },
     "inhibition-rules": {
       "body": "This Alertmanager has inhibition rules configured. Some alerts may be suppressed when matching alerts are firing.",
@@ -2553,7 +2700,8 @@
       "expand-all": "Expand all"
     },
     "rule-list-v2": {
-      "import-to-gma": "Import alert rules"
+      "import-to-gma": "Import alert rules",
+      "import-to-gma-tool": "Import to GMA"
     },
     "rule-modify-export": {
       "text-loading-the-rule": "Loading the rule...",

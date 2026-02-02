@@ -1,20 +1,26 @@
 import { css } from '@emotion/css';
+import { isEmpty } from 'lodash';
 import { useCallback, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+import { Alert, Box, Button, Icon, Modal, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { Folder } from '../../types/rule-form';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
+import { stringifyErrorLike } from '../../utils/misc';
+import { createListFilterLink } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
+import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
 import { DryRunValidationModal, DryRunValidationResult } from './DryRunValidationModal';
-import { ImportPreviewModal } from './ImportPreviewModal';
 import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
@@ -22,7 +28,7 @@ import { WizardStep } from './Wizard/WizardStep';
 import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
-import { useDryRunNotifications } from './useImport';
+import { filterRulerRulesConfig, useDryRunNotifications, useImportNotifications, useImportRules } from './useImport';
 
 /**
  * Label name used in X-Grafana-Alerting-Merge-Matchers header.
@@ -70,7 +76,7 @@ const ImportToGMA = () => {
     <AlertingPageWrapper
       navId="alert-list"
       pageNav={{
-        text: t('alerting.import-to-gma.pageTitle', 'Import to Grafana Alerting'),
+        text: t('alerting.import-to-gma-tool.pageTitle', 'Import to Grafana Alerting'),
       }}
     >
       <StepperStateProvider>
@@ -87,12 +93,16 @@ function ImportWizardContent() {
   const { activeStep, setStepCompleted, setStepSkipped, setActiveStep, setVisitedStep, setStepErrors } =
     useStepperState();
 
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showDryRunModal, setShowDryRunModal] = useState(false);
   const [dryRunState, setDryRunState] = useState<'loading' | 'success' | 'warning' | 'error'>('loading');
   const [dryRunResult, setDryRunResult] = useState<DryRunValidationResult | undefined>();
+  const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
 
   const { runDryRun, reset: resetDryRun } = useDryRunNotifications();
+  const importNotifications = useImportNotifications();
+  const importRules = useImportRules();
+  const notifyApp = useAppNotification();
 
   const formAPI = useForm<ImportFormValues>({
     defaultValues: {
@@ -231,16 +241,101 @@ function ImportWizardContent() {
     setActiveStep(StepKey.Review);
   }, [setValue, setStepCompleted, setStepSkipped, setStepErrors, setVisitedStep, setActiveStep]);
 
-  const handleStartMigration = useCallback(() => {
-    setShowPreviewModal(true);
+  // Get ruler rules for rules import (needed when importing from datasource)
+  const formValues = getValues();
+  const shouldFetchRules =
+    formValues.step2Completed && !formValues.step2Skipped && formValues.rulesSource === 'datasource';
+  const { rulerRules: rulesFromDatasource } = useGetRulerRules(
+    shouldFetchRules ? (formValues.rulesDatasourceName ?? undefined) : undefined
+  );
+
+  const handleStartImport = useCallback(() => {
+    setShowConfirmModal(true);
   }, []);
+
+  const handleConfirmImport = useCallback(async () => {
+    setImportStatus('importing');
+
+    const values = getValues();
+    const willImportNotifications = values.step1Completed && !values.step1Skipped;
+    const willImportRules = values.step2Completed && !values.step2Skipped;
+
+    try {
+      const notificationsLabel = `${MERGE_MATCHERS_LABEL_NAME}=${values.policyTreeName}`;
+
+      // Import notifications first (if step 1 was completed)
+      if (willImportNotifications) {
+        await importNotifications({
+          source: values.notificationsSource,
+          datasourceName: values.notificationsDatasourceName ?? undefined,
+          yamlFile: values.notificationsYamlFile,
+          mergeMatchers: notificationsLabel,
+        });
+      }
+
+      // Then import rules (if step 2 was completed)
+      if (willImportRules && values.rulesDatasourceUID) {
+        // Get the filtered rules payload
+        let rulesPayload: RulerRulesConfigDTO = {};
+
+        if (values.rulesSource === 'datasource' && rulesFromDatasource) {
+          const { filteredConfig } = filterRulerRulesConfig(rulesFromDatasource, values.namespace, values.ruleGroup);
+          rulesPayload = filteredConfig;
+        }
+
+        // Calculate extra labels based on notification policy option
+        let extraLabels: string | undefined;
+        if (values.notificationPolicyOption === 'imported') {
+          extraLabels = `${MERGE_MATCHERS_LABEL_NAME}=${values.policyTreeName}`;
+        } else if (values.notificationPolicyOption === 'manual') {
+          extraLabels = `${values.manualLabelName}=${values.manualLabelValue}`;
+        }
+
+        await importRules({
+          dataSourceUID: values.rulesDatasourceUID,
+          targetFolderUID: values.targetFolder?.uid,
+          pauseAlertingRules: values.pauseAlertingRules,
+          pauseRecordingRules: values.pauseRecordingRules,
+          payload: rulesPayload,
+          targetDatasourceUID: values.targetDatasourceUID,
+          extraLabels,
+        });
+      }
+
+      setImportStatus('success');
+
+      // Redirect to alert list with folder filter after a short delay
+      const targetFolder = values.targetFolder;
+      const isRootFolder = isEmpty(targetFolder?.uid);
+      const ruleListUrl = createListFilterLink(isRootFolder ? [] : [['namespace', targetFolder?.title ?? '']], {
+        skipSubPath: true,
+      });
+
+      setTimeout(() => {
+        setShowConfirmModal(false);
+        notifyApp.success(t('alerting.import-to-gma.success', 'Successfully imported resources to Grafana Alerting.'));
+        locationService.push(ruleListUrl);
+      }, 1500);
+    } catch (err) {
+      setImportStatus('error');
+      notifyApp.error(t('alerting.import-to-gma.error', 'Failed to import resources'), stringifyErrorLike(err));
+    }
+  }, [getValues, importNotifications, importRules, rulesFromDatasource, notifyApp]);
+
+  const handleCancelConfirm = useCallback(() => {
+    // Only allow closing if not importing
+    if (importStatus !== 'importing') {
+      setShowConfirmModal(false);
+      setImportStatus('idle');
+    }
+  }, [importStatus]);
 
   return (
     <>
       <Box marginBottom={3}>
         <Alert severity="info" title={t('alerting.import-to-gma.info-title', 'Import wizard')}>
           <Trans i18nKey="alerting.import-to-gma.info-description">
-            This wizard helps you migrate alert rules and notification resources from external sources to Grafana
+            This wizard helps you import alert rules and notification resources from external sources to Grafana
             Alerting. For more information, refer to the{' '}
             <a href={DOCS_URL_ALERTING_MIGRATION} target="_blank" rel="noreferrer">
               documentation
@@ -270,15 +365,18 @@ function ImportWizardContent() {
 
           {/* Step 3: Review */}
           {activeStep === StepKey.Review && (
-            <ReviewStep formData={getValues()} onStartMigration={handleStartMigration} dryRunResult={dryRunResult} />
+            <ReviewStep formData={getValues()} onStartImport={handleStartImport} dryRunResult={dryRunResult} />
           )}
         </WizardLayout>
       </FormProvider>
 
-      {/* Preview Modal */}
-      {showPreviewModal && (
-        <ImportPreviewModal formData={formAPI.getValues()} onDismiss={() => setShowPreviewModal(false)} />
-      )}
+      {/* Confirm Import Modal */}
+      <ConfirmImportModal
+        isOpen={showConfirmModal}
+        importStatus={importStatus}
+        onConfirm={handleConfirmImport}
+        onDismiss={handleCancelConfirm}
+      />
 
       {/* Dry-run Validation Modal */}
       <DryRunValidationModal
@@ -438,17 +536,17 @@ function ValidationStatusIndicator({ result, styles }: ValidationStatusIndicator
 // Review Step Component
 interface ReviewStepProps {
   formData: ImportFormValues;
-  onStartMigration: () => void;
+  onStartImport: () => void;
   dryRunResult?: DryRunValidationResult;
 }
 
-function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProps) {
+function ReviewStep({ formData, onStartImport, dryRunResult }: ReviewStepProps) {
   const styles = useStyles2(getStyles);
   const { setActiveStep } = useStepperState();
 
-  const willMigrateNotifications = formData.step1Completed && !formData.step1Skipped;
-  const willMigrateRules = formData.step2Completed && !formData.step2Skipped;
-  const nothingToMigrate = !willMigrateNotifications && !willMigrateRules;
+  const willImportNotifications = formData.step1Completed && !formData.step1Skipped;
+  const willImportRules = formData.step2Completed && !formData.step2Skipped;
+  const nothingToImport = !willImportNotifications && !willImportRules;
 
   const handleBack = () => {
     setActiveStep(StepKey.Rules);
@@ -467,7 +565,7 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
         </Text>
       </Box>
 
-      {nothingToMigrate ? (
+      {nothingToImport ? (
         <Alert severity="warning" title={t('alerting.import-to-gma.review.nothing', 'Nothing to import')}>
           <Trans i18nKey="alerting.import-to-gma.review.nothing-desc">
             Both steps were skipped. Go back and configure at least one import source.
@@ -481,7 +579,7 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
               <Text variant="h5" element="h3">
                 {t('alerting.import-to-gma.review.notifications-title', 'Notification Resources')}
               </Text>
-              {willMigrateNotifications && (
+              {willImportNotifications && (
                 <span className={styles.badge}>{t('alerting.import-to-gma.review.will-import', 'Will import')}</span>
               )}
               {formData.step1Skipped && (
@@ -489,7 +587,7 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
               )}
             </div>
             <div className={styles.cardContent}>
-              {willMigrateNotifications ? (
+              {willImportNotifications ? (
                 <Stack direction="column" gap={1}>
                   <div className={styles.row}>
                     <Text color="secondary">{t('alerting.import-to-gma.review.source', 'Source')}</Text>
@@ -527,7 +625,7 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
               <Text variant="h5" element="h3">
                 {t('alerting.import-to-gma.review.rules-title', 'Alert Rules')}
               </Text>
-              {willMigrateRules && (
+              {willImportRules && (
                 <span className={styles.badge}>{t('alerting.import-to-gma.review.will-import', 'Will import')}</span>
               )}
               {formData.step2Skipped && (
@@ -535,7 +633,7 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
               )}
             </div>
             <div className={styles.cardContent}>
-              {willMigrateRules ? (
+              {willImportRules ? (
                 <Stack direction="column" gap={1}>
                   <div className={styles.row}>
                     <Text color="secondary">{t('alerting.import-to-gma.review.source', 'Source')}</Text>
@@ -600,13 +698,103 @@ function ReviewStep({ formData, onStartMigration, dryRunResult }: ReviewStepProp
           <Button variant="secondary" icon="arrow-left" onClick={handleBack}>
             {t('alerting.import-to-gma.review.back', 'Alert rules')}
           </Button>
-          <Button variant="primary" icon="upload" onClick={onStartMigration} disabled={nothingToMigrate}>
+          <Button variant="primary" icon="upload" onClick={onStartImport} disabled={nothingToImport}>
             {t('alerting.import-to-gma.review.start', 'Start import')}
           </Button>
         </Stack>
         <CancelButton />
       </Stack>
     </Stack>
+  );
+}
+
+// Confirm Import Modal Component
+interface ConfirmImportModalProps {
+  isOpen: boolean;
+  importStatus: 'idle' | 'importing' | 'success' | 'error';
+  onConfirm: () => void;
+  onDismiss: () => void;
+}
+
+function ConfirmImportModal({ isOpen, importStatus, onConfirm, onDismiss }: ConfirmImportModalProps) {
+  const isImporting = importStatus === 'importing';
+  const isSuccess = importStatus === 'success';
+  const isError = importStatus === 'error';
+
+  const getTitle = () => {
+    if (isImporting) {
+      return t('alerting.import-to-gma.confirm.importing-title', 'Importing...');
+    }
+    if (isSuccess) {
+      return t('alerting.import-to-gma.confirm.success-title', 'Import Successful');
+    }
+    if (isError) {
+      return t('alerting.import-to-gma.confirm.error-title', 'Import Failed');
+    }
+    return t('alerting.import-to-gma.confirm.title', 'Confirm Import');
+  };
+
+  return (
+    <Modal isOpen={isOpen} title={getTitle()} onDismiss={onDismiss}>
+      <Stack direction="column" gap={2}>
+        {importStatus === 'idle' && (
+          <Text>
+            <Trans i18nKey="alerting.import-to-gma.confirm.body">
+              Are you sure you want to start the import? This action will create new resources in Grafana Alerting.
+            </Trans>
+          </Text>
+        )}
+
+        {isImporting && (
+          <Stack direction="row" gap={2} alignItems="center">
+            <Spinner />
+            <Text>
+              <Trans i18nKey="alerting.import-to-gma.confirm.importing-body">
+                Importing resources to Grafana Alerting. Please wait...
+              </Trans>
+            </Text>
+          </Stack>
+        )}
+
+        {isSuccess && (
+          <Stack direction="row" gap={2} alignItems="center">
+            <Icon name="check-circle" size="xl" color="green" />
+            <Text>
+              <Trans i18nKey="alerting.import-to-gma.confirm.success-body">
+                Resources imported successfully. Redirecting...
+              </Trans>
+            </Text>
+          </Stack>
+        )}
+
+        {isError && (
+          <Text color="error">
+            <Trans i18nKey="alerting.import-to-gma.confirm.error-body">
+              Failed to import resources. Please check the error details and try again.
+            </Trans>
+          </Text>
+        )}
+      </Stack>
+
+      <Modal.ButtonRow>
+        {importStatus === 'idle' && (
+          <>
+            <Button variant="secondary" onClick={onDismiss}>
+              {t('alerting.common.cancel', 'Cancel')}
+            </Button>
+            <Button variant="primary" fill="solid" onClick={onConfirm}>
+              {t('alerting.import-to-gma.confirm.confirm', 'Start Import')}
+            </Button>
+          </>
+        )}
+
+        {isError && (
+          <Button variant="secondary" onClick={onDismiss}>
+            {t('alerting.common.close', 'Close')}
+          </Button>
+        )}
+      </Modal.ButtonRow>
+    </Modal>
   );
 }
 
