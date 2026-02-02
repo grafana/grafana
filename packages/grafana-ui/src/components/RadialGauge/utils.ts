@@ -260,7 +260,7 @@ export function getThresholdPercentageValue(
   fieldDisplay: FieldDisplay
 ): number {
   if (thresholdsMode === ThresholdsMode.Percentage) {
-    return threshold.value! / 100;
+    return threshold.value / 100;
   }
   const [min, max] = getFieldConfigMinMax(fieldDisplay);
   return (threshold.value - min) / (max - min);
