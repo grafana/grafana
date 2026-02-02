@@ -27,6 +27,7 @@ func NewRepositoryQuotaChecker(
 
 // NamespaceOverQuota checks if a namespace has more repositories than allowed by its quota.
 // It returns true if the namespace exceeds its repository quota, false otherwise.
+// Repositories with DeletionTimestamp set are excluded from the count as they are being deleted.
 func (c *RepositoryQuotaChecker) NamespaceOverQuota(
 	ctx context.Context,
 	namespace string,
@@ -46,6 +47,14 @@ func (c *RepositoryQuotaChecker) NamespaceOverQuota(
 		return false, err
 	}
 
+	// Count only non-deleted repositories
+	activeCount := 0
+	for _, repo := range repos {
+		if repo.DeletionTimestamp == nil {
+			activeCount++
+		}
+	}
+
 	// Check if count exceeds quota
-	return len(repos) > int(maxRepos), nil
+	return activeCount > int(maxRepos), nil
 }

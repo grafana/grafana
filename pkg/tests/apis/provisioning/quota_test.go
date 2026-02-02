@@ -683,4 +683,179 @@ func TestIntegrationProvisioning_RepositoryCountQuota(t *testing.T) {
 			assert.Contains(collect, quotaCondition["message"], "quota exceeded")
 		}, waitTimeoutDefault, waitIntervalDefault)
 	})
+
+	t.Run("blocked repositories do not perform health checks or syncs", func(t *testing.T) {
+		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+			opts.ProvisioningMaxRepositories = 2 // Allow only 2 repositories
+		})
+		ctx := context.Background()
+
+		// Create 3 repositories (over quota)
+		repoNames := make([]string, 3)
+		for i := 0; i < 3; i++ {
+			repoNames[i] = fmt.Sprintf("repo-blocked-%d", i)
+			testRepo := TestRepo{
+				Name:   repoNames[i],
+				Target: "folder",
+				Copies: map[string]string{
+					"testdata/all-panels.json": "dashboard.json",
+				},
+				ExpectedDashboards: 1,
+				ExpectedFolders:    1,
+			}
+			helper.CreateRepo(t, testRepo)
+		}
+
+		// Wait for repositories to be blocked
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			repoObj, err := helper.Repositories.Resource.Get(ctx, repoNames[0], metav1.GetOptions{})
+			if err != nil {
+				collect.Errorf("failed to get repository: %v", err)
+				return
+			}
+
+			conditions, found, _ := unstructuredNestedSlice(repoObj.Object, "status", "conditions")
+			if !found {
+				collect.Errorf("conditions not found")
+				return
+			}
+
+			var quotaCondition map[string]interface{}
+			for _, c := range conditions {
+				cond, ok := c.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				if cond["type"] == provisioning.ConditionTypeQuota {
+					quotaCondition = cond
+					break
+				}
+			}
+
+			if quotaCondition == nil {
+				collect.Errorf("Quota condition not found")
+				return
+			}
+
+			assert.Equal(collect, string(metav1.ConditionFalse), quotaCondition["status"],
+				"Repository should be blocked (quota condition False)")
+
+			// Verify sync status indicates repository is blocked
+			sync, found, _ := nestedField(repoObj.Object, "status", "sync")
+			if found {
+				syncMap, ok := sync.(map[string]interface{})
+				if ok {
+					// Blocked repos should not have new syncs triggered
+					// The sync state should either be empty or error
+					state, hasState := syncMap["state"]
+					if hasState {
+						assert.NotEqual(collect, "Working", state,
+							"Blocked repository should not have syncs in Working state")
+					}
+				}
+			}
+		}, waitTimeoutDefault, waitIntervalDefault)
+	})
+
+	t.Run("blocked repo with no triggers eventually unblocks after deletion", func(t *testing.T) {
+		helper := runGrafana(t, func(opts *testinfra.GrafanaOpts) {
+			opts.ProvisioningMaxRepositories = 3
+		})
+		ctx := context.Background()
+
+		// Create 5 repositories (over quota)
+		repoNames := make([]string, 5)
+		for i := 0; i < 5; i++ {
+			repoNames[i] = fmt.Sprintf("repo-nontrigger-%d", i)
+			testRepo := TestRepo{
+				Name:   repoNames[i],
+				Target: "folder",
+				Copies: map[string]string{
+					"testdata/all-panels.json": "dashboard.json",
+				},
+				ExpectedDashboards: 1,
+				ExpectedFolders:    1,
+			}
+			helper.CreateRepo(t, testRepo)
+		}
+
+		// Wait for repositories to be blocked
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			repoObj, err := helper.Repositories.Resource.Get(ctx, repoNames[0], metav1.GetOptions{})
+			if err != nil {
+				collect.Errorf("failed to get repository: %v", err)
+				return
+			}
+
+			conditions, found, _ := unstructuredNestedSlice(repoObj.Object, "status", "conditions")
+			if !found {
+				collect.Errorf("conditions not found")
+				return
+			}
+
+			var quotaCondition map[string]interface{}
+			for _, c := range conditions {
+				cond, ok := c.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				if cond["type"] == provisioning.ConditionTypeQuota {
+					quotaCondition = cond
+					break
+				}
+			}
+
+			if quotaCondition == nil {
+				collect.Errorf("Quota condition not found")
+				return
+			}
+			assert.Equal(collect, string(metav1.ConditionFalse), quotaCondition["status"])
+		}, waitTimeoutDefault, waitIntervalDefault)
+
+		// Delete 2 repositories to get back under quota
+		err := helper.Repositories.Resource.Delete(ctx, repoNames[3], metav1.DeleteOptions{})
+		require.NoError(t, err)
+		err = helper.Repositories.Resource.Delete(ctx, repoNames[4], metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		// Verify that blocked repos unblock even without spec changes or sync triggers
+		// This validates the forceProcessForUnblock mechanism
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			for i := 0; i < 3; i++ {
+				repoObj, err := helper.Repositories.Resource.Get(ctx, repoNames[i], metav1.GetOptions{})
+				if err != nil {
+					collect.Errorf("failed to get repository %s: %v", repoNames[i], err)
+					continue
+				}
+
+				conditions, found, err := unstructuredNestedSlice(repoObj.Object, "status", "conditions")
+				if !found || err != nil {
+					collect.Errorf("conditions not found for %s: %v", repoNames[i], err)
+					continue
+				}
+
+				var quotaCondition map[string]interface{}
+				for _, c := range conditions {
+					cond, ok := c.(map[string]interface{})
+					if !ok {
+						continue
+					}
+					if cond["type"] == provisioning.ConditionTypeQuota {
+						quotaCondition = cond
+						break
+					}
+				}
+
+				if quotaCondition == nil {
+					collect.Errorf("Quota condition not found for %s", repoNames[i])
+					continue
+				}
+
+				assert.Equal(collect, string(metav1.ConditionTrue), quotaCondition["status"],
+					"Repository %s should have quota condition True after quota freed (forceProcessForUnblock)", repoNames[i])
+				assert.Equal(collect, provisioning.ReasonWithinQuota, quotaCondition["reason"],
+					"Repository %s should have WithinQuota reason", repoNames[i])
+			}
+		}, waitTimeoutDefault, waitIntervalDefault)
+	})
 }

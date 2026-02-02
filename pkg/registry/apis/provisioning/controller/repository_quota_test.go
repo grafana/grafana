@@ -192,3 +192,104 @@ func TestNamespaceOverQuota(t *testing.T) {
 	}
 }
 
+func TestNamespaceOverQuota_ExcludesDeletingRepos(t *testing.T) {
+	ctx := context.Background()
+	namespace := "test-ns"
+
+	tests := []struct {
+		name               string
+		maxRepos           int64
+		activeRepos        int
+		deletingRepos      int
+		expectedOverQuota  bool
+	}{
+		{
+			name:              "deleting repos excluded from count - under quota",
+			maxRepos:          5,
+			activeRepos:       3,
+			deletingRepos:     5,
+			expectedOverQuota: false,
+		},
+		{
+			name:              "deleting repos excluded from count - at quota",
+			maxRepos:          5,
+			activeRepos:       5,
+			deletingRepos:     2,
+			expectedOverQuota: false,
+		},
+		{
+			name:              "deleting repos excluded from count - over quota",
+			maxRepos:          5,
+			activeRepos:       7,
+			deletingRepos:     3,
+			expectedOverQuota: true,
+		},
+		{
+			name:              "all repos being deleted - not over quota",
+			maxRepos:          5,
+			activeRepos:       0,
+			deletingRepos:     10,
+			expectedOverQuota: false,
+		},
+		{
+			name:              "deletion brings namespace under quota",
+			maxRepos:          3,
+			activeRepos:       3,
+			deletingRepos:     2,
+			expectedOverQuota: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create active repositories (no DeletionTimestamp)
+			repos := make([]*provisioning.Repository, 0, tt.activeRepos+tt.deletingRepos)
+			for i := 0; i < tt.activeRepos; i++ {
+				repos = append(repos, &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      fmt.Sprintf("active-repo-%d", i),
+						Namespace: namespace,
+					},
+				})
+			}
+
+			// Create deleting repositories (with DeletionTimestamp)
+			deletionTime := metav1.Now()
+			for i := 0; i < tt.deletingRepos; i++ {
+				repos = append(repos, &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              fmt.Sprintf("deleting-repo-%d", i),
+						Namespace:         namespace,
+						DeletionTimestamp: &deletionTime,
+					},
+				})
+			}
+
+			// Setup mocks
+			mockQuotaGetter := &MockQuotaGetter{}
+			mockQuotaGetter.On("GetQuotaStatus", ctx, namespace).Return(
+				provisioning.QuotaStatus{
+					MaxRepositories:           tt.maxRepos,
+					MaxResourcesPerRepository: 100,
+				},
+			)
+
+			mockNamespaceLister := &MockRepositoryNamespaceLister{}
+			mockNamespaceLister.On("List", mock.Anything).Return(repos, nil)
+			mockRepoLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+			checker := NewRepositoryQuotaChecker(mockQuotaGetter, mockRepoLister)
+
+			// Execute
+			result, err := checker.NamespaceOverQuota(ctx, namespace)
+
+			// Assert
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedOverQuota, result,
+				"Expected over quota: %v, got: %v (active: %d, deleting: %d, max: %d)",
+				tt.expectedOverQuota, result, tt.activeRepos, tt.deletingRepos, tt.maxRepos)
+
+			mockQuotaGetter.AssertExpectations(t)
+		})
+	}
+}
