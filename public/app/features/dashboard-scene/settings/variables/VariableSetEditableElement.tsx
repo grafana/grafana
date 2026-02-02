@@ -5,11 +5,13 @@ import { useCallback, useId, useMemo } from 'react';
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../../utils/interactions';
@@ -117,16 +119,32 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
   const createDragEndHandler = useCallback(
     (sourceList: SceneVariable[], mergeLists: (updatedList: SceneVariable[]) => SceneVariable[]) => {
       return (result: DropResult) => {
-        if (!result.destination || result.destination.index === result.source.index) {
-          return;
-        }
+        const currentList = set.state.variables;
 
-        const updatedList = [...sourceList];
-        const [movedVariable] = updatedList.splice(result.source.index, 1);
-        updatedList.splice(result.destination.index, 0, movedVariable);
+        dashboardEditActions.edit({
+          source: set,
+          description: t(
+            'dashboard-scene.variable-list.create-drag-end-handler.description.reorder-variables-list',
+            'Reorder variables list'
+          ),
+          perform: () => {
+            if (!result.destination || result.destination.index === result.source.index) {
+              return;
+            }
 
-        set.setState({
-          variables: [...nonEditableVariables, ...mergeLists(updatedList)],
+            reportInteraction('Variable drag and drop');
+
+            const updatedList = [...sourceList];
+            const [movedVariable] = updatedList.splice(result.source.index, 1);
+            updatedList.splice(result.destination.index, 0, movedVariable);
+
+            set.setState({
+              variables: [...nonEditableVariables, ...mergeLists(updatedList)],
+            });
+          },
+          undo: () => {
+            set.setState({ variables: currentList });
+          },
         });
       };
     },

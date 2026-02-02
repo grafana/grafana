@@ -6691,6 +6691,13 @@
       },
       "label": "Hide"
     },
+    "variable-list": {
+      "create-drag-end-handler": {
+        "description": {
+          "reorder-variables-list": "Reorder variables list"
+        }
+      }
+    },
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "Static options"
     },
