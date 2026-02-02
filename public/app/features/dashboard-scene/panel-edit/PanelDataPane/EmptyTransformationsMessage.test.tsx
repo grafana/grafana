@@ -123,7 +123,8 @@ describe('EmptyTransformationsMessage', () => {
       expect(screen.getByTestId(selectors.components.Transforms.addTransformationButton)).toBeInTheDocument();
     });
 
-    it('should disable SQL expression card when datasourceUid is SHARED_DASHBOARD_QUERY', () => {
+    it('should disable SQL expression card when datasourceUid is SHARED_DASHBOARD_QUERY', async () => {
+      const user = userEvent.setup();
       render(
         <EmptyTransformationsMessage
           onShowPicker={onShowPicker}
@@ -136,6 +137,13 @@ describe('EmptyTransformationsMessage', () => {
 
       const sqlCard = screen.getByTestId('transform-with-sql-card');
       expect(sqlCard).toHaveStyle({ pointerEvents: 'none' });
+      const button = sqlCard.querySelector('button');
+
+      if (button) {
+        await user.click(button);
+      }
+
+      expect(onGoToQueries).not.toHaveBeenCalled();
     });
   });
 });
