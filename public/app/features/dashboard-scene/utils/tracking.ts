@@ -57,7 +57,12 @@ export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
 export function trackDashboardSceneCreatedOrSaved(
   isNew: boolean,
   dashboard: DashboardScene,
-  initialProperties: { name: string; url: string; expression_and_transformation_counts?: Record<string, number> }
+  initialProperties: {
+    name: string;
+    url: string;
+    transformation_counts?: Record<string, number>;
+    expression_counts?: Record<string, number>;
+  }
 ) {
   // url values for dashboard library experiment
   const urlParams = new URLSearchParams(window.location.search);

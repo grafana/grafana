@@ -1155,6 +1155,41 @@ describe('DashboardScene', () => {
         organize: 1,
       });
     });
+
+    it('should skip LibraryPanel elements in V2', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Test Dashboard V2',
+        elements: {
+          'panel-1': {
+            kind: 'Panel',
+            spec: {
+              id: 1,
+              title: 'Panel 1',
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [],
+                  transformations: [{ kind: 'organize', spec: { id: 'organize', options: {} } }],
+                  queryOptions: {},
+                },
+              },
+            },
+          },
+          'library-panel-1': {
+            kind: 'LibraryPanel',
+            spec: {
+              uid: 'library-uid',
+              name: 'Library Panel',
+            },
+          },
+        },
+      } as unknown as DashboardV2Spec;
+
+      const result = scene.getTransformationCounts(saveModel);
+
+      expect(result).toEqual({ organize: 1 });
+    });
   });
 
   describe('getExpressionCounts', () => {
@@ -1315,6 +1350,135 @@ describe('DashboardScene', () => {
       const result = scene.getExpressionCounts(saveModel);
 
       expect(result).toEqual({ math: 1, reduce: 1, sql: 1 });
+    });
+
+    it('should skip non-expression datasources in V1 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Test Dashboard',
+        schemaVersion: 30,
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            targets: [
+              {
+                refId: 'A',
+                datasource: { type: 'prometheus', uid: 'prometheus-uid' },
+                type: 'instant',
+              },
+              {
+                refId: 'B',
+                datasource: { type: '__expr__', uid: '__expr__' },
+                type: 'sql',
+              },
+            ],
+          },
+        ],
+      } as unknown as Dashboard;
+
+      const result = scene.getExpressionCounts(saveModel);
+
+      expect(result).toEqual({ sql: 1 });
+    });
+
+    it('should skip non-expression datasources in V2 dashboards', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Test Dashboard V2',
+        elements: {
+          'panel-1': {
+            kind: 'Panel',
+            spec: {
+              id: 1,
+              title: 'Panel 1',
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [
+                    {
+                      kind: 'PanelQuery',
+                      spec: {
+                        query: {
+                          kind: 'DataQuery',
+                          group: 'prometheus',
+                          datasource: { name: 'prometheus-uid' },
+                          spec: { expr: 'up' },
+                        },
+                        refId: 'A',
+                      },
+                    },
+                    {
+                      kind: 'PanelQuery',
+                      spec: {
+                        query: {
+                          kind: 'DataQuery',
+                          group: '__expr__',
+                          datasource: { name: '__expr__' },
+                          spec: { type: 'math' },
+                        },
+                        refId: 'B',
+                      },
+                    },
+                  ],
+                  queryOptions: {},
+                },
+              },
+            },
+          },
+        },
+      } as unknown as DashboardV2Spec;
+
+      const result = scene.getExpressionCounts(saveModel);
+
+      expect(result).toEqual({ math: 1 });
+    });
+
+    it('should skip LibraryPanel elements in V2', () => {
+      const scene = buildTestScene();
+      const saveModel = {
+        title: 'Test Dashboard V2',
+        elements: {
+          'panel-1': {
+            kind: 'Panel',
+            spec: {
+              id: 1,
+              title: 'Panel 1',
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  queries: [
+                    {
+                      kind: 'PanelQuery',
+                      spec: {
+                        query: {
+                          kind: 'DataQuery',
+                          group: '__expr__',
+                          datasource: { name: '__expr__' },
+                          spec: { type: 'sql' },
+                        },
+                        refId: 'A',
+                      },
+                    },
+                  ],
+                  queryOptions: {},
+                },
+              },
+            },
+          },
+          'library-panel-1': {
+            kind: 'LibraryPanel',
+            spec: {
+              uid: 'library-uid',
+              name: 'Library Panel',
+            },
+          },
+        },
+      } as unknown as DashboardV2Spec;
+
+      const result = scene.getExpressionCounts(saveModel);
+
+      expect(result).toEqual({ sql: 1 });
     });
   });
 });
