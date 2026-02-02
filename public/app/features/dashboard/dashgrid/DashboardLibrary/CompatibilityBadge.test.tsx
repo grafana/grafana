@@ -165,17 +165,6 @@ describe('CompatibilityBadge', () => {
       const badge = screen.getByTestId('compatibility-badge-success');
       expect(badge).toHaveTextContent('100%');
     });
-
-    it('should render badge when metrics info is not available', () => {
-      const state: CompatibilityState = {
-        status: 'success',
-        score: 75,
-      };
-      render(<CompatibilityBadge state={state} onCheck={mockOnCheck} />);
-
-      const badge = screen.getByTestId('compatibility-badge-success');
-      expect(badge).toHaveTextContent('75%');
-    });
   });
 
   describe('error state', () => {

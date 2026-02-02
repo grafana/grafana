@@ -4,15 +4,16 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Badge, Button, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
-export type CompatibilityStatus = 'idle' | 'loading' | 'success' | 'error';
-
-export interface CompatibilityState {
-  status: CompatibilityStatus;
-  score?: number; // 0-100 percentage
-  metricsFound?: number; // Count of found metrics
-  metricsTotal?: number; // Total metrics in dashboard
-  errorMessage?: string; // For error state
-}
+/**
+ * Discriminated union for compatibility check states.
+ * Each state variant only includes fields relevant to that state,
+ * making invalid states unrepresentable at the type level.
+ */
+export type CompatibilityState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; score: number; metricsFound: number; metricsTotal: number }
+  | { status: 'error'; errorMessage?: string };
 
 interface CompatibilityBadgeProps {
   state: CompatibilityState;
@@ -50,6 +51,36 @@ function getScoreIcon(score: number): 'check-circle' | 'exclamation-triangle' | 
 }
 
 /**
+ * Returns the appropriate tooltip message based on compatibility score.
+ * - Green (≥80%): Simple match message
+ * - Orange (50-79%): Match message + warning about panel customization
+ * - Red (<50%): Match message + warning about query customization
+ */
+function getScoreTooltip(score: number, metricsFound: number, metricsTotal: number): string {
+  if (score >= 80) {
+    return t(
+      'dashboard-library.compatibility-badge.tooltip-green',
+      '{{score}}% ({{found}}/{{total}}) of metrics match.',
+      { score, found: metricsFound, total: metricsTotal }
+    );
+  }
+
+  if (score >= 50) {
+    return t(
+      'dashboard-library.compatibility-badge.tooltip-orange',
+      '{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard may contain panels that require heavy customization.',
+      { score, found: metricsFound, total: metricsTotal }
+    );
+  }
+
+  return t(
+    'dashboard-library.compatibility-badge.tooltip-red',
+    '{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard will require heavy query customization.',
+    { score, found: metricsFound, total: metricsTotal }
+  );
+}
+
+/**
  * Compact inline badge that displays dashboard compatibility status.
  *
  * States:
@@ -70,7 +101,7 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
 
     const tooltipContent = t(
       'dashboard-library.compatibility-badge.check-tooltip',
-      'Check if the metrics used by this dashboard exist in your datasource'
+      'Checks how many dashboard metrics match your data source.'
     );
 
     return (
@@ -97,8 +128,12 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
 
   // Error state - show error badge with retry
   if (state.status === 'error') {
-    const errorTooltip =
-      state.errorMessage || t('dashboard-library.compatibility-badge.check-failed', 'Check failed · Click to retry');
+    const errorPrefix = state.errorMessage || t('dashboard-library.compatibility-badge.check-failed', 'Check failed');
+    const errorSuffix = t(
+      'dashboard-library.compatibility-badge.error-hint',
+      'There is an error with the compatibility check, your data source and variables may need to be reviewed.'
+    );
+    const errorTooltip = `${errorPrefix}. ${errorSuffix}`;
     return (
       <Tooltip interactive={true} content={errorTooltip}>
         <span
@@ -129,29 +164,19 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
   }
 
   // Success state - show score with color coding
-  if (state.status === 'success' && state.score !== undefined) {
+  // With discriminated unions, TypeScript knows score/metricsFound/metricsTotal exist
+  if (state.status === 'success') {
     const color = getScoreColor(state.score);
     const icon = getScoreIcon(state.score);
-    const tooltipContent =
-      state.metricsFound !== undefined && state.metricsTotal !== undefined
-        ? t(
-            'dashboard-library.compatibility-badge.score-tooltip',
-            '{{score}}% metric availability · {{found}}/{{total}} metrics exist in your datasource',
-            {
-              score: state.score,
-              found: state.metricsFound,
-              total: state.metricsTotal,
-            }
-          )
-        : t('dashboard-library.compatibility-badge.score-only-tooltip', '{{score}}% metric availability', {
-            score: state.score,
-          });
+    const tooltipContent = getScoreTooltip(state.score, state.metricsFound, state.metricsTotal);
 
     return (
       <Tooltip interactive={true} content={tooltipContent}>
         <span className={styles.badgeWrapper} data-testid="compatibility-badge-success">
           <Badge
-            text={t('dashboard-library.compatibility-badge.score-text', '{{score}}%', { score: state.score })}
+            text={t('dashboard-library.compatibility-badge.score-text', '{{score}}% compatible', {
+              score: state.score,
+            })}
             icon={icon}
             color={color}
             className={styles.badge}
