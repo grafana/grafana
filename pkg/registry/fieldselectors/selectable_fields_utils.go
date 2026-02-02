@@ -1,4 +1,4 @@
-package apiregistry
+package fieldselectors
 
 import (
 	"fmt"
@@ -11,7 +11,8 @@ import (
 	sdkres "github.com/grafana/grafana-app-sdk/resource"
 )
 
-// These helper functions are to be used in InstallSchema() in apis/*/register.go files in order for already existing kinds to use field selectors.
+// These helper functions are to be used in InstallSchema() in apis/*/register.go files
+// in order for already existing kinds to use field selectors.
 
 // AddSelectableFieldLabelConversions registers field selector conversions for kinds that
 // expose selectable fields via the app SDK.
