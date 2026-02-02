@@ -14,7 +14,10 @@ import { VariableDisplaySelect } from 'app/features/dashboard-scene/settings/var
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
-import { VariableValuesPreview } from 'app/features/dashboard-scene/settings/variables/components/VariableValuesPreview';
+import {
+  useGetAllVariableOptions,
+  VariableValuesPreview,
+} from 'app/features/dashboard-scene/settings/variables/components/VariableValuesPreview';
 import { VariableNameConstraints } from 'app/features/variables/editor/types';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
@@ -68,14 +71,14 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
   const onDisplayChange = (display: VariableHide) => variable.setState({ hide: display });
 
   const isHasVariableOptions = hasVariableOptions(variable);
-  const optionsForSelect = isHasVariableOptions ? variable.getOptionsForSelect(false) : [];
-  const hasMultiProps = 'valuesFormat' in variable.state && variable.state.valuesFormat === 'json';
 
   const onDeleteVariable = (hideModal: () => void) => () => {
     reportInteraction('Delete variable');
     onDelete(name);
     hideModal();
   };
+
+  const { options, staticOptions } = useGetAllVariableOptions(variable);
 
   return (
     <form
@@ -125,7 +128,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
 
       {EditorToRender && <EditorToRender variable={variable} onRunQuery={onRunQuery} />}
 
-      {isHasVariableOptions && <VariableValuesPreview options={optionsForSelect} hasMultiProps={hasMultiProps} />}
+      {isHasVariableOptions && <VariableValuesPreview options={options} staticOptions={staticOptions} />}
 
       <div className={styles.buttonContainer}>
         <Stack gap={2}>

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, Icon, Input, Space, Stack, Text, Tooltip } from '@grafana/ui';
 import { OwnerReference } from 'app/api/clients/folder/v1beta1';
 import { FolderDTO } from 'app/types/folders';
@@ -52,9 +52,14 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
   return (
     <form
       name="addFolder"
-      onSubmit={handleSubmit((form) =>
-        onConfirm(form.folderName, createTeamFolder && selectedTeam ? [selectedTeam] : [])
-      )}
+      onSubmit={handleSubmit((form) => {
+        reportInteraction('grafana_browse_dashboards_page_action_create_folder', {
+          teamFolder: !!selectedTeam,
+          teamUid: selectedTeam?.uid,
+        });
+
+        onConfirm(form.folderName, createTeamFolder && selectedTeam ? [selectedTeam] : []);
+      })}
       data-testid={selectors.pages.BrowseDashboards.NewFolderForm.form}
     >
       <Stack gap={1} direction="column">

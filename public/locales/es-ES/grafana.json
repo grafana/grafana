@@ -2328,7 +2328,8 @@
     },
     "routing-settings": {
       "aria-label-group-by": "Agrupar por",
-      "description-group-by": "Combina varias alertas en una sola notificación agrupándolas por los mismos valores de etiqueta. Si el campo está vacío, se hereda de la política de notificación predeterminada.",
+      "description-group-by": "",
+      "group-by-hint": "",
       "group-interval": "",
       "group-wait": "",
       "grouping": "",
@@ -3629,7 +3630,9 @@
       "delete-button": "Eliminar",
       "delete-modal-invalid-text": "Una o más carpetas contienen paneles de biblioteca o reglas de alerta. Para continuar, primero elimínelas.",
       "delete-modal-invalid-title": "No se puede eliminar la carpeta",
-      "delete-modal-restore-dashboards-text": "",
+      "delete-modal-restore-dashboards-common": "",
+      "delete-modal-restore-dashboards-prefix-folder": "",
+      "delete-modal-restore-dashboards-suffix-folder": "",
       "delete-modal-text": "Esta acción eliminará el siguiente contenido:",
       "delete-modal-text-one-folder": "",
       "delete-modal-title": "Eliminar",
@@ -5151,6 +5154,9 @@
       "panel-data-label": "Datos de panel",
       "panel-json-description": "El modelo guardado en el panel de control JSON que configura cómo funciona todo.",
       "panel-json-label": "JSON de panel",
+      "panel-layout-description": "",
+      "panel-layout-label": "",
+      "panel-spec-label": "",
       "select-source": "Seleccionar fuente",
       "unknown": "Objeto desconocido: {{show}}"
     },
@@ -5478,10 +5484,6 @@
         "tooltip": ""
       },
       "dashboard-options": {
-        "title": "",
-        "tooltip": ""
-      },
-      "edit-schema": {
         "title": "",
         "tooltip": ""
       },
@@ -6240,7 +6242,9 @@
     },
     "inspect-json-tab": {
       "apply": "Aplicar",
+      "error-element-changed": "",
       "error-invalid-json": "",
+      "error-invalid-layout": "",
       "error-invalid-v2-panel": "",
       "validation-error": ""
     },
@@ -6747,7 +6751,7 @@
       "delete-button": "Eliminar",
       "title": "Eliminar"
     },
-    "delete-modal-restore-dashboards-text": "",
+    "delete-modal-restore-dashboards-prefix": "",
     "delete-modal-text": "¿Quieres eliminar este panel de control?",
     "general": {
       "auto-refresh-description": "Define los intervalos de actualización automática que deben estar disponibles en la lista de actualización automática. Utiliza el formato «5 s» para los segundos, «1 m» para los minutos, «1 h» para las horas y «1 d» para los días (por ejemplo: «5 s, 10 s, 30 s, 1 m, 5 m, 15 m, 30 m, 1 h, 2 h, 1 d»).",
@@ -11897,6 +11901,7 @@
       "alert-connection-deleted": "",
       "alert-connection-saved": "",
       "alert-connection-updated": "",
+      "available-repositories": "",
       "back-to-connections": "",
       "button-save": "",
       "button-saving": "",
@@ -11909,6 +11914,7 @@
       "error-delete-connection": "",
       "error-required": "",
       "error-save-connection": "",
+      "grafana-repositories": "",
       "label-app-id": "",
       "label-description": "",
       "label-installation-id": "",
@@ -11923,7 +11929,6 @@
       "placeholder-app-id": "",
       "placeholder-description": "",
       "placeholder-installation-id": "",
-      "placeholder-private-key": "",
       "placeholder-title": ""
     },
     "connection-options": {
@@ -12218,6 +12223,7 @@
       "jobs": "Trabajos"
     },
     "repository-actions": {
+      "connection": "",
       "settings": "Configuración",
       "source-code": "Código fuente"
     },
@@ -12240,6 +12246,7 @@
     },
     "repository-overview": {
       "checked": "Revisado:",
+      "connection-status": "",
       "finished": "",
       "health": "Salud",
       "healthy": "Lineas",
@@ -12673,13 +12680,17 @@
     }
   },
   "query-editor-next": {
+    "labels": {
+      "expression": "",
+      "query": "",
+      "transformation": ""
+    },
     "sidebar": {
       "card-click": "",
-      "expression": "",
       "queries-expressions": "",
-      "query": "",
       "query-stack": "",
-      "toggle-size": ""
+      "toggle-size": "",
+      "transformations": ""
     }
   },
   "query-library": {
@@ -12718,7 +12729,7 @@
     },
     "page": {
       "no-deleted-dashboards": "No has eliminado ningún panel de control recientemente.",
-      "no-deleted-dashboards-text": "Cuando elimines un panel de control, aparecerá aquí durante 30 días antes de eliminarse de forma permanente. El administrador de tu organización puede restaurar los paneles de control eliminados recientemente.",
+      "no-deleted-dashboards-text": "",
       "no-search-result": "No se han encontrado resultados para tu consulta"
     },
     "restore-modal": {
@@ -14839,6 +14850,9 @@
       "description": {
         "variable-values-fetched-datasource-query": "Los valores de las variables se obtienen de una consulta de fuente de datos"
       }
+    },
+    "create-switch-variable-adapter": {
+      "description": ""
     },
     "data-source-variable-slice": {
       "text": {

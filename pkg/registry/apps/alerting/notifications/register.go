@@ -115,7 +115,7 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 		}
 		return templategroup.NewStorage(srv, namespacer)
 	} else if gvr == routingtree.ResourceInfo.GroupVersionResource() {
-		return routingtree.NewStorage(api.Policies, namespacer)
+		return routingtree.NewStorage(api.RouteService, namespacer)
 	}
 	panic("unknown legacy storage requested: " + gvr.String())
 }
