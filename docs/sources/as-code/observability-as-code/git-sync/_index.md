@@ -61,12 +61,6 @@ Your Grafana instance polls the provisioned GitHub resources to synchronize. If 
 
 ## Resource support and compatibility
 
-{{< admonition type="caution" >}}
-
-Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise.
-
-{{< /admonition >}}
-
 Git Sync only supports dashboards and folders. Alerts, panels, and other resources are not supported yet.
 
 If you're using Git Sync in Grafana OSS or Grafana Enterprise, some supported resources might be in an incompatible data format. If this happens, syncing will be blocked. Compatibility issues will be fixed with an upcoming migration tool.

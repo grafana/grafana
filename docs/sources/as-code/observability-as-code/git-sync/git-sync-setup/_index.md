@@ -62,18 +62,16 @@ For further details on how Git Sync operates refer to [key concepts](https://gra
 
 ### Enable required feature toggles
 
-To activate Git Sync in Grafana you need to set the `provisioning` and `kubernetesDashboards` feature toggles to `true`. To enable them:
+Git Sync in Grafana Cloud is activated according to a rollout schedule TBC
 
-- In Grafana Cloud, open a support ticket
+To activate Git Sync in Grafana OSS/Enterprise, set the `provisioning` feature toggle to `true`:
 
-- In Grafana OSS/Enterprise:
   1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
   1. Add this value:
 
      ```ini
      [feature_toggles]
      provisioning = true
-     kubernetesDashboards = true ; use k8s from browser
      ```
 
   1. Save the changes to the file and restart Grafana.
@@ -218,10 +216,6 @@ Optionally, you can export any unmanaged resources into the provisioned folder. 
 
 Select **Choose additional settings** to continue setup.
 
-#### Full instance sync
-
-Full instance sync is not available in Grafana Cloud and is experimental and unsupported in Grafana OSS/Enterprise. To have access to this option you must enable experimental instance sync.
-
 ### Synchronize with external storage
 
 In this screen:
@@ -230,17 +224,11 @@ In this screen:
 1. Check the **Migrate existing resources** box to migrate your unmanaged dashboards to the provisioned folder. If you select this option, all future updates are automatically saved to the synced Git repository and provisioned back to the instance.
 1. Click **Begin synchronization** to create the Git Sync connection.
 
-{{< admonition type="caution" >}}
-
-This process can take a few minutes.
-
-{{< /admonition >}}
-
 ### Choose additional settings
 
 You connection is complete!
 
-In this last step, you can configure the **Sync interval (seconds)** to indicate how often you want your Grafana instance to pull updates from GitHub. The default value is 60 seconds.
+In this last step, you can configure the **Sync interval (seconds)** to indicate how often you want your Grafana instance to pull updates from GitHub. The default value is 300 seconds in Grafana Cloud, and 60 seconds in Grafana OSS/Enterprise.
 
 You can also select these optional settings:
 
@@ -267,7 +255,9 @@ Optionally, you can extend Git Sync by enabling pull request notifications and i
 
 ### Set up webhooks for real-time notification and pull request integration
 
-Git Sync uses webhooks to enable real-time updates from GitHub public repositories, or to enable pull request integrations. Without webhooks the polling interval is set during configuration, and is 60 seconds by default. You can set up webhooks with whichever service or tooling you prefer: Cloudflare Tunnels with a Cloudflare-managed domain, port-forwarding and DNS options, or a tool such as `ngrok`.
+Real-time notifications (or automatic pulling) is enabled and configured by defaut in Grafana Cloud.
+
+In Grafana OSS/Enterprise, Git Sync uses webhooks to enable real-time updates from GitHub public repositories, or to enable pull request integrations. Without webhooks the polling interval is set during configuration, and is 60 seconds by default. You can set up webhooks with whichever service or tooling you prefer: Cloudflare Tunnels with a Cloudflare-managed domain, port-forwarding and DNS options, or a tool such as `ngrok`.
 
 To set up webhooks:
 
@@ -296,6 +286,12 @@ The necessary paths required to be exposed are, in RegExp:
 - `/apis/provisioning\.grafana\.app/v0(alpha1)?/namespaces/[^/]+/repositories/[^/]+/(webhook|render/.*)$`
 
 ### Set up image rendering for dashboard previews
+
+{{< admonition type="caution" >}}
+
+Only available in Grafana OSS and Grafana Enterprise.
+
+{{< /admonition >}}
 
 Set up image rendering to add visual previews of dashboard updates directly in pull requests. Image rendering also requires webhooks.
 
