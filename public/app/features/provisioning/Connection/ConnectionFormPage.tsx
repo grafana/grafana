@@ -2,6 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
+import { isFetchError } from '@grafana/runtime';
 import { Alert, Card, EmptyState, Stack, Text, TextLink } from '@grafana/ui';
 import { useGetConnectionRepositoriesQuery, useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
@@ -36,8 +37,7 @@ export default function ConnectionFormPage() {
   const availableReposQuery = useGetConnectionRepositoriesQuery(isCreate ? skipToken : { name });
   const availableRepos = availableReposQuery.data?.items ?? [];
 
-  //@ts-expect-error TODO add error types
-  const notFound = !isCreate && isError && error?.status === 404;
+  const notFound = !isCreate && isError && isFetchError(error) && error.status === 404;
 
   const pageTitle = isCreate
     ? t('provisioning.connection-form.page-title-create', 'Create connection')
