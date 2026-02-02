@@ -120,7 +120,7 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                 )}
                 imageUrl={config.theme2.isDark ? sqlDarkImage : sqlLightImage}
                 onClick={handleSqlTransformationClick}
-                testId="go-to-queries-button"
+                testId="transform-with-sql-card"
                 disabled={props.datasourceUid === SHARED_DASHBOARD_QUERY}
               />
             )}

@@ -5,6 +5,7 @@ import { standardTransformersRegistry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import config from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { EmptyTransformationsMessage, LegacyEmptyTransformationsMessage } from './EmptyTransformationsMessage';
 
@@ -98,7 +99,7 @@ describe('EmptyTransformationsMessage', () => {
         />
       );
 
-      const sqlCard = screen.getByTestId('go-to-queries-button');
+      const sqlCard = screen.getByTestId('transform-with-sql-card');
       const button = sqlCard.querySelector('button');
       await user.click(button!);
 
@@ -120,6 +121,21 @@ describe('EmptyTransformationsMessage', () => {
 
       // But should still show the "Show more" button
       expect(screen.getByTestId(selectors.components.Transforms.addTransformationButton)).toBeInTheDocument();
+    });
+
+    it('should disable SQL expression card when datasourceUid is SHARED_DASHBOARD_QUERY', () => {
+      render(
+        <EmptyTransformationsMessage
+          onShowPicker={onShowPicker}
+          onGoToQueries={onGoToQueries}
+          onAddTransformation={onAddTransformation}
+          data={[]}
+          datasourceUid={SHARED_DASHBOARD_QUERY}
+        />
+      );
+
+      const sqlCard = screen.getByTestId('transform-with-sql-card');
+      expect(sqlCard).toHaveStyle({ pointerEvents: 'none' });
     });
   });
 });
