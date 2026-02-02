@@ -144,9 +144,9 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
         description: t('dashboard-scene.use-modal-editor.description.change-variable-query', 'Change variable query'),
         perform: async () => {
           if (!config.featureToggles.multiPropsVariables) {
-            variable.setState({ valuesFormat: 'csv', query, value: undefined });
+            variable.setState({ valuesFormat: 'csv', query });
           } else {
-            variable.setState({ valuesFormat, query, value: undefined });
+            variable.setState({ valuesFormat, query });
           }
 
           if (valuesFormat === 'json') {
@@ -159,12 +159,10 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
           variable.setState({
             valuesFormat: initialValuesFormatRef.current,
             query: initialQueryRef.current,
-            value: undefined,
           });
 
           if (initialValuesFormatRef.current === 'json') {
-            variable.setState({ allowCustomValue: false });
-            variable.setState({ allValue: undefined });
+            variable.setState({ allowCustomValue: false, allValue: undefined });
           }
 
           await lastValueFrom(variable.validateAndUpdate!());
