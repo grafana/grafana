@@ -16,7 +16,7 @@ func FoldersDashboardsMigration(migrator migrator.FoldersDashboardsMigrator) mig
 		ID:          "folders-dashboards",
 		MigrationID: "folders and dashboards migration",
 		Resources: []migrations.ResourceInfo{
-			{GroupResource: folderGR, LockTable: "folder"},
+			{GroupResource: folderGR, LockTable: "dashboard"},
 			{GroupResource: dashboardGR, LockTable: "dashboard"},
 		},
 		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
