@@ -814,12 +814,6 @@ func (dr *DashboardServiceImpl) ValidateDashboardBeforeSave(ctx context.Context,
 
 		if dashboard.UID == "" {
 			dashboard.SetUID(existingById.UID)
-		} else if existingById.UID != dashboard.UID {
-			// if the uid changed from the existing dashboard with this id, clear the id
-			// so a new unique id gets generated. this prevents duplicate ids during duplication.
-			dashboard.SetID(0)
-			dashboard.Data.Del("id")
-			existingById = nil // treat as new dashboard
 		}
 	}
 	dashWithIdExists := (existingById != nil)

@@ -139,10 +139,10 @@ export class K8sDashboardV2API
     if (obj.metadata.name) {
       // remove resource version when updating
       delete obj.metadata.resourceVersion;
-      // if the uid changed from the original k8s metadata (e.g., when editing JSON), 
+      // if the uid changed from the original k8s metadata (e.g., when editing JSON),
       // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
       const originalUid = options?.k8s?.name;
-      if (originalUid && obj.metadata.name !== originalUid) {
+      if (originalUid && obj.metadata.name !== originalUid && obj.metadata.labels) {
         delete obj.metadata.labels['grafana.app/deprecatedInternalID'];
       }
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
