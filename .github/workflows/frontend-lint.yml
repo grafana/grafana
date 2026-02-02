@@ -193,3 +193,45 @@ jobs:
         yarn run packages:pack
     - name: Validate packages
       run: ./scripts/validate-npm-packages.sh
+  lint-circular-dependencies:
+    needs: detect-changes
+    permissions:
+      contents: read
+      id-token: write
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed == 'true'
+    name: Check circular dependencies
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout build commit
+      uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Setup Node
+      uses: ./.github/actions/setup-node
+    - name: Install dependencies
+      run: yarn install --immutable
+    - name: Check circular dependencies on PR
+      run: |
+        yarn dlx madge --circular --extensions ts,tsx . > /tmp/pr-circular.txt || true
+        echo "Circular dependencies on PR:"
+        wc -l < /tmp/pr-circular.txt
+    - name: Fetch main branch
+      run: git fetch https://github.com/${{ github.repository }} main:main --depth=1
+    - name: Check circular dependencies on main
+      run: |
+        git checkout main
+        yarn dlx madge --circular --extensions ts,tsx . > /tmp/main-circular.txt || true
+        echo "Circular dependencies on main:"
+        wc -l < /tmp/main-circular.txt
+    - name: Compare circular dependencies
+      run: |
+        main_count=$(wc -l < /tmp/main-circular.txt)
+        pr_count=$(wc -l < /tmp/pr-circular.txt)
+        echo "Main branch circular dependencies: $main_count lines"
+        echo "PR branch circular dependencies: $pr_count lines"
+        if [ "$pr_count" -gt "$main_count" ]; then
+          echo "🚨 ERROR: PR introduces new circular dependencies!"
+          echo "Diff between main and PR:"
+          diff /tmp/main-circular.txt /tmp/pr-circular.txt || true
+          exit 1
+        fi
