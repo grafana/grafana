@@ -18,17 +18,11 @@ import { HeaderActions } from './HeaderActions';
  * This interface defines everything needed to render the header without Scene coupling.
  */
 export interface ContentHeaderProps {
-  /** The currently selected query (null if transformation is selected) */
   selectedQuery: DataQuery | null;
-  /** The currently selected transformation (null if query is selected) */
   selectedTransformation: Transformation | null;
-  /** All queries in the query runner */
   queries: DataQuery[];
-  /** The type of card currently selected (Query, Expression, or Transformation) */
   cardType: QueryEditorType;
-  /** Callback when datasource is changed */
   onChangeDataSource: (ds: DataSourceInstanceSettings, refId: string) => void;
-  /** Callback when query is updated (e.g., refId change) */
   onUpdateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   /**
    * Optional callback to render additional elements in the header's left section.
