@@ -4,7 +4,7 @@ go 1.25.6
 
 require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.49.0
+	github.com/grafana/grafana-app-sdk v0.49.1
 	github.com/grafana/grafana-app-sdk/logging v0.49.0
 	k8s.io/apimachinery v0.34.3
 	k8s.io/kube-openapi v0.0.0-20251125145642-4e65d59e963e
@@ -80,7 +80,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260126083543-e67cba6048e1 // indirect
+	github.com/grafana/alerting v0.0.0-20260129164026-85d7010c64b8 // indirect
 	github.com/grafana/authlib v0.0.0-20260119104241-f33edcf42077 // indirect
 	github.com/grafana/authlib/types v0.0.0-20260119104241-f33edcf42077 // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect

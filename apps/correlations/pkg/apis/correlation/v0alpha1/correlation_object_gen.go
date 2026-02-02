@@ -23,6 +23,12 @@ type Correlation struct {
 	Spec CorrelationSpec `json:"spec" yaml:"spec"`
 }
 
+func NewCorrelation() *Correlation {
+	return &Correlation{
+		Spec: *NewCorrelationSpec(),
+	}
+}
+
 func (o *Correlation) GetSpec() any {
 	return o.Spec
 }
