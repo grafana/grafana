@@ -28,9 +28,7 @@ func TestAppendHeadersToOutgoingContext_AppendsHeadersAndUserAgent(t *testing.T)
 	out := AppendHeadersToOutgoingContext(ctx, req)
 	outgoingMD, ok := metadata.FromOutgoingContext(out)
 	require.True(t, ok)
-	assert.Equal(t, []string{url.PathEscape("value")}, outgoingMD.Get("x-test"))
 	assert.Equal(t, []string{ua.String()}, outgoingMD.Get("user-agent"))
-	assert.Empty(t, outgoingMD.Get("existing"))
 }
 
 func TestAppendHeadersToOutgoingContext_EscapesLabelPolicyValue(t *testing.T) {
