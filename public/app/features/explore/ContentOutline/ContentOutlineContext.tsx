@@ -1,29 +1,7 @@
 import { uniqueId } from 'lodash';
 import { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
-import { SetOptional } from 'type-fest';
 
-import { ContentOutlineItemBaseProps, ITEM_TYPES } from './ContentOutlineItem';
-
-export interface ContentOutlineItemContextProps extends ContentOutlineItemBaseProps {
-  id: string;
-  ref: HTMLElement | null;
-  color?: string;
-  children?: ContentOutlineItemContextProps[];
-}
-
-type RegisterFunction = (outlineItem: SetOptional<ContentOutlineItemContextProps, 'id'>) => string;
-
-export interface ContentOutlineContextProps {
-  outlineItems: ContentOutlineItemContextProps[];
-  register: RegisterFunction;
-  unregister: (id: string) => void;
-  unregisterAllChildren: (
-    parentIdGetter: (items: ContentOutlineItemContextProps[]) => string | undefined,
-    childType: ITEM_TYPES
-  ) => void;
-  updateOutlineItems: (newItems: ContentOutlineItemContextProps[]) => void;
-  updateItem: (id: string, properties: Partial<Omit<ContentOutlineItemContextProps, 'id'>>) => void;
-}
+import { ContentOutlineContextProps, ContentOutlineItemContextProps, ITEM_TYPES, RegisterFunction } from './types';
 
 interface ContentOutlineContextProviderProps {
   children: ReactNode;
