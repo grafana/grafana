@@ -84,7 +84,7 @@ func (s *server) listWithFieldSelectors(ctx context.Context, req *resourcepb.Lis
 }
 
 func filterFieldSelectors(req *resourcepb.ListRequest) *resourcepb.ListRequest {
-	var fields []*resourcepb.Requirement
+	fields := make([]*resourcepb.Requirement, 0, len(req.Options.Fields))
 	for _, f := range req.Options.Fields {
 		if (f.Operator != "=" && f.Operator != "==") || f.Key == "metadata.namespace" {
 			continue
