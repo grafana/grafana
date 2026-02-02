@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import { skipToken } from '@reduxjs/toolkit/query/react';
 
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Card, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Repository, useGetConnectionQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
+import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { formatTimestamp } from '../utils/time';
 
 import { CheckRepository } from './CheckRepository';
@@ -14,7 +14,7 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
   const status = repo.status;
   const connectionName = repo.spec?.connection?.name;
-  const { data: connection } = useGetConnectionQuery(connectionName ? { name: connectionName } : skipToken);
+  const { connection, isDisconnected } = useConnectionStatus(connectionName);
 
   return (
     <Card noMargin className={styles.card}>
@@ -76,6 +76,18 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
               <div className={styles.spanTwo}>
                 <ConnectionStatusBadge status={connection?.status} />
               </div>
+              {isDisconnected && (
+                <>
+                  <div />
+                  <div className={styles.spanTwo}>
+                    <Text color="error">
+                      <Trans i18nKey="provisioning.repository-health.connection-disconnected-message">
+                        This repository can no longer access GitHub through this connection.
+                      </Trans>
+                    </Text>
+                  </div>
+                </>
+              )}
             </>
           )}
         </Grid>

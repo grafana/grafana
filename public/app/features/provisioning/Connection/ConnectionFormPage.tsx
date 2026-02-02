@@ -2,15 +2,12 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
-import { Card, EmptyState, Stack, Text, TextLink } from '@grafana/ui';
-import {
-  useGetConnectionQuery,
-  useGetConnectionRepositoriesQuery,
-  useListRepositoryQuery,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { Alert, Card, EmptyState, Stack, Text, TextLink } from '@grafana/ui';
+import { useGetConnectionRepositoriesQuery, useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
 
 import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
+import { useConnectionStatus } from '../hooks/useConnectionStatus';
 
 import { ConnectionForm } from './ConnectionForm';
 
@@ -25,7 +22,9 @@ export default function ConnectionFormPage() {
   const { name = '' } = useParams();
   const isCreate = !name;
 
-  const query = useGetConnectionQuery(isCreate ? skipToken : { name });
+  const { connection, isLoading, isError, error, isDisconnected, disconnectMessage } = useConnectionStatus(
+    isCreate ? undefined : name
+  );
 
   // Grafana repositories that use this connection
   const connectedReposQuery = useListRepositoryQuery(
@@ -38,7 +37,7 @@ export default function ConnectionFormPage() {
   const availableRepos = availableReposQuery.data?.items ?? [];
 
   //@ts-expect-error TODO add error types
-  const notFound = !isCreate && query.isError && query.error?.status === 404;
+  const notFound = !isCreate && isError && error?.status === 404;
 
   const pageTitle = isCreate
     ? t('provisioning.connection-form.page-title-create', 'Create connection')
@@ -55,7 +54,7 @@ export default function ConnectionFormPage() {
         ),
       }}
     >
-      <Page.Contents isLoading={!isCreate && query.isLoading}>
+      <Page.Contents isLoading={!isCreate && isLoading}>
         {notFound ? (
           <EmptyState message={t('provisioning.connection-form.not-found', 'Connection not found')} variant="not-found">
             <Text element="p">
@@ -69,6 +68,18 @@ export default function ConnectionFormPage() {
           </EmptyState>
         ) : (
           <Stack direction="column" gap={2}>
+            {isDisconnected && (
+              <Alert
+                severity="error"
+                title={t('provisioning.connection.disconnected-title', 'Connection is disconnected')}
+              >
+                <Trans i18nKey="provisioning.connection.disconnected-message">
+                  This GitHub App connection has lost access. The app may have been uninstalled or the repository access
+                  was revoked.
+                </Trans>
+                {disconnectMessage && <Text element="p">{disconnectMessage}</Text>}
+              </Alert>
+            )}
             {!isCreate && connectedRepos.length > 0 && (
               <div style={{ maxWidth: 700 }}>
                 <Card noMargin>
@@ -115,7 +126,7 @@ export default function ConnectionFormPage() {
               </div>
             )}
 
-            <ConnectionForm data={isCreate ? undefined : query.data} />
+            <ConnectionForm data={isCreate ? undefined : connection} />
           </Stack>
         )}
       </Page.Contents>
