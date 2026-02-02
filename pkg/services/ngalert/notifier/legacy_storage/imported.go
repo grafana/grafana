@@ -133,3 +133,35 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 	}
 	return m
 }
+
+func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
+	if e.importedConfig == nil {
+		return nil, nil
+	}
+
+	// We use a stub config so that calling definition.Merge doesn't modify the original Route.
+	// We leave out parts that are irrelevant to constructing the correctly imported route with renamed receivers and
+	// time intervals.
+	mergeResult, err := definition.Merge(definitions.PostableApiAlertingConfig{
+		Config: definitions.Config{
+			Route:             &definitions.Route{},
+			MuteTimeIntervals: e.rev.Config.AlertmanagerConfig.MuteTimeIntervals,
+			TimeIntervals:     e.rev.Config.AlertmanagerConfig.TimeIntervals,
+		},
+		Receivers: e.rev.Config.AlertmanagerConfig.Receivers,
+	}, *e.importedConfig, e.opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to merge imported config: %w", err)
+	}
+	// The imported route should have been injected into the stub and be the only subroute.
+	if len(mergeResult.Config.Route.Routes) != 1 {
+		// This really shouldn't happen, but just in case.
+		return nil, fmt.Errorf("failed to merge imported config: missing imported route")
+	}
+	importedRoute := mergeResult.Config.Route.Routes[0]
+
+	mr := NewManagedRoute(e.opts.DedupSuffix, importedRoute)
+	mr.Provenance = models.ProvenanceConvertedPrometheus
+	mr.Origin = models.ResourceOriginImported
+	return mr, nil
+}
