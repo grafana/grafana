@@ -32,7 +32,7 @@ func testLastImportStore(t *testing.T, kv kv.KV, allowDuplicateNamespaceGroupRes
 
 	pnsr := NamespacedResource{Namespace: "namespace", Group: "playlists", Resource: "playlist"}
 
-	now := time.Now().Truncate(time.Millisecond).UTC()
+	now := time.Now().Truncate(time.Second).UTC()
 
 	require.NoError(t, store.Save(t.Context(), ResourceLastImportTime{NamespacedResource: fnsr, LastImportTime: now.Add(-15 * time.Minute)}))
 	require.NoError(t, store.Save(t.Context(), ResourceLastImportTime{NamespacedResource: fnsr, LastImportTime: now.Add(-5 * time.Minute)}))
@@ -46,22 +46,22 @@ func testLastImportStore(t *testing.T, kv kv.KV, allowDuplicateNamespaceGroupRes
 
 	// SQLKV only stores a single import time per namespace/group/resource.
 	expectedKeys := []string{
-		fmt.Sprintf("namespace~dashboards~dashboard~%d", now.Add(2*time.Minute).UnixMilli()),
-		fmt.Sprintf("namespace~folders~folder~%d", now.Add(5*time.Minute).UnixMilli()),
-		fmt.Sprintf("namespace~playlists~playlist~%d", now.Add(-20*time.Minute).UnixMilli()),
+		fmt.Sprintf("namespace~dashboards~dashboard~%d", now.Add(2*time.Minute).Unix()),
+		fmt.Sprintf("namespace~folders~folder~%d", now.Add(5*time.Minute).Unix()),
+		fmt.Sprintf("namespace~playlists~playlist~%d", now.Add(-20*time.Minute).Unix()),
 	}
 	if allowDuplicateNamespaceGroupResource {
 		// Regular KV store keeps all previous import times, until they are deleted.
 		expectedKeys = []string{
-			fmt.Sprintf("namespace~dashboards~dashboard~%d", now.Add(-12*time.Minute).UnixMilli()),
-			fmt.Sprintf("namespace~dashboards~dashboard~%d", now.Add(-7*time.Minute).UnixMilli()),
-			fmt.Sprintf("namespace~dashboards~dashboard~%d", now.Add(2*time.Minute).UnixMilli()),
+			fmt.Sprintf("namespace~dashboards~dashboard~%d", now.Add(-12*time.Minute).Unix()),
+			fmt.Sprintf("namespace~dashboards~dashboard~%d", now.Add(-7*time.Minute).Unix()),
+			fmt.Sprintf("namespace~dashboards~dashboard~%d", now.Add(2*time.Minute).Unix()),
 
-			fmt.Sprintf("namespace~folders~folder~%d", now.Add(-15*time.Minute).UnixMilli()),
-			fmt.Sprintf("namespace~folders~folder~%d", now.Add(-5*time.Minute).UnixMilli()),
-			fmt.Sprintf("namespace~folders~folder~%d", now.Add(5*time.Minute).UnixMilli()),
+			fmt.Sprintf("namespace~folders~folder~%d", now.Add(-15*time.Minute).Unix()),
+			fmt.Sprintf("namespace~folders~folder~%d", now.Add(-5*time.Minute).Unix()),
+			fmt.Sprintf("namespace~folders~folder~%d", now.Add(5*time.Minute).Unix()),
 
-			fmt.Sprintf("namespace~playlists~playlist~%d", now.Add(-20*time.Minute).UnixMilli()),
+			fmt.Sprintf("namespace~playlists~playlist~%d", now.Add(-20*time.Minute).Unix()),
 		}
 	}
 	require.Equal(t, expectedKeys, collectKeys(t, store.kv.Keys(t.Context(), lastImportTimesSection, ListOptions{})))
@@ -77,8 +77,8 @@ func testLastImportStore(t *testing.T, kv kv.KV, allowDuplicateNamespaceGroupRes
 
 	// Verify that all other times were deleted.
 	expectedKeysAfterList := []string{
-		fmt.Sprintf("namespace~dashboards~dashboard~%d", now.Add(2*time.Minute).UnixMilli()),
-		fmt.Sprintf("namespace~folders~folder~%d", now.Add(5*time.Minute).UnixMilli()),
+		fmt.Sprintf("namespace~dashboards~dashboard~%d", now.Add(2*time.Minute).Unix()),
+		fmt.Sprintf("namespace~folders~folder~%d", now.Add(5*time.Minute).Unix()),
 	}
 	require.Equal(t, expectedKeysAfterList, collectKeys(t, store.kv.Keys(t.Context(), lastImportTimesSection, ListOptions{})))
 }

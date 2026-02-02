@@ -148,7 +148,8 @@ func (k *SqlKV) deleteLastImportTime(ctx context.Context, key string) error {
 }
 
 func LastImportTimeKey(ns, group, resource string, ts time.Time) string {
-	return fmt.Sprintf("%s~%s~%s~%d", ns, group, resource, ts.UnixMilli())
+	// We use unix seconds, as SQL implementation uses DATETIME which has seconds precision.
+	return fmt.Sprintf("%s~%s~%s~%d", ns, group, resource, ts.Unix())
 }
 
 func ParseLastImportTimeKey(key string) (ns, group, resource string, ts time.Time, _ error) {
@@ -162,5 +163,5 @@ func ParseLastImportTimeKey(key string) (ns, group, resource string, ts time.Tim
 		return "", "", "", time.Time{}, fmt.Errorf("invalid timestamp: %w", err)
 	}
 
-	return parts[0], parts[1], parts[2], time.UnixMilli(int64(t)).UTC(), nil
+	return parts[0], parts[1], parts[2], time.Unix(int64(t), 0).UTC(), nil
 }
