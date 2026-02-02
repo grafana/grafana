@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react';
-import { act, getWrapper, renderHook, screen, waitFor } from 'test/test-utils';
+import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import * as runtime from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
