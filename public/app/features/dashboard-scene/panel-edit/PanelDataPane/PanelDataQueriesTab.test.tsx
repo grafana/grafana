@@ -20,6 +20,7 @@ import {
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { DashboardDataDTO } from 'app/types/dashboard';
@@ -284,11 +285,15 @@ jest.mock('../../../explore/QueryLibrary/QueryLibraryContext', () => ({
   }),
 }));
 
-// Mock hasReadPermissions
-const mockHasReadPermissions = jest.fn(() => false);
-jest.mock('../../../../extensions/query-library/utils/identity', () => ({
-  hasReadPermissions: () => mockHasReadPermissions(),
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    hasPermission: jest.fn(),
+    isSignedIn: jest.fn(),
+    user: { uid: 'test-uid' },
+  },
 }));
+
+const mockContextSrv = jest.mocked(contextSrv);
 
 const data = jest.requireMock('@grafana/data');
 let deactivators = [] as Array<() => void>;
@@ -299,7 +304,8 @@ describe('PanelDataQueriesTab', () => {
     // Reset mocks to default state
     mockOpenDrawer.mockClear();
     mockQueryLibraryEnabled.mockReturnValue(false);
-    mockHasReadPermissions.mockReturnValue(false);
+    mockContextSrv.hasPermission.mockReturnValue(false);
+    mockContextSrv.user.isSignedIn = true;
   });
 
   afterEach(() => {
@@ -308,34 +314,45 @@ describe('PanelDataQueriesTab', () => {
   });
 
   describe('Add from saved queries button', () => {
-    it('should show button only when queryLibraryEnabled and hasReadPermissions are both true', async () => {
+    it('should show button only when queryLibraryEnabled and canReadQueries are both true', async () => {
       const modelMock = await createModelMock();
 
       // Test: Button hidden when both flags are false
       mockQueryLibraryEnabled.mockReturnValue(false);
-      mockHasReadPermissions.mockReturnValue(false);
+      mockContextSrv.hasPermission.mockReturnValue(false);
+      mockContextSrv.user.isSignedIn = true;
       const { rerender } = render(<PanelDataQueriesTabRendered model={modelMock} />);
       expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
 
       // Test: Button hidden when only queryLibraryEnabled is true
       mockQueryLibraryEnabled.mockReturnValue(true);
-      mockHasReadPermissions.mockReturnValue(false);
+      mockContextSrv.hasPermission.mockReturnValue(false);
+      mockContextSrv.isSignedIn = false;
       rerender(<PanelDataQueriesTabRendered model={modelMock} />);
       expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
 
-      // Test: Button hidden when only hasReadPermissions is true
+      // Test: Button hidden when only canReadQueries is true (non-RBAC mode)
       mockQueryLibraryEnabled.mockReturnValue(false);
-      mockHasReadPermissions.mockReturnValue(true);
+      mockContextSrv.isSignedIn = true;
       rerender(<PanelDataQueriesTabRendered model={modelMock} />);
       expect(screen.queryByTestId(selectors.components.QueryTab.addQueryFromLibrary)).not.toBeInTheDocument();
 
-      // Test: Button visible when both are true
+      // Test: Button visible when both are true (non-RBAC mode - isSignedIn)
       mockQueryLibraryEnabled.mockReturnValue(true);
-      mockHasReadPermissions.mockReturnValue(true);
+      mockContextSrv.isSignedIn = true;
+      config.featureToggles.savedQueriesRBAC = false;
       rerender(<PanelDataQueriesTabRendered model={modelMock} />);
-      const button = await screen.findByTestId(selectors.components.QueryTab.addQueryFromLibrary);
+      let button = await screen.findByTestId(selectors.components.QueryTab.addQueryFromLibrary);
       expect(button).toBeInTheDocument();
       expect(screen.getByText('Add from saved queries')).toBeInTheDocument();
+
+      // Test: Button visible when both are true (RBAC mode - hasPermission)
+      config.featureToggles.savedQueriesRBAC = true;
+      mockContextSrv.isSignedIn = true;
+      mockContextSrv.hasPermission.mockReturnValue(true);
+      rerender(<PanelDataQueriesTabRendered model={modelMock} />);
+      button = await screen.findByTestId(selectors.components.QueryTab.addQueryFromLibrary);
+      expect(button).toBeInTheDocument();
 
       // Test: Button click calls openDrawer with correct params
       await userEvent.click(button);
