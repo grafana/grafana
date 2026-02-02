@@ -9,11 +9,12 @@ import (
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	settingservice "github.com/grafana/grafana/pkg/services/setting"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -33,20 +34,16 @@ func setupTestContext(r *http.Request) *http.Request {
 
 func TestRequestConfigMiddleware(t *testing.T) {
 	t.Run("should store base config in request context", func(t *testing.T) {
-		baseConfig := FSRequestConfig{
-			FSFrontendSettings: FSFrontendSettings{
-				BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
-					Version: "10.3.0",
-					Edition: "Open Source",
-				},
-				AnonymousEnabled: true,
-			},
+		license := &licensing.OSSLicensingService{}
+		cfg := &setting.Cfg{
+			Raw:         ini.Empty(),
+			HTTPPort:    "1234",
 			CSPEnabled:  true,
 			CSPTemplate: "default-src 'self'",
 			AppURL:      "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(baseConfig, nil)
+		middleware := RequestConfigMiddleware(cfg, license, nil)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -65,17 +62,22 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		handler.ServeHTTP(recorder, req)
 
 		assert.Equal(t, http.StatusOK, recorder.Code)
-		assert.Equal(t, baseConfig.CSPEnabled, capturedConfig.CSPEnabled)
-		assert.Equal(t, baseConfig.CSPTemplate, capturedConfig.CSPTemplate)
-		assert.Equal(t, baseConfig.AppURL, capturedConfig.AppURL)
-		assert.Equal(t, baseConfig.AnonymousEnabled, capturedConfig.AnonymousEnabled)
-		assert.Equal(t, baseConfig.BuildInfo.Version, capturedConfig.BuildInfo.Version)
-		assert.Equal(t, baseConfig.BuildInfo.Edition, capturedConfig.BuildInfo.Edition)
+		assert.True(t, capturedConfig.CSPEnabled)
+		assert.Equal(t, capturedConfig.CSPTemplate, "default-src 'self'")
+		assert.Equal(t, capturedConfig.AppURL, "https://grafana.example.com")
 	})
 
 	t.Run("should call next handler", func(t *testing.T) {
-		baseConfig := FSRequestConfig{}
-		middleware := RequestConfigMiddleware(baseConfig, nil)
+		license := &licensing.OSSLicensingService{}
+		cfg := &setting.Cfg{
+			Raw:         ini.Empty(),
+			HTTPPort:    "1234",
+			CSPEnabled:  true,
+			CSPTemplate: "default-src 'self'",
+			AppURL:      "https://grafana.example.com",
+		}
+
+		middleware := RequestConfigMiddleware(cfg, license, nil)
 
 		nextCalled := false
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -95,44 +97,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		assert.Equal(t, http.StatusOK, recorder.Code)
 	})
 
-	t.Run("should work with minimal config", func(t *testing.T) {
-		baseConfig := FSRequestConfig{
-			FSFrontendSettings: FSFrontendSettings{},
-		}
-
-		middleware := RequestConfigMiddleware(baseConfig, nil)
-
-		var capturedConfig FSRequestConfig
-		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var err error
-			capturedConfig, err = FSRequestConfigFromContext(r.Context())
-			require.NoError(t, err)
-			w.WriteHeader(http.StatusOK)
-		})
-
-		handler := middleware(testHandler)
-
-		req := httptest.NewRequest("GET", "/", nil)
-		req = setupTestContext(req)
-		recorder := httptest.NewRecorder()
-
-		handler.ServeHTTP(recorder, req)
-
-		assert.Equal(t, http.StatusOK, recorder.Code)
-		assert.Equal(t, false, capturedConfig.CSPEnabled)
-		assert.Equal(t, "", capturedConfig.CSPTemplate)
-	})
-
 	t.Run("should fetch and apply tenant overrides from settings service", func(t *testing.T) {
-		baseConfig := FSRequestConfig{
-			FSFrontendSettings: FSFrontendSettings{
-				AnonymousEnabled: false,
-				DisableLoginForm: false,
-			},
-			AppURL:     "https://base.example.com",
-			CSPEnabled: false,
-		}
-
 		// Create mock settings service that returns CSP overrides
 		mockSettingsService := &mockSettingsService{
 			settings: []*settingservice.Setting{
@@ -141,7 +106,16 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			},
 		}
 
-		middleware := RequestConfigMiddleware(baseConfig, mockSettingsService)
+		license := &licensing.OSSLicensingService{}
+		cfg := &setting.Cfg{
+			Raw:         ini.Empty(),
+			HTTPPort:    "1234",
+			CSPEnabled:  true,
+			CSPTemplate: "default-src 'self'",
+			AppURL:      "https://grafana.example.com",
+		}
+
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -167,26 +141,28 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		assert.Equal(t, "script-src 'self'", capturedConfig.CSPTemplate)
 
 		// Verify other settings remain at base values (not overridden)
-		assert.Equal(t, "https://base.example.com", capturedConfig.AppURL)
-		assert.False(t, capturedConfig.AnonymousEnabled)
-		assert.False(t, capturedConfig.DisableLoginForm)
+		assert.Equal(t, "https://grafana.example.com", capturedConfig.AppURL)
 
 		// Verify settings service was called
 		assert.True(t, mockSettingsService.called)
 	})
 
 	t.Run("should fallback to base config on settings service error", func(t *testing.T) {
-		baseConfig := FSRequestConfig{
-			AppURL:     "https://base.example.com",
-			CSPEnabled: true,
-		}
-
 		// Create mock that returns an error
 		mockSettingsService := &mockSettingsService{
 			err: assert.AnError,
 		}
 
-		middleware := RequestConfigMiddleware(baseConfig, mockSettingsService)
+		license := &licensing.OSSLicensingService{}
+		cfg := &setting.Cfg{
+			Raw:         ini.Empty(),
+			HTTPPort:    "1234",
+			CSPEnabled:  true,
+			CSPTemplate: "default-src 'self'",
+			AppURL:      "https://base.example.com",
+		}
+
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -210,19 +186,23 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		// Verify base config was used (no overrides)
 		assert.Equal(t, "https://base.example.com", capturedConfig.AppURL)
 		assert.True(t, capturedConfig.CSPEnabled)
+		assert.Equal(t, "default-src 'self'", capturedConfig.CSPTemplate)
 
 		// Verify settings service was called
 		assert.True(t, mockSettingsService.called)
 	})
 
 	t.Run("should not call settings service without namespace header", func(t *testing.T) {
-		baseConfig := FSRequestConfig{
-			AppURL: "https://base.example.com",
-		}
-
 		mockSettingsService := &mockSettingsService{}
 
-		middleware := RequestConfigMiddleware(baseConfig, mockSettingsService)
+		license := &licensing.OSSLicensingService{}
+		cfg := &setting.Cfg{
+			Raw:      ini.Empty(),
+			HTTPPort: "1234",
+			AppURL:   "https://base.example.com",
+		}
+
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
 
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -242,21 +222,20 @@ func TestRequestConfigMiddleware(t *testing.T) {
 	})
 
 	t.Run("should parse namespace from baggage header with multiple values", func(t *testing.T) {
-		baseConfig := FSRequestConfig{
-			FSFrontendSettings: FSFrontendSettings{
-				AnonymousEnabled: false,
-			},
-			AppURL:     "https://base.example.com",
-			CSPEnabled: false,
-		}
-
 		mockSettingsService := &mockSettingsService{
 			settings: []*settingservice.Setting{
 				{Section: "security", Key: "content_security_policy", Value: "true"},
 			},
 		}
 
-		middleware := RequestConfigMiddleware(baseConfig, mockSettingsService)
+		license := &licensing.OSSLicensingService{}
+		cfg := &setting.Cfg{
+			Raw:        ini.Empty(),
+			HTTPPort:   "1234",
+			CSPEnabled: false, // Base config has CSP disabled
+		}
+
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -282,13 +261,15 @@ func TestRequestConfigMiddleware(t *testing.T) {
 	})
 
 	t.Run("should not call settings service with malformed baggage header", func(t *testing.T) {
-		baseConfig := FSRequestConfig{
-			AppURL: "https://base.example.com",
-		}
-
 		mockSettingsService := &mockSettingsService{}
 
-		middleware := RequestConfigMiddleware(baseConfig, mockSettingsService)
+		license := &licensing.OSSLicensingService{}
+		cfg := &setting.Cfg{
+			Raw:      ini.Empty(),
+			HTTPPort: "1234",
+		}
+
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
 
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -309,13 +290,15 @@ func TestRequestConfigMiddleware(t *testing.T) {
 	})
 
 	t.Run("should not call settings service when baggage has no namespace", func(t *testing.T) {
-		baseConfig := FSRequestConfig{
-			AppURL: "https://base.example.com",
-		}
-
 		mockSettingsService := &mockSettingsService{}
 
-		middleware := RequestConfigMiddleware(baseConfig, mockSettingsService)
+		license := &licensing.OSSLicensingService{}
+		cfg := &setting.Cfg{
+			Raw:      ini.Empty(),
+			HTTPPort: "1234",
+		}
+
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
 
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)

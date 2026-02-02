@@ -9,7 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	settingservice "github.com/grafana/grafana/pkg/services/setting"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -21,7 +23,7 @@ import (
 // - Stores final configuration in context
 //
 // Otherwise, uses base configuration for all requests.
-func RequestConfigMiddleware(baseConfig FSRequestConfig, settingsService settingservice.Service) web.Middleware {
+func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, settingsService settingservice.Service) web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx, span := tracing.Start(r.Context(), "frontend.RequestConfigMiddleware")
@@ -41,7 +43,9 @@ func RequestConfigMiddleware(baseConfig FSRequestConfig, settingsService setting
 			reqCtx := contexthandler.FromContext(ctx)
 			logger := reqCtx.Logger
 
-			finalConfig := baseConfig
+			// Create base request config from global settings
+			// This is the default configuration that will be used for all requests
+			requestConfig := NewFSRequestConfig(cfg, license)
 
 			// Fetch tenant-specific configuration if namespace is present
 			if namespace != "" && settingsService != nil {
@@ -65,13 +69,12 @@ func RequestConfigMiddleware(baseConfig FSRequestConfig, settingsService setting
 					// Fall back to base config
 				} else {
 					// Merge tenant overrides with base config
-					finalConfig = baseConfig.WithOverrides(settings, logger)
+					requestConfig.ApplyOverrides(settings, logger)
 				}
 			}
 
-			// Store config in context
-			ctx = finalConfig.WithContext(ctx)
-
+			// Store config in context for other middleware/handlers to use
+			ctx = requestConfig.WithContext(ctx)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
